@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{16D61E23-42BD-4D00-9376-A6D0874BCAD7}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Bolt.Addons.Community</RootNamespace>
+    <AssemblyName>Bolt.Addons.Community</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;GUID_a040fb66244a7f54289914d98ea4ef7d;ENABLE_PROFILER;TARGET_INCLUDE_ALL;TARGET_BACKEND_IL2CPP</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Bolt.Core.Runtime">
+      <HintPath>..\dice-of-the-realm\Assets\Plugins\Assemblies\Bolt.Core.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Bolt.Flow.Runtime">
+      <HintPath>..\dice-of-the-realm\Assets\Plugins\Assemblies\Bolt.Flow.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Ludiq.Core.Runtime">
+      <HintPath>..\dice-of-the-realm\Assets\Plugins\Assemblies\Ludiq.Core.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Ludiq.Graphs.Runtime">
+      <HintPath>..\dice-of-the-realm\Assets\Plugins\Assemblies\Ludiq.Graphs.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="UnityEngine">
+      <HintPath>..\dice-of-the-realm\Library\UnityAssemblies\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\dice-of-the-realm\Library\UnityAssemblies\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\dice-of-the-realm\Library\UnityAssemblies\UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Custom Units\Control\BranchNext.cs" />
+    <Compile Include="Custom Units\Math\Functions\ExponentialFunction.cs" />
+    <Compile Include="Custom Units\Math\Functions\ExponentialFunctionOfRange.cs" />
+    <Compile Include="Custom Units\Math\Functions\LinearFunction.cs" />
+    <Compile Include="Custom Units\Math\Functions\LinearFunctionOfRange.cs" />
+    <Compile Include="Custom Units\Math\Functions\ReverseLinearFunction.cs" />
+    <Compile Include="Custom Units\Math\Functions\MathLibrary.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
