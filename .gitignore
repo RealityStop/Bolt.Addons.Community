@@ -260,4 +260,5 @@ paket-files/
 *.msi
 
 
-Dependencies*/
+Dependencies/BoltBinaries/*.dll
+Dependencies/UnityBinaries/*.dll
