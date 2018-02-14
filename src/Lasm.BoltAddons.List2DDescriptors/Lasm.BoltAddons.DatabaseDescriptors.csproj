@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{95C04C12-BC86-42A2-9A38-21AA9B64D3FE}</ProjectGuid>
+    <ProjectGuid>{8B5801D2-8C51-4FB5-AEAD-F7C8477AFD10}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Bolt.Addons.Community.Logic</RootNamespace>
-    <AssemblyName>Bolt.Addons.Community.Logic</AssemblyName>
+    <RootNamespace>Lasm.BoltAddons.Database.Editor</RootNamespace>
+    <AssemblyName>Lasm.BoltAddons.Database.Editor</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\Sandbox\Sandbox %28Framework Testing%29\Assets\Plugins\LifeandStyleMedia\Bolt\Editor\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -31,39 +31,61 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="DatabaseUnitDescriptor.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Bolt.Core.Editor">
+      <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Core.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Bolt.Core.Runtime">
       <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Core.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Bolt.Flow.Editor">
+      <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Flow.Editor.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Bolt.Flow.Runtime">
       <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Flow.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Ludiq.Core.Editor">
+      <HintPath>..\..\Dependencies\BoltBinaries\Ludiq.Core.Editor.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Core.Runtime">
       <HintPath>..\..\Dependencies\BoltBinaries\Ludiq.Core.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Ludiq.Graphs.Editor">
+      <HintPath>..\..\Dependencies\BoltBinaries\Ludiq.Graphs.Editor.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Graphs.Runtime">
       <HintPath>..\..\Dependencies\BoltBinaries\Ludiq.Graphs.Runtime.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <Reference Include="UnityEditor">
+      <HintPath>..\..\Dependencies\UnityBinaries\UnityEditor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Custom Units\Control\BranchNext.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <ProjectReference Include="..\Lasm.BoltAddons.List2D\Lasm.BoltAddons.Database.csproj">
+      <Project>{cb739d29-8fb4-409d-93a3-1b06b17651ed}</Project>
+      <Name>Lasm.BoltAddons.Database</Name>
+      <Private>False</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

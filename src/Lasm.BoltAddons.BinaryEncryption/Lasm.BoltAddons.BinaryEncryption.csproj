@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{95C04C12-BC86-42A2-9A38-21AA9B64D3FE}</ProjectGuid>
+    <ProjectGuid>{4312C20C-BB60-43B2-925A-BB7AA7948D78}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Bolt.Addons.Community.Logic</RootNamespace>
-    <AssemblyName>Bolt.Addons.Community.Logic</AssemblyName>
+    <RootNamespace>Lasm.BoltAddons.BinaryEncryption</RootNamespace>
+    <AssemblyName>Lasm.BoltAddons.BinaryEncryption</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\Sandbox\Sandbox %28Framework Testing%29\Assets\Plugins\LifeandStyleMedia\Bolt\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -31,38 +31,54 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Bolt.Core.Editor">
+      <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Core.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Bolt.Core.Runtime">
       <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Core.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Bolt.Flow.Editor">
+      <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Flow.Editor.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Bolt.Flow.Runtime">
       <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Flow.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Ludiq.Core.Editor">
+      <HintPath>..\..\Dependencies\BoltBinaries\Ludiq.Core.Editor.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Core.Runtime">
       <HintPath>..\..\Dependencies\BoltBinaries\Ludiq.Core.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Ludiq.Graphs.Editor">
+      <HintPath>..\..\Dependencies\BoltBinaries\Ludiq.Graphs.Editor.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Graphs.Runtime">
       <HintPath>..\..\Dependencies\BoltBinaries\Ludiq.Graphs.Runtime.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
       <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Custom Units\Control\BranchNext.cs" />
+    <Compile Include="BinaryVariable.cs" />
+    <Compile Include="CreateBinaryVariables.cs" />
+    <Compile Include="NewBinaryVariable.cs" />
+    <Compile Include="SaveBinaryVariableUnit.cs" />
+    <Compile Include="BinaryEncryptionBaseUnit.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
