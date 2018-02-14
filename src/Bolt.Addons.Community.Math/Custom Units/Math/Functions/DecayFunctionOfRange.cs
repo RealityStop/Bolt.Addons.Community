@@ -12,7 +12,7 @@ namespace Bolt.Addons.Community.Custom_Units.Math.Functions
     /// </summary>
     [UnitCategory("Math/Functions")]
     [UnitTitle("Decay Function of Range")]
-    [UnitOrder(4)]
+    [UnitOrder(8)]
     public class DecayFunctionOfRange : Unit
     {
         public DecayFunctionOfRange() : base() { }

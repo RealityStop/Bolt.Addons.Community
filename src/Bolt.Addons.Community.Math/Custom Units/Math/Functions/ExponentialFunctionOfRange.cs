@@ -95,7 +95,7 @@ namespace Bolt.Addons.Community.Custom_Units.Math.Functions
             output = ValueOutput<float>(nameof(output), (x) => output.GetValue<float>());
 
             Relation(minimumRange, input);
-            Relation(maximumRange, output);
+            Relation(maximumRange, input);
             Relation(input, output);
             Relation(minimumValue, output);
             Relation(exponent, output);

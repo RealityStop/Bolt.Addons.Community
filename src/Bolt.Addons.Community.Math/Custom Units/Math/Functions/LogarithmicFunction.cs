@@ -12,7 +12,7 @@ namespace Bolt.Addons.Community.Custom_Units.Math.Functions
     /// </summary>
     [UnitCategory("Math/Functions")]
     [UnitTitle("Logarithmic")]
-    [UnitOrder(3)]
+    [UnitOrder(5)]
     public class LogarithmicFunction : Unit
     {
         public LogarithmicFunction() : base() { }
