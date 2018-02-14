@@ -258,3 +258,6 @@ paket-files/
 *.wxs
 *.wixobj
 *.msi
+
+
+Dependencies*/
