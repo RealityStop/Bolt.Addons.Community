@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{95C04C12-BC86-42A2-9A38-21AA9B64D3FE}</ProjectGuid>
+    <ProjectGuid>{80529EB4-3514-4661-B3F4-1BE7532B0D44}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Bolt.Addons.Community.Logic</RootNamespace>
-    <AssemblyName>Bolt.Addons.Community.Logic</AssemblyName>
+    <RootNamespace>Lasm.Core.Collections</RootNamespace>
+    <AssemblyName>Lasm.Core.Collections.Database</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\Games\Base\Assets\Assemblies\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -31,18 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Bolt.Core.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Core.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Bolt.Flow.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Flow.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Ludiq.Core.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\Ludiq.Core.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Ludiq.Graphs.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\Ludiq.Graphs.Runtime.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -51,18 +39,9 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="UnityEngine">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.UI.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Custom Units\Control\BranchNext.cs" />
+    <Compile Include="Database.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
