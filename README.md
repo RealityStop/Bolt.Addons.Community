@@ -11,9 +11,9 @@ While the latter flows off of the tongue more naturally, this project aims to be
 ## Direct Download (requires matching Bolt version)
 |Bolt|  |
 |--|--|
-| 1.3 | [Bolt.Addons.Community.Variables](https://www.dropbox.com/s/a7rn56n7fva0jv4/Bolt.Addons.Community.Variables.dll?dl=0) |
-| 1.3 | [Bolt.Addons.Community.Math](https://www.dropbox.com/s/9vqwczyea3i7nuf/Bolt.Addons.Community.Math.dll?dl=0) |
-| 1.3 | [Bolt.Addons.Community.Logic](https://www.dropbox.com/s/xnxx24795t1cj3s/Bolt.Addons.Community.Logic.dll?dl=0) |
+| 1.3 | [Bolt.Addons.Community.Variables](https://drive.google.com/open?id=1ISfW9_y2u_lInaoq9_SadVHpTs_twfcH) |
+| 1.3 | [Bolt.Addons.Community.Math](https://drive.google.com/open?id=1h5VG4qwowWsX-I0IYQ33CkJjifhpHRnN) |
+| 1.3 | [Bolt.Addons.Community.Logic](https://drive.google.com/open?id=1Enu8Y-GVb95CKRq62leuu6_2SQf5kDZs) |
 
 ## Installing
 Add the dlls via the Unit Option Wizard in the assembly step and regenerate.  There is no need to add anything to the type options.
