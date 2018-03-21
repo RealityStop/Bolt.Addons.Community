@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lasm.BoltAddons.VariableTag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lasm.Core.Collections", "Lasm.Core.Collections\Lasm.Core.Collections.csproj", "{80529EB4-3514-4661-B3F4-1BE7532B0D44}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Variables", "Bolt.Addons.Community.Variables\Bolt.Addons.Community.Variables.csproj", "{2FD5F2B8-19B5-4778-B4CB-076A270BA7B7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +103,10 @@ Global
 		{80529EB4-3514-4661-B3F4-1BE7532B0D44}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{80529EB4-3514-4661-B3F4-1BE7532B0D44}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{80529EB4-3514-4661-B3F4-1BE7532B0D44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FD5F2B8-19B5-4778-B4CB-076A270BA7B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FD5F2B8-19B5-4778-B4CB-076A270BA7B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FD5F2B8-19B5-4778-B4CB-076A270BA7B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FD5F2B8-19B5-4778-B4CB-076A270BA7B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

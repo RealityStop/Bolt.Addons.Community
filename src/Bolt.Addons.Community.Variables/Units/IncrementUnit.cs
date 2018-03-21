@@ -1,17 +1,16 @@
-﻿using Bolt.Addons.Community.Math.Custom_Units;
-using Ludiq;
+﻿using Ludiq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Math.Scalar
+namespace Bolt.Addons.Community.Variables.Units
 {
-    [UnitCategory("Math/Scalar")]
+    [UnitCategory("Variables")]
     [UnitShortTitle("Increment Variable")]
     [UnitTitle("Increment")]
-    public sealed class IncrementUnit : VarUnit
+    public sealed class IncrementUnit : UnifiedVariableUnit
     {
         public IncrementUnit() : base() { }
 
@@ -38,7 +37,6 @@ namespace Bolt.Addons.Community.Math.Scalar
         /// </summary>
         [DoNotSerialize]
         [PortLabel("pre")]
-        [PortLabelHidden]
         public ValueOutput preIncrement { get; private set; }
 
         /// <summary>
@@ -46,7 +44,6 @@ namespace Bolt.Addons.Community.Math.Scalar
         /// </summary>
         [DoNotSerialize]
         [PortLabel("post")]
-        [PortLabelHidden]
         public ValueOutput postIncrement { get; private set; }
 
         protected override void Definition()
@@ -82,19 +79,19 @@ namespace Bolt.Addons.Community.Math.Scalar
             switch (kind)
             {
                 case VariableKind.Graph:
-                    variables = Variables.Graph(graph);
+                    variables = Bolt.Variables.Graph(graph);
                     break;
                 case VariableKind.Object:
-                    variables = Variables.Object(@object.GetValue<GameObject>());
+                    variables = Bolt.Variables.Object(@object.GetValue<GameObject>());
                     break;
                 case VariableKind.Scene:
-                    variables = Variables.Scene(owner.GameObject().scene);
+                    variables = Bolt.Variables.Scene(owner.GameObject().scene);
                     break;
                 case VariableKind.Application:
-                    variables = Variables.Application;
+                    variables = Bolt.Variables.Application;
                     break;
                 case VariableKind.Saved:
-                    variables = Variables.Saved;
+                    variables = Bolt.Variables.Saved;
                     break;
                 default:
                     throw new UnexpectedEnumValueException<VariableKind>(kind);

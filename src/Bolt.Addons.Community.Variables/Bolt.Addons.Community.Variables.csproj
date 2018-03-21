@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{59392204-C9FC-49CD-917E-2478A7CAA965}</ProjectGuid>
+    <ProjectGuid>{2FD5F2B8-19B5-4778-B4CB-076A270BA7B7}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Bolt.Addons.Community.Math</RootNamespace>
-    <AssemblyName>Bolt.Addons.Community.Math</AssemblyName>
+    <RootNamespace>Bolt.Addons.Community.Variables</RootNamespace>
+    <AssemblyName>Bolt.Addons.Community.Variables</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
@@ -31,7 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Bolt.Core.Editor">
+<Reference Include="Bolt.Core.Editor">
       <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Core.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Bolt.Core.Runtime">
@@ -68,20 +68,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Custom Units\Math\Functions\DecayFunction.cs" />
-    <Compile Include="Custom Units\Math\Functions\DecayFunctionOfRange.cs" />
-    <Compile Include="Custom Units\Math\Functions\ExponentialFunction.cs" />
-    <Compile Include="Custom Units\Math\Functions\ExponentialFunctionOfRange.cs" />
-    <Compile Include="Custom Units\Math\Functions\LinearFunction.cs" />
-    <Compile Include="Custom Units\Math\Functions\LinearFunctionOfRange.cs" />
-    <Compile Include="Custom Units\Math\Functions\LogarithmicFunction.cs" />
-    <Compile Include="Custom Units\Math\Functions\LogarithmicFunctionOfRange.cs" />
-    <Compile Include="Custom Units\Math\Functions\MathLibrary.cs" />
-    <Compile Include="Custom Units\Math\Functions\ReverseLinearFunction.cs" />
-    <Compile Include="Custom Units\Math\Functions\SigmoidFunction.cs" />
-    <Compile Include="Custom Units\Math\Functions\SigmoidFunctionOfRange.cs" />
+    <Compile Include="Units\DecrementUnit.cs" />
+    <Compile Include="UnitOptions\DecrementUnitOption.cs" />
+    <Compile Include="Units\IncrementUnit.cs" />
+    <Compile Include="UnitOptions\IncrementUnitOption.cs" />
+    <Compile Include="Options.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
