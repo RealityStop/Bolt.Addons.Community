@@ -31,7 +31,7 @@ Add the dlls via the Unit Option Wizard in the assembly step and regenerate.  Th
 
  - **Increment Variable**
  - **Decrement Variable**
- - **Plus Equals**
+ - **Plus Equals** (new in 1.1)
 
 ### Bolt.Addons.Community.Math
 
