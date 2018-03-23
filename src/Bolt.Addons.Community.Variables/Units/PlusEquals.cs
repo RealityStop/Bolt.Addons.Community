@@ -8,42 +8,41 @@ using UnityEngine;
 namespace Bolt.Addons.Community.Variables.Units
 {
     [UnitCategory("Variables")]
-    [UnitShortTitle("Increment Variable")]
-    [UnitTitle("Increment")]
-    public class IncrementUnit : VariableAdder
+    [UnitShortTitle("Plus Equals")]
+    [UnitTitle("Plus Equals")]
+    public sealed class PlusEquals : VariableAdder
     {
-        public IncrementUnit() : base() { }
+        public PlusEquals() : base() { }
 
-        /// <summary>
-        /// The value assigned to the variable before incrementing.
-        /// </summary>
         [DoNotSerialize]
-        [PortLabel("pre")]
-        public ValueOutput preIncrement { get; private set; }
+        [PortLabel("amount")]
+        public ValueInput amount { get; private set; }
+
 
         /// <summary>
         /// The value assigned to the variable after incrementing.
         /// </summary>
         [DoNotSerialize]
-        [PortLabel("post")]
+        [PortLabelHidden]
         public ValueOutput postIncrement { get; private set; }
+
 
         protected override void Definition()
         {
             base.Definition();
 
-            preIncrement = ValueOutput<float>(nameof(preIncrement), (x) => _preIncrementValue);
+            amount = ValueInput<float>(nameof(amount), 1);
             postIncrement = ValueOutput<float>(nameof(postIncrement), (x) => _postIncrementValue);
-
-            Relation(name, preIncrement);
+            
+            Relation(name, amount);
             Relation(name, postIncrement);
-            Relation(assign, preIncrement);
+            Relation(assign, amount);
             Relation(assign, postIncrement);
         }
 
         protected override float GetAmount()
         {
-            return 1;
+            return amount.GetValue<float>();
         }
     }
 }
