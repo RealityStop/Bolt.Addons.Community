@@ -262,3 +262,4 @@ paket-files/
 
 Dependencies/BoltBinaries/*.dll
 Dependencies/UnityBinaries/*.dll
+Output/
