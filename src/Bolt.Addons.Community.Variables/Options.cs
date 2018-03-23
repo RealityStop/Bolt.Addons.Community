@@ -29,6 +29,12 @@ namespace Bolt.Addons.Community.Math.Custom_Units.Math
             yield return new DecrementUnitOption(VariableKind.Scene);
             yield return new DecrementUnitOption(VariableKind.Application);
             yield return new DecrementUnitOption(VariableKind.Saved);
+
+            yield return new PlusEqualUnitOption(VariableKind.Graph);
+            yield return new PlusEqualUnitOption(VariableKind.Object);
+            yield return new PlusEqualUnitOption(VariableKind.Scene);
+            yield return new PlusEqualUnitOption(VariableKind.Application);
+            yield return new PlusEqualUnitOption(VariableKind.Saved);
         }
     }
 }

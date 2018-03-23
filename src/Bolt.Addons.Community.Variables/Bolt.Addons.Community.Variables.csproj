@@ -31,7 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-<Reference Include="Bolt.Core.Editor">
+    <Reference Include="Bolt.Core.Editor">
       <HintPath>..\..\Dependencies\BoltBinaries\Bolt.Core.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Bolt.Core.Runtime">
@@ -68,12 +68,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="UnitOptions\PlusEqualUnitOption.cs" />
     <Compile Include="Units\DecrementUnit.cs" />
     <Compile Include="UnitOptions\DecrementUnitOption.cs" />
     <Compile Include="Units\IncrementUnit.cs" />
     <Compile Include="UnitOptions\IncrementUnitOption.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Units\PlusEquals.cs" />
+    <Compile Include="Units\VariableAdder.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
