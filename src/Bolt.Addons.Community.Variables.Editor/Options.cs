@@ -1,12 +1,12 @@
 ﻿
-using Bolt.Addons.Community.Variables.UnitOptions;
+using Bolt.Addons.Community.Variables.Editor.UnitOptions;
 using Ludiq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Bolt.Addons.Community.Math.Custom_Units.Math
+namespace Bolt.Addons.Community.Variables.Editor
 {
     [InitializeAfterPlugins]
     public static class Options
