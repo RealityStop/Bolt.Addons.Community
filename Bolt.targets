@@ -1,0 +1,15 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <BoltVersion>1.2</BoltVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release_1.2.3'">
+    <BoltVersion>1.2.3</BoltVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release_1.3.0'">
+    <BoltVersion>1.3.0</BoltVersion>
+	</PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>if not exist "$(SolutionDir)..\Output\$(BoltVersion)" mkdir "$(SolutionDir)..\Output\$(BoltVersion)"
+	xCopy "$(TargetPath)" "$(SolutionDir)..\Output\$(BoltVersion)" /y</PostBuildEvent>
+  </PropertyGroup>
+</Project>
