@@ -23,13 +23,13 @@ namespace Bolt.Addons.Community.Logic.Units
         /// The first input.
         /// </summary>
         [DoNotSerialize]
-        public ValueInput a { get; private set; }
+        public ValueInput a { get; protected set; }
 
         /// <summary>
         /// The second input.
         /// </summary>
         [DoNotSerialize]
-        public ValueInput b { get; private set; }
+        public ValueInput b { get; protected set; }
 
         /// <summary>
         /// The action to execute if the condition is true.
@@ -46,29 +46,9 @@ namespace Bolt.Addons.Community.Logic.Units
         public ControlOutput ifFalse { get; private set; }
 
 
-        /// <summary>
-        /// Whether the compared inputs are numbers.
-        /// </summary>
-        [Serialize]
-        [Inspectable]
-        [InspectorToggleLeft]
-        public bool numeric { get; set; } = true;
-
         protected override void Definition()
         {
-
             enter = ControlInput("enter", Enter);
-
-            if (numeric)
-            {
-                a = ValueInput<float>(nameof(a));
-                b = ValueInput<float>(nameof(b), 0);
-            }
-            else
-            {
-                a = ValueInput<object>(nameof(a)).AllowsNull();
-                b = ValueInput<object>(nameof(b)).AllowsNull();
-            }
 
             ifTrue = ControlOutput("ifTrue");
             ifFalse = ControlOutput("ifFalse");
@@ -81,24 +61,14 @@ namespace Bolt.Addons.Community.Logic.Units
             Relation(b, ifFalse);
         }
 
-        public void Enter(Flow flow)
+        public abstract bool Comparison();
+
+        public virtual void Enter(Flow flow)
         {
-            bool istrue = false;
-            if (numeric)
-                istrue = NumericComparison(a.GetValue<float>(), b.GetValue<float>());
-            else
-                istrue = GenericComparison(a.GetValue<object>(), b.GetValue<object>());
-
-
-            if (istrue)
+            if (Comparison())
                 flow.Invoke(ifTrue);
             else
                 flow.Invoke(ifFalse);
         }
-
-
-        protected abstract bool NumericComparison(float a, float b);
-
-        protected abstract bool GenericComparison(object a, object b);
     }
 }
