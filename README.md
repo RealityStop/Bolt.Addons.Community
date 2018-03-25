@@ -58,9 +58,9 @@ Add the dlls via the Unit Option Wizard in the assembly step and regenerate.  Th
 # For Developers:
 
 ## How to build
-Add the following dlls from your Unity Project with Bolt installed:
+To build the addons for Bolt version <targetversion>.  Add the following dlls from your Unity Project with <targetversion> of Bolt installed:
 
-\Dependencies\BoltBinaries
+\Dependencies\BoltBinaries\<targetversion>
  - Bolt.*.dll  
  - Ludiq.*.dll
 (from (*Assets\Ludiq\Assemblies*) )
@@ -71,7 +71,9 @@ Add the following dlls from your Unity Project with Bolt installed:
  - UnityEngine.dll
  - UnityEngine.UI.dll
 
-Open and build the \src\Bolt.Addons.Community.sln solution in Visual Studio 2017.
+Open and build the \src\Bolt.Addons.Community.sln solution in Visual Studio 2017, selecting the Release_<targetversion> solution configuration.
+
+The binaries will be copied to \Output\<targetversion>
 
 
 ## Current contributors (aka who to blame)
