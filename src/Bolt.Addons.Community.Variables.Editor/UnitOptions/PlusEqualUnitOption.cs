@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Bolt.Addons.Community.Variables.UnitOptions
+namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
 {
     [FuzzyOption(typeof(IncrementUnit))]
     public class PlusEqualUnitOption : UnifiedVariableUnitOption<PlusEquals>
