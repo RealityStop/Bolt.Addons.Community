@@ -31,6 +31,7 @@ namespace Bolt.Addons.Community.Logic.Units
         [DoNotSerialize]
         public ValueInput b { get; protected set; }
 
+
         /// <summary>
         /// The action to execute if the condition is true.
         /// </summary>
@@ -49,7 +50,7 @@ namespace Bolt.Addons.Community.Logic.Units
         protected override void Definition()
         {
             enter = ControlInput("enter", Enter);
-
+            
             ifTrue = ControlOutput("ifTrue");
             ifFalse = ControlOutput("ifFalse");
 

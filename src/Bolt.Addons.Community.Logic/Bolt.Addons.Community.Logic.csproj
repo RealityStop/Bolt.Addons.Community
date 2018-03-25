@@ -63,6 +63,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Units\BranchEqual.cs" />
+    <Compile Include="Units\BranchGreater.cs" />
+    <Compile Include="Units\BranchLess.cs" />
     <Compile Include="Units\BranchNext.cs" />
     <Compile Include="Units\ComparisonBranch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
