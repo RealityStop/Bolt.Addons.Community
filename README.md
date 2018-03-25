@@ -1,5 +1,6 @@
 
 
+
 # Bolt.Addons.Community
 A community-driven project for extending Unity Bolt with custom nodes, types, and helpers.
 
@@ -46,6 +47,10 @@ Add the dlls via the Unit Option Wizard in the assembly step and regenerate.  Th
 ### Bolt.Addons.Community.Logic
 
  - **Branch Next**
+ - Conditional
+	 - **Branch Equal** (new in 1.2)
+	 - **Branch Greater** (new in 1.2)
+	 - **Branch Less** (new in 1.2)
 
 
 ----------
