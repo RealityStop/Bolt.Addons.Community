@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Ludiq;
 
-namespace Bolt
+namespace Bolt.Addons.Community.Variables.Units
 {
     /// <summary>
     /// Branches flow by checking if a condition is true or false.

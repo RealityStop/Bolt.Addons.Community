@@ -62,9 +62,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Custom Units\Control\BranchNext.cs" />
+    <Compile Include="Units\BranchEqual.cs" />
+    <Compile Include="Units\BranchNext.cs" />
+    <Compile Include="Units\ComparisonBranch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
