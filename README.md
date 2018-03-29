@@ -1,6 +1,7 @@
 
 
 
+
 # Bolt.Addons.Community
 A community-driven project for extending Unity Bolt with custom nodes, types, and helpers.
 
@@ -32,7 +33,7 @@ Add the dlls via the Unit Option Wizard in the assembly step and regenerate.  Th
 
  - **Increment Variable**
  - **Decrement Variable**
- - **Plus Equals** (new in 1.1)
+ - **Plus Equals**
 
 ### Bolt.Addons.Community.Math
 
@@ -47,10 +48,11 @@ Add the dlls via the Unit Option Wizard in the assembly step and regenerate.  Th
 ### Bolt.Addons.Community.Logic
 
  - **Branch Next**
+ - **Gate** (new in 1.3)
  - Conditional
-	 - **Branch Equal** (new in 1.2)
-	 - **Branch Greater** (new in 1.2)
-	 - **Branch Less** (new in 1.2)
+	 - **Branch Equal**
+	 - **Branch Greater**
+	 - **Branch Less**
 
 
 ----------
@@ -58,9 +60,9 @@ Add the dlls via the Unit Option Wizard in the assembly step and regenerate.  Th
 # For Developers:
 
 ## How to build
-To build the addons for Bolt version <targetversion>.  Add the following dlls from your Unity Project with <targetversion> of Bolt installed:
+To build the addons for Bolt version {targetversion}.  Add the following dlls from your Unity Project with {targetversion} of Bolt installed:
 
-\Dependencies\BoltBinaries\<targetversion>
+\Dependencies\BoltBinaries\\{targetversion}
  - Bolt.*.dll  
  - Ludiq.*.dll
 (from (*Assets\Ludiq\Assemblies*) )
@@ -73,7 +75,7 @@ To build the addons for Bolt version <targetversion>.  Add the following dlls fr
 
 Open and build the \src\Bolt.Addons.Community.sln solution in Visual Studio 2017, selecting the Release_<targetversion> solution configuration.
 
-The binaries will be copied to \Output\<targetversion>
+The binaries will be copied to \Output\\{targetversion}
 
 
 ## Current contributors (aka who to blame)
