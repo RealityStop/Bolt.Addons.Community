@@ -13,9 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lasm.BoltAddons.BinaryEncry
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lasm.BoltAddons.BinaryEncryption.Editor", "Lasm.BoltAddons.BinaryEncryption.Editor\Lasm.BoltAddons.BinaryEncryption.Editor.csproj", "{A37E5516-730C-40F7-A3CB-7D2CA6A90F5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lasm.BoltAddons.Comments", "Lasm.BoltAddons.Comments\Lasm.BoltAddons.Comments.csproj", "{C7FA2FB0-ACD3-4957-A653-979AFADC3145}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Utility", "Bolt.Addons.Community.Utility\Bolt.Addons.Community.Utility.csproj", "{C7FA2FB0-ACD3-4957-A653-979AFADC3145}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lasm.BoltAddons.Comments.Editor", "Lasm.BoltAddons.Comments.Editor\Lasm.BoltAddons.Comments.Editor.csproj", "{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Utility.Editor", "Bolt.Addons.Community.Utility.Editor\Bolt.Addons.Community.Utility.Editor.csproj", "{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lasm.BoltAddons.Helpers", "Lasm.BoltAddons.Helpers\Lasm.BoltAddons.Helpers.csproj", "{D4FEE35B-EE5C-4533-8E35-C136CF77A1B1}"
 EndProject
@@ -85,7 +85,8 @@ Global
 		{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3}.Release_1.2.3|Any CPU.ActiveCfg = Release|Any CPU
-		{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3}.Release_1.3.0|Any CPU.ActiveCfg = Release|Any CPU
+		{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3}.Release_1.3.0|Any CPU.ActiveCfg = Release_1.3.0|Any CPU
+		{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3}.Release_1.3.0|Any CPU.Build.0 = Release_1.3.0|Any CPU
 		{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D4FEE35B-EE5C-4533-8E35-C136CF77A1B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -165,8 +166,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{4312C20C-BB60-43B2-925A-BB7AA7948D78} = {72195403-8613-44B0-A456-A68908D1BCBD}
 		{A37E5516-730C-40F7-A3CB-7D2CA6A90F5D} = {72195403-8613-44B0-A456-A68908D1BCBD}
-		{C7FA2FB0-ACD3-4957-A653-979AFADC3145} = {72195403-8613-44B0-A456-A68908D1BCBD}
-		{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3} = {72195403-8613-44B0-A456-A68908D1BCBD}
 		{D4FEE35B-EE5C-4533-8E35-C136CF77A1B1} = {72195403-8613-44B0-A456-A68908D1BCBD}
 		{CB739D29-8FB4-409D-93A3-1B06B17651ED} = {72195403-8613-44B0-A456-A68908D1BCBD}
 		{8B5801D2-8C51-4FB5-AEAD-F7C8477AFD10} = {72195403-8613-44B0-A456-A68908D1BCBD}

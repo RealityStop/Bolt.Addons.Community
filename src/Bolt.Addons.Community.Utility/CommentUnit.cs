@@ -3,9 +3,9 @@ using Ludiq;
 using Bolt;
 using UnityEngine;
 
-namespace Lasm.BoltAddons.Helpers
+namespace Bolt.Addons.Community.Utility
 {
-
+    [RenamedFrom("Lasm.BoltAddons.Helpers.CommentUnit")]
     [TypeIcon(typeof(CommentUnit))]
     [UnitTitle("Comment")]
     [UnitShortTitle("")]
