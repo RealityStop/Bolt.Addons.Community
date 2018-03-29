@@ -80,12 +80,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Units\BranchEqual.cs" />
-    <Compile Include="Units\BranchGreater.cs" />
-    <Compile Include="Units\BranchLess.cs" />
-    <Compile Include="Units\BranchNext.cs" />
-    <Compile Include="Units\ComparisonBranch.cs" />
+    <Compile Include="Units\Branching\BranchEqual.cs" />
+    <Compile Include="Units\Branching\BranchGreater.cs" />
+    <Compile Include="Units\Branching\BranchLess.cs" />
+    <Compile Include="Units\Branching\BranchNext.cs" />
+    <Compile Include="Units\Branching\ComparisonBranch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Units\Gate.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
