@@ -11,7 +11,7 @@ namespace Lasm.BoltAddons.UnitTools.FlowControl.Editor
         {
         }
 
-        protected new void Ports(UnitPortDescriptionCollection ports)
+        protected override void Ports(UnitPortDescriptionCollection ports)
         {
             base.Ports(ports);
 
