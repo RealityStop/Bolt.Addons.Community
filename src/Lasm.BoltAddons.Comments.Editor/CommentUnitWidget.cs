@@ -33,8 +33,5 @@ namespace Lasm.BoltAddons.Helpers.Editor
                 };
             }
         }
-
-        override 
-
     }
 }
