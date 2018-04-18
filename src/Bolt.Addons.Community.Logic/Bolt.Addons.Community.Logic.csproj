@@ -81,6 +81,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Units\Boolean\Latch.cs" />
+    <Compile Include="Units\Between.cs" />
     <Compile Include="Units\Branching\BranchEqual.cs" />
     <Compile Include="Units\Branching\BranchGreater.cs" />
     <Compile Include="Units\Branching\BranchLess.cs" />
