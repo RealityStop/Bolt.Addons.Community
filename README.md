@@ -2,6 +2,7 @@
 
 
 
+
 # Bolt.Addons.Community
 A community-driven project for extending Unity Bolt with custom nodes, types, and helpers.
 
@@ -23,7 +24,8 @@ While the latter flows off of the tongue more naturally, this project aims to be
  
 
 ## Installing
-Add the dlls via the Unit Option Wizard in the assembly step and regenerate.  There is no need to add anything to the type options.  Regenerating is required before the units will be available.
+
+Import the provided .assetpackage into your project, then add the dlls via Bolt's Unit Option Wizard in the assembly step and regenerate.  There is no need to add anything to the type options.  Regenerating is required before the units will be available.
 
 
 ## What's included
@@ -48,7 +50,9 @@ Add the dlls via the Unit Option Wizard in the assembly step and regenerate.  Th
 ### Bolt.Addons.Community.Logic
 
  - **Branch Next**
- - **Gate** (new in 1.3)
+ - **Gate**
+ - **Latch** -- *(new in 1.4)*
+ - **Between** -- *(new in 1.4)*
  - Conditional
 	 - **Branch Equal**
 	 - **Branch Greater**
@@ -73,7 +77,7 @@ To build the addons for Bolt version {targetversion}.  Add the following dlls fr
  - UnityEngine.dll
  - UnityEngine.UI.dll
 
-Open and build the \src\Bolt.Addons.Community.sln solution in Visual Studio 2017, selecting the Release_<targetversion> solution configuration.
+Open and build the \src\Bolt.Addons.Community.sln solution in Visual Studio 2017, selecting the Release_{targetversion} solution configuration.
 
 The binaries will be copied to \Output\\{targetversion}
 
