@@ -3,10 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using Ludiq;
 using Bolt;
-using Lasm.BoltAddons.Helpers;
 using UnityEngine;
 
-namespace Lasm.BoltAddons.Helpers.Editor
+namespace Bolt.Addons.Community.Utility.Editor
 {
     [Widget(typeof(CommentUnit))]
     public sealed class CommentUnitWidget : UnitWidget<CommentUnit>

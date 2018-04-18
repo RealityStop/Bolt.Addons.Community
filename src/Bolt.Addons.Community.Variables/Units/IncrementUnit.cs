@@ -34,11 +34,6 @@ namespace Bolt.Addons.Community.Variables.Units
 
             preIncrement = ValueOutput<float>(nameof(preIncrement), (x) => _preIncrementValue);
             postIncrement = ValueOutput<float>(nameof(postIncrement), (x) => _postIncrementValue);
-
-            Relation(name, preIncrement);
-            Relation(name, postIncrement);
-            Relation(assign, preIncrement);
-            Relation(assign, postIncrement);
         }
 
         protected override float GetAmount()
