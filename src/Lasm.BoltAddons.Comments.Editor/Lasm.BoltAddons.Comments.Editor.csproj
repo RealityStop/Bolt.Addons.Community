@@ -4,16 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{34B696DE-6557-4513-800F-FADEA3195D85}</ProjectGuid>
+    <ProjectGuid>{38CBFE70-F11F-4F16-8E20-9926F8FC5AD3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Lasm.BoltAddons.UnitTools.FlowControl.Editor</RootNamespace>
-    <AssemblyName>Lasm.BoltAddons.UnitTools.FlowControl.Editor</AssemblyName>
+    <RootNamespace>Lasm.BoltAddons.Helpers.Editor</RootNamespace>
+    <AssemblyName>Lasm.BoltAddons.Comments.Editor</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
   </PropertyGroup>
-<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -30,25 +30,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_1.3.0|AnyCPU'">
-    <OutputPath>bin\Release_1.3.0\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release_1.3.0|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_1.2.3|AnyCPU'">
-    <OutputPath>bin\Release_1.2.3\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
- <ItemGroup>
+  <ItemGroup>
     <Reference Include="Bolt.Core.Editor">
       <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Core.Editor.dll</HintPath>
     </Reference>
@@ -90,16 +80,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="WaitLoopUnitDescriptor.cs" />
-    <Compile Include="CycleValueUnitDescriptor.cs" />
-    <Compile Include="CycleControlUnitDescriptor.cs" />
+    <Compile Include="CommentUnitWidget.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Lasm.BoltAddons.UnitTools.FlowControl\Lasm.BoltAddons.UnitTools.FlowControl.csproj">
-      <Project>{7656ac25-19e3-487a-851b-20e262950c33}</Project>
-      <Name>Lasm.BoltAddons.UnitTools.FlowControl</Name>
-      <Private>False</Private>
+    <ProjectReference Include="..\Lasm.BoltAddons.Comments\Lasm.BoltAddons.Comments.csproj">
+      <Project>{c7fa2fb0-acd3-4957-a653-979afadc3145}</Project>
+      <Name>Lasm.BoltAddons.Comments</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

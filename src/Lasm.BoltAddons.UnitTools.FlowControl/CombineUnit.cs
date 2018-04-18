@@ -50,9 +50,9 @@ namespace Lasm.BoltAddons.UnitTools.FlowControl
             {
                 controlConnections = new Dictionary<ControlConnection, bool>();
 
-                for (int i = 0; i < enter.connectedPorts.ToListPooled().Count; i++)
+                for (int i = 0; i < enter.validConnectedPorts.ToListPooled().Count; i++)
                 {
-                    controlConnections.Add(enter.connectedPorts.ToListPooled()[i].connection, false);
+                    controlConnections.Add(enter.validConnectedPorts.ToListPooled()[i].connection, false);
                 }
 
                 addedConnectedPorts = true;
