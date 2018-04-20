@@ -58,7 +58,7 @@ namespace Bolt.Addons.Community.Custom_Units.Math.Functions
 
         internal static float DecayFunction(float value, float minWeight, float decayFactor, float scale)
         {
-            value = Mathf.Clamp01(decayFactor);
+            value = Mathf.Clamp01(value);
             return scale * Mathf.Pow(decayFactor, value) + minWeight;
         }
 
