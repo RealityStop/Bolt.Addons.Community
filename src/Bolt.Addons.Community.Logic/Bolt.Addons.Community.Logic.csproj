@@ -89,6 +89,7 @@
     <Compile Include="Units\Branching\ComparisonBranch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Units\Control\Gate.cs" />
+    <Compile Include="Units\Polarity.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
