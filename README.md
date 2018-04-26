@@ -3,6 +3,7 @@
 
 
 
+
 # Bolt.Addons.Community
 A community-driven project for extending Unity Bolt with custom nodes, types, and helpers.
 
@@ -51,8 +52,10 @@ Import the provided .assetpackage into your project, then add the dlls via Bolt'
 
  - **Branch Next**
  - **Gate**
- - **Latch** -- *(new in 1.4)*
- - **Between** -- *(new in 1.4)*
+ - **Latch**
+ - **Polarity** -- *(new in 1.5)*
+ - **Between**
+ - **DoOnce** -- *(new in 1.5)*
  - Conditional
 	 - **Branch Equal**
 	 - **Branch Greater**
