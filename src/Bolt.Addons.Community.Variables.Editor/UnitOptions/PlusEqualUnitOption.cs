@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
 {
-    [FuzzyOption(typeof(IncrementUnit))]
+    [FuzzyOption(typeof(PlusEquals))]
     public class PlusEqualUnitOption : UnifiedVariableUnitOption<PlusEquals>
     {
         [Obsolete(Serialization.ConstructorWarning)]
