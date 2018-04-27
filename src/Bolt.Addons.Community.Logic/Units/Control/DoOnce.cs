@@ -7,7 +7,7 @@ using System.Text;
 namespace Bolt.Addons.Community.Logic.Units
 {
     /// <summary>
-    /// Branches flow by checking if a condition is true or false.
+    /// Restricts control flow by only allowing through one control flow until reset.
     /// </summary>
     [UnitCategory("Control")]
     [UnitTitle("Do Once")]
@@ -17,17 +17,19 @@ namespace Bolt.Addons.Community.Logic.Units
         public DoOnce() : base() { }
 
         /// <summary>
-        /// The entry point for the branch.
+        /// The entry point for the node.
         /// </summary>
         [DoNotSerialize]
         public ControlInput enter { get; private set; }
 
         /// <summary>
-        /// The entry point for the branch.
+        /// The resets the node, allowing the next entry through.
         /// </summary>
         [DoNotSerialize]
         public ControlInput reset { get; private set; }
 
+        /// <summary>
+        /// The exit point for the node.
         /// </summary>
         [DoNotSerialize]
         public ControlOutput exit { get; private set; }
