@@ -10,54 +10,60 @@ namespace Bolt.Addons.Community.Logic.Units
     /// Restricts control flow by only allowing through one control flow until reset.
     /// </summary>
     [UnitCategory("Control")]
-    [UnitTitle("Do Once")]
     [TypeIcon(typeof(ISelectUnit))]
-    public sealed class DoOnce : Unit
+    public sealed class EdgeTrigger : Unit
     {
-        public DoOnce() : base() { }
+        public EdgeTrigger() : base() { }
 
         /// <summary>
-        /// The entry point for the node.
+        /// The entry point for the branch.
         /// </summary>
         [DoNotSerialize]
+        [PortLabelHidden]
         public ControlInput enter { get; private set; }
 
         /// <summary>
-        /// The resets the node, allowing the next entry through.
+        /// Boolean indicating to let the next control flow through.
         /// </summary>
         [DoNotSerialize]
-        public ControlInput reset { get; private set; }
+        public ValueInput inValue { get; private set; }
+
+        /// <summary>
+        /// Boolean indicating to let the next control flow through.
+        /// </summary>
+        [DoNotSerialize]
+        public ValueOutput outValue { get; private set; }
 
         /// <summary>
         /// The exit point for the node.
         /// </summary>
         [DoNotSerialize]
+        [PortLabelHidden]
         public ControlOutput exit { get; private set; }
 
-        private bool _isOpen = true;
+        private bool _lastEdge = true;
 
         protected override void Definition()
         {
             enter = ControlInput(nameof(enter), Enter);
-            reset = ControlInput(nameof(reset), Reset);
+            inValue = ValueInput<bool>(nameof(inValue), false);
+            outValue = ValueOutput<bool>(nameof(outValue), (recursion) => _lastEdge);
             exit = ControlOutput(nameof(exit));
 
             Relation(enter, exit);
+            Relation(inValue, exit);
+            Relation(inValue, outValue);
         }
 
 
         public void Enter(Flow flow)
         {
-            if (_isOpen)
+            bool currentValue = inValue.GetValue<bool>();
+            if (_lastEdge != currentValue)
             {
-                _isOpen = false;
+                _lastEdge = currentValue;
                 flow.Invoke(exit);
             }
-        }
-
-        private void Reset(Flow obj)
-        {
-            _isOpen = true;
         }
     }
 }
