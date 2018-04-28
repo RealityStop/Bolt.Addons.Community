@@ -55,6 +55,7 @@ Import the provided .assetpackage into your project, then add the dlls via Bolt'
  - **Latch**
  - **Polarity** -- *(new in 1.5)*
  - **Between**
+ - **Edge Trigger** -- (new in 1.5)
  - **DoOnce** -- *(new in 1.5)*
  - Conditional
 	 - **Branch Equal**
@@ -62,7 +63,10 @@ Import the provided .assetpackage into your project, then add the dlls via Bolt'
 	 - **Branch Less**
 
 
-----------
+
+## How do I use it?
+See the documentation!  Once you've rebuilt your unit options, the new nodes will be available for use.  The repository wiki details each node added.  If we've missed anything, send us a message!
+
 
 # For Developers:
 
