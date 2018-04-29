@@ -12,6 +12,7 @@ namespace Bolt.Addons.Community.Logic.Units
     [UnitCategory("Control")]
     [UnitTitle("Do Once")]
     [TypeIcon(typeof(ISelectUnit))]
+    [Obsolete]
     public sealed class DoOnceValue : Unit
     {
         public DoOnceValue() : base() { }
