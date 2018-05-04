@@ -94,6 +94,7 @@
     <Compile Include="Units\Control\EdgeTrigger.cs" />
     <Compile Include="Units\Control\Gate.cs" />
     <Compile Include="Units\Boolean\Polarity.cs" />
+    <Compile Include="Units\IsNullValue.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
