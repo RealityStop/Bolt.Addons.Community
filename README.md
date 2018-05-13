@@ -4,6 +4,7 @@
 
 
 
+
 # Bolt.Addons.Community
 A community-driven project for extending Unity Bolt with custom nodes, types, and helpers.
 
@@ -39,7 +40,7 @@ Import the provided .assetpackage into your project, then add the dlls via Bolt'
  - **Plus Equals**
 
 ### Bolt.Addons.Community.Math
-
+ - **Random Numbers** - (new in 1.6)
  - Functions
 	 - **Decay**
 	 - **Exponential**
@@ -53,10 +54,12 @@ Import the provided .assetpackage into your project, then add the dlls via Bolt'
  - **Branch Next**
  - **Gate**
  - **Latch**
- - **Polarity** -- *(new in 1.5)*
+ - **Polarity**
  - **Between**
- - **Edge Trigger** -- (new in 1.5)
- - **DoOnce** -- *(new in 1.5)*
+ - **Edge Trigger**
+ - **Change Detect** --(new in 1.6)
+ - **IsNull** --(new in 1.6)
+ - **DoOnce** -- *(revamped in 1.6)*
  - Conditional
 	 - **Branch Equal**
 	 - **Branch Greater**
