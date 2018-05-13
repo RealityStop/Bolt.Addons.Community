@@ -20,6 +20,7 @@ namespace Bolt.Addons.Community.Logic.Units
         /// The entry point for the node.
         /// </summary>
         [DoNotSerialize]
+        [PortLabelHidden]
         public ControlInput enter { get; private set; }
 
         /// <summary>
@@ -59,6 +60,7 @@ namespace Bolt.Addons.Community.Logic.Units
         /// The exit point for the node.
         /// </summary>
         [DoNotSerialize]
+        [PortLabelHidden]
         public ControlOutput exit { get; private set; }
 
         private bool _isOpen = true;
