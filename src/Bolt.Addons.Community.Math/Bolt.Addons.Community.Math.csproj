@@ -74,6 +74,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Custom Units\RandomNumbers.cs" />
     <Compile Include="Custom Units\Math\Functions\DecayFunction.cs" />
     <Compile Include="Custom Units\Math\Functions\DecayFunctionOfRange.cs" />
     <Compile Include="Custom Units\Math\Functions\ExponentialFunction.cs" />

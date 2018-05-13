@@ -5,7 +5,8 @@ using System.Linq;
 using System.Text;
 
 namespace Bolt.Addons.Community.Logic.Units
-{    /// <summary>
+{   
+    /// <summary>
      /// Returns whether the value is within the given range (inclusive).
      /// </summary>
     [UnitCategory("Logic")]

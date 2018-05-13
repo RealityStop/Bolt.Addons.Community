@@ -10,55 +10,60 @@ namespace Bolt.Addons.Community.Logic.Units
     /// Restricts control flow by only allowing through one control flow until reset.
     /// </summary>
     [UnitCategory("Control")]
-    [UnitTitle("Do Once")]
     [TypeIcon(typeof(ISelectUnit))]
-    [Obsolete]
-    public sealed class DoOnce : Unit
+    public sealed class ChangeDetect : Unit
     {
-        public DoOnce() : base() { }
+        public ChangeDetect() : base() { }
 
         /// <summary>
         /// The entry point for the node.
         /// </summary>
         [DoNotSerialize]
+        [PortLabelHidden]
         public ControlInput enter { get; private set; }
 
         /// <summary>
         /// The resets the node, allowing the next entry through.
         /// </summary>
         [DoNotSerialize]
-        public ControlInput reset { get; private set; }
+        public ValueInput input { get; private set; }
+
+        /// <summary>
+        /// The resets the node, allowing the next entry through.
+        /// </summary>
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ValueOutput lastValue{ get; private set; }
 
         /// <summary>
         /// The exit point for the node.
         /// </summary>
         [DoNotSerialize]
-        public ControlOutput exit { get; private set; }
+        public ControlOutput onChange { get; private set; }
 
-        private bool _isOpen = true;
+        private object _previous = null;
 
         protected override void Definition()
         {
             enter = ControlInput(nameof(enter), Enter);
-            reset = ControlInput(nameof(reset), Reset);
-            exit = ControlOutput(nameof(exit));
+            input = ValueInput<object>(nameof(input));
+            lastValue = ValueOutput<object>(nameof(lastValue), (x) => _previous);
+            onChange = ControlOutput(nameof(onChange));
 
-            Relation(enter, exit);
+            Relation(enter, onChange);
+            Relation(input, onChange);
         }
 
 
         public void Enter(Flow flow)
         {
-            if (_isOpen)
-            {
-                _isOpen = false;
-                flow.Invoke(exit);
-            }
-        }
+            object currentValue = input.GetValue<object>();
 
-        private void Reset(Flow obj)
-        {
-            _isOpen = true;
+            if (currentValue != _previous)
+            {
+                _previous = currentValue;
+                flow.Invoke(onChange);
+            }
         }
     }
 }
