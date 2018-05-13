@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace Bolt.Addons.Community.Logic.Units
 {
@@ -59,10 +60,21 @@ namespace Bolt.Addons.Community.Logic.Units
         {
             object currentValue = input.GetValue<object>();
 
-            if (currentValue != _previous)
+            if (currentValue is float && _previous is float)
             {
-                _previous = currentValue;
-                flow.Invoke(onChange);
+                if (!Mathf.Approximately((float)currentValue, (float)_previous))
+                {
+                    _previous = currentValue;
+                    flow.Invoke(onChange);
+                }
+            }
+            else
+            {
+                if (currentValue != _previous)
+                {
+                    _previous = currentValue;
+                    flow.Invoke(onChange);
+                }
             }
         }
     }
