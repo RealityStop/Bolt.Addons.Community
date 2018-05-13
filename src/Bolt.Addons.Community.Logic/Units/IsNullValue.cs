@@ -42,7 +42,7 @@ namespace Bolt.Addons.Community.Logic.Units
 
         protected override void Definition()
         {
-            input = ValueInput<object>(nameof(input));
+            input = ValueInput<object>(nameof(input)).AllowsNull();
             isNull = ValueOutput<bool>(nameof(isNull), (x) => input.GetValue() == null);
             isNotNull = ValueOutput<bool>(nameof(isNotNull), (x) => input.GetValue() != null);
 
