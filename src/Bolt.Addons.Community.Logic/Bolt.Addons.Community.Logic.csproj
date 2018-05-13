@@ -88,6 +88,7 @@
     <Compile Include="Units\Branching\BranchNext.cs" />
     <Compile Include="Units\Branching\ComparisonBranch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Units\Control\ChangeDetect.cs" />
     <Compile Include="Units\Control\DoOnceV2.cs" />
     <Compile Include="Units\Control\DoOnceValue.cs" />
     <Compile Include="Units\Control\DoOnce.cs" />
