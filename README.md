@@ -41,7 +41,7 @@ Import the provided .assetpackage into your project, then add the dlls via Bolt'
 
 ### Bolt.Addons.Community.Math
  - **Random Numbers** - (new in 1.6)
- - Functions
+ - Functions  (Still in testing, feel free to make suggestions, though!)
 	 - **Decay**
 	 - **Exponential**
 	 - **Linear**
