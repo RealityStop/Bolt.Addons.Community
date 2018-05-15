@@ -3,6 +3,8 @@
 
 
 
+
+
 # Bolt.Addons.Community
 A community-driven project for extending Unity Bolt with custom nodes, types, and helpers.
 
@@ -38,8 +40,8 @@ Import the provided .assetpackage into your project, then add the dlls via Bolt'
  - **Plus Equals**
 
 ### Bolt.Addons.Community.Math
-
- - Functions
+ - **Random Numbers** - (new in 1.6)
+ - Functions  (Still in testing, feel free to make suggestions, though!)
 	 - **Decay**
 	 - **Exponential**
 	 - **Linear**
@@ -51,15 +53,23 @@ Import the provided .assetpackage into your project, then add the dlls via Bolt'
 
  - **Branch Next**
  - **Gate**
- - **Latch** -- *(new in 1.4)*
- - **Between** -- *(new in 1.4)*
+ - **Latch**
+ - **Polarity**
+ - **Between**
+ - **Edge Trigger**
+ - **Change Detect** --(new in 1.6)
+ - **IsNull** --(new in 1.6)
+ - **DoOnce** -- *(revamped in 1.6)*
  - Conditional
 	 - **Branch Equal**
 	 - **Branch Greater**
 	 - **Branch Less**
 
 
-----------
+
+## How do I use it?
+See the documentation!  Once you've rebuilt your unit options, the new nodes will be available for use.  The repository wiki details each node added.  If we've missed anything, send us a message!
+
 
 # For Developers:
 
@@ -85,3 +95,4 @@ The binaries will be copied to \Output\\{targetversion}
 ## Current contributors (aka who to blame)
  - Reality.Stop()
  - JasonJamesLASM
+ - Silence
