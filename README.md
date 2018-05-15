@@ -60,6 +60,7 @@ Import the provided .assetpackage into your project, then add the dlls via Bolt'
  - **Change Detect** --(new in 1.6)
  - **IsNull** --(new in 1.6)
  - **DoOnce** -- *(revamped in 1.6)*
+ - **On Every X Seconds** -- *(new in 1.6.1)*
  - Conditional
 	 - **Branch Equal**
 	 - **Branch Greater**
