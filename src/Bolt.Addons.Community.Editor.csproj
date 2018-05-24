@@ -75,7 +75,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Editor\Options.cs" />
+    <Compile Include="Editor\UnitOptions\DecrementUnitOption.cs" />
+    <Compile Include="Editor\UnitOptions\IncrementUnitOption.cs" />
+    <Compile Include="Editor\UnitOptions\OnVariableChanged.cs" />
+    <Compile Include="Editor\UnitOptions\PlusEqualUnitOption.cs" />
+    <Compile Include="Properties\AssemblyInfo-Editor.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

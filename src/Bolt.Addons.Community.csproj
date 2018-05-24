@@ -75,6 +75,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Units\logic\test.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Units\logic\Between.cs" />
     <Compile Include="Units\logic\Boolean\Latch.cs" />
