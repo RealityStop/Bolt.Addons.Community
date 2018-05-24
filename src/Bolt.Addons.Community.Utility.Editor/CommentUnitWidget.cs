@@ -1,18 +1,17 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using Ludiq;
+﻿using Ludiq;
 using Bolt;
-using UnityEngine;
 
 namespace Bolt.Addons.Community.Utility.Editor
 {
+    [RenamedFrom("Lasm.BoltAddons.Helpers.Editor.CommentUnitWidget")]
+    [RenamedFrom("Lasm.Bolt.Comments")]
     [Widget(typeof(CommentUnit))]
     public sealed class CommentUnitWidget : UnitWidget<CommentUnit>
     {
 
         public CommentUnitWidget(CommentUnit unit) : base(unit)
         {
+
         }
 
         protected override NodeColorMix baseColor
@@ -28,7 +27,6 @@ namespace Bolt.Addons.Community.Utility.Editor
                     gray = 0f,
                     orange = 0f,
                     teal = 0f
-                    
                 };
             }
         }

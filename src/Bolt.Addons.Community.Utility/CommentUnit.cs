@@ -5,11 +5,12 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.Utility
 {
-    [RenamedFrom("Lasm.BoltAddons.Helpers.CommentUnit")]
     [TypeIcon(typeof(CommentUnit))]
     [UnitTitle("Comment")]
     [UnitShortTitle("")]
     [UnitCategory("Tools/Graphs")]
+    [RenamedFrom("Lasm.Bolt.Comments")]
+    [RenamedFrom("Lasm.BoltAddons.Helpers.CommentUnit")]
     public class CommentUnit : Unit
     {
         [Inspectable]
@@ -22,9 +23,7 @@ namespace Bolt.Addons.Community.Utility
 
         protected override void Definition()
         {
+            isControlRoot = true;
         }
-
-        public override bool isControlRoot { get { return true; } }
     }
-        
 }
