@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{95C04C12-BC86-42A2-9A38-21AA9B64D3FE}</ProjectGuid>
+    <ProjectGuid>{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Bolt.Addons.Community.Logic</RootNamespace>
-    <AssemblyName>Bolt.Addons.Community.Logic</AssemblyName>
+    <RootNamespace>Bolt.Addons.Community</RootNamespace>
+    <AssemblyName>Bolt.Addons.Community</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -50,55 +51,58 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bolt.Core.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Core.Runtime.dll</HintPath>
+      <HintPath>..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Core.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Bolt.Flow.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Flow.Runtime.dll</HintPath>
+      <HintPath>..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Flow.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Ludiq.Core.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Core.Runtime.dll</HintPath>
+      <HintPath>..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Core.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Ludiq.Graphs.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Graphs.Runtime.dll</HintPath>
+      <HintPath>..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Graphs.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Bolt.Core.Editor">
+      <HintPath>..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Core.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Bolt.Flow.Editor">
+      <HintPath>..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Flow.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Bolt.State.Editor">
+      <HintPath>..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.State.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Ludiq.Core.Editor">
+      <HintPath>..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Core.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Ludiq.Graphs.Editor">
+      <HintPath>..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Graphs.Editor.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
+      <HintPath>..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\Dependencies\UnityBinaries\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Units\Boolean\Latch.cs" />
-    <Compile Include="Units\Between.cs" />
-    <Compile Include="Units\Branching\BranchEqual.cs" />
-    <Compile Include="Units\Branching\BranchGreater.cs" />
-    <Compile Include="Units\Branching\BranchLess.cs" />
-    <Compile Include="Units\Branching\BranchNext.cs" />
-    <Compile Include="Units\Branching\ComparisonBranch.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Units\Control\ChangeDetect.cs" />
-    <Compile Include="Units\Control\DoOnceV2.cs" />
-    <Compile Include="Units\Control\DoOnceValue.cs" />
-    <Compile Include="Units\Control\DoOnce.cs" />
-    <Compile Include="Units\Control\EdgeTrigger.cs" />
-    <Compile Include="Units\Control\Gate.cs" />
-    <Compile Include="Units\Boolean\Polarity.cs" />
-    <Compile Include="Units\IsNullValue.cs" />
-    <Compile Include="Units\Time\EveryXSeconds.cs" />
+    <Compile Include="Editor\Options.cs" />
+    <Compile Include="Editor\UnitOptions\DecrementUnitOption.cs" />
+    <Compile Include="Editor\UnitOptions\IncrementUnitOption.cs" />
+    <Compile Include="Editor\UnitOptions\OnVariableChanged.cs" />
+    <Compile Include="Editor\UnitOptions\PlusEqualUnitOption.cs" />
+    <Compile Include="Properties\AssemblyInfo-Editor.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="Bolt.Addons.Community.csproj">
+      <Project>{c7fa2fb0-acd3-4957-a653-979afadc3145}</Project>
+      <Name>Bolt.Addons.Community</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\..\Bolt.targets" />
+  <Import Project="..\Bolt.targets" />
 </Project>

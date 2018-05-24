@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Bolt.Addons.Community.Math")]
+[assembly: AssemblyTitle("Lasm.BoltAddons.Comments")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Bolt.Addons.Community.Math")]
+[assembly: AssemblyProduct("Lasm.BoltAddons.Comments")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("59392204-c9fc-49cd-917e-2478a7caa965")]
+[assembly: Guid("c7fa2fb0-acd3-4957-a653-979afadc3145")]
 
 // Version information for an assembly consists of the following four values:
 //
