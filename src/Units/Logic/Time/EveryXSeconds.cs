@@ -59,13 +59,13 @@ namespace Bolt.Addons.Community.Logic.Units
                 return;
             }
 
+            //Requery the time to run for, in case we're wired to a dynamic value.
+            _seconds = seconds.GetValue<float>();
 
             timer += unscaledTime.GetValue<bool>() ? Time.unscaledDeltaTime : Time.deltaTime;
 
             if (timer >= _seconds)
             {
-                // Triggered must be before trigger, otherwise self-transitions 
-                // in state graphs  won't properly reset.
                 timer = 0;
                 Trigger();
             }

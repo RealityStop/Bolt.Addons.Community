@@ -262,3 +262,4 @@ paket-files/
 
 Dependencies/**/*.dll
 Output/
+Bolt\.Addons\.Community\.Examples/
