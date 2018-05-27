@@ -59,6 +59,7 @@ namespace Bolt.Addons.Community.Logic.Units
                 return;
             }
 
+            _seconds = seconds.GetValue<float>();
 
             timer += unscaledTime.GetValue<bool>() ? Time.unscaledDeltaTime : Time.deltaTime;
 
