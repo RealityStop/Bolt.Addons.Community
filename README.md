@@ -87,6 +87,8 @@ To build the addons for Bolt version {targetversion}.  Add the following dlls fr
  - UnityEngine.CoreModule.dll
  - UnityEngine.dll
  - UnityEngine.UI.dll
+ 
+ ![](https://i.imgur.com/M7XvCRl.gif)
 
 Open and build the \src\Bolt.Addons.Community.sln solution in Visual Studio 2017, selecting the Release_{targetversion} solution configuration.
 
