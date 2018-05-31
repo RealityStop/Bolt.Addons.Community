@@ -9,7 +9,7 @@ namespace Bolt.Addons.Community.Variables.Units
     /// <summary>
     /// Branches flow by checking if a condition is true or false.
     /// </summary>
-    [UnitCategory("Control")]
+    [UnitCategory("Community\\Control")]
     [UnitOrder(0)]
     public sealed class BranchNext : Unit, IBranchUnit
     {

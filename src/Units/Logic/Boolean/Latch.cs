@@ -9,7 +9,7 @@ namespace Bolt.Addons.Community.Logic.Units
     /// <summary>
     /// Latches a boolean value until it is reset.
     /// </summary>
-    [UnitCategory("Logic")]
+    [UnitCategory("Community\\Logic")]
     public sealed class Latch : Unit
     {
         public Latch() : base() { }

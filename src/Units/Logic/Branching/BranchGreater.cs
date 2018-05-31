@@ -10,7 +10,7 @@ namespace Bolt.Addons.Community.Logic.Units
     /// <summary>
     /// Branches flow by checking if a condition is true or false.
     /// </summary>
-    [UnitCategory("Control\\Conditional")]
+    [UnitCategory("Community\\Control")]
     [UnitOrder(1)]
     public sealed class BranchGreater : ComparisonBranch
     {

@@ -10,7 +10,7 @@ namespace Bolt.Addons.Community.Logic.Units
     /// <summary>
     /// Restricts control flow by only allowing through one control flow until reset.
     /// </summary>
-    [UnitCategory("Control")]
+    [UnitCategory("Community\\Control")]
     [TypeIcon(typeof(ISelectUnit))]
     public sealed class ChangeDetect : Unit
     {

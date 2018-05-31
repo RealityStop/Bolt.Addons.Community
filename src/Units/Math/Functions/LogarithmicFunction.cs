@@ -10,7 +10,7 @@ namespace Bolt.Addons.Community.Custom_Units.Math.Functions
     /// <summary>
     /// Takes a given float input (0-1) and scales it across the specified range.
     /// </summary>
-    [UnitCategory("Math/Functions")]
+    [UnitCategory("Community\\Math\\Functions")]
     [UnitTitle("Logarithmic")]
     [UnitOrder(5)]
     public class LogarithmicFunction : Unit

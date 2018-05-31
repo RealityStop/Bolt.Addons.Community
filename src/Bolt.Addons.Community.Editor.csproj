@@ -72,6 +72,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Editor\Descriptors\AndParamDescriptor.cs" />
     <Compile Include="Editor\Options.cs" />
     <Compile Include="Editor\UnitOptions\DecrementUnitOption.cs" />
     <Compile Include="Editor\UnitOptions\IncrementUnitOption.cs" />

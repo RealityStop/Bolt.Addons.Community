@@ -7,7 +7,7 @@ namespace Bolt.Addons.Community.Logic.Units
     /// <summary>
     /// Called whenever a specified number of seconds have elapsed.
     /// </summary>
-    [UnitCategory("Events/Time")]
+    [UnitCategory("Events\\Time")]
     public sealed class OnEveryXSeconds : GlobalEventUnit, IOnTimerElapsed, IUnityUpdateLoop
     {
         public OnEveryXSeconds() { }

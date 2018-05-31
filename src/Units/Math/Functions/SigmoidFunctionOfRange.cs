@@ -11,7 +11,7 @@ namespace Bolt.Addons.Community.Math.Custom_Units.Math.Functions
     /// <summary>
     /// Takes a given float input (0-1) and scales it across the specified range.
     /// </summary>
-    [UnitCategory("Math/Functions")]
+    [UnitCategory("Community\\Math\\Functions")]
     [UnitTitle("Sigmoid Function Of Range")]
     [UnitOrder(10)]
     public class SigmoidFunctionOfRange : Unit

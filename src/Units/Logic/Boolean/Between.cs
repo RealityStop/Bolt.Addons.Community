@@ -9,7 +9,7 @@ namespace Bolt.Addons.Community.Logic.Units
     /// <summary>
      /// Returns whether the value is within the given range (inclusive).
      /// </summary>
-    [UnitCategory("Logic")]
+    [UnitCategory("Community\\Logic")]
     [TypeIcon(typeof(Bolt.And))]
     public class Between : Unit
     {

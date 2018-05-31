@@ -11,7 +11,7 @@ namespace Bolt.Addons.Community.Custom_Units.Math
     /// <summary>
     /// Takes a given float input (0-1) and scales it across the specified range.
     /// </summary>
-    [UnitCategory("Collections/Lists")]
+    [UnitCategory("Community\\Collections\\Lists")]
     [UnitTitle("Random Numbers")]
     [TypeIcon(typeof(IList))]
     [UnitOrder(20)]
@@ -66,8 +66,6 @@ namespace Bolt.Addons.Community.Custom_Units.Math
             unique = ValueInput<bool>(nameof(unique), true);
             exit = ControlOutput(nameof(exit));
 
-            Debug.Log("Hey");
-
             if (integer)
             {
                 minimum = ValueInput<int>(nameof(minimum), 0);
@@ -80,7 +78,6 @@ namespace Bolt.Addons.Community.Custom_Units.Math
                 maximum = ValueInput<float>(nameof(maximum), 100);
                 output = ValueOutput<IList>(nameof(output), (x) => { if (_list == null) BuildList(); return _list; });
             }
-            Debug.Log("Hey2");
 
             Relation(input, exit);
             Relation(count, output);

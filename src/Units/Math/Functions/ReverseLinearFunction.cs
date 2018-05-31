@@ -10,7 +10,7 @@ namespace Bolt.Addons.Community.Custom_Units.Math.Functions
     /// <summary>
     /// Takes a given float input (minimum-maximum) and returns a 0-1 value that represents the position along the range (percent).
     /// </summary>
-    [UnitCategory("Math/Functions")]
+    [UnitCategory("Community\\Math\\Functions")]
     [UnitTitle("Reverse Linear")]
     [UnitOrder(1)]
     public class ReverseLinearFunction : Unit

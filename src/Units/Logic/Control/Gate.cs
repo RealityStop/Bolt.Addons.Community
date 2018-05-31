@@ -9,7 +9,7 @@ namespace Bolt.Addons.Community.Logic.Units
     /// <summary>
     /// Branches flow by checking if a condition is true or false.
     /// </summary>
-    [UnitCategory("Control")]
+    [UnitCategory("Community\\Control")]
     [TypeIcon(typeof(ISelectUnit))]
     [UnitOrder(0)]
     public sealed class Gate : Unit
