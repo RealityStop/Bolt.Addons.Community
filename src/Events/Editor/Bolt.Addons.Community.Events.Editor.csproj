@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{303D2151-1CC5-4960-AFD2-D8AACC50F87E}</ProjectGuid>
+    <ProjectGuid>{A48FB4F2-A962-4628-8F1E-35191B078F43}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Bolt.Addons.Community.Events</RootNamespace>
-    <AssemblyName>Bolt.Addons.Community.Events</AssemblyName>
+    <RootNamespace>Bolt.Addons.Community.Events.Editor</RootNamespace>
+    <AssemblyName>Bolt.Addons.Community.Events.Editor</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
@@ -32,40 +32,59 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bolt.Core.Editor">
-      <HintPath>..\Dependencies\BoltBinaries\1.3.0\Bolt.Core.Editor.dll</HintPath>
+      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Bolt.Core.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Bolt.Core.Runtime">
-      <HintPath>..\Dependencies\BoltBinaries\1.3.0\Bolt.Core.Runtime.dll</HintPath>
+      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Bolt.Core.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Bolt.Flow.Editor">
+      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Bolt.Flow.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Bolt.Flow.Runtime">
-      <HintPath>..\Dependencies\BoltBinaries\1.3.0\Bolt.Flow.Runtime.dll</HintPath>
+      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Bolt.Flow.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Ludiq.Core.Editor">
+      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Ludiq.Core.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Core.Runtime">
-      <HintPath>..\Dependencies\BoltBinaries\1.3.0\Ludiq.Core.Runtime.dll</HintPath>
+      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Ludiq.Core.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Ludiq.Graphs.Editor">
+      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Ludiq.Graphs.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Graphs.Runtime">
-      <HintPath>..\Dependencies\BoltBinaries\1.3.0\Ludiq.Graphs.Runtime.dll</HintPath>
+      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Ludiq.Graphs.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="UnityEngine">
-      <HintPath>..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
+    <Reference Include="UnityEditor">
+      <HintPath>..\..\..\..\..\..\..\..\Programs\2018.1.0b10\Editor\Data\Managed\UnityEditor.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Return.cs" />
-    <Compile Include="ReturnEvent.cs" />
-    <Compile Include="TriggerReturnEvent.cs" />
+    <Compile Include="TriggerReturnEventDescriptor.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Bolt.Addons.Community.Events.csproj">
+      <Project>{303d2151-1cc5-4960-afd2-d8aacc50f87e}</Project>
+      <Name>Bolt.Addons.Community.Events</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
