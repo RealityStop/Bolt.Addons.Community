@@ -22,14 +22,5 @@ namespace Bolt.Addons.Community.Events {
         }
 
     }
-
-    public class TriggerReturnEventDescriptor : UnitWidget<TriggerReturnEvent>
-    {
-        public TriggerReturnEventDescriptor(TriggerReturnEvent unit) : base(unit)
-        {
-
-        }
-        
-
-    }
+    
 }
