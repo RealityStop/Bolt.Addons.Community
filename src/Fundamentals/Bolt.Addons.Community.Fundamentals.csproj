@@ -7,8 +7,8 @@
     <ProjectGuid>{C7FA2FB0-ACD3-4957-A653-979AFADC3145}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Bolt.Addons.Community</RootNamespace>
-    <AssemblyName>Bolt.Addons.Community</AssemblyName>
+    <RootNamespace>Bolt.Addons.Community.Fundamentals</RootNamespace>
+    <AssemblyName>Bolt.Addons.Community.Fundamentals</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>

@@ -32,47 +32,47 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bolt.Core.Editor">
-      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Bolt.Core.Editor.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\\BoltBinaries\$(BoltVersion)\Bolt.Core.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Bolt.Core.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Bolt.Core.Runtime.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\\BoltBinaries\$(BoltVersion)\Bolt.Core.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Bolt.Flow.Editor">
-      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Bolt.Flow.Editor.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\\BoltBinaries\$(BoltVersion)\Bolt.Flow.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Bolt.Flow.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Bolt.Flow.Runtime.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\\BoltBinaries\$(BoltVersion)\Bolt.Flow.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Core.Editor">
-      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Ludiq.Core.Editor.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\\BoltBinaries\$(BoltVersion)\Ludiq.Core.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Core.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Ludiq.Core.Runtime.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\\BoltBinaries\$(BoltVersion)\Ludiq.Core.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Graphs.Editor">
-      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Ludiq.Graphs.Editor.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\\BoltBinaries\$(BoltVersion)\Ludiq.Graphs.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Graphs.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\1.3.0\Ludiq.Graphs.Runtime.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\\BoltBinaries\$(BoltVersion)\Ludiq.Graphs.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="UnityEditor">
-      <HintPath>..\..\..\..\..\..\..\..\Programs\2018.1.0b10\Editor\Data\Managed\UnityEditor.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\\UnityBinaries\UnityEditor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\\UnityBinaries\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -87,8 +87,5 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>if not exist "$(SolutionDir)..\Output\$(BoltVersion)" mkdir "$(SolutionDir)..\Output\$(BoltVersion)"
-	xCopy "$(TargetPath)" "$(SolutionDir)..\Output\$(BoltVersion)\" /y</PostBuildEvent>
-  </PropertyGroup>
+  <Import Project="$(SolutionDir)\Bolt.targets" />
 </Project>

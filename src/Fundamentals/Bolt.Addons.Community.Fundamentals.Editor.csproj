@@ -7,8 +7,8 @@
     <ProjectGuid>{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Bolt.Addons.Community.Editor</RootNamespace>
-    <AssemblyName>Bolt.Addons.Community.Editor</AssemblyName>
+    <RootNamespace>Bolt.Addons.Community.Fundamentals.Editor</RootNamespace>
+    <AssemblyName>Bolt.Addons.Community.Fundamentals.Editor</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
