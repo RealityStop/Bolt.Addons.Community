@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityObject = UnityEngine.Object;
 
 namespace Bolt.Addons.Community.Logic.Units
 {
@@ -37,17 +38,32 @@ namespace Bolt.Addons.Community.Logic.Units
         /// </summary>
         [DoNotSerialize]
         [PortLabel("Not Null")]
-        public ValueOutput isNotNull{ get; private set; }
+        public ValueOutput isNotNull { get; private set; }
 
 
         protected override void Definition()
         {
             input = ValueInput<object>(nameof(input)).AllowsNull();
-            isNull = ValueOutput<bool>(nameof(isNull), (x) => input.GetValue() == null);
-            isNotNull = ValueOutput<bool>(nameof(isNotNull), (x) => input.GetValue() != null);
+            isNull = ValueOutput(nameof(isNull), (x) => IsNull());
+            isNotNull = ValueOutput<bool>(nameof(isNotNull), (x) => !IsNull());
 
             Relation(input, isNull);
             Relation(input, isNotNull);
+        }
+
+        private bool IsNull()
+        {
+            var inputvalue = input.GetValue();
+
+            if (inputvalue is UnityObject)
+            {
+                // Required cast because of Unity's custom == operator.
+                return (UnityObject)inputvalue == null;
+            }
+            else
+            {
+                return inputvalue == null;
+            }
         }
     }
 }
