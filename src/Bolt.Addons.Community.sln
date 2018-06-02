@@ -19,9 +19,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Varia
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Variables.Editor", "Legacy\Bolt.Addons.Community.Variables.Editor.csproj", "{3251CB2C-90A6-4EB2-9F39-5BD80FB032A0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Events", "Events\Bolt.Addons.Community.Events.csproj", "{303D2151-1CC5-4960-AFD2-D8AACC50F87E}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Events.Editor", "Events\Editor\Bolt.Addons.Community.Events.Editor.csproj", "{A48FB4F2-A962-4628-8F1E-35191B078F43}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Events", "Events\Bolt.Addons.Community.Events.csproj", "{33411767-CA47-4D3B-A82C-D77AB4C5FA97}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,14 +53,14 @@ Global
 		{3251CB2C-90A6-4EB2-9F39-5BD80FB032A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3251CB2C-90A6-4EB2-9F39-5BD80FB032A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3251CB2C-90A6-4EB2-9F39-5BD80FB032A0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{303D2151-1CC5-4960-AFD2-D8AACC50F87E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{303D2151-1CC5-4960-AFD2-D8AACC50F87E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{303D2151-1CC5-4960-AFD2-D8AACC50F87E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{303D2151-1CC5-4960-AFD2-D8AACC50F87E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A48FB4F2-A962-4628-8F1E-35191B078F43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A48FB4F2-A962-4628-8F1E-35191B078F43}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A48FB4F2-A962-4628-8F1E-35191B078F43}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A48FB4F2-A962-4628-8F1E-35191B078F43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33411767-CA47-4D3B-A82C-D77AB4C5FA97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33411767-CA47-4D3B-A82C-D77AB4C5FA97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33411767-CA47-4D3B-A82C-D77AB4C5FA97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33411767-CA47-4D3B-A82C-D77AB4C5FA97}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
