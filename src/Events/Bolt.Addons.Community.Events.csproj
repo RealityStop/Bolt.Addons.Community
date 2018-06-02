@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{303D2151-1CC5-4960-AFD2-D8AACC50F87E}</ProjectGuid>
+    <ProjectGuid>{33411767-CA47-4D3B-A82C-D77AB4C5FA97}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Bolt.Addons.Community.Events</RootNamespace>
@@ -31,10 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Bolt.Core.Editor">
-      <HintPath>$(SolutionDir)\..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Core.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Bolt.Core.Runtime">
       <HintPath>$(SolutionDir)\..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Core.Runtime.dll</HintPath>
       <Private>False</Private>
@@ -58,6 +54,10 @@
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(SolutionDir)..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEditor">
+      <HintPath>$(SolutionDir)..\Dependencies\UnityBinaries\UnityEditor.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>

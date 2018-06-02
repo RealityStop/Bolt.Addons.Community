@@ -79,10 +79,11 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TriggerReturnEventDescriptor.cs" />
+    <Compile Include="TriggerReturnEventWidget.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bolt.Addons.Community.Events.csproj">
-      <Project>{303d2151-1cc5-4960-afd2-d8aacc50f87e}</Project>
+      <Project>{33411767-ca47-4d3b-a82c-d77ab4c5fa97}</Project>
       <Name>Bolt.Addons.Community.Events</Name>
     </ProjectReference>
   </ItemGroup>
