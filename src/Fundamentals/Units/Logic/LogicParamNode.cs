@@ -5,17 +5,22 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
-    [UnitShortTitle("And")]
-    [UnitTitle("And (Params)")]
-    [UnitCategory("Community\\Logic")]
-    [TypeIcon(typeof(And))]
-    public sealed class AndParam : Unit
+    public abstract class LogicParamNode : Unit
     {
-        public AndParam() { }
+        public enum BranchType { And, Or }
 
-        
+
+        [SerializeAs(nameof(BranchingType))]
+        private BranchType _branchingType;
+
+        [DoNotSerialize]
+        [Inspectable, UnitHeaderInspectable("Condition")]
+        public BranchType BranchingType { get { return _branchingType; } set { _branchingType = value; } }
+
+
+
         [SerializeAs(nameof(argumentCount))]
         private int _argumentCount;
 
@@ -29,7 +34,7 @@ namespace Bolt.Addons.Community.Logic.Units
         {
             get
             {
-                return Mathf.Max(2,_argumentCount);
+                return Mathf.Max(2, _argumentCount);
             }
             set
             {
@@ -37,32 +42,21 @@ namespace Bolt.Addons.Community.Logic.Units
             }
         }
 
-        [PortLabel("&&")]
-        [DoNotSerialize]
-        public ValueOutput output { get; private set; }
+        protected abstract void BuildRelations(ValueInput arg);
+
+
 
         protected override void Definition()
         {
-            output = ValueOutput<bool>(nameof(output), GetValue);
-
             arguments = new List<ValueInput>();
 
             for (var i = 0; i < argumentCount; i++)
             {
                 var argument = ValueInput<bool>("argument_" + i);
                 arguments.Add(argument);
-                Relation(argument, output);
+                BuildRelations(argument);
             }
         }
 
-        private bool GetValue(Recursion arg1)
-        {
-            foreach (var item in arguments)
-            {
-                if (!item.GetValue<bool>())
-                    return false;
-            }
-            return true;
-        }
     }
 }

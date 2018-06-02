@@ -11,6 +11,7 @@ namespace Bolt.Addons.Community.Logic.Units
     [UnitTitle("Or (Params)")]
     [UnitCategory("Community\\Logic")]
     [TypeIcon(typeof(Or))]
+    [Obsolete]
     public sealed class OrParam : Unit
     {
         public OrParam() { }

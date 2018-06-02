@@ -7,10 +7,10 @@ using System.Text;
 
 namespace Bolt.Addons.Community.Editor.Editor.Descriptors
 {
-    [Descriptor(typeof(AndParam))]
-    public class AndParamDescriptor : UnitDescriptor<AndParam>
+    [Descriptor(typeof(BranchParams))]
+    public class BranchParamDescriptor : UnitDescriptor<BranchParams>
     {
-        public AndParamDescriptor(AndParam unit) : base(unit) { }
+        public BranchParamDescriptor(BranchParams unit) : base(unit) { }
 
         protected override void DefinedPort(IUnitPort port, UnitPortDescription description)
         {
