@@ -4,17 +4,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Bolt.Addons.Community.Fundamentals;
-using Bolt.Addons.Community.Fundamentals.Units;
 using Ludiq;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     [UnitShortTitle("Branch")]
     [UnitTitle("Branch (Params)")]
     [UnitCategory("Community\\Control")]
     [TypeIcon(typeof(Branch))]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchAnd")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchParams")]
     public sealed class BranchParams : LogicParamNode
     {
         public BranchParams() { }

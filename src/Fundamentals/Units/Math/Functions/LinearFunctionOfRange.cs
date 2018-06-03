@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Custom_Units.Math.Functions
+namespace Bolt.Addons.Community.Fundamentals
 {
     /// <summary>
     /// Takes a given float input (minimum-maximum) and returns a 0-1 value that represents the position along the range (percent).
     /// </summary>
     [UnitCategory("Community\\Math\\Functions")]
+    [RenamedFrom("Bolt.Addons.Community.Custom_Units.Math.Functions.LinearFunctionOfRange")]
     [UnitTitle("Linear Function of Range")]
     [UnitOrder(2)]
     public class LinearFunctionOfRange : Unit

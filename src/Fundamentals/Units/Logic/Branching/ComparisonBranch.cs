@@ -6,7 +6,7 @@ using System.Text;
 using Ludiq;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     public abstract class ComparisonBranch : Unit, IBranchUnit
     {

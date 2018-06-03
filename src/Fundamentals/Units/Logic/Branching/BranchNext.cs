@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using Ludiq;
 
-namespace Bolt.Addons.Community.Variables.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     /// <summary>
     /// Branches flow by checking if a condition is true or false.
     /// </summary>
     [UnitCategory("Community\\Control")]
+    [RenamedFrom("Bolt.Addons.Community.Variables.Units.BranchNext")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchNext")]
     [UnitOrder(0)]
     public sealed class BranchNext : Unit, IBranchUnit
     {

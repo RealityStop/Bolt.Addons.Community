@@ -1,4 +1,4 @@
-﻿using Bolt.Addons.Community.Variables.Units;
+﻿using Bolt.Addons.Community.Fundamentals;
 using Ludiq;
 using System;
 using System.Collections.Generic;

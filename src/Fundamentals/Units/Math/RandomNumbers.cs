@@ -6,12 +6,13 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Custom_Units.Math
+namespace Bolt.Addons.Community.Fundamentals
 {
     /// <summary>
     /// Takes a given float input (0-1) and scales it across the specified range.
     /// </summary>
     [UnitCategory("Community\\Collections\\Lists")]
+    [RenamedFrom("Bolt.Addons.Community.Custom_Units.Math.RandomNumbers")]
     [UnitTitle("Random Numbers")]
     [TypeIcon(typeof(IList))]
     [UnitOrder(20)]

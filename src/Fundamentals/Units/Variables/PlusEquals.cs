@@ -5,10 +5,11 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Variables.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     [UnitCategory("Variables")]
     [UnitShortTitle("Plus Equals")]
+    [RenamedFrom("Bolt.Addons.Community.Variables.Units.PlusEquals")]
     [UnitTitle("Plus Equals")]
     public sealed class PlusEquals : VariableAdder
     {

@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     /// <summary>
     /// Restricts control flow by only allowing through one control flow until reset.
     /// </summary>
     [UnitCategory("Community\\Control")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.DoOnceV2")]
     [UnitTitle("Do Once")]
     [TypeIcon(typeof(ISelectUnit))]
     public sealed class DoOnceV2 : Unit

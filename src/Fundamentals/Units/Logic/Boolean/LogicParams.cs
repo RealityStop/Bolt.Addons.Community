@@ -1,18 +1,18 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units;
-using Ludiq;
+﻿using Ludiq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     [UnitShortTitle("Logic")]
     [UnitTitle("Logic (Params)")]
     [UnitCategory("Community\\Logic")]
     [TypeIcon(typeof(And))]
-    [RenamedFrom("Bolt.Addons.Community.Logic.Units.AndParam")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.LogicParams")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.OrParam")]
     public sealed class LogicParams : LogicParamNode
     {
         public LogicParams() { }

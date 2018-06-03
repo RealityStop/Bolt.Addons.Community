@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Custom_Units.Math.Functions
+namespace Bolt.Addons.Community.Fundamentals
 {
     static class MathLibrary
     {

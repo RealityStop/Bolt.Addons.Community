@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Variables.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
    /* [UnitCategory("Events")]
     public sealed class OnVariableChanged : UnifiedVariableUnit, 

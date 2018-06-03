@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {   
     /// <summary>
      /// Returns whether the value is within the given range (inclusive).
      /// </summary>
     [UnitCategory("Community\\Logic")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.Between")]
     [TypeIcon(typeof(Bolt.And))]
     public class Between : Unit
     {

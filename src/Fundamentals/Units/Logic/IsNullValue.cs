@@ -5,13 +5,14 @@ using System.Linq;
 using System.Text;
 using UnityObject = UnityEngine.Object;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     /// <summary>
     /// Returns whether the value is within the given range (inclusive).
     /// </summary>
     [UnitCategory("Nulls")]
     [UnitTitle("Is Null")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.IsNullValue")]
     [TypeIcon(typeof(Null))]
     public class IsNullValue : Unit
     {

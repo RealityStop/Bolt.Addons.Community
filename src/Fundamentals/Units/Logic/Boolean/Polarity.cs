@@ -5,11 +5,12 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {    /// <summary>
      /// Returns whether the value is within the given range (inclusive).
      /// </summary>
     [UnitCategory("Community\\Logic")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.Polarity")]
     [TypeIcon(typeof(Bolt.Comparison))]
     public class Polarity : Unit
     {

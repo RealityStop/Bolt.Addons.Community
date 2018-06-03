@@ -1,12 +1,11 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units;
-using Ludiq;
+﻿using Ludiq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     public abstract class LogicParamNode : VariadicNode<bool>
     {

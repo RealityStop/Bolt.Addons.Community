@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     /// <summary>
     /// Restricts control flow by only allowing through one control flow until reset.
     /// </summary>
     [UnitCategory("Community\\Control")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.ChangeDetect")]
     [TypeIcon(typeof(ISelectUnit))]
     public sealed class ChangeDetect : Unit
     {

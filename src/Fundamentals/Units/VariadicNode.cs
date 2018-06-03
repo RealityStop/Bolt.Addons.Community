@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     public abstract class VariadicNode<T> : Unit
     {

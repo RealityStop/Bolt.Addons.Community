@@ -5,10 +5,11 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Variables.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     [UnitCategory("Variables")]
     [UnitShortTitle("Increment Variable")]
+    [RenamedFrom("Bolt.Addons.Community.Variables.Units.IncrementUnit")]
     [UnitTitle("Increment")]
     public class IncrementUnit : VariableAdder
     {

@@ -6,12 +6,13 @@ using System.Text;
 using Ludiq;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     /// <summary>
     /// Branches flow by checking if a condition is true or false.
     /// </summary>
     [UnitCategory("Community\\Control")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchEqual")]
     [UnitOrder(0)]
     public sealed class BranchEqual : ComparisonBranch
     {

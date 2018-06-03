@@ -2,12 +2,13 @@
 using Ludiq;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     /// <summary>
     /// Called whenever a specified number of seconds have elapsed.
     /// </summary>
     [UnitCategory("Events\\Time")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.OnEveryXSeconds")]
     public sealed class OnEveryXSeconds : GlobalEventUnit, IOnTimerElapsed, IUnityUpdateLoop
     {
         public OnEveryXSeconds() { }

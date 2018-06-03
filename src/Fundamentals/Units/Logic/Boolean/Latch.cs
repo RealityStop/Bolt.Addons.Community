@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Bolt.Addons.Community.Logic.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     /// <summary>
     /// Latches a boolean value until it is reset.
     /// </summary>
     [UnitCategory("Community\\Logic")]
+    [RenamedFrom("Bolt.Addons.Community.Logic.Units.Latch")]
     public sealed class Latch : Unit
     {
         public Latch() : base() { }

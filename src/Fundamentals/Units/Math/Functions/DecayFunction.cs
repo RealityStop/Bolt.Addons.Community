@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Custom_Units.Math.Functions
+namespace Bolt.Addons.Community.Fundamentals
 {
     /// <summary>
     /// Takes a given float input (0-1) and scales it across the specified range.
     /// </summary>
     [UnitCategory("Community\\Math\\Functions")]
+    [RenamedFrom("Bolt.Addons.Community.Custom_Units.Math.Functions.DecayFunction")]
     [UnitTitle("Decay")]
     [UnitOrder(7)]
     public class DecayFunction : Unit

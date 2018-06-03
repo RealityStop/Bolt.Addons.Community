@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Variables.Units
+namespace Bolt.Addons.Community.Fundamentals
 {
     public abstract class VariableAdder : UnifiedVariableUnit
     {
