@@ -1,13 +1,14 @@
-﻿using Ludiq;
+﻿using Bolt.Addons.Community.Fundamentals.Units;
+using Ludiq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Bolt.Addons.Community.Fundamentals.Units
 {
-    public abstract class LogicParamNode : Unit
+    public abstract class LogicParamNode : VariadicNode<bool>
     {
         public enum BranchType { And, Or }
 
@@ -20,43 +21,9 @@ namespace Bolt.Addons.Community.Fundamentals
         public BranchType BranchingType { get { return _branchingType; } set { _branchingType = value; } }
 
 
-
-        [SerializeAs(nameof(argumentCount))]
-        private int _argumentCount;
-
-        [DoNotSerialize]
-        public List<ValueInput> arguments { get; private set; }
-
-
-        [DoNotSerialize]
-        [Inspectable, UnitHeaderInspectable("Arguments")]
-        public int argumentCount
-        {
-            get
-            {
-                return Mathf.Max(2, _argumentCount);
-            }
-            set
-            {
-                _argumentCount = Mathf.Clamp(value, 2, 10);
-            }
-        }
-
-        protected abstract void BuildRelations(ValueInput arg);
-
-
-
         protected override void Definition()
         {
-            arguments = new List<ValueInput>();
-
-            for (var i = 0; i < argumentCount; i++)
-            {
-                var argument = ValueInput<bool>("argument_" + i);
-                arguments.Add(argument);
-                BuildRelations(argument);
-            }
+            base.Definition();
         }
-
     }
 }

@@ -90,12 +90,14 @@
     <Compile Include="Units\math\Functions\ReverseLinearFunction.cs" />
     <Compile Include="Units\math\Functions\SigmoidFunction.cs" />
     <Compile Include="Units\math\Functions\SigmoidFunctionOfRange.cs" />
+    <Compile Include="Units\math\MathParamNode.cs" />
     <Compile Include="Units\math\RandomNumbers.cs" />
     <Compile Include="Units\variables\DecrementUnit.cs" />
     <Compile Include="Units\variables\IncrementUnit.cs" />
     <Compile Include="Units\variables\OnVariableChanged.cs" />
     <Compile Include="Units\variables\PlusEquals.cs" />
     <Compile Include="Units\variables\VariableAdder.cs" />
+    <Compile Include="Units\VariadicNode.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

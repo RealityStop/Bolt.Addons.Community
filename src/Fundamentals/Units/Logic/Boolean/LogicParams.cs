@@ -1,4 +1,4 @@
-﻿using Bolt.Addons.Community.Fundamentals;
+﻿using Bolt.Addons.Community.Fundamentals.Units;
 using Ludiq;
 using System;
 using System.Collections.Generic;
@@ -17,7 +17,7 @@ namespace Bolt.Addons.Community.Logic.Units
     {
         public LogicParams() { }
 
-        [PortLabel("&&")]
+        [PortLabel("Result")]
         [DoNotSerialize]
         public ValueOutput output { get; private set; }
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Bolt.Addons.Community.Fundamentals;
+using Bolt.Addons.Community.Fundamentals.Units;
 using Ludiq;
 using UnityEngine;
 
