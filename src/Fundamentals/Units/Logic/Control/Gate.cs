@@ -86,16 +86,19 @@ namespace Bolt.Addons.Community.Fundamentals
 
         private void Open(Flow obj)
         {
+            _isInitial = false;
             _isOpen = true;
         }
 
         private void Close(Flow obj)
         {
+            _isInitial = false;
             _isOpen = false;
         }
 
         private void Toggle(Flow obj)
         {
+            _isInitial = false;
             _isOpen = !_isOpen;
         }
 
