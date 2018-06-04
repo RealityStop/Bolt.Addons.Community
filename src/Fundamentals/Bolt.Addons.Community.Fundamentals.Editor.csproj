@@ -72,8 +72,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Editor\Descriptors\BranchParamDescriptor.cs" />
-    <Compile Include="Editor\Descriptors\LogicParamDescriptor.cs" />
     <Compile Include="Editor\Options.cs" />
     <Compile Include="Editor\UnitOptions\DecrementUnitOption.cs" />
     <Compile Include="Editor\UnitOptions\IncrementUnitOption.cs" />
