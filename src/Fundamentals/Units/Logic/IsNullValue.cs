@@ -14,6 +14,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitTitle("Is Null")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.IsNullValue")]
     [TypeIcon(typeof(Null))]
+    [Obsolete("This unit can be replaced by the built-in Equals (not Object.Equals, but the Bolt one in Logic)")]
     public class IsNullValue : Unit
     {
         public IsNullValue() : base() { }
