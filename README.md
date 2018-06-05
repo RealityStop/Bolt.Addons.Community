@@ -63,6 +63,7 @@ There are two .unitypackages delivered currently:
 
 /Math
  - **Math Op** - *(New in 2.0)*
+ - 
 	 /Functions  (Still in testing, feel free to make suggestions, though!)
 	 - **Decay**
 	 - **Exponential**
