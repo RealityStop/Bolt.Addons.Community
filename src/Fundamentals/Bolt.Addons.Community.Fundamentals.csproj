@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{C7FA2FB0-ACD3-4957-A653-979AFADC3145}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Bolt.Addons.Community.Fundamentals</RootNamespace>
+    <AssemblyName>Bolt.Addons.Community.Fundamentals</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Bolt.Core.Runtime">
+      <HintPath>$(SolutionDir)\..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Core.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Bolt.Flow.Runtime">
+      <HintPath>$(SolutionDir)..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Flow.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Ludiq.Core.Runtime">
+      <HintPath>$(SolutionDir)..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Core.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Ludiq.Graphs.Runtime">
+      <HintPath>$(SolutionDir)..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Graphs.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="UnityEngine">
+      <HintPath>$(SolutionDir)..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(SolutionDir)..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(SolutionDir)..\Dependencies\UnityBinaries\UnityEngine.UI.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Units\logic\Boolean\Between.cs" />
+    <Compile Include="Units\logic\Boolean\LogicParams.cs" />
+    <Compile Include="Units\logic\Boolean\Latch.cs" />
+    <Compile Include="Units\logic\Boolean\Polarity.cs" />
+    <Compile Include="Units\logic\Branching\BranchParams.cs" />
+    <Compile Include="Units\logic\Branching\BranchEqual.cs" />
+    <Compile Include="Units\logic\Branching\BranchGreater.cs" />
+    <Compile Include="Units\logic\Branching\BranchLess.cs" />
+    <Compile Include="Units\logic\Branching\BranchNext.cs" />
+    <Compile Include="Units\logic\Branching\ComparisonBranch.cs" />
+    <Compile Include="Units\logic\Control\ChangeDetect.cs" />
+    <Compile Include="Units\logic\Control\DoOnce.cs" />
+    <Compile Include="Units\logic\Control\DoOnceV2.cs" />
+    <Compile Include="Units\logic\Control\DoOnceValue.cs" />
+    <Compile Include="Units\logic\Control\EdgeTrigger.cs" />
+    <Compile Include="Units\logic\Control\Gate.cs" />
+    <Compile Include="Units\logic\IsNullValue.cs" />
+    <Compile Include="Units\logic\LogicParamNode.cs" />
+    <Compile Include="Units\logic\Time\EveryXSeconds.cs" />
+    <Compile Include="Units\math\Functions\DecayFunction.cs" />
+    <Compile Include="Units\math\Functions\DecayFunctionOfRange.cs" />
+    <Compile Include="Units\math\Functions\ExponentialFunction.cs" />
+    <Compile Include="Units\math\Functions\ExponentialFunctionOfRange.cs" />
+    <Compile Include="Units\math\Functions\LinearFunction.cs" />
+    <Compile Include="Units\math\Functions\LinearFunctionOfRange.cs" />
+    <Compile Include="Units\math\Functions\LogarithmicFunction.cs" />
+    <Compile Include="Units\math\Functions\LogarithmicFunctionOfRange.cs" />
+    <Compile Include="Units\math\Functions\MathLibrary.cs" />
+    <Compile Include="Units\math\Functions\ReverseLinearFunction.cs" />
+    <Compile Include="Units\math\Functions\SigmoidFunction.cs" />
+    <Compile Include="Units\math\Functions\SigmoidFunctionOfRange.cs" />
+    <Compile Include="Units\math\MathParamNode.cs" />
+    <Compile Include="Units\math\RandomNumbers.cs" />
+    <Compile Include="Units\variables\DecrementUnit.cs" />
+    <Compile Include="Units\variables\IncrementUnit.cs" />
+    <Compile Include="Units\variables\OnVariableChanged.cs" />
+    <Compile Include="Units\variables\PlusEquals.cs" />
+    <Compile Include="Units\variables\VariableAdder.cs" />
+    <Compile Include="Units\VariadicNode.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\Bolt.targets" />
+</Project>

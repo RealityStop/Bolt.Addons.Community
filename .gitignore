@@ -263,3 +263,5 @@ paket-files/
 Dependencies/**/*.dll
 Output/
 Bolt\.Addons\.Community\.Examples/
+
+src/Bolt\.Addons\.Community\.v3\.ncrunchsolution

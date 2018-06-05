@@ -3,13 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community", "Bolt.Addons.Community.csproj", "{C7FA2FB0-ACD3-4957-A653-979AFADC3145}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Editor", "Bolt.Addons.Community.Editor.csproj", "{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Downloader", "Downloader", "{61C7D654-183E-46D1-95F5-727299C021D6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Legacy", "Legacy", "{0F6B5AB0-D090-41AF-9266-29998CC557E7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Events.Editor", "Events\Editor\Bolt.Addons.Community.Events.Editor.csproj", "{A48FB4F2-A962-4628-8F1E-35191B078F43}"
+	ProjectSection(ProjectDependencies) = postProject
+		{33411767-CA47-4D3B-A82C-D77AB4C5FA97} = {33411767-CA47-4D3B-A82C-D77AB4C5FA97}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Fundamentals", "Fundamentals", "{F1756C9F-2895-479E-811A-6E7AA3086E57}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Logic", "Legacy\Bolt.Addons.Community.Logic.csproj", "{63E0BE87-2979-4275-A37E-B7F8CBD365F9}"
 EndProject
@@ -19,20 +22,22 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Varia
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Variables.Editor", "Legacy\Bolt.Addons.Community.Variables.Editor.csproj", "{3251CB2C-90A6-4EB2-9F39-5BD80FB032A0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Fundamentals", "Fundamentals\Bolt.Addons.Community.Fundamentals.csproj", "{C7FA2FB0-ACD3-4957-A653-979AFADC3145}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Fundamentals.Editor", "Fundamentals\Bolt.Addons.Community.Fundamentals.Editor.csproj", "{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolt.Addons.Community.Events", "Events\Bolt.Addons.Community.Events.csproj", "{33411767-CA47-4D3B-A82C-D77AB4C5FA97}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C7FA2FB0-ACD3-4957-A653-979AFADC3145}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C7FA2FB0-ACD3-4957-A653-979AFADC3145}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C7FA2FB0-ACD3-4957-A653-979AFADC3145}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C7FA2FB0-ACD3-4957-A653-979AFADC3145}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A48FB4F2-A962-4628-8F1E-35191B078F43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A48FB4F2-A962-4628-8F1E-35191B078F43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A48FB4F2-A962-4628-8F1E-35191B078F43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A48FB4F2-A962-4628-8F1E-35191B078F43}.Release|Any CPU.Build.0 = Release|Any CPU
 		{63E0BE87-2979-4275-A37E-B7F8CBD365F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{63E0BE87-2979-4275-A37E-B7F8CBD365F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{63E0BE87-2979-4275-A37E-B7F8CBD365F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -49,6 +54,18 @@ Global
 		{3251CB2C-90A6-4EB2-9F39-5BD80FB032A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3251CB2C-90A6-4EB2-9F39-5BD80FB032A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3251CB2C-90A6-4EB2-9F39-5BD80FB032A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7FA2FB0-ACD3-4957-A653-979AFADC3145}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7FA2FB0-ACD3-4957-A653-979AFADC3145}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7FA2FB0-ACD3-4957-A653-979AFADC3145}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7FA2FB0-ACD3-4957-A653-979AFADC3145}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3CE813EF-2925-41C5-B8BA-D8F2BE90058B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33411767-CA47-4D3B-A82C-D77AB4C5FA97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33411767-CA47-4D3B-A82C-D77AB4C5FA97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33411767-CA47-4D3B-A82C-D77AB4C5FA97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33411767-CA47-4D3B-A82C-D77AB4C5FA97}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -58,6 +75,8 @@ Global
 		{A92A0A22-56D4-4B8A-9623-913B6846A106} = {0F6B5AB0-D090-41AF-9266-29998CC557E7}
 		{5E5C0512-81BC-4C47-878C-89F723D1A589} = {0F6B5AB0-D090-41AF-9266-29998CC557E7}
 		{3251CB2C-90A6-4EB2-9F39-5BD80FB032A0} = {0F6B5AB0-D090-41AF-9266-29998CC557E7}
+		{C7FA2FB0-ACD3-4957-A653-979AFADC3145} = {F1756C9F-2895-479E-811A-6E7AA3086E57}
+		{3CE813EF-2925-41C5-B8BA-D8F2BE90058B} = {F1756C9F-2895-479E-811A-6E7AA3086E57}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FBD3EB6F-0BDA-4218-8D0C-0756C8AFE605}
