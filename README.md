@@ -45,15 +45,15 @@ There are two .unitypackages delivered currently:
  - **Random Numbers** 
 
 /Control
-	 - **Branch Equal**
-	 - **Branch Greater**
-	 - **Branch Less**
-	 - **Branch Next**
-	 - **Branch (Params)** - *(New in 2.0)*
-	 - **Gate**
-	 - **Edge Trigger**
-	 - **Change Detect**
-	 - **DoOnce**
+ - **Branch Equal**
+ - **Branch Greater**
+ - **Branch Less**
+ - **Branch Next**
+ - **Branch (Params)** - *(New in 2.0)*
+ - **Gate**
+ - **Edge Trigger**
+ - **Change Detect**
+ - **DoOnce**
 
 /Logic
  - **Latch**
@@ -64,12 +64,12 @@ There are two .unitypackages delivered currently:
 /Math
  - **Math Op** - *(New in 2.0)*
 	 /Functions  (Still in testing, feel free to make suggestions, though!)
-		 - **Decay**
-		 - **Exponential**
-		 - **Linear**
-		 - **Logarithmic**
-		 - **Reverse Linear**
-		 - **Sigmoid**
+	 - **Decay**
+	 - **Exponential**
+	 - **Linear**
+	 - **Logarithmic**
+	 - **Reverse Linear**
+	 - **Sigmoid**
 
 > ### Bolt.Addons.Community.Events
  - **Return**
