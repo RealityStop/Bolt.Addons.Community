@@ -10,7 +10,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitShortTitle("Math")]
     [UnitTitle("Math Op")]
     [UnitCategory("Community\\Math")]
-    [TypeIcon(typeof(Branch))]
+    [TypeIcon(typeof(Absolute<float>))]
     public class MathParamNode : VariadicNode<float>
     {
         public enum MathType { Add, Subtract, Multiply, Divide}
