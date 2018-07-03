@@ -47,13 +47,13 @@ namespace Bolt.Addons.Community.Fundamentals
         protected override void Definition()
         {
             input = ValueInput<float>(nameof(input));
-            positive = ValueOutput<bool>(nameof(positive), (recursion) => input.GetValue<float>() > 0);
-            negative = ValueOutput<bool>(nameof(negative), (recursion) => input.GetValue<float>() < 0);
-            zero = ValueOutput<bool>(nameof(zero), (recursion) => { return Mathf.Approximately(input.GetValue<float>(), 0f); });
+            positive = ValueOutput<bool>(nameof(positive), (flow) => flow.GetValue<float>(input) > 0);
+            negative = ValueOutput<bool>(nameof(negative), (flow) => flow.GetValue<float>(input) < 0);
+            zero = ValueOutput<bool>(nameof(zero), (flow) => { return Mathf.Approximately(flow.GetValue<float>(input), 0f); });
 
-            Relation(input, positive);
-            Relation(input, negative);
-            Relation(input, zero);
+            Requirement(input, positive);
+            Requirement(input, negative);
+            Requirement(input, zero);
         }
     }
 }
