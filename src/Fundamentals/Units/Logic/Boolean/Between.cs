@@ -51,19 +51,19 @@ namespace Bolt.Addons.Community.Fundamentals
             input = ValueInput<float>(nameof(input));
             min = ValueInput<float>(nameof(min), 0);
             max = ValueInput<float>(nameof(max), 0);
-            within = ValueOutput<bool>(nameof(within), (x)=>GetWithin());
+            within = ValueOutput<bool>(nameof(within), (flow)=>GetWithin(flow));
 
-            Relation(input, within);
-            Relation(min, within);
-            Relation(max, within);
+            Requirement(input, within);
+            Requirement(min, within);
+            Requirement(max, within);
         }
 
-        private bool GetWithin()
+        private bool GetWithin(Flow flow)
         {
-            float inputValue = input.GetValue<float>();
+            float inputValue = flow.GetValue<float>(input);
 
-            return (inputValue >= min.GetValue<float>()) &&
-                    (inputValue <= max.GetValue<float>());
+            return (inputValue >= flow.GetValue<float>(min)) &&
+                    (inputValue <= flow.GetValue<float>(max));
         }
     }
 }
