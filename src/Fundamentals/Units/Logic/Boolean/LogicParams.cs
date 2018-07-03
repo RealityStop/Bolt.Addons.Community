@@ -10,7 +10,6 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitShortTitle("Logic")]
     [UnitTitle("Logic (Params)")]
     [UnitCategory("Community\\Logic")]
-    [TypeIcon(typeof(And))]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.LogicParams")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.OrParam")]
     public sealed class LogicParams : LogicParamNode

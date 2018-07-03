@@ -1,6 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <BoltVersion>1.3.0</BoltVersion>
+    <BoltVersion>1.4.0</BoltVersion>
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>if not exist "$(SolutionDir)..\Output\$(BoltVersion)" mkdir "$(SolutionDir)..\Output\$(BoltVersion)"

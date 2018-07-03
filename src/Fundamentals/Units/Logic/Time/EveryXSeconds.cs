@@ -7,20 +7,21 @@ namespace Bolt.Addons.Community.Fundamentals
     /// <summary>
     /// Called whenever a specified number of seconds have elapsed.
     /// </summary>
-    [UnitCategory("Events\\Time")]
+    [UnitCategory("Events/Time")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.OnEveryXSeconds")]
-    public sealed class OnEveryXSeconds : GlobalEventUnit, IOnTimerElapsed, IUnityUpdateLoop
+    public sealed class OnEveryXSeconds : MachineEventUnit<EmptyEventArgs>
     {
-        public OnEveryXSeconds() { }
+        public new class Data : EventUnit<EmptyEventArgs>.Data
+        {
+            public float time;
+        }
 
-        [DoNotSerialize]
-        private float timer;
+        public override IGraphElementData CreateData()
+        {
+            return new Data();
+        }
 
-        [DoNotSerialize]
-        private bool triggered;
-
-        [DoNotSerialize]
-        private float _seconds;
+        protected override string hookName => EventHooks.Update;
 
         /// <summary>
         /// The number of seconds to await.
@@ -44,32 +45,35 @@ namespace Bolt.Addons.Community.Fundamentals
             unscaledTime = ValueInput(nameof(unscaledTime), false);
         }
 
-        public override void StartListening()
+        public override void StartListening(GraphStack stack)
         {
-            base.StartListening();
+            base.StartListening(stack);
 
-            timer = 0;
-            triggered = false;
-            _seconds = seconds.GetValue<float>();
+            var data = stack.GetElementData<Data>(this);
         }
 
-        public void Update()
+        protected override bool ShouldTrigger(Flow flow, EmptyEventArgs args)
         {
-            if (!isListening)
+            var data = flow.stack.GetElementData<Data>(this);
+
+            if (!data.isListening)
             {
-                return;
+                return false;
             }
 
             //Requery the time to run for, in case we're wired to a dynamic value.
-            _seconds = seconds.GetValue<float>();
+            var increment = flow.GetValue<bool>(unscaledTime) ? Time.unscaledDeltaTime : Time.deltaTime;
+            var threshold = flow.GetValue<float>(seconds);
 
-            timer += unscaledTime.GetValue<bool>() ? Time.unscaledDeltaTime : Time.deltaTime;
+            data.time += increment;
 
-            if (timer >= _seconds)
+            if (data.time >= threshold)
             {
-                timer = 0;
-                Trigger();
+                data.time = 0;
+                return true;
             }
+
+            return false;
         }
     }
 }
