@@ -44,12 +44,12 @@ namespace Bolt.Addons.Community.Fundamentals
             base.Definition();
         }
 
-        public override bool Comparison()
+        public override bool Comparison(Flow flow)
         {
             if (numeric)
-                return NumericComparison(a.GetValue<float>(), b.GetValue<float>());
+                return NumericComparison(flow.GetValue<float>(a), flow.GetValue<float>(b));
             else
-                return GenericComparison(a.GetValue<object>(), b.GetValue<object>());
+                return GenericComparison(flow.GetValue<object>(a), flow.GetValue<object>(b));
         }
 
         private bool NumericComparison(float a, float b)
