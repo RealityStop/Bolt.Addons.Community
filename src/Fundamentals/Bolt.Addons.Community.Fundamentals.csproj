@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Units\Documenting\Todo.cs" />
     <Compile Include="Units\logic\Boolean\Between.cs" />
     <Compile Include="Units\logic\Boolean\LogicParams.cs" />
     <Compile Include="Units\logic\Boolean\Latch.cs" />
