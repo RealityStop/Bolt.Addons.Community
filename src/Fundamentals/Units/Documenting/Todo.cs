@@ -21,10 +21,10 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
 
         protected override void Definition()
         {
-            enter = ControlInput(nameof(enter), (x)=>x.Invoke(exit));
+            enter = ControlInput(nameof(enter), (x) => exit);
             exit = ControlOutput(nameof(exit));
 
-            Relation(enter, exit);
+            Succession(enter, exit);
         }
     }
 }
