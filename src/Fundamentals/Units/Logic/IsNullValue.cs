@@ -46,16 +46,16 @@ namespace Bolt.Addons.Community.Fundamentals
         protected override void Definition()
         {
             input = ValueInput<object>(nameof(input)).AllowsNull();
-            isNull = ValueOutput(nameof(isNull), (x) => IsNull());
-            isNotNull = ValueOutput<bool>(nameof(isNotNull), (x) => !IsNull());
+            isNull = ValueOutput(nameof(isNull), (x) => IsNull(x));
+            isNotNull = ValueOutput<bool>(nameof(isNotNull), (x) => !IsNull(x));
 
-            Relation(input, isNull);
-            Relation(input, isNotNull);
+            Requirement(input, isNull);
+            Requirement(input, isNotNull);
         }
 
-        private bool IsNull()
+        private bool IsNull(Flow flow)
         {
-            var inputvalue = input.GetValue();
+            var inputvalue = flow.GetValue(input);
 
             if (inputvalue is UnityObject)
             {
