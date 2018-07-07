@@ -71,43 +71,48 @@ namespace Bolt.Addons.Community.Fundamentals
             initialState = ValueInput<bool>(nameof(initialState), true);
             exit = ControlOutput(nameof(exit));
 
-            Relation(enter, exit);
-            Relation(initialState, exit);
+            Succession(enter, exit);
+            Requirement(initialState, enter);
         }
 
 
-        public void Enter(Flow flow)
+        public ControlOutput Enter(Flow flow)
         {
-            PrepInitialState();
+            PrepInitialState(flow);
 
             if (_isOpen)
-                flow.Invoke(exit);
+                return exit;
+
+            return null;
         }
 
-        private void Open(Flow obj)
+        private ControlOutput Open(Flow obj)
         {
             _isInitial = false;
             _isOpen = true;
+            return null;
         }
 
-        private void Close(Flow obj)
+        private ControlOutput Close(Flow obj)
         {
             _isInitial = false;
             _isOpen = false;
+            return null;
         }
 
-        private void Toggle(Flow obj)
+        private ControlOutput Toggle(Flow obj)
         {
             _isInitial = false;
             _isOpen = !_isOpen;
+            return null;
         }
 
 
 
-        private void PrepInitialState()
+        private void PrepInitialState(Flow flow)
         {
             if (_isInitial)
-                _isOpen = initialState.GetValue<bool>();
+                _isOpen = flow.GetValue<bool>(initialState);
             _isInitial = false;
         }
     }

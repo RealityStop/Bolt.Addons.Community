@@ -51,20 +51,22 @@ namespace Bolt.Addons.Community.Fundamentals
             outValue = ValueOutput<bool>(nameof(outValue), (recursion) => _lastEdge);
             exit = ControlOutput(nameof(exit));
 
-            Relation(enter, exit);
-            Relation(inValue, exit);
-            Relation(inValue, outValue);
+            Succession(enter, exit);
+            Requirement(inValue, enter);
+            Requirement(inValue, outValue);
         }
 
 
-        public void Enter(Flow flow)
+        public ControlOutput Enter(Flow flow)
         {
-            bool currentValue = inValue.GetValue<bool>();
+            bool currentValue = flow.GetValue<bool>(inValue);
             if (_lastEdge != currentValue)
             {
                 _lastEdge = currentValue;
-                flow.Invoke(exit);
+                return exit;
             }
+
+            return null;
         }
     }
 }
