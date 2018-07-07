@@ -44,22 +44,24 @@ namespace Bolt.Addons.Community.Fundamentals
             reset = ControlInput(nameof(reset), Reset);
             exit = ControlOutput(nameof(exit));
 
-            Relation(enter, exit);
+            Succession(enter, exit);
         }
 
 
-        public void Enter(Flow flow)
+        public ControlOutput Enter(Flow flow)
         {
             if (_isOpen)
             {
                 _isOpen = false;
-                flow.Invoke(exit);
+                return exit;
             }
+            return null;
         }
 
-        private void Reset(Flow obj)
+        private ControlOutput Reset(Flow obj)
         {
             _isOpen = true;
+            return null;
         }
     }
 }
