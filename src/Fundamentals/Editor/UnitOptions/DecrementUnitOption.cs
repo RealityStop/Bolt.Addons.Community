@@ -15,12 +15,12 @@ namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
 
         public DecrementUnitOption(VariableKind kind, string defaultName = null) : base(kind, defaultName) { }
 
-        protected override string DefaultNameLabel()
+        protected override string NamedLabel(bool human)
         {
-            return $"Decrement {defaultName}";
+            return $"Decrement {name}";
         }
 
-        protected override string GenericLabel()
+        protected override string UnnamedLabel(bool human)
         {
             return $"Decrement {kind} Variable";
         }

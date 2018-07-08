@@ -35,14 +35,13 @@ namespace Bolt.Addons.Community.Fundamentals
             amount = ValueInput<float>(nameof(amount), 1);
             postIncrement = ValueOutput<float>(nameof(postIncrement), (x) => _postIncrementValue);
             
-            Relation(assign, amount);
-            Relation(assign, postIncrement);
-            Relation(amount, postIncrement);
+            Requirement(amount, assign);
+            Requirement(amount, postIncrement);
         }
 
-        protected override float GetAmount()
+        protected override float GetAmount(Flow flow)
         {
-            return amount.GetValue<float>();
+            return flow.GetValue<float>(amount);
         }
     }
 }

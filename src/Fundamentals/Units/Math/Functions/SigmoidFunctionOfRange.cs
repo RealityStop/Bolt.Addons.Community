@@ -104,24 +104,24 @@ namespace Bolt.Addons.Community.Fundamentals
             inflectionPoint = ValueInput<float>(nameof(inflectionPoint), defaultInflectionPoint);
             decayFactor = ValueInput<float>(nameof(decayFactor), defaultDecayFactor);
             scale = ValueInput<float>(nameof(scale), defaultScale);
-            output = ValueOutput<float>(nameof(output), (x) => output.GetValue<float>());
+            output = ValueOutput<float>(nameof(output), (x) => Operation(x));
 
 
-            Relation(minimumRange, input);
-            Relation(maximumRange, input);
-            Relation(input, output);
-            Relation(minimum, output);
-            Relation(inflectionPoint, output);
-            Relation(decayFactor, output);
-            Relation(scale, output);
+            Requirement(minimumRange, output);
+            Requirement(maximumRange, output);
+            Requirement(input, output);
+            Requirement(minimum, output);
+            Requirement(inflectionPoint, output);
+            Requirement(decayFactor, output);
+            Requirement(scale, output);
         }
 
-        private float Operation(Recursion recursion)
+        private float Operation(Flow flow)
         {
-            float normalizedInput = MathLibrary.ReverseLinearFunction(input.GetValue<float>(), minimumRange.GetValue<float>(), maximumRange.GetValue<float>());
-            float normalizedInflection = MathLibrary.ReverseLinearFunction(inflectionPoint.GetValue<float>(), minimumRange.GetValue<float>(), maximumRange.GetValue<float>());
+            float normalizedInput = MathLibrary.ReverseLinearFunction(flow.GetValue<float>(input), flow.GetValue<float>(minimumRange), flow.GetValue<float>(maximumRange));
+            float normalizedInflection = MathLibrary.ReverseLinearFunction(flow.GetValue<float>(inflectionPoint), flow.GetValue<float>(minimumRange), flow.GetValue<float>(maximumRange));
 
-            return MathLibrary.DecayingSigmoid(normalizedInput, normalizedInflection, minimum.GetValue<float>(), decayFactor.GetValue<float>(), scale.GetValue<float>());
+            return MathLibrary.DecayingSigmoid(normalizedInput, normalizedInflection, flow.GetValue<float>(minimum), flow.GetValue<float>(decayFactor), flow.GetValue<float>(scale));
         }
     }
 }

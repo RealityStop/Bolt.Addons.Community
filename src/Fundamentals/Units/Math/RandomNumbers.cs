@@ -71,13 +71,13 @@ namespace Bolt.Addons.Community.Fundamentals
             {
                 minimum = ValueInput<int>(nameof(minimum), 0);
                 maximum = ValueInput<int>(nameof(maximum), 100);
-                output = ValueOutput<IList>(nameof(output), (x) => { if (_list == null) BuildList(); return _list; });
+                output = ValueOutput<IList>(nameof(output), (x) => { if (_list == null) BuildList(x); return _list; });
             }
             else
             {
                 minimum = ValueInput<float>(nameof(minimum), 0);
                 maximum = ValueInput<float>(nameof(maximum), 100);
-                output = ValueOutput<IList>(nameof(output), (x) => { if (_list == null) BuildList(); return _list; });
+                output = ValueOutput<IList>(nameof(output), (x) => { if (_list == null) BuildList(x); return _list; });
             }
 
             Succession(input, exit);

@@ -15,12 +15,12 @@ namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
 
         public PlusEqualUnitOption(VariableKind kind, string defaultName = null) : base(kind, defaultName) { }
 
-        protected override string DefaultNameLabel()
+        protected override string NamedLabel(bool human)
         {
-            return $"Plus Equal {defaultName}";
+            return $"Plus Equal {name}";
         }
 
-        protected override string GenericLabel()
+        protected override string UnnamedLabel(bool human)
         {
             return $"Plus Equal {kind} Variable";
         }

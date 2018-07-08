@@ -93,19 +93,19 @@ namespace Bolt.Addons.Community.Fundamentals
             minimumValue = ValueInput<float>(nameof(minimumValue), defaultMinimum);
             decayFactor = ValueInput<float>(nameof(decayFactor), defaultDecayFactor);
             scale = ValueInput<float>(nameof(scale), defaultScale);
-            output = ValueOutput<float>(nameof(output), (x) => output.GetValue<float>());
+            output = ValueOutput<float>(nameof(output), Operation);
 
-            Relation(minimumRange, input);
-            Relation(maximumRange, output);
-            Relation(input, output);
-            Relation(minimumValue, output);
-            Relation(decayFactor, output);
-            Relation(scale, output);
+            Requirement(minimumRange, output);
+            Requirement(maximumRange, output);
+            Requirement(input, output);
+            Requirement(minimumValue, output);
+            Requirement(decayFactor, output);
+            Requirement(scale, output);
         }
 
-        private float Operation(Recursion recursion)
+        private float Operation(Flow flow)
         {
-            return MathLibrary.DecayFunctionOfRange(input.GetValue<float>(), minimumRange.GetValue<float>(), maximumRange.GetValue<float>(), maximumRange.GetValue<float>(), decayFactor.GetValue<float>(), scale.GetValue<float>());
+            return MathLibrary.DecayFunctionOfRange(flow.GetValue<float>(input), flow.GetValue<float>(minimumRange), flow.GetValue<float>(maximumRange), flow.GetValue<float>(maximumRange), flow.GetValue<float>(decayFactor), flow.GetValue<float>(scale));
         }
     }
 }

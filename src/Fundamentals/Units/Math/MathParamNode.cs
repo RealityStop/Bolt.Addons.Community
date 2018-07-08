@@ -38,28 +38,28 @@ namespace Bolt.Addons.Community.Fundamentals
 
         protected override void BuildRelations(ValueInput arg)
         {
-            Relation(arg, output);
+            Requirement(arg, output);
         }
 
-        private float GetValue(Recursion arg1)
+        private float GetValue(Flow flow)
         {
-            float numeric = arguments[0].GetValue<float>();
+            float numeric = flow.GetValue<float>(arguments[0]);
 
             for (int i = 1; i < argumentCount; i++)
             {
                 switch (OperationType)
                 {
                     case MathType.Add:
-                        numeric += arguments[i].GetValue<float>();
+                        numeric += flow.GetValue<float>(arguments[i]);
                         break;
                     case MathType.Subtract:
-                        numeric -= arguments[i].GetValue<float>();
+                        numeric -= flow.GetValue<float>(arguments[i]);
                         break;
                     case MathType.Multiply:
-                        numeric *= arguments[i].GetValue<float>();
+                        numeric *= flow.GetValue<float>(arguments[i]);
                         break;
                     case MathType.Divide:
-                        numeric /= arguments[i].GetValue<float>();
+                        numeric /= flow.GetValue<float>(arguments[i]);
                         break;
                     default:
                         break;

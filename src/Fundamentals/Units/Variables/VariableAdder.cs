@@ -28,7 +28,24 @@ namespace Bolt.Addons.Community.Fundamentals
         [PortLabelHidden]
         public ControlOutput assigned { get; private set; }
 
-        protected abstract float GetAmount();
+
+
+        /// <summary>
+        /// The value to return if the variable is not defined.
+        /// </summary>
+        [DoNotSerialize]
+        public ValueInput fallback { get; private set; }
+
+        /// <summary>
+        /// Whether a fallback value should be provided if the 
+        /// variable is not defined.
+        /// </summary>
+        [Serialize]
+        [Inspectable]
+        [InspectorLabel("Fallback")]
+        public bool specifyFallback { get; set; } = false;
+
+        protected abstract float GetAmount(Flow flow);
 
         protected override void Definition()
         {
@@ -39,30 +56,39 @@ namespace Bolt.Addons.Community.Fundamentals
 
 
 
-            Relation(name, assign);
-            Relation(assign, assigned);
+            Requirement(name, assign);
+            Succession(assign, assigned);
 
             if (kind == VariableKind.Object)
             {
-                Relation(@object, assign);
+                Requirement(@object, assign);
+            }
+
+            if (specifyFallback)
+            {
+                fallback = ValueInput<object>(nameof(fallback));
+                Requirement(fallback, assign);
             }
         }
 
-        private void UpdateVariable(Flow flow)
+        private ControlOutput UpdateVariable(Flow flow)
         {
-            var name = this.name.GetValue<string>();
+            var name = flow.GetValue<string>(this.name);
             VariableDeclarations variables;
 
             switch (kind)
             {
+                case VariableKind.Flow:
+                    variables = flow.variables;
+                    break;
                 case VariableKind.Graph:
-                    variables = Bolt.Variables.Graph(graph);
+                    variables = Bolt.Variables.Graph(flow.stack);
                     break;
                 case VariableKind.Object:
-                    variables = Bolt.Variables.Object(@object.GetValue<GameObject>());
+                    variables = Bolt.Variables.Object(@flow.GetValue<GameObject>(@object));
                     break;
                 case VariableKind.Scene:
-                    variables = Bolt.Variables.Scene(owner.GameObject().scene);
+                    variables = Bolt.Variables.Scene(flow.stack.scene);
                     break;
                 case VariableKind.Application:
                     variables = Bolt.Variables.Application;
@@ -75,10 +101,10 @@ namespace Bolt.Addons.Community.Fundamentals
             }
 
             _preIncrementValue = variables.Get<float>(name);
-            _postIncrementValue = _preIncrementValue + GetAmount();
+            _postIncrementValue = _preIncrementValue + GetAmount(flow);
             variables.Set(name, _postIncrementValue);
 
-            flow.Invoke(assigned);
+            return assigned;
         }
     }
 }
