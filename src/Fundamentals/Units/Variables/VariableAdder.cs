@@ -9,8 +9,6 @@ namespace Bolt.Addons.Community.Fundamentals
 {
     public abstract class VariableAdder : UnifiedVariableUnit
     {
-        public VariableAdder() : base() { }
-
         protected float _preIncrementValue;
         protected float _postIncrementValue;
 
