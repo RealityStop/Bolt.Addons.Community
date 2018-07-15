@@ -37,7 +37,7 @@ namespace Bolt.Addons.Community.Fundamentals
 
         public override bool Comparison(Flow flow)
         {
-            return NumericComparison(flow.GetValue<float>(a), flow.GetValue<float>(a), flow.GetValue<bool>(AllowEquals));
+            return NumericComparison(flow.GetValue<float>(a), flow.GetValue<float>(b), flow.GetValue<bool>(AllowEquals));
         }
 
         private bool NumericComparison(float a, float b, bool allowEquals)
