@@ -32,7 +32,7 @@ namespace Bolt.Addons.Community.Variables.Editor
             yield return new DecrementUnitOption(VariableKind.Application);
             yield return new DecrementUnitOption(VariableKind.Saved);
 
-            yield return new DecrementUnitOption(VariableKind.Flow);
+            yield return new PlusEqualUnitOption(VariableKind.Flow);
             yield return new PlusEqualUnitOption(VariableKind.Graph);
             yield return new PlusEqualUnitOption(VariableKind.Object);
             yield return new PlusEqualUnitOption(VariableKind.Scene);
