@@ -64,7 +64,7 @@ namespace Bolt.Addons.Community.Fundamentals
 
             if (specifyFallback)
             {
-                fallback = ValueInput<object>(nameof(fallback));
+                fallback = ValueInput<float>(nameof(fallback), 0);
                 Requirement(fallback, assign);
             }
         }
@@ -98,7 +98,12 @@ namespace Bolt.Addons.Community.Fundamentals
                     throw new UnexpectedEnumValueException<VariableKind>(kind);
             }
 
-            _preIncrementValue = variables.Get<float>(name);
+            if (!variables.IsDefined(name) && specifyFallback)
+                _preIncrementValue = flow.GetValue<float>(fallback);
+            else
+                _preIncrementValue = variables.Get<float>(name);
+
+
             _postIncrementValue = _preIncrementValue + GetAmount(flow);
             variables.Set(name, _postIncrementValue);
 
