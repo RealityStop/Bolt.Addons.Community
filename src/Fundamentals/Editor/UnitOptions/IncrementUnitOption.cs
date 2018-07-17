@@ -15,12 +15,12 @@ namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
 
         public IncrementUnitOption(VariableKind kind, string defaultName = null) : base(kind, defaultName) { }
 
-        protected override string DefaultNameLabel()
+        protected override string NamedLabel(bool human)
         {
-            return $"Increment {defaultName}";
+            return $"Increment {name}";
         }
 
-        protected override string GenericLabel()
+        protected override string UnnamedLabel(bool human)
         {
             return $"Increment {kind} Variable";
         }

@@ -35,9 +35,15 @@ namespace Bolt.Addons.Community.Fundamentals
 
             preIncrement = ValueOutput<float>(nameof(preIncrement), (x) => _preIncrementValue);
             postIncrement = ValueOutput<float>(nameof(postIncrement), (x) => _postIncrementValue);
+
+            if (specifyFallback)
+            {
+                Requirement(fallback, preIncrement);
+                Requirement(fallback, postIncrement);
+            }
         }
 
-        protected override float GetAmount()
+        protected override float GetAmount(Flow flow)
         {
             return 1;
         }

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals
 {
@@ -42,29 +43,31 @@ namespace Bolt.Addons.Community.Fundamentals
         [PortLabelHidden]
         public ControlOutput exit { get; private set; }
 
-        private bool _lastEdge = true;
+        private bool? _lastEdge;
 
         protected override void Definition()
         {
             enter = ControlInput(nameof(enter), Enter);
             inValue = ValueInput<bool>(nameof(inValue), false);
-            outValue = ValueOutput<bool>(nameof(outValue), (recursion) => _lastEdge);
+            outValue = ValueOutput<bool>(nameof(outValue), (recursion) => { if (_lastEdge.HasValue) return _lastEdge.Value; return false; });
             exit = ControlOutput(nameof(exit));
 
-            Relation(enter, exit);
-            Relation(inValue, exit);
-            Relation(inValue, outValue);
+            Succession(enter, exit);
+            Requirement(inValue, enter);
+            Requirement(inValue, outValue);
         }
 
 
-        public void Enter(Flow flow)
+        public ControlOutput Enter(Flow flow)
         {
-            bool currentValue = inValue.GetValue<bool>();
-            if (_lastEdge != currentValue)
+            bool currentValue = flow.GetValue<bool>(inValue);
+            if (!_lastEdge.HasValue || _lastEdge != currentValue)
             {
                 _lastEdge = currentValue;
-                flow.Invoke(exit);
+                return exit;
             }
+
+            return null;
         }
     }
 }

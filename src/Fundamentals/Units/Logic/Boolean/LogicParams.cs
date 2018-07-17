@@ -10,7 +10,6 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitShortTitle("Logic")]
     [UnitTitle("Logic (Params)")]
     [UnitCategory("Community\\Logic")]
-    [TypeIcon(typeof(And))]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.LogicParams")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.OrParam")]
     public sealed class LogicParams : LogicParamNode
@@ -30,21 +29,21 @@ namespace Bolt.Addons.Community.Fundamentals
 
         protected override void BuildRelations(ValueInput arg)
         {
-            Relation(arg, output);
+            Requirement(arg, output);
         }
 
-        private bool GetValue(Recursion arg1)
+        private bool GetValue(Flow flow)
         {
             foreach (var item in arguments)
             {
                 switch (BranchingType)
                 {
                     case BranchType.And:
-                        if (!item.GetValue<bool>())
+                        if (!flow.GetValue<bool>(item))
                             return false;
                         break;
                     case BranchType.Or:
-                        if (item.GetValue<bool>())
+                        if (flow.GetValue<bool>(item))
                             return true;
                         break;
                     default:

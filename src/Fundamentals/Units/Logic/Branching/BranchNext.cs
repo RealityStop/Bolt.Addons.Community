@@ -61,15 +61,15 @@ namespace Bolt.Addons.Community.Fundamentals
             ifFalse = ControlOutput("ifFalse");
             onNext = ControlOutput("onNext");
 
-            Relation(enter, ifTrue);
-            Relation(enter, ifFalse);
-            Relation(enter, onNext);
-            Relation(condition, enter);
+            Succession(enter, ifTrue);
+            Succession(enter, ifFalse);
+            Succession(enter, onNext);
+            Requirement(condition, enter);
         }
 
-        public void Enter(Flow flow)
+        public ControlOutput Enter(Flow flow)
         {
-            if (condition.GetValue<bool>())
+            if (flow.GetValue<bool>(condition))
             {
                 flow.Invoke(ifTrue);
             }
@@ -77,7 +77,7 @@ namespace Bolt.Addons.Community.Fundamentals
             {
                 flow.Invoke(ifFalse);
             }
-            flow.Invoke(onNext);
+            return onNext;
         }
     }
 }

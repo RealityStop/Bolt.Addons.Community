@@ -69,17 +69,17 @@ namespace Bolt.Addons.Community.Fundamentals
             minimum = ValueInput<float>(nameof(minimum), defaultMinimum);
             exponent = ValueInput<float>(nameof(exponent), defaultExponent);
             scale = ValueInput<float>(nameof(scale), defaultScale);
-            output = ValueOutput<float>(nameof(output), (x) => output.GetValue<float>());
+            output = ValueOutput<float>(nameof(output), Operation);
 
-            Relation(input, output);
-            Relation(minimum, output);
-            Relation(exponent, output);
-            Relation(scale, output);
+            Requirement(input, output);
+            Requirement(minimum, output);
+            Requirement(exponent, output);
+            Requirement(scale, output);
         }
 
-        private float Operation(Recursion recursion)
+        private float Operation(Flow flow)
         {
-            return MathLibrary.ExponentialFunction(input.GetValue<float>(), minimum.GetValue<float>(), exponent.GetValue<float>(), scale.GetValue<float>());
+            return MathLibrary.ExponentialFunction(flow.GetValue<float>(input), flow.GetValue<float>(minimum), flow.GetValue<float>(exponent), flow.GetValue<float>(scale));
         }
     }
 }

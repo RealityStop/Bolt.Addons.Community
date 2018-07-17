@@ -71,25 +71,30 @@ namespace Bolt.Addons.Community.Fundamentals
             {
                 minimum = ValueInput<int>(nameof(minimum), 0);
                 maximum = ValueInput<int>(nameof(maximum), 100);
-                output = ValueOutput<IList>(nameof(output), (x) => { if (_list == null) BuildList(); return _list; });
+                output = ValueOutput<IList>(nameof(output), (x) => { if (_list == null) BuildList(x); return _list; });
             }
             else
             {
                 minimum = ValueInput<float>(nameof(minimum), 0);
                 maximum = ValueInput<float>(nameof(maximum), 100);
-                output = ValueOutput<IList>(nameof(output), (x) => { if (_list == null) BuildList(); return _list; });
+                output = ValueOutput<IList>(nameof(output), (x) => { if (_list == null) BuildList(x); return _list; });
             }
 
-            Relation(input, exit);
-            Relation(count, output);
-            Relation(minimum, output);
-            Relation(unique, output);
+            Succession(input, exit);
+
+            Requirement(count, input);
+            Requirement(minimum, input);
+            Requirement(unique, input);
+
+            Requirement(count, output);
+            Requirement(minimum, output);
+            Requirement(unique, output);
         }
 
-        private void BuildList()
+        private void BuildList(Flow flow)
         {
-            bool createUnique = unique.GetValue<bool>();
-            int num = count.GetValue<int>();
+            bool createUnique = flow.GetValue<bool>(unique);
+            int num = flow.GetValue<int>(count);
 
             _list.Clear();
 
@@ -100,8 +105,8 @@ namespace Bolt.Addons.Community.Fundamentals
             }
             if (integer)
             {
-                int min = minimum.GetValue<int>();
-                int max = maximum.GetValue<int>();
+                int min = flow.GetValue<int>(minimum);
+                int max = flow.GetValue<int>(maximum);
                 if (createUnique)
                     if (max - min < num)
                     {
@@ -113,8 +118,8 @@ namespace Bolt.Addons.Community.Fundamentals
             else
             {
 
-                float min = minimum.GetValue<float>();
-                float max = maximum.GetValue<float>();
+                float min = flow.GetValue<float>(minimum);
+                float max = flow.GetValue<float>(maximum);
                 PopulateList(createUnique, num, _list, () => { return UnityEngine.Random.Range(min, max); });
             }
 
@@ -140,10 +145,10 @@ namespace Bolt.Addons.Community.Fundamentals
             }
         }
 
-        private void Enter(Flow flow)
+        private ControlOutput Enter(Flow flow)
         {
-            BuildList();
-            flow.Invoke(exit);
+            BuildList(flow);
+            return exit;
         }
     }
 }

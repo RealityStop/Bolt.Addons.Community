@@ -1,5 +1,4 @@
-﻿
-using Ludiq;
+﻿using Ludiq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,13 +31,13 @@ namespace Bolt.Addons.Community.Fundamentals
 
             base.Definition();
 
-            Relation(AllowEquals, ifTrue);
-            Relation(AllowEquals, ifFalse);
+            Requirement(AllowEquals, enter);
+            Requirement(AllowEquals, enter);
         }
 
-        public override bool Comparison()
+        public override bool Comparison(Flow flow)
         {
-            return NumericComparison(a.GetValue<float>(), b.GetValue<float>(), AllowEquals.GetValue<bool>());
+            return NumericComparison(flow.GetValue<float>(a), flow.GetValue<float>(b), flow.GetValue<bool>(AllowEquals));
         }
 
         private bool NumericComparison(float a, float b, bool allowEquals)

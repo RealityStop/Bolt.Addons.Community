@@ -52,21 +52,21 @@ namespace Bolt.Addons.Community.Fundamentals
             lastValue = ValueOutput<object>(nameof(lastValue), (x) => _previous);
             onChange = ControlOutput(nameof(onChange));
 
-            Relation(enter, onChange);
-            Relation(input, onChange);
+            Succession(enter, onChange);
+            Requirement(input, enter);
         }
 
 
-        public void Enter(Flow flow)
+        public ControlOutput Enter(Flow flow)
         {
-            object currentValue = input.GetValue<object>();
+            object currentValue = flow.GetValue<object>(input);
 
             if (currentValue is float && _previous is float)
             {
                 if (!Mathf.Approximately((float)currentValue, (float)_previous))
                 {
                     _previous = currentValue;
-                    flow.Invoke(onChange);
+                    return onChange;
                 }
             }
             else
@@ -74,9 +74,10 @@ namespace Bolt.Addons.Community.Fundamentals
                 if (currentValue != _previous)
                 {
                     _previous = currentValue;
-                    flow.Invoke(onChange);
+                    return onChange;
                 }
             }
+            return null;
         }
     }
 }

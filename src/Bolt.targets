@@ -1,9 +1,19 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <BoltVersion>1.3.0</BoltVersion>
+    <BoltVersion>1.4.0</BoltVersion>
   </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>if not exist "$(SolutionDir)..\Output\$(BoltVersion)" mkdir "$(SolutionDir)..\Output\$(BoltVersion)"
-	xCopy "$(TargetPath)" "$(SolutionDir)..\Output\$(BoltVersion)\" /y</PostBuildEvent>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release4.6'"> 
+    <TargetFrameworkVersionNumber>4.6</TargetFrameworkVersionNumber>
+	<TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+	<TargetFrameworkVersionString>Net46</TargetFrameworkVersionString>
+	<TargetFrameworkProfile></TargetFrameworkProfile> 
+    <OutputPath>bin\$(Configuration)</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release3.5'">
+	<TargetFrameworkVersionNumber>3.5</TargetFrameworkVersionNumber>
+	<TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+	<TargetFrameworkVersionString>Net35</TargetFrameworkVersionString>
+	<TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile> 
+    <OutputPath>bin\$(Configuration)</OutputPath>
   </PropertyGroup>
 </Project>

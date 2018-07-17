@@ -15,7 +15,7 @@ namespace Bolt.Addons.Community.Fundamentals
     {
         public DecrementUnit() : base() { }
 
-        protected override float GetAmount()
+        protected override float GetAmount(Flow flow)
         {
             return -1;
         }

@@ -79,21 +79,21 @@ namespace Bolt.Addons.Community.Fundamentals
             inflectionPoint = ValueInput<float>(nameof(inflectionPoint), defaultInflectionPoint);
             decayFactor = ValueInput<float>(nameof(decayFactor), defaultDecayFactor);
             scale = ValueInput<float>(nameof(scale), defaultScale);
-            output = ValueOutput<float>(nameof(output), (x) => output.GetValue<float>());
+            output = ValueOutput<float>(nameof(output), (flow) => Operation(flow));
 
-            Relation(input, output);
-            Relation(minimum, output);
-            Relation(inflectionPoint, output);
-            Relation(decayFactor, output);
-            Relation(scale, output);
+            Requirement(input, output);
+            Requirement(minimum, output);
+            Requirement(inflectionPoint, output);
+            Requirement(decayFactor, output);
+            Requirement(scale, output);
         }
 
-        private float Operation(Recursion recursion)
+        private float Operation(Flow flow)
         {
-            float inputValue = Mathf.Clamp01(input.GetValue<float>(recursion));
-            float inflectionPointValue = Mathf.Clamp01(inflectionPoint.GetValue<float>(recursion));
+            float inputValue = Mathf.Clamp01(flow.GetValue<float>(input));
+            float inflectionPointValue = Mathf.Clamp01(flow.GetValue<float>(inflectionPoint));
 
-            return MathLibrary.DecayingSigmoid(inputValue, inflectionPointValue, minimum.GetValue<float>(), decayFactor.GetValue<float>(), scale.GetValue<float>());
+            return MathLibrary.DecayingSigmoid(inputValue, inflectionPointValue, flow.GetValue<float>(minimum), flow.GetValue<float>(decayFactor), flow.GetValue<float>(scale));
         }
     }
 }

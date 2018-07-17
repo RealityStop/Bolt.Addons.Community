@@ -38,18 +38,18 @@ namespace Bolt.Addons.Community.Fundamentals
 
 
 
-            Relation(name, assign);
-            Relation(assign, onChange);
+            Requirement(name, assign);
+            Requirement(assign, onChange);
 
             if (kind == VariableKind.Object)
             {
-                Relation(@object, assign);
+                Requirement(@object, assign);
             }
         }
 
         private void CheckVariable(Flow flow)
         {
-            var name = this.name.GetValue<string>();
+            var name = this.flow.GetValue<string>(name);
             VariableDeclarations variables;
 
             switch (kind)
@@ -58,7 +58,7 @@ namespace Bolt.Addons.Community.Fundamentals
                     variables = Bolt.Variables.Graph(graph);
                     break;
                 case VariableKind.Object:
-                    variables = Bolt.Variables.Object(@object.GetValue<GameObject>());
+                    variables = Bolt.Variables.Object(@flow.GetValue<GameObject>(object));
                     break;
                 case VariableKind.Scene:
                     variables = Bolt.Variables.Scene(owner.GameObject().scene);

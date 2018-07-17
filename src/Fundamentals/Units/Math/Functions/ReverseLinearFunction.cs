@@ -58,16 +58,16 @@ namespace Bolt.Addons.Community.Fundamentals
             input = ValueInput<float>(nameof(input), 0);
             minimum = ValueInput<float>(nameof(minimum), defaultMinimum);
             maximum = ValueInput<float>(nameof(maximum), defaultMaximum);
-            output = ValueOutput<float>(nameof(output), (x) => output.GetValue<float>());
+            output = ValueOutput<float>(nameof(output), Operation);
 
-            Relation(input, output);
-            Relation(minimum, output);
-            Relation(maximum, output);
+            Requirement(input, output);
+            Requirement(minimum, output);
+            Requirement(maximum, output);
         }
 
-        private float Operation(Recursion recursion)
+        private float Operation(Flow flow)
         {
-            return MathLibrary.ReverseLinearFunction(minimum.GetValue<float>(recursion), maximum.GetValue<float>(recursion), input.GetValue<float>(recursion));
+            return MathLibrary.ReverseLinearFunction(flow.GetValue<float>(minimum), flow.GetValue<float>(maximum), flow.GetValue<float>(input));
         }
     }
 }

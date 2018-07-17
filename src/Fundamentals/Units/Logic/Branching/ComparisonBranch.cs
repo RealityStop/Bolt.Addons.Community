@@ -54,22 +54,20 @@ namespace Bolt.Addons.Community.Fundamentals
             ifTrue = ControlOutput("ifTrue");
             ifFalse = ControlOutput("ifFalse");
 
-            Relation(enter, ifTrue);
-            Relation(enter, ifFalse);
-            Relation(a, ifTrue);
-            Relation(b, ifTrue);
-            Relation(a, ifFalse);
-            Relation(b, ifFalse);
+            Succession(enter, ifTrue);
+            Succession(enter, ifFalse);
+            Requirement(a, enter);
+            Requirement(b, enter);
         }
 
-        public abstract bool Comparison();
+        public abstract bool Comparison(Flow flow);
 
-        public virtual void Enter(Flow flow)
+        public ControlOutput Enter(Flow flow)
         {
-            if (Comparison())
-                flow.Invoke(ifTrue);
+            if (Comparison(flow))
+                return ifTrue;
             else
-                flow.Invoke(ifFalse);
+                return ifFalse;
         }
     }
 }

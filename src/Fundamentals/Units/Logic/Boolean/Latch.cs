@@ -71,22 +71,26 @@ namespace Bolt.Addons.Community.Fundamentals
             exit = ControlOutput(nameof(exit));
             value = ValueOutput<bool>(nameof(value), (x) => _isSet);
 
-            Relation(enter, exit);
+            Succession(enter, exit);
 
-            Relation(set, value);
-            Relation(reset, value);
-            Relation(resetDominant, value);
 
+            Requirement(set, enter);
+            Requirement(reset, enter);
+            Requirement(resetDominant, enter);
+
+            Requirement(set, value);
+            Requirement(reset, value);
+            Requirement(resetDominant, value);
         }
 
 
-        public void Enter(Flow flow)
+        public ControlOutput Enter(Flow flow)
         {
-            if (set.GetValue<bool>())
+            if (flow.GetValue<bool>(set))
             {
-                if (reset.GetValue<bool>())
+                if (flow.GetValue<bool>(reset))
                 {
-                    if (resetDominant.GetValue<bool>())
+                    if (flow.GetValue<bool>(resetDominant))
                         _isSet = false;
                     else
                         _isSet = true;
@@ -98,11 +102,11 @@ namespace Bolt.Addons.Community.Fundamentals
             }
             else
             {
-                if (reset.GetValue<bool>())
+                if (flow.GetValue<bool>(reset))
                     _isSet = false;
             }
 
-            flow.Invoke(exit);
+            return exit;
         }
     }
 }

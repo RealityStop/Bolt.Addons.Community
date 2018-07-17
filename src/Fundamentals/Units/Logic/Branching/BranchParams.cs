@@ -40,28 +40,27 @@ namespace Bolt.Addons.Community.Fundamentals
 
             base.Definition();
 
-            Relation(enter, exitTrue);
-            Relation(enter, exitFalse);
+            Succession(enter, exitTrue);
+            Succession(enter, exitFalse);
         }
 
         protected override void BuildRelations(ValueInput arg)
         {
-            Relation(arg, exitTrue);
-            Relation(arg, exitFalse);
+            Requirement(arg, enter);
         }
 
-        private bool GetValue()
+        private bool GetValue(Flow flow)
         {
             foreach (var item in arguments)
             {
                 switch (BranchingType)
                 {
                     case BranchType.And:
-                        if (!item.GetValue<bool>())
+                        if (!flow.GetValue<bool>(item))
                             return false;
                         break;
                     case BranchType.Or:
-                        if (item.GetValue<bool>())
+                        if (flow.GetValue<bool>(item))
                             return true;
                         break;
                     default:
@@ -78,12 +77,12 @@ namespace Bolt.Addons.Community.Fundamentals
             return false;
         }
 
-        private void Branch(Flow flow)
+        private ControlOutput Branch(Flow flow)
         {
-            if (GetValue())
-                flow.Invoke(exitTrue);
+            if (GetValue(flow))
+                return exitTrue;
             else
-                flow.Invoke(exitFalse);
+                return exitFalse;
         }
     }
 }

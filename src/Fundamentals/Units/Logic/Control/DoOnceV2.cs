@@ -81,33 +81,36 @@ namespace Bolt.Addons.Community.Fundamentals
                 resetBool = ValueInput<bool>(nameof(resetBool), false);
                 exit = ControlOutput(nameof(exit));
 
-                Relation(resetBool, enter);
-                Relation(resetBool, testReset);
+                Requirement(resetBool, enter);
+                Requirement(resetBool, testReset);
             }
-            Relation(enter, exit);
+            Succession(enter, exit);
         }
 
 
-        public void Enter(Flow flow)
+        public ControlOutput Enter(Flow flow)
         {
             if (_isOpen)
             {
                 _isOpen = false;
-                flow.Invoke(exit);
+                return exit;
             }
+            return null;
         }
 
-        private void Reset(Flow obj)
+        private ControlOutput Reset(Flow obj)
         {
             _isOpen = true;
+            return null;
         }
 
-        public void TestReset(Flow flow)
+        public ControlOutput TestReset(Flow flow)
         {
-            if (resetBool.GetValue<bool>())
+            if (flow.GetValue<bool>(resetBool))
             {
                 _isOpen = true;
             }
+            return null;
         }
     }
 }

@@ -83,21 +83,21 @@ namespace Bolt.Addons.Community.Fundamentals
             maxInputRange = ValueInput<float>(nameof(maxInputRange), defaultMaxRange);
             minimum = ValueInput<float>(nameof(minimum), defaultMinimum);
             maximum = ValueInput<float>(nameof(maximum), defaultMaximum);
-            output = ValueOutput<float>(nameof(output), (x) => output.GetValue<float>());
+            output = ValueOutput<float>(nameof(output), Operation);
 
-            Relation(input, output);
-            Relation(input, minInputRange);
-            Relation(input, maxInputRange);
-            Relation(minimum, output);
-            Relation(maximum, output);
+            Requirement(input, output);
+            Requirement(minInputRange, output);
+            Requirement(maxInputRange, output);
+            Requirement(minimum, output);
+            Requirement(maximum, output);
         }
 
-        private float Operation(Recursion recursion)
+        private float Operation(Flow flow)
         {
             return MathLibrary.LinearFunctionOfRange(
-                input.GetValue<float>(),
-                minInputRange.GetValue<float>(),
-                maxInputRange.GetValue<float>(), minimum.GetValue<float>(), maximum.GetValue<float>());
+                flow.GetValue<float>(input),
+                flow.GetValue<float>(minInputRange),
+                flow.GetValue<float>(maxInputRange), flow.GetValue<float>(minimum), flow.GetValue<float>(maximum));
         }
     }
 }
