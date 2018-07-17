@@ -63,7 +63,6 @@ namespace Bolt.Addons.Community.Fundamentals
             bool currentValue = flow.GetValue<bool>(inValue);
             if (!_lastEdge.HasValue || _lastEdge != currentValue)
             {
-                Debug.Log("Eehhh");
                 _lastEdge = currentValue;
                 return exit;
             }

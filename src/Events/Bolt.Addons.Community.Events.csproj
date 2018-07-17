@@ -9,45 +9,24 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Bolt.Addons.Community.Events</RootNamespace>
     <AssemblyName>Bolt.Addons.Community.Events</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
+  <Import Project="$(SolutionDir)\Bolt.targets" />
   <ItemGroup>
     <Reference Include="Bolt.Core.Runtime">
-      <HintPath>$(SolutionDir)\..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Core.Runtime.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\BoltBinaries\$(BoltVersion)\.NET$(TargetFrameworkVersionNumber)\Bolt.Core.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Bolt.Flow.Runtime">
-      <HintPath>$(SolutionDir)\..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Flow.Runtime.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\BoltBinaries\$(BoltVersion)\.NET$(TargetFrameworkVersionNumber)\Bolt.Flow.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Core.Runtime">
-      <HintPath>$(SolutionDir)\..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Core.Runtime.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\BoltBinaries\$(BoltVersion)\.NET$(TargetFrameworkVersionNumber)\Ludiq.Core.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Ludiq.Graphs.Runtime">
-      <HintPath>$(SolutionDir)\..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Graphs.Runtime.dll</HintPath>
+      <HintPath>$(SolutionDir)\..\Dependencies\BoltBinaries\$(BoltVersion)\.NET$(TargetFrameworkVersionNumber)\Ludiq.Graphs.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -71,5 +50,5 @@
     <Compile Include="TriggerReturnEvent.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(SolutionDir)\Bolt.targets" />
+  <Import Project="$(SolutionDir)\Bolt.PostBuild.targets" />
 </Project>
