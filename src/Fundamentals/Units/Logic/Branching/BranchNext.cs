@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Ludiq;
+using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals
 {

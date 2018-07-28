@@ -75,10 +75,6 @@
       <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lasm.BoltAddons.List2D\Lasm.BoltAddons.Database.csproj">
