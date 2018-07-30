@@ -50,24 +50,21 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bolt.Core.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Core.Runtime.dll</HintPath>
+      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\.NET$(TargetFrameworkVersionNumber)\Bolt.Core.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Bolt.Flow.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\Bolt.Flow.Runtime.dll</HintPath>
+      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\.NET$(TargetFrameworkVersionNumber)\Bolt.Flow.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Ludiq.Core.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Core.Runtime.dll</HintPath>
+      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\.NET$(TargetFrameworkVersionNumber)\Ludiq.Core.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Ludiq.Graphs.Runtime">
-      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\Ludiq.Graphs.Runtime.dll</HintPath>
+      <HintPath>..\..\Dependencies\BoltBinaries\$(BoltVersion)\.NET$(TargetFrameworkVersionNumber)\Ludiq.Graphs.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine">
       <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.UI.dll</HintPath>

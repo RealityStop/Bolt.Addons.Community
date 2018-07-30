@@ -76,10 +76,6 @@
       <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EventBindingDelegates\MethodEvent.cs" />
