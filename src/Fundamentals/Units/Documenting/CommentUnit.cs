@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
 {
+    [RenamedFrom("Lasm.Bolt.Comments.CommentUnit")]
     [RenamedFrom("Lasm.BoltAddons.Helpers.CommentUnit")]
     [TypeIcon(typeof(CommentUnit))]
     [UnitTitle("Comment")]
