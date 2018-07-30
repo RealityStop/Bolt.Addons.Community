@@ -37,7 +37,6 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
 
         private IEnumerable<string> GetNameSuggestions()
         {
-            Debug.Log("hi");
             return EditorVariablesUtility.GetVariableNameSuggestions(unit.kind, reference);
         }
     }
