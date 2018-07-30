@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals
 {
+     [SpecialUnit]
      [UnitCategory("Events")]
      public sealed class OnVariableChanged : MachineEventUnit<EmptyEventArgs>, IUnifiedVariableUnit
      {
@@ -99,7 +100,7 @@ namespace Bolt.Addons.Community.Fundamentals
             base.StartListening(stack);
             var data = stack.GetElementData<Data>(this);
             data._previousValue = null;
-            data.firstExecution = false;
+            data.firstExecution = true;
         }
 
 
