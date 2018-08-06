@@ -41,7 +41,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
 
         private ControlOutput Enter(Flow x)
         {
-            string message = string.Format("Todo{0}", string.IsNullOrWhiteSpace(CustomMessage) ? "" : " - " + CustomMessage);
+            string message = string.Format("Todo{0}", string.IsNullOrEmpty(CustomMessage) ? "" : " - " + CustomMessage);
 
             Debug.LogWarning(message);
 
