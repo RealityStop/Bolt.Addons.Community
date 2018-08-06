@@ -34,10 +34,6 @@
       <HintPath>$(SolutionDir)..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(SolutionDir)..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEditor">
       <HintPath>$(SolutionDir)..\Dependencies\UnityBinaries\UnityEditor.dll</HintPath>
       <Private>False</Private>

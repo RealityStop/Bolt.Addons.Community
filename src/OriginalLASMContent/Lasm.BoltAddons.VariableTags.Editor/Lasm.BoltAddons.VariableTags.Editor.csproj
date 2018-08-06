@@ -68,10 +68,6 @@
       <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\Dependencies\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>..\Lasm.BoltAddons.VariableTags\bin\Debug\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>False</Private>

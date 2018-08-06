@@ -45,9 +45,6 @@
     <Reference Include="UnityEngine">
       <HintPath>$(SolutionDir)\..\Dependencies\\UnityBinaries\UnityEngine.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(SolutionDir)\..\Dependencies\\UnityBinaries\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>$(SolutionDir)\..\Dependencies\\UnityBinaries\UnityEngine.UI.dll</HintPath>
     </Reference>
@@ -56,8 +53,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Editor\CommentUnitWidget.cs" />
     <Compile Include="Editor\Descriptors\LogicParamsDescriptor.cs" />
+    <Compile Include="Editor\Descriptors\OnVariableChangedDescriptor.cs" />
+    <Compile Include="Editor\OnVariableChangedWidget.cs" />
     <Compile Include="Editor\Options.cs" />
+    <Compile Include="Editor\UnitOptions\OnVariableChangedOption.cs" />
     <Compile Include="Editor\UnitOptions\DecrementUnitOption.cs" />
     <Compile Include="Editor\UnitOptions\IncrementUnitOption.cs" />
     <Compile Include="Editor\UnitOptions\OnVariableChanged.cs" />
