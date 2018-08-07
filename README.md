@@ -1,3 +1,4 @@
+
 # Bolt.Addons.Community
 A community-driven project for extending Unity Bolt with custom nodes, types, and helpers.
 
@@ -13,12 +14,21 @@ While the latter flows off of the tongue more naturally, this project aims to be
 
 ----------
 
-## Now in V2.0!
+## Now in V2.2.1!
 
- Version 2.0 has arrived!  See the [release notes](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Version-2.0-Released!) for more details on what comes with 2.0 as well why the version number got bumped all the way to 2.0.
+We've added four new units.  The standout is the On Variable Changed:
+
+ ![enter image description here](https://user-images.githubusercontent.com/33366270/43755484-0f0a3c70-99de-11e8-9c5b-c354bcb6802b.png)
+
+Which will track state and trigger when the selected variable has changed!
+
+Additionally, we've added some Documentation units to improve organization (See the releases page for more information)
+
+![enter image description here](https://user-images.githubusercontent.com/33366270/43755381-a6b85b5c-99dd-11e8-9bb8-15389d323da2.png)
  
- 
- 
+![enter image description here](https://user-images.githubusercontent.com/33366270/43755436-e4ff8714-99dd-11e8-8352-b2bc4a63c92a.png)
+
+![enter image description here](https://user-images.githubusercontent.com/33366270/43755459-f8127302-99dd-11e8-9edf-4a83ec364b9b.png)
 
 ## Installing
 
@@ -38,8 +48,13 @@ There are two .unitypackages delivered currently:
  - **Plus Equals**
 
 /Events
- - **On Every X Seconds** -- *(new in 1.6.1)*
+ - **On Every X Seconds**
+ - **On Variable Changed** -- *(new in 2.2.1)*
 
+/Documentation
+ - **Todo** -- *(new in 2.2.1)*
+ - **Stuff Happens** -- *(new in 2.2.1)*
+ - **Comment** -- *(new in 2.2.1)*
 
 /Collections
  - **Random Numbers** 
@@ -49,7 +64,7 @@ There are two .unitypackages delivered currently:
  - **Branch Greater**
  - **Branch Less**
  - **Branch Next**
- - **Branch (Params)** - *(New in 2.0)*
+ - **Branch (Params)**
  - **Gate**
  - **Edge Trigger**
  - **Change Detect**
@@ -59,10 +74,10 @@ There are two .unitypackages delivered currently:
  - **Latch**
  - **Polarity**
  - **Between**
- - **Logic (Params)** - *(New in 2.0)*
+ - **Logic (Params)**
 
 /Math
- - **Math Op** - *(New in 2.0)*
+ - **Math Op**
  - 
 	 /Functions  (Still in testing, feel free to make suggestions, though!)
 	 - **Decay**
