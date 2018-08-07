@@ -39,7 +39,6 @@ namespace Bolt.Addons.Community.Variables.Editor
             yield return new PlusEqualUnitOption(VariableKind.Application);
             yield return new PlusEqualUnitOption(VariableKind.Saved);
 
-            yield return new OnVariableChangedOption(VariableKind.Flow);
             yield return new OnVariableChangedOption(VariableKind.Graph);
             yield return new OnVariableChangedOption(VariableKind.Object);
             yield return new OnVariableChangedOption(VariableKind.Scene);
