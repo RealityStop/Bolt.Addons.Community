@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
 {
-    [FuzzyOption(typeof(DecrementUnit))]
+    [FuzzyOption(typeof(OnVariableChanged))]
     public class OnVariableChangedOption : UnitOption<OnVariableChanged>
     {
         [Obsolete(Serialization.ConstructorWarning)]
