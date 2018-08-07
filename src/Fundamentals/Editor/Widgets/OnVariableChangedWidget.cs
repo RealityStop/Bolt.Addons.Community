@@ -12,12 +12,14 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
     [Widget(typeof(OnVariableChanged))]
     public sealed class OnVariableChangedWidget : UnitWidget<OnVariableChanged>
     {
+
+        protected override NodeColorMix baseColor => NodeColor.Green;
+
+
         public OnVariableChangedWidget(FlowCanvas canvas, OnVariableChanged unit) : base(canvas, unit)
         {
             nameInspectorConstructor = (metadata) => new VariableNameInspector(metadata, GetNameSuggestions);
         }
-
-        protected override NodeColorMix baseColor => NodeColorMix.TealReadable;
 
         private VariableNameInspector nameInspector;
         private Func<Metadata, VariableNameInspector> nameInspectorConstructor;

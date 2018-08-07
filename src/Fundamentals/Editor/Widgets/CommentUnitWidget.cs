@@ -3,11 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using Ludiq;
 using Bolt;
-using Lasm.BoltAddons.Helpers;
 using UnityEngine;
 using Bolt.Addons.Community.Fundamentals.Units.Documenting;
 
-namespace Lasm.BoltAddons.Helpers.Editor
+namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
 {
     [Widget(typeof(CommentUnit))]
     public sealed class CommentUnitWidget : UnitWidget<CommentUnit>
@@ -21,6 +20,11 @@ namespace Lasm.BoltAddons.Helpers.Editor
         {
             get
             {
+                if (unit.color.maxColorComponent == 0)
+                {
+                    return new NodeColorMix() { red = 0.6578709f, green = 1f };
+                }
+
                 return new NodeColorMix
                 {
                     red = unit.color.r,

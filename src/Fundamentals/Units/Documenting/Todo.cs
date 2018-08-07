@@ -28,7 +28,9 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
 
         [Serialize]
         [Inspectable]
-        [InspectorLabel("Custom Message")]
+        [UnitHeaderInspectable]
+        [InspectorLabel("Message")]
+        [InspectorTextArea()]
         public string CustomMessage { get; set; }
 
         protected override void Definition()
