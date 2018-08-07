@@ -13,6 +13,11 @@ namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
         [Obsolete(Serialization.ConstructorWarning)]
         public OnVariableChangedOption() : base() { }
 
+        public OnVariableChangedOption(OnVariableChanged unit) : base(unit)
+        {
+
+        }
+
         public OnVariableChangedOption(VariableKind kind, string defaultName = null) : base() {
             this.kind = kind;
             this.name = defaultName;
