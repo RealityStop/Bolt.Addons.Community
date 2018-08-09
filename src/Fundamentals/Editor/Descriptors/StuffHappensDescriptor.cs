@@ -15,7 +15,7 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor.Descriptors
 
         protected override EditorTexture DefinedIcon()
         {
-            return EditorTexture.Load(new AssemblyResourceProvider(Assembly.GetExecutingAssembly(), "Bolt.Addons.Community.Fundamentals.Editor", "Resources"), "Icons\\weather_clouds.png", CreateTextureOptions.PixelPerfect, true);
+            return EditorTexture.Load(new AssemblyResourceProvider(Assembly.GetExecutingAssembly(), "Bolt.Addons.Community.Fundamentals.Editor", "Resources"), "weather_clouds.png", CreateTextureOptions.PixelPerfect, true);
         }
     }
 }

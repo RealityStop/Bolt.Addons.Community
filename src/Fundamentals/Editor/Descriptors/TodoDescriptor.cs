@@ -16,9 +16,9 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor.Descriptors
         protected override EditorTexture DefinedIcon()
         {
             if (unit.ErrorIfHit)
-                return EditorTexture.Load(new AssemblyResourceProvider(Assembly.GetExecutingAssembly(), "Bolt.Addons.Community.Fundamentals.Editor", "Resources"), "Icons\\construction_alarm.png", CreateTextureOptions.PixelPerfect, true);
+                return EditorTexture.Load(new AssemblyResourceProvider(Assembly.GetExecutingAssembly(), "Bolt.Addons.Community.Fundamentals.Editor", "Resources"), "construction_alarm.png", CreateTextureOptions.PixelPerfect, true);
             
-            return EditorTexture.Load(new AssemblyResourceProvider(Assembly.GetExecutingAssembly(), "Bolt.Addons.Community.Fundamentals.Editor", "Resources"), "Icons\\construction.png", CreateTextureOptions.PixelPerfect, true);
+            return EditorTexture.Load(new AssemblyResourceProvider(Assembly.GetExecutingAssembly(), "Bolt.Addons.Community.Fundamentals.Editor", "Resources"), "construction.png", CreateTextureOptions.PixelPerfect, true);
         }
     }
 }

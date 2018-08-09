@@ -78,22 +78,22 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Icons\construction.png" />
+    <EmbeddedResource Include="Resources\construction_alarm.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Icons\construction_alarm.png" />
+    <EmbeddedResource Include="Resources\weather_clouds.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Icons\weather_clouds.png" />
+    <EmbeddedResource Include="Resources\comments.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Icons\comments.png" />
+    <EmbeddedResource Include="Resources\variableevent.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Icons\variableevent.png" />
+    <EmbeddedResource Include="Resources\arrow_switch.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Icons\arrow_switch.png" />
+    <EmbeddedResource Include="Resources\construction.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\Bolt.PostBuild.targets" />

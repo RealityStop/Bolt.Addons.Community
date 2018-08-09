@@ -15,7 +15,7 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor.Descriptors
 
         protected override EditorTexture DefinedIcon()
         {
-            return EditorTexture.Load(new AssemblyResourceProvider(Assembly.GetExecutingAssembly(), "Bolt.Addons.Community.Fundamentals.Editor", "Resources"), "Icons\\comments.png", CreateTextureOptions.PixelPerfect, true);
+            return EditorTexture.Load(new AssemblyResourceProvider(Assembly.GetExecutingAssembly(), "Bolt.Addons.Community.Fundamentals.Editor", "Resources"), "comments.png", CreateTextureOptions.PixelPerfect, true);
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Bolt.Addons.Community.Fundamentals
 
         protected override EditorTexture DefinedIcon()
         {
-            return EditorTexture.Load(new AssemblyResourceProvider(Assembly.GetExecutingAssembly(), "Bolt.Addons.Community.Fundamentals.Editor", "Resources"), "Icons\\arrow_switch.png", CreateTextureOptions.PixelPerfect, true);
+            return EditorTexture.Load(new AssemblyResourceProvider(Assembly.GetExecutingAssembly(), "Bolt.Addons.Community.Fundamentals.Editor", "Resources"), "arrow_switch.png", CreateTextureOptions.PixelPerfect, true);
         }
     }
 }
