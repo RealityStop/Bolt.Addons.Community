@@ -9,13 +9,11 @@ namespace Bolt.Addons.Community.Fundamentals
 {
     public abstract class VariadicNode<T> : Unit
     {
-
-
         [SerializeAs(nameof(argumentCount))]
         private int _argumentCount;
 
         [DoNotSerialize]
-        public List<ValueInput> arguments { get; private set; }
+        public List<ValueInput> arguments { get; protected set; }
 
 
         [DoNotSerialize]

@@ -13,11 +13,16 @@ namespace Bolt.Addons.Community.Fundamentals
     [TypeIcon(typeof(Absolute<float>))]
     public class MathParamNode : VariadicNode<float>
     {
-        public enum MathType { Add, Subtract, Multiply, Divide}
+        public enum MathType { Add, Subtract, Multiply, Divide }
 
 
         [SerializeAs(nameof(OperationType))]
         private MathType _operationType;
+
+        [Serialize]
+        [Inspectable]
+        [InspectorLabel("Non-Numeric Inputs")]
+        private bool nonNumeric;
 
         [DoNotSerialize]
         [Inspectable, UnitHeaderInspectable("Operation")]
@@ -31,9 +36,27 @@ namespace Bolt.Addons.Community.Fundamentals
 
         protected override void Definition()
         {
-            output = ValueOutput<float>(nameof(output), GetValue);
-
-            base.Definition();
+            arguments = new List<ValueInput>();
+            if (nonNumeric)
+            {
+                output = ValueOutput<object>(nameof(output), GetObjectValue);
+                for (var i = 0; i < argumentCount; i++)
+                {
+                    var argument = ValueInput<object>("Arg_" + i);
+                    arguments.Add(argument);
+                    BuildRelations(argument);
+                }
+            }
+            else
+            {
+                output = ValueOutput<float>(nameof(output), GetFloatValue);
+                for (var i = 0; i < argumentCount; i++)
+                {
+                    var argument = ValueInput<float>("Arg_" + i);
+                    arguments.Add(argument);
+                    BuildRelations(argument);
+                }
+            }
         }
 
         protected override void BuildRelations(ValueInput arg)
@@ -41,12 +64,13 @@ namespace Bolt.Addons.Community.Fundamentals
             Requirement(arg, output);
         }
 
-        private float GetValue(Flow flow)
+        private float GetFloatValue(Flow flow)
         {
             float numeric = flow.GetValue<float>(arguments[0]);
 
             for (int i = 1; i < argumentCount; i++)
             {
+
                 switch (OperationType)
                 {
                     case MathType.Add:
@@ -65,8 +89,37 @@ namespace Bolt.Addons.Community.Fundamentals
                         break;
                 }
             }
-
             return numeric;
+        }
+
+
+        private object GetObjectValue(Flow flow)
+        {
+
+            object obj = flow.GetValue<object>(arguments[0]);
+
+            for (int i = 1; i < argumentCount; i++)
+            {
+                switch (OperationType)
+                {
+                    case MathType.Add:
+                        obj = OperatorUtility.Add(obj, flow.GetValue<object>(arguments[i]));
+                        break;
+                    case MathType.Subtract:
+                        obj = OperatorUtility.Subtract(obj, flow.GetValue<object>(arguments[i]));
+                        break;
+                    case MathType.Multiply:
+                        obj = OperatorUtility.Multiply(obj, flow.GetValue<object>(arguments[i]));
+                        break;
+                    case MathType.Divide:
+                        obj = OperatorUtility.Divide(obj, flow.GetValue<object>(arguments[i]));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return obj;
         }
     }
 }
