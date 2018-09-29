@@ -13,6 +13,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.DoOnceV2")]
     [UnitTitle("Do Once")]
     [TypeIcon(typeof(ISelectUnit))]
+    [Obsolete("Use the build in Once Unit!")]
     public sealed class DoOnceV2 : Unit
     {
         public DoOnceV2() : base() { }

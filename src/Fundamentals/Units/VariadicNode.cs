@@ -26,7 +26,7 @@ namespace Bolt.Addons.Community.Fundamentals
             }
             set
             {
-                _argumentCount = Mathf.Clamp(value, 2, 10);
+                _argumentCount = Mathf.Clamp(value, 2, ArgumentLimit());
             }
         }
 
@@ -36,12 +36,17 @@ namespace Bolt.Addons.Community.Fundamentals
         {
             arguments = new List<ValueInput>();
 
-            for (var i = 0; i < argumentCount; i++)
+            for (var i = 0; i < Math.Min(argumentCount, ArgumentLimit()); i++)
             {
                 var argument = ValueInput<T>("Arg_" + i);
                 arguments.Add(argument);
                 BuildRelations(argument);
             }
+        }
+
+        protected virtual int ArgumentLimit()
+        {
+            return 10;
         }
     }
 }
