@@ -14,6 +14,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitCategory("Community\\Control")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchEqual")]
     [UnitOrder(0)]
+    [Obsolete("Use the Branch (Param) node instead!  It supersede this one!")]
     public sealed class BranchEqual : ComparisonBranch
     {
         public BranchEqual() : base() { }
