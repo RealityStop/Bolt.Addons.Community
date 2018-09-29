@@ -106,7 +106,8 @@ namespace Bolt.Addons.Community.Fundamentals
 
                         for (int i = 1; i < arguments.Count; i++)
                         {
-                            if (Mathf.Approximately(target, flow.GetValue<float>(arguments[i])))
+                            Debug.Log(flow.GetValue<float>(arguments[i]));
+                            if (!Mathf.Approximately(target, flow.GetValue<float>(arguments[i])))
                                 return false;
                         }
                         return true;
@@ -117,7 +118,7 @@ namespace Bolt.Addons.Community.Fundamentals
 
                         for (int i = 1; i < arguments.Count; i++)
                         {
-                            if (target != flow.GetValue<object>(arguments[i]))
+                            if (!OperatorUtility.Equal(target, flow.GetValue<object>(arguments[i])))
                                 return false;
                         }
                         return true;
