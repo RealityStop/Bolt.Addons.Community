@@ -27,7 +27,7 @@ namespace Bolt.Addons.Community.Fundamentals
 
 
         [Serialize]
-        [InspectorLabel("Allow Equals [[Less, Greater]]")]
+        [InspectorLabel("[[<,>]] Allow Equals")]
         [Inspectable]
         //[InspectableIf(nameof(supportsEqual))]
         public bool AllowEquals = false;
@@ -40,7 +40,7 @@ namespace Bolt.Addons.Community.Fundamentals
 
         [Serialize]
         [Inspectable]
-        [InspectorLabel("Numeric [[Equals]]")]
+        [InspectorLabel("[[ = ]] Numeric")]
         //[InspectableIf(nameof(supportsNumeric))]
         public bool Numeric = false;
 

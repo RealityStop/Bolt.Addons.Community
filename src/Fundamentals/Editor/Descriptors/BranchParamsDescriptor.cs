@@ -42,6 +42,9 @@ namespace Bolt.Addons.Community.Fundamentals
         {
             base.DefinedPort(port, description);
 
+            if (port == unit.exitNext)
+                description.summary = "Exit control flow after True/False evaluation.  Will always be called following the comparison.";
+
             if (port == unit.exitTrue)
             {
                 switch (unit.BranchingType)
