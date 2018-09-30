@@ -30,7 +30,7 @@ namespace Bolt.Addons.Community.Fundamentals
         [InspectorLabel("Allow Equals [[Less, Greater]]")]
         [Inspectable]
         //[InspectableIf(nameof(supportsEqual))]
-        protected bool AllowEquals = false;
+        public bool AllowEquals = false;
 
 
 
@@ -42,7 +42,7 @@ namespace Bolt.Addons.Community.Fundamentals
         [Inspectable]
         [InspectorLabel("Numeric [[Equals]]")]
         //[InspectableIf(nameof(supportsNumeric))]
-        protected bool Numeric = false;
+        public bool Numeric = false;
 
 
         protected override void Definition()
