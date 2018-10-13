@@ -15,7 +15,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [TypeIcon(typeof(Branch))]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchAnd")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchParams")]
-    public sealed class BranchParams : LogicParamNode
+    public sealed class BranchParams : LogicParamNode, IBranchUnit
     {
         public BranchParams() { }
 
@@ -31,12 +31,26 @@ namespace Bolt.Addons.Community.Fundamentals
         [DoNotSerialize]
         public ControlOutput exitFalse { get; private set; }
 
+        [PortLabel("Next")]
+        [DoNotSerialize]
+        public ControlOutput exitNext { get; private set; }
+
+        [Serialize]
+        [Inspectable]
+        [InspectorLabel("Next Output")]
+        private bool showNext;
+
 
         protected override void Definition()
         {
-            enter = ControlInput(nameof(enter), (x) => Branch(x));
+            enter = ControlInput(nameof(enter), Branch);
             exitTrue = ControlOutput(nameof(exitTrue));
             exitFalse = ControlOutput(nameof(exitFalse));
+            if (showNext)
+            {
+                exitNext = ControlOutput(nameof(exitNext));
+                Succession(enter, exitNext);
+            }
 
             base.Definition();
 
@@ -51,38 +65,81 @@ namespace Bolt.Addons.Community.Fundamentals
 
         private bool GetValue(Flow flow)
         {
-            foreach (var item in arguments)
+            switch (BranchingType)
             {
-                switch (BranchingType)
-                {
-                    case BranchType.And:
+                case BranchType.And:
+                    foreach (var item in arguments)
+                    {
                         if (!flow.GetValue<bool>(item))
                             return false;
-                        break;
-                    case BranchType.Or:
+                    }
+                    return true;
+                case BranchType.Or:
+                    foreach (var item in arguments)
+                    {
                         if (flow.GetValue<bool>(item))
                             return true;
-                        break;
-                    default:
-                        return false;
-                }
+                    }
+                    return false;
+                case BranchType.GreaterThan:
+                    {
+                        bool NumericComparison(float a, float b, bool allowEquals)
+                        {
+                            return (a > b) || (allowEquals && Mathf.Approximately(a, b));
+                        }
+
+                        return NumericComparison(flow.GetValue<float>(arguments[0]), flow.GetValue<float>(arguments[1]), AllowEquals);
+                    }
+                case BranchType.LessThan:
+                    {
+                        bool NumericComparison(float a, float b, bool allowEquals)
+                        {
+                            return (a < b) || (allowEquals && Mathf.Approximately(a, b));
+                        }
+
+                        return NumericComparison(flow.GetValue<float>(arguments[0]), flow.GetValue<float>(arguments[1]), AllowEquals);
+                    }
+                case BranchType.Equal:
+                    if (Numeric)
+                    {
+                        var target = flow.GetValue<float>(arguments[0]);
+
+                        for (int i = 1; i < arguments.Count; i++)
+                        {
+                            Debug.Log(flow.GetValue<float>(arguments[i]));
+                            if (!Mathf.Approximately(target, flow.GetValue<float>(arguments[i])))
+                                return false;
+                        }
+                        return true;
+                    }
+                    else
+                    {
+                        var target = flow.GetValue<object>(arguments[0]);
+
+                        for (int i = 1; i < arguments.Count; i++)
+                        {
+                            if (!OperatorUtility.Equal(target, flow.GetValue<object>(arguments[i])))
+                                return false;
+                        }
+                        return true;
+                    }
+                default:
+                    return false;
             }
-
-            if (BranchingType == BranchType.And)
-                return true;
-
-            if (BranchingType == BranchType.Or)
-                return false;
-
-            return false;
         }
+
 
         private ControlOutput Branch(Flow flow)
         {
             if (GetValue(flow))
-                return exitTrue;
+                flow.Invoke(exitTrue);
             else
-                return exitFalse;
+                flow.Invoke(exitFalse);
+
+            if (showNext)
+                return exitNext;
+
+            return null;
         }
     }
 }

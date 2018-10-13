@@ -14,6 +14,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [RenamedFrom("Bolt.Addons.Community.Variables.Units.BranchNext")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchNext")]
     [UnitOrder(0)]
+    [Obsolete("Use the Branch (Param) node instead!  It supersede this one!")]
     public sealed class BranchNext : Unit, IBranchUnit
     {
         public BranchNext() : base() { }

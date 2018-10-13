@@ -1,0 +1,8 @@
+@Reality.Stop() Here goes for the type of events:
+
+- Global Event: Is triggered to the event bus (EventBus.Trigger) on all handlers.
+- Game Object Event: Is triggered through the event bus (EventBus.Trigger), but only on handlers where the EventHook's target matches. (Basically: "local" events)
+- Manual Event: Will have to get triggered through TriggerEventHandler. Usually used for special cases & edit mode stuff like gizmos.
+- Event (abstract): None of this is very well defined, so you can derive it to implement really customized events.
+
+It's important to note that the event bus does not exist during edit mode, so if you need to run graph code then, you'll probably need Manual Event.

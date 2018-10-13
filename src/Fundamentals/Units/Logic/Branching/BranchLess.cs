@@ -13,6 +13,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitCategory("Community\\Control")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchLess")]
     [UnitOrder(2)]
+    [Obsolete("Use the Branch (Param) node instead!  It supersede this one!")]
     public sealed class BranchLess : ComparisonBranch
     {
         public BranchLess() : base() { }

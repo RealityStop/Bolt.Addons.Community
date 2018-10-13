@@ -13,6 +13,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitCategory("Community\\Control")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchGreater")]
     [UnitOrder(1)]
+    [Obsolete("Use the Branch (Param) node instead!  It supersede this one!")]
     public sealed class BranchGreater : ComparisonBranch
     {
         public BranchGreater() : base() { }
