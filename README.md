@@ -33,22 +33,23 @@ There are two .unitypackages delivered currently:
 
 /Events
  - **On Every X Seconds**
- - **On Variable Changed** -- *(new in 2.2.1)*
+ - **On Variable Changed**
+ - **Manual Event** -- *(new in 2.3)*
 
 /Documentation
- - **Todo** -- *(new in 2.2.1)*
- - **Stuff Happens** -- *(new in 2.2.1)*
- - **Comment** -- *(new in 2.2.1)*
+ - **Todo**
+ - **Stuff Happens**
+ - **Comment**
 
 /Collections
  - **Random Numbers** 
 
 /Control
- - **Branch Equal**
- - **Branch Greater**
- - **Branch Less**
- - **Branch Next**
- - **Branch (Params)**
+ - **Branch Equal** -- *Now in the Branch (Params)*
+ - **Branch Greater** -- *Now in the Branch (Params)*
+ - **Branch Less** -- *Now in the Branch (Params)*
+ - **Branch Next** -- *Now in the Branch (Params)*
+ - **Branch (Params)** -- *Improved!*
  - **Gate**
  - **Edge Trigger**
  - **Change Detect**
