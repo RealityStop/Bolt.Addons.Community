@@ -39,6 +39,7 @@
     <Compile Include="Units\Documenting\CommentUnit.cs" />
     <Compile Include="Units\Documenting\StuffHappens.cs" />
     <Compile Include="Units\Documenting\Todo.cs" />
+    <Compile Include="Units\FlowEvents\ManualEvent.cs" />
     <Compile Include="Units\logic\Boolean\Between.cs" />
     <Compile Include="Units\logic\Boolean\LogicParams.cs" />
     <Compile Include="Units\logic\Boolean\Latch.cs" />
@@ -80,7 +81,12 @@
     <Compile Include="Units\variables\VariableAdder.cs" />
     <Compile Include="Units\VariadicNode.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\Utility\Bolt.Addons.Community.Utility.csproj">
+      <Project>{a2fdb1fb-e259-45c0-b46a-4e416110bbb3}</Project>
+      <Name>Bolt.Addons.Community.Utility</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\Bolt.PostBuild.targets" />
 </Project>

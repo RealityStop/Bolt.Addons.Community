@@ -79,7 +79,7 @@ namespace Bolt.Addons.Community.Fundamentals
 
             if (provideInitial)
             {
-                Initial = ValueInput<object>(nameof(Initial));
+                Initial = ValueInput<object>(nameof(Initial)).AllowsNull();
                 Requirement(Initial, value);
             }
 

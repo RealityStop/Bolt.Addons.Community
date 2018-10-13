@@ -26,10 +26,14 @@ namespace Bolt.Addons.Community.Fundamentals
 
 
 
+
+        /// <summary>
+        /// Adds Equals to the comparison such that a Less comparison becomes a Less Than or Equals and a Greater comparison becomes a Greater Than or Equals.  Has no effect on other comparison modes.
+        /// </summary>
         [Serialize]
         [InspectorLabel("[[<,>]] Allow Equals")]
         [Inspectable]
-        //[InspectableIf(nameof(supportsEqual))]
+        [InspectorExpandTooltip]
         public bool AllowEquals = false;
 
 
@@ -37,11 +41,13 @@ namespace Bolt.Addons.Community.Fundamentals
         [DoNotSerialize]
         public bool supportsNumeric => BranchingType == BranchType.Equal;
 
-
+        /// <summary>
+        /// Makes an Equals comparison a Numeric comparison, allowing approximately close values to match.
+        /// </summary>
         [Serialize]
         [Inspectable]
         [InspectorLabel("[[ = ]] Numeric")]
-        //[InspectableIf(nameof(supportsNumeric))]
+       [InspectableIf(nameof(supportsNumeric))]
         public bool Numeric = false;
 
 
