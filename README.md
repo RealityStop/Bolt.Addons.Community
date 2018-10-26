@@ -16,7 +16,7 @@ While the latter flows off of the tongue more naturally, this project aims to be
 
 ## Installing
 
-Import the provided .assetpackage into your project, then and regenerate.  There is no need to add anything to the assembly or type options.  Regenerating is required before the units will be available.
+Import the provided .assetpackage into your project, then and regenerate.  There is no need to add anything to the assembly or type options.  "Build Unit Options" is required before the units will be available.
 
 > **Important:** Version 2 is structured significantly different from prior versions.  See the [Upgrade Guide](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Version-2.0-Released!) for more information.
 
