@@ -144,9 +144,7 @@ namespace Bolt.Addons.Community.Fundamentals
                 else
                 {
                     if (integer)
-                        _list = new List<int>(num);
-                    else
-                        _list = new List<float>(num);
+                        _list = new List<object>(num);
                 }
             }
 
