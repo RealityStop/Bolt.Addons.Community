@@ -1,4 +1,4 @@
-﻿using Ludiq;
+using Ludiq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -38,6 +38,8 @@ namespace Bolt.Addons.Community.Fundamentals
 
         [DoNotSerialize]
         public ValueInput unique { get; private set; }
+        [DoNotSerialize]
+        public ValueInput aotList { get; private set; }
 
         [DoNotSerialize]
         [PortLabelHidden]
@@ -58,13 +60,15 @@ namespace Bolt.Addons.Community.Fundamentals
         public bool integer { get; set; } = false;
 
 
-        IList _list = new List<object>();
+//        IList _list = new List<object>();
+        private IList _list;
 
         protected override void Definition()
         {
             input = ControlInput(nameof(input),x=>Enter(x));
             count = ValueInput<int>(nameof(count), 10);
             unique = ValueInput<bool>(nameof(unique), true);
+            aotList = ValueInput<bool>(nameof(aotList), false);
             exit = ControlOutput(nameof(exit));
 
             if (integer)
@@ -85,17 +89,32 @@ namespace Bolt.Addons.Community.Fundamentals
             Requirement(count, input);
             Requirement(minimum, input);
             Requirement(unique, input);
+            Requirement(aotList, input);
 
             Requirement(count, output);
             Requirement(minimum, output);
             Requirement(unique, output);
+            Requirement(aotList, output);
         }
 
         private void BuildList(Flow flow)
         {
             bool createUnique = flow.GetValue<bool>(unique);
+            bool isAotList = flow.GetValue<bool>(aotList);
+            
+            
             int num = flow.GetValue<int>(count);
 
+            if (isAotList)
+            {
+                _list = new AotList();
+            }
+            else
+            {
+                _list = new List<object>();
+            }
+            
+            // TODO: redundant
             _list.Clear();
 
             //If we need unique integers, we have to ensure there are enough choices
@@ -106,7 +125,9 @@ namespace Bolt.Addons.Community.Fundamentals
             if (integer)
             {
                 int min = flow.GetValue<int>(minimum);
-                int max = flow.GetValue<int>(maximum);
+                // we add 1 for consistency
+                int max = flow.GetValue<int>(maximum) + 1;
+                
                 if (createUnique)
                     if (max - min < num)
                     {
