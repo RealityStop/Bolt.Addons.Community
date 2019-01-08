@@ -12,7 +12,6 @@ namespace Bolt.Addons.Community.Fundamentals
     /// Returns a list of random numbers from the specified range.
     /// </summary>
     [UnitCategory("Community\\Collections\\Lists")]
-    [RenamedFrom("Bolt.Addons.Community.Custom_Units.Math.RandomNumbers")]
     [UnitTitle("Random Numbers")]
     [TypeIcon(typeof(IList))]
     [UnitOrder(20)]

@@ -6,9 +6,10 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Bolt.Addons.Community.Fundamentals.Deprecated
 {
     [UnitCategory("Community\\Collections\\Lists")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.RandomNumbers")]
     [RenamedFrom("Bolt.Addons.Community.Custom_Units.Math.RandomNumbers")]
     [UnitTitle("Random Numbers")]
     [TypeIcon(typeof(IList))]
