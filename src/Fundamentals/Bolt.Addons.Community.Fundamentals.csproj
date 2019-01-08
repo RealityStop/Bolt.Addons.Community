@@ -36,7 +36,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Units\Deprecated\RandomNumbers.cs" />
     <Compile Include="Units\Documenting\CommentUnit.cs" />
+    <Compile Include="Units\Documenting\MakeGame.cs" />
     <Compile Include="Units\Documenting\StuffHappens.cs" />
     <Compile Include="Units\Documenting\Todo.cs" />
     <Compile Include="Units\FlowEvents\ManualEvent.cs" />
@@ -72,7 +74,7 @@
     <Compile Include="Units\math\Functions\SigmoidFunction.cs" />
     <Compile Include="Units\math\Functions\SigmoidFunctionOfRange.cs" />
     <Compile Include="Units\math\MathParamNode.cs" />
-    <Compile Include="Units\math\RandomNumbers.cs" />
+    <Compile Include="Units\math\RandomNumbersv2.cs" />
     <Compile Include="Units\physics\OnParticleTriggerNode.cs" />
     <Compile Include="Units\variables\DecrementUnit.cs" />
     <Compile Include="Units\variables\IncrementUnit.cs" />

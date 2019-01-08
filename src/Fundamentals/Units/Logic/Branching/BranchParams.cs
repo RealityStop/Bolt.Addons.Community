@@ -131,15 +131,17 @@ namespace Bolt.Addons.Community.Fundamentals
 
         private ControlOutput Branch(Flow flow)
         {
-            if (GetValue(flow))
-                flow.Invoke(exitTrue);
-            else
-                flow.Invoke(exitFalse);
-
             if (showNext)
-                return exitNext;
+            {
+                if (GetValue(flow))
+                    flow.Invoke(exitTrue);
+                else
+                    flow.Invoke(exitFalse);
 
-            return null;
+                return exitNext;
+            }
+            else
+                return GetValue(flow) ? exitTrue : exitFalse;
         }
     }
 }

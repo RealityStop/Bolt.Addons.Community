@@ -6,15 +6,14 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Bolt.Addons.Community.Fundamentals.Deprecated
 {
-    /// <summary>
-    /// Takes a given float input (0-1) and scales it across the specified range.
-    /// </summary>
     [UnitCategory("Community\\Collections\\Lists")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.RandomNumbers")]
     [RenamedFrom("Bolt.Addons.Community.Custom_Units.Math.RandomNumbers")]
     [UnitTitle("Random Numbers")]
     [TypeIcon(typeof(IList))]
+    [Obsolete]
     [UnitOrder(20)]
     public class RandomNumbers : Unit
     {
@@ -62,7 +61,7 @@ namespace Bolt.Addons.Community.Fundamentals
 
         protected override void Definition()
         {
-            input = ControlInput(nameof(input),x=>Enter(x));
+            input = ControlInput(nameof(input), x => Enter(x));
             count = ValueInput<int>(nameof(count), 10);
             unique = ValueInput<bool>(nameof(unique), true);
             exit = ControlOutput(nameof(exit));
@@ -101,7 +100,7 @@ namespace Bolt.Addons.Community.Fundamentals
             //If we need unique integers, we have to ensure there are enough choices
             if (createUnique && integer)
             {
-               
+
             }
             if (integer)
             {
@@ -129,7 +128,7 @@ namespace Bolt.Addons.Community.Fundamentals
         {
             HashSet<T> uniqueNumbers = new HashSet<T>();
 
-            while(list.Count < count)
+            while (list.Count < count)
             {
                 T newNumber = p();
                 if (unique)
