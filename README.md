@@ -42,7 +42,7 @@ There are two .unitypackages delivered currently:
  - **Comment**
 
 /Collections
- - **Random Numbers** 
+ - **Random Numbers** -- *Improved!*
 
 /Control
  - **Branch Equal** -- *Now in the Branch (Params)*
@@ -72,11 +72,7 @@ There are two .unitypackages delivered currently:
 	 - **Reverse Linear**
 	 - **Sigmoid**
 
-> ### Bolt.Addons.Community.Events
- - **Return**
- - **Return Event**
- - **Trigger Return Event**
-
+> ### Bolt.Addons.Community.Events  (Officially moved to its own page - http://lifeandstylemedia.com/tutorials/bolt/assets/returnevent_downloads.php)
 
 
 
@@ -110,4 +106,6 @@ The binaries will be copied to \Output\\{targetversion}
 ## Current contributors (aka who to blame)
  - *Reality.Stop()
  - *JasonJamesLASM
+ - Necka
+ - Eka
  - Silence
