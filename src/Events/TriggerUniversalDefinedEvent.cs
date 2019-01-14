@@ -6,18 +6,15 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.DefinedEvents
 {
+
     [UnitCategory("Community/Events")]
-    [UnitTitle("Trigger Defined Event")]
+    [UnitTitle("Trigger Universal Defined Event")]
     [TypeIcon(typeof(BoltUnityEvent))]
-    public class TriggerDefinedEvent : Unit
+    public class TriggerUniversalDefinedEvent : Unit
     {
 
         [Inspectable, UnitHeaderInspectable("Event Type")]
         public System.Type eventType;
-
-        [DoNotSerialize]
-        [PortLabel("Event Target")]
-        public ValueInput zzzEventTarget { get; private set; }
 
 
         [DoNotSerialize]
@@ -46,11 +43,9 @@ namespace Bolt.Addons.Community.DefinedEvents
 
             exit = ControlOutput(nameof(exit));
 
-            zzzEventTarget = ValueInput<GameObject>(nameof(zzzEventTarget), null).NullMeansSelf();
 
             BuildFromInfo();
 
-            Requirement(zzzEventTarget, enter);
             Succession(enter, exit);
         }
 
@@ -67,7 +62,7 @@ namespace Bolt.Addons.Community.DefinedEvents
             }
 
 
-            foreach (var property in Info.reflectedProperties)  
+            foreach (var property in Info.reflectedProperties)
             {
                 inputPorts.Add(ValueInput(property.Value.PropertyType, property.Value.Name));
             }
@@ -97,9 +92,10 @@ namespace Bolt.Addons.Community.DefinedEvents
                 }
             }
 
-            TargettedDefinedEvent.Trigger(flow.GetValue<GameObject>(zzzEventTarget), eventInstance);
+            UniversalDefinedEvent.Trigger(eventInstance);
 
             return exit;
         }
     }
+
 }

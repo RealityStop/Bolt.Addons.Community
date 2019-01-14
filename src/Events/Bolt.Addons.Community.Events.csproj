@@ -43,9 +43,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReflectedInfo.cs" />
     <Compile Include="SampleEventStruct.cs" />
+    <Compile Include="TriggerUniversalDefinedEvent.cs" />
     <Compile Include="TriggerDefinedEvent.cs" />
-    <Compile Include="DefinedEvent.cs" />
+    <Compile Include="UniversalDefinedEvent.cs" />
     <Compile Include="DefinedEventArgs.cs" />
+    <Compile Include="TargettedDefinedEvent.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\Bolt.PostBuild.targets" />

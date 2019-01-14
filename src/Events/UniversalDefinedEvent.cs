@@ -1,6 +1,8 @@
 using Ludiq;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine;
 /// <summary>
 /// Universal event.
 /// 
@@ -10,17 +12,10 @@ using System.Reflection;
 namespace Bolt.Addons.Community.DefinedEvents
 {
     [UnitCategory("Events")]
-    [UnitTitle("On Defined Event")]
-    public class DefinedEvent : EventUnit<DefinedEventArgs>
+    [UnitTitle("On Universal Defined Event")]
+    public class UniversalDefinedEvent : EventUnit<DefinedEventArgs>
     {
-        const string EventName = "OnDefinedEvent";
-
-
-        //[Inspectable, UnitHeaderInspectable]
-        //public System.Type eventType;
-
-        [SerializeAs(nameof(lastEventType))]
-        private System.Type _lastEventType;
+        const string EventName = "OnUniversalDefinedEvent";
 
         [SerializeAs(nameof(eventType))]
         private System.Type _eventType;
@@ -33,25 +28,8 @@ namespace Bolt.Addons.Community.DefinedEvents
         public System.Type eventType
         {
             get { return _eventType; }
-            set
-            {
-                var isDirty = _eventType != null;
-                //if (isDirty) Define();
-
-                _lastEventType = _eventType;
-                _eventType = value;
-            }
+            set { _eventType = value; }
         }
-
-        [DoNotSerialize]
-        public System.Type lastEventType
-        {
-            get
-            {
-                return _lastEventType;
-            }
-        }
-
 
         [DoNotSerialize]
         public List<ValueOutput> outputPorts { get; } = new List<ValueOutput>();
@@ -62,55 +40,14 @@ namespace Bolt.Addons.Community.DefinedEvents
         //protected override bool register => false;
         protected override bool register => true;
 
-        public override void StartListening(GraphStack stack)
-        {
-            // FIXME: StartListening only gets retriggered if an input changes.
-
-            //var wasListening = data.isListening;
-
-            //if (lastEventType != null && eventType != lastEventType)
-            //{
-            //    if (wasListening)
-            //    {
-            //        var tag = lastEventType.GetTypeInfo().FullName;
-            //        var eventHook = new EventHook("OnUniversalEvent", null, tag);
-
-            //        EventBus.Unregister(eventHook, data.handler);
-
-            //        StopListening(stack);
-
-            //        _lastEventType = eventType;
-            //    }
-            //}
-
-            base.StartListening(stack);
-        }
-
-        public override void StopListening(GraphStack stack)
-        {
-            base.StopListening(stack);
-        }
-
         protected override bool ShouldTrigger(Flow flow, DefinedEventArgs args)
         {
-            // FIXME: can't seem to catch when `eventType` was changed
-            // so we can't force a StopListening call.
-            // The only time this matters is during modifications during play mode
-            //
-            // If the incoming event data doesn't match our set event type,
-            // do not trigger the event.
             return args.eventData.GetType() == eventType;
         }
 
         public override EventHook GetHook(GraphReference reference)
         {
-            if (eventType == null)
-            {
-                return new EventHook(EventName);
-            }
-
-            var tag = eventType.GetTypeInfo().FullName;
-            return new EventHook(EventName, null, tag);
+            return new EventHook(EventName);
         }
 
         protected override void Definition()
@@ -132,7 +69,6 @@ namespace Bolt.Addons.Community.DefinedEvents
             {
                 outputPorts.Add(ValueOutput(field.Value.FieldType, field.Value.Name));
             }
-
 
             foreach (var property in Info.reflectedProperties)
             {
@@ -161,9 +97,10 @@ namespace Bolt.Addons.Community.DefinedEvents
 
         public static void Trigger(object eventData)
         {
-            var tag = eventData.GetType().GetTypeInfo().FullName;
-            var eventHook = new EventHook(EventName, null, tag);
-            EventBus.Trigger(eventHook, new DefinedEventArgs(eventData));
+            //var tag = eventData.GetType().GetTypeInfo().FullName;
+            //var eventHook = new EventHook(EventName, null, tag);
+            var eventHook = new EventHook(EventName);
+            EventBus.Trigger(eventHook, new DefinedEventArgs(null,eventData));
         }
     }
 }
