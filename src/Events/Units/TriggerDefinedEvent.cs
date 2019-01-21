@@ -3,17 +3,72 @@ using System.Collections.Generic;
 using Bolt;
 using Ludiq;
 using UnityEngine;
+using Bolt.Addons.Community.DefinedEvents.Support;
 
-namespace Bolt.Addons.Community.DefinedEvents
+namespace Bolt.Addons.Community.DefinedEvents.Units
 {
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.TriggerDefinedEvent")]
     [UnitCategory("Community/Events")]
     [UnitTitle("Trigger Defined Event")]
     [TypeIcon(typeof(BoltUnityEvent))]
     public class TriggerDefinedEvent : Unit
     {
+        #region Event Type Handling
 
-        [Inspectable, UnitHeaderInspectable("Event Type")]
-        public System.Type eventType;
+        [SerializeAs(nameof(eventType))]
+        private System.Type _eventType;
+
+
+        /// <summary>
+        /// The event type that will trigger this event.
+        /// </summary>
+        [DoNotSerialize]
+        //[UnitHeaderInspectable("Event Type")]
+        [InspectableIf(nameof(IsNotRestricted))]
+        public System.Type eventType
+        {
+            get
+            {
+                return _eventType;
+            }
+            set
+            {
+                _eventType = value;
+            }
+        }
+
+        /// <summary>
+        /// The event type that will trigger this event.
+        /// </summary>
+        [DoNotSerialize]
+        [UnitHeaderInspectable("Event Type")]
+        [InspectableIf(nameof(IsRestricted))]
+        [Ludiq.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+        public System.Type restrictedEventType
+        {
+            get
+            {
+                return _eventType;
+            }
+            set
+            {
+                _eventType = value;
+            }
+        }
+
+
+        public bool IsRestricted
+        {
+            get { return CommunityOptionFetcher.DefinedEvent_RestrictEventTypes; }
+        }
+
+        public bool IsNotRestricted
+        {
+            get { return !IsRestricted; }
+        }
+
+        #endregion
+
 
         [DoNotSerialize]
         [PortLabel("Event Target")]
@@ -37,8 +92,11 @@ namespace Bolt.Addons.Community.DefinedEvents
         [PortLabelHidden]
         public ControlOutput exit { get; private set; }
 
+
         [DoNotSerialize]
         private ReflectedInfo Info;
+
+
 
         protected override void Definition()
         {
@@ -57,10 +115,10 @@ namespace Bolt.Addons.Community.DefinedEvents
         private void BuildFromInfo()
         {
             inputPorts.Clear();
-            if (eventType == null)
+            if (_eventType == null)
                 return;
 
-            Info = ReflectedInfo.For(eventType);
+            Info = ReflectedInfo.For(_eventType);
             foreach (var field in Info.reflectedFields)
             {
                 inputPorts.Add(ValueInput(field.Value.FieldType, field.Value.Name));
@@ -76,9 +134,9 @@ namespace Bolt.Addons.Community.DefinedEvents
         private ControlOutput Trigger(Flow flow)
         {
 
-            if (eventType == null) return exit;
+            if (_eventType == null) return exit;
 
-            var eventInstance = System.Activator.CreateInstance(eventType);
+            var eventInstance = System.Activator.CreateInstance(_eventType);
 
             for (var i = 0; i < inputPorts.Count; i++)
             {

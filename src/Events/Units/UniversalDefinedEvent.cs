@@ -1,35 +1,75 @@
+using Bolt.Addons.Community.DefinedEvents.Support;
+using Bolt.Addons.Community.DefinedEvents.Support.Internal;
 using Ludiq;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-/// <summary>
-/// Universal event.
-/// 
-/// Changing the event type _does not work in play mode_
-/// </summary>
-/// 
-namespace Bolt.Addons.Community.DefinedEvents
+
+
+namespace Bolt.Addons.Community.DefinedEvents.Units
 {
     [UnitCategory("Events")]
-    [UnitTitle("On Universal Defined Event")]
-    public class UniversalDefinedEvent : EventUnit<DefinedEventArgs>
+    [UnitTitle("Global Defined Event")]
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.UniversalDefinedEvent")]
+    public class UniversalDefinedEvent : EventUnit<DefinedEventArgs>, IDefinedEventUnit
     {
         const string EventName = "OnUniversalDefinedEvent";
 
+        #region Event Type Handling
+
         [SerializeAs(nameof(eventType))]
         private System.Type _eventType;
+
 
         /// <summary>
         /// The event type that will trigger this event.
         /// </summary>
         [DoNotSerialize]
-        [Inspectable, UnitHeaderInspectable("Event Type")]
+        //[UnitHeaderInspectable("Event Type")]
+        [InspectableIf(nameof(IsNotRestricted))]
         public System.Type eventType
         {
-            get { return _eventType; }
-            set { _eventType = value; }
+            get
+            {
+                return _eventType;
+            }
+            set
+            {
+                _eventType = value;
+            }
         }
+
+        /// <summary>
+        /// The event type that will trigger this event.
+        /// </summary>
+        [DoNotSerialize]
+        [UnitHeaderInspectable("Event Type")]
+        [InspectableIf(nameof(IsRestricted))]
+        [Ludiq.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+        public System.Type restrictedEventType
+        {
+            get
+            {
+                return _eventType;
+            }
+            set
+            {
+                _eventType = value;
+            }
+        }
+
+        public bool IsRestricted
+        {
+            get { return CommunityOptionFetcher.DefinedEvent_RestrictEventTypes; }
+        }
+
+        public bool IsNotRestricted
+        {
+            get { return !IsRestricted; }
+        }
+        #endregion
+
 
         [DoNotSerialize]
         public List<ValueOutput> outputPorts { get; } = new List<ValueOutput>();
@@ -37,7 +77,6 @@ namespace Bolt.Addons.Community.DefinedEvents
         [DoNotSerialize]
         private ReflectedInfo Info;
 
-        //protected override bool register => false;
         protected override bool register => true;
 
         protected override bool ShouldTrigger(Flow flow, DefinedEventArgs args)
@@ -47,7 +86,7 @@ namespace Bolt.Addons.Community.DefinedEvents
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook(EventName);
+            return ConstructHook(eventType);
         }
 
         protected override void Definition()
@@ -99,8 +138,18 @@ namespace Bolt.Addons.Community.DefinedEvents
         {
             //var tag = eventData.GetType().GetTypeInfo().FullName;
             //var eventHook = new EventHook(EventName, null, tag);
-            var eventHook = new EventHook(EventName);
-            EventBus.Trigger(eventHook, new DefinedEventArgs(null,eventData));
+            EventHook hook = ConstructHook(eventData.GetType());
+            EventBus.Trigger(hook, new DefinedEventArgs(eventData));
+        }
+
+        private static EventHook ConstructHook(Type eventType)
+        {
+            EventHook hook;
+            if (DefinedEventSupport.IsOptimized())
+                hook = new EventHook(EventName, tag: eventType.GetTypeInfo().FullName);
+            else
+                hook = new EventHook(EventName);
+            return hook;
         }
     }
 }

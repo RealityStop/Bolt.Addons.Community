@@ -3,26 +3,68 @@ using System.Collections.Generic;
 using Bolt;
 using Ludiq;
 using UnityEngine;
+using Bolt.Addons.Community.DefinedEvents.Support;
 
-namespace Bolt.Addons.Community.DefinedEvents
+namespace Bolt.Addons.Community.DefinedEvents.Units
 {
-
     [UnitCategory("Community/Events")]
-    [UnitTitle("Trigger Universal Defined Event")]
+    [UnitTitle("Trigger Global Defined Event")]
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.TriggerUniversalDefinedEvent")]
     [TypeIcon(typeof(BoltUnityEvent))]
     public class TriggerUniversalDefinedEvent : Unit
     {
+        #region Event Type Handling
 
-        [Inspectable, UnitHeaderInspectable("Event Type")]
-        public System.Type eventType;
+        [SerializeAs(nameof(eventType))]
+        private System.Type _eventType;
 
+
+        [DoNotSerialize]
+        [InspectableIf(nameof(IsNotRestricted))]
+        public System.Type eventType
+        {
+            get
+            {
+                return _eventType;
+            }
+            set
+            {
+                _eventType = value;
+            }
+        }
+
+        [DoNotSerialize]
+        [UnitHeaderInspectable("Event Type")]
+        [InspectableIf(nameof(IsRestricted))]
+        [Ludiq.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+        public System.Type restrictedEventType
+        {
+            get
+            {
+                return _eventType;
+            }
+            set
+            {
+                _eventType = value;
+            }
+        }
+
+
+        public bool IsRestricted
+        {
+            get { return CommunityOptionFetcher.DefinedEvent_RestrictEventTypes; }
+        }
+
+        public bool IsNotRestricted
+        {
+            get { return !IsRestricted; }
+        }
+
+        #endregion
 
         [DoNotSerialize]
         public List<ValueInput> inputPorts { get; } = new List<ValueInput>();
 
-        /// <summary>
-        /// The entry point to trigger the event.
-        /// </summary>
         [DoNotSerialize]
         [PortLabelHidden]
         public ControlInput enter { get; private set; }

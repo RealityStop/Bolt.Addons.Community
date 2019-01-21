@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Bolt.Addons.Community.DefinedEvents
+namespace Bolt.Addons.Community.DefinedEvents.Support
 {
     class ReflectedInfo
     {
@@ -45,9 +45,6 @@ namespace Bolt.Addons.Community.DefinedEvents
             DefineInputsForEventType();
         }
 
-        /// <summary>
-        /// Reflects over "Event Type" and turns its fields and properties into input ports.
-        /// </summary>
         private void DefineInputsForEventType()
         {
             reflectedFields.Clear();

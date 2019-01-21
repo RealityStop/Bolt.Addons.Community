@@ -1,4 +1,6 @@
-﻿using Ludiq;
+﻿using Bolt.Addons.Community.DefinedEvents.Support;
+using Bolt.Addons.Community.DefinedEvents.Support.Internal;
+using Ludiq;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -6,31 +8,59 @@ using UnityEngine;
 
 
 
-namespace Bolt.Addons.Community.DefinedEvents
+namespace Bolt.Addons.Community.DefinedEvents.Units
 {
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.TargettedDefinedEvent")]
     [UnitCategory("Events")]
-    [UnitTitle("On Defined Event")]
-    public class TargettedDefinedEvent : GameObjectEventUnit<DefinedEventArgs>
+    [UnitTitle("Defined Event")]
+    public class TargettedDefinedEvent : GameObjectEventUnit<DefinedEventArgs>, IDefinedEventUnit
     {
         const string EventName = "OnDefinedEvent";
 
+        #region Event Type Handling
         [SerializeAs(nameof(eventType))]
         private System.Type _eventType;
+        
 
-
-        /// <summary>
-        /// The event type that will trigger this event.
-        /// </summary>
         [DoNotSerialize]
-        [Inspectable, UnitHeaderInspectable("Event Type")]
+        [InspectableIf(nameof(IsNotRestricted))]
         public System.Type eventType
         {
-            get { return _eventType; }
+            get {
+                return _eventType; }
             set
             {
                 _eventType = value;
             }
         }
+
+        [DoNotSerialize]
+        [UnitHeaderInspectable("Event Type")]
+        [InspectableIf(nameof(IsRestricted))]
+        [Ludiq.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+        public System.Type restrictedEventType
+        {
+            get
+            {
+                return _eventType;
+            }
+            set
+            {
+                _eventType = value;
+            }
+        }
+
+        public bool IsRestricted
+        {
+            get { return CommunityOptionFetcher.DefinedEvent_RestrictEventTypes; }
+        }
+
+        public bool IsNotRestricted
+        {
+            get { return !IsRestricted; }
+        }
+        #endregion
+
 
         [DoNotSerialize]
         public List<ValueOutput> outputPorts { get; } = new List<ValueOutput>();
@@ -41,9 +71,10 @@ namespace Bolt.Addons.Community.DefinedEvents
         protected override string hookName => EventName;
 
 
+
         protected override bool ShouldTrigger(Flow flow, DefinedEventArgs args)
         {
-            return args.eventData.GetType() == eventType;
+            return args.eventData.GetType() == _eventType;
         }
 
 
@@ -55,13 +86,14 @@ namespace Bolt.Addons.Community.DefinedEvents
         }
 
 
+
         private void BuildFromInfo()
         {
             outputPorts.Clear();
-            if (eventType == null)
+            if (_eventType == null)
                 return;
 
-            Info = ReflectedInfo.For(eventType);
+            Info = ReflectedInfo.For(_eventType);
             foreach (var field in Info.reflectedFields)
             {
                 outputPorts.Add(ValueOutput(field.Value.FieldType, field.Value.Name));
@@ -90,16 +122,29 @@ namespace Bolt.Addons.Community.DefinedEvents
                     var reflectedProperty = Info.reflectedProperties[key];
                     flow.SetValue(outputPort, reflectedProperty.GetValue(args.eventData));
                 }
-            }
+            } 
+        }
+        public override EventHook GetHook(GraphReference reference)
+        {
+            var refData = reference.GetElementData<Data>(this);
+            return ConstructHook(refData.target, _eventType);
+        }
+
+        private static EventHook ConstructHook(GameObject target, Type eventType)
+        {
+            EventHook hook;
+            if (DefinedEventSupport.IsOptimized())
+                hook = new EventHook(EventName, target, eventType.GetTypeInfo().FullName);
+            else
+                hook = new EventHook(EventName);
+            return hook;
         }
 
 
         public static void Trigger(GameObject target,object eventData)
         {
-            //var tag = eventData.GetType().GetTypeInfo().FullName;
-            //var eventHook = new EventHook(EventName, null, tag);
-            var eventHook = new EventHook(EventName, target, null);
-            EventBus.Trigger(eventHook, new DefinedEventArgs(null, eventData));
+            var eventHook = ConstructHook(target, eventData.GetType());
+            EventBus.Trigger(eventHook, new DefinedEventArgs(eventData));
         }
     }
 }
