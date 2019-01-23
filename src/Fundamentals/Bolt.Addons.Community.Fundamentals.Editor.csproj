@@ -73,6 +73,7 @@
     <Compile Include="Editor\UnitOptions\IncrementUnitOption.cs" />
     <Compile Include="Editor\UnitOptions\PlusEqualUnitOption.cs" />
     <Compile Include="Editor\Widgets\StuffHappensWidget.cs" />
+    <Compile Include="Editor\Widgets\SomeValueWidget.cs" />
     <Compile Include="Editor\Widgets\TodoUnitWidget.cs" />
     <Compile Include="Properties\AssemblyInfo-Editor.cs" />
   </ItemGroup>

@@ -41,6 +41,7 @@
     <Compile Include="Units\Deprecated\RandomNumbers.cs" />
     <Compile Include="Units\Documenting\CommentUnit.cs" />
     <Compile Include="Units\Documenting\MakeGame.cs" />
+    <Compile Include="Units\Documenting\SomeValue.cs" />
     <Compile Include="Units\Documenting\StuffHappens.cs" />
     <Compile Include="Units\Documenting\Todo.cs" />
     <Compile Include="Units\FlowEvents\ManualEvent.cs" />
