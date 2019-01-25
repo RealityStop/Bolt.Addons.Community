@@ -106,7 +106,6 @@ namespace Bolt.Addons.Community.Fundamentals
 
                         for (int i = 1; i < arguments.Count; i++)
                         {
-                            Debug.Log(flow.GetValue<float>(arguments[i]));
                             if (!Mathf.Approximately(target, flow.GetValue<float>(arguments[i])))
                                 return false;
                         }
