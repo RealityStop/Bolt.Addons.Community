@@ -36,7 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CommunityOptionFetcher.cs" />
-    <Compile Include="ICommunityOptions.cs" />
+    <Compile Include="CommunityOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Units\Deprecated\RandomNumbers.cs" />
     <Compile Include="Units\Documenting\CommentUnit.cs" />
@@ -63,6 +63,7 @@
     <Compile Include="Units\logic\Control\Gate.cs" />
     <Compile Include="Units\logic\IsNullValue.cs" />
     <Compile Include="Units\logic\LogicParamNode.cs" />
+    <Compile Include="Units\logic\LogUnit.cs" />
     <Compile Include="Units\logic\Time\EveryXSeconds.cs" />
     <Compile Include="Units\math\Functions\DecayFunction.cs" />
     <Compile Include="Units\math\Functions\DecayFunctionOfRange.cs" />

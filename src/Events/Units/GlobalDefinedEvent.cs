@@ -12,9 +12,10 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
     [UnitCategory("Events")]
     [UnitTitle("Global Defined Event")]
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.UniversalDefinedEvent")]
-    public class UniversalDefinedEvent : EventUnit<DefinedEventArgs>, IDefinedEventUnit
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.UniversalDefinedEvent")]
+    public class GlobalDefinedEvent : EventUnit<DefinedEventArgs>, IDefinedEventUnit
     {
-        const string EventName = "OnUniversalDefinedEvent";
+        const string EventName = "OnGlobalDefinedEvent";
 
         #region Event Type Handling
 

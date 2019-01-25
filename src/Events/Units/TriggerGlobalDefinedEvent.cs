@@ -7,11 +7,12 @@ using Bolt.Addons.Community.DefinedEvents.Support;
 
 namespace Bolt.Addons.Community.DefinedEvents.Units
 {
-    [UnitCategory("Community/Events")]
+    [UnitCategory("Events")]
     [UnitTitle("Trigger Global Defined Event")]
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.TriggerUniversalDefinedEvent")]
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.TriggerUniversalDefinedEvent")]
     [TypeIcon(typeof(BoltUnityEvent))]
-    public class TriggerUniversalDefinedEvent : Unit
+    public class TriggerGlobalDefinedEvent : Unit
     {
         #region Event Type Handling
 
@@ -100,13 +101,35 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
             Info = ReflectedInfo.For(eventType);
             foreach (var field in Info.reflectedFields)
             {
-                inputPorts.Add(ValueInput(field.Value.FieldType, field.Value.Name));
+                if (field.Value.FieldType == typeof(bool))
+                    inputPorts.Add(ValueInput<bool>(field.Value.Name, false));
+                else if (field.Value.FieldType == typeof(int))
+                    inputPorts.Add(ValueInput<int>(field.Value.Name, 0));
+                else if (field.Value.FieldType == typeof(float))
+                    inputPorts.Add(ValueInput<float>(field.Value.Name, 0.0f));
+                else if (field.Value.FieldType == typeof(string))
+                    inputPorts.Add(ValueInput<string>(field.Value.Name, ""));
+                else if (field.Value.FieldType == typeof(GameObject))
+                    inputPorts.Add(ValueInput<GameObject>(field.Value.Name, null).NullMeansSelf());
+                else
+                    inputPorts.Add(ValueInput(field.Value.FieldType, field.Value.Name));
             }
 
 
             foreach (var property in Info.reflectedProperties)
             {
-                inputPorts.Add(ValueInput(property.Value.PropertyType, property.Value.Name));
+                if (property.Value.PropertyType == typeof(bool))
+                    inputPorts.Add(ValueInput<bool>(property.Value.Name, false));
+                else if (property.Value.PropertyType == typeof(int))
+                    inputPorts.Add(ValueInput<int>(property.Value.Name, 0));
+                else if (property.Value.PropertyType == typeof(float))
+                    inputPorts.Add(ValueInput<float>(property.Value.Name, 0.0f));
+                else if (property.Value.PropertyType == typeof(string))
+                    inputPorts.Add(ValueInput<string>(property.Value.Name, ""));
+                else if (property.Value.PropertyType == typeof(GameObject))
+                    inputPorts.Add(ValueInput<GameObject>(property.Value.Name, null).NullMeansSelf());
+                else
+                    inputPorts.Add(ValueInput(property.Value.PropertyType, property.Value.Name));
             }
         }
 
@@ -134,7 +157,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
                 }
             }
 
-            UniversalDefinedEvent.Trigger(eventInstance);
+            GlobalDefinedEvent.Trigger(eventInstance);
 
             return exit;
         }

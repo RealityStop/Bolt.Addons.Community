@@ -7,8 +7,8 @@ using Bolt.Addons.Community.DefinedEvents.Support;
 
 namespace Bolt.Addons.Community.DefinedEvents.Units
 {
+    [UnitCategory("Events")]
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.TriggerDefinedEvent")]
-    [UnitCategory("Community/Events")]
     [UnitTitle("Trigger Defined Event")]
     [TypeIcon(typeof(BoltUnityEvent))]
     public class TriggerDefinedEvent : Unit
@@ -71,7 +71,8 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
 
 
         [DoNotSerialize]
-        [PortLabel("Event Target")]
+        [PortLabelHidden]
+        [NullMeansSelf]
         public ValueInput zzzEventTarget { get; private set; }
 
 
@@ -121,13 +122,35 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
             Info = ReflectedInfo.For(_eventType);
             foreach (var field in Info.reflectedFields)
             {
-                inputPorts.Add(ValueInput(field.Value.FieldType, field.Value.Name));
+                if (field.Value.FieldType == typeof(bool))
+                    inputPorts.Add(ValueInput<bool>(field.Value.Name, false));
+                else if (field.Value.FieldType == typeof(int))
+                    inputPorts.Add(ValueInput<int>(field.Value.Name, 0));
+                else if(field.Value.FieldType == typeof(float))
+                    inputPorts.Add(ValueInput<float>(field.Value.Name, 0.0f));
+                else if (field.Value.FieldType == typeof(string))
+                    inputPorts.Add(ValueInput<string>(field.Value.Name, ""));
+                else if (field.Value.FieldType == typeof(GameObject))
+                    inputPorts.Add(ValueInput<GameObject>(field.Value.Name, null).NullMeansSelf());
+                else
+                    inputPorts.Add(ValueInput(field.Value.FieldType, field.Value.Name));
             }
 
 
-            foreach (var property in Info.reflectedProperties)  
+            foreach (var property in Info.reflectedProperties)
             {
-                inputPorts.Add(ValueInput(property.Value.PropertyType, property.Value.Name));
+                if (property.Value.PropertyType == typeof(bool))
+                    inputPorts.Add(ValueInput<bool>(property.Value.Name, false));
+                else if (property.Value.PropertyType == typeof(int))
+                    inputPorts.Add(ValueInput<int>(property.Value.Name, 0));
+                else if (property.Value.PropertyType == typeof(float))
+                    inputPorts.Add(ValueInput<float>(property.Value.Name, 0.0f));
+                else if (property.Value.PropertyType == typeof(string))
+                    inputPorts.Add(ValueInput<string>(property.Value.Name, ""));
+                else if (property.Value.PropertyType == typeof(GameObject))
+                    inputPorts.Add(ValueInput<GameObject>(property.Value.Name, null).NullMeansSelf());
+                else
+                    inputPorts.Add(ValueInput(property.Value.PropertyType, property.Value.Name));
             }
         }
 
@@ -155,7 +178,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
                 }
             }
 
-            TargettedDefinedEvent.Trigger(flow.GetValue<GameObject>(zzzEventTarget), eventInstance);
+            DefinedEvent.Trigger(flow.GetValue<GameObject>(zzzEventTarget), eventInstance);
 
             return exit;
         }

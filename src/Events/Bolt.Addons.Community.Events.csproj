@@ -46,11 +46,11 @@
     <Compile Include="Support\Internal\IDefinedEventTriggerUnit.cs" />
     <Compile Include="Support\ReflectedInfo.cs" />
     <Compile Include="Support\Internal\IDefinedEventUnit.cs" />
-    <Compile Include="Units\TriggerUniversalDefinedEvent.cs" />
+    <Compile Include="Units\TriggerGlobalDefinedEvent.cs" />
     <Compile Include="Units\TriggerDefinedEvent.cs" />
-    <Compile Include="Units\UniversalDefinedEvent.cs" />
+    <Compile Include="Units\GlobalDefinedEvent.cs" />
     <Compile Include="Support\DefinedEventArgs.cs" />
-    <Compile Include="Units\TargettedDefinedEvent.cs" />
+    <Compile Include="Units\DefinedEvent.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fundamentals\Bolt.Addons.Community.Fundamentals.csproj">

@@ -53,6 +53,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Editor\Descriptors\LogUnitDescriptor.cs" />
     <Compile Include="Editor\Descriptors\MathParamsDescriptor.cs" />
     <Compile Include="Editor\Descriptors\BranchParamsDescriptor.cs" />
     <Compile Include="Editor\Descriptors\StuffHappensDescriptor.cs" />
@@ -122,7 +123,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\Branch_Equal.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\debug.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\Bolt.PostBuild.targets" />
 </Project>

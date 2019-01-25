@@ -11,9 +11,10 @@ using UnityEngine;
 namespace Bolt.Addons.Community.DefinedEvents.Units
 {
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.TargettedDefinedEvent")]
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.TargettedDefinedEvent")]
     [UnitCategory("Events")]
     [UnitTitle("Defined Event")]
-    public class TargettedDefinedEvent : GameObjectEventUnit<DefinedEventArgs>, IDefinedEventUnit
+    public class DefinedEvent : GameObjectEventUnit<DefinedEventArgs>, IDefinedEventUnit
     {
         const string EventName = "OnDefinedEvent";
 
