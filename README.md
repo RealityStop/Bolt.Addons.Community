@@ -77,7 +77,7 @@ There are two sets of units currently delivered:
  - **Trigger Global Event**
 
 
-Return Events have officially moved to their own page - http://lifeandstylemedia.com/tutorials/bolt/assets/returnevent_downloads.php)
+#### Return Events have officially moved to their own page - http://lifeandstylemedia.com/tutorials/bolt/assets/returnevent_downloads.php)
 
 
 ## How do I use it?
