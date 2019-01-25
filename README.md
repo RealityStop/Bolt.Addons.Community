@@ -58,6 +58,7 @@ There are two sets of units currently delivered:
  - **Polarity**
  - **Between**
  - **Logic (Params)**
+ - **Log** -- (new in 2.4)
 
 /Math
  - **Math Op**
