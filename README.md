@@ -1,4 +1,5 @@
 
+
 # Bolt.Addons.Community
 A community-driven project for extending Unity Bolt with custom nodes, types, and helpers.
 
@@ -22,7 +23,7 @@ Import the provided .assetpackage into your project, then and regenerate.  There
 
 
 ## What's included
-There are two .unitypackages delivered currently:
+There are two sets of units currently delivered:
 
 > ### Bolt.Addons.Community.Fundamentals
 
@@ -34,22 +35,19 @@ There are two .unitypackages delivered currently:
 /Events
  - **On Every X Seconds**
  - **On Variable Changed**
- - **Manual Event** -- *(new in 2.3)*
+ - **Manual Event**
 
 /Documentation
  - **Todo**
+ - **Some Value** -- (new in 2.4)
  - **Stuff Happens**
  - **Comment**
 
 /Collections
- - **Random Numbers** -- *Improved!*
+ - **Random Numbers**
 
 /Control
- - **Branch Equal** -- *Now in the Branch (Params)*
- - **Branch Greater** -- *Now in the Branch (Params)*
- - **Branch Less** -- *Now in the Branch (Params)*
- - **Branch Next** -- *Now in the Branch (Params)*
- - **Branch (Params)** -- *Improved!*
+ - **Branch (Params)**
  - **Gate**
  - **Edge Trigger**
  - **Change Detect**
@@ -72,15 +70,21 @@ There are two .unitypackages delivered currently:
 	 - **Reverse Linear**
 	 - **Sigmoid**
 
-> ### Bolt.Addons.Community.Events  (Officially moved to its own page - http://lifeandstylemedia.com/tutorials/bolt/assets/returnevent_downloads.php)
+> ### Bolt.Addons.Community.Events  (New for 2.4!)
+ - **Defined Event**
+ - **Trigger Defined Event**
+ - **Global Event**
+ - **Trigger Global Event**
 
+
+Return Events have officially moved to their own page - http://lifeandstylemedia.com/tutorials/bolt/assets/returnevent_downloads.php)
 
 
 ## How do I use it?
-See the documentation!  Once you've rebuilt your unit options, the new nodes will be available for use.  The repository wiki details each node added.  If we've missed anything, send us a message!
+See the documentation!  Add the .unitypackage, use the Tools menu to Build Unit Options, and they're ready to go!  Once you've rebuilt your unit options, the new nodes will be available for use.  The repository wiki details each node added.  If we've missed anything, send us a message!
 
 
-# For Developers:
+# For Developers  (aka, you want to build the source yourself):
 
 ## How to build
 To build the addons for Bolt version {targetversion}.  Add the following dlls from your Unity Project with {targetversion} of Bolt installed:
@@ -107,5 +111,6 @@ The binaries will be copied to \Output\\{targetversion}
  - *Reality.Stop()
  - *JasonJamesLASM
  - Necka
+ - AFoolsDuty
  - Eka
  - Silence
