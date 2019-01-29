@@ -7,8 +7,10 @@ using Bolt.Addons.Community.DefinedEvents.Support;
 
 namespace Bolt.Addons.Community.DefinedEvents.Units
 {
+    /// <summary>
+    /// Triggers an Event to all Defined Events listening for this type on the target object.
+    /// </summary>
     [UnitCategory("Events")]
-    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.TriggerDefinedEvent")]
     [UnitTitle("Trigger Defined Event")]
     [TypeIcon(typeof(BoltUnityEvent))]
     public class TriggerDefinedEvent : Unit
@@ -71,6 +73,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
 
 
         [DoNotSerialize]
+        [PortLabel("Event Target")]
         [PortLabelHidden]
         [NullMeansSelf]
         public ValueInput zzzEventTarget { get; private set; }

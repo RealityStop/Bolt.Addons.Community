@@ -10,8 +10,9 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.DefinedEvents.Units
 {
-    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.TargettedDefinedEvent")]
-    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.TargettedDefinedEvent")]
+    /// <summary>
+    /// Listens for an event by type, rather than by name.  In other respects, it acts similar to the built-in Custom Unit
+    /// </summary>
     [UnitCategory("Events")]
     [UnitTitle("Defined Event")]
     public class DefinedEvent : GameObjectEventUnit<DefinedEventArgs>, IDefinedEventUnit

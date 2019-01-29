@@ -7,10 +7,11 @@ using Bolt.Addons.Community.DefinedEvents.Support;
 
 namespace Bolt.Addons.Community.DefinedEvents.Units
 {
+    /// <summary>
+    /// Triggers a Global Event to all Global Defined Events listening for this type.
+    /// </summary>
     [UnitCategory("Events")]
     [UnitTitle("Trigger Global Defined Event")]
-    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.TriggerUniversalDefinedEvent")]
-    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.TriggerUniversalDefinedEvent")]
     [TypeIcon(typeof(BoltUnityEvent))]
     public class TriggerGlobalDefinedEvent : Unit
     {
