@@ -9,10 +9,13 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.DefinedEvents.Units
 {
+    /// <summary>
+    /// Listens for an event by type, rather than by name.  In other respects, it acts similar
+    /// to the built-in Custom Unit.  This variation listens for events triggered by any
+    /// Trigger Global Defined Event.
+    /// </summary>
     [UnitCategory("Events")]
     [UnitTitle("Global Defined Event")]
-    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.UniversalDefinedEvent")]
-    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.UniversalDefinedEvent")]
     public class GlobalDefinedEvent : EventUnit<DefinedEventArgs>, IDefinedEventUnit
     {
         const string EventName = "OnGlobalDefinedEvent";

@@ -26,7 +26,7 @@ namespace Bolt.Addons.Community
         /// This is the scripting quivalent to the Trigger Global Defined Event unit.
         /// </summary>
         /// <param name="eventData">This is a filled object of the type of event you want to trigger.</param>
-        public static void TriggerGlobally(object eventData)
+        public static void TriggerGlobal(object eventData)
         {
             Bolt.Addons.Community.DefinedEvents.Units.GlobalDefinedEvent.Trigger(eventData);
         }
