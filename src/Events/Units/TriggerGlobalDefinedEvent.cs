@@ -158,7 +158,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
                 }
             }
 
-            GlobalDefinedEvent.Trigger(eventInstance);
+            GlobalDefinedEventUnit.Trigger(eventInstance);
 
             return exit;
         }

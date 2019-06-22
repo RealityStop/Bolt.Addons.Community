@@ -49,14 +49,18 @@
     <Compile Include="Support\Internal\IDefinedEventUnit.cs" />
     <Compile Include="Units\TriggerGlobalDefinedEvent.cs" />
     <Compile Include="Units\TriggerDefinedEvent.cs" />
-    <Compile Include="Units\GlobalDefinedEvent.cs" />
+    <Compile Include="Units\GlobalDefinedEventUnit.cs" />
     <Compile Include="Support\DefinedEventArgs.cs" />
-    <Compile Include="Units\DefinedEvent.cs" />
+    <Compile Include="Units\DefinedEventUnit.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fundamentals\Bolt.Addons.Community.Fundamentals.csproj">
       <Project>{c7fa2fb0-acd3-4957-a653-979afadc3145}</Project>
       <Name>Bolt.Addons.Community.Fundamentals</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Utility\Bolt.Addons.Community.Utility.csproj">
+      <Project>{A2FDB1FB-E259-45C0-B46A-4E416110BBB3}</Project>
+      <Name>Bolt.Addons.Community.Utility</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

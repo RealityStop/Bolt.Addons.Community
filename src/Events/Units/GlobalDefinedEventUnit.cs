@@ -1,5 +1,6 @@
-﻿using Bolt.Addons.Community.DefinedEvents.Support;
+using Bolt.Addons.Community.DefinedEvents.Support;
 using Bolt.Addons.Community.DefinedEvents.Support.Internal;
+using Bolt.Addons.Community.Utility;
 using Ludiq;
 using System;
 using System.Collections.Generic;
@@ -7,35 +8,47 @@ using System.Reflection;
 using UnityEngine;
 
 
-
 namespace Bolt.Addons.Community.DefinedEvents.Units
 {
     /// <summary>
-    /// Listens for an event by type, rather than by name.  In other respects, it acts similar to the built-in Custom Unit
+    /// Listens for an event by type, rather than by name.  In other respects, it acts similar
+    /// to the built-in Custom Unit.  This variation listens for events triggered by any
+    /// Trigger Global Defined Event.
     /// </summary>
     [UnitCategory("Events")]
-    [UnitTitle("Defined Event")]
-    public class DefinedEvent : GameObjectEventUnit<DefinedEventArgs>, IDefinedEventUnit
+    [UnitTitle("Global Defined Event")]
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.GlobalDefinedEvent")]
+    public class GlobalDefinedEventUnit : EventUnit<DefinedEventArgs>, IDefinedEventUnit
     {
-        const string EventName = "OnDefinedEvent";
+        const string EventName = "OnGlobalDefinedEvent";
 
         #region Event Type Handling
+
         [SerializeAs(nameof(eventType))]
         private System.Type _eventType;
-        
 
+
+        /// <summary>
+        /// The event type that will trigger this event.
+        /// </summary>
         [DoNotSerialize]
+        //[UnitHeaderInspectable("Event Type")]
         [InspectableIf(nameof(IsNotRestricted))]
         public System.Type eventType
         {
-            get {
-                return _eventType; }
+            get
+            {
+                return _eventType;
+            }
             set
             {
                 _eventType = value;
             }
         }
 
+        /// <summary>
+        /// The event type that will trigger this event.
+        /// </summary>
         [DoNotSerialize]
         [UnitHeaderInspectable("Event Type")]
         [InspectableIf(nameof(IsRestricted))]
@@ -70,15 +83,17 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
         [DoNotSerialize]
         private ReflectedInfo Info;
 
-        protected override string hookName => EventName;
-
-
+        protected override bool register => true;
 
         protected override bool ShouldTrigger(Flow flow, DefinedEventArgs args)
         {
-            return args.eventData.GetType() == _eventType;
+            return args.eventData.GetType() == eventType;
         }
 
+        public override EventHook GetHook(GraphReference reference)
+        {
+            return ConstructHook(eventType);
+        }
 
         protected override void Definition()
         {
@@ -88,19 +103,17 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
         }
 
 
-
         private void BuildFromInfo()
         {
             outputPorts.Clear();
-            if (_eventType == null)
+            if (eventType == null)
                 return;
 
-            Info = ReflectedInfo.For(_eventType);
+            Info = ReflectedInfo.For(eventType);
             foreach (var field in Info.reflectedFields)
             {
                 outputPorts.Add(ValueOutput(field.Value.FieldType, field.Value.Name));
             }
-
 
             foreach (var property in Info.reflectedProperties)
             {
@@ -124,29 +137,35 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
                     var reflectedProperty = Info.reflectedProperties[key];
                     flow.SetValue(outputPort, reflectedProperty.GetValue(args.eventData));
                 }
-            } 
-        }
-        public override EventHook GetHook(GraphReference reference)
-        {
-            var refData = reference.GetElementData<Data>(this);
-            return ConstructHook(refData.target, _eventType);
+            }
         }
 
-        private static EventHook ConstructHook(GameObject target, Type eventType)
+        private static EventHook ConstructHook(Type eventType)
         {
             EventHook hook;
             if (DefinedEventSupport.IsOptimized())
-                hook = new EventHook(EventName, target, eventType.GetTypeInfo().FullName);
+                hook = new EventHook(EventName, tag: eventType.GetTypeInfo().FullName);
             else
                 hook = new EventHook(EventName);
             return hook;
         }
 
-
-        public static void Trigger(GameObject target,object eventData)
+        public static void Trigger(object eventData)
         {
-            var eventHook = ConstructHook(target, eventData.GetType());
-            EventBus.Trigger(eventHook, new DefinedEventArgs(eventData));
+            //var tag = eventData.GetType().GetTypeInfo().FullName;
+            //var eventHook = new EventHook(EventName, null, tag);
+            EventHook hook = ConstructHook(eventData.GetType());
+            EventBus.Trigger(hook, new DefinedEventArgs(eventData));
+        }
+
+
+        public static IDisposable RegisterListener<T>(Action<T> onEvent)
+        {
+            var eventHook = ConstructHook(typeof(T));
+            Action<DefinedEventArgs> action = (x) => { onEvent((T)x.eventData); };
+            EventBus.Register<DefinedEventArgs>(eventHook, action);
+
+            return Disposable.Create(() => { EventBus.Unregister(eventHook, action); });
         }
     }
 }
