@@ -1,6 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <BoltVersion>1.4.1</BoltVersion>
+    <BoltVersion>1.4.7</BoltVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release4.6'"> 
     <TargetFrameworkVersionNumber>4.6</TargetFrameworkVersionNumber>
