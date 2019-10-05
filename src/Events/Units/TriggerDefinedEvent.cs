@@ -181,7 +181,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
                 }
             }
 
-            DefinedEvent.Trigger(flow.GetValue<GameObject>(zzzEventTarget), eventInstance);
+            DefinedEventUnit.Trigger(flow.GetValue<GameObject>(zzzEventTarget), eventInstance);
 
             return exit;
         }
