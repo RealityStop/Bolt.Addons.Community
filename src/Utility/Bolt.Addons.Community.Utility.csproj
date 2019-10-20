@@ -36,6 +36,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Disposable.cs" />
+    <Compile Include="EditorState.cs" />
+    <Compile Include="IEditorStateFetcher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnitButton.cs" />
     <Compile Include="UnitButtonAttribute.cs" />
