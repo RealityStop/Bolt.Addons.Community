@@ -31,7 +31,6 @@ namespace Bolt.Addons.Community.Utility
                 if (types.Count() == 1)
                 {
                     Fetcher = (IEditorStateFetcher)Activator.CreateInstance(types.First());
-                    Debug.Log("EditorState Fetcher found");
                     return;
                 }
             }

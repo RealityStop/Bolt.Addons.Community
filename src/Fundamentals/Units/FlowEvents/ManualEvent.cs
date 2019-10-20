@@ -15,12 +15,23 @@ namespace Bolt.Addons.Community.Fundamentals.Units.FlowEvents
     [UnitTitle("Manual Event")]
     public class ManualEvent : MachineEventUnit<EmptyEventArgs>, IGraphElementWithData
     {
+        /*
+        Manual Event execution table:
+        Event Style,    Edit/Play,  Paused, Result,
+        Normal,         Edit,       N/A,    Immediate,
+        Normal,         Play,       No,     Defer,      "(could be immediate, but seems like it would hit edge cases)"
+        Normal,         Play,       Yes,    Immediate,
+        Coroutine,      Edit,       N/A,    "Warn, Immediate",
+        Coroutine,      Play,       No,     Defer,
+        Coroutine,      Play,       Yes,    Defer,
+
+        */
+
+
         public new class Data : EventUnit<EmptyEventArgs>.Data
         {
             //Tracked per instance of the node.
             public int LastObservedUpdateTicker = 0;
-
-            public Delegate update;
         }
 
         public override IGraphElementData CreateData()
@@ -36,6 +47,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.FlowEvents
 
 
         //Tracked class-wide (because it updates outside of the graph scope)
+        [DoNotSerialize]
         public int shouldTriggerNextUpdateTicker;
 
         public void TriggerButton(GraphReference reference)
@@ -61,7 +73,6 @@ namespace Bolt.Addons.Community.Fundamentals.Units.FlowEvents
             {
                 //In the editor, we just fire immediately.
 
-                Debug.Log("Immediate");
                 if (coroutine)
                     Debug.LogWarning("This manual event is marked as a coroutine, but Unity coroutines are only valid during Play mode.  Attempting non-coroutine activation!");
                 Flow flow = Flow.New(reference);
@@ -69,7 +80,6 @@ namespace Bolt.Addons.Community.Fundamentals.Units.FlowEvents
             }
             else
             {
-                Debug.Log("Deferring");
                 shouldTriggerNextUpdateTicker++;        //When run in game, we sync it to the update
             }
         }
