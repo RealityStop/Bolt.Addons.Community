@@ -162,7 +162,10 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
         public static IDisposable RegisterListener<T>(Action<T> onEvent)
         {
             var eventHook = ConstructHook(typeof(T));
-            Action<DefinedEventArgs> action = (x) => { onEvent((T)x.eventData); };
+            Action<DefinedEventArgs> action = (x) => {
+                if (x.eventData.GetType() == typeof(T))
+                    onEvent((T)x.eventData);
+            };
             EventBus.Register<DefinedEventArgs>(eventHook, action);
 
             return Disposable.Create(() => { EventBus.Unregister(eventHook, action); });
