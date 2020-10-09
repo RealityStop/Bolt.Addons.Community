@@ -140,7 +140,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
             if (DefinedEventSupport.IsOptimized())
                 hook = new EventHook(EventName, target, eventType.GetTypeInfo().FullName);
             else
-                hook = new EventHook(EventName);
+                hook = new EventHook(EventName, target);
             return hook;
         }
 
