@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EditorStateFetcher.cs" />
+    <Compile Include="Editor\AOTLoaderIntegration.cs" />
     <Compile Include="Properties\AssemblyInfo.Editor.cs" />
     <Compile Include="Editor\UnitButtonInspector.cs" />
     <Compile Include="Editor\UnitButtonPropertyDrawer.cs" />

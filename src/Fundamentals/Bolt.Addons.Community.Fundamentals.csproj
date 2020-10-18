@@ -37,6 +37,7 @@
   <ItemGroup>
     <Compile Include="CommunityOptionFetcher.cs" />
     <Compile Include="CommunityOptions.cs" />
+    <Compile Include="FundamentalsLoader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Units\Deprecated\RandomNumbers.cs" />
     <Compile Include="Units\Documenting\CommentUnit.cs" />
