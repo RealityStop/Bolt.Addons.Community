@@ -17,15 +17,20 @@ While the latter flows off of the tongue more naturally, this project aims to be
 
 ## Installing
 
-Import the provided .assetpackage into your project, then and regenerate.  There is no need to add anything to the assembly or type options.  "Build Unit Options" is required before the units will be available.
+To import the addons, open Packages/manifest.json and add this line under dependencies:
 
-> **Important:** Version 2 is structured significantly different from prior versions.  See the [Upgrade Guide](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Version-2.0-Released!) for more information.
+	"dev.bolt.addons": "https://github.com/RealityStop/Bolt.Addons.Community.git"
+	
+Then, use the Tools menu to Build Unit Options, and they're ready to go!  Once you've rebuilt your unit options, the new nodes will be available for use.
+
+## Updating
+To update GoCS, open Packages/manifest.json and remove the dev.bolt.addons entry under lock at the end of the file.
 
 
 ## What's included
 There are two sets of units currently delivered:
 
-> ### Bolt.Addons.Community.Fundamentals
+> ### Bolt.Addons.Community
 
 /Variables
  - **Increment Variable**
@@ -36,10 +41,14 @@ There are two sets of units currently delivered:
  - **On Every X Seconds**
  - **On Variable Changed**
  - **Manual Event**
+ - **Defined Event**
+ - **Trigger Defined Event**
+ - **Global Event**
+ - **Trigger Global Event**
 
 /Documentation
  - **Todo**
- - **Some Value** -- (new in 2.4)
+ - **Some Value**
  - **Stuff Happens**
  - **Comment**
 
@@ -58,7 +67,7 @@ There are two sets of units currently delivered:
  - **Polarity**
  - **Between**
  - **Logic (Params)**
- - **Log** -- (new in 2.4)
+ - **Log**
 
 /Math
  - **Math Op**
@@ -71,41 +80,6 @@ There are two sets of units currently delivered:
 	 - **Reverse Linear**
 	 - **Sigmoid**
 
-> ### Bolt.Addons.Community.Events  (New for 2.4!)
- - **Defined Event**
- - **Trigger Defined Event**
- - **Global Event**
- - **Trigger Global Event**
-
-
-#### Return Events have officially moved to their own page - http://lifeandstylemedia.com/tutorials/bolt/assets/returnevent_downloads.php)
-
-
-## How do I use it?
-See the documentation!  Add the .unitypackage, use the Tools menu to Build Unit Options, and they're ready to go!  Once you've rebuilt your unit options, the new nodes will be available for use.  The repository wiki details each node added.  If we've missed anything, send us a message!
-
-
-# For Developers  (aka, you want to build the source yourself):
-
-## How to build
-To build the addons for Bolt version {targetversion}.  Add the following dlls from your Unity Project with {targetversion} of Bolt installed:
-
-\Dependencies\BoltBinaries\\{targetversion}
- - Bolt.*.dll  
- - Ludiq.*.dll
-(from (*Assets\Ludiq\Assemblies*) )
-  
-\Dependencies\UnityBinaries
- - UnityEditor.dll
- - UnityEngine.CoreModule.dll
- - UnityEngine.dll
- - UnityEngine.UI.dll
- 
- ![](https://i.imgur.com/M7XvCRl.gif)
-
-Open and build the \src\Bolt.Addons.Community.sln solution in Visual Studio 2017, selecting the Release_{targetversion} solution configuration.
-
-The binaries will be copied to \Output\\{targetversion}
 
 
 ## Current contributors (aka who to blame)
