@@ -26,7 +26,7 @@ Then, use the Tools menu to Build Unit Options, and they're ready to go!  Once y
 > **Important**: if updating from a pre-3.0 version, please *DELETE* any Bolt.Addons.Community dll files.  By default these were placed in your *Plugins* folder.
 
 # Updating
-To update GoCS, open Packages/manifest.json and remove the dev.bolt.addons entry under lock at the end of the file.
+To update, open Packages/manifest.json and remove the dev.bolt.addons entry under lock at the end of the file.
 
 
 ----------
