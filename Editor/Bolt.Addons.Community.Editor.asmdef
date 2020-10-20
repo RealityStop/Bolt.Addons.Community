@@ -1,0 +1,17 @@
+{
+    "name": "Bolt.Addons.Community.Editor",
+    "references": [
+        "GUID:e46719400fbb27b4d8f5114be79b259c"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
