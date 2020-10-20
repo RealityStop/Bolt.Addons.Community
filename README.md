@@ -29,6 +29,9 @@ Then, use the Tools menu to Build Unit Options, and they're ready to go!  Once y
 To update GoCS, open Packages/manifest.json and remove the dev.bolt.addons entry under lock at the end of the file.
 
 
+----------
+
+
 ## What's included
 There are two sets of units currently delivered:
 
