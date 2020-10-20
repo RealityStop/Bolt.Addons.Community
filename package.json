@@ -1,5 +1,5 @@
 {
-    "name": "Bolt.Addons.Community",
+    "name": "dev.bolt.addons",
     "version": "3.0.0",
     "displayName": "Community Addons for Bolt",
     "description": "A collection of Unit Addons for Bolt.",
