@@ -22,8 +22,8 @@ namespace Bolt.Addons.Community
             }
         }
 
-        public static string CommunityEditorFolder => RootCommunityFolder + "Community/Editor/";
-        public static string CommunityRuntimeFolder => RootCommunityFolder + "Community/Runtime/";
+        public static string CommunityEditorFolder => RootCommunityFolder + "Editor/";
+        public static string CommunityRuntimeFolder => RootCommunityFolder + "Runtime/";
 
         public static string FundamentalsEditorFolder => CommunityEditorFolder + "Fundamentals/";
         public static string FundamentalsRuntimeFolder => CommunityRuntimeFolder + "Fundamentals/";
