@@ -1,8 +1,0 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <PostBuildEvent>
-	if not exist "$(SolutionDir)..\Output\$(BoltVersion)\$(TargetFrameworkVersionNumber)" mkdir "$(SolutionDir)..\Output\$(BoltVersion)\$(TargetFrameworkVersionNumber)"
-	xCopy "$(TargetPath)" "$(SolutionDir)..\Output\$(BoltVersion)\$(TargetFrameworkVersionNumber)" /y
-	</PostBuildEvent>
-  </PropertyGroup>
- </Project>
