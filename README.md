@@ -59,6 +59,10 @@ There are two sets of units currently delivered:
 
 /Collections
  - **Random Numbers**
+ - **CreateMultiArray**		(new in 3.0)
+ - **GetArrayItem**		(new in 3.0)
+ - **SetArrayItem**		(new in 3.0)
+ - **Query**			(new in 3.0)
 
 /Control
  - **Branch (Params)**
@@ -74,6 +78,11 @@ There are two sets of units currently delivered:
  - **Logic (Params)**
  - **Log**
 
+/Utility
+ - **Convert**			(new in 3.0)
+ - **FlowReroute**		(new in 3.0)
+ - **ValueReroute**		(new in 3.0)
+ 
 /Math
  - **Math Op**
  - 
@@ -87,9 +96,11 @@ There are two sets of units currently delivered:
 
 
 
-## Current contributors (aka who to blame)
- - *Reality.Stop()
- - *JasonJonesLASM
+## Current maintainers (aka who to blame)
+ - Reality.Stop()
+ - JasonJonesLASM
+ 
+ With contributions from:
  - Necka
  - AFoolsDuty
  - Eka
