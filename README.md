@@ -89,7 +89,7 @@ There are two sets of units currently delivered:
 
 ## Current contributors (aka who to blame)
  - *Reality.Stop()
- - *JasonJamesLASM
+ - *JasonJonesLASM
  - Necka
  - AFoolsDuty
  - Eka
