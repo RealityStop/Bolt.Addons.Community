@@ -2,7 +2,7 @@
 {
     public enum CommunityEditorPath
     {
-        Community,
+        Root,
         Events,
         Fundamentals,
     }

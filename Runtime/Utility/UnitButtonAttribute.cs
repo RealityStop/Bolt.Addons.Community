@@ -6,7 +6,7 @@ using Ludiq;
 
 namespace Bolt.Addons.Community.Utility
 {
-    [RenamedFrom("Bolt.Community.Addons.Utility.UnitButton")]
+    [RenamedFrom("Bolt.Community.Addons.Utility.UnitButtonAttribute")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public class UnitButtonAttribute : Attribute
     {

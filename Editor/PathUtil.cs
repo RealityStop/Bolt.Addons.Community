@@ -45,7 +45,7 @@ namespace Bolt.Addons.Community
 
             switch (path)
             {
-                case CommunityEditorPath.Community:
+                case CommunityEditorPath.Root:
                     _path = CommunityEditorFolder + "Resources/";
                     break;
 
