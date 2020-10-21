@@ -2,9 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Ludiq;
 
-namespace Bolt.Community.Addons.Utility
+namespace Bolt.Addons.Community.Utility
 {
+    [RenamedFrom("Bolt.Community.Addons.Utility.UnitButton")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public class UnitButtonAttribute : Attribute
     {
