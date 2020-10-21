@@ -5,9 +5,10 @@ using Ludiq;
 using System.Reflection;
 using System;
 
-namespace Bolt.Community.Addons.Utility.Editor
+namespace Bolt.Addons.Community.Utility.Editor
 {
-    [Inspector(typeof(UnitButton) )]
+    [Inspector(typeof(UnitButton))]
+    [RenamedFrom("Bolt.Community.Addons.Utility.Editor.UnitButtonInspector")]
     public class UnitButtonInspector : Inspector
     {
         public UnitButtonInspector(Metadata metadata) : base(metadata) { }
