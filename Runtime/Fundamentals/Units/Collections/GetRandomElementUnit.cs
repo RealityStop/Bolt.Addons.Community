@@ -32,11 +32,24 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
         [DoNotSerialize]
         public ValueInput collection;
 
+
+        /// <summary>
+        /// The ValueOutput for the randomly selected key.
+        /// </summary>
+        [DoNotSerialize]
+        public ValueOutput key;
+
+
         /// <summary>
         /// The ValueOutput for the randomly selected value.
         /// </summary>
         [DoNotSerialize]
-        public ValueOutput item;
+        public ValueOutput value;
+
+
+
+        [Inspectable]
+        public bool Dictionary;
 
 
         private static UnityEngine.Random rand = new UnityEngine.Random();
@@ -46,51 +59,89 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
         {
             enter = ControlInput("enter", (flow) =>
             {
-                var current = PerformOperation(flow);
-                flow.SetValue(item, current);
+                PerformOperation(flow);
                 return exit;
             });
 
 
             collection = ValueInput<IEnumerable>("collection");
-            item = ValueOutput<object>("item");
+            
             exit = ControlOutput("exit");
 
-            Succession(enter, exit); 
-            Assignment(enter, item);
+            if (Dictionary)
+            {
+                key = ValueOutput<object>("key");
+                Assignment(enter, key);
+            }
+
+            value = ValueOutput<object>("item");
+
+            Succession(enter, exit);
+            Assignment(enter, value);
             Requirement(collection, enter);
 
         }
 
-        private object PerformOperation(Flow flow)
+        private void PerformOperation(Flow flow)
         {
             var collectionValue = flow.GetValue<IEnumerable>(collection);
 
             IList list = collectionValue as IList;
             if (list != null)
             {
+                if (Dictionary)
+                {
+                    Debug.LogWarning("Unit is configured as Dictionary, but recieved list.  Key will be unset.");
+                    flow.SetValue(key, null);
+                }
+
                 if (list.Count == 0)
-                    return null;
+                {
+                    Debug.LogWarning("Collection is empty, null returned.");
+                    flow.SetValue(value, null);
+                    return;
+                }
 
                 //Lists have fast random access, so... use it.
                 //Prevents overhead associated with .ElementAt
-                return list[UnityEngine.Random.Range(0, list.Count)];
+                flow.SetValue(value, list[UnityEngine.Random.Range(0, list.Count)]);
             }
             else
             {
                 IDictionary dictionary = collectionValue as IDictionary;
                 if (dictionary != null)
                 {
+                    if (!Dictionary)
+                    {
+                        Debug.LogWarning("Unit is configured as simple collection, but recieved Dictionary.  Key will be innaccessible.");
+                    }
+
                     if (dictionary.Count == 0)
-                        return null;
+                    {
+                        Debug.LogWarning("Collection is empty, null returned.");
+
+                        if (Dictionary)
+                            flow.SetValue(key, null);
+                        flow.SetValue(value, null);
+                        return;
+                    }
 
                     //If is slightly faster to select a random key than it is to do a straight .ElementAt
-                    return dictionary[dictionary.Keys.Cast<object>().ElementAt(UnityEngine.Random.Range(0, dictionary.Count))];
+                    object randomKey = dictionary.Keys.Cast<object>().ElementAt(UnityEngine.Random.Range(0, dictionary.Count));
+
+                    if (Dictionary)
+                        flow.SetValue(key, randomKey);
+                    flow.SetValue(value, dictionary[randomKey]);
                 }
                 else
                 {
+                    if (Dictionary)
+                    {
+                        Debug.LogWarning("Unit is configured as Dictionary, but recieved non-dictionary collection.  Key will be unset.");
+                        flow.SetValue(key, null);
+                    }
                     //Default implementation.  Might be slow, we don't know!
-                    return collectionValue.Cast<object>().ElementAt(UnityEngine.Random.Range(0, list.Count));
+                    flow.SetValue(value, collectionValue.Cast<object>().ElementAt(UnityEngine.Random.Range(0, list.Count)));
                 }
             }
         }
