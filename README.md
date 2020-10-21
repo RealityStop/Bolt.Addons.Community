@@ -87,7 +87,7 @@ There are two sets of units currently delivered:
  - **GetArrayItem**		(new in 3.0)
  - **SetArrayItem**		(new in 3.0)
  - **Query**			(new in 3.0)
- - **Get Random Element**       (new in 3.0)
+ - **Random Element**       (new in 3.0)
 
 /Control
  - **Branch (Params)**
