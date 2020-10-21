@@ -8,10 +8,10 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Collections
 {
-    [UnitTitle("Get Random Element")]
+    [UnitTitle("Random Element")]
     [UnitCategory("Collections")]
     [TypeIcon(typeof(IEnumerable))]
-    public class GetRandomElementUnit : Unit
+    public class RandomElementUnit : Unit
     {
         /// <summary>
         /// The Control Input entered when we want a random element
