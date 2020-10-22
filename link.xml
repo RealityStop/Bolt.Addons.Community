@@ -1,0 +1,3 @@
+<linker>
+  <assembly fullname="Bolt.Addons.Community.Runtime" preserve="all"/>
+</linker>
