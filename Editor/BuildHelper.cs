@@ -11,7 +11,12 @@ public class PackagesLinkXmlExtractor : IPreprocessBuildWithReport, IPostprocess
 {
     public string TemporaryFolder
     {
-        get { return $"{Application.dataPath}/Temporary/";}
+        get { return $"{Application.dataPath}/Temporary-Build/";}
+    }
+	 
+	public string TemporaryFolderMeta
+    {
+        get { return $"{Application.dataPath}/Temporary-Build.meta";}
     }
 
     public string LinkFilePath
@@ -30,8 +35,14 @@ public class PackagesLinkXmlExtractor : IPreprocessBuildWithReport, IPostprocess
     {
         if(File.Exists(LinkFilePath))
             File.Delete(LinkFilePath);
-        if(!Directory.EnumerateFiles(TemporaryFolder, "*").Any())
-            Directory.Delete(TemporaryFolder);
+        if (Directory.Exists(TemporaryFolder))
+        {
+            if (!Directory.EnumerateFiles(TemporaryFolder, "*").Any())
+                Directory.Delete(TemporaryFolder);
+            Directory.Delete(TemporaryFolder, true);
+        }
+		if (File.Exists(TemporaryFolderMeta))
+			File.Delete(TemporaryFolderMeta);
     }
 
     private void CreateMergedLinkFromPackages()
@@ -44,7 +55,8 @@ public class PackagesLinkXmlExtractor : IPreprocessBuildWithReport, IPostprocess
             foreach (var package in request.Result)
             {
                 var path = package.resolvedPath;
-                xmlPathList.AddRange(Directory.EnumerateFiles(path, "link.xml", SearchOption.AllDirectories).ToList());
+				if (path.Contains("dev.bolt.addons"))				
+					xmlPathList.AddRange(Directory.EnumerateFiles(path, "link.xml", SearchOption.AllDirectories).ToList());
             }
 
             if (xmlPathList.Count <= 0)
