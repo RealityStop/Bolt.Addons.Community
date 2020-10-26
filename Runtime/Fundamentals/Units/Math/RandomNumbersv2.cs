@@ -100,6 +100,8 @@ namespace Bolt.Addons.Community.Fundamentals
 
             Requirement(count, output);
             Requirement(minimum, output);
+
+            Assignment(input, output);
         }
 
         private void BuildList(Flow flow)
@@ -143,7 +145,9 @@ namespace Bolt.Addons.Community.Fundamentals
                 else
                 {
                     if (integer)
-                        _list = new List<object>(num);
+                        _list = new List<int>(num);
+                    else
+                        _list = new List<float>(num);
                 }
             }
 
