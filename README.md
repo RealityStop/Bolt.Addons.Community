@@ -72,8 +72,8 @@ There are two sets of units currently delivered:
  - **Manual Event**
  - **Defined Event**
  - **Trigger Defined Event**
- - **Global Event**
- - **Trigger Global Event**
+ - **Global Defined Event**
+ - **Trigger Global Defined Event**
 
 /Documentation
  - **Todo**
