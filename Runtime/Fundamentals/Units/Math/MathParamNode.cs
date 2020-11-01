@@ -22,7 +22,7 @@ namespace Bolt.Addons.Community.Fundamentals
         [Serialize]
         [Inspectable]
         [InspectorLabel("Non-Numeric Inputs")]
-        private bool nonNumeric;
+        private bool nonNumeric = default(bool);
 
         [DoNotSerialize]
         [Inspectable, UnitHeaderInspectable("Operation")]

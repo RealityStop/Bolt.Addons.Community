@@ -38,7 +38,7 @@ namespace Bolt.Addons.Community.Fundamentals
         [Serialize]
         [Inspectable]
         [InspectorLabel("Next Output")]
-        private bool showNext;
+        private bool showNext = default(bool);
 
 
         protected override void Definition()
