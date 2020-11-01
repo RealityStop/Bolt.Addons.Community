@@ -13,8 +13,18 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitCategory("Community\\Control")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.ChangeDetect")]
     [TypeIcon(typeof(ISelectUnit))]
-    public sealed class ChangeDetect : Unit
+    public sealed class ChangeDetect : Unit, IGraphElementWithData
     {
+        public sealed class Data : IGraphElementData
+        {
+            public object lastValue;
+        }
+        public IGraphElementData CreateData()
+        {
+            return new Data();
+        }
+
+
         public ChangeDetect() : base() { }
 
         /// <summary>
@@ -43,13 +53,11 @@ namespace Bolt.Addons.Community.Fundamentals
         [DoNotSerialize]
         public ControlOutput onChange { get; private set; }
 
-        private object _previous = null;
-
         protected override void Definition()
         {
             enter = ControlInput(nameof(enter), Enter);
             input = ValueInput<object>(nameof(input));
-            lastValue = ValueOutput<object>(nameof(lastValue), (x) => _previous);
+            lastValue = ValueOutput<object>(nameof(lastValue));
             onChange = ControlOutput(nameof(onChange));
 
             Succession(enter, onChange);
@@ -59,21 +67,24 @@ namespace Bolt.Addons.Community.Fundamentals
 
         public ControlOutput Enter(Flow flow)
         {
+            var data = flow.stack.GetElementData<Data>(this);
             object currentValue = flow.GetValue<object>(input);
 
-            if (currentValue is float && _previous is float)
+            if (currentValue is float && data.lastValue is float)
             {
-                if (!Mathf.Approximately((float)currentValue, (float)_previous))
+                if (!Mathf.Approximately((float)currentValue, (float)data.lastValue))
                 {
-                    _previous = currentValue;
+                    data.lastValue = currentValue;
+                    flow.SetValue(lastValue, currentValue);
                     return onChange;
                 }
             }
             else
             {
-                if (currentValue != _previous)
+                if (currentValue != data.lastValue)
                 {
-                    _previous = currentValue;
+                    data.lastValue = currentValue;
+                    flow.SetValue(lastValue, currentValue);
                     return onChange;
                 }
             }
