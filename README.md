@@ -52,6 +52,7 @@ Then, use the Tools menu to Build Unit Options, and they're ready to go!  Once y
 # Updating
 To update, open Packages/manifest.json and remove the dev.bolt.addons entry under lock at the end of the file.  Once Unity synchronizes the package source, use the Tools menu to Build Unit Options and incorporate any new units.
 
+![](https://imgur.com/siRm7wu.gif)
 
 ----------
 
