@@ -70,24 +70,14 @@ namespace Bolt.Addons.Community.Fundamentals
             var data = flow.stack.GetElementData<Data>(this);
             object currentValue = flow.GetValue<object>(input);
 
-            if (currentValue is float && data.lastValue is float)
+
+            if (!OperatorUtility.Equal(data.lastValue, currentValue))
             {
-                if (!Mathf.Approximately((float)currentValue, (float)data.lastValue))
-                {
-                    data.lastValue = currentValue;
-                    flow.SetValue(lastValue, currentValue);
-                    return onChange;
-                }
+                data.lastValue = currentValue;
+                flow.SetValue(lastValue, currentValue);
+                return onChange;
             }
-            else
-            {
-                if (currentValue != data.lastValue)
-                {
-                    data.lastValue = currentValue;
-                    flow.SetValue(lastValue, currentValue);
-                    return onChange;
-                }
-            }
+
             return null;
         }
     }
