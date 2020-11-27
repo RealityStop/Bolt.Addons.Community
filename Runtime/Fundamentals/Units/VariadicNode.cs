@@ -36,12 +36,34 @@ namespace Bolt.Addons.Community.Fundamentals
         {
             arguments = new List<ValueInput>();
 
+            ConstructArgs<T>();
+        }
+
+        protected void ConstructArgs<T1>()
+        {
             for (var i = 0; i < Math.Min(argumentCount, ArgumentLimit()); i++)
             {
-                var argument = ValueInput<T>("Arg_" + i);
+                var argument = ValueInput<T1>(GetArgumentName(i));
+                argument.SetDefaultValue(GetDefaultValue(typeof(T1)));
                 arguments.Add(argument);
                 BuildRelations(argument);
             }
+        }
+
+        protected object GetDefaultValue(Type t)
+        {
+            if (t.IsValueType)
+                return Activator.CreateInstance(t);
+
+            if (t == typeof(string))
+                return "";
+
+            return null;
+        }
+
+        protected virtual string GetArgumentName(int index)
+        {
+            return "Arg_" + index;
         }
 
         protected virtual int ArgumentLimit()

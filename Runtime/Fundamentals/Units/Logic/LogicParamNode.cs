@@ -76,20 +76,6 @@ namespace Bolt.Addons.Community.Fundamentals
             }
         }
 
-        private void ConstructArgs<T>()
-        {
-            for (var i = 0; i < Math.Min(argumentCount, ArgumentLimit()); i++)
-            {
-                var argument = ValueInput<T>(GetArgumentName(i));
-                arguments.Add(argument);
-                BuildRelations(argument);
-            }
-        }
-
-        protected virtual string GetArgumentName(int index)
-        {
-            return "Arg_" + index;
-        }
 
         protected override int ArgumentLimit()
         {
