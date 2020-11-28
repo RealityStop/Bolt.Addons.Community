@@ -1,9 +1,12 @@
 ﻿
+using Bolt.Addons.Community.Fundamentals.Units.logic;
+using Bolt.Addons.Community.Utility;
 using Bolt.Addons.Community.Variables.Editor.UnitOptions;
 using Ludiq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Bolt.Addons.Community.Variables.Editor
@@ -14,6 +17,7 @@ namespace Bolt.Addons.Community.Variables.Editor
         static Options()
         {
             UnitBase.staticUnitsExtensions.Add(GetStaticOptions);
+            UnitBase.staticUnitsExtensions.Add(DelegateOptions);
         }
 
         private static IEnumerable<IUnitOption> GetStaticOptions()
@@ -44,6 +48,26 @@ namespace Bolt.Addons.Community.Variables.Editor
             yield return new OnVariableChangedOption(VariableKind.Scene);
             yield return new OnVariableChangedOption(VariableKind.Application);
             yield return new OnVariableChangedOption(VariableKind.Saved);
+        }
+
+        private static IEnumerable<IUnitOption> DelegateOptions()
+        {
+            List<Type> result = new List<Type>();
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            for (int assembly = 0; assembly < assemblies.Length; assembly++)
+            {
+                Type[] types = assemblies[assembly].GetTypes();
+
+                for (int type = 0; type < types.Length; type++)
+                {
+                    if (!types[type].IsAbstract && typeof(IAction).IsAssignableFrom(types[type]))
+                    {
+                        yield return new ActionUnitOption(new ActionUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
+                        yield return new ActionInvokeUnitOption(new ActionInvokeUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
+                    }
+                }
+            }
         }
     }
 }
