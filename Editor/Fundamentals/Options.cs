@@ -17,7 +17,7 @@ namespace Bolt.Addons.Community.Variables.Editor
         static Options()
         {
             UnitBase.staticUnitsExtensions.Add(GetStaticOptions);
-            UnitBase.staticUnitsExtensions.Add(DelegateOptions);
+            UnitBase.dynamicUnitsExtensions.Add(DelegateOptions);
         }
 
         private static IEnumerable<IUnitOption> GetStaticOptions()
@@ -67,12 +67,14 @@ namespace Bolt.Addons.Community.Variables.Editor
                         {
                             yield return new ActionUnitOption(new ActionUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
                             yield return new ActionInvokeUnitOption(new ActionInvokeUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
+                            yield return new BindActionDelegateUnitOption(new BindDelegateUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
                         }
 
                         if (typeof(IFunc).IsAssignableFrom(types[type]))
                         {
                             yield return new FuncUnitOption(new FuncUnit(Activator.CreateInstance(types[type] as System.Type) as IFunc));
                             yield return new FuncInvokeUnitOption(new FuncInvokeUnit(Activator.CreateInstance(types[type] as System.Type) as IFunc));
+                            yield return new BindFuncDelegateUnitOption(new BindDelegateUnit(Activator.CreateInstance(types[type] as System.Type) as IFunc));
                         }
                     }
                 }

@@ -34,7 +34,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
             buttonRect.y += 38;
             buttonRect.height = 20;
 
-            var buttonLabel = unit._delegate == null ? "( None Selected )" : unit._delegate.GetType().Name.Prettify();
+            var buttonLabel = unit._delegate == null ? "( None Selected )" : unit._delegate?.GetType().Name.Prettify();
             buttonRect.width = GUI.skin.label.CalcSize(new GUIContent(buttonLabel)).x + 8;
 
             if (GUI.Button(buttonRect, buttonLabel))
