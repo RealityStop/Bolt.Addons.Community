@@ -3,6 +3,8 @@ using Ludiq;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.logic
 {
+    [UnitCategory("Community/Control")]
+    [TypeIcon(typeof(Flow))]
     public sealed class FuncUnit : DelegateUnit
     {
         public IFunc _func => _delegate as IFunc;
@@ -12,7 +14,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
 
         public FuncUnit() : base() { }
 
-        public FuncUnit(IDelegate @delegate)
+        public FuncUnit(IFunc func) : base(func)
         {
         }
 

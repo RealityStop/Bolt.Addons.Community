@@ -5,13 +5,15 @@ using System.Collections.Generic;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.logic
 {
-    public class ActionUnit : DelegateUnit
+    [UnitCategory("Community/Control")]
+    [TypeIcon(typeof(Flow))]
+    public sealed class ActionUnit : DelegateUnit
     {
         public IAction _action => _delegate as IAction;
 
         public ActionUnit() : base() { }
 
-        public ActionUnit(IDelegate @delegate)
+        public ActionUnit(IAction action) : base(action)
         {
         }
 
