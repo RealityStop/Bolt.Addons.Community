@@ -36,7 +36,19 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
         {
             parameters.Clear();
 
-            enter = ControlInput("enter", (flow)=> {  flow.GetValue<System.Delegate>(action).DynamicInvoke(); return exit; });
+            enter = ControlInput("enter", (flow)=> 
+            {
+                var values = new List<object>();
+                var act = flow.GetValue<System.Delegate>(action);
+
+                for (int i = 0; i < parameters.Count; i++)
+                {
+                    values.Add(flow.GetValue(parameters[i]));
+                }
+
+                act.DynamicInvoke(values.ToArray());
+                return exit;
+            });
 
             exit = ControlOutput("exit");
 
@@ -44,7 +56,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
             {
                 action = ValueInput(_action.GetActionType(), "action");
 
-                for (int i = 0; i < _action?.parameters?.Length; i++)
+                for (int i = 0; i < _action.parameters.Length; i++)
                 {
                     parameters.Add(ValueInput(_action.parameters[i].type, _action.parameters[i].name));
                 }

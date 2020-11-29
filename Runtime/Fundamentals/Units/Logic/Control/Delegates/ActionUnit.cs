@@ -39,22 +39,23 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
             {
                 action = ValueOutput(_action.GetActionType(), "action", (flow) =>
                 {
-                    if (_action.GetAction() == null)
-                    {
-                        if (_action.parameters.Length == 0)
-                        {
-                            reference = flow.stack.ToReference();
-                            _action.Initialize(() => { Flow.New(reference).Invoke(invoke); });
-                        }
-                    }
-
+                    reference = flow.stack.ToReference();
+                    _action.Initialize(flow, this, () => { flow.Invoke(invoke); });
                     return _action.GetAction();
                 });
 
-                for (int i = 0; i < _action?.parameters.Length; i++)
+                for (int i = 0; i < _action.parameters.Length; i++)
                 {
                     parameters.Add(ValueOutput(_action.parameters[i].type, _action.parameters[i].name));
                 }
+            }
+        }
+
+        public void AssignPorts(Flow flow, params object[] parameters)
+        {
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                flow.SetValue(this.parameters[0], parameters[i]);
             }
         }
     }

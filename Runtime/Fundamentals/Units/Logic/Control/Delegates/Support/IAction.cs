@@ -1,4 +1,5 @@
-﻿using Bolt.Addons.Community.Utility;
+﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
+using Bolt.Addons.Community.Utility;
 using System;
 using System.Collections.Generic;
 
@@ -10,7 +11,6 @@ namespace Bolt.Addons.Community.Utility
         TypeParam[] parameters { get; }
         object GetAction();
         Type GetActionType();
-        void Initialize(Action flow);
-        void SetAction(object action);
+        void Initialize(Flow flow, ActionUnit unit, Action flowAction);
     }
 }

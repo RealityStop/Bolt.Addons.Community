@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Ludiq;
 using Bolt;
+using Bolt.Addons.Community.Fundamentals.Units.logic;
 
 namespace Bolt.Addons.Community.Utility
 {
@@ -11,7 +12,6 @@ namespace Bolt.Addons.Community.Utility
     {
         public Action action;
         public object GetAction() => action;
-        public void SetAction(object action) => this.action = action as Action;
         public Type GetActionType() => typeof(Action);
         public TypeParam[] parameters => new TypeParam[] { };
 
@@ -20,9 +20,9 @@ namespace Bolt.Addons.Community.Utility
             action.Invoke();
         }
 
-        public void Initialize(Action flow)
+        public void Initialize(Flow flow, ActionUnit unit, Action action)
         {
-            action = () => { flow.Invoke(); };
+            this.action = () => { action.Invoke(); };
         }
     }
 
@@ -31,7 +31,6 @@ namespace Bolt.Addons.Community.Utility
     {
         public Action<T> action;
         public object GetAction() => action;
-        public void SetAction(object action) => this.action = action as Action<T>;
         public Type GetActionType() => typeof(Action<T>);
 
         public abstract TypeParam[] parameters { get; }
@@ -41,9 +40,13 @@ namespace Bolt.Addons.Community.Utility
             action.Invoke((T)parameters[0]);
         }
 
-        public void Initialize(Action flow)
+        public void Initialize(Flow flow, ActionUnit unit, Action flowAction)
         {
-            action = (t) => { flow.Invoke(); };
+            this.action = (t) =>
+            {
+                unit.AssignPorts(flow, t);
+                flowAction.Invoke();
+            };
         }
     }
 
@@ -52,7 +55,6 @@ namespace Bolt.Addons.Community.Utility
     {
         internal Action<T1, T2> action;
         public object GetAction() => action;
-        public void SetAction(object action) => this.action = action as Action<T1, T2>;
         public Type GetActionType() => typeof(Action<T1, T2>);
 
         public abstract TypeParam[] parameters { get; }
@@ -62,9 +64,13 @@ namespace Bolt.Addons.Community.Utility
             action.Invoke((T1)parameters[0], (T2)parameters[1]);
         }
 
-        public void Initialize(Action flow)
+        public void Initialize(Flow flow, ActionUnit unit, Action flowAction)
         {
-            action = (t1, t2) => { flow.Invoke(); };
+            this.action = (t1, t2) =>
+            {
+                unit.AssignPorts(flow, t1, t2);
+                flowAction.Invoke();
+            };
         }
     }
 
@@ -73,7 +79,6 @@ namespace Bolt.Addons.Community.Utility
     {
         public Action<T1, T2, T3> action;
         public object GetAction() => action;
-        public void SetAction(object action) => this.action = action as Action<T1, T2, T3>;
         public Type GetActionType() => typeof(Action<T1, T2, T3>);
 
         public abstract TypeParam[] parameters { get; }
@@ -83,9 +88,13 @@ namespace Bolt.Addons.Community.Utility
             action.Invoke((T1)parameters[0], (T2)parameters[1], (T3)parameters[3]);
         }
 
-        public void Initialize(Action flow)
+        public void Initialize(Flow flow, ActionUnit unit, Action flowAction)
         {
-            action = (t1, t2, t3) => { flow.Invoke(); };
+            this.action = (t1, t2, t3) =>
+            {
+                unit.AssignPorts(flow, t1, t2, t3);
+                flowAction.Invoke();
+            };
         }
     }
 
@@ -94,7 +103,6 @@ namespace Bolt.Addons.Community.Utility
     {
         public Action<T1, T2, T3, T4> action;
         public object GetAction() => action;
-        public void SetAction(object action) => this.action = action as Action<T1, T2, T3, T4>;
         public Type GetActionType() => typeof(Action<T1, T2, T3, T4>);
 
         public abstract TypeParam[] parameters { get; }
@@ -104,9 +112,13 @@ namespace Bolt.Addons.Community.Utility
             action.Invoke((T1)parameters[0], (T2)parameters[1], (T3)parameters[3], (T4)parameters[4]);
         }
 
-        public void Initialize(Action flow)
+        public void Initialize(Flow flow, ActionUnit unit, Action flowAction)
         {
-            action = (t1, t2, t3, t4) => { flow.Invoke(); };
+            this.action = (t1, t2, t3, t4) =>
+            {
+                unit.AssignPorts(flow, t1, t2, t3, t4);
+                flowAction.Invoke();
+            };
         }
     }
 }
