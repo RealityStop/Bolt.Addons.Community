@@ -9,10 +9,10 @@ using Bolt.Addons.Community.Utility;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 {
-    [Widget(typeof(ActionInvokeUnit))]
-    public sealed class ActionInvokeUnitWidget : UnitWidget<ActionInvokeUnit>
+    [Widget(typeof(ActionUnit))]
+    public sealed class ActionUnitWidget : UnitWidget<ActionUnit>
     {
-        public ActionInvokeUnitWidget(FlowCanvas canvas, ActionInvokeUnit unit) : base(canvas, unit)
+        public ActionUnitWidget(FlowCanvas canvas, ActionUnit unit) : base(canvas, unit)
         {
         }
 
@@ -32,7 +32,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
             buttonRect.y += 22;
             buttonRect.height = 20;
 
-            var buttonLabel = unit._action == null ? "( None Selected )" : unit._action?.GetType().Name.Prettify();
+            var buttonLabel = unit._action == null ? "( None Selected )" : unit._action.GetType().Name.Prettify();
             buttonRect.width = GUI.skin.label.CalcSize(new GUIContent(buttonLabel)).x + 8;
 
             if (GUI.Button(buttonRect, buttonLabel))
@@ -51,7 +51,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
                         if (!types[type].IsAbstract && typeof(IAction).IsAssignableFrom(types[type]))
                         {
                             var _type = types[type];
-                            menu.AddItem(new GUIContent(types[type].Name.Prettify()), false, ()=> 
+                            menu.AddItem(new GUIContent(types[type].Name.Prettify()), false, () => 
                             {
                                 unit._action = Activator.CreateInstance(_type as System.Type) as IAction;
                                 unit.Define();

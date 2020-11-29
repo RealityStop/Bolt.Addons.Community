@@ -51,8 +51,11 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
                         if (!types[type].IsAbstract && typeof(IAction).IsAssignableFrom(types[type]))
                         {
                             var _type = types[type];
-                            menu.AddItem(new GUIContent(types[type].Name.Prettify()), false, () => { unit._action = Activator.CreateInstance(_type as System.Type) as IAction; });
-                            unit.Define();
+                            menu.AddItem(new GUIContent(types[type].Name.Prettify()), false, () => 
+                            {
+                                unit._action = Activator.CreateInstance(_type as System.Type) as IAction;
+                                unit.Define();
+                            });
                         }
                     }
                 }

@@ -9,31 +9,31 @@ using Bolt.Addons.Community.Utility;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 {
-    [Widget(typeof(ActionInvokeUnit))]
-    public sealed class ActionInvokeUnitWidget : UnitWidget<ActionInvokeUnit>
+    [Editor(typeof(ActionUnit))]
+    public sealed class ActionUnitEditor : UnitEditor
     {
-        public ActionInvokeUnitWidget(FlowCanvas canvas, ActionInvokeUnit unit) : base(canvas, unit)
+        public ActionUnitEditor(Metadata metadata) : base(metadata)
         {
         }
 
-        public override bool foregroundRequiresInput => true;
-
-        protected override bool showHeaderAddon => unit._action == null;
-
-        protected override float GetHeaderAddonHeight(float width)
-        {
-            return 20;
-        }
-
-        protected override void DrawHeaderAddon()
+        protected override void OnInspectorGUI(Rect position)
         {
             var buttonRect = position;
-            buttonRect.x += 42;
-            buttonRect.y += 22;
             buttonRect.height = 20;
+            buttonRect.x += 40;
 
+            var labelRect = position;
+            labelRect.height = 20;
+            labelRect.width = 40;
+
+            var baseRect = position;
+            baseRect.y += 24;
+
+            GUI.Label(labelRect, "Action");
+
+            var unit = metadata.value as ActionUnit;
             var buttonLabel = unit._action == null ? "( None Selected )" : unit._action?.GetType().Name.Prettify();
-            buttonRect.width = GUI.skin.label.CalcSize(new GUIContent(buttonLabel)).x + 8;
+            buttonRect.width = GUI.skin.label.CalcSize(new GUIContent(buttonLabel)).x + 40;
 
             if (GUI.Button(buttonRect, buttonLabel))
             {
@@ -51,7 +51,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
                         if (!types[type].IsAbstract && typeof(IAction).IsAssignableFrom(types[type]))
                         {
                             var _type = types[type];
-                            menu.AddItem(new GUIContent(types[type].Name.Prettify()), false, ()=> 
+                            menu.AddItem(new GUIContent(types[type].Name.Prettify()), false, () => 
                             {
                                 unit._action = Activator.CreateInstance(_type as System.Type) as IAction;
                                 unit.Define();
@@ -62,11 +62,13 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 
                 menu.ShowAsContext();
             }
+
+            base.OnInspectorGUI(position);
         }
 
-        protected override float GetHeaderAddonWidth()
+        protected override float GetInspectorHeight(float width)
         {
-            return GUI.skin.label.CalcSize(new GUIContent(unit._action == null ? "( None Selected )" : unit._action?.GetType().Name.Prettify())).x + 8;
+            return base.GetInspectorHeight(width) + 24;
         }
     }
 }
