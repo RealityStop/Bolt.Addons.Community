@@ -11,8 +11,8 @@ namespace Bolt.Addons.Community.Utility
     public sealed class AOTAction : IAction
     {
         public Action action;
-        public object GetAction() => action;
-        public Type GetActionType() => typeof(Action);
+        public object GetDelegate() => action;
+        public Type GetDelegateType() => typeof(Action);
         public TypeParam[] parameters => new TypeParam[] { };
 
         public void Invoke(params object[] parameters)
@@ -30,8 +30,8 @@ namespace Bolt.Addons.Community.Utility
     public abstract class AOTAction<T> : IAction
     {
         public Action<T> action;
-        public object GetAction() => action;
-        public Type GetActionType() => typeof(Action<T>);
+        public object GetDelegate() => action;
+        public Type GetDelegateType() => typeof(Action<T>);
 
         public abstract TypeParam[] parameters { get; }
 
@@ -44,7 +44,7 @@ namespace Bolt.Addons.Community.Utility
         {
             this.action = (t) =>
             {
-                unit.AssignPorts(flow, t);
+                unit.AssignParameters(flow, t);
                 flowAction.Invoke();
             };
         }
@@ -54,8 +54,8 @@ namespace Bolt.Addons.Community.Utility
     public abstract class AOTAction<T1, T2> : IAction
     {
         internal Action<T1, T2> action;
-        public object GetAction() => action;
-        public Type GetActionType() => typeof(Action<T1, T2>);
+        public object GetDelegate() => action;
+        public Type GetDelegateType() => typeof(Action<T1, T2>);
 
         public abstract TypeParam[] parameters { get; }
 
@@ -68,7 +68,7 @@ namespace Bolt.Addons.Community.Utility
         {
             this.action = (t1, t2) =>
             {
-                unit.AssignPorts(flow, t1, t2);
+                unit.AssignParameters(flow, t1, t2);
                 flowAction.Invoke();
             };
         }
@@ -78,8 +78,8 @@ namespace Bolt.Addons.Community.Utility
     public abstract class AOTAction<T1, T2, T3> : IAction
     {
         public Action<T1, T2, T3> action;
-        public object GetAction() => action;
-        public Type GetActionType() => typeof(Action<T1, T2, T3>);
+        public object GetDelegate() => action;
+        public Type GetDelegateType() => typeof(Action<T1, T2, T3>);
 
         public abstract TypeParam[] parameters { get; }
 
@@ -92,7 +92,7 @@ namespace Bolt.Addons.Community.Utility
         {
             this.action = (t1, t2, t3) =>
             {
-                unit.AssignPorts(flow, t1, t2, t3);
+                unit.AssignParameters(flow, t1, t2, t3);
                 flowAction.Invoke();
             };
         }
@@ -102,8 +102,8 @@ namespace Bolt.Addons.Community.Utility
     public abstract class AOTAction<T1, T2, T3, T4> : IAction
     {
         public Action<T1, T2, T3, T4> action;
-        public object GetAction() => action;
-        public Type GetActionType() => typeof(Action<T1, T2, T3, T4>);
+        public object GetDelegate() => action;
+        public Type GetDelegateType() => typeof(Action<T1, T2, T3, T4>);
 
         public abstract TypeParam[] parameters { get; }
 
@@ -116,7 +116,7 @@ namespace Bolt.Addons.Community.Utility
         {
             this.action = (t1, t2, t3, t4) =>
             {
-                unit.AssignPorts(flow, t1, t2, t3, t4);
+                unit.AssignParameters(flow, t1, t2, t3, t4);
                 flowAction.Invoke();
             };
         }

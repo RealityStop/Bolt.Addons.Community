@@ -5,12 +5,9 @@ using System.Collections.Generic;
 
 namespace Bolt.Addons.Community.Utility
 {
-    public interface IAction
+    public interface IAction : IDelegate
     {
         void Invoke(params object[] parameters);
-        TypeParam[] parameters { get; }
-        object GetAction();
-        Type GetActionType();
         void Initialize(Flow flow, ActionUnit unit, Action flowAction);
     }
 }
