@@ -52,7 +52,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
         public bool Dictionary;
 
 
-        private static UnityEngine.Random rand = new UnityEngine.Random();
+        
 
 
         protected override void Definition()
