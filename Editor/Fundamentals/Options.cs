@@ -18,7 +18,6 @@ namespace Bolt.Addons.Community.Variables.Editor
         static Options()
         {
             UnitBase.staticUnitsExtensions.Add(GetStaticOptions);
-            UnitBase.dynamicUnitsExtensions.Add(DelegateOptions);
         }
 
         private static IEnumerable<IUnitOption> GetStaticOptions()
@@ -61,37 +60,6 @@ namespace Bolt.Addons.Community.Variables.Editor
             yield return new SetDictionaryVariableItemUnitOption(VariableKind.Scene);
             yield return new SetDictionaryVariableItemUnitOption(VariableKind.Application);
             yield return new SetDictionaryVariableItemUnitOption(VariableKind.Saved);
-        }
-
-        private static IEnumerable<IUnitOption> DelegateOptions()
-        {
-            List<Type> result = new List<Type>();
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-            for (int assembly = 0; assembly < assemblies.Length; assembly++)
-            {
-                Type[] types = assemblies[assembly].GetTypes();
-
-                for (int type = 0; type < types.Length; type++)
-                {
-                    if (!types[type].IsAbstract)
-                    {
-                        if (typeof(IAction).IsAssignableFrom(types[type]))
-                        {
-                            yield return new ActionUnitOption(new ActionUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
-                            yield return new ActionInvokeUnitOption(new ActionInvokeUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
-                            yield return new BindActionDelegateUnitOption(new BindDelegateUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
-                        }
-
-                        if (typeof(IFunc).IsAssignableFrom(types[type]))
-                        {
-                            yield return new FuncUnitOption(new FuncUnit(Activator.CreateInstance(types[type] as System.Type) as IFunc));
-                            yield return new FuncInvokeUnitOption(new FuncInvokeUnit(Activator.CreateInstance(types[type] as System.Type) as IFunc));
-                            yield return new BindFuncDelegateUnitOption(new BindDelegateUnit(Activator.CreateInstance(types[type] as System.Type) as IFunc));
-                        }
-                    }
-                }
-            }
         }
     }
 }
