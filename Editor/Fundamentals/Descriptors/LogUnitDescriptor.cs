@@ -1,11 +1,12 @@
 ﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
-using Ludiq;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals.Editor.Editor.Descriptors
 {

@@ -1,9 +1,9 @@
 using System.Reflection;
 using System.Collections.Generic;
 using Bolt;
-using Ludiq;
 using UnityEngine;
 using Bolt.Addons.Community.DefinedEvents.Support;
+using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.DefinedEvents.Units
 {
@@ -38,7 +38,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
         [DoNotSerialize]
         [UnitHeaderInspectable("Event Type")]
         [InspectableIf(nameof(IsRestricted))]
-        [Ludiq.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+        [Unity.VisualScripting.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
         public System.Type restrictedEventType
         {
             get

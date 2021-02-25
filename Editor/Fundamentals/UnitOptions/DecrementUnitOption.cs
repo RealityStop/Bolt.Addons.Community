@@ -1,9 +1,10 @@
 ﻿using Bolt.Addons.Community.Fundamentals;
-using Ludiq;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
 {

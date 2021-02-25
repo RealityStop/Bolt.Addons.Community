@@ -1,8 +1,9 @@
-﻿using Ludiq;
+﻿
 using Bolt;
 using UnityEngine;
 using UnityEditor;
 using System;
+using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals
 {
@@ -15,8 +16,8 @@ namespace Bolt.Addons.Community.Fundamentals
         {
             switch (unit.BranchingType)
             {
-                case LogicParamNode.BranchType.And: return typeof(Bolt.And).Icon();
-                case LogicParamNode.BranchType.Or: return typeof(Bolt.Or).Icon();
+                case LogicParamNode.BranchType.And: return typeof(Unity.VisualScripting.And).Icon();
+                case LogicParamNode.BranchType.Or: return typeof(Unity.VisualScripting.Or).Icon();
                 default: return base.DefinedIcon();
             }
         }

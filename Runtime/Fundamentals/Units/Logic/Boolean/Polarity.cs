@@ -1,8 +1,9 @@
-﻿using Ludiq;
+﻿
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals
@@ -11,7 +12,7 @@ namespace Bolt.Addons.Community.Fundamentals
      /// </summary>
     [UnitCategory("Community\\Logic")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.Polarity")]
-    [TypeIcon(typeof(Bolt.Comparison))]
+    [TypeIcon(typeof(Unity.VisualScripting.Comparison))]
     public class Polarity : Unit
     {
         public Polarity() : base() { }

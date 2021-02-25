@@ -1,5 +1,5 @@
 ﻿using Bolt;
-using Ludiq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility

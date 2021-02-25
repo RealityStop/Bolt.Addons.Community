@@ -1,10 +1,10 @@
 using Bolt.Addons.Community.DefinedEvents.Support;
 using Bolt.Addons.Community.DefinedEvents.Support.Internal;
 using Bolt.Addons.Community.Utility;
-using Ludiq;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -52,7 +52,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
         [DoNotSerialize]
         [UnitHeaderInspectable("Event Type")]
         [InspectableIf(nameof(IsRestricted))]
-        [Ludiq.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+        [Unity.VisualScripting.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
         public System.Type restrictedEventType
         {
             get

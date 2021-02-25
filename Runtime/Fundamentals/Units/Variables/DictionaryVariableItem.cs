@@ -1,10 +1,10 @@
 ﻿using Bolt;
-using Ludiq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Assets.BAC.Runtime.Fundamentals.Units.Variables
@@ -68,15 +68,15 @@ namespace Assets.BAC.Runtime.Fundamentals.Units.Variables
 				case VariableKind.Flow:
 					return flow.variables;
 				case VariableKind.Graph:
-					return Bolt.Variables.Graph(flow.stack);
+					return Unity.VisualScripting.Variables.Graph(flow.stack);
 				case VariableKind.Object:
-					return Bolt.Variables.Object(@flow.GetValue<GameObject>(@object));
+					return Unity.VisualScripting.Variables.Object(@flow.GetValue<GameObject>(@object));
 				case VariableKind.Scene:
-					return Bolt.Variables.Scene(flow.stack.scene);
+					return Unity.VisualScripting.Variables.Scene(flow.stack.scene);
 				case VariableKind.Application:
-					return Bolt.Variables.Application;
+					return Unity.VisualScripting.Variables.Application;
 				case VariableKind.Saved:
-					return Bolt.Variables.Saved;
+					return Unity.VisualScripting.Variables.Saved;
 				default:
 					throw new UnexpectedEnumValueException<VariableKind>(kind);
 			}

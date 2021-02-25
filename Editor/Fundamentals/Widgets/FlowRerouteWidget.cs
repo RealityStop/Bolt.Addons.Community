@@ -1,8 +1,9 @@
 ﻿using Bolt;
-using Ludiq;
+
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
+using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility
 {
@@ -18,7 +19,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility
 
         public override void DrawForeground()
         {
-            Ludiq.GraphGUI.Node(new Rect(position.x, position.y, _position.width, _position.height), NodeShape.Square, NodeColor.Gray, isSelected);
+            Unity.VisualScripting.GraphGUI.Node(new Rect(position.x, position.y, _position.width, _position.height), NodeShape.Square, NodeColor.Gray, isSelected);
         }
 
         protected override bool showIcons => true;
