@@ -44,6 +44,18 @@ namespace Bolt.Addons.Community.Variables.Editor
             yield return new OnVariableChangedOption(VariableKind.Scene);
             yield return new OnVariableChangedOption(VariableKind.Application);
             yield return new OnVariableChangedOption(VariableKind.Saved);
+
+            yield return new GetDictionaryVariableItemUnitOption(VariableKind.Graph);
+            yield return new GetDictionaryVariableItemUnitOption(VariableKind.Object);
+            yield return new GetDictionaryVariableItemUnitOption(VariableKind.Scene);
+            yield return new GetDictionaryVariableItemUnitOption(VariableKind.Application);
+            yield return new GetDictionaryVariableItemUnitOption(VariableKind.Saved);
+
+            yield return new SetDictionaryVariableItemUnitOption(VariableKind.Graph);
+            yield return new SetDictionaryVariableItemUnitOption(VariableKind.Object);
+            yield return new SetDictionaryVariableItemUnitOption(VariableKind.Scene);
+            yield return new SetDictionaryVariableItemUnitOption(VariableKind.Application);
+            yield return new SetDictionaryVariableItemUnitOption(VariableKind.Saved);
         }
     }
 }

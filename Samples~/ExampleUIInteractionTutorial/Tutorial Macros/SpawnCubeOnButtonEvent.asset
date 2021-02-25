@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1893448595, guid: a040fb66244a7f54289914d98ea4ef7d, type: 3}
+  m_Name: SpawnCubeOnButtonEvent
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"graph":{"variables":{"collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":0.0,"y":0.0},"zoom":1.0,"elements":[{"argumentCount":0,"coroutine":false,"defaultValues":{"target":{"$content":0,"$type":"UnityEngine.Object"},"name":{"$content":"OnButtonPress","$type":"System.String"}},"position":{"x":-245.0,"y":-58.0},"guid":"998b9e30-2cb3-4197-b8e1-6faf12e513f6","$version":"A","$type":"Bolt.CustomEvent","$id":"9"},{"nest":{"source":"Macro","macro":1,"embed":null},"defaultValues":{},"position":{"x":46.0,"y":-53.0},"guid":"057a6cbc-389b-4d79-aba6-a1e7d0bf302f","$version":"A","$type":"Bolt.SuperUnit","$id":"11"},{"sourceUnit":{"$ref":"9"},"sourceKey":"trigger","destinationUnit":{"$ref":"11"},"destinationKey":"In","guid":"db47e591-cf4e-4079-b347-8a34ebef1913","$type":"Bolt.ControlConnection"}],"$version":"A"}}'
+    _objectReferences:
+    - {fileID: 0}
+    - {fileID: 11400000, guid: 167591aa2b3dadf459274f7ceb955ee2, type: 2}

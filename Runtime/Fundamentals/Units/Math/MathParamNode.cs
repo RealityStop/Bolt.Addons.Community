@@ -53,6 +53,7 @@ namespace Bolt.Addons.Community.Fundamentals
                 for (var i = 0; i < argumentCount; i++)
                 {
                     var argument = ValueInput<float>("Arg_" + i);
+                    argument.SetDefaultValue(GetDefaultValue(typeof(float)));
                     arguments.Add(argument);
                     BuildRelations(argument);
                 }

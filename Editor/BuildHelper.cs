@@ -28,7 +28,8 @@ public class PackagesLinkXmlExtractor : IPreprocessBuildWithReport, IPostprocess
 
     public void OnPreprocessBuild(BuildReport report)
     {
-        CreateMergedLinkFromPackages();
+		if (!File.Exists(LinkFilePath))
+			CreateMergedLinkFromPackages();
     }
 
     public void OnPostprocessBuild(BuildReport report)
@@ -54,9 +55,8 @@ public class PackagesLinkXmlExtractor : IPreprocessBuildWithReport, IPostprocess
             List<string> xmlPathList = new List<string>();
             foreach (var package in request.Result)
             {
-                var path = package.resolvedPath;
-				if (path.Contains("dev.bolt.addons"))				
-					xmlPathList.AddRange(Directory.EnumerateFiles(path, "link.xml", SearchOption.AllDirectories).ToList());
+                var path = package.resolvedPath;			
+				xmlPathList.AddRange(Directory.EnumerateFiles(path, "linkmerge.xml", SearchOption.AllDirectories).ToList());
             }
 
             if (xmlPathList.Count <= 0)

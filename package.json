@@ -1,17 +1,28 @@
 {
-    "name": "dev.bolt.addons",
-    "version": "3.0.0",
-    "displayName": "Community Addons for Bolt",
-    "description": "A collection of Unit Addons for Bolt.",
-    "unity": "2018.4",
-    "dependencies": { },
-    "keywords": [
-        "Bolt",
-        "Units",
-        "Community",
-        "Addons"
-    ],
-    "author": {
-        "name": "Reality.Stop()"
-    }
-  }
+	"name": "dev.bolt.addons",
+	"version": "3.1.2",
+	"displayName": "Community Addons for Bolt",
+	"description": "A collection of Unit Addons for Bolt.",
+	"unity": "2018.4",
+	"dependencies": {},
+	"keywords": [
+		"Bolt",
+		"Units",
+		"Community",
+		"Addons"
+	],
+	"author": {
+		"name": "Reality.Stop()"
+	},
+	"samples": [{
+			"displayName": "Example Macro Pack #1",
+			"description": "A set of basic macros for testing out this framework.",
+			"path": "Samples~/ExampleMacroPack1"
+		},
+		{
+			"displayName": "Tutorial - UI Interaction",
+			"description": "A working example of interacting with the UI through Bolt.",
+			"path": "Samples~/ExampleUIInteractionTutorial"
+		}
+	]
+}
