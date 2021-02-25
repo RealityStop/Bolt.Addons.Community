@@ -1,82 +1,90 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Xml.Linq;
-using UnityEditor.Build;
-using UnityEditor.Build.Reporting;
-using UnityEditor.PackageManager;
-using UnityEngine;
-
-public class PackagesLinkXmlExtractor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
+namespace RealityStop.LinkMerge
 {
-    public string TemporaryFolder
-    {
-        get { return $"{Application.dataPath}/Temporary-Build/";}
-    }
-	 
-	public string TemporaryFolderMeta
-    {
-        get { return $"{Application.dataPath}/Temporary-Build.meta";}
-    }
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using System.Xml.Linq;
+    using UnityEditor.Build;
+    using UnityEditor.Build.Reporting;
+    using UnityEditor.PackageManager;
+    using UnityEditor.PackageManager.Requests;
+    using UnityEngine;
 
-    public string LinkFilePath
+    public class PackagesLinkXmlExtractor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
-        get { return $"{TemporaryFolder}link.xml"; }
-    }
+        public string TemporaryFolder => $"{Application.dataPath}/Temporary-Build/";
 
-    public int callbackOrder { get { return 0; } }
+        public static string TemporaryFolderMeta => $"{Application.dataPath}/Temporary-Build.meta";
 
-    public void OnPreprocessBuild(BuildReport report)
-    {
-		if (!File.Exists(LinkFilePath))
-			CreateMergedLinkFromPackages();
-    }
+        public string LinkFilePath => $"{TemporaryFolder}link.xml";
 
-    public void OnPostprocessBuild(BuildReport report)
-    {
-        if(File.Exists(LinkFilePath))
-            File.Delete(LinkFilePath);
-        if (Directory.Exists(TemporaryFolder))
+        // We execute the script after the others ones
+        public int callbackOrder => 10;
+
+        public async void OnPreprocessBuild(BuildReport report)
         {
-            if (!Directory.EnumerateFiles(TemporaryFolder, "*").Any())
-                Directory.Delete(TemporaryFolder);
-            Directory.Delete(TemporaryFolder, true);
+            // NOTE: We merge a potentially existing previous link.xml file instead of skipping preprocess step 
+            // if (!File.Exists(LinkFilePath))
+            await CreateMergedLinkFromPackages();
         }
-		if (File.Exists(TemporaryFolderMeta))
-			File.Delete(TemporaryFolderMeta);
-    }
 
-    private void CreateMergedLinkFromPackages()
-    {
-        var request = Client.List();
-        do { } while (!request.IsCompleted);
-        if (request.Status == StatusCode.Success)
+        public void OnPostprocessBuild(BuildReport report)
         {
-            List<string> xmlPathList = new List<string>();
-            foreach (var package in request.Result)
+            if(File.Exists(LinkFilePath))
+                File.Delete(LinkFilePath);
+            if (Directory.Exists(TemporaryFolder))
             {
-                var path = package.resolvedPath;			
-				xmlPathList.AddRange(Directory.EnumerateFiles(path, "linkmerge.xml", SearchOption.AllDirectories).ToList());
+                if (!Directory.EnumerateFiles(TemporaryFolder, "*").Any())
+                    Directory.Delete(TemporaryFolder);
+                Directory.Delete(TemporaryFolder, true);
             }
-
-            if (xmlPathList.Count <= 0)
-                return;
-
-            var xmlList = xmlPathList.Select(XDocument.Load).ToArray();
-            
-            var combinedXml = xmlList.First();
-            foreach (var xDocument in xmlList.Where(xml => xml != combinedXml))
-            {
-                combinedXml.Root.Add(xDocument.Root.Elements());
-            }
-
-            if (!Directory.Exists(TemporaryFolder))
-                Directory.CreateDirectory(TemporaryFolder);
-            combinedXml.Save(LinkFilePath);
+            if (File.Exists(TemporaryFolderMeta))
+                File.Delete(TemporaryFolderMeta);
         }
-        else if (request.Status >= StatusCode.Failure)
+
+        private async Task CreateMergedLinkFromPackages()
         {
-            Debug.LogError(request.Error.message);
+            ListRequest request = Client.List();
+
+            do { await Task.Yield(); } while (!request.IsCompleted);
+
+            if (request.Status == StatusCode.Success)
+            {
+                List<string> xmlPathList = new List<string>();
+                foreach (PackageInfo package in request.Result)
+                {
+                    string path = package.resolvedPath;			
+                    xmlPathList.AddRange(Directory.EnumerateFiles(path, "linkmerge.xml", SearchOption.AllDirectories).ToList());
+                }
+
+                if (xmlPathList.Count <= 0)
+                    return;
+
+                XDocument[] xmlList = xmlPathList.Select(XDocument.Load).ToArray();
+                
+                XDocument combinedXml = xmlList.First();
+                foreach (XDocument xDocument in xmlList.Where(xml => xml != combinedXml))
+                {
+                    combinedXml.Root.Add(xDocument.Root.Elements());
+                }
+
+                if (!Directory.Exists(TemporaryFolder))
+                {
+                    Directory.CreateDirectory(TemporaryFolder);
+                }
+                else if(File.Exists(LinkFilePath))
+                {
+                    XDocument previousLinksXML = XDocument.Load(LinkFilePath);
+                    combinedXml.Root.Add(previousLinksXML.Root.Elements());
+                }
+                    
+                combinedXml.Save(LinkFilePath);
+            }
+            else if (request.Status >= StatusCode.Failure)
+            {
+                Debug.LogError(request.Error.message);
+            }
         }
     }
 }
