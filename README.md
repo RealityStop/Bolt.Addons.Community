@@ -32,6 +32,8 @@ and add the following url:
 
 > https://github.com/RealityStop/Bolt.Addons.Community.git
 
+> **Important**: looking for Unity Visual Scripting (UVS) support?  Use https://github.com/RealityStop/Bolt.Addons.Community.git#UVSsupport instead!
+
 
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 
