@@ -1,6 +1,6 @@
 {
 	"name": "dev.bolt.addons",
-	"version": "3.1.3",
+	"version": "3.1.4",
 	"displayName": "Community Addons for Bolt",
 	"description": "A collection of Unit Addons for Bolt.",
 	"unity": "2018.4",
