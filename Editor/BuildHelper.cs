@@ -34,11 +34,8 @@ namespace RealityStop.LinkMerge
             if(File.Exists(LinkFilePath))
                 File.Delete(LinkFilePath);
             if (Directory.Exists(TemporaryFolder))
-            {
-                if (!Directory.EnumerateFiles(TemporaryFolder, "*").Any())
-                    Directory.Delete(TemporaryFolder);
                 Directory.Delete(TemporaryFolder, true);
-            }
+            
             if (File.Exists(TemporaryFolderMeta))
                 File.Delete(TemporaryFolderMeta);
         }
