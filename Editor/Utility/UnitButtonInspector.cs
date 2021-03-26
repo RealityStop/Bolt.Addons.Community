@@ -21,7 +21,7 @@ namespace Bolt.Addons.Community.Utility.Editor
 
         protected override void OnGUI(Rect position, GUIContent label)
         {
-            BeginBlock(metadata, position, GUIContent.none);
+            BeginBlock(metadata, position);
 
             var buttonPosition = new Rect(
                 position.x,
