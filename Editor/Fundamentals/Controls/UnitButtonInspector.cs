@@ -20,7 +20,11 @@ namespace Bolt.Community.Addons.Fundamentals.Editor.Controls
 
         protected override void OnGUI(Rect position, GUIContent label)
         {
+#if UNITY_2021_1_OR_NEWER
             BeginBlock(metadata, position);
+#else
+            BeginBlock(metadata, position, GUIContent.none);
+#endif
 
             var buttonPosition = new Rect(
                 position.x,
