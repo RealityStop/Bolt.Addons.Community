@@ -19,6 +19,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.DefinedEvent")]
     public class DefinedEventUnit : GameObjectEventUnit<DefinedEventArgs>, IDefinedEventUnit
     {
+		public override Type MessageListenerType => null;
         const string EventName = "OnDefinedEvent";
 
         #region Event Type Handling
