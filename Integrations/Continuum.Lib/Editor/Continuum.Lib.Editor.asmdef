@@ -1,0 +1,16 @@
+{
+    "name": "Bolt.Addons.Integrations.Continuum.Lib.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:07f0e0f71d6535949869180f044204fe"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
