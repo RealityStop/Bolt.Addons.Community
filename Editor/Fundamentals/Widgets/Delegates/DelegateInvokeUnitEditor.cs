@@ -9,8 +9,9 @@ using Bolt.Addons.Community.Utility;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 {
-    public abstract class DelegateInvokeUnitEditor : UnitEditor
+    public abstract class DelegateInvokeUnitEditor<TDelegate> : UnitEditor where TDelegate : IDelegate
     {
+
         public DelegateInvokeUnitEditor(Metadata metadata) : base(metadata)
         {
         }
@@ -49,14 +50,17 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 
                     for (int type = 0; type < types.Length; type++)
                     {
-                        if (!types[type].IsAbstract && typeof(IAction).IsAssignableFrom(types[type]))
+                        if (!types[type].IsAbstract)
                         {
-                            var _type = types[type];
-                            menu.AddItem(new GUIContent(types[type].Name.Prettify()), false, () =>
+                            if (typeof(TDelegate).IsAssignableFrom(types[type]))
                             {
-                                unit._delegate = Activator.CreateInstance(_type as System.Type) as IDelegate;
-                                unit.Define();
-                            });
+                                var _type = types[type];
+                                menu.AddItem(new GUIContent(types[type].Name.Prettify()), false, () =>
+                                {
+                                    unit._delegate = Activator.CreateInstance(_type as System.Type) as IDelegate;
+                                    unit.Define();
+                                });
+                            }
                         }
                     }
                 }

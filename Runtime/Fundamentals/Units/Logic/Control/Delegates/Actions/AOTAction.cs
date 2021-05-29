@@ -24,6 +24,18 @@ namespace Bolt.Addons.Community.Utility
         {
             this.action = () => { action.Invoke(); };
         }
+
+        public void Bind(object a, object b)
+        {
+            var _action = a as Action;
+            _action += ((Action)b);
+        }
+
+        public void Unbind(object a, object b)
+        {
+            var _action = a as Action;
+            _action -= ((Action)b);
+        }
     }
 
     [IncludeInSettings(true)]
@@ -47,6 +59,18 @@ namespace Bolt.Addons.Community.Utility
                 unit.AssignParameters(flow, t);
                 flowAction.Invoke();
             };
+        }
+
+        public void Bind(object a, object b)
+        {
+            var _action = a as Action<T>;
+            _action += ((Action<T>)b);
+        }
+
+        public void Unbind(object a, object b)
+        {
+            var _action = a as Action<T>;
+            _action -= ((Action<T>)b);
         }
     }
 
@@ -72,6 +96,18 @@ namespace Bolt.Addons.Community.Utility
                 flowAction.Invoke();
             };
         }
+
+        public void Bind(object a, object b)
+        {
+            var _action = a as Action<T1, T2>;
+            _action += ((Action<T1, T2>)b);
+        }
+
+        public void Unbind(object a, object b)
+        {
+            var _action = a as Action<T1, T2>;
+            _action -= ((Action<T1, T2>)b);
+        }
     }
 
     [IncludeInSettings(true)]
@@ -96,6 +132,18 @@ namespace Bolt.Addons.Community.Utility
                 flowAction.Invoke();
             };
         }
+
+        public void Bind(object a, object b)
+        {
+            var _action = a as Action<T1, T2, T3>;
+            _action += ((Action<T1, T2, T3>)b);
+        }
+
+        public void Unbind(object a, object b)
+        {
+            var _action = a as Action<T1, T2, T3>;
+            _action -= ((Action<T1, T2, T3>)b);
+        }
     }
 
     [IncludeInSettings(true)]
@@ -119,6 +167,18 @@ namespace Bolt.Addons.Community.Utility
                 unit.AssignParameters(flow, t1, t2, t3, t4);
                 flowAction.Invoke();
             };
+        }
+
+        public void Bind(object a, object b)
+        {
+            var _action = a as Action<T1, T2, T3, T4>;
+            _action += ((Action<T1, T2, T3, T4>)b);
+        }
+
+        public void Unbind(object a, object b)
+        {
+            var _action = a as Action<T1, T2, T3, T4>;
+            _action -= ((Action<T1, T2, T3, T4>)b);
         }
     }
 }

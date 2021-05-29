@@ -17,10 +17,6 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
         public ValueInput a;
         [DoNotSerialize]
         public ValueInput b;
-        [DoNotSerialize]
-        public ValueOutput bound;
-
-        object combined;
 
         public BindDelegateUnit() : base() { }
         public BindDelegateUnit(IDelegate @delegate)
@@ -32,9 +28,15 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
         {
             enter = ControlInput("enter", (flow) =>
             {
-                Delegate _a = flow.GetValue(a) as Delegate;
-                Delegate _b = flow.GetValue(b) as Delegate;
-                combined = Delegate.Combine(_a, _b);
+                if (_delegate is IAction)
+                {
+                    ((IAction)_delegate).Bind(flow.GetValue(a), flow.GetValue(b));
+                }
+
+                if (_delegate is IFunc)
+                {
+                    ((IFunc)_delegate).Bind(flow.GetValue(a), flow.GetValue(b));
+                }
                 return exit;
             });
 
@@ -42,7 +44,6 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
 
             a = ValueInput(_delegate.GetDelegateType(), "a");
             b = ValueInput(_delegate.GetDelegateType(), "b");
-            bound = ValueOutput(_delegate.GetDelegateType(), "delegate", (flow) => { return combined; });
         }
     }
 }

@@ -34,6 +34,18 @@ namespace Bolt.Addons.Community.Utility
                 return (T)flowAction.Invoke();
             };
         }
+
+        public void Bind(object a, object b)
+        {
+            var _action = a as Func<T>;
+            _action += ((Func<T>)b);
+        }
+
+        public void Unbind(object a, object b)
+        {
+            var _action = a as Func<T>;
+            _action -= ((Func<T>)b);
+        }
     }
 
     [IncludeInSettings(true)]
@@ -59,6 +71,18 @@ namespace Bolt.Addons.Community.Utility
                 unit.AssignParameters(flow, t);
                 return (T1)flowAction.Invoke();
             };
+        }
+
+        public void Bind(object a, object b)
+        {
+            var _action = a as Func<T, T1>;
+            _action += ((Func<T, T1>)b);
+        }
+
+        public void Unbind(object a, object b)
+        {
+            var _action = a as Func<T, T1>;
+            _action -= ((Func<T, T1>)b);
         }
     }
 
@@ -86,6 +110,18 @@ namespace Bolt.Addons.Community.Utility
                 return (T1)flowAction.Invoke();
             };
         }
+
+        public void Bind(object a, object b)
+        {
+            var _action = a as Func<T, T1, T2>;
+            _action += ((Func<T, T1, T2>)b);
+        }
+
+        public void Unbind(object a, object b)
+        {
+            var _action = a as Func<T, T1, T2>;
+            _action -= ((Func<T, T1, T2>)b);
+        }
     }
 
     [IncludeInSettings(true)]
@@ -112,6 +148,18 @@ namespace Bolt.Addons.Community.Utility
                 return (T3)flowAction.Invoke();
             };
         }
+
+        public void Bind(object a, object b)
+        {
+            var _action = a as Func<T, T1, T2, T3>;
+            _action += ((Func<T, T1, T2, T3>)b);
+        }
+
+        public void Unbind(object a, object b)
+        {
+            var _action = a as Func<T, T1, T2, T3>;
+            _action -= ((Func<T, T1, T2, T3>)b);
+        }
     }
 
     [IncludeInSettings(true)]
@@ -137,6 +185,18 @@ namespace Bolt.Addons.Community.Utility
                 unit.AssignParameters(flow, t);
                 return (T4)flowAction.Invoke();
             };
+        }
+
+        public void Bind(object a, object b)
+        {
+            var _action = a as Func<T, T1, T2, T3, T4>;
+            _action += ((Func<T, T1, T2, T3, T4>)b);
+        }
+
+        public void Unbind(object a, object b)
+        {
+            var _action = a as Func<T, T1, T2, T3, T4>;
+            _action -= ((Func<T, T1, T2, T3, T4>)b);
         }
     }
 }
