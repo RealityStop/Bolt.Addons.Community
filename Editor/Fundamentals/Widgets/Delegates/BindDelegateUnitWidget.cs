@@ -9,11 +9,11 @@ using Bolt.Addons.Community.Utility;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 {
-    public abstract class DelegateUnitWidget<T, TDelegate> : UnitWidget<T> 
-        where T: DelegateUnit 
+    public abstract class BindDelegateUnitWidget<T, TDelegate> : UnitWidget<T>
+        where T : BindDelegateUnit<TDelegate>
         where TDelegate : IDelegate
     {
-        public DelegateUnitWidget(FlowCanvas canvas, T unit) : base(canvas, unit)
+        public BindDelegateUnitWidget(FlowCanvas canvas, T unit) : base(canvas, unit)
         {
         }
 
@@ -54,7 +54,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
                             var _type = types[type];
                             menu.AddItem(new GUIContent(types[type].Name.Prettify()), false, () =>
                             {
-                                unit._delegate = Activator.CreateInstance(_type as System.Type) as IDelegate;
+                                unit._delegate = (TDelegate)Activator.CreateInstance(_type as System.Type);
                                 unit.Define();
                             });
                         }

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.logic
 {
-    [UnitCategory("Community/Control")]
     public abstract class DelegateUnit : Unit
     {
         [Serialize]

@@ -9,32 +9,34 @@ using Bolt.Addons.Community.Utility;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 {
-    public abstract class DelegateUnitWidget<T, TDelegate> : UnitWidget<T> 
-        where T: DelegateUnit 
+    public abstract class BindDelegateUnitEditor<T, TDelegate> : UnitEditor
+        where T : BindDelegateUnit<TDelegate>
         where TDelegate : IDelegate
     {
-        public DelegateUnitWidget(FlowCanvas canvas, T unit) : base(canvas, unit)
+        public BindDelegateUnitEditor(Metadata metadata) : base(metadata)
         {
         }
 
-        public override bool foregroundRequiresInput => true;
+        protected abstract string DefaultName { get; }
 
-        protected override bool showHeaderAddon => unit._delegate == null;
-
-        protected override float GetHeaderAddonHeight(float width)
-        {
-            return 20;
-        }
-
-        protected override void DrawHeaderAddon()
+        protected override void OnInspectorGUI(Rect position)
         {
             var buttonRect = position;
-            buttonRect.x += 42;
-            buttonRect.y += 22;
             buttonRect.height = 20;
+            buttonRect.x += 40;
 
-            var buttonLabel = unit._delegate == null ? "( None Selected )" : unit._delegate?.DisplayName;
-            buttonRect.width = GUI.skin.label.CalcSize(new GUIContent(buttonLabel)).x + 8;
+            var labelRect = position;
+            labelRect.height = 20;
+            labelRect.width = 40;
+
+            var baseRect = position;
+            baseRect.y += 24;
+
+            GUI.Label(labelRect, DefaultName);
+
+            var unit = metadata.value as T;
+            var buttonLabel = unit._delegate == null ? "( None Selected )" : unit._delegate?.GetType().Name.Prettify();
+            buttonRect.width = GUI.skin.label.CalcSize(new GUIContent(buttonLabel)).x + 40;
 
             if (GUI.Button(buttonRect, buttonLabel))
             {
@@ -54,7 +56,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
                             var _type = types[type];
                             menu.AddItem(new GUIContent(types[type].Name.Prettify()), false, () =>
                             {
-                                unit._delegate = Activator.CreateInstance(_type as System.Type) as IDelegate;
+                                unit._delegate = (TDelegate)Activator.CreateInstance(_type as System.Type);
                                 unit.Define();
                             });
                         }
@@ -63,11 +65,13 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 
                 menu.ShowAsContext();
             }
+
+            base.OnInspectorGUI(position);
         }
 
-        protected override float GetHeaderAddonWidth()
+        protected override float GetInspectorHeight(float width)
         {
-            return GUI.skin.label.CalcSize(new GUIContent(unit._delegate == null ? "( None Selected )" : unit._delegate.DisplayName)).x + 8;
+            return base.GetInspectorHeight(width) + 24;
         }
     }
 }

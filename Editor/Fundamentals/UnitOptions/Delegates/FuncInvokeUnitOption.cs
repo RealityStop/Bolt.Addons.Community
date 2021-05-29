@@ -16,7 +16,7 @@ namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
 
         protected override string Label(bool human)
         {
-            return $"{LudiqGUIUtility.DimString("Invoke")} { unit._func?.GetType().Name }";
+            return $"{LudiqGUIUtility.DimString("Invoke")} { unit._func?.DisplayName }";
         }
 
         protected override UnitCategory Category()

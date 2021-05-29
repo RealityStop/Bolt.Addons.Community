@@ -1,16 +1,29 @@
 ﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
+using Bolt.Addons.Community.Utility;
 using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
 {
-    public abstract class DelegateUnitDescriptor<T> : UnitDescriptor<T> where T : DelegateUnit
+    public abstract class BindDelegateUnitDescriptor<T, TInterface> : UnitDescriptor<T>
+        where T : BindDelegateUnit<TInterface>
+        where TInterface : IDelegate
     {
-        public DelegateUnitDescriptor(T target) : base(target)
+        public BindDelegateUnitDescriptor(T target) : base(target)
         {
         }
 
         protected abstract string DefaultName();
         protected abstract string DefinedName();
+
+        protected override string DefaultSurtitle()
+        {
+            return "Bind";
+        }
+
+        protected override string DefinedSurtitle()
+        {
+            return "Bind";
+        }
 
         protected override string DefinedTitle()
         {

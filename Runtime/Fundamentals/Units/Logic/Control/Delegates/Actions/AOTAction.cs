@@ -8,12 +8,13 @@ using Bolt.Addons.Community.Fundamentals.Units.logic;
 namespace Bolt.Addons.Community.Utility
 {
     [IncludeInSettings(true)]
-    public sealed class AOTAction : IAction
+    public class AOTAction : IAction
     {
         public Action action;
         public object GetDelegate() => action;
         public Type GetDelegateType() => typeof(Action);
         public TypeParam[] parameters => new TypeParam[] { };
+        public virtual string DisplayName => "AOT Action";
 
         public void Invoke(params object[] parameters)
         {
@@ -44,6 +45,7 @@ namespace Bolt.Addons.Community.Utility
         public Action<T> action;
         public object GetDelegate() => action;
         public Type GetDelegateType() => typeof(Action<T>);
+        public abstract string DisplayName { get; }
 
         public abstract TypeParam[] parameters { get; }
 
@@ -80,6 +82,7 @@ namespace Bolt.Addons.Community.Utility
         internal Action<T1, T2> action;
         public object GetDelegate() => action;
         public Type GetDelegateType() => typeof(Action<T1, T2>);
+        public abstract string DisplayName { get; }
 
         public abstract TypeParam[] parameters { get; }
 
@@ -116,6 +119,7 @@ namespace Bolt.Addons.Community.Utility
         public Action<T1, T2, T3> action;
         public object GetDelegate() => action;
         public Type GetDelegateType() => typeof(Action<T1, T2, T3>);
+        public abstract string DisplayName { get; }
 
         public abstract TypeParam[] parameters { get; }
 
@@ -152,6 +156,7 @@ namespace Bolt.Addons.Community.Utility
         public Action<T1, T2, T3, T4> action;
         public object GetDelegate() => action;
         public Type GetDelegateType() => typeof(Action<T1, T2, T3, T4>);
+        public abstract string DisplayName { get; }
 
         public abstract TypeParam[] parameters { get; }
 

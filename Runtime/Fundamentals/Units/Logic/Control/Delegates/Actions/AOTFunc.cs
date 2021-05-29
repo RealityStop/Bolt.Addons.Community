@@ -7,7 +7,7 @@ namespace Bolt.Addons.Community.Utility
     [IncludeInSettings(true)]
     public sealed class AOTFunc : AOTFunc<object>
     {
-
+        public override string DisplayName => "AOT Func";
     }
 
     [IncludeInSettings(true)]
@@ -20,6 +20,8 @@ namespace Bolt.Addons.Community.Utility
         public TypeParam[] parameters => new TypeParam[] { };
 
         public Type ReturnType => typeof(T);
+
+        public abstract string DisplayName { get; }
 
         public object Invoke(params object[] parameters)
         {
@@ -59,6 +61,8 @@ namespace Bolt.Addons.Community.Utility
 
         public Type ReturnType => typeof(T1);
 
+        public abstract string DisplayName { get; }
+
         public object Invoke(params object[] parameters)
         {
             return func.Invoke((T)parameters[0]);
@@ -96,6 +100,8 @@ namespace Bolt.Addons.Community.Utility
         public abstract TypeParam[] parameters { get; }
 
         public Type ReturnType => typeof(T1);
+
+        public abstract string DisplayName { get; }
 
         public object Invoke(params object[] parameters)
         {
@@ -135,6 +141,8 @@ namespace Bolt.Addons.Community.Utility
 
         public Type ReturnType => typeof(T3);
 
+        public abstract string DisplayName { get; }
+
         public object Invoke(params object[] parameters)
         {
             return func.Invoke((T)parameters[0], (T1)parameters[1], (T2)parameters[2]);
@@ -172,6 +180,8 @@ namespace Bolt.Addons.Community.Utility
         public abstract TypeParam[] parameters { get; }
 
         public Type ReturnType => typeof(T4);
+
+        public abstract string DisplayName { get; }
 
         public object Invoke(params object[] parameters)
         {
