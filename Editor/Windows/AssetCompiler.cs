@@ -20,11 +20,18 @@ namespace Bolt.Addons.Community.Utility.Editor
             HUMIO.Ensure(enumPath).Path();
 
             var csharpObjects = HUMAssets.Find().Assets().OfType<CSharpObject>();
+            var enums = HUMAssets.Find().Assets().OfType<EnumAsset>();
 
             for (int i = 0; i < csharpObjects.Count; i++)
             {
                 var fullPath = csharpPath + csharpObjects[i].title.LegalMemberName() + ".cs";
                 HUMIO.Save(CSharpObjectGenerator.GetSingleDecorator(csharpObjects[i]).GenerateClean(0)).Custom(fullPath).Text(false);
+            }
+
+            for (int i = 0; i < enums.Count; i++)
+            {
+                var fullPath = enumPath + enums[i].title.LegalMemberName() + ".cs";
+                HUMIO.Save(EnumAssetGenerator.GetSingleDecorator(enums[i]).GenerateClean(0)).Custom(fullPath).Text(false);
             }
 
             AssetDatabase.SaveAssets();

@@ -6,21 +6,14 @@ using Unity.VisualScripting;
 namespace Bolt.Addons.Community.Code.Editor
 {
     [CreateAssetMenu(menuName = "Visual Scripting/Community/CSharp Object")]
-    public class CSharpObject : ScriptableObject
+    public class CSharpObject : CodeAsset
     {
-        [Inspectable]
-        [InspectorWide]
-        public string title;
-        [Inspectable]
-        [InspectorWide]
-        public string category;
         [Inspectable]
         [InspectorWide]
         public ObjectType objectType;
         [Inspectable]
         [InspectorWide]
         public List<FieldDeclaration> fields = new List<FieldDeclaration>();
-        public bool preview;
         [Inspectable]
         public bool inspectable = true;
         [Inspectable]
@@ -30,6 +23,5 @@ namespace Bolt.Addons.Community.Code.Editor
         [Inspectable]
         public bool definedEvent;
         public bool fieldsOpened;
-        public bool optionsOpened;
     }
 }
