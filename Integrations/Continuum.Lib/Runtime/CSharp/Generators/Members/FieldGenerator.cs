@@ -75,7 +75,8 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
 
             foreach (AttributeGenerator attr in attributes)
             {
-                _attributes += attr.Generate(indent) + ((count < attributes.Count - 1) ? "\n" : string.Empty);
+                _attributes += attr.Generate(indent) + (count < attributes.Count - 1 ? "\n" : string.Empty);
+                count++;
             }
 
             if (attributes.Count > 0) _attributes += "\n";

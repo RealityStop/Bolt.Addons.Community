@@ -201,6 +201,15 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
                 if (!inherits.Is().PrimitiveStringOrVoid()) usings.Add(inherits.Namespace);
             }
 
+            var interfaceList = new List<string>();
+
+            for (int i = 0; i < interfaces.Count; i++)
+            {
+                if (!string.IsNullOrEmpty(interfaces[i].Namespace) && !interfaceList.Contains(interfaces[i].Namespace)) interfaceList.Add(interfaces[i].Namespace);
+            }
+
+            usings.MergeUnique(interfaceList);
+
             for (int i = 0; i < attributes.Count; i++)
             {
                 usings.MergeUnique(attributes[i].Usings());

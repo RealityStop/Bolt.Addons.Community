@@ -45,6 +45,14 @@ namespace Bolt.Addons.Integrations.Continuum.Humility
             return new HUMIO.Data.Custom(filePath + fileName, saveData, new HUMIO.Data.Load());
         }
 
+        /// <summary>
+        /// Sets the save to be in a custom folder.
+        /// </summary>
+        public static HUMIO.Data.Custom Custom(this HUMIO.Data.Save saveData, string fullPath)
+        {
+            return new HUMIO.Data.Custom(fullPath, saveData, new HUMIO.Data.Load());
+        }
+
 
         /// <summary>
         /// Deletes a file in the persistant data path.

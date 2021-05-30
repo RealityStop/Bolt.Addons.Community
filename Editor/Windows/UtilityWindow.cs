@@ -18,18 +18,22 @@ namespace Bolt.Addons.Community.Utility.Editor
 
         private void OnEnable()
         {
-            SelectionToSuperUnit();
-            minSize = new Vector2(250, minSize.y);
-        }
-
-        private void SelectionToSuperUnit()
-        {
             var root = rootVisualElement;
 
             var container = new BorderedRectangle(HUMEditorColor.DefaultEditorBackground, Color.black, 2);
             container.style.flexDirection = FlexDirection.Column;
             container.style.flexGrow = 1;
 
+            SelectionToSuperUnit(container);
+            GenerateCode(container);
+
+            minSize = new Vector2(250, minSize.y);
+
+            root.Add(container);
+        }
+
+        private void SelectionToSuperUnit(BorderedRectangle container)
+        {
             var header = new BorderedRectangle(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2);
             header.style.height = 24;
             header.style.marginBottom = 4;
@@ -55,7 +59,36 @@ namespace Bolt.Addons.Community.Utility.Editor
             header.Add(label);
             container.Add(header);
             container.Add(buttonContainer);
-            root.Add(container);
+        }
+
+        private void GenerateCode(BorderedRectangle container)
+        {
+            var header = new BorderedRectangle(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2);
+            header.style.height = 24;
+            header.style.marginBottom = 4;
+            header.style.unityTextAlign = TextAnchor.MiddleCenter;
+            header.style.marginTop = 6;
+
+            var label = new Label();
+            label.text = "Compile Assets";
+            label.style.flexGrow = 1;
+
+            var hint = new HelpBox("Clicking 'Compile' will generate C# scripts for Defined Events, Funcs, and Actions to ensure complete AOT Safety on all platforms.", HelpBoxMessageType.Info);
+            hint.Set().Padding(6);
+
+            var buttonContainer = new VisualElement();
+            buttonContainer.style.flexDirection = FlexDirection.Row;
+            buttonContainer.style.height = 24;
+
+            var compileButton = new Button(() => { AssetCompiler.Compile(); }) { text = "Compile" };
+            compileButton.style.flexGrow = 1;
+
+            buttonContainer.Add(compileButton);
+
+            header.Add(label);
+            container.Add(header);
+            container.Add(hint);
+            container.Add(buttonContainer);
         }
     }
 }
