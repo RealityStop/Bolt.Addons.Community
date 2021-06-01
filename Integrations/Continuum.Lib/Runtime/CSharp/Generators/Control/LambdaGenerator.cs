@@ -30,10 +30,10 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
 
         public override string Generate(int indent)
         {
+            var parameters = string.Empty;
+
             if (multiLine)
             {
-                var parameters = string.Empty;
-
                 for (int i = 0; i < parameterNames.Count; i++)
                 {
                     parameters += parameterNames[i];
@@ -50,8 +50,6 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
             }
             else
             {
-                var parameters = string.Empty;
-
                 for (int i = 0; i < parameterNames.Count; i++)
                 {
                     parameters += parameterNames[i];
@@ -62,7 +60,7 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
                     }
                 }
 
-                return "(" + parameters + ") => { " + body + "}";
+                return "(" + parameters + ") => { " + body + (string.IsNullOrEmpty(body) ? string.Empty : " ") + "}";
             }
         }
 

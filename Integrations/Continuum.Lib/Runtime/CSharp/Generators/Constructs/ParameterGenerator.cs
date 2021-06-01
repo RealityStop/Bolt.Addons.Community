@@ -10,13 +10,14 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
         public Type type;
         public string assemblyQualifiedType;
         public bool useAssemblyQualifiedType;
-
+        public bool isParameters;
         public bool isLiteral;
         public ParameterModifier modifier;
 
         public override string Generate(int indent)
         {
-            return type == null ? assemblyQualifiedType + " " + name : type.As().CSharpName() + " " + name.LegalMemberName();
+            var param = isParameters ? "params ".ConstructHighlight() : string.Empty;
+            return type == null ? param + assemblyQualifiedType + " " + name : param + type.As().CSharpName() + " " + name.LegalMemberName();
         }
 
         private ParameterGenerator()
@@ -24,17 +25,18 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
 
         }
 
-        public static ParameterGenerator Parameter(string name, Type type, ParameterModifier modifier, bool isLiteral = false)
+        public static ParameterGenerator Parameter(string name, Type type, ParameterModifier modifier, bool isLiteral = false, bool isParameters = false)
         {
             var parameter = new ParameterGenerator();
             parameter.name = name;
             parameter.type = type;
             parameter.modifier = modifier;
             parameter.isLiteral = isLiteral;
+            parameter.isParameters = isParameters;
             return parameter;
         }
 
-        public static ParameterGenerator Parameter(string name, string assemblyQualifiedType, ParameterModifier modifier, bool isLiteral = false)
+        public static ParameterGenerator Parameter(string name, string assemblyQualifiedType, ParameterModifier modifier, bool isLiteral = false, bool isParameters = false)
         {
             var parameter = new ParameterGenerator();
             parameter.name = name;
@@ -42,6 +44,7 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
             parameter.useAssemblyQualifiedType = true;
             parameter.modifier = modifier;
             parameter.isLiteral = isLiteral;
+            parameter.isParameters = isParameters;
             return parameter;
         }
 

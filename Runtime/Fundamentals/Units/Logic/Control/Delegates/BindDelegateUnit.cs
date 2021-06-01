@@ -30,20 +30,20 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
             {
                 if (_delegate is IAction)
                 {
-                    ((IAction)_delegate).Bind(flow.GetValue(a), flow.GetValue(b));
+                    (flow.GetValue<IAction>(a)).Bind(flow.GetValue<TDelegateInterface>(b));
                 }
 
                 if (_delegate is IFunc)
                 {
-                    ((IFunc)_delegate).Bind(flow.GetValue(a), flow.GetValue(b));
+                    ((IFunc)_delegate).Bind(flow.GetValue<TDelegateInterface>(a), flow.GetValue<TDelegateInterface>(b));
                 }
                 return exit;
             });
 
             exit = ControlOutput("exit");
 
-            a = ValueInput(_delegate.GetDelegateType(), "a");
-            b = ValueInput(_delegate.GetDelegateType(), "b");
+            a = ValueInput(_delegate.GetType(), "a");
+            b = ValueInput(_delegate.GetType(), "b");
         }
     }
 }

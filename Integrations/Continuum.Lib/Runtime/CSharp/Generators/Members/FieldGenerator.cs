@@ -29,7 +29,7 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
             field.modifier = modifier;
             field.type = type;
             field.name = name.LegalMemberName();
-            field.defaultValue = HUMValue.Create().New(type);
+            field.defaultValue = type.Default();
             return field;
         }
 

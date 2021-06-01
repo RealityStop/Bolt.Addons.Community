@@ -10,7 +10,7 @@ namespace Bolt.Addons.Community.Utility
     {
         void Invoke(params object[] parameters);
         void Initialize(Flow flow, ActionUnit unit, Action flowAction);
-        void Bind(object a, object b);
-        void Unbind(object a, object b);
+        void Bind(IDelegate other);
+        void Unbind(IDelegate other);
     }
 }

@@ -80,5 +80,47 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
 
             return text;
         }
+
+        private static string[] _constructNames;
+        public static string[] constructNames => _constructNames = _constructNames ?? new string[]
+        {
+            "object",
+            "var",
+            "func",
+            "delegate",
+            "class",
+            "struct",
+            "enum",
+            "interface",
+            "void",
+            "float",
+            "int",
+            "string",
+            "bool",
+            "in",
+            "out",
+            "as",
+            "is",
+            "ref",
+            "return",
+            "public",
+            "private",
+            "protected",
+            "internal",
+            "static",
+            "where",
+            "from",
+            "select"
+        };
+
+        public static string EnsureNonConstructName(this string text)
+        {
+            for(int i = 0; i < constructNames.Length; i++)
+            {
+                if (constructNames[i] == text) return "@" + text;
+            }
+
+            return text;
+        }
     }
 }

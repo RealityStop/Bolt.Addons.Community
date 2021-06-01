@@ -28,8 +28,9 @@ namespace Bolt.Addons.Integrations.Continuum.Humility
         /// </summary>
         public static string CSharpName(this HUMType.Data.As @as, bool hideSystemObject = false, bool fullName = false, bool highlight = true)
         {
-            if (highlight == true) return @as.HighlightCSharpName(hideSystemObject, fullName);
+            if (highlight) return @as.HighlightCSharpName(hideSystemObject, fullName);
             if (@as.type == null) return "null";
+            if (@as.type.IsConstructedGenericType || @as.type.IsGenericType) return GenericDeclaration(@as.type);
             if (@as.type == typeof(int)) return "int";
             if (@as.type == typeof(string)) return "string";
             if (@as.type == typeof(float)) return "float";
@@ -38,8 +39,8 @@ namespace Bolt.Addons.Integrations.Continuum.Humility
             if (@as.type == typeof(bool)) return "bool";
             if (@as.type == typeof(byte)) return "byte";
             if (@as.type == typeof(void)) return "void";
-            if (@as.type.IsConstructedGenericType) return GenericDeclaration(@as.type);
-            if (@as.type == typeof(System.Object) && @as.type.BaseType == null) return hideSystemObject ? string.Empty : "object";
+            if (@as.type == typeof(object) && @as.type.BaseType == null) return hideSystemObject ? string.Empty : "object";
+            if (@as.type == typeof(object[])) return "object[]";
 
             return fullName ? @as.type.FullName : @as.type.Name;
         }
@@ -47,6 +48,7 @@ namespace Bolt.Addons.Integrations.Continuum.Humility
         private static string HighlightCSharpName(this HUMType.Data.As @as, bool hideSystemObject = false, bool fullName = false)
         {
             if (@as.type == null) return "null".ConstructHighlight();
+            if (@as.type.IsConstructedGenericType || @as.type.IsGenericType) return GenericDeclaration(@as.type);
             if (@as.type == typeof(int)) return "int".ConstructHighlight();
             if (@as.type == typeof(string)) return "string".ConstructHighlight();
             if (@as.type == typeof(float)) return "float".ConstructHighlight();
@@ -57,8 +59,8 @@ namespace Bolt.Addons.Integrations.Continuum.Humility
             if (@as.type == typeof(void)) return "void".ConstructHighlight();
             if (@as.type.IsEnum) return @as.type.Name.EnumHighlight();
             if (@as.type.IsInterface) return @as.type.Name.InterfaceHighlight();
-            if (@as.type.IsConstructedGenericType) return GenericDeclaration(@as.type);
             if (@as.type == typeof(System.Object) && @as.type.BaseType == null) return hideSystemObject ? string.Empty : "object".ConstructHighlight();
+            if (@as.type == typeof(object[])) return "object".ConstructHighlight() + "[]";
 
             return fullName ? @as.type.FullName.Replace(@as.type.Name, @as.type.Name.TypeHighlight()) : @as.type.Name.TypeHighlight();
         }
@@ -417,13 +419,12 @@ namespace Bolt.Addons.Integrations.Continuum.Humility
             return output;
         }
 
-        public static string GenericDeclaration(Type type)
+        public static string GenericDeclaration(Type type, params Type[] declaredGenerics)
         {
             var output = string.Empty;
 
-            if (!type.IsConstructedGenericType) throw new Exception("Type is not a generic type but you are trying to declare a generic.");
-
-            output += type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight();
+            if (!type.IsConstructedGenericType && !type.IsGenericType) throw new Exception("Type is not a generic type but you are trying to declare a generic.");
+            output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight();
             output += "<";
 
             var args = type.GetGenericArguments();

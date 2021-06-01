@@ -24,12 +24,14 @@ namespace Bolt.Addons.Community.Code.Editor
 
         protected virtual void AfterCategoryGUI() { }
 
-        protected virtual void OptionsGUI() { }
+        protected virtual void OptionsGUI() { EditorGUILayout.HelpBox("No Options for this asset type", MessageType.None); }
 
         protected virtual void BeforePreview() { }
 
         public override sealed void OnInspectorGUI()
         {
+            serializedObject.Update();
+
             hidden = false;
 
             Cache();
@@ -56,8 +58,6 @@ namespace Bolt.Addons.Community.Code.Editor
                                 Target.category = EditorGUILayout.TextField(Target.category);
                             });
 
-                            EditorGUILayout.Space(4);
-
                             AfterCategoryGUI();
                         });
 
@@ -71,11 +71,11 @@ namespace Bolt.Addons.Community.Code.Editor
                             });
                         });
 
-                        EditorGUILayout.Space(8);
+                        EditorGUILayout.Space(4);
 
                         BeforePreview();
 
-                        EditorGUILayout.Space(8);
+                        EditorGUILayout.Space(4);
 
                     }, () =>
                     {
@@ -87,11 +87,13 @@ namespace Bolt.Addons.Community.Code.Editor
                         HUMEditor.Vertical().Box(HUMColor.Grey(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
                         {
                             generator = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
-                            GUILayout.Label(generator.Generate(0).RemoveMarkdown(), new GUIStyle(GUI.skin.label) { richText = true });
+                            GUILayout.Label(generator.Generate(0).RemoveMarkdown(), new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true });
                         }, true, true);
                     });
                 });
             }
+
+            serializedObject.ApplyModifiedProperties();
         }
     }
 }

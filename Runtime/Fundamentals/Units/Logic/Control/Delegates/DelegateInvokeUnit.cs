@@ -1,6 +1,7 @@
 ﻿using Bolt.Addons.Community.Utility;
 using Unity.VisualScripting;
 using System.Collections.Generic;
+using System;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.logic
 {
@@ -42,18 +43,21 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
                 enter = ControlInput("enter", (flow) =>
                 {
                     var values = new List<object>();
-                    var act = flow.GetValue<System.Delegate>(@delegate);
+                    var act = flow.GetValue<IDelegate>(@delegate);
 
                     for (int i = 0; i < parameters.Count; i++)
                     {
                         values.Add(flow.GetValue(parameters[i]));
                     }
 
-                    act.DynamicInvoke(values.ToArray());
+                        ((IAction)act).Invoke(values.ToArray());
+
                     return exit;
                 });
 
                 exit = ControlOutput("exit");
+
+                Succession(enter, exit);
             }
 
             if (_delegate != null)

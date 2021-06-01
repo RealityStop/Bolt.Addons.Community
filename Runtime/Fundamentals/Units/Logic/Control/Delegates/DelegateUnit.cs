@@ -21,6 +21,8 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
         [PortLabelHidden]
         public ControlOutput invoke;
 
+        public bool initialized;
+
         public DelegateUnit() : base() { }
 
         public DelegateUnit(IDelegate @delegate)
@@ -36,11 +38,11 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
 
             if (_delegate != null)
             {
-                @delegate = ValueOutput(_delegate.GetDelegateType(), "delegate", (flow) =>
+                @delegate = ValueOutput(_delegate.GetType(), "delegate", (flow) =>
                 {
                     reference = flow.stack.ToReference();
-                    InitializeDelegate(flow);
-                    return _delegate.GetDelegate();
+                    if (!initialized) { InitializeDelegate(flow); initialized = true; }
+                    return _delegate;
                 });
 
                 for (int i = 0; i < _delegate.parameters.Length; i++)
@@ -49,12 +51,12 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
                 }
             }
         }
-
+         
         public void AssignParameters(Flow flow, params object[] parameters)
         {
             for (int i = 0; i < parameters.Length; i++)
             {
-                flow.SetValue(this.parameters[0], parameters[i]);
+                flow.SetValue(this.parameters[i], parameters[i]);
             }
         }
 

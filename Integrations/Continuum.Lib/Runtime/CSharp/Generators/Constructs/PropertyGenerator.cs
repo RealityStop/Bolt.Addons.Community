@@ -23,6 +23,9 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
         private bool assemblyQualifiedIsValueType;
         private bool assemblyQualifiedIsPrimitive;
         private bool hasBackingField;
+        private bool hasIndexer;
+        private string indexerBody;
+
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
 #pragma warning restore 0649
 
@@ -101,6 +104,13 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
             return this;
         }
 
+        public PropertyGenerator AddTypeIndexer(string contents)
+        {
+            hasIndexer = true;
+            indexerBody = contents;
+            return this;
+        }
+
         public override string Generate(int indent)
         {
             if (useAssemblyQualifiedReturnType)
@@ -113,8 +123,8 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
                 }
 
                 var modSpace = (modifier == PropertyModifier.None) ? string.Empty : " ";
-                var definition = CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + assemblyQualifiedReturnType + " " + name.LegalMemberName() + " " + GetterSetter();
-                var output = defaultValue == null && returnType.IsValueType && returnType.IsPrimitive ? (hasGetter || hasSetter ? string.Empty : ";") : hasDefault ? " = " + defaultValue.As().Code(true) + ";" : string.Empty;
+                var definition = CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + assemblyQualifiedReturnType + (hasIndexer ? $"[{indexerBody}]" : string.Empty) + " " + name.LegalMemberName() + " " + GetterSetter();
+                var output = defaultValue == null && returnType.IsValueType && returnType.IsPrimitive ? (hasGetter || hasSetter ? string.Empty : (!hasDefault ? ";" : string.Empty)) : hasDefault ? " = " + defaultValue.As().Code(true) + ";" : string.Empty;
                 return _attributes + definition + output;
             }
             else
@@ -127,8 +137,8 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
                 }
 
                 var modSpace = (modifier == PropertyModifier.None) ? string.Empty : " ";
-                var definition = CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + " " + modifier.AsString() + modSpace + returnType.As().CSharpName() + " " + name + " " + GetterSetter();
-                var output = defaultValue == null && assemblyQualifiedIsValueType && assemblyQualifiedIsPrimitive ? (hasGetter || hasSetter ? string.Empty : ";") : hasDefault ? " = " + defaultValue.As().Code(true) + ";" : string.Empty;
+                var definition = CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + returnType.As().CSharpName().TypeHighlight() + (hasIndexer ? $"[{indexerBody}]" : string.Empty) + " " + name + " " + GetterSetter();
+                var output = defaultValue == null && assemblyQualifiedIsValueType && assemblyQualifiedIsPrimitive ? (hasGetter || hasSetter ? string.Empty : (!hasDefault ? ";" : string.Empty)) : hasDefault ? " = " + defaultValue.As().Code(true) + ";" : string.Empty;
                 return _attributes + definition + output;
             }
 
@@ -138,11 +148,11 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
 
                 if (multiStatementGetter || multiStatementSetter)
                 {
-                    return (getterBody == null ? string.Empty : "\n" + CodeBuilder.Indent(indent) + "{\n" + Getter()) + (setterBody == null ? string.Empty : "\n" + Setter() + "\n") + "\n" + CodeBuilder.Indent(indent) + "}";
+                    return (string.IsNullOrEmpty(getterBody) ? string.Empty : "\n" + CodeBuilder.Indent(indent) + "{\n" + Getter()) + (string.IsNullOrEmpty(setterBody) ? string.Empty : "\n" + Setter() + "\n") + "\n" + CodeBuilder.Indent(indent) + "}";
                 }
                 else
                 {
-                    return "{ " + (getterBody == null ? string.Empty : Getter() + " ") + (setterBody == null ? string.Empty : (getterBody == null ? " " : string.Empty) + Setter() + " ") + "}";
+                    return "{ " + (string.IsNullOrEmpty(getterBody) ? string.Empty : Getter() + " ") + (string.IsNullOrEmpty(setterBody) ? string.Empty : (string.IsNullOrEmpty(getterBody) ? " " : string.Empty) + Setter() + " ") + "}";
                 }
             }
 
