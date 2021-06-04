@@ -16,7 +16,7 @@ namespace Bolt.Addons.Integrations.Continuum.CSharp
 #pragma warning disable 0414
         public bool isNested;
 #pragma warning restore 0414
-        public string name { get; private set; }
+        public string name;
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
         public List<FieldGenerator> fields = new List<FieldGenerator>();
         public List<PropertyGenerator> properties = new List<PropertyGenerator>();

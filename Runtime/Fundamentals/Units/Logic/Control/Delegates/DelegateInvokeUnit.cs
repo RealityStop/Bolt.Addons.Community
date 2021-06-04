@@ -5,7 +5,7 @@ using System;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.logic
 {
-    [UnitCategory("Community/Control")]
+    [UnitCategory("Community/Control/Delegates")]
     [TypeIcon(typeof(Flow))]
     public abstract class DelegateInvokeUnit : Unit
     {
@@ -50,25 +50,35 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
                         values.Add(flow.GetValue(parameters[i]));
                     }
 
-                        ((IAction)act).Invoke(values.ToArray());
+                    Invoke(flow, values);
 
                     return exit;
                 });
 
                 exit = ControlOutput("exit");
-
-                Succession(enter, exit);
             }
 
             if (_delegate != null)
             {
-                @delegate = ValueInput(_delegate.GetDelegateType(), "delegate");
+                @delegate = ValueInput(_delegate.GetType(), "delegate");
 
                 for (int i = 0; i < _delegate.parameters.Length; i++)
                 {
                     parameters.Add(ValueInput(_delegate.parameters[i].type, _delegate.parameters[i].name));
                 }
             }
+
+            if (!isPure)
+            {
+                Succession(enter, exit);
+                if (@delegate != null) Requirement(@delegate, enter);
+                for (int i = 0; i < parameters.Count; i++)
+                {
+                    Requirement(parameters[i], enter);
+                }
+            }
         }
+
+        protected abstract void Invoke(Flow flow, List<object> values);
     }
 }

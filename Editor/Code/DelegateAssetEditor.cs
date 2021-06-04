@@ -9,18 +9,22 @@ using System.Linq;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
-    [CustomEditor(typeof(ActionAsset))]
-    public class ActionAssetEditor : CodeAssetEditor<ActionAsset, ActionAssetGenerator>
+    [CustomEditor(typeof(DelegateAsset))]
+    public class DelegateAssetEditor : CodeAssetEditor<DelegateAsset, DelegateAssetGenerator>
     {
         private Metadata type;
         private Metadata generics;
         private List<Type> types;
         private List<Type> allTypes;
 
+        protected override bool showOptions => false;
+        protected override bool showTitle => false;
+        protected override bool showCategory => false;
+
         private void OnEnable()
         {
             allTypes = typeof(object).Get().Derived().Where((type) => { return type.BaseType != null; }).ToList();
-            types = typeof(object).Get().Derived().Where((type) => { return type.IsSubclassOf(typeof(Delegate)) && type.GetMethod("Invoke").ReturnType == typeof(void); }).ToList();
+            types = typeof(object).Get().Derived().Where((type) => { return type.IsSubclassOf(typeof(Delegate)) && !type.Namespace.Contains("System.Xml"); }).ToList();
         }
 
         protected override void Cache()
@@ -29,6 +33,7 @@ namespace Bolt.Addons.Community.Code.Editor
             {
                 type = Metadata.FromProperty(serializedObject.FindProperty("type"))["type"];
                 generics = Metadata.FromProperty(serializedObject.FindProperty("generics"));
+
                 hidden = true;
             }
         }

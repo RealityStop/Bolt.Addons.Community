@@ -6,7 +6,8 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
     [Descriptor(typeof(FuncInvokeUnit))]
     public sealed class FuncInvokeUnitDescriptor : DelegateInvokeUnitDescriptor<FuncInvokeUnit>
     {
-        protected override string Prefix => "Invoke Func";
+        protected override string Prefix => "Invoke";
+        protected override string FallbackName => "Func";
 
         public FuncInvokeUnitDescriptor(FuncInvokeUnit target) : base(target)
         {

@@ -13,7 +13,7 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
 
         protected override EditorTexture DefaultIcon()
         {
-            return PathUtil.Load("action", CommunityEditorPath.Fundamentals);
+            return PathUtil.Load("action_bind", CommunityEditorPath.Fundamentals);
         }
 
         protected override string DefaultName()
@@ -23,7 +23,7 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
 
         protected override EditorTexture DefinedIcon()
         {
-            return PathUtil.Load("action", CommunityEditorPath.Fundamentals);
+            return PathUtil.Load("action_bind", CommunityEditorPath.Fundamentals);
         }
 
         protected override string DefinedName()

@@ -1,4 +1,5 @@
 ﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
+using Bolt.Addons.Integrations.Continuum.CSharp;
 using Unity.VisualScripting;
 using System;
 
@@ -16,12 +17,15 @@ namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
 
         protected override string Label(bool human)
         {
+            if (unit._delegate == null) return "Create Func";
             return $"{LudiqGUIUtility.DimString("Func")} { unit._delegate?.DisplayName }";
         }
 
         protected override UnitCategory Category()
         {
-            return new UnitCategory(base.Category().fullName + "/Funcs");
+            var @namespace = unit._delegate == null ? string.Empty : unit._delegate.GetDelegateType().Namespace;
+            @namespace = (string.IsNullOrEmpty(@namespace) ? string.Empty : @namespace).PeriodsToSlashes();
+            return new UnitCategory(base.Category().fullName + (unit._delegate == null ? string.Empty : "/" + @namespace));
         }
     }
 }

@@ -81,6 +81,7 @@ namespace Bolt.Addons.Community.Variables.Editor
                             yield return new ActionUnitOption(new ActionUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
                             yield return new ActionInvokeUnitOption(new ActionInvokeUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
                             yield return new BindActionUnitOption(new BindActionUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
+                            yield return new UnbindActionUnitOption(new UnbindActionUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
                         }
 
                         if (typeof(IFunc).IsAssignableFrom(types[type]))
@@ -88,6 +89,7 @@ namespace Bolt.Addons.Community.Variables.Editor
                             yield return new FuncUnitOption(new FuncUnit(Activator.CreateInstance(types[type] as System.Type) as IFunc));
                             yield return new FuncInvokeUnitOption(new FuncInvokeUnit(Activator.CreateInstance(types[type] as System.Type) as IFunc));
                             yield return new BindFuncUnitOption(new BindFuncUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
+                            yield return new UnbindFuncUnitOption(new UnbindFuncUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
                         }
                     }
                 }

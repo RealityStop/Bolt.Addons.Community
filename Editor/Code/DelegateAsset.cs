@@ -6,9 +6,9 @@ using System.Collections.Generic;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
-    [CreateAssetMenu(menuName = "Visual Scripting/Community/Action")]
+    [CreateAssetMenu(menuName = "Visual Scripting/Community/Delegate")]
     [Serializable]
-    public sealed class ActionAsset : CodeAsset, ISerializationCallbackReceiver
+    public sealed class DelegateAsset : CodeAsset, ISerializationCallbackReceiver
     {
         [Inspectable]
         public SystemType type = new SystemType() { type = typeof(Action) };
@@ -41,17 +41,5 @@ namespace Bolt.Addons.Community.Code.Editor
 
             qualifiedName = type.type.AssemblyQualifiedName;
         }
-    }
-
-    [Inspectable]
-    [Serializable]
-    public sealed class GenericDeclaration
-    {
-        [Inspectable]
-        public string name;
-        [Inspectable]
-        public SystemType type = new SystemType() { type = typeof(int) };
-        [Inspectable]
-        public SystemType constraint = new SystemType() { type = typeof(object) };
     }
 }

@@ -3,7 +3,7 @@ using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.logic
 {
-    [UnitCategory("Community/Control")]
+    [UnitCategory("Community/Control/Delegates")]
     [TypeIcon(typeof(Flow))]
     public sealed class FuncUnit : DelegateUnit
     {

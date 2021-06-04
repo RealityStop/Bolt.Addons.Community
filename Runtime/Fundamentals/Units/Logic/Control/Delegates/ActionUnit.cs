@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.logic
 {
-    [UnitCategory("Community/Control")]
+    [UnitCategory("Community/Control/Delegates")]
     [TypeIcon(typeof(Flow))]
     public sealed class ActionUnit : DelegateUnit
     {

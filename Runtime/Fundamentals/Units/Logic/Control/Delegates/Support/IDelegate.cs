@@ -8,5 +8,7 @@ namespace Bolt.Addons.Community.Utility
         object GetDelegate();
         Type GetDelegateType();
         TypeParam[] parameters { get; }
+        void Bind(IDelegate other);
+        void Unbind(IDelegate other);
     }
 }

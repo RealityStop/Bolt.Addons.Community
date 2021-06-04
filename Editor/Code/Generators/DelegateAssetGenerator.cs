@@ -10,8 +10,8 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
-    [CodeGenerator(typeof(ActionAsset))]
-    public sealed class ActionAssetGenerator : CodeGenerator<ActionAsset>
+    [CodeGenerator(typeof(DelegateAsset))]
+    public sealed class DelegateAssetGenerator : CodeGenerator<DelegateAsset>
     {
         public override string Generate(int indent)
         {
@@ -19,17 +19,28 @@ namespace Bolt.Addons.Community.Code.Editor
             NamespaceGenerator @namespace = NamespaceGenerator.Namespace(null);
             ClassGenerator @class = null;
 
-            if (string.IsNullOrEmpty(Data.title)) return output;
+            if (string.IsNullOrEmpty(Data.title))
+            {
+                var gens = string.Empty;
+                var gen = Data.type.type.Name.EnsureNonConstructName();
+
+                for (int i = 0; i < Data.generics.Count; i++)
+                {
+                    gens += "_" + (i == 0 ? "_" : string.Empty);
+                    gens += Data.generics[i].type.type.As().CSharpName().Replace("&", string.Empty).LegalMemberName();
+                }
+                Data.title = gen + gens;
+            }
 
             if (!string.IsNullOrEmpty(Data.category))
             {
                 @namespace = NamespaceGenerator.Namespace(Data.category);
             }
 
-            @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, Data.title.LegalMemberName(), typeof(object)).ImplementInterface(typeof(IAction));
-
-            @class.AddField(FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, Data.type.type, "callback"));
-
+            var interfaceType = Data.type.type.GetMethod("Invoke").ReturnType == typeof(void) ? typeof(IAction) : typeof(IFunc);
+            var isAction = Data.type.type.GetMethod("Invoke").ReturnType == typeof(void) ? true : false;
+            @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, Data.title, typeof(object)).ImplementInterface(interfaceType);
+            
             var properties = string.Empty;
 
             var method = Data.type.type.GetMethod("Invoke");
@@ -37,6 +48,7 @@ namespace Bolt.Addons.Community.Code.Editor
             var parameters = method.GetParameters();
             var parameterNames = new List<string>();
             var something = new Dictionary<ParameterInfo, string>();
+
             for (int i = 0; i < parameters.Length; i++)
             {
                 properties += " new".ConstructHighlight() + " TypeParam".TypeHighlight() + "() { name = " + $@"""{parameters[i].Name}""".StringHighlight() + ", type = " + "typeof".ConstructHighlight() + "(" + (parameters[i].ParameterType.IsGenericParameter ? Data.generics[i].type.type.As().CSharpName() : parameters[i].ParameterType.As().CSharpName()) + ") }";
@@ -76,7 +88,6 @@ namespace Bolt.Addons.Community.Code.Editor
                 if (constParams[i].Name == "object" || constParams[i].Name == "method") constParams.Remove(constParams[i]);
             }
 
-            var remappedGenerics = string.Empty;
              
             for (int i = 0; i < constParams.Count; i++)
             {
@@ -88,16 +99,27 @@ namespace Bolt.Addons.Community.Code.Editor
                 }
             }
 
+            var remappedGenerics = string.Empty;
             var remappedGeneric = Data.type.type.Name.EnsureNonConstructName();
 
             for (int i = 0; i < Data.generics.Count; i++)
             {
                 remappedGenerics += Data.generics[i].type.type.As().CSharpName().Replace("&", string.Empty);
-                invokeString += $"({ Data.generics[i].type.type.As().CSharpName().Replace("&", string.Empty)})parameters[{i.ToString()}]";
                 if (i < Data.generics.Count - 1)
                 {
                     remappedGenerics += ", ";
-                    invokeString += ", ";
+                }
+            }
+
+            if (Data.generics.Count - 1 >= 0 || isAction)
+            {
+                for (int i = 0; i < (isAction ? Data.generics.Count : Mathf.Clamp(Data.generics.Count-1, 0, Data.generics.Count)); i++)
+                {
+                    if (i < Data.generics.Count - 1 || isAction)
+                    {
+                        invokeString += $"({ Data.generics[i].type.type.As().CSharpName().Replace("&", string.Empty)})parameters[{i.ToString()}]";
+                        if (i < Data.generics.Count - (isAction ? 1 : 2)) invokeString += ", ";
+                    }
                 }
             }
 
@@ -111,21 +133,25 @@ namespace Bolt.Addons.Community.Code.Editor
                 remappedGeneric.TypeHighlight(); 
             }
 
+            @class.AddField(FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, remappedGeneric, Data.type.type.Namespace, "callback"));
+
             @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(TypeParam), "parameters", false).SingleStatementGetter(AccessModifier.Public, "new".ConstructHighlight() + " TypeParam".TypeHighlight() + "[] {" + properties.Replace("&", string.Empty) + "}").AddTypeIndexer(""));
 
-            @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(string), "DisplayName", false).SingleStatementGetter(AccessModifier.Public, $@"""{remappedGeneric.RemoveHighlights().RemoveMarkdown()}""".StringHighlight()));
+            @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(string), "DisplayName", false).SingleStatementGetter(AccessModifier.Public, $@"""{remappedGeneric.RemoveHighlights().RemoveMarkdown().Replace("<", " (").Replace(">", ")")}""".StringHighlight()));
+
+            if (!isAction) @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(Type), "ReturnType", false).SingleStatementGetter(AccessModifier.Public, "typeof".ConstructHighlight() + "(" + Data.generics[Data.generics.Count > 1 ? Data.generics.Count - 2 : Data.generics.Count - 1].type.type.As().CSharpName() + ")"));
 
             @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(Type), "GetDelegateType").Body("return typeof".ConstructHighlight() + "(" + remappedGeneric + ");"));
 
             @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(object), "GetDelegate").Body("return".ConstructHighlight() + " callback;"));
 
-            @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(void), "Invoke").AddParameter(ParameterGenerator.Parameter("parameters", typeof(object[]), Integrations.Continuum.CSharp.ParameterModifier.None, isParameters:true)).Body($"callback({invokeString});"));
+            @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, interfaceType == typeof(IAction) ? typeof(void) : typeof(object), "Invoke").AddParameter(ParameterGenerator.Parameter("parameters", typeof(object[]), Integrations.Continuum.CSharp.ParameterModifier.None, isParameters:true)).Body($"{(isAction ? string.Empty : "return").ConstructHighlight()} callback({invokeString});"));
 
             @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(void), "Initialize").
                 AddParameter(ParameterGenerator.Parameter("flow", typeof(Flow), Integrations.Continuum.CSharp.ParameterModifier.None)).
-                AddParameter(ParameterGenerator.Parameter("unit", typeof(ActionUnit), Integrations.Continuum.CSharp.ParameterModifier.None)).
-                AddParameter(ParameterGenerator.Parameter("flowAction", typeof(Action), Integrations.Continuum.CSharp.ParameterModifier.None))
-                .Body("callback = " + "new ".ConstructHighlight() + remappedGeneric + "(" + LambdaGenerator.SingleLine(stringConstructorParameters, (stringConstructorParameters.Count > 0 ? "unit.AssignParameters(flow, " + assignParams + "); " + "flowAction.Invoke();" : "flowAction.Invoke();")).Generate(0) + ");"));
+                AddParameter(ParameterGenerator.Parameter("unit", isAction ? typeof(ActionUnit) : typeof(FuncUnit), Integrations.Continuum.CSharp.ParameterModifier.None)).
+                AddParameter(ParameterGenerator.Parameter(isAction ? "flowAction" : "flowFunc", isAction ? typeof(Action) : typeof(Func<object>), Integrations.Continuum.CSharp.ParameterModifier.None))
+                .Body("callback = " + "new ".ConstructHighlight() + remappedGeneric + "(" + LambdaGenerator.SingleLine(stringConstructorParameters, (stringConstructorParameters.Count > 0 ? "unit.AssignParameters(flow, " + assignParams + "); " + (isAction ? "flowAction.Invoke();" : "return ".ConstructHighlight() + "(" + Data.generics[Data.generics.Count - 1].type.type.As().CSharpName() + ")" + "flowFunc();") : (isAction ? "flowAction.Invoke();" : "return ".ConstructHighlight() + "(" + Data.generics[Data.generics.Count-1].type.type.As().CSharpName() + ")" + "flowFunc();"))).Generate(0) + ");"));
 
             @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(void), "Bind").
                 AddParameter(ParameterGenerator.Parameter("other", typeof(IDelegate), Integrations.Continuum.CSharp.ParameterModifier.None))
@@ -143,15 +169,19 @@ namespace Bolt.Addons.Community.Code.Editor
 
             @class.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
 
-            if (!string.IsNullOrEmpty(Data.lastCompiledName))
+            var currentName = Data.category + (string.IsNullOrEmpty(Data.category) ? string.Empty : ".") + Data.title;
+            if (Data.lastCompiledName != currentName && !string.IsNullOrEmpty(Data.lastCompiledName))
             {
-                var currentName = Data.category + (string.IsNullOrEmpty(Data.category) ? string.Empty : ".") + Data.title;
-                if (Data.lastCompiledName != currentName)
-                {
-                    @class.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
-                }
+                @class.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
             }
 
+            var genericNamespace = new List<string>();
+            for (int i = 0; i < Data.generics.Count; i++)
+            {
+                if(!genericNamespace.Contains(Data.generics[i].type.type.Namespace))genericNamespace.Add(Data.generics[i].type.type.Namespace);
+            }
+            @class.AddUsings(genericNamespace);
+            @class.name = remappedGeneric.RemoveHighlights().RemoveMarkdown();
             @namespace.AddClass(@class);
 
             return @namespace.Generate(indent);

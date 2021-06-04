@@ -34,7 +34,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
             GUI.Label(labelRect, DefaultName);
 
             var unit = metadata.value as DelegateInvokeUnit;
-            var buttonLabel = unit._delegate == null ? "( None Selected )" : unit._delegate?.GetType().Name.Prettify();
+            var buttonLabel = unit._delegate == null ? "( None Selected )" : unit._delegate?.DisplayName;
             buttonRect.width = GUI.skin.label.CalcSize(new GUIContent(buttonLabel)).x + 40;
 
             if (GUI.Button(buttonRect, buttonLabel))
@@ -55,9 +55,10 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
                             if (typeof(TDelegate).IsAssignableFrom(types[type]))
                             {
                                 var _type = types[type];
-                                menu.AddItem(new GUIContent(types[type].Name.Prettify()), false, () =>
+                                var del = (TDelegate)Activator.CreateInstance(_type as System.Type);
+                                menu.AddItem(new GUIContent(del.DisplayName), false, () =>
                                 {
-                                    unit._delegate = Activator.CreateInstance(_type as System.Type) as IDelegate;
+                                    unit._delegate = del;
                                     unit.Define();
                                 });
                             }

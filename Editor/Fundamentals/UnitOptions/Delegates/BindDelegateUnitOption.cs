@@ -1,5 +1,6 @@
 ﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
 using Bolt.Addons.Community.Utility;
+using Bolt.Addons.Integrations.Continuum.CSharp;
 using Unity.VisualScripting;
 using System;
 
@@ -12,8 +13,6 @@ namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
         [Obsolete()]
         public BindDelegateUnitOption() : base() { }
 
-        protected abstract string subCategory { get; }
-
         public BindDelegateUnitOption(TBindDelegateUnit unit) : base(unit)
         {
         }
@@ -25,7 +24,9 @@ namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
 
         protected override UnitCategory Category()
         {
-            return new UnitCategory(base.Category().fullName + "/" + subCategory);
+            var @namespace = unit._delegate == null ? string.Empty : unit._delegate.GetDelegateType().Namespace;
+            @namespace = (string.IsNullOrEmpty(@namespace) ? string.Empty : @namespace).PeriodsToSlashes();
+            return new UnitCategory(base.Category().fullName + (unit._delegate == null ? string.Empty : "/" + @namespace));
         }
     }
 }

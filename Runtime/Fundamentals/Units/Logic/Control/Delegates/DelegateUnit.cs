@@ -32,6 +32,8 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
 
         protected override void Definition()
         {
+            isControlRoot = true;
+
             parameters.Clear();
 
             invoke = ControlOutput("invoke");

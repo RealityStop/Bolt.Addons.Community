@@ -10,36 +10,37 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
         }
 
         protected abstract string Prefix { get; }
+        protected abstract string FallbackName { get; }
 
         protected override string DefinedTitle()
         {
-            return target._delegate == null ? Prefix : target._delegate.GetType().Name.Prettify();
+            return target._delegate == null ? FallbackName : target._delegate.DisplayName;
         }
 
 
         protected override string DefinedShortTitle()
         {
-            return target._delegate == null ? Prefix : target._delegate.GetType().Name.Prettify();
+            return target._delegate == null ? FallbackName : target._delegate.DisplayName;
         }
 
 
         protected override string DefaultTitle()
         {
-            return target._delegate == null ? Prefix : target._delegate.GetType().Name.Prettify();
+            return target._delegate == null ? FallbackName : target._delegate.DisplayName;
         }
 
 
         protected override string DefaultShortTitle()
         {
-            return target._delegate == null ? Prefix : target._delegate.GetType().Name.Prettify();
+            return target._delegate == null ? FallbackName : target._delegate.DisplayName;
         }
 
-        protected override string DefaultSubtitle()
+        protected override string DefaultSurtitle()
         {
             return Prefix;
         }
 
-        protected override string DefinedSubtitle()
+        protected override string DefinedSurtitle()
         {
             return Prefix;
         }
