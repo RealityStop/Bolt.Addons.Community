@@ -19,18 +19,15 @@ namespace Bolt.Addons.Community.Code.Editor
             NamespaceGenerator @namespace = NamespaceGenerator.Namespace(null);
             ClassGenerator @class = null;
 
-            if (string.IsNullOrEmpty(Data.title))
-            {
-                var gens = string.Empty;
-                var gen = Data.type.type.Name.EnsureNonConstructName();
+            var gens = string.Empty;
+            var gen = Data.type.type.Name.EnsureNonConstructName().LegalMemberName();
 
-                for (int i = 0; i < Data.generics.Count; i++)
-                {
-                    gens += "_" + (i == 0 ? "_" : string.Empty);
-                    gens += Data.generics[i].type.type.As().CSharpName().Replace("&", string.Empty).LegalMemberName();
-                }
-                Data.title = gen + gens;
+            for (int i = 0; i < Data.generics.Count; i++)
+            {
+                gens += Data.generics[i].type.type.As().CSharpName().RemoveHighlights().RemoveMarkdown().Replace("&", string.Empty);
             }
+
+            Data.title = gen + gens;
 
             if (!string.IsNullOrEmpty(Data.category))
             {
@@ -169,10 +166,11 @@ namespace Bolt.Addons.Community.Code.Editor
 
             @class.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
 
-            var currentName = Data.category + (string.IsNullOrEmpty(Data.category) ? string.Empty : ".") + Data.title;
+            var currentName = Data.title;
             if (Data.lastCompiledName != currentName && !string.IsNullOrEmpty(Data.lastCompiledName))
             {
                 @class.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
+                Data.lastCompiledName = currentName;
             }
 
             var genericNamespace = new List<string>();
@@ -181,7 +179,7 @@ namespace Bolt.Addons.Community.Code.Editor
                 if(!genericNamespace.Contains(Data.generics[i].type.type.Namespace))genericNamespace.Add(Data.generics[i].type.type.Namespace);
             }
             @class.AddUsings(genericNamespace);
-            @class.name = remappedGeneric.RemoveHighlights().RemoveMarkdown();
+            @class.name = Data.title;
             @namespace.AddClass(@class);
 
             return @namespace.Generate(indent);

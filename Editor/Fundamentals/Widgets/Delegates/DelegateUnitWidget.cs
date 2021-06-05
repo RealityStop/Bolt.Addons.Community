@@ -9,11 +9,10 @@ using Bolt.Addons.Community.Utility;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 {
-    public abstract class DelegateUnitWidget<T, TDelegate> : UnitWidget<T> 
-        where T: DelegateUnit 
+    public abstract class DelegateUnitWidget<TDelegate> : UnitWidget<DelegateUnit> 
         where TDelegate : IDelegate
     {
-        public DelegateUnitWidget(FlowCanvas canvas, T unit) : base(canvas, unit)
+        public DelegateUnitWidget(FlowCanvas canvas, DelegateUnit unit) : base(canvas, unit)
         {
         }
 

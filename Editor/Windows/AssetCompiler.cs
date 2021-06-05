@@ -53,9 +53,11 @@ namespace Bolt.Addons.Community.Utility.Editor
 
             for (int i = 0; i < delegates.Count; i++)
             {
-                var fullPath = delegatesPath + delegates[i].title.LegalMemberName() + ".cs";
-                HUMIO.Save(DelegateAssetGenerator.GetSingleDecorator(delegates[i]).GenerateClean(0)).Custom(fullPath).Text(false);
-                delegates[i].lastCompiledName = delegates[i].category + (string.IsNullOrEmpty(delegates[i].category) ? string.Empty : ".") + delegates[i].title;
+                var generator = DelegateAssetGenerator.GetSingleDecorator(delegates[i]);
+                var code = generator.GenerateClean(0);
+                var fullPath = delegatesPath + delegates[i].title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName() + ".cs";
+                HUMIO.Save(code).Custom(fullPath).Text(false);
+                delegates[i].lastCompiledName = delegates[i].category + (string.IsNullOrEmpty(delegates[i].category) ? string.Empty : ".") + delegates[i].title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName(); 
             }
 
             AssetDatabase.SaveAssets();

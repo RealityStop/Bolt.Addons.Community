@@ -23,7 +23,7 @@ namespace Bolt.Addons.Community.Code.Editor
 
         private void OnEnable()
         {
-            allTypes = typeof(object).Get().Derived().Where((type) => { return type.BaseType != null; }).ToList();
+            allTypes = typeof(object).Get().Derived().ToList();
             types = typeof(object).Get().Derived().Where((type) => { return type.IsSubclassOf(typeof(Delegate)) && !type.Namespace.Contains("System.Xml"); }).ToList();
         }
 
@@ -63,12 +63,13 @@ namespace Bolt.Addons.Community.Code.Editor
                                 {
                                     var generic = ((Type)type.value)?.GetGenericTypeDefinition();
                                     var _generics = generic?.GetGenericArguments();
+                                    var constraints = ((Type)type.value).GetGenericParameterConstraints();
 
                                     for (int i = 0; i < _generics.Length; i++)
                                     {
                                         var declaration = new GenericDeclaration();
                                         declaration.name = _generics[i].Name;
-                                        declaration.constraint.type = _generics[i];
+                                        declaration.constraint.type = constraints[i];
                                         ((List<GenericDeclaration>)generics.value).Add(declaration);
                                     }
                                 }
