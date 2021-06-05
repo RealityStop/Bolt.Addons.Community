@@ -32,80 +32,85 @@ namespace Bolt.Addons.Community.Code.Editor
 
         protected virtual void BeforePreview() { }
 
-        public override sealed void OnInspectorGUI()
+        public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
-            hidden = false;
 
-            Cache();
-            
-            if (Target == null) Target = (TAsset)target;
-
-            if (!hidden)
+            HUMEditor.Changed(() =>
             {
-                HUMEditor.Vertical(() =>
+
+                hidden = false;
+
+                Cache();
+
+                if (Target == null) Target = (TAsset)target;
+
+                if (!hidden)
                 {
-                    HUMEditor.Changed(() =>
+                    HUMEditor.Vertical(() =>
                     {
-                        HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 2, 2), () =>
+                        HUMEditor.Changed(() =>
                         {
-                            if (showTitle)
+                            HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 2, 2), () =>
                             {
-                                HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
+                                if (showTitle)
                                 {
-                                    EditorGUILayout.LabelField("Title", GUILayout.Width(80));
-                                    Target.title = EditorGUILayout.TextField(Target.title);
-                                });
-                            }
+                                    HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
+                                    {
+                                        EditorGUILayout.LabelField("Title", GUILayout.Width(80));
+                                        Target.title = EditorGUILayout.TextField(Target.title);
+                                    });
+                                }
 
 
-                            if (showCategory)
-                            {
-                                HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
+                                if (showCategory)
                                 {
-                                    EditorGUILayout.LabelField("Category", GUILayout.Width(80));
-                                    Target.category = EditorGUILayout.TextField(Target.category);
-                                });
-                            }
+                                    HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
+                                    {
+                                        EditorGUILayout.LabelField("Category", GUILayout.Width(80));
+                                        Target.category = EditorGUILayout.TextField(Target.category);
+                                    });
+                                }
 
-                            AfterCategoryGUI();
-                        });
-
-                        EditorGUILayout.Space(8);
-
-                        if (showOptions)
-                        {
-                            Target.optionsOpened = HUMEditor.Foldout(Target.optionsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () => { GUILayout.Label("Options"); }, () =>
-                            {
-                                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
-                                {
-                                    OptionsGUI();
-                                });
+                                AfterCategoryGUI();
                             });
 
+                            EditorGUILayout.Space(8);
+
+                            if (showOptions)
+                            {
+                                Target.optionsOpened = HUMEditor.Foldout(Target.optionsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () => { GUILayout.Label("Options"); }, () =>
+                                {
+                                    HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                                    {
+                                        OptionsGUI();
+                                    });
+                                });
+
+                                EditorGUILayout.Space(4);
+                            }
+
+                            BeforePreview();
+
                             EditorGUILayout.Space(4);
-                        }
 
-                        BeforePreview();
-
-                        EditorGUILayout.Space(4);
-
-                    }, () =>
-                    {
-                        generator = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
-                    });
-
-                    Target.preview = HUMEditor.Foldout(Target.preview, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () => { GUILayout.Label("Preview C#"); }, () =>
-                    {
-                        HUMEditor.Vertical().Box(HUMColor.Grey(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                        }, () =>
                         {
                             generator = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
-                            GUILayout.Label(generator.Generate(0).RemoveMarkdown(), new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true });
-                        }, true, true);
+                        });
+
+                        Target.preview = HUMEditor.Foldout(Target.preview, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () => { GUILayout.Label("Preview C#"); }, () =>
+                        {
+                            HUMEditor.Vertical().Box(HUMColor.Grey(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                            {
+                                generator = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
+                                GUILayout.Label(generator.Generate(0).RemoveMarkdown(), new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true });
+                            }, true, true);
+                        });
                     });
-                });
-            }
+                }
+            }, ()=> { EditorUtility.SetDirty(Target); });
 
             serializedObject.ApplyModifiedProperties();
         }

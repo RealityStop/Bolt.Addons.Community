@@ -59,17 +59,20 @@ namespace Bolt.Addons.Community.Code.Editor
                             {
                                 type.value = val;
 
+                                Type[] constraints = null;
+                                var _type = ((Type)type.value);
+
                                 if (((Type)type.value).IsGenericTypeDefinition)
                                 {
                                     var generic = ((Type)type.value)?.GetGenericTypeDefinition();
                                     var _generics = generic?.GetGenericArguments();
-                                    var constraints = ((Type)type.value).GetGenericParameterConstraints();
+                                    if (_type.IsGenericParameter) constraints = ((Type)type.value).GetGenericParameterConstraints();
 
                                     for (int i = 0; i < _generics.Length; i++)
                                     {
                                         var declaration = new GenericDeclaration();
                                         declaration.name = _generics[i].Name;
-                                        declaration.constraint.type = constraints[i];
+                                        if (_type.IsGenericParameter) declaration.constraint.type = constraints[i];
                                         ((List<GenericDeclaration>)generics.value).Add(declaration);
                                     }
                                 }

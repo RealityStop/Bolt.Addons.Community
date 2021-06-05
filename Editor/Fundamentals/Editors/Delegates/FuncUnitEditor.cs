@@ -5,7 +5,7 @@ using Bolt.Addons.Community.Utility;
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 {
     [Editor(typeof(FuncUnit))]
-    public sealed class FuncUnitEditor : DelegateUnitEditor<IFunc>
+    public sealed class FuncUnitEditor : DelegateUnitEditor<FuncUnit, IFunc>
     {
         public FuncUnitEditor(Metadata metadata) : base(metadata)
         {

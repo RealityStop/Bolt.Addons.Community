@@ -10,7 +10,7 @@ using Bolt.Addons.Community.Utility;
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 {
     [Editor(typeof(ActionInvokeUnit))]
-    public sealed class ActionInvokeUnitEditor : DelegateInvokeUnitEditor<IAction>
+    public sealed class ActionInvokeUnitEditor : DelegateInvokeUnitEditor<ActionInvokeUnit, IAction>
     {
         public ActionInvokeUnitEditor(Metadata metadata) : base(metadata)
         {
