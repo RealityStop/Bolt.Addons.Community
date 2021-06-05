@@ -20,7 +20,7 @@ namespace Bolt.Addons.Community.Code.Editor
             ClassGenerator @class = null;
 
             var gens = string.Empty;
-            var gen = Data.type.type.Name.EnsureNonConstructName().LegalMemberName();
+            var gen = Data.type.type.Name.RemoveAfterFirst("`".ToCharArray()[0]).LegalMemberName();
 
             for (int i = 0; i < Data.generics.Count; i++)
             {
@@ -28,7 +28,7 @@ namespace Bolt.Addons.Community.Code.Editor
             }
 
             Data.title = gen + gens;
-
+            
             if (!string.IsNullOrEmpty(Data.category))
             {
                 @namespace = NamespaceGenerator.Namespace(Data.category);
@@ -166,11 +166,12 @@ namespace Bolt.Addons.Community.Code.Editor
 
             @class.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
 
-            var currentName = Data.title;
-            if (Data.lastCompiledName != currentName && !string.IsNullOrEmpty(Data.lastCompiledName))
+            Debug.Log("Last: " + Data.lastCompiledName);
+            Debug.Log("Current: " + Data.title);
+
+            if (Data.lastCompiledName != Data.title && !string.IsNullOrEmpty(Data.lastCompiledName))
             {
                 @class.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
-                Data.lastCompiledName = currentName;
             }
 
             var genericNamespace = new List<string>();
@@ -179,7 +180,6 @@ namespace Bolt.Addons.Community.Code.Editor
                 if(!genericNamespace.Contains(Data.generics[i].type.type.Namespace))genericNamespace.Add(Data.generics[i].type.type.Namespace);
             }
             @class.AddUsings(genericNamespace);
-            @class.name = Data.title;
             @namespace.AddClass(@class);
 
             return @namespace.Generate(indent);

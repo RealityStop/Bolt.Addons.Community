@@ -16,6 +16,14 @@ namespace Bolt.Addons.Integrations.Continuum.Humility {
             return regex.Replace(sourceString, startTag + endTag);
         }
 
+        public static string RemoveAfterFirst(this string text, char character)
+        {
+            var startIndex = text.IndexOf(character);
+            var output = text;
+            if (startIndex < text.Length - 1) output = text.Remove(startIndex + 1, ((text.Length - 1) - startIndex));
+            return output;
+        }
+
         /// <summary>
         /// Begins adding something into text.
         /// </summary>
