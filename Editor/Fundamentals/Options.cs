@@ -78,16 +78,16 @@ namespace Bolt.Addons.Community.Variables.Editor
                     {
                         if (typeof(IAction).IsAssignableFrom(types[type]))
                         {
-                            yield return new ActionUnitOption(new ActionUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
-                            yield return new ActionInvokeUnitOption(new ActionInvokeUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
+                            yield return new ActionUnitOption(new ActionUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
+                            yield return new ActionInvokeUnitOption(new ActionInvokeUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
                             yield return new BindActionUnitOption(new BindActionUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
                             yield return new UnbindActionUnitOption(new UnbindActionUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
                         }
 
                         if (typeof(IFunc).IsAssignableFrom(types[type]))
                         {
-                            yield return new FuncUnitOption(new FuncUnit(Activator.CreateInstance(types[type] as System.Type) as IFunc));
-                            yield return new FuncInvokeUnitOption(new FuncInvokeUnit(Activator.CreateInstance(types[type] as System.Type) as IFunc));
+                            yield return new FuncUnitOption(new FuncUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
+                            yield return new FuncInvokeUnitOption(new FuncInvokeUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
                             yield return new BindFuncUnitOption(new BindFuncUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
                             yield return new UnbindFuncUnitOption(new UnbindFuncUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
                         }

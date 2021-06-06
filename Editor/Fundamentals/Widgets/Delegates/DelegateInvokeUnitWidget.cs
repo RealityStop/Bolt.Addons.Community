@@ -9,9 +9,8 @@ using Bolt.Addons.Community.Utility;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 {
-    [Widget(typeof(DelegateInvokeUnit))]
     public abstract class DelegateInvokeUnitWidget<T, TDelegate> : UnitWidget<T> 
-        where T : DelegateInvokeUnit
+        where T : DelegateInvokeUnit<TDelegate>
         where TDelegate : IDelegate
     {
         public DelegateInvokeUnitWidget(FlowCanvas canvas, T unit) : base(canvas, unit)

@@ -1,20 +1,16 @@
 ﻿using Bolt.Addons.Community.Utility;
 using Unity.VisualScripting;
 using System.Collections.Generic;
+using System;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.logic
 {
     [UnitCategory("Community/Control/Delegates")]
     [TypeIcon(typeof(Flow))]
-    public class FuncInvokeUnit : DelegateInvokeUnit
+    public sealed class FuncInvokeUnit : DelegateInvokeUnit<IFunc>
     {
-        public IFunc _func => _delegate as IFunc;
-
         [DoNotSerialize]
         public ValueOutput @return;
-
-        public FuncInvokeUnit() : base() { }
-        public FuncInvokeUnit(IFunc @func) : base(@func) { }
 
         protected override bool isPure => true;
 
@@ -22,9 +18,9 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
         {
             base.Definition();
 
-            if (_func != null)
+            if (_delegate != null)
             {
-                @return = ValueOutput(_func.ReturnType, "return", (flow) =>
+                @return = ValueOutput(_delegate.ReturnType, "return", (flow) =>
                 {
                     var values = new List<object>();
                     var act = flow.GetValue<IFunc>(@delegate);
@@ -41,6 +37,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
 
         protected override void Invoke(Flow flow, List<object> values)
         {
+            flow.GetValue<IFunc>(@delegate).Invoke(values.ToArray());
         }
     }
 }

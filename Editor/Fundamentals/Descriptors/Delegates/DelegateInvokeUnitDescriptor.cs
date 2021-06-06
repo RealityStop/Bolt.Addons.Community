@@ -1,9 +1,12 @@
 ﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
+using Bolt.Addons.Community.Utility;
 using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
 {
-    public abstract class DelegateInvokeUnitDescriptor<T> : UnitDescriptor<T> where T : DelegateInvokeUnit
+    public abstract class DelegateInvokeUnitDescriptor<T, TDelegate> : UnitDescriptor<T>
+        where T : DelegateInvokeUnit<TDelegate>
+        where TDelegate : IDelegate
     {
         public DelegateInvokeUnitDescriptor(T target) : base(target)
         {

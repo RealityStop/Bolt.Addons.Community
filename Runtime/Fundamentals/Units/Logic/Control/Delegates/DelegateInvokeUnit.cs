@@ -5,12 +5,10 @@ using System;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.logic
 {
-    [UnitCategory("Community/Control/Delegates")]
-    [TypeIcon(typeof(Flow))]
-    public abstract class DelegateInvokeUnit : Unit
+    public abstract class DelegateInvokeUnit<TDelegateInterface> : Unit where TDelegateInterface : IDelegate
     {
         [Serialize]
-        public IDelegate _delegate;
+        public TDelegateInterface _delegate;
 
         [DoNotSerialize]
         public ValueInput @delegate;
@@ -23,15 +21,16 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
         [PortLabelHidden]
         public ControlOutput exit;
 
+        [DoNotSerialize]
         public List<ValueInput> parameters = new List<ValueInput>();
 
         protected virtual bool isPure => false;
 
         public DelegateInvokeUnit() : base() { }
 
-        public DelegateInvokeUnit(IDelegate @delegate)
+        public DelegateInvokeUnit(TDelegateInterface @delegate)
         {
-            _delegate = @delegate;
+            this._delegate = @delegate;
         }
 
         protected override void Definition()
@@ -43,7 +42,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
                 enter = ControlInput("enter", (flow) =>
                 {
                     var values = new List<object>();
-                    var act = flow.GetValue<IDelegate>(@delegate);
+                    var act = flow.GetValue<TDelegateInterface>(@delegate);
 
                     for (int i = 0; i < parameters.Count; i++)
                     {

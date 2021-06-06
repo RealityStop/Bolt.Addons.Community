@@ -1,4 +1,5 @@
 ﻿using Bolt.Addons.Community.Utility;
+using System;
 using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.logic
@@ -11,12 +12,6 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
 
         [DoNotSerialize]
         public ValueInput @return;
-
-        public FuncUnit() : base() { }
-
-        public FuncUnit(IFunc func) : base(func)
-        {
-        }
 
         protected override void InitializeDelegate(Flow flow)
         {

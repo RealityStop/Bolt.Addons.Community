@@ -33,14 +33,16 @@ namespace Bolt.Addons.Community.Utility.Editor
                 var superUnitCanvas = superUnitGraph.Canvas<FlowCanvas>();
                 var elements = selection.ToList();
 
+                superUnit.position = GetSuperUnitPosition(elements);
+
                 ((FlowGraph)GraphWindow.active.reference.graph).units.Add(superUnit);
 
                 superUnit.nest.SwitchToEmbed(superUnitGraph);
 
                 CopyElementsToGraph(superUnitCanvas);
 
-                var graphInput = new GraphInput() { position = new Vector2(-200, 0) };
-                var graphOutput = new GraphOutput() { position = new Vector2(200, 0) };
+                var graphInput = new GraphInput();
+                var graphOutput = new GraphOutput();
 
                 var listWithoutInputOutput = ((FlowGraph)GraphWindow.active.reference.graph).units.ToList();
 
@@ -51,83 +53,12 @@ namespace Bolt.Addons.Community.Utility.Editor
                 CopyValueConnectionData(superUnitGraph, graphInput, graphOutput, GetValueIndices(selection, superUnit));
                 CopyInvalidConnectionData(superUnitGraph, graphInput, graphOutput, GetInvalidIndices(selection, superUnit));
 
-                SetInputOutputPosition(listWithoutInputOutput, graphInput, graphOutput);
-                superUnit.position = GetSuperUnitPosition(elements);
+                SetInputOutputPosition(superUnitGraph, graphInput, graphOutput);
 
-                var keyIncrements = new Dictionary<string, int>();
+                superUnitGraph.pan = superUnit.position;
 
-                var controlInputsToRemove = new List<ControlInputDefinition>();
+                RemoveUnusedDefinitions(superUnitGraph);
 
-                for (int i = 0; i < superUnitGraph.controlInputDefinitions.Count; i++)
-                {
-                    if (!keyIncrements.ContainsKey(superUnitGraph.controlInputDefinitions[i].key))
-                    {
-                        keyIncrements.Add(superUnitGraph.controlInputDefinitions[i].key, 0);
-                    }
-                    else
-                    { 
-                        controlInputsToRemove.Add(superUnitGraph.controlInputDefinitions[i]);
-                    }
-                }
-
-                var controlOutputsToRemove = new List<ControlOutputDefinition>();
-
-                for (int i = 0; i < superUnitGraph.controlOutputDefinitions.Count; i++)
-                {
-                    if (!keyIncrements.ContainsKey(superUnitGraph.controlOutputDefinitions[i].key))
-                    {
-                        keyIncrements.Add(superUnitGraph.controlOutputDefinitions[i].key, 0);
-                    }
-                    else
-                    {
-                        controlOutputsToRemove.Add(superUnitGraph.controlOutputDefinitions[i]);
-                    }
-                }
-
-                var valueInputsToRemove = new List<ValueInputDefinition>();
-
-                for (int i = 0; i < superUnitGraph.valueInputDefinitions.Count; i++)
-                {
-                    if (!keyIncrements.ContainsKey(superUnitGraph.valueInputDefinitions[i].key))
-                    {
-                        keyIncrements.Add(superUnitGraph.valueInputDefinitions[i].key, 0);
-                    }
-                    else
-                    {
-                        valueInputsToRemove.Add(superUnitGraph.valueInputDefinitions[i]);
-                    }
-                }
-
-                var valueOutputsToRemove = new List<ValueOutputDefinition>();
-
-                for (int i = 0; i < superUnitGraph.valueOutputDefinitions.Count; i++)
-                {
-                    if (!keyIncrements.ContainsKey(superUnitGraph.valueOutputDefinitions[i].key))
-                    {
-                        keyIncrements.Add(superUnitGraph.valueOutputDefinitions[i].key, 0);
-                    }
-                    else
-                    { 
-                        valueOutputsToRemove.Add(superUnitGraph.valueOutputDefinitions[i]);
-                    }
-                }
-
-                for (int i = 0; i < controlInputsToRemove.Count; i++)
-                {
-                    superUnitGraph.controlInputDefinitions.Remove(controlInputsToRemove[i]);
-                }
-                for (int i = 0; i < controlOutputsToRemove.Count; i++)
-                {
-                    superUnitGraph.controlOutputDefinitions.Remove(controlOutputsToRemove[i]);
-                }
-                for (int i = 0; i < valueInputsToRemove.Count; i++)
-                {
-                    superUnitGraph.valueInputDefinitions.Remove(valueInputsToRemove[i]);
-                }
-                for (int i = 0; i < valueOutputsToRemove.Count; i++)
-                {
-                    superUnitGraph.valueOutputDefinitions.Remove(valueOutputsToRemove[i]);
-                }
                 superUnitGraph.PortDefinitionsChanged();
 
                 GraphWindow.active.reference.graph.Canvas<FlowCanvas>().DeleteSelection();
@@ -153,6 +84,84 @@ namespace Bolt.Addons.Community.Utility.Editor
                     asset.graph = superUnit.nest.embed;
                     superUnit.nest.SwitchToMacro(asset);
                 }
+            }
+        }
+
+        private static void RemoveUnusedDefinitions(FlowGraph superUnitGraph)
+        {
+            var keyIncrements = new Dictionary<string, int>();
+
+            var controlInputsToRemove = new List<ControlInputDefinition>();
+
+            for (int i = 0; i < superUnitGraph.controlInputDefinitions.Count; i++)
+            {
+                if (!keyIncrements.ContainsKey(superUnitGraph.controlInputDefinitions[i].key))
+                {
+                    keyIncrements.Add(superUnitGraph.controlInputDefinitions[i].key, 0);
+                }
+                else
+                {
+                    controlInputsToRemove.Add(superUnitGraph.controlInputDefinitions[i]);
+                }
+            }
+
+            var controlOutputsToRemove = new List<ControlOutputDefinition>();
+
+            for (int i = 0; i < superUnitGraph.controlOutputDefinitions.Count; i++)
+            {
+                if (!keyIncrements.ContainsKey(superUnitGraph.controlOutputDefinitions[i].key))
+                {
+                    keyIncrements.Add(superUnitGraph.controlOutputDefinitions[i].key, 0);
+                }
+                else
+                {
+                    controlOutputsToRemove.Add(superUnitGraph.controlOutputDefinitions[i]);
+                }
+            }
+
+            var valueInputsToRemove = new List<ValueInputDefinition>();
+
+            for (int i = 0; i < superUnitGraph.valueInputDefinitions.Count; i++)
+            {
+                if (!keyIncrements.ContainsKey(superUnitGraph.valueInputDefinitions[i].key))
+                {
+                    keyIncrements.Add(superUnitGraph.valueInputDefinitions[i].key, 0);
+                }
+                else
+                {
+                    valueInputsToRemove.Add(superUnitGraph.valueInputDefinitions[i]);
+                }
+            }
+
+            var valueOutputsToRemove = new List<ValueOutputDefinition>();
+
+            for (int i = 0; i < superUnitGraph.valueOutputDefinitions.Count; i++)
+            {
+                if (!keyIncrements.ContainsKey(superUnitGraph.valueOutputDefinitions[i].key))
+                {
+                    keyIncrements.Add(superUnitGraph.valueOutputDefinitions[i].key, 0);
+                }
+                else
+                {
+                    valueOutputsToRemove.Add(superUnitGraph.valueOutputDefinitions[i]);
+                }
+            }
+
+            for (int i = 0; i < controlInputsToRemove.Count; i++)
+            {
+                superUnitGraph.controlInputDefinitions.Remove(controlInputsToRemove[i]);
+            }
+            for (int i = 0; i < controlOutputsToRemove.Count; i++)
+            {
+                superUnitGraph.controlOutputDefinitions.Remove(controlOutputsToRemove[i]);
+            }
+            for (int i = 0; i < valueInputsToRemove.Count; i++)
+            {
+                superUnitGraph.valueInputDefinitions.Remove(valueInputsToRemove[i]);
+            }
+            for (int i = 0; i < valueOutputsToRemove.Count; i++)
+            {
+                superUnitGraph.valueOutputDefinitions.Remove(valueOutputsToRemove[i]);
             }
         }
 
@@ -435,12 +444,12 @@ namespace Bolt.Addons.Community.Utility.Editor
                 switch (connectionData[index].source)
                 {
                     case ConnectionDataSource.GraphInput:
+                        var def = connectionData[index].valueType.Default();
+                        var isDefault = def != null;
                         superUnitGraph.valueInputDefinitions.Add(new ValueInputDefinition()
                         {
                             key = connectionData[index].key,
-                            type = connectionData[index].valueType,
-                            defaultValue = connectionData[index].valueType.Default(),
-                            hasDefaultValue = true
+                            type = connectionData[index].valueType
                         });
                         superUnitGraph.PortDefinitionsChanged();
                         graphInput.valueOutputs.Single((op) => { return op.key == connectionData[index].key; }).ConnectToValid(superUnitGraph.units[connectionData[index].destinationUnitIndex].valueInputs.ToList()[connectionData[index].destinationInputIndex] as ValueInput);
@@ -493,35 +502,30 @@ namespace Bolt.Addons.Community.Utility.Editor
             return new Vector2(superUnitPosition.x / elements.Count, superUnitPosition.y / elements.Count);
         }
 
-        private static void SetInputOutputPosition(List<IUnit> units, GraphInput input, GraphOutput output)
+        private static void SetInputOutputPosition(FlowGraph graph, GraphInput input, GraphOutput output)
         {
-            var posX = 0f;
-            var posY = 0f;
+            var posXIn = 0f;
+            var posYIn = 0f;
+            var posXOut = 0f;
+            var posYOut = 0f;
 
-            for (int i = 0; i < units.Count; i++)
+            for (int i = 0; i < graph.units.Count; i++)
             {
-                if (units[i].position.x < posX)
+                if (posXIn >= graph.units[i].position.x)
                 {
-                    posX = units[i].position.x;
-                    posY = units[i].position.y;
+                    posXIn = graph.units[i].position.x;
+                    posYIn = graph.units[i].position.y;
+                }
+
+                if (graph.units[i].position.x <= posXOut)
+                {
+                    posXOut = graph.units[i].position.x;
+                    posYOut = graph.units[i].position.y;
                 }
             }
 
-            input.position = new Vector2(posX - 70, posY);
-
-            posX = 0;
-            posY = 0;
-
-            for (int i = 0; i < units.Count; i++)
-            {
-                if (units[i].position.x > posX)
-                {
-                    posX = units[i].position.x;
-                    posY = units[i].position.y;
-                }
-            }
-
-            output.position = new Vector2(posX + 70, posY);
+            input.position = new Vector2(posXIn - 240, posYIn);
+            output.position = new Vector2(posXOut + 240, posYOut);
         }
 
         public class ConnectionData

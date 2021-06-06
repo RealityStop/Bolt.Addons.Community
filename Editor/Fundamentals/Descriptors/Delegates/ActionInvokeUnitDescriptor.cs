@@ -1,10 +1,11 @@
 ﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
+using Bolt.Addons.Community.Utility;
 using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
 {
     [Descriptor(typeof(ActionInvokeUnit))]
-    public sealed class ActionInvokeUnitDescriptor : DelegateInvokeUnitDescriptor<ActionInvokeUnit>
+    public sealed class ActionInvokeUnitDescriptor : DelegateInvokeUnitDescriptor<ActionInvokeUnit, IAction>
     {
         protected override string Prefix => "Invoke";
         protected override string FallbackName => "Action";

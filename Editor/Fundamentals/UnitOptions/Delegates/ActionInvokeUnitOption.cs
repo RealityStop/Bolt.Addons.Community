@@ -19,7 +19,7 @@ namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
         protected override string Label(bool human)
         {
             if (unit._delegate == null) return "Invoke Action";
-            return $"{LudiqGUIUtility.DimString("Invoke")} { unit._action?.DisplayName }";
+            return $"{LudiqGUIUtility.DimString("Invoke")} { unit._delegate?.DisplayName }";
         }
 
         protected override UnitCategory Category()

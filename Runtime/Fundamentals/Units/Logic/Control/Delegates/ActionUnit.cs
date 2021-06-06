@@ -1,6 +1,7 @@
 ﻿using Bolt.Addons.Community.Utility;
 using Unity.VisualScripting;
 using System.Collections.Generic;
+using System;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.logic
 {
@@ -9,12 +10,6 @@ namespace Bolt.Addons.Community.Fundamentals.Units.logic
     public sealed class ActionUnit : DelegateUnit
     {
         public IAction _action => _delegate as IAction;
-
-        public ActionUnit() : base() { }
-
-        public ActionUnit(IAction action) : base(action)
-        {
-        }
 
         protected override void InitializeDelegate(Flow flow)
         {

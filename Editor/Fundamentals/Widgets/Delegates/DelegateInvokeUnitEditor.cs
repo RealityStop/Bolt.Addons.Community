@@ -10,7 +10,7 @@ using Bolt.Addons.Community.Utility;
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 {
     public abstract class DelegateInvokeUnitEditor<T, TDelegate> : UnitEditor
-        where T : DelegateInvokeUnit
+        where T : DelegateInvokeUnit<TDelegate>
         where TDelegate : IDelegate
     {
         public DelegateInvokeUnitEditor(Metadata metadata) : base(metadata)
@@ -34,8 +34,8 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
 
             GUI.Label(labelRect, DefaultName);
 
-            var unit = metadata.value as DelegateInvokeUnit;
-            var buttonLabel = unit?._delegate == null ? "( None Selected )" : unit._delegate?.DisplayName;
+            var unit = metadata.value as DelegateInvokeUnit<TDelegate>;
+            var buttonLabel = unit == null || unit._delegate == null ? "( None Selected )" : unit._delegate?.DisplayName;
             buttonRect.width = GUI.skin.label.CalcSize(new GUIContent(buttonLabel)).x + 40;
 
             if (GUI.Button(buttonRect, buttonLabel))
