@@ -9,6 +9,8 @@ namespace Bolt.Addons.Community.Utility.Editor
 {
     public class UtilityWindow : EditorWindow
     {
+        private BorderedRectangle container;
+
         [MenuItem("Window/Community Addons/Utilities")]
         public static void Open()
         {
@@ -20,20 +22,23 @@ namespace Bolt.Addons.Community.Utility.Editor
         {
             var root = rootVisualElement;
 
-            var container = new BorderedRectangle(HUMEditorColor.DefaultEditorBackground, Color.black, 2);
+            container = new BorderedRectangle(HUMEditorColor.DefaultEditorBackground, Color.black, 2);
             container.style.flexDirection = FlexDirection.Column;
             container.style.flexGrow = 1;
 
-            SelectionToSuperUnit(container);
-            GenerateCode(container);
+            container.Add(SelectionToSuperUnit());
+            container.Add(GenerateCode());
 
             minSize = new Vector2(250, minSize.y);
 
             root.Add(container);
         }
 
-        private void SelectionToSuperUnit(BorderedRectangle container)
+        private VisualElement SelectionToSuperUnit()
         {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Column;
+
             var header = new BorderedRectangle(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2);
             header.style.height = 24;
             header.style.marginBottom = 4;
@@ -59,10 +64,14 @@ namespace Bolt.Addons.Community.Utility.Editor
             header.Add(label);
             container.Add(header);
             container.Add(buttonContainer);
+            return container;
         }
 
-        private void GenerateCode(BorderedRectangle container)
+        private VisualElement GenerateCode()
         {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Column;
+
             var header = new BorderedRectangle(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2);
             header.style.height = 24;
             header.style.marginBottom = 4;
@@ -89,6 +98,7 @@ namespace Bolt.Addons.Community.Utility.Editor
             container.Add(header);
             container.Add(hint);
             container.Add(buttonContainer);
+            return container;
         }
     }
 }

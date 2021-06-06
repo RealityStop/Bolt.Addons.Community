@@ -28,6 +28,8 @@ namespace Bolt.Addons.Community.Utility.Editor
 
             if (selection != null && selection.Count > 0)
             {
+                Undo.RegisterCompleteObjectUndo(GraphWindow.active?.reference.rootObject, "Add Super Unit to Script Graph");
+
                 var superUnit = new SuperUnit();
                 var superUnitGraph = new FlowGraph();
                 var superUnitCanvas = superUnitGraph.Canvas<FlowCanvas>();
