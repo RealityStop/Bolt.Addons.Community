@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals
 {
-    [UnitCategory("Community/Control/Time")]
+    [UnitCategory("Community/Time")]
     public class WaitForEnumerator : WaitUnit
     {
         [DoNotSerialize]
