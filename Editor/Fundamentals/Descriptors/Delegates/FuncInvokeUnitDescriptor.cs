@@ -1,8 +1,7 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
-using Bolt.Addons.Community.Utility;
+﻿using Bolt.Addons.Community.Utility;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
+namespace Bolt.Addons.Community.Fundamentals.Editor
 {
     [Descriptor(typeof(FuncInvokeUnit))]
     public sealed class FuncInvokeUnitDescriptor : DelegateInvokeUnitDescriptor<FuncInvokeUnit, IFunc>

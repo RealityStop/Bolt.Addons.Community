@@ -2,7 +2,7 @@
 using Unity.VisualScripting;
 using System;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.logic
+namespace Bolt.Addons.Community.Fundamentals
 {
     public abstract class BindDelegateUnit<TDelegateInterface> : Unit where TDelegateInterface : IDelegate
     {

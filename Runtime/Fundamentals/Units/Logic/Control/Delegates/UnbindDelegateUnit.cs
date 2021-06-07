@@ -2,7 +2,7 @@
 using System;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.logic
+namespace Bolt.Addons.Community.Fundamentals
 {
     public abstract class UnbindDelegateUnit<TDelegateInterface> : Unit where TDelegateInterface : IDelegate
     {

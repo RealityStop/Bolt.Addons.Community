@@ -1,5 +1,4 @@
 ﻿using Unity.VisualScripting;
-using Bolt.Addons.Community.Fundamentals.Units.logic;
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
@@ -7,7 +6,7 @@ using System;
 using System.Reflection;
 using Bolt.Addons.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
+namespace Bolt.Addons.Community.Fundamentals.Editor
 {
     public abstract class DelegateInvokeUnitWidget<T, TDelegate> : UnitWidget<T> 
         where T : DelegateInvokeUnit<TDelegate>

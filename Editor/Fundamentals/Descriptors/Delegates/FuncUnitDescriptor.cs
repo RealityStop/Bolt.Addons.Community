@@ -1,7 +1,6 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
-using Unity.VisualScripting;
+﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
+namespace Bolt.Addons.Community.Fundamentals.Editor
 {
     [Descriptor(typeof(FuncUnit))]
     public sealed class FuncUnitDescriptor : DelegateUnitDescriptor<FuncUnit>

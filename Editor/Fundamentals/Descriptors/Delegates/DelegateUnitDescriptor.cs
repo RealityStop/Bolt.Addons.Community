@@ -1,7 +1,6 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
-using Unity.VisualScripting;
+﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
+namespace Bolt.Addons.Community.Fundamentals.Editor
 {
     public abstract class DelegateUnitDescriptor<T> : UnitDescriptor<T> where T : DelegateUnit
     {

@@ -1,4 +1,4 @@
-﻿using Bolt.Addons.Integrations.Continuum.Humility;
+﻿using Bolt.Addons.Libraries.Humility;
 using System;
 
 namespace Bolt.Addons.Community.Code.Editor

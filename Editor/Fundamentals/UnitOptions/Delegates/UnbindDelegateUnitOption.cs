@@ -1,10 +1,9 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
-using Bolt.Addons.Community.Utility;
-using Bolt.Addons.Integrations.Continuum.CSharp;
+﻿using Bolt.Addons.Community.Utility;
+using Bolt.Addons.Libraries.CSharp;
 using Unity.VisualScripting;
 using System;
 
-namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
+namespace Bolt.Addons.Community.Fundamentals.Editor.UnitOptions
 {
     public abstract class UnbindDelegateUnitOption<TUnbindDelegateUnit, TDelegateInterface> : UnitOption<TUnbindDelegateUnit>
        where TUnbindDelegateUnit : UnbindDelegateUnit<TDelegateInterface>

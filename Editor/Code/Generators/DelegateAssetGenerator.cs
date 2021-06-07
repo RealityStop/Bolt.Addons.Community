@@ -1,12 +1,12 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
-using Bolt.Addons.Community.Utility;
-using Bolt.Addons.Integrations.Continuum.Humility;
-using Bolt.Addons.Integrations.Continuum.CSharp;
+﻿using Bolt.Addons.Community.Utility;
+using Bolt.Addons.Libraries.Humility;
+using Bolt.Addons.Libraries.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.VisualScripting;
 using UnityEngine;
+using Bolt.Addons.Community.Fundamentals;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
@@ -133,22 +133,22 @@ namespace Bolt.Addons.Community.Code.Editor
 
             @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(object), "GetDelegate").Body("return".ConstructHighlight() + " callback;"));
 
-            @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, IsAction ? typeof(void) : typeof(object), "Invoke").AddParameter(ParameterGenerator.Parameter("parameters", typeof(object[]), Integrations.Continuum.CSharp.ParameterModifier.None, isParameters:true)).Body($"{(IsAction ? string.Empty : "return").ConstructHighlight()} callback({invokeString});"));
+            @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, IsAction ? typeof(void) : typeof(object), "Invoke").AddParameter(ParameterGenerator.Parameter("parameters", typeof(object[]), Libraries.CSharp.ParameterModifier.None, isParameters:true)).Body($"{(IsAction ? string.Empty : "return").ConstructHighlight()} callback({invokeString});"));
 
             @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(void), "Initialize").
-                AddParameter(ParameterGenerator.Parameter("flow", typeof(Flow), Integrations.Continuum.CSharp.ParameterModifier.None)).
-                AddParameter(ParameterGenerator.Parameter("unit", IsAction ? typeof(ActionUnit) : typeof(FuncUnit), Integrations.Continuum.CSharp.ParameterModifier.None)).
-                AddParameter(ParameterGenerator.Parameter(IsAction ? "flowAction" : "flowFunc", IsAction ? typeof(Action) : typeof(Func<object>), Integrations.Continuum.CSharp.ParameterModifier.None))
+                AddParameter(ParameterGenerator.Parameter("flow", typeof(Flow), Libraries.CSharp.ParameterModifier.None)).
+                AddParameter(ParameterGenerator.Parameter("unit", IsAction ? typeof(ActionUnit) : typeof(FuncUnit), Libraries.CSharp.ParameterModifier.None)).
+                AddParameter(ParameterGenerator.Parameter(IsAction ? "flowAction" : "flowFunc", IsAction ? typeof(Action) : typeof(Func<object>), Libraries.CSharp.ParameterModifier.None))
                 .Body("callback = " + "new ".ConstructHighlight() + remappedGeneric + "(" + LambdaGenerator.SingleLine(stringConstructorParameters, (stringConstructorParameters.Count > 0 ? "unit.AssignParameters(flow, " + assignParams + "); " + (IsAction ? "flowAction.Invoke();" : "return ".ConstructHighlight() + "(" + Data.generics[Data.generics.Count - 1].type.type.As().CSharpName() + ")" + "flowFunc();") : (IsAction ? "flowAction.Invoke();" : "return ".ConstructHighlight() + "(" + Data.generics[Data.generics.Count-1].type.type.As().CSharpName() + ")" + "flowFunc();"))).Generate(0) + ");"));
 
             @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(void), "Bind").
-                AddParameter(ParameterGenerator.Parameter("other", typeof(IDelegate), Integrations.Continuum.CSharp.ParameterModifier.None))
+                AddParameter(ParameterGenerator.Parameter("other", typeof(IDelegate), Libraries.CSharp.ParameterModifier.None))
                 .Body(
                 "callback += (" + remappedGeneric + ")other.GetDelegate();"
                 ));
 
             @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(void), "Unbind").
-                AddParameter(ParameterGenerator.Parameter("other", typeof(IDelegate), Integrations.Continuum.CSharp.ParameterModifier.None))
+                AddParameter(ParameterGenerator.Parameter("other", typeof(IDelegate), Libraries.CSharp.ParameterModifier.None))
                 .Body(
                 "callback -= (" + remappedGeneric + ")other.GetDelegate();"
                 ));

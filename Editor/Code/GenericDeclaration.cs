@@ -1,6 +1,6 @@
 ﻿using Unity.VisualScripting;
 using System;
-using Bolt.Addons.Integrations.Continuum;
+using Bolt.Addons.Libraries.CSharp;
 
 namespace Bolt.Addons.Community.Code.Editor
 {

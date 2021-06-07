@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using Unity.VisualScripting;
 using UnityEditor;
-using Bolt.Addons.Integrations.Continuum.Humility;
-using Bolt.Addons.Integrations.Continuum.CSharp;
+using Bolt.Addons.Libraries.Humility;
+using Bolt.Addons.Libraries.CSharp;
 using System;
 
 namespace Bolt.Addons.Community.Code.Editor

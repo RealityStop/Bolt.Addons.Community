@@ -3,7 +3,7 @@ using Unity.VisualScripting;
 using System.Collections.Generic;
 using System;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.logic
+namespace Bolt.Addons.Community.Fundamentals
 {
     [UnitCategory("Community/Control/Delegates")]
     [TypeIcon(typeof(Flow))]

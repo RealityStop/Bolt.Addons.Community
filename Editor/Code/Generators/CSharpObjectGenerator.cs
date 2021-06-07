@@ -1,4 +1,4 @@
-﻿using Bolt.Addons.Integrations.Continuum.CSharp;
+﻿using Bolt.Addons.Libraries.CSharp;
 using System;
 using Unity.VisualScripting;
 

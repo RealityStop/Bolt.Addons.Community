@@ -1,8 +1,7 @@
 ﻿using Unity.VisualScripting;
-using Bolt.Addons.Community.Fundamentals.Units.logic;
 using Bolt.Addons.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
+namespace Bolt.Addons.Community.Fundamentals.Editor
 {
     [Editor(typeof(BindFuncUnit))]
     public sealed class BindFuncUnitEditor : BindDelegateUnitEditor<BindFuncUnit, IFunc>

@@ -1,8 +1,7 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
-using Bolt.Addons.Community.Utility;
+﻿using Bolt.Addons.Community.Utility;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
+namespace Bolt.Addons.Community.Fundamentals.Editor
 {
     public abstract class BindDelegateUnitDescriptor<T, TInterface> : UnitDescriptor<T>
         where T : BindDelegateUnit<TInterface>

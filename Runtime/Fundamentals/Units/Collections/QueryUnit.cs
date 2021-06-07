@@ -79,7 +79,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
         private bool outCondition;
         [Obsolete]
         private string serializedOperation;
-        
+         
         protected override void Definition()
         {
             enter = ControlInput("enter", (flow) =>

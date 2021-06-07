@@ -1,13 +1,10 @@
-﻿
-using Bolt.Addons.Community.Fundamentals.Units.logic;
+﻿using Bolt.Addons.Community.Fundamentals;
+using Bolt.Addons.Community.Fundamentals.Editor.UnitOptions;
 using Bolt.Addons.Community.Utility;
 using Bolt.Addons.Community.Variables.Editor.UnitOptions;
-
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Variables.Editor

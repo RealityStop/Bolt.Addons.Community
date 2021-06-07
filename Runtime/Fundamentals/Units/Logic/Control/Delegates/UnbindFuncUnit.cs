@@ -2,7 +2,7 @@
 using System;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.logic
+namespace Bolt.Addons.Community.Fundamentals
 {
     [UnitCategory("Community/Control/Delegates")]
     public sealed class UnbindFuncUnit : UnbindDelegateUnit<IFunc>

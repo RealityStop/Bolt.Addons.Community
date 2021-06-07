@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using Unity.VisualScripting;
 using UnityEditor;
-using Bolt.Addons.Integrations.Continuum.Humility;
+using Bolt.Addons.Libraries.Humility;
 
 namespace Bolt.Addons.Community.Code.Editor
 {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.logic
+namespace Bolt.Addons.Community.Fundamentals
 {
     [UnitCategory("Community/Control/Time")]
     public class WaitForEnumerator : WaitUnit

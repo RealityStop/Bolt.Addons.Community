@@ -1,8 +1,7 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
-using Bolt.Addons.Community.Utility;
+﻿using Bolt.Addons.Community.Utility;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
+namespace Bolt.Addons.Community.Fundamentals.Editor
 {
     public abstract class DelegateInvokeUnitDescriptor<T, TDelegate> : UnitDescriptor<T>
         where T : DelegateInvokeUnit<TDelegate>

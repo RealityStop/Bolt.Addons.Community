@@ -3,8 +3,8 @@ using Unity.VisualScripting;
 using UnityEditor;
 using System;
 using System.Collections.Generic;
-using Bolt.Addons.Integrations.Continuum.Humility;
-using Bolt.Addons.Integrations.Continuum.CSharp;
+using Bolt.Addons.Libraries.Humility;
+using Bolt.Addons.Libraries.CSharp;
 using System.Linq;
 
 namespace Bolt.Addons.Community.Code.Editor

@@ -1,9 +1,8 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
-using Bolt.Addons.Integrations.Continuum.CSharp;
+﻿using Bolt.Addons.Libraries.CSharp;
 using Unity.VisualScripting;
 using System;
 
-namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
+namespace Bolt.Addons.Community.Fundamentals.Editor.UnitOptions
 {
     [FuzzyOption(typeof(ActionUnit))]
     public sealed class ActionUnitOption : UnitOption<ActionUnit>

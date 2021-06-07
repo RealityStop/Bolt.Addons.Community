@@ -1,5 +1,5 @@
-﻿using Bolt.Addons.Integrations.Continuum.CSharp;
-using Bolt.Addons.Integrations.Continuum.Humility;
+﻿using Bolt.Addons.Libraries.CSharp;
+using Bolt.Addons.Libraries.Humility;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
