@@ -36,7 +36,11 @@ namespace Bolt.Addons.Community.ReturnEvents
 
         private GraphReference triggerReference;
 
+#if VISUAL_SCRIPTING_1_7
+        private ScriptMachine machine;
+#else
         private FlowMachine machine;
+#endif
 
         /// <summary>
         /// Defines the ports of the unit.

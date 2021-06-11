@@ -5,6 +5,12 @@ using System.Linq;
 using System;
 using UnityEditor;
 
+#if VISUAL_SCRIPTING_1_7
+using NestedNode = Unity.VisualScripting.SubgraphUnit;
+#else
+using NestedNode = Unity.VisualScripting.SuperUnit;
+#endif
+
 namespace Bolt.Addons.Community.Utility.Editor
 {
     public static partial class UnitSelection
@@ -30,12 +36,12 @@ namespace Bolt.Addons.Community.Utility.Editor
             {
                 Undo.RegisterCompleteObjectUndo(GraphWindow.active?.reference.rootObject, "Add Super Unit to Script Graph");
 
-                var superUnit = new SuperUnit();
+                var superUnit = new NestedNode();
                 var superUnitGraph = new FlowGraph();
                 var superUnitCanvas = superUnitGraph.Canvas<FlowCanvas>();
                 var elements = selection.ToList();
 
-                superUnit.position = GetSuperUnitPosition(elements);
+                superUnit.position = GetNestedNodePosition(elements);
 
                 ((FlowGraph)GraphWindow.active.reference.graph).units.Add(superUnit);
 
@@ -78,7 +84,7 @@ namespace Bolt.Addons.Community.Utility.Editor
                 if (!string.IsNullOrEmpty(path))
                 {
                     ConvertToEmbed();
-                    var superUnit = selection.ToList()[0] as SuperUnit;
+                    var superUnit = selection.ToList()[0] as NestedNode;
                     var asset = ScriptGraphAsset.CreateInstance<ScriptGraphAsset>();
                     AssetDatabase.CreateAsset(asset, path);
                     AssetDatabase.SaveAssets();
@@ -167,7 +173,7 @@ namespace Bolt.Addons.Community.Utility.Editor
             }
         }
 
-        private static List<ConnectionData> GetControlIndices(GraphSelection selection, SuperUnit superUnit)
+        private static List<ConnectionData> GetControlIndices(GraphSelection selection, NestedNode superUnit)
         {
             List<ConnectionData> controlConnectionData = new List<ConnectionData>();
             var original = GraphWindow.active.reference.graph as FlowGraph;
@@ -255,7 +261,7 @@ namespace Bolt.Addons.Community.Utility.Editor
             return controlConnectionData;
         }
 
-        private static List<ConnectionData> GetValueIndices(GraphSelection selection, SuperUnit superUnit)
+        private static List<ConnectionData> GetValueIndices(GraphSelection selection, NestedNode superUnit)
         {
             List<ConnectionData> valueConnectionData = new List<ConnectionData>();
             var original = GraphWindow.active.reference.graph as FlowGraph;
@@ -345,7 +351,7 @@ namespace Bolt.Addons.Community.Utility.Editor
             return valueConnectionData;
         }
 
-        private static List<ConnectionData> GetInvalidIndices(GraphSelection selection, SuperUnit superUnit)
+        private static List<ConnectionData> GetInvalidIndices(GraphSelection selection, NestedNode superUnit)
         {
             List<ConnectionData> invalidConnectionData = new List<ConnectionData>();
             var original = GraphWindow.active.reference.graph as FlowGraph;
@@ -486,7 +492,7 @@ namespace Bolt.Addons.Community.Utility.Editor
             }
         }
 
-        private static Vector2 GetSuperUnitPosition(List<IGraphElement> elements)
+        private static Vector2 GetNestedNodePosition(List<IGraphElement> elements)
         {
             var superUnitPosition = Vector2.zero;
 
@@ -537,7 +543,7 @@ namespace Bolt.Addons.Community.Utility.Editor
             public int destinationUnitIndex;
             public int destinationInputIndex;
             public IUnitPort externalPort;
-            public SuperUnit superUnit;
+            public NestedNode superUnit;
             public Type valueType;
             public string key;
             public ConnectionDataSource source;

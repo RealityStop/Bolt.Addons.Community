@@ -14,6 +14,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.visualscripting",
+            "expression": "1.7.1",
+            "define": "VISUAL_SCRIPTING_1_7"
+        }
+    ],
     "noEngineReferences": false
 }
