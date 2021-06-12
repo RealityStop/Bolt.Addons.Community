@@ -11,6 +11,7 @@ namespace Bolt.Addons.Community.Code.Editor
     public sealed class DelegateAsset : CodeAsset, ISerializationCallbackReceiver
     {
         [Inspectable]
+        [SerializeField]
         public SystemType type = new SystemType() { type = typeof(Action) };
 
         [Inspectable]

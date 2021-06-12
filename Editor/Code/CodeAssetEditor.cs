@@ -36,7 +36,6 @@ namespace Bolt.Addons.Community.Code.Editor
         {
             serializedObject.Update();
 
-
             HUMEditor.Changed(() =>
             {
 

@@ -19,7 +19,7 @@ namespace Bolt.Addons.Community.Code.Editor
 
         public override string Generate(int indent)
         {
-            NamespaceGenerator @namespace = NamespaceGenerator.Namespace(null);
+            NamespaceGenerator @namespace = NamespaceGenerator.Namespace("Bolt.Addons.Generated");
 
             var title = GetCompoundTitle();
             var delegateType = DelegateType;
@@ -180,14 +180,16 @@ namespace Bolt.Addons.Community.Code.Editor
         private string GetCompoundTitle()
         {
             var gens = string.Empty;
-            var gen = Data.type.type.Name.RemoveAfterFirst("`".ToCharArray()[0]).LegalMemberName();
+            var gen = Data.type.type.Name;
+
+            if (gen.Contains("`")) { gen = gen.RemoveAfterFirst("`".ToCharArray()[0]).LegalMemberName(); } else { gen = gen.LegalMemberName(); }
 
             for (int i = 0; i < Data.generics.Count; i++)
             {
                 gens += Data.generics[i].type.type.As().CSharpName().RemoveHighlights().RemoveMarkdown().Replace("&", string.Empty);
             }
 
-            return gen + gens;
+            return gen + gens + "DelegateScript";
         }
 
     }

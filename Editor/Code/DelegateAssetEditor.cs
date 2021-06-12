@@ -14,8 +14,8 @@ namespace Bolt.Addons.Community.Code.Editor
     {
         private Metadata type;
         private Metadata generics;
-        private List<Type> types;
-        private List<Type> allTypes;
+        private IEnumerable<Type> types = new List<Type>();
+        private IEnumerable<Type> allTypes = new List<Type>();
 
         protected override bool showOptions => false;
         protected override bool showTitle => false;
@@ -23,8 +23,8 @@ namespace Bolt.Addons.Community.Code.Editor
 
         private void OnEnable()
         {
-            allTypes = typeof(object).Get().Derived().ToList();
-            types = typeof(object).Get().Derived().Where((type) => { return type.IsSubclassOf(typeof(Delegate)) && !type.Namespace.Contains("System.Xml"); }).ToList();
+            allTypes = typeof(object).Get().Derived();
+            types = typeof(object).Get().Derived().Where((type) => { return type.IsSubclassOf(typeof(Delegate)); });
         }
 
         protected override void Cache()
