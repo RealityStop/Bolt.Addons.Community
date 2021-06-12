@@ -2,6 +2,7 @@
 
 namespace Bolt.Addons.Community.Fundamentals
 {
+    [UnitTitle("Set Machine Variable")]
     public sealed class SetMachineVariableUnit : MachineVariableUnit
     {
         [DoNotSerialize]

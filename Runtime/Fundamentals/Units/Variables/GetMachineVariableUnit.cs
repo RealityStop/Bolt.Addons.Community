@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals
 {
+    [UnitTitle("Get Machine Variable")]
     public sealed class GetMachineVariableUnit : MachineVariableUnit
     {
         [DoNotSerialize]
