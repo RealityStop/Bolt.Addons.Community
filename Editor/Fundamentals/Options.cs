@@ -2,6 +2,7 @@
 using Bolt.Addons.Community.Fundamentals.Editor.UnitOptions;
 using Bolt.Addons.Community.Utility;
 using Bolt.Addons.Community.Variables.Editor.UnitOptions;
+using Bolt.Addons.Libraries.Humility;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -16,6 +17,7 @@ namespace Bolt.Addons.Community.Variables.Editor
         {
             UnitBase.staticUnitsExtensions.Add(GetStaticOptions);
             UnitBase.dynamicUnitsExtensions.Add(DelegateOptions);
+            UnitBase.dynamicUnitsExtensions.Add(MachineVariableOptions);
         }
 
         private static IEnumerable<IUnitOption> GetStaticOptions()
@@ -58,6 +60,22 @@ namespace Bolt.Addons.Community.Variables.Editor
             yield return new SetDictionaryVariableItemUnitOption(VariableKind.Scene);
             yield return new SetDictionaryVariableItemUnitOption(VariableKind.Application);
             yield return new SetDictionaryVariableItemUnitOption(VariableKind.Saved);
+        }
+
+        private static IEnumerable<IUnitOption> MachineVariableOptions()
+        {
+            var assets = HUMAssets.Find().Assets().OfType<ScriptGraphAsset>();
+
+            for (int i = 0; i < assets.Count; i++)
+            {
+                var variables = assets[i].graph.variables.ToArrayPooled();
+
+                for (int varIndex = 0; varIndex < variables.Length; varIndex++)
+                {
+                    yield return new SetMachineVariableUnitOption(new SetMachineVariableUnit() { asset = assets[i], defaultName = variables[varIndex].name });
+                    yield return new GetMachineVariableUnitOption(new GetMachineVariableUnit() { asset = assets[i], defaultName = variables[varIndex].name });
+                }
+            }
         }
 
         private static IEnumerable<IUnitOption> DelegateOptions()

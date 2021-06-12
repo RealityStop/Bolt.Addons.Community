@@ -14,7 +14,6 @@
 //        public BranchParamsInspector(Metadata metadata) : base(metadata)
 //        {
 //        }
-///*
 //        protected override void OnMemberGUI(Metadata member, Rect memberPosition)
 //        {
 //            Debug.Log(member.path);
