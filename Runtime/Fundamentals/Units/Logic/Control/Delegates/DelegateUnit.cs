@@ -13,6 +13,8 @@ namespace Bolt.Addons.Community.Fundamentals
         [DoNotSerialize]
         public ValueOutput @delegate;
 
+        public string name;
+
         [DoNotSerialize]
         public List<ValueOutput> parameters = new List<ValueOutput>();
 
@@ -24,11 +26,20 @@ namespace Bolt.Addons.Community.Fundamentals
 
         public bool initialized;
 
+        [UnitHeaderInspectable]
+        private bool variable;
+
         public DelegateUnit() : base() { }
 
         public DelegateUnit(IDelegate @delegate)
         {
             this._delegate = @delegate;
+        }
+
+        protected override void AfterDefine()
+        {
+            base.AfterDefine();
+
         }
 
         protected override void Definition()
@@ -44,7 +55,7 @@ namespace Bolt.Addons.Community.Fundamentals
                 @delegate = ValueOutput(_delegate.GetType(), "delegate", (flow) =>
                 {
                     reference = flow.stack.ToReference();
-                    if (!initialized) { InitializeDelegate(flow); initialized = true; }
+                    if (!_delegate.initialized) { InitializeDelegate(flow); }
                     return _delegate;
                 });
 

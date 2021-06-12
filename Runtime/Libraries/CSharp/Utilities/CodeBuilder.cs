@@ -288,7 +288,7 @@ namespace Bolt.Addons.Libraries.CSharp
 
             for (int i = 0; i < newCopy.Length; i++)
             {
-                if (!char.IsLetter(newCopy[i]) && !char.IsNumber(newCopy[i]))
+                if (!char.IsLetter(newCopy[i]) && !char.IsNumber(newCopy[i]) && newCopy[i] != "_".ToCharArray()[0])
                 {
                     output = output.Replace(newCopy[i].ToString(), string.Empty);
                 }
