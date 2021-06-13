@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Unity.VisualScripting;
 using UnityEditor;
 using System;
@@ -14,8 +14,8 @@ namespace Bolt.Addons.Community.Code.Editor
     {
         private Metadata type;
         private Metadata generics;
-        private IEnumerable<Type> types = new List<Type>();
-        private IEnumerable<Type> allTypes = new List<Type>();
+        private List<Type> types = new List<Type>();
+        private List<Type> delegateTypes = new List<Type>();
 
         protected override bool showOptions => false;
         protected override bool showTitle => false;
@@ -23,8 +23,8 @@ namespace Bolt.Addons.Community.Code.Editor
 
         private void OnEnable()
         {
-            allTypes = typeof(object).Get().Derived();
-            types = typeof(object).Get().Derived().Where((type) => { return type.IsSubclassOf(typeof(Delegate)); });
+            types = typeof(object).Get().Derived().Where((type) => { return !type.IsGenericType && !type.IsAbstract; }).ToList();
+            delegateTypes = typeof(object).Get().Derived().Where((type) => { return type.IsSubclassOf(typeof(Delegate)); }).ToList();
         }
 
         protected override void Cache()
@@ -51,7 +51,7 @@ namespace Bolt.Addons.Community.Code.Editor
                     GUILayout.Label("Delegate", GUILayout.Width(80));
                     if (GUILayout.Button(((Type)type.value)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown()))
                     {
-                        LudiqGUI.FuzzyDropdown(lastRect, new TypeOptionTree(types), type.value, (val) =>
+                        LudiqGUI.FuzzyDropdown(lastRect, new TypeOptionTree(delegateTypes), type.value, (val) =>
                         {
                             generics.value = new List<GenericDeclaration>();
 
@@ -95,7 +95,7 @@ namespace Bolt.Addons.Community.Code.Editor
                                 GUILayout.Label(string.IsNullOrEmpty(gen[index].name) ? "T" + index.ToString() : gen[index].name);
                                 if (GUILayout.Button(gen[index].type.type?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown()))
                                 {
-                                    LudiqGUI.FuzzyDropdown(lastRect, new TypeOptionTree(allTypes.Where((t) =>
+                                    LudiqGUI.FuzzyDropdown(lastRect, new TypeOptionTree(types.Where((t) =>
                                     {
                                         return t.Inherits(gen[index].constraint.type);
                                     })), type.value, (val) =>
