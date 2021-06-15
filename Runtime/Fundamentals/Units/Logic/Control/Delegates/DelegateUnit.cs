@@ -54,8 +54,8 @@ namespace Bolt.Addons.Community.Fundamentals
             {
                 @delegate = ValueOutput(_delegate.GetType(), "delegate", (flow) =>
                 {
-                    reference = flow.stack.root.GetReference() as GraphReference;
-                    if (!_delegate.initialized) { InitializeDelegate(Flow.New(reference)); }
+                    reference = flow.stack.ToReference();
+                    if (!_delegate.initialized) { var _flow = Flow.New(reference); InitializeDelegate(_flow); }
                     return _delegate;
                 });
 
