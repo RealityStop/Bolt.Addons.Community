@@ -11,7 +11,7 @@ namespace Bolt.Addons.Community.Fundamentals
 
         protected override void InitializeDelegate(Flow flow)
         {
-            _action.Initialize(flow, this, () => { flow.Invoke(invoke); });
+            _action.Initialize(flow, this, () => { var _flow = Flow.New(flow.stack.AsReference()); _flow.Invoke(invoke); });
         }
     }
 }

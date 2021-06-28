@@ -5,8 +5,18 @@ using System;
 
 namespace Bolt.Addons.Community.Fundamentals
 {
-    public abstract class DelegateUnit : Unit
+    public abstract class DelegateUnit : Unit, IGraphElementWithData
     {
+        public IGraphElementData CreateData()
+        {
+            return new Data();
+        }
+
+        public sealed class Data : IGraphElementData
+        {
+            public object[] values;
+        }
+
         [Serialize]
         public IDelegate _delegate;
 
@@ -39,7 +49,6 @@ namespace Bolt.Addons.Community.Fundamentals
         protected override void AfterDefine()
         {
             base.AfterDefine();
-
         }
 
         protected override void Definition()
@@ -61,17 +70,19 @@ namespace Bolt.Addons.Community.Fundamentals
 
                 for (int i = 0; i < _delegate.parameters.Length; i++)
                 {
-                    parameters.Add(ValueOutput(_delegate.parameters[i].type, _delegate.parameters[i].name));
+                    var index = i;
+                    parameters.Add(ValueOutput(_delegate.parameters[i].type, _delegate.parameters[i].name, (flow)=> { return flow.stack.GetElementData<Data>(this).values[index]; }));
                 }
             }
         }
          
         public void AssignParameters(Flow flow, params object[] parameters)
         {
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                flow.SetValue(this.parameters[i], parameters[i]);
-            }
+            flow.stack.GetElementData<Data>(this).values = parameters;
+            //for (int i = 0; i < this.parameters.Count; i++)
+            //{
+            //    flow.SetValue(this.parameters[i], parameters[i]);
+            //}
         }
 
         protected abstract void InitializeDelegate(Flow flow);
