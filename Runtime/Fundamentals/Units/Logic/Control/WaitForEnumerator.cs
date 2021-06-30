@@ -6,7 +6,9 @@ using UnityEngine;
 namespace Bolt.Addons.Community.Fundamentals
 {
     [UnitCategory("Community/Time")]
-    public class WaitForEnumerator : WaitUnit
+    [UnitTitle("Yield")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.WaitForEnumerator")]
+    public class YieldUnit : WaitUnit
     {
         [UnitHeaderInspectable]
         public EnumeratorType type;
@@ -33,6 +35,7 @@ namespace Bolt.Addons.Community.Fundamentals
                     break;
             }
         }
+
         protected override IEnumerator Await(Flow flow)
         {
             switch (type)

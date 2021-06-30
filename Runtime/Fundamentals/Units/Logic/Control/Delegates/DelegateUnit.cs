@@ -46,11 +46,6 @@ namespace Bolt.Addons.Community.Fundamentals
             this._delegate = @delegate;
         }
 
-        protected override void AfterDefine()
-        {
-            base.AfterDefine();
-        }
-
         protected override void Definition()
         {
             isControlRoot = true;
@@ -79,10 +74,6 @@ namespace Bolt.Addons.Community.Fundamentals
         public void AssignParameters(Flow flow, params object[] parameters)
         {
             flow.stack.GetElementData<Data>(this).values = parameters;
-            //for (int i = 0; i < this.parameters.Count; i++)
-            //{
-            //    flow.SetValue(this.parameters[i], parameters[i]);
-            //}
         }
 
         protected abstract void InitializeDelegate(Flow flow);
