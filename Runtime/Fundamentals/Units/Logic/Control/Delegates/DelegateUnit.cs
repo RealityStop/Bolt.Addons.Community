@@ -6,18 +6,8 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals
 {
-    public abstract class DelegateUnit : Unit, IGraphElementWithData
+    public abstract class DelegateUnit : Unit
     {
-        public IGraphElementData CreateData()
-        {
-            return new Data();
-        }
-
-        public sealed class Data : IGraphElementData
-        {
-            public object[] values;
-        }
-
         [Serialize]
         public IDelegate _delegate;
 
@@ -29,17 +19,13 @@ namespace Bolt.Addons.Community.Fundamentals
         [DoNotSerialize]
         public List<ValueOutput> parameters = new List<ValueOutput>();
 
-        public GraphReference reference;
-
         [DoNotSerialize]
         [PortLabelHidden]
         public ControlOutput invoke;
 
-        [DoNotSerialize]
-        public bool initialized;
-
         [UnitHeaderInspectable]
         private bool variable;
+        private object[] values;
 
         public DelegateUnit() : base() { }
 
@@ -60,11 +46,8 @@ namespace Bolt.Addons.Community.Fundamentals
             {
                 @delegate = ValueOutput(_delegate.GetType(), "delegate", (flow) =>
                 {
-                    if (!_delegate.initialized)
-                    {
-                        var _flow = Flow.New(flow.stack.ToReference());
-                        InitializeDelegate(_flow);
-                    }
+                    var _flow = Flow.New(flow.stack.AsReference());
+                    InitializeDelegate(_flow, _delegate.initialized);
                     return _delegate;
                 });
 
@@ -73,17 +56,23 @@ namespace Bolt.Addons.Community.Fundamentals
                     var index = i;
                     parameters.Add(ValueOutput(_delegate.parameters[i].type, _delegate.parameters[i].name, (flow) =>
                     {
-                        return flow.stack.GetElementData<Data>(this).values[index];
+                        return values[index];
                     }));
                 }
             }
         }
 
-        public void AssignParameters(Flow flow, params object[] parameters)
+        public override void Instantiate(GraphReference instance)
         {
-            flow.stack.GetElementData<Data>(this).values = parameters;
+            base.Instantiate(instance);
+            if (_delegate != null) _delegate.initialized = false;
         }
 
-        protected abstract void InitializeDelegate(Flow flow);
+        public void AssignParameters(Flow flow, params object[] parameters)
+        {
+            values = parameters;
+        }
+
+        protected abstract void InitializeDelegate(Flow flow, bool instance = false);
     }
 }

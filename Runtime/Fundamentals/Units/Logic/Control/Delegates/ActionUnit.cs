@@ -10,9 +10,20 @@ namespace Bolt.Addons.Community.Fundamentals
     {
         public IAction _action => _delegate as IAction;
 
-        protected override void InitializeDelegate(Flow flow)
+        public ActionUnit() : base() { }
+        public ActionUnit(IDelegate del) : base(del)
         {
-            _action.Initialize(flow, this, () => { var _flow = Flow.New(flow.stack.AsReference()); _flow.Invoke(invoke); });
+
+        }
+
+        protected override void InitializeDelegate(Flow flow, bool instance = false)
+        {
+            if (instance)
+            {
+                _action.SetInstance(flow, this, () => { var _flow = Flow.New(flow.stack.ToReference()); _flow.Invoke(invoke); });
+                return;
+            }
+            _action.Initialize(flow, this, () => { var _flow = Flow.New(flow.stack.ToReference()); _flow.Invoke(invoke); });
         }
     }
 }

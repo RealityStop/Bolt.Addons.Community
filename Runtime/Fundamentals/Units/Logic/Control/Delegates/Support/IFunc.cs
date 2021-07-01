@@ -9,5 +9,6 @@ namespace Bolt.Addons.Community.Utility
         Type ReturnType { get; }
         object Invoke(params object[] parameters);
         void Initialize(Flow flow, FuncUnit unit, Func<object> flowAction);
+        void SetInstance(Flow flow, FuncUnit unit, Func<object> flowAction);
     }
 }

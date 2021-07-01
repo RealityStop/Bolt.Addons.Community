@@ -8,5 +8,6 @@ namespace Bolt.Addons.Community.Utility
     {
         void Invoke(params object[] parameters);
         void Initialize(Flow flow, ActionUnit unit, Action flowAction);
+        void SetInstance(Flow flow, ActionUnit unit, Action flowAction);
     }
 }
