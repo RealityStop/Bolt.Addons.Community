@@ -8,7 +8,7 @@ namespace Bolt.Addons.Community.Code.Editor
 {
     [CreateAssetMenu(menuName = "Visual Scripting/Community/Delegate")]
     [Serializable]
-    public sealed class DelegateAsset : CodeAsset, ISerializationCallbackReceiver
+    public sealed class DelegateAsset : CodeAsset
     {
         [Inspectable]
         [SerializeField]
@@ -17,30 +17,7 @@ namespace Bolt.Addons.Community.Code.Editor
         [Inspectable]
         public List<GenericDeclaration> generics = new List<GenericDeclaration>();
 
-        [SerializeField]
-        [HideInInspector]
-        private string qualifiedName;
-
         [Inspectable]
         public string displayName;
-
-        public void OnAfterDeserialize()
-        {
-            if (!(string.IsNullOrWhiteSpace(qualifiedName) || string.IsNullOrEmpty(qualifiedName)))
-            {
-                type.type = Type.GetType(qualifiedName);
-            }
-        }
-
-        public void OnBeforeSerialize()
-        {
-            if (type == null)
-            {
-                qualifiedName = string.Empty;
-                return;
-            }
-
-            qualifiedName = type.type.AssemblyQualifiedName;
-        }
     }
 }
