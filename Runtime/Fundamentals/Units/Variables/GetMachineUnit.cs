@@ -2,10 +2,16 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
+
 namespace Bolt.Addons.Community.Fundamentals
 {
     [UnitTitle("Get Machine")]
-    [TypeIcon(typeof(ScriptMachine))]
+    [TypeIcon(typeof(SMachine))]
     [UnitCategory("Community/Graphs")]
     public sealed class GetMachineUnit : Unit
     {
@@ -25,10 +31,10 @@ namespace Bolt.Addons.Community.Fundamentals
             target = ValueInput<GameObject>("target", (GameObject)null);
             target.NullMeansSelf();
             asset = ValueInput<ScriptGraphAsset>("asset", (ScriptGraphAsset)null);
-            machine = ValueOutput<ScriptMachine>("machine", (flow) =>
+            machine = ValueOutput<SMachine>("machine", (flow) =>
             {
-                var machines = flow.GetValue<GameObject>(target).GetComponents<ScriptMachine>();
-                ScriptMachine _machine = null;
+                var machines = flow.GetValue<GameObject>(target).GetComponents<SMachine>();
+                SMachine _machine = null;
 
                 for (int i = 0; i < machines.Length; i++)
                 {
@@ -41,7 +47,7 @@ namespace Bolt.Addons.Community.Fundamentals
     }
 
     [UnitTitle("Get Machines")]
-    [TypeIcon(typeof(ScriptMachine))]
+    [TypeIcon(typeof(SMachine))]
     [UnitCategory("Community/Graphs")]
     public sealed class GetMachinesUnit : Unit
     {
@@ -61,10 +67,10 @@ namespace Bolt.Addons.Community.Fundamentals
             target = ValueInput<GameObject>("target", (GameObject)null);
             target.NullMeansSelf();
             asset = ValueInput<ScriptGraphAsset>("asset", (ScriptGraphAsset)null);
-            machines = ValueOutput<ScriptMachine[]>("machine", (flow) =>
+            machines = ValueOutput<SMachine[]>("machine", (flow) =>
             {
-                var machines = flow.GetValue<GameObject>(target).GetComponents<ScriptMachine>();
-                var _machines = new List<ScriptMachine>();
+                var machines = flow.GetValue<GameObject>(target).GetComponents<SMachine>();
+                var _machines = new List<SMachine>();
 
                 for (int i = 0; i < machines.Length; i++)
                 {

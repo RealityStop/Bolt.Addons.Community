@@ -1,5 +1,6 @@
 ﻿using Bolt.Addons.Community.Utility;
 using Unity.VisualScripting;
+using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals
 {

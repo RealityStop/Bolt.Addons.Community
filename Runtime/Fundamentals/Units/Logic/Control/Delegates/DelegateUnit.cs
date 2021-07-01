@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using System.Collections.Generic;
 using System;
+using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals
 {
@@ -34,6 +35,7 @@ namespace Bolt.Addons.Community.Fundamentals
         [PortLabelHidden]
         public ControlOutput invoke;
 
+        [DoNotSerialize]
         public bool initialized;
 
         [UnitHeaderInspectable]
@@ -58,19 +60,25 @@ namespace Bolt.Addons.Community.Fundamentals
             {
                 @delegate = ValueOutput(_delegate.GetType(), "delegate", (flow) =>
                 {
-                    reference = flow.stack.ToReference();
-                    if (!_delegate.initialized) { var _flow = Flow.New(reference); InitializeDelegate(_flow); }
+                    if (!_delegate.initialized)
+                    {
+                        var _flow = Flow.New(flow.stack.ToReference());
+                        InitializeDelegate(_flow);
+                    }
                     return _delegate;
                 });
 
                 for (int i = 0; i < _delegate.parameters.Length; i++)
                 {
                     var index = i;
-                    parameters.Add(ValueOutput(_delegate.parameters[i].type, _delegate.parameters[i].name, (flow)=> { return flow.stack.GetElementData<Data>(this).values[index]; }));
+                    parameters.Add(ValueOutput(_delegate.parameters[i].type, _delegate.parameters[i].name, (flow) =>
+                    {
+                        return flow.stack.GetElementData<Data>(this).values[index];
+                    }));
                 }
             }
         }
-         
+
         public void AssignParameters(Flow flow, params object[] parameters)
         {
             flow.stack.GetElementData<Data>(this).values = parameters;

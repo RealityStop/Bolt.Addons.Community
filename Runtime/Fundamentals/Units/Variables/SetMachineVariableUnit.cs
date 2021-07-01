@@ -1,5 +1,11 @@
 ﻿using Unity.VisualScripting;
 
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
+
 namespace Bolt.Addons.Community.Fundamentals
 {
     [UnitTitle("Set Machine Variable")]
@@ -17,7 +23,7 @@ namespace Bolt.Addons.Community.Fundamentals
             base.Definition();
             enter = ControlInput("enter", (flow) =>
             {
-                Variables.Graph(flow.GetValue<ScriptMachine>(target).GetReference()).Set(flow.GetValue<string>(name), flow.GetValue(value));
+                Variables.Graph(flow.GetValue<SMachine>(target).GetReference()).Set(flow.GetValue<string>(name), flow.GetValue(value));
                 return exit;
             });
             exit = ControlOutput("exit");

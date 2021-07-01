@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals
@@ -8,7 +9,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitCategory("Community/Time")]
     [UnitTitle("Yield")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.WaitForEnumerator")]
-    public class YieldUnit : WaitUnit
+    public sealed class YieldUnit : WaitUnit
     {
         [UnitHeaderInspectable]
         public EnumeratorType type;
@@ -47,7 +48,10 @@ namespace Bolt.Addons.Community.Fundamentals
 
                 case EnumeratorType.Enumerator:
                     var _enumerator = flow.GetValue<IEnumerator>(enumerator);
-                    while (_enumerator.MoveNext()) yield return _enumerator.Current;
+                    while (_enumerator.MoveNext())
+                    {
+                        yield return _enumerator.Current;
+                    }
                     break;
 
                 case EnumeratorType.Coroutine:

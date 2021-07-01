@@ -4,6 +4,12 @@ using UnityEngine;
 using Bolt;
 using Unity.VisualScripting;
 
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
+
 namespace Bolt.Addons.Community.ReturnEvents
 {
     /// <summary>
@@ -36,11 +42,7 @@ namespace Bolt.Addons.Community.ReturnEvents
 
         private GraphReference triggerReference;
 
-#if VISUAL_SCRIPTING_1_7
-        private ScriptMachine machine;
-#else
-        private FlowMachine machine;
-#endif
+        private SMachine machine;
 
         /// <summary>
         /// Defines the ports of the unit.

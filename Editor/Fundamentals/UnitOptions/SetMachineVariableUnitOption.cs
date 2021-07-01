@@ -1,5 +1,4 @@
 ﻿using Bolt.Addons.Community.Fundamentals;
-
 using System;
 using Unity.VisualScripting;
 
