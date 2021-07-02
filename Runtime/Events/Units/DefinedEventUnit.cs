@@ -39,7 +39,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
         }
 
         [DoNotSerialize]
-        [UnitHeaderInspectable("Event Type")]
+        [UnitHeaderInspectable]
         [InspectableIf(nameof(IsRestricted))]
         [Unity.VisualScripting.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
         public System.Type restrictedEventType
