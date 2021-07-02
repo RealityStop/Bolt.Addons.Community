@@ -6,7 +6,7 @@ namespace Bolt.Addons.Community.Fundamentals
     /// <summary>
     /// Called whenever a specified number of seconds have elapsed.
     /// </summary>
-    [UnitCategory("Events/Time")]
+    [UnitCategory("Events/Community/Time")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.OnEveryXSeconds")]
     public sealed class OnEveryXSeconds : MachineEventUnit<EmptyEventArgs>
     {

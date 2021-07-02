@@ -10,7 +10,7 @@ namespace Bolt.Addons.Community.ReturnEvents
     /// <summary>
     /// The Event that starts some logic before return back flow and a value.
     /// </summary>
-    [UnitCategory("Events")]
+    [UnitCategory("Events/Community/Returns")]
     [RenamedFrom("Lasm.BoltExtensions.ReturnEvent")]
     [RenamedFrom("Lasm.UAlive.ReturnEvent")]
     public sealed class ReturnEvent : GlobalEventUnit<ReturnEventArg>

@@ -12,7 +12,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
     /// A unit for using Linq querying operations in a Bolt graph.
     /// </summary>
     [UnitTitle("Query")]
-    [UnitCategory("Collections")]
+    [UnitCategory("Community/Collections")]
     [TypeIcon(typeof(IEnumerable))]
     [RenamedFrom("Lasm.BoltExtensions.QueryUnit")]
     [RenamedFrom("Lasm.UAlive.QueryUnit")]

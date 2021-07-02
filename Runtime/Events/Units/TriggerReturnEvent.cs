@@ -10,7 +10,7 @@ namespace Bolt.Addons.Community.ReturnEvents
     /// <summary>
     /// The Unit for triggering a Return Event.
     /// </summary>
-    [UnitCategory("Events")]
+    [UnitCategory("Events/Community/Returns")]
     [RenamedFrom("Lasm.BoltExtensions.TriggerReturnEvent")]
     [RenamedFrom("Lasm.UAlive.TriggerReturnEvent")]
     [TypeIcon(typeof(BoltUnityEvent))]

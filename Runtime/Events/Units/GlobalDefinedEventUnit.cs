@@ -15,7 +15,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
     /// to the built-in Custom Unit.  This variation listens for events triggered by any
     /// Trigger Global Defined Event.
     /// </summary>
-    [UnitCategory("Events")]
+    [UnitCategory("Events/Community")]
     [UnitTitle("Global Defined Event")]
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.GlobalDefinedEvent")]
     public class GlobalDefinedEventUnit : EventUnit<DefinedEventArgs>, IDefinedEventUnit

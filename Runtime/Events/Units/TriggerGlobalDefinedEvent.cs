@@ -10,7 +10,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
     /// <summary>
     /// Triggers a Global Event to all Global Defined Events listening for this type.
     /// </summary>
-    [UnitCategory("Events")]
+    [UnitCategory("Events/Community")]
     [UnitTitle("Trigger Global Defined Event")]
     [TypeIcon(typeof(BoltUnityEvent))]
     public class TriggerGlobalDefinedEvent : Unit

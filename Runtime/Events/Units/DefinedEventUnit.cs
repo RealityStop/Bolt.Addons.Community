@@ -14,7 +14,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
     /// <summary>
     /// Listens for an event by type, rather than by name.  In other respects, it acts similar to the built-in Custom Unit
     /// </summary>
-    [UnitCategory("Events")]
+    [UnitCategory("Events/Community")]
     [UnitTitle("Defined Event")]
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.DefinedEvent")]
     public class DefinedEventUnit : GameObjectEventUnit<DefinedEventArgs>, IDefinedEventUnit

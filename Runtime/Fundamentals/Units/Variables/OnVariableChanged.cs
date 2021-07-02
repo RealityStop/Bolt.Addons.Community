@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Bolt.Addons.Community.Fundamentals
 {
      [SpecialUnit]
-     [UnitCategory("Events")]
+     [UnitCategory("Events/Community/Variables")]
      public sealed class OnVariableChanged : MachineEventUnit<EmptyEventArgs>, IUnifiedVariableUnit
      {
         public new class Data : EventUnit<EmptyEventArgs>.Data

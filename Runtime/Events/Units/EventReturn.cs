@@ -15,7 +15,7 @@ namespace Bolt.Addons.Community.ReturnEvents
     /// <summary>
     /// The Unit that returns your flow and value back to the Complete port of the initial trigger unit.
     /// </summary>
-    [UnitCategory("Events")][UnitShortTitle("Return")][UnitSubtitle("Return Event")]
+    [UnitCategory("Events/Community/Returns")][UnitShortTitle("Return")][UnitSubtitle("Return Event")]
     [RenamedFrom("Lasm.BoltExtensions.EventReturn")]
     [RenamedFrom("Lasm.UAlive.EventReturn")]
     public sealed class EventReturn : Unit

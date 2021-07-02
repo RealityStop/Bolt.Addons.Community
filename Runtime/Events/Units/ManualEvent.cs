@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.FlowEvents
 {
-    [UnitCategory("Events/Editor")]
+    [UnitCategory("Events/Community/Editor")]
     [UnitShortTitle("Manual Event")]
     [UnitTitle("Manual Event")]
     public class ManualEvent : MachineEventUnit<EmptyEventArgs>, IGraphElementWithData
