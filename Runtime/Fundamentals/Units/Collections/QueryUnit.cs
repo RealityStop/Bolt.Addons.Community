@@ -192,6 +192,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
 
         private void PerformOperation(Flow flow)
         {
+            Flow _flow = null;
             switch (operation)
             {
                 case QueryOperation.Any:
@@ -202,8 +203,9 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
                     outCondition = flow.GetValue<IEnumerable>(collection).Cast<object>().Any<object>((item) =>
                     {
                         current = item;
-                        flow.Invoke(body);
-                        return flow.GetValue<bool>(condition);
+                        _flow = Flow.New(flow.stack.AsReference());
+                        _flow.Invoke(body);
+                        return _flow.GetValue<bool>(condition);
                     });
                     break;
 
@@ -211,8 +213,9 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
                     single = flow.GetValue<IEnumerable>(collection).Cast<object>().First<object>((item) =>
                     {
                         current = item;
-                        flow.Invoke(body);
-                        return flow.GetValue<bool>(condition);
+                        _flow = Flow.New(flow.stack.AsReference());
+                        _flow.Invoke(body);
+                        return _flow.GetValue<bool>(condition);
                     });
                     break;
 
@@ -220,8 +223,9 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
                     single = flow.GetValue<IEnumerable>(collection).Cast<object>().FirstOrDefault<object>((item) =>
                     {
                         current = item;
-                        flow.Invoke(body);
-                        return flow.GetValue<bool>(condition);
+                        _flow = Flow.New(flow.stack.AsReference());
+                        _flow.Invoke(body);
+                        return _flow.GetValue<bool>(condition);
                     });
                     break;
 
@@ -229,8 +233,9 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
                     output = flow.GetValue<IEnumerable>(collection).Cast<object>().OrderBy((item) =>
                     {
                         current = item;
-                        flow.Invoke(body);
-                        return flow.GetValue<object>(key);
+                        _flow = Flow.New(flow.stack.AsReference());
+                        _flow.Invoke(body);
+                        return _flow.GetValue<object>(key);
                     });
                     break;
 
@@ -238,8 +243,9 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
                     output = flow.GetValue<IEnumerable>(collection).Cast<object>().OrderByDescending((item) =>
                     {
                         current = item;
-                        flow.Invoke(body);
-                        return flow.GetValue<object>(key);
+                        _flow = Flow.New(flow.stack.AsReference());
+                        _flow.Invoke(body);
+                        return _flow.GetValue<object>(key);
                     });
                     break;
 
@@ -247,8 +253,9 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
                     single = flow.GetValue<IEnumerable>(collection).Cast<object>().Single((item) =>
                     {
                         current = item;
-                        flow.Invoke(body);
-                        return flow.GetValue<bool>(condition);
+                        _flow = Flow.New(flow.stack.AsReference());
+                        _flow.Invoke(body);
+                        return _flow.GetValue<bool>(condition);
                     });
                     break;
 
@@ -256,8 +263,9 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
                     output = flow.GetValue<IEnumerable>(collection).Cast<object>().Where((item) =>
                     {
                         current = item;
-                        flow.Invoke(body);
-                        return flow.GetValue<bool>(condition);
+                        _flow = Flow.New(flow.stack.AsReference());
+                        _flow.Invoke(body);
+                        return _flow.GetValue<bool>(condition);
                     });
                     break;
             }
