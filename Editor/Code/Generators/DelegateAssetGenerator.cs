@@ -138,7 +138,9 @@ namespace Bolt.Addons.Community.Code.Editor
 
             @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(object), "GetDelegate").Body("return".ConstructHighlight() + " callback;"));
 
-            @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, IsAction ? typeof(void) : typeof(object), "Invoke").AddParameter(ParameterGenerator.Parameter("parameters", typeof(object[]), Libraries.CSharp.ParameterModifier.None, isParameters:true)).Body($"{(IsAction ? string.Empty : "return").ConstructHighlight()} callback({invokeString});"));
+            @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, IsAction ? typeof(void) : typeof(object), IsAction ? "Invoke" : "DynamicInvoke").AddParameter(ParameterGenerator.Parameter("parameters", typeof(object[]), Libraries.CSharp.ParameterModifier.None, isParameters:true)).Body($"{(IsAction ? string.Empty : "return").ConstructHighlight()} callback({invokeString});"));
+
+            if (!IsAction) @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, Data.generics[0].type.type, "Invoke").AddParameter(ParameterGenerator.Parameter("parameters", typeof(object[]), Libraries.CSharp.ParameterModifier.None, isParameters: true)).Body($"{(IsAction ? string.Empty : "return").ConstructHighlight()} callback({invokeString});"));
 
             @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(void), "Initialize").
                 AddParameter(ParameterGenerator.Parameter("flow", typeof(Flow), Libraries.CSharp.ParameterModifier.None)).
@@ -200,7 +202,7 @@ namespace Bolt.Addons.Community.Code.Editor
                 gens += Data.generics[i].type.type.As().CSharpName().RemoveHighlights().RemoveMarkdown().Replace("&", string.Empty);
             }
 
-            return gen + gens + "DelegateScript";
+            return (Data.type.type == typeof(Action) ? "Generic" : string.Empty) + gen + gens;
         }
 
     }

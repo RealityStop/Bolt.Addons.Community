@@ -30,14 +30,14 @@ namespace Bolt.Addons.Community.Fundamentals
                         values.Add(flow.GetValue(parameters[i]));
                     }
 
-                    return flow.GetValue<IFunc>(@delegate).Invoke(values.ToArray());
+                    return flow.GetValue<IFunc>(@delegate).DynamicInvoke(values.ToArray());
                 });
             }
         }
 
         protected override void Invoke(Flow flow, List<object> values)
         {
-            flow.GetValue<IFunc>(@delegate).Invoke(values.ToArray());
+            flow.GetValue<IFunc>(@delegate).DynamicInvoke(values.ToArray());
         }
     }
 }
