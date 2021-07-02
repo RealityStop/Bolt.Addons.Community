@@ -17,7 +17,7 @@ namespace Bolt.Addons.Libraries.CSharp
         public override string Generate(int indent)
         {
             var param = isParameters ? "params ".ConstructHighlight() : string.Empty;
-            return type == null ? param + assemblyQualifiedType + " " + name : param + type.As().CSharpName() + " " + name.LegalMemberName();
+            return useAssemblyQualifiedType ? param + assemblyQualifiedType + " " + name : param + type.As().CSharpName() + " " + name.LegalMemberName();
         }
 
         private ParameterGenerator()
@@ -33,6 +33,7 @@ namespace Bolt.Addons.Libraries.CSharp
             parameter.modifier = modifier;
             parameter.isLiteral = isLiteral;
             parameter.isParameters = isParameters;
+            parameter.useAssemblyQualifiedType = false;
             return parameter;
         }
 
@@ -50,14 +51,13 @@ namespace Bolt.Addons.Libraries.CSharp
 
         public string Using()
         {
+            if (useAssemblyQualifiedType) return string.Empty;
             return type == typeof(void) || type.IsPrimitive ? string.Empty : type.Namespace;
         }
 
         public override List<string> Usings()
         {
             var usings = new List<string>();
-
-
             return usings;
         }
     }

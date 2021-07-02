@@ -80,7 +80,7 @@ namespace Bolt.Addons.Libraries.CSharp
 
             for (int i = 0; i < parameters.Count; i++)
             {
-                if (!usings.Contains(parameters[i].Using()) && !parameters[i].type.Is().PrimitiveStringOrVoid()) usings.Add(parameters[i].Using());
+                if (!parameters[i].useAssemblyQualifiedType && !usings.Contains(parameters[i].Using()) && !parameters[i].type.Is().PrimitiveStringOrVoid()) usings.Add(parameters[i].Using());
             }
 
             return usings;

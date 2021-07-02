@@ -15,12 +15,18 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
     public class CommentUnit : Unit
     {
         [Inspectable]
-        public Color color;
+        public Color color = new Color(0.1961f, 0.3333f, 0.7176f, 1f);
 
         [Inspectable]
         [UnitHeaderInspectable]
         [InspectorTextArea()]
         public string comment;
+
+        [Serialize]
+        private int _width = 120;
+        [Inspectable]
+        [InspectorRange(120, 400)]
+        public int width { get => _width; set => _width = Mathf.Clamp(value, 120, 400); }
 
         protected override void Definition()
         {
