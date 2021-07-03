@@ -3,6 +3,7 @@ using UnityEditor;
 using Bolt.Addons.Libraries.Humility;
 using Bolt.Addons.Libraries.CSharp;
 using System;
+using Bolt.Addons.Community.Utility.Editor;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
@@ -18,6 +19,8 @@ namespace Bolt.Addons.Community.Code.Editor
 
         protected bool hidden;
 
+        private bool shouldUpdate = true;
+
         public override bool UseDefaultMargins()
         {
             return false;
@@ -27,7 +30,7 @@ namespace Bolt.Addons.Community.Code.Editor
         protected virtual bool showTitle => true;
         protected virtual bool showCategory => true;
 
-        protected virtual void Cache() { }
+        protected virtual void Cache() { shouldUpdate = true; }
 
         protected virtual void AfterCategoryGUI() { }
 
@@ -96,19 +99,18 @@ namespace Bolt.Addons.Community.Code.Editor
 
                     }, () =>
                     {
-                        generator = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
+                        shouldUpdate = true;
                     });
 
-                    Target.preview = HUMEditor.Foldout(Target.preview, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () => { GUILayout.Label("Preview C#"); }, () =>
-                    {
-                        HUMEditor.Vertical().Box(HUMColor.Grey(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
-                        {
-                            generator = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
-                            GUILayout.Label(generator.Generate(0).RemoveMarkdown(), new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true });
-                        }, true, true);
-                    });
                 });
             }
+
+            if (CSharpPreviewWindow.instance != null)
+            {
+                if (shouldUpdate) CSharpPreviewWindow.instance.preview.code = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
+            }
+
+            shouldUpdate = false;
 
             EditorUtility.SetDirty(Target);
             serializedObject.ApplyModifiedProperties();

@@ -28,6 +28,7 @@ namespace Bolt.Addons.Community.Utility.Editor
 
             container.Add(SelectionToSuperUnit());
             container.Add(GenerateCode());
+            container.Add(QuickAccess());
 
             minSize = new Vector2(250, minSize.y);
 
@@ -97,6 +98,36 @@ namespace Bolt.Addons.Community.Utility.Editor
             header.Add(label);
             container.Add(header);
             container.Add(hint);
+            container.Add(buttonContainer);
+            return container;
+        }
+
+        private VisualElement QuickAccess()
+        {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Column;
+
+            var header = new BorderedRectangle(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2);
+            header.style.height = 24;
+            header.style.marginBottom = 4;
+            header.style.unityTextAlign = TextAnchor.MiddleCenter;
+            header.style.marginTop = 6;
+
+            var label = new Label();
+            label.text = "Quick Access";
+            label.style.flexGrow = 1;
+
+            var buttonContainer = new VisualElement();
+            buttonContainer.style.flexDirection = FlexDirection.Row;
+            buttonContainer.style.height = 24;
+
+            var csPreviewButton = new Button(() => { CSharpPreviewWindow.Open(); }) { text = "Open C# Preview Window" };
+            csPreviewButton.style.flexGrow = 1;
+
+            buttonContainer.Add(csPreviewButton);
+
+            header.Add(label);
+            container.Add(header);
             container.Add(buttonContainer);
             return container;
         }

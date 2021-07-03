@@ -17,6 +17,8 @@ namespace Bolt.Addons.Community.Code.Editor
 
         protected override void Cache()
         {
+            base.Cache();
+
             if (objectType == null)
             {
                 objectType = Metadata.FromProperty(serializedObject.FindProperty("objectType"));

@@ -13,6 +13,8 @@ namespace Bolt.Addons.Community.Code.Editor
 
         protected override void Cache()
         {
+            base.Cache();
+
             if (items == null)
             {
                 items = Metadata.FromProperty(serializedObject.FindProperty("items"));
