@@ -1,9 +1,12 @@
 ﻿using Bolt.Addons.Libraries.CSharp;
+using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
     [CodeGenerator(typeof(EnumAsset))]
+    [Serializable]
     public sealed class EnumAssetGenerator : CodeGenerator<EnumAsset>
     {
         private List<int> indices = new List<int>();
@@ -43,6 +46,13 @@ namespace Bolt.Addons.Community.Code.Editor
                 }
 
                 @enum.indexing = Data.useIndex;
+
+#if VISUAL_SCRIPTING_1_7
+                if (Data.lastCompiledName != Data.title && !string.IsNullOrEmpty(Data.lastCompiledName))
+                {
+                    @enum.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
+                }
+#endif
 
                 if (@namespace != null)
                 {

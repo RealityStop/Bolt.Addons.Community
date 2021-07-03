@@ -28,23 +28,19 @@ namespace Bolt.Addons.Community.Utility.Editor
             instance = this;
             preview.shouldRepaint = true;
             preview.Refresh();
+            Debug.Log(preview.code.GenerateClean(0));
         }
 
         private void OnGUI()
         {
             if (!cached)
             {
-                preview.code = CodeGenerator.GetSingleDecorator((Selection.activeObject as CodeAsset));
-                preview.shouldRepaint = true;
-                preview.Refresh();
+                var codeAsset = Selection.activeObject as CodeAsset;
+                if (preview.code == null && codeAsset != null) preview.code = CodeGenerator.GetSingleDecorator(codeAsset);
                 cached = true;
             }
             preview.DrawLayout();
-            if (preview.shouldRepaint)
-            {
-                preview.Refresh();
-                Repaint();
-            }
+            Repaint();
         }
     }
 }

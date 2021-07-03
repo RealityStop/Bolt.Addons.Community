@@ -11,6 +11,7 @@ using Bolt.Addons.Community.Fundamentals;
 namespace Bolt.Addons.Community.Code.Editor
 {
     [CodeGenerator(typeof(DelegateAsset))]
+    [Serializable]
     public sealed class DelegateAssetGenerator : CodeGenerator<DelegateAsset>
     {
         private bool IsAction => Data.type.type.GetMethod("Invoke").ReturnType == typeof(void);

@@ -5,11 +5,12 @@ using Unity.VisualScripting;
 namespace Bolt.Addons.Community.Code.Editor
 {
     [CodeGenerator(typeof(CSharpObject))]
+    [Serializable]
     public sealed class CSharpObjectGenerator : CodeGenerator<CSharpObject>
     {
         public override string Generate(int indent)
         {
-            if (Data != null)
+            if (decorated  != null)
             {
                 var output = string.Empty;
                 NamespaceGenerator @namespace = null;
@@ -75,6 +76,11 @@ namespace Bolt.Addons.Community.Code.Editor
                     {
                         @namespace.AddStruct(@struct);
                     }
+                }
+
+                if (Data.lastCompiledName != Data.title && !string.IsNullOrEmpty(Data.lastCompiledName))
+                {
+                    @class.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
                 }
 
                 if (@namespace != null) return @namespace.Generate(indent);
