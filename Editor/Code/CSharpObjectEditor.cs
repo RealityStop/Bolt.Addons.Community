@@ -48,7 +48,19 @@ namespace Bolt.Addons.Community.Code.Editor
             Target.inspectable = EditorGUILayout.ToggleLeft("Inspectable", Target.inspectable);
             Target.includeInSettings = EditorGUILayout.ToggleLeft("Include In Settings", Target.includeInSettings);
             Target.definedEvent = EditorGUILayout.ToggleLeft("Flag for Defined Event Filtering", Target.definedEvent);
-            HUMEditor.Disabled(Target.objectType == ObjectType.Struct, ()=> { Target.scriptableObject = EditorGUILayout.ToggleLeft("Scriptable Object", Target.definedEvent); });
+            HUMEditor.Disabled(Target.objectType == ObjectType.Struct, ()=> 
+            {
+                Target.scriptableObject = EditorGUILayout.ToggleLeft("Scriptable Object", Target.scriptableObject);
+                if (Target.scriptableObject)
+                {
+                    GUILayout.Label("Scriptable Object Menu Name");
+                    Target.menuName = EditorGUILayout.TextField(Target.menuName);
+                    GUILayout.Label("Scriptable Object File Name");
+                    Target.menuName = EditorGUILayout.TextField(Target.fileName);
+                    GUILayout.Label("Scriptable Object Menu Order");
+                    Target.order = EditorGUILayout.IntField(Target.order);
+                }
+            });
         }
 
         protected override void BeforePreview()

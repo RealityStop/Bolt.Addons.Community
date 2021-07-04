@@ -24,6 +24,10 @@ namespace Bolt.Addons.Community.Code.Editor
         public bool definedEvent;
         [Inspectable]
         public bool scriptableObject;
+        [Inspectable]
+        public string fileName, menuName;
+        [Inspectable]
+        public int order;
         public bool fieldsOpened;
     }
 }

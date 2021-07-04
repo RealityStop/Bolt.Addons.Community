@@ -28,7 +28,6 @@ namespace Bolt.Addons.Community.Utility.Editor
             instance = this;
             preview.shouldRepaint = true;
             preview.Refresh();
-            Debug.Log(preview.code.GenerateClean(0));
         }
 
         private void OnGUI()

@@ -32,6 +32,7 @@ namespace Bolt.Addons.Community.Code.Editor
                     if (Data.inspectable) @class.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
                     if (Data.serialized) @class.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());
                     if (Data.includeInSettings) @class.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
+                    if (Data.scriptableObject) @class.AddAttribute(AttributeGenerator.Attribute<CreateAssetMenuAttribute>().AddParameter("menuName", Data.menuName).AddParameter("fileName", Data.fileName).AddParameter("order", Data.order));
 
                     for (int i = 0; i < Data.fields.Count; i++)
                     {
