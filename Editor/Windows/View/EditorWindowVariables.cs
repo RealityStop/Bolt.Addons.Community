@@ -8,40 +8,39 @@ using System;
 
 namespace Bolt.Addons.Community.Utility.Editor
 {
-    [Serializable]
     public sealed class EditorWindowVariables : EditorWindow
     {
+        [SerializeField]
         private EditorWindowAsset asset;
         private SerializedObject serializedObject;
         private SerializedObject view;
         private Metadata variablesMetadata;
         private Metadata windowVariablesMetadata;
 
-        [SerializeField]
         private Vector2 scrollPosition;
 
         private bool focused;
         private bool cached;
-
-        [SerializeField]
+        private bool locked;
         private bool isInstance, isDefinition;
 
         public static void Open(Rect position, EditorWindowAsset asset, EditorWindowView view)
         {
             EditorWindowVariables window = CreateInstance<EditorWindowVariables>();
             window.position = position;
-            window.asset = asset;
+            window.asset = asset; 
             window.serializedObject = new SerializedObject(asset);
             window.variablesMetadata = Metadata.FromProperty(window.serializedObject?.FindProperty("variables"));
             window.view = new SerializedObject(view);
             window.windowVariablesMetadata = Metadata.FromProperty(window.view.FindProperty("variables"));
             window.ShowPopup();
-        }
+        } 
 
         private void OnFocus()
         {
             focused = true; 
         }
+
         private void OnLostFocus()
         {
             focused = false; 
@@ -57,25 +56,29 @@ namespace Bolt.Addons.Community.Utility.Editor
                 cached = true;
             }
 
-            if (!focused && FuzzyWindow.instance == null || !focused && focusedWindow != FuzzyWindow.instance) Close();
+            if (!locked && (!focused && FuzzyWindow.instance == null || !focused && focusedWindow != FuzzyWindow.instance)) Close();
 
             HUMEditor.Draw(new Rect(new Vector2(0,0), position.size)).Box(HUMEditorColor.DefaultEditorBackground, Color.black, BorderDrawPlacement.Inside, 1);
 
             HUMEditor.Horizontal(() =>
             {
-                var definition = isDefinition;
-                isDefinition = EditorGUILayout.Toggle(isDefinition, new GUIStyle(GUI.skin.button));
+                var instance = isInstance;
+                isInstance = EditorGUILayout.Toggle(isInstance, new GUIStyle(GUI.skin.button), GUILayout.Height(24));
                 var lastRect = GUILayoutUtility.GetLastRect();
+                GUI.Label(lastRect, new GUIContent("Instance"), new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter });
+                if (isInstance != instance) isDefinition = false;
+
+                var definition = isDefinition;
+                isDefinition = EditorGUILayout.Toggle(isDefinition, new GUIStyle(GUI.skin.button), GUILayout.Height(24));
+                lastRect = GUILayoutUtility.GetLastRect();
                 GUI.Label(lastRect, new GUIContent("Definition"), new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter });
                 if (isDefinition != definition) isInstance = false;
 
-                var instance = isInstance;
-                isInstance = EditorGUILayout.Toggle(isInstance, new GUIStyle(GUI.skin.button));
+                locked = EditorGUILayout.Toggle(locked, new GUIStyle(GUI.skin.button), GUILayout.Width(48), GUILayout.Height(24));
                 lastRect = GUILayoutUtility.GetLastRect();
-                GUI.Label(lastRect, new GUIContent("Instance"), new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter });
-                if (isInstance != instance) isDefinition = false;
+                GUI.Label(lastRect, new GUIContent("Locked"), new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter });
             });
-             
+
             scrollPosition = HUMEditor.Draw().ScrollView(scrollPosition, ()=> 
             {
                 if (isInstance) { LudiqGUI.InspectorLayout(windowVariablesMetadata); }
@@ -83,6 +86,8 @@ namespace Bolt.Addons.Community.Utility.Editor
             });
 
             view?.ApplyModifiedProperties();
+
+            if (locked) Repaint();
         }
     }
 }

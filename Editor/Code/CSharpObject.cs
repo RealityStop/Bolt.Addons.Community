@@ -22,6 +22,8 @@ namespace Bolt.Addons.Community.Code.Editor
         public bool includeInSettings = true;
         [Inspectable]
         public bool definedEvent;
+        [Inspectable]
+        public bool scriptableObject;
         public bool fieldsOpened;
     }
 }

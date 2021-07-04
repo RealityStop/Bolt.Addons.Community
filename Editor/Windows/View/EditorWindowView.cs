@@ -49,7 +49,7 @@ namespace Bolt.Addons.Community.Utility.Editor
 
         private bool firstPass = true;
 
-        private void OnHeaderGUI()
+        private void OnHeaderGUI() 
         {
             e = Event.current;
 
@@ -116,11 +116,18 @@ namespace Bolt.Addons.Community.Utility.Editor
             variables.onVariablesChanged -= OnVariablesChanged;
             GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnDestroy"; }, new EditorWindowEventArgs(this), (p) => true, true);
         }
-
+        
         private void OnDisable()
         {
             variables.onVariablesChanged -= OnVariablesChanged;
             GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnDisable"; }, new EditorWindowEventArgs(this), (p) => true, true);
+
+            var windows = Resources.FindObjectsOfTypeAll<EditorWindowVariables>();
+            for (int i = 0; i < windows.Length; i++)
+            {
+                windows[i].Close();
+                UnityEngine.Object.DestroyImmediate(windows[i]);
+            } 
         }
 
         private void OnEnable()

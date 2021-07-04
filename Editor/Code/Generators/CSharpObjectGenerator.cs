@@ -1,6 +1,7 @@
 ﻿using Bolt.Addons.Libraries.CSharp;
 using System;
 using Unity.VisualScripting;
+using UnityEngine;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
@@ -26,7 +27,7 @@ namespace Bolt.Addons.Community.Code.Editor
 
                 if (Data.objectType == ObjectType.Class)
                 {
-                    @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, Data.title.LegalMemberName(), typeof(object));
+                    @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, Data.title.LegalMemberName(), Data.scriptableObject ? typeof(ScriptableObject) : typeof(object));
                     if (Data.definedEvent) @class.ImplementInterface(typeof(IDefinedEvent));
                     if (Data.inspectable) @class.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
                     if (Data.serialized) @class.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());

@@ -48,6 +48,7 @@ namespace Bolt.Addons.Community.Code.Editor
             Target.inspectable = EditorGUILayout.ToggleLeft("Inspectable", Target.inspectable);
             Target.includeInSettings = EditorGUILayout.ToggleLeft("Include In Settings", Target.includeInSettings);
             Target.definedEvent = EditorGUILayout.ToggleLeft("Flag for Defined Event Filtering", Target.definedEvent);
+            HUMEditor.Disabled(Target.objectType == ObjectType.Struct, ()=> { Target.scriptableObject = EditorGUILayout.ToggleLeft("Scriptable Object", Target.definedEvent); });
         }
 
         protected override void BeforePreview()
