@@ -56,7 +56,7 @@ namespace Bolt.Addons.Community.Code.Editor
                     GUILayout.Label("Scriptable Object Menu Name");
                     Target.menuName = EditorGUILayout.TextField(Target.menuName);
                     GUILayout.Label("Scriptable Object File Name");
-                    Target.menuName = EditorGUILayout.TextField(Target.fileName);
+                    Target.fileName = EditorGUILayout.TextField(Target.fileName);
                     GUILayout.Label("Scriptable Object Menu Order");
                     Target.order = EditorGUILayout.IntField(Target.order);
                 }
