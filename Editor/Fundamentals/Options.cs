@@ -1,6 +1,8 @@
 ﻿using Bolt.Addons.Community.Fundamentals;
 using Bolt.Addons.Community.Fundamentals.Editor.UnitOptions;
 using Bolt.Addons.Community.Utility;
+using Bolt.Addons.Community.Utility.Editor;
+using Bolt.Addons.Community.Utility.Editor.UnitOptions;
 using Bolt.Addons.Community.Variables.Editor.UnitOptions;
 using Bolt.Addons.Libraries.Humility;
 using System;
@@ -16,6 +18,7 @@ namespace Bolt.Addons.Community.Variables.Editor
         static Options()
         {
             UnitBase.staticUnitsExtensions.Add(GetStaticOptions);
+            UnitBase.staticUnitsExtensions.Add(EditorOptions);
             UnitBase.dynamicUnitsExtensions.Add(DelegateOptions);
             UnitBase.dynamicUnitsExtensions.Add(MachineVariableOptions);
         }
@@ -76,6 +79,16 @@ namespace Bolt.Addons.Community.Variables.Editor
                     yield return new GetMachineVariableUnitOption(new GetMachineVariableUnit() { asset = assets[i], defaultName = variables[varIndex].name });
                 }
             }
+        }
+
+        private static IEnumerable<IUnitOption> EditorOptions()
+        {
+            yield return new EditorWindowOnDestroyEventOption(new EditorWindowOnDestroy());
+            yield return new EditorWindowOnDisableEventOption(new EditorWindowOnDisable());
+            yield return new EditorWindowOnEnableEventOption(new EditorWindowOnEnable());
+            yield return new EditorWindowOnFocusEventOption(new EditorWindowOnFocus());
+            yield return new EditorWindowOnLostFocusEventOption(new EditorWindowOnLostFocus());
+            yield return new EditorWindowOnGUIEventOption(new EditorWindowOnGUI());
         }
 
         private static IEnumerable<IUnitOption> DelegateOptions()
