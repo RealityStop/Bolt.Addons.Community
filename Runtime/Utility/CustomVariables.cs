@@ -16,7 +16,7 @@ namespace Bolt.Addons.Community.Utility.Editor
         [SerializeField]
         [Inspectable]
         [InspectorWide]
-        private List<CustomVariable> variables = new List<CustomVariable>();
+        public List<CustomVariable> variables = new List<CustomVariable>();
         public event Action onVariablesChanged = () => { };
 
         public bool Has(string name)

@@ -18,7 +18,8 @@ namespace Bolt.Addons.Community.Variables.Editor
         static Options()
         {
             UnitBase.staticUnitsExtensions.Add(GetStaticOptions);
-            UnitBase.staticUnitsExtensions.Add(EditorOptions);
+            UnitBase.staticUnitsExtensions.Add(StaticEditorOptions);
+            UnitBase.dynamicUnitsExtensions.Add(DynamicEditorOptions);
             UnitBase.dynamicUnitsExtensions.Add(DelegateOptions);
             UnitBase.dynamicUnitsExtensions.Add(MachineVariableOptions);
         }
@@ -81,7 +82,7 @@ namespace Bolt.Addons.Community.Variables.Editor
             }
         }
 
-        private static IEnumerable<IUnitOption> EditorOptions()
+        private static IEnumerable<IUnitOption> StaticEditorOptions()
         {
             yield return new EditorWindowOnDestroyEventOption(new EditorWindowOnDestroy());
             yield return new EditorWindowOnDisableEventOption(new EditorWindowOnDisable());
@@ -89,6 +90,22 @@ namespace Bolt.Addons.Community.Variables.Editor
             yield return new EditorWindowOnFocusEventOption(new EditorWindowOnFocus());
             yield return new EditorWindowOnLostFocusEventOption(new EditorWindowOnLostFocus());
             yield return new EditorWindowOnGUIEventOption(new EditorWindowOnGUI());
+        }
+
+        private static IEnumerable<IUnitOption> DynamicEditorOptions()
+        {
+            var assets = HUMAssets.Find().Assets().OfType<EditorWindowAsset>();
+
+            for (int i = 0; i < assets.Count; i++)
+            {
+                var variables = assets[i].variables.variables;
+
+                for (int varIndex = 0; varIndex < variables.Count; varIndex++)
+                {
+                    yield return new GetWindowVariableUnitOption(new GetWindowVariableUnit() { asset = assets[i], defaultName = variables[varIndex].name });
+                    yield return new SetWindowVariableUnitOption(new SetWindowVariableUnit() { asset = assets[i], defaultName = variables[varIndex].name });
+                }
+            }
         }
 
         private static IEnumerable<IUnitOption> DelegateOptions()
