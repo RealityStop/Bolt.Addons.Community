@@ -7,8 +7,8 @@ using System;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
-    [CustomEditor(typeof(CSharpObject))]
-    public class CSharpObjectEditor : CodeAssetEditor<CSharpObject, CSharpObjectGenerator>
+    [CustomEditor(typeof(CustomType))]
+    public class CustomTypeEditor : CodeAssetEditor<CustomType, CustomTypeGenerator>
     {
         private Metadata fields;
         private Metadata objectType;

@@ -2,7 +2,7 @@
 using System;
 using Bolt.Addons.Libraries.CSharp;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Bolt.Addons.Community.Code
 {
     [Inspectable]
     [Serializable]

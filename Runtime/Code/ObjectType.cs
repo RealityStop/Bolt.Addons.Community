@@ -1,4 +1,4 @@
-﻿namespace Bolt.Addons.Community.Code.Editor
+﻿namespace Bolt.Addons.Community.Code
 {
     public enum ObjectType
     {

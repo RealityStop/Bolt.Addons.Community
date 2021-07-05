@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using Bolt.Addons.Libraries.CSharp;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Bolt.Addons.Community.Code
 {
     [Serializable][Inspectable]
     public sealed class FieldDeclaration : ISerializationCallbackReceiver

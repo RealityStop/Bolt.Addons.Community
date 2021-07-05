@@ -1,4 +1,5 @@
-﻿using Bolt.Addons.Community.Code.Editor;
+﻿using Bolt.Addons.Community.Code;
+using Bolt.Addons.Community.Code.Editor;
 using System;
 using UnityEditor;
 using UnityEngine;

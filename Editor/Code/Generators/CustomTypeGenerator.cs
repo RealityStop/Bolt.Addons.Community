@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
-    [CodeGenerator(typeof(CSharpObject))]
+    [CodeGenerator(typeof(CustomType))]
     [Serializable]
-    public sealed class CSharpObjectGenerator : CodeGenerator<CSharpObject>
+    public sealed class CustomTypeGenerator : CodeGenerator<CustomType>
     {
         public override string Generate(int indent)
         {

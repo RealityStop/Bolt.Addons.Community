@@ -2,7 +2,7 @@
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Bolt.Addons.Community.Code
 {
     [CreateAssetMenu(menuName = "Visual Scripting/Community/Enum")]
     public class EnumAsset : CodeAsset

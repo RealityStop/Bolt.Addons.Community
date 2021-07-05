@@ -1,7 +1,7 @@
 ﻿using System;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Bolt.Addons.Community.Code
 {
     [Serializable]
     [Inspectable]

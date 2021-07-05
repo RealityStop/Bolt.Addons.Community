@@ -33,14 +33,14 @@ namespace Bolt.Addons.Community.Utility.Editor
             HUMIO.Ensure(csharpPath).Path();
             HUMIO.Ensure(enumPath).Path();
 
-            var csharpObjects = HUMAssets.Find().Assets().OfType<CSharpObject>();
+            var csharpObjects = HUMAssets.Find().Assets().OfType<CustomType>();
             var enums = HUMAssets.Find().Assets().OfType<EnumAsset>();
             var delegates = HUMAssets.Find().Assets().OfType<DelegateAsset>();
 
             for (int i = 0; i < csharpObjects.Count; i++)
             {
                 var fullPath = csharpPath + csharpObjects[i].title.LegalMemberName() + ".cs";
-                HUMIO.Save(CSharpObjectGenerator.GetSingleDecorator(csharpObjects[i]).GenerateClean(0)).Custom(fullPath).Text(false);
+                HUMIO.Save(CustomTypeGenerator.GetSingleDecorator(csharpObjects[i]).GenerateClean(0)).Custom(fullPath).Text(false);
                 csharpObjects[i].lastCompiledName = csharpObjects[i].category + (string.IsNullOrEmpty(csharpObjects[i].category) ? string.Empty : ".") + csharpObjects[i].title.LegalMemberName();
             }
 
