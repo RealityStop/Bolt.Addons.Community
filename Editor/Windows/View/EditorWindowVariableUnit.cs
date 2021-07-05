@@ -4,9 +4,9 @@ using UnityEditor;
 
 namespace Bolt.Addons.Community.Utility.Editor
 {
-    [UnitCategory("Community/Editor/Windows")]
+    [UnitCategory("Community/Editor")]
     [TypeIcon(typeof(EditorWindow))]
-    public abstract class EditorWindowVariableUnit : ProxyEditorUnit
+    public abstract class EditorWindowVariableUnit : Unit
     {
         [Serialize]
         [Inspectable]

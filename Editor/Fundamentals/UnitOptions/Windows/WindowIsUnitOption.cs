@@ -3,16 +3,16 @@ using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Utility.Editor.UnitOptions
 {
-    [FuzzyOption(typeof(GetWindowVariableUnit))]
-    public class GetWindowVariableUnitOption : UnitOption<GetWindowVariableUnit>
+    [FuzzyOption(typeof(WindowIsUnit))]
+    public class WindowIsUnitOption : UnitOption<WindowIsUnit>
     {
         private string name;
         private EditorWindowAsset asset;
 
         [Obsolete(Serialization.ConstructorWarning)]
-        public GetWindowVariableUnitOption() : base() { }
+        public WindowIsUnitOption() : base() { }
 
-        public GetWindowVariableUnitOption(GetWindowVariableUnit unit) : base(unit)
+        public WindowIsUnitOption(WindowIsUnit unit) : base(unit)
         {
         }
 
@@ -25,7 +25,7 @@ namespace Bolt.Addons.Community.Utility.Editor.UnitOptions
         protected override string Label(bool human)
         {
             if (unit.asset == null) return base.Label(human);
-            return $"{LudiqGUIUtility.DimString("Get")} {unit.defaultName}";
+            return $"{LudiqGUIUtility.DimString("Is")} {unit.asset?.name}";
         }
     }
 }

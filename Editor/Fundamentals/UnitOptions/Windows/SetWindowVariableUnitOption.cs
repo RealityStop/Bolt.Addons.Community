@@ -19,7 +19,7 @@ namespace Bolt.Addons.Community.Utility.Editor.UnitOptions
         protected override UnitCategory Category()
         {
             if (unit.asset == null) return base.Category();
-            return new UnitCategory($"Community/Editor/Windows/{unit.asset?.name}");
+            return new UnitCategory($"Community/Editor/{unit.asset?.name}");
         }
 
         protected override string Label(bool human)

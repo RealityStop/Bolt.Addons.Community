@@ -100,6 +100,8 @@ namespace Bolt.Addons.Community.Variables.Editor
             {
                 var variables = assets[i].variables.variables;
 
+                yield return new WindowIsUnitOption(new WindowIsUnit() { asset = assets[i] });
+
                 for (int varIndex = 0; varIndex < variables.Count; varIndex++)
                 {
                     yield return new GetWindowVariableUnitOption(new GetWindowVariableUnit() { asset = assets[i], defaultName = variables[varIndex].name });

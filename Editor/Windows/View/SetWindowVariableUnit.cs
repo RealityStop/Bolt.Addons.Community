@@ -2,7 +2,7 @@
 
 namespace Bolt.Addons.Community.Utility.Editor
 {
-    [UnitCategory("Community/Editor/Windows")]
+    [UnitCategory("Community/Editor")]
     [UnitTitle("Set Window Variable")]
     public sealed class SetWindowVariableUnit : EditorWindowVariableUnit
     {
