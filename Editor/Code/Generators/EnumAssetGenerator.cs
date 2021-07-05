@@ -48,7 +48,7 @@ namespace Bolt.Addons.Community.Code.Editor
                 @enum.indexing = Data.useIndex;
 
 #if VISUAL_SCRIPTING_1_7
-                if (Data.lastCompiledName != Data.title && !string.IsNullOrEmpty(Data.lastCompiledName))
+                if (Data.lastCompiledName != Data.GetFullTypeName())
                 {
                     @enum.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
                 }

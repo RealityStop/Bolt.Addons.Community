@@ -80,7 +80,7 @@ namespace Bolt.Addons.Community.Code.Editor
                     }
                 }
 
-                if (Data.lastCompiledName != Data.title && !string.IsNullOrEmpty(Data.lastCompiledName))
+                if (Data.lastCompiledName != Data.GetFullTypeName())
                 {
                     @class.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
                 }

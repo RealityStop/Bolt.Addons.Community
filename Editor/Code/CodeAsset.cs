@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Unity.VisualScripting;
 using System;
+using Bolt.Addons.Libraries.CSharp;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
@@ -16,5 +17,10 @@ namespace Bolt.Addons.Community.Code.Editor
         public bool optionsOpened;
         public bool preview;
         public string lastCompiledName;
+
+        public string GetFullTypeName()
+        {
+            return category + (string.IsNullOrEmpty(category) ? string.Empty : ".") + title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName();
+        }
     }
 }
