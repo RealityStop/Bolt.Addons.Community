@@ -20,10 +20,10 @@ namespace Bolt.Addons.Community.Code.Editor
 
         public override string Generate(int indent)
         { 
+            NamespaceGenerator @namespace = NamespaceGenerator.Namespace("Bolt.Addons.Generated");
+
             if (Data != null)
             {
-                NamespaceGenerator @namespace = NamespaceGenerator.Namespace("Bolt.Addons.Generated");
-
                 var title = GetCompoundTitle();
                 var delegateType = DelegateType;
 
