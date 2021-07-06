@@ -6,7 +6,8 @@ namespace Bolt.Addons.Community.Utility.Editor
 {
     [UnitCategory("Community/Editor")]
     [TypeIcon(typeof(EditorWindow))]
-    public abstract class EditorWindowVariableUnit : Unit
+    [RenamedFrom("Bolt.Addons.Community.Utility.Editor.EditorWindowVariableUnit")]
+    public abstract class WindowVariableUnit : Unit
     {
         [Serialize]
         [Inspectable]

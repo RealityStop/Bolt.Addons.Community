@@ -4,10 +4,10 @@ using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Utility.Editor
 {
-    [Widget(typeof(EditorWindowVariableUnit))]
-    public class EditorWindowVariableUnitWidget : UnitWidget<EditorWindowVariableUnit>
+    [Widget(typeof(WindowVariableUnit))]
+    public class WindowVariableUnitWidget : UnitWidget<WindowVariableUnit>
     {
-        public EditorWindowVariableUnitWidget(FlowCanvas canvas, EditorWindowVariableUnit unit) : base(canvas, unit)
+        public WindowVariableUnitWidget(FlowCanvas canvas, WindowVariableUnit unit) : base(canvas, unit)
         {
             nameInspectorConstructor = (metadata) => new VariableNameInspector(metadata, GetNameSuggestions);
         }

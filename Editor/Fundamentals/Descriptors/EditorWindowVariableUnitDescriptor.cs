@@ -2,9 +2,9 @@
 
 namespace Bolt.Addons.Community.Utility.Editor
 {
-    public abstract class EditorWindowVariableUnitDescriptor : UnitDescriptor<EditorWindowVariableUnit>
+    public abstract class WindowVariableUnitDescriptor : UnitDescriptor<WindowVariableUnit>
     {
-        public EditorWindowVariableUnitDescriptor(EditorWindowVariableUnit unit) : base(unit)
+        public WindowVariableUnitDescriptor(WindowVariableUnit unit) : base(unit)
         {
 
         }
@@ -39,6 +39,16 @@ namespace Bolt.Addons.Community.Utility.Editor
         protected override EditorTexture DefaultIcon()
         {
             return PathUtil.Load("EditorWindow_Variable", CommunityEditorPath.Fundamentals);
+        }
+
+        protected override void DefinedPort(IUnitPort port, UnitPortDescription description)
+        {
+            base.DefinedPort(port, description);
+
+            if (port == unit.target)
+            {
+                description.icon = PathUtil.Load("EditorWindow", CommunityEditorPath.Fundamentals);
+            }
         }
     }
 }

@@ -4,7 +4,7 @@ namespace Bolt.Addons.Community.Utility.Editor
 {
     [UnitCategory("Community/Editor")]
     [UnitTitle("Set Window Variable")]
-    public sealed class SetWindowVariableUnit : EditorWindowVariableUnit
+    public sealed class SetWindowVariableUnit : WindowVariableUnit
     {
         [DoNotSerialize]
         public ControlInput enter;

@@ -7,9 +7,7 @@ using UnityEngine.Scripting.APIUpdating;
 
 namespace Bolt.Addons.Community.Code
 {
-    // No idea if this actually works. It says missing script, but if you replace it with CustomType script, it will have all the data. *Shrug*
-    [MovedFrom(false, sourceAssembly:"Bolt.Addons.Community.Editor", sourceNamespace:"Bolt.Addons.Community.Code.Editor", sourceClassName:"CSharpObject")]
-    [CreateAssetMenu(menuName = "Visual Scripting/Community/Custom Type")]
+    [CreateAssetMenu(menuName = "Visual Scripting/Community/Class")]
     public class CustomType : CodeAsset
     {
         [Inspectable]
