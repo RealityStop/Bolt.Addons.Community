@@ -53,6 +53,7 @@ namespace Bolt.Addons.Libraries.CSharp
         {
             var usings = new List<string>();
 
+            if (type == null) return usings;
             if (!type.IsPrimitive) usings.Add(type.Namespace);
 
             for (int i = 0; i < parameterValues.Count; i++)
