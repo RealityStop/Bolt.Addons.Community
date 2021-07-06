@@ -9,19 +9,37 @@ using UnityEngine.UIElements;
 
 namespace Bolt.Addons.Community.Utility.Editor
 {
-    [IncludeInSettings(true)]
     [Serializable]
-    public class EditorWindowView : EditorWindow, IMacro
+    public sealed class EditorWindowView : EditorWindow, IMacro
     {
         public EditorWindowAsset asset;
+        VisualElement header;
+
+        [SerializeField]
+        public bool assetWasCopied;
 
         [MenuItem("Window/Community Addons/New Editor Window View")]
-        public static void OpenNew()
+        public static void Open()
         {
             EditorWindowView window = CreateInstance<EditorWindowView>();
+            window.position = new Rect(HUMEditor.ScreenCenter(new Vector2(400, 400)).position, new Vector2(400, 400));
+            window.showReferencePicker = true;
             window.titleContent = new GUIContent("Editor Window View");
             window.Show();
         }
+
+        public static EditorWindowView CreateWindow(EditorWindowAsset windowType, bool showReferencePicker = false)
+        {
+            EditorWindowView window = CreateInstance<EditorWindowView>();
+            window.position = new Rect(HUMEditor.ScreenCenter(new Vector2(400, 400)).position, new Vector2(400, 400));
+            window.asset = windowType;
+            window.showReferencePicker = showReferencePicker;
+            window.titleContent = new GUIContent("Editor Window View");
+            return window;
+        }
+
+        [SerializeField]
+        private bool showReferencePicker;
 
         public IGraph childGraph => asset == null ? graph : asset.graph;
 
@@ -53,44 +71,59 @@ namespace Bolt.Addons.Community.Utility.Editor
         {
             e = Event.current;
 
-            HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(2, 2, 2, 2), new RectOffset(2, 2, 2, 2), () =>
+            if (showReferencePicker)
             {
-                HUMEditor.Disabled(asset == null, () =>
+                HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(2, 2, 2, 2), new RectOffset(2, 2, 2, 2), () =>
                 {
-                    if (GUILayout.Button("Variables", GUILayout.Width(100)))
+                    HUMEditor.Disabled(asset == null, () =>
                     {
-                        EditorWindowVariables.Open(new Rect(GUIUtility.GUIToScreenPoint(new Vector2(e.mousePosition.x, e.mousePosition.y)), new Vector2(220, 300)), asset, this);
-                    }
+                        if (GUILayout.Button("Variables", GUILayout.Width(100)))
+                        {
+                            EditorWindowVariables.Open(new Rect(GUIUtility.GUIToScreenPoint(new Vector2(e.mousePosition.x, e.mousePosition.y)), new Vector2(220, 300)), asset, this);
+                        }
 
-                    if (GUILayout.Button("Edit Graph", GUILayout.Width(120)))
-                    {
-                        GraphWindow.OpenActive(GetReference() as GraphReference);
-                    }
-                });
+                        if (GUILayout.Button("Edit Graph", GUILayout.Width(120)))
+                        {
+                            GraphWindow.OpenActive(GetReference() as GraphReference);
+                        }
+                    });
 
-                HUMEditor.Changed(() => 
-                {
-                    asset = (EditorWindowAsset)EditorGUILayout.ObjectField(asset, typeof(EditorWindowAsset), false);
-                }, ()=> 
-                {
-                    if (asset == null)
+                    HUMEditor.Changed(() =>
                     {
-                        variables.Clear();
-                    }
-                    else
+                        asset = (EditorWindowAsset)EditorGUILayout.ObjectField(asset, typeof(EditorWindowAsset), false);
+                    }, () =>
                     {
-                        if (!firstPass) variables.Clear();
-                        variables.CopyFrom(asset.variables, true);
-                    }
-                });
+                        if (asset == null)
+                        {
+                            variables.Clear();
+                        }
+                        else
+                        {
+                            if (!firstPass) variables.Clear();
+                            variables.CopyFrom(asset.variables, true);
+                        }
+                    });
 
-                firstPass = false;
-            }, GUILayout.Height(24));
+                    firstPass = false;
+                }, GUILayout.Height(24));
+            }
         }
 
         private void OnContainerGUI()
         {
-            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnGUI"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            if (showReferencePicker && header != null && !rootVisualElement.Contains(header)) rootVisualElement.Add(header);
+            if (!showReferencePicker && header != null && rootVisualElement.Contains(header)) rootVisualElement.Remove(header);
+
+            if (asset != null)
+            {
+                if (!assetWasCopied)
+                {
+                    variables.CopyFrom(asset.variables);
+                    assetWasCopied = true;
+                }
+
+                GetReference()?.AsReference()?.TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnGUI"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            }
         }
 
         public GraphPointer GetReference()
@@ -114,13 +147,32 @@ namespace Bolt.Addons.Community.Utility.Editor
         private void OnDestroy()
         {
             variables.onVariablesChanged -= OnVariablesChanged;
-            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnDestroy"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            if (asset != null)
+            {
+                if (!assetWasCopied)
+                {
+                    variables.CopyFrom(asset.variables);
+                    assetWasCopied = true;
+                }
+
+                GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnDestroy"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            }
         }
         
         private void OnDisable()
         {
             variables.onVariablesChanged -= OnVariablesChanged;
-            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnDisable"; }, new EditorWindowEventArgs(this), (p) => true, true);
+
+            if (asset != null)
+            {
+                if (!assetWasCopied)
+                {
+                    variables.CopyFrom(asset.variables);
+                    assetWasCopied = true;
+                }
+
+                GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnDisable"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            }
 
             var windows = Resources.FindObjectsOfTypeAll<EditorWindowVariables>();
             for (int i = 0; i < windows.Length; i++)
@@ -132,7 +184,7 @@ namespace Bolt.Addons.Community.Utility.Editor
 
         private void OnEnable()
         {
-            var header = new IMGUIContainer(OnHeaderGUI);
+            header = new IMGUIContainer(OnHeaderGUI);
             header.style.height = 27;
             container = new IMGUIContainer(OnContainerGUI);
             container.style.flexGrow = 1;
@@ -140,20 +192,48 @@ namespace Bolt.Addons.Community.Utility.Editor
             rootVisualElement.Add(header);
             rootVisualElement.Add(container);
 
-            if (asset != null) variables.CopyFrom(asset.variables);
+            if (asset != null) { variables.CopyFrom(asset.variables); assetWasCopied = true; }
+
             variables.onVariablesChanged += OnVariablesChanged;
 
-            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnEnable"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            if (asset != null)
+            {
+                if (!assetWasCopied)
+                {
+                    variables.CopyFrom(asset.variables);
+                    assetWasCopied = true;
+                }
+
+                GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnEnable"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            }
         }
 
         private void OnFocus()
         {
-            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnFocus"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            if (asset != null)
+            {
+                if (!assetWasCopied)
+                {
+                    variables.CopyFrom(asset.variables);
+                    assetWasCopied = true;
+                }
+
+                GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnFocus"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            }
         }
 
         private void OnLostFocus()
         {
-            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnLostFocus"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            if (asset != null)
+            {
+                if (!assetWasCopied)
+                {
+                    variables.CopyFrom(asset.variables);
+                    assetWasCopied = true;
+                }
+
+                GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnLostFocus"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            }
         }
 
         private void OnVariablesChanged() 
