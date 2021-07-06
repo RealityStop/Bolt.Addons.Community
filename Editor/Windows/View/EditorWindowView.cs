@@ -90,12 +90,12 @@ namespace Bolt.Addons.Community.Utility.Editor
 
         private void OnContainerGUI()
         {
-            GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnGUI"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnGUI"; }, new EditorWindowEventArgs(this), (p) => true, true);
         }
 
         public GraphPointer GetReference()
         {
-            return GraphReference.New(asset == null ? this : (IGraphRoot)asset, true); ;
+            return GraphReference.New(asset, true);
         }
 
         public IGraph DefaultGraph()
@@ -114,13 +114,13 @@ namespace Bolt.Addons.Community.Utility.Editor
         private void OnDestroy()
         {
             variables.onVariablesChanged -= OnVariablesChanged;
-            GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnDestroy"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnDestroy"; }, new EditorWindowEventArgs(this), (p) => true, true);
         }
         
         private void OnDisable()
         {
             variables.onVariablesChanged -= OnVariablesChanged;
-            GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnDisable"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnDisable"; }, new EditorWindowEventArgs(this), (p) => true, true);
 
             var windows = Resources.FindObjectsOfTypeAll<EditorWindowVariables>();
             for (int i = 0; i < windows.Length; i++)
@@ -143,17 +143,17 @@ namespace Bolt.Addons.Community.Utility.Editor
             if (asset != null) variables.CopyFrom(asset.variables);
             variables.onVariablesChanged += OnVariablesChanged;
 
-            GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnEnable"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnEnable"; }, new EditorWindowEventArgs(this), (p) => true, true);
         }
 
         private void OnFocus()
         {
-            GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnFocus"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnFocus"; }, new EditorWindowEventArgs(this), (p) => true, true);
         }
 
         private void OnLostFocus()
         {
-            GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnLostFocus"; }, new EditorWindowEventArgs(this), (p) => true, true);
+            if (asset != null) GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnLostFocus"; }, new EditorWindowEventArgs(this), (p) => true, true);
         }
 
         private void OnVariablesChanged() 
