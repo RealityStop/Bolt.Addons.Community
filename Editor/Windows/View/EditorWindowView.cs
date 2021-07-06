@@ -9,6 +9,7 @@ using UnityEngine.UIElements;
 
 namespace Bolt.Addons.Community.Utility.Editor
 {
+    [IncludeInSettings(true)]
     [Serializable]
     public sealed class EditorWindowView : EditorWindow, IMacro
     {
