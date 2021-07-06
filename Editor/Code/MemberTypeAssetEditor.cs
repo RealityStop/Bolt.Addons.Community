@@ -2,29 +2,20 @@
 using Unity.VisualScripting;
 using UnityEditor;
 using Bolt.Addons.Libraries.Humility;
-using Bolt.Addons.Libraries.CSharp;
-using System;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
-    [CustomEditor(typeof(CustomType))]
-    public class CustomTypeEditor : CodeAssetEditor<CustomType, CustomTypeGenerator>
+    public abstract class MemberTypeAssetEditor<TMemberTypeAsset, TMemberTypeGenerator, TFieldDeclaration> : CodeAssetEditor<TMemberTypeAsset, TMemberTypeGenerator>
+        where TMemberTypeAsset : MemberTypeAsset<TFieldDeclaration>
+        where TMemberTypeGenerator : MemberTypeAssetGenerator<TMemberTypeAsset, TFieldDeclaration>
+        where TFieldDeclaration : FieldDeclaration
     {
-        private Metadata fields;
-        private Metadata objectType;
-        private SerializedProperty fieldsProp;
-        private SerializedProperty objectTypeProp;
+        protected Metadata fields;
+        protected SerializedProperty fieldsProp;
 
         protected override void Cache()
         {
             base.Cache();
-
-            if (objectType == null)
-            {
-                objectType = Metadata.FromProperty(serializedObject.FindProperty("objectType"));
-                objectTypeProp = serializedObject.FindProperty("objectType");
-                hidden = true;
-            }
 
             if (fields == null)
             {
@@ -36,10 +27,9 @@ namespace Bolt.Addons.Community.Code.Editor
 
         protected override void AfterCategoryGUI()
         {
-            HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 1, 1), () =>
-            {
-                LudiqGUI.InspectorLayout(objectType, GUIContent.none);
-            });
+            //HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 1, 1), () =>
+            //{
+            //});
         }
 
         protected override void OptionsGUI()
@@ -48,19 +38,12 @@ namespace Bolt.Addons.Community.Code.Editor
             Target.inspectable = EditorGUILayout.ToggleLeft("Inspectable", Target.inspectable);
             Target.includeInSettings = EditorGUILayout.ToggleLeft("Include In Settings", Target.includeInSettings);
             Target.definedEvent = EditorGUILayout.ToggleLeft("Flag for Defined Event Filtering", Target.definedEvent);
-            HUMEditor.Disabled(Target.objectType == ObjectType.Struct, ()=> 
-            {
-                Target.scriptableObject = EditorGUILayout.ToggleLeft("Scriptable Object", Target.scriptableObject);
-                if (Target.scriptableObject)
-                {
-                    GUILayout.Label("Scriptable Object Menu Name");
-                    Target.menuName = EditorGUILayout.TextField(Target.menuName);
-                    GUILayout.Label("Scriptable Object File Name");
-                    Target.fileName = EditorGUILayout.TextField(Target.fileName);
-                    GUILayout.Label("Scriptable Object Menu Order");
-                    Target.order = EditorGUILayout.IntField(Target.order);
-                }
-            });
+            OnExtendedOptionsGUI();
+        }
+
+        protected virtual void OnExtendedOptionsGUI()
+        {
+
         }
 
         protected override void BeforePreview()

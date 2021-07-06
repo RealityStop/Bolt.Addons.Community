@@ -4,7 +4,7 @@ using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Code
 {
-    [CreateAssetMenu(menuName = "Visual Scripting/Community/Enum")]
+    [CreateAssetMenu(menuName = "Visual Scripting/Community/Code/Enum")]
     public class EnumAsset : CodeAsset
     {
         [Inspectable]

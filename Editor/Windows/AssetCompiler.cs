@@ -33,15 +33,23 @@ namespace Bolt.Addons.Community.Utility.Editor
             HUMIO.Ensure(csharpPath).Path();
             HUMIO.Ensure(enumPath).Path();
 
-            var csharpObjects = HUMAssets.Find().Assets().OfType<CustomType>();
+            var classes = HUMAssets.Find().Assets().OfType<ClassAsset>();
+            var structs = HUMAssets.Find().Assets().OfType<StructAsset>();
             var enums = HUMAssets.Find().Assets().OfType<EnumAsset>();
             var delegates = HUMAssets.Find().Assets().OfType<DelegateAsset>();
 
-            for (int i = 0; i < csharpObjects.Count; i++)
+            for (int i = 0; i < classes.Count; i++)
             {
-                var fullPath = csharpPath + csharpObjects[i].title.LegalMemberName() + ".cs";
-                HUMIO.Save(CustomTypeGenerator.GetSingleDecorator(csharpObjects[i]).GenerateClean(0)).Custom(fullPath).Text(false);
-                csharpObjects[i].lastCompiledName = csharpObjects[i].category + (string.IsNullOrEmpty(csharpObjects[i].category) ? string.Empty : ".") + csharpObjects[i].title.LegalMemberName();
+                var fullPath = csharpPath + classes[i].title.LegalMemberName() + ".cs";
+                HUMIO.Save(ClassAssetGenerator.GetSingleDecorator(classes[i]).GenerateClean(0)).Custom(fullPath).Text(false);
+                classes[i].lastCompiledName = classes[i].category + (string.IsNullOrEmpty(classes[i].category) ? string.Empty : ".") + classes[i].title.LegalMemberName();
+            }
+
+            for (int i = 0; i < structs.Count; i++)
+            {
+                var fullPath = csharpPath + structs[i].title.LegalMemberName() + ".cs";
+                HUMIO.Save(StructAssetGenerator.GetSingleDecorator(structs[i]).GenerateClean(0)).Custom(fullPath).Text(false);
+                structs[i].lastCompiledName = structs[i].category + (string.IsNullOrEmpty(structs[i].category) ? string.Empty : ".") + structs[i].title.LegalMemberName();
             }
 
             for (int i = 0; i < enums.Count; i++)

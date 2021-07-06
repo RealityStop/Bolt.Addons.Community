@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Bolt.Addons.Community.Utility.Editor
 {
-    [CreateAssetMenu(fileName = "New Editor Window", menuName = "Visual Scripting/Community/Editor Window")][Inspectable]
+    [CreateAssetMenu(fileName = "New Editor Window", menuName = "Visual Scripting/Community/Editor/Editor Window")][Inspectable]
     public sealed class EditorWindowAsset : Macro<FlowGraph>
     {
         [Serialize][Inspectable]

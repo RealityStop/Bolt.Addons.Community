@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Bolt.Addons.Community.Code
 {
-    [CreateAssetMenu(menuName = "Visual Scripting/Community/Delegate")]
+    [CreateAssetMenu(menuName = "Visual Scripting/Community/Code/Delegate")]
     [Serializable]
     public sealed class DelegateAsset : CodeAsset
     {

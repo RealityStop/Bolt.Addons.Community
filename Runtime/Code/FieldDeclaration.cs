@@ -6,7 +6,7 @@ using Bolt.Addons.Libraries.CSharp;
 namespace Bolt.Addons.Community.Code
 {
     [Serializable][Inspectable]
-    public sealed class FieldDeclaration : ISerializationCallbackReceiver
+    public abstract class FieldDeclaration : ISerializationCallbackReceiver
     {
         [Inspectable]
         public string name;
