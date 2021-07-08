@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Bolt.Addons.Community.Fundamentals.Units.Documenting;
+using System;
 using Unity.VisualScripting;
+using UnityEngine;
 
 namespace Bolt.Addons.Community.Utility.Editor.UnitOptions
 {

@@ -1,6 +1,7 @@
 ﻿using Unity.VisualScripting;
 using UnityEngine;
 using Bolt.Addons.Libraries.Humility;
+using UnityEditor;
 
 namespace Bolt.Addons.Community.Processing
 {
@@ -33,7 +34,7 @@ namespace Bolt.Addons.Community.Processing
                 }
                 else
                 {
-                    if (@event.keyCode == KeyCode.Slash && @event.rawType == EventType.KeyUp)
+                    if (@event.keyCode == KeyCode.Slash && @event.rawType == EventType.KeyUp && @event.control)
                     {
                         CommentPopup.Open();
                         firstSlash = false;
