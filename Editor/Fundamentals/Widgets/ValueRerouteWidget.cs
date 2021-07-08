@@ -12,109 +12,52 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
     [Widget(typeof(ValueReroute))]
     public sealed class ValueRerouteWidget : UnitWidget<ValueReroute>
     {
-        private static ValueReroute addedUnit = null;
-        private static bool keyPressed;
-        private static bool keyUp;
-        private int connections;
-        private int frames = 0;
-
         public ValueRerouteWidget(FlowCanvas canvas, ValueReroute unit) : base(canvas, unit)
         {
         }
 
         public override void DrawForeground()
         {
-            GraphGUI.Node(new Rect(position.x, position.y, _position.width, _position.height), NodeShape.Square, NodeColor.Gray, isSelected);
+            var inputHasConnection = inputs[0].port.hasAnyConnection;
+            var outputHasConnection = outputs[0].port.hasAnyConnection;
+            mouseIsOver = new Rect(_position.x - 20, _position.y - 10, mouseIsOver ? 80 : 40, 40).Contains(mousePosition);
+            if (isSelected || mouseIsOver || !inputHasConnection || !outputHasConnection)
+            {
+                _position.width = 26;
+                GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height - 4), NodeShape.Square, NodeColor.Gray, isSelected);
+            }
+            else
+            {
+                _position.width = -19;
+            }
+            Reposition();
         }
 
-        private Type lastType = typeof(object);
+        EditorTexture valueIcon;
 
-        protected override bool showIcons => true;
+        public override bool foregroundRequiresInput => true;
 
-        public override void Update()
-        {
-                if (unit.input != null && unit.input.connection != null && unit.input.connection.sourceExists)
-                {
-                    unit.portType = unit.input.connection.source.type;
-                }
-                else
-                {
-                    unit.portType = typeof(object);
-                }
-
-                if (lastType != null && unit.portType != null && lastType != unit.portType)
-                {
-                    lastType = unit.portType;
-                    unit.Define();
-                }
-
-                if (addedUnit == null && keyPressed && SourceIsReroute())
-                {
-                    addedUnit = new ValueReroute();
-                    addedUnit.position = canvas.mousePosition - new Vector2(14, 14);
-                    ((FlowGraph)graph).units.Add(addedUnit);
-                    unit.output.ValidlyConnectTo(addedUnit.input);
-                    canvas.connectionSource = addedUnit.output;
-                }
-                else
-                {
-                    if (addedUnit == null && HasSource() && HasConnections() && IsConnecting() && SourceIsReroute() && DestinationIsNotReroute())
-                    {
-                        if (canvas.hoveredWidget as UnitInputPortWidget<ValueInput> != null && !keyPressed) canvas.CancelConnection();
-                    }
-                }
-
-                if (addedUnit != null) canvas.connectionSource = addedUnit.output;
-
-                if (!keyPressed)
-                {
-                    addedUnit = null;
-                }
-
-            if (frames < 10) frames++; ;
-        }
-
-        private bool HasSource()
-        {
-            return canvas.connectionSource != null;
-        }
-
-        public override void HandleCapture()
-        {
-            base.HandleCapture();
-            keyPressed = e.keyCode == KeyCode.Space;
-            keyUp = e.IsKeyUp(KeyCode.Space);
-        }
-
-        private bool DestinationIsNotReroute()
-        {
-            return canvas.connectionSource.connections.Any((connection) => { return connection.destination.unit.GetType() != typeof(ValueReroute); });
-        }
-
-        private bool HasConnections()
-        {
-            return canvas.connectionSource.connections != null;
-        }
-
-        private bool SourceIsReroute()
-        {
-            return canvas.connectionSource == unit.output;
-        }
-
-        private bool IsConnecting()
-        {
-            return canvas.isCreatingConnection;
-        }
+        private bool mouseIsOver;
 
         public override void CachePosition()
         {
+            var inputPort = inputs[0].port;
+            var outputPort = outputs[0].port;
+            var inputHasConnection = inputPort.hasAnyConnection;
+            var outputHasConnection = outputPort.hasAnyConnection;
             _position.x = unit.position.x;
             _position.y = unit.position.y;
-            _position.width = 26;
-            _position.height = 26;
+            _position.width = !inputHasConnection || !outputHasConnection || isSelected || mouseIsOver ? 26 : -19;
+            _position.height = 20;
 
             inputs[0].y = _position.y + 5;
             outputs[0].y = _position.y + 5;
+
+            if (valueIcon == null && (inputPort.Descriptor()).description.icon != null) valueIcon = ((UnitPortDescriptor)inputPort.Descriptor()).description.icon;
+
+            if (inputHasConnection && !outputHasConnection) { ((UnitPortDescriptor)inputPort.Descriptor()).description.icon = null; }
+            ((UnitPortDescriptor)inputPort.Descriptor()).description.icon = !inputHasConnection || isSelected || mouseIsOver ? valueIcon : null;
+            ((UnitPortDescriptor)outputPort.Descriptor()).description.icon = !outputHasConnection || isSelected || mouseIsOver ? valueIcon : null;
         }
     }
 }
