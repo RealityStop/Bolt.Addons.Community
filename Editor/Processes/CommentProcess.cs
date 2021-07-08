@@ -26,7 +26,7 @@ namespace Bolt.Addons.Community.Processing
                 {
                     if (@event != null)
                     {
-                        if (@event.keyCode == KeyCode.Slash && @event.rawType == EventType.KeyUp)
+                        if (@event.keyCode == KeyCode.Slash && @event.rawType == EventType.KeyUp && @event.control)
                         {
                             firstSlash = true;
                         }

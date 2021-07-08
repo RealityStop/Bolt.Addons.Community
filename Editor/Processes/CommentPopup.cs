@@ -46,6 +46,13 @@ namespace Bolt.Addons.Community.Processing
                 canvas?.AddUnit(new CommentUnit() { comment = text, color = new Color(Random.Range(0.1f, 0.6f), Random.Range(0.1f, 0.6f), Random.Range(0.1f, 0.6f)) }, placement);
                 Close();
             }
+            else
+            {
+                if (Event.current.keyCode == KeyCode.Escape && Event.current.rawType == EventType.KeyUp)
+                {
+                    Close();
+                }
+            }
 
             if (focusedWindow != this) Close();
         }
