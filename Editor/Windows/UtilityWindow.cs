@@ -11,11 +11,18 @@ namespace Bolt.Addons.Community.Utility.Editor
     {
         private BorderedRectangle container;
 
+        public static Event e;
+
         [MenuItem("Window/Community Addons/Utilities")]
         public static void Open()
         {
             var window = GetWindow<UtilityWindow>();
             window.titleContent = new GUIContent("UVS Community Utilities");
+        }
+
+        private void OnGUI()
+        {
+            e = Event.current;
         }
 
         private void OnEnable()

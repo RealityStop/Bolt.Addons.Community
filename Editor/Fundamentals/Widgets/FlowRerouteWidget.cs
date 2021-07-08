@@ -10,8 +10,9 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility
     [Widget(typeof(FlowReroute))]
     public sealed class FlowRerouteWidget : UnitWidget<FlowReroute>
     {
-        private static FlowReroute addedUnit = null;
+        public static FlowReroute addedUnit = null;
         private static bool keyPressed;
+        public static bool rerouteHotFixed = true;
 
         public FlowRerouteWidget(FlowCanvas canvas, FlowReroute unit) : base(canvas, unit)
         {
@@ -19,7 +20,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility
 
         public override void DrawForeground()
         {
-            Unity.VisualScripting.GraphGUI.Node(new Rect(position.x, position.y, _position.width, _position.height), NodeShape.Square, NodeColor.Gray, isSelected);
+            Unity.VisualScripting.GraphGUI.Node(new Rect(position.x, position.y + 3, _position.width, _position.height - 12), NodeShape.Square, NodeColor.Gray, isSelected);
         }
 
         protected override bool showIcons => true;
@@ -28,27 +29,30 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility
 
         public override void Update()
         {
-            if (addedUnit == null && keyPressed && SourceIsReroute())
+            if (rerouteHotFixed)
             {
-                addedUnit = new FlowReroute();
-                addedUnit.position = canvas.mousePosition - new Vector2(14, 14);
-                ((FlowGraph)graph).units.Add(addedUnit);
-                unit.output.ValidlyConnectTo(addedUnit.input);
-                canvas.connectionSource = addedUnit.output;
-            }
-            else
-            {
-                if (addedUnit == null && HasSource() && HasConnections() && IsConnecting() && SourceIsReroute() && DestinationIsNotReroute())
+                if (addedUnit == null && keyPressed && SourceIsReroute())
                 {
-                    if (canvas.hoveredWidget as UnitInputPortWidget<ControlInput> != null && !keyPressed) canvas.CancelConnection();
+                    addedUnit = new FlowReroute();
+                    addedUnit.position = canvas.mousePosition - new Vector2(14, 14);
+                    ((FlowGraph)graph).units.Add(addedUnit);
+                    unit.output.ValidlyConnectTo(addedUnit.input);
+                    canvas.connectionSource = addedUnit.output;
                 }
-            }
+                else
+                {
+                    if (addedUnit == null && HasSource() && HasConnections() && IsConnecting() && SourceIsReroute() && DestinationIsNotReroute())
+                    {
+                        if (canvas.hoveredWidget as UnitInputPortWidget<ControlInput> != null && !keyPressed) canvas.CancelConnection();
+                    }
+                }
 
-            if (addedUnit != null) canvas.connectionSource = addedUnit.output;
+                if (addedUnit != null) canvas.connectionSource = addedUnit.output;
 
-            if (!keyPressed)
-            {
-                addedUnit = null;
+                if (!keyPressed)
+                {
+                    addedUnit = null;
+                }
             }
         }
 
@@ -69,7 +73,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Utility
 
         private bool SourceIsReroute()
         {
-            return canvas.connectionSource == unit.output;
+            return canvas.connectionSource == unit.output && canvas.connectionSource.unit.GetType() == typeof(FlowReroute);
         }
 
         private bool IsConnecting()

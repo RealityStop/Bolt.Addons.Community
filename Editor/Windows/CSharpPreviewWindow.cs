@@ -10,6 +10,7 @@ namespace Bolt.Addons.Community.Utility.Editor
     public sealed class CSharpPreviewWindow : EditorWindow
     {
         public static CSharpPreviewWindow instance;
+        public static Event e;
 
         [SerializeReference]
         public CSharpPreview preview = new CSharpPreview();
@@ -33,6 +34,7 @@ namespace Bolt.Addons.Community.Utility.Editor
 
         private void OnGUI()
         {
+            e = Event.current;
             if (!cached)
             {
                 var codeAsset = Selection.activeObject as CodeAsset;

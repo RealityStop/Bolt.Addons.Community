@@ -99,9 +99,9 @@ namespace Bolt.Addons.Libraries.Humility
             return null;
         }
 
-        public static object New(this Type type)
+        public static object New(this Type type, params object[] args)
         {
-            return System.Activator.CreateInstance(type);
+            return System.Activator.CreateInstance(type, args);
         }
     }
 }

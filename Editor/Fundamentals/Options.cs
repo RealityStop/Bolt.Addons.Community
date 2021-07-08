@@ -7,8 +7,11 @@ using Bolt.Addons.Community.Variables.Editor.UnitOptions;
 using Bolt.Addons.Libraries.Humility;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Unity.VisualScripting;
+using UnityEditor;
+using UnityEngine;
 
 namespace Bolt.Addons.Community.Variables.Editor
 {
@@ -90,6 +93,47 @@ namespace Bolt.Addons.Community.Variables.Editor
             yield return new EditorWindowOnFocusEventOption(new EditorWindowOnFocus());
             yield return new EditorWindowOnLostFocusEventOption(new EditorWindowOnLostFocus());
             yield return new EditorWindowOnGUIEventOption(new EditorWindowOnGUI());
+        }
+
+        private static IEnumerable<IUnitOption> DelegateMemberOptions()
+        {
+            var typeAsset = AssetDatabase.LoadAssetAtPath<DictionaryAsset>("Assets/Unity.VisualScripting.Generated/VisualScripting.Core");
+            var types = typeAsset?["typeOptions"] as List<Type>;
+            if (types == null) yield break;
+
+            for (int i = 0; i < types.Count; i++)
+            {
+                var delegateFields = types[i].GetFields();
+                var delegateProperties = types[i].GetProperties();
+                for (int d = 0; d < delegateFields.Length; d++)
+                {
+                    var del = delegateFields[d];
+                    if (del.IsPublic && del.FieldType.Inherits<Delegate>())
+                    {
+                        Debug.Log(del.Name);
+                        yield return new GetMemberOption(new GetMember(new Member(types[i], del)));
+                        yield return new SetMemberOption(new SetMember(new Member(types[i], del)));
+                    }
+                }
+
+                for (int d = 0; d < delegateProperties.Length; d++)
+                {
+                    var del = delegateProperties[d];
+                    if (del.PropertyType.Inherits<Delegate>())
+                    {
+                        Debug.Log(del.Name);
+                        if (del.CanRead) yield return new GetMemberOption(new GetMember(new Member(types[i], del)));
+                        if (del.CanWrite) yield return new SetMemberOption(new SetMember(new Member(types[i], del)));
+                    }
+                }
+
+                var events = types[i].GetEvents(BindingFlags.Public);
+
+                for (int ev = 0; ev < events.Length; ev++)
+                {
+                     yield return new GetMemberOption(new GetMember(new Member(types[i], events[ev].Name)));
+                }
+            }
         }
 
         private static IEnumerable<IUnitOption> DynamicEditorOptions()

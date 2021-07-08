@@ -210,6 +210,5 @@ namespace Bolt.Addons.Community.Code.Editor
 
             return (Data.type.type == typeof(Action) ? "Generic" : string.Empty) + gen + gens;
         }
-
     }
 }

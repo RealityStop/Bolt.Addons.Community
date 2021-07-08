@@ -31,6 +31,24 @@ namespace Bolt.Addons.Community.Processing
             } 
         }
 
+        public static void Unbind(GlobalProcess process)
+        {
+            if (!instances.Contains(process))
+            {
+                process.OnUnbind();
+                instances.Remove(process);
+            }
+        }
+
+        public static void Bind(GlobalProcess process)
+        {
+            if (instances.Contains(process))
+            {
+                process.OnBind();
+                instances.Add(process);
+            }
+        }
+
         private void UpdateProcess()
         {
             processes();
@@ -44,6 +62,7 @@ namespace Bolt.Addons.Community.Processing
             {
                 var process = (GlobalProcess)Activator.CreateInstance(_processes[i]);
                 instances.Add(process);
+                process.OnInitialize();
                 processes += process.Process;
                 process.OnBind();
             }
