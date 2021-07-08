@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Bolt.Addons.Libraries.Humility;
 using System.Linq;
 
-namespace Continuum
+namespace Bolt.Addons.Libraries.Humility
 {
     [Serializable]
     public class DefinedDictionary<TKey, TValue> : ISerializationCallbackReceiver
