@@ -41,7 +41,7 @@ namespace Bolt.Addons.Community.Processing
                 {
                     if (reference.graph.GetType() == processes[i].graphType)
                     {
-                        processes[i].OnBind(reference.graph as FlowGraph, GraphWindow.activeContext.canvas as FlowCanvas);
+                        processes[i].Bind(reference.graph, GraphWindow.activeContext.canvas);
                     }
                 }
             }
@@ -56,7 +56,7 @@ namespace Bolt.Addons.Community.Processing
                 {
                     if (reference.graph.GetType() == processes[i].graphType)
                     {
-                        processes[i].OnUnbind(reference.graph as FlowGraph, GraphWindow.activeContext.canvas as FlowCanvas);
+                        processes[i].Unbind(reference.graph, GraphWindow.activeContext.canvas);
                     }
                 }
             }

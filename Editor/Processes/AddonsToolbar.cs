@@ -12,7 +12,6 @@ namespace Bolt.Addons.Community.Processing
     {
         public static AddonsToolbar active;
 
-        [MenuItem("Window/Toolbar")]
         public static void Open()
         {
             AddonsToolbar toolbar = null;

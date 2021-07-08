@@ -3,25 +3,14 @@ using UnityEngine;
 using Bolt.Addons.Community.Fundamentals.Units.Utility;
 using Bolt.Addons.Libraries.Humility;
 using Bolt.Addons.Community.Utility.Editor;
+using Bolt.Addons.Community.Fundamentals.Units.Documenting;
+using UnityEditor;
+using Bolt.Addons.Community.Fundamentals.Editor.Editor;
 
 namespace Bolt.Addons.Community.Processing
 {
     public sealed class RerouteProcess : GraphProcess<FlowGraph, FlowCanvas>
     {
-        private int ticks;
-        private bool canAdd = true;
-        private Event @event;
-
-        public override void OnBind(FlowGraph graph, FlowCanvas canvas)
-        {
-            UnityEditorEvent.onCurrentEvent += SetKeyCode;
-        }
-
-        public override void OnUnbind(FlowGraph graph, FlowCanvas canvas)
-        {
-            UnityEditorEvent.onCurrentEvent -= SetKeyCode;
-        }
-
         public override void Process(FlowGraph graph, FlowCanvas canvas)
         {
             if (canvas.isCreatingConnection)
@@ -68,11 +57,6 @@ namespace Bolt.Addons.Community.Processing
                     }
                 }
             } 
-        }
-
-        private void SetKeyCode(Event e)
-        {
-            @event = e;
         }
     }
 }
