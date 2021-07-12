@@ -5,8 +5,7 @@ namespace Bolt.Addons.Community.Code
 {
     [Serializable]
     [Inspectable]
-    public sealed class ClassFieldDeclaration : FieldDeclaration
+    public abstract class ConstructorDeclaration : Macro<FlowGraph>
     {
-        public object defaultValue;
     }
 }

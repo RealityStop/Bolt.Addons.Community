@@ -135,7 +135,7 @@ namespace Bolt.Addons.Community.Code.Editor
 
                 @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(bool), "initialized", false).SingleStatementGetter(AccessModifier.Public, "_initialized").SingleStatementSetter(AccessModifier.Public, "_initialized = value"));
 
-                if (IsFunc) @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(Type), "ReturnType", false).SingleStatementGetter(AccessModifier.Public, "typeof".ConstructHighlight() + "(" + Data.generics[Data.generics.Count > 1 ? Data.generics.Count - 2 : Data.generics.Count - 1].type.type.As().CSharpName() + ")"));
+                if (IsFunc) @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(Type), "ReturnType", false).SingleStatementGetter(AccessModifier.Public, "typeof".ConstructHighlight() + "(" + Data.generics[Data.generics.Count - 1].type.type.As().CSharpName() + ")"));
 
                 @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(Type), "GetDelegateType").Body("return typeof".ConstructHighlight() + "(" + remappedGeneric + ");"));
 

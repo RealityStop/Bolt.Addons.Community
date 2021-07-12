@@ -35,9 +35,9 @@ namespace Bolt.Addons.Community.Code.Editor
             {
                 type = Metadata.FromProperty(serializedObject.FindProperty("type"))["type"];
                 generics = Metadata.FromProperty(serializedObject.FindProperty("generics"));
-
-                hidden = true;
             }
+
+            if (type != null) cached = true;
         }
 
         protected override void AfterCategoryGUI()

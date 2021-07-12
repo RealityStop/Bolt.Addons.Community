@@ -6,7 +6,7 @@ namespace Bolt.Addons.Community.Code.Editor
 {
     [Serializable]
     [CodeGenerator(typeof(StructAsset))]
-    public sealed class StructAssetGenerator : MemberTypeAssetGenerator<StructAsset, StructFieldDeclaration>
+    public sealed class StructAssetGenerator : MemberTypeAssetGenerator<StructAsset, StructFieldDeclaration, StructMethodDeclaration, StructConstructorDeclaration>
     {
         protected override TypeGenerator OnGenerateType(ref string output, NamespaceGenerator @namespace)
         {

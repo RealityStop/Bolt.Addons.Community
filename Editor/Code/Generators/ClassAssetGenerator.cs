@@ -1,4 +1,5 @@
-﻿using Bolt.Addons.Libraries.CSharp;
+﻿using Bolt.Addons.Community.Generation;
+using Bolt.Addons.Libraries.CSharp;
 using System;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -7,7 +8,7 @@ namespace Bolt.Addons.Community.Code.Editor
 {
     [Serializable]
     [CodeGenerator(typeof(ClassAsset))]
-    public sealed class ClassAssetGenerator : MemberTypeAssetGenerator<ClassAsset, ClassFieldDeclaration>
+    public sealed class ClassAssetGenerator : MemberTypeAssetGenerator<ClassAsset, ClassFieldDeclaration, ClassMethodDeclaration, ClassConstructorDeclaration>
     {
         protected override TypeGenerator OnGenerateType(ref string output, NamespaceGenerator @namespace)
         {
@@ -29,6 +30,20 @@ namespace Bolt.Addons.Community.Code.Editor
                         if (!Data.fields[i].serialized) field.AddAttribute(AttributeGenerator.Attribute<NonSerializedAttribute>());
                     }
                     @class.AddField(field);
+                }
+            }
+
+            for (int i = 0; i < Data.methods.Count; i++)
+            {
+                if (!string.IsNullOrEmpty(Data.methods[i].name) && Data.methods[i].returnType != null)
+                {
+                    var method = MethodGenerator.Method(Data.methods[i].scope, Data.methods[i].modifier, Data.methods[i].returnType, Data.methods[i].name);
+                    if (Data.methods[i].graph.units.Count > 0)
+                    {
+                        var unit = Data.methods[i].graph.units[0] as FunctionUnit;
+                        method.Body(FunctionUnitGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0));
+                    }
+                    @class.AddMethod(method);
                 }
             }
 

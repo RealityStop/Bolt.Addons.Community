@@ -17,9 +17,7 @@ namespace Bolt.Addons.Community.Code.Editor
 
         private Type lastType;
 
-        protected bool hidden;
-
-        private bool shouldUpdate = true;
+        protected bool shouldUpdate = true;
 
         public override bool UseDefaultMargins()
         {
@@ -30,7 +28,21 @@ namespace Bolt.Addons.Community.Code.Editor
         protected virtual bool showTitle => true;
         protected virtual bool showCategory => true;
 
-        protected virtual void Cache() { shouldUpdate = true; }
+        protected bool cached;
+
+        private bool warningPresent;
+
+        protected virtual void Cache()
+        {
+            if (!EditorPrefs.HasKey("Bolt.Addons.Community.Code.Warning_Present"))
+            {
+                EditorPrefs.SetBool("Bolt.Addons.Community.Code.Warning_Present", false);
+            }
+
+            warningPresent = EditorPrefs.GetBool("Bolt.Addons.Community.Code.Warning_Present");
+
+            shouldUpdate = true;
+        }
 
         protected virtual void AfterCategoryGUI() { }
 
@@ -42,13 +54,14 @@ namespace Bolt.Addons.Community.Code.Editor
         {
             serializedObject.Update();
 
-            hidden = false;
-
-            Cache();
-
             if (Target == null) Target = (TAsset)target;
 
-            if (!hidden)
+            if (!cached)
+            {
+                Cache();
+            }
+
+            if (cached)
             {
                 HUMEditor.Vertical(() =>
                 {
@@ -78,7 +91,25 @@ namespace Bolt.Addons.Community.Code.Editor
                             AfterCategoryGUI();
                         });
 
-                        EditorGUILayout.Space(8);
+                        EditorGUILayout.Space(4);
+
+                        if (!warningPresent)
+                        {
+                            EditorGUILayout.HelpBox("Code Assets are an in preview feature. " +
+                                "Not all functionality is present, and not all nodes have working generators. " +
+                                "There is no guarentee assets will remain in tact. " +
+                                "You may move the output scipts somewhere else for safe keeping.", MessageType.Warning);
+
+                            EditorGUILayout.Space(4);
+
+                            if (GUILayout.Button("Understood. Hide this warning."))
+                            {
+                                EditorPrefs.SetBool("Bolt.Addons.Community.Code.Warning_Present", true);
+                                warningPresent = true;
+                            }
+                        }
+
+                        EditorGUILayout.Space(4);
 
                         if (showOptions)
                         {

@@ -40,7 +40,7 @@ namespace Bolt.Addons.Community.Generation
 
                     var controlData = new ControlGenerationData();
                     controlData.returns = data.returns;
-                    controlData.mustBreak = controlData.returns == typeof(void);
+                    controlData.mustBreak = controlData.returns == typeof(Void);
                     controlData.mustReturn = !controlData.mustBreak;
                     controlData.localNames = data.localNames;
 

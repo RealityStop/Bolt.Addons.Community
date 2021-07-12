@@ -5,9 +5,11 @@ using Unity.VisualScripting;
 namespace Bolt.Addons.Community.Code.Editor
 {
     [Serializable]
-    public abstract class MemberTypeAssetGenerator<TMemberTypeAsset, TFieldDeclaration> : CodeGenerator<TMemberTypeAsset> 
-        where TMemberTypeAsset : MemberTypeAsset<TFieldDeclaration>
+    public abstract class MemberTypeAssetGenerator<TMemberTypeAsset, TFieldDeclaration, TMethodDeclaration, TConstructorDeclaration> : CodeGenerator<TMemberTypeAsset> 
+        where TMemberTypeAsset : MemberTypeAsset<TFieldDeclaration, TMethodDeclaration, TConstructorDeclaration>
         where TFieldDeclaration : FieldDeclaration
+        where TMethodDeclaration : MethodDeclaration
+        where TConstructorDeclaration : ConstructorDeclaration
     {
         protected abstract TypeGenerator OnGenerateType(ref string output, NamespaceGenerator @namespace);
 
@@ -28,7 +30,7 @@ namespace Bolt.Addons.Community.Code.Editor
                 ClassGenerator classType = type as ClassGenerator;
                 StructGenerator structType = type as StructGenerator;
 
-                if (Data.lastCompiledName != Data.GetFullTypeName())
+                if (Data.lastCompiledName != Data.GetFullTypeName() && !string.IsNullOrEmpty(Data.lastCompiledName))
                 {
                     if (classType != null) classType.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
                     if (structType != null) structType.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));

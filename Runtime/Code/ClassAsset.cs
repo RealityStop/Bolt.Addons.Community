@@ -8,7 +8,7 @@ using UnityEngine.Scripting.APIUpdating;
 namespace Bolt.Addons.Community.Code
 {
     [CreateAssetMenu(menuName = "Visual Scripting/Community/Code/Class")]
-    public class ClassAsset : MemberTypeAsset<ClassFieldDeclaration>
+    public class ClassAsset : MemberTypeAsset<ClassFieldDeclaration, ClassMethodDeclaration, ClassConstructorDeclaration>
     {
         [Inspectable]
         public bool scriptableObject;

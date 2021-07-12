@@ -1,12 +1,11 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using Bolt.Addons.Libraries.CSharp;
-using System;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
     [CustomEditor(typeof(ClassAsset))]
-    public sealed class ClassAssetEditor : MemberTypeAssetEditor<ClassAsset, ClassAssetGenerator, ClassFieldDeclaration>
+    public sealed class ClassAssetEditor : MemberTypeAssetEditor<ClassAsset, ClassAssetGenerator, ClassFieldDeclaration, ClassMethodDeclaration, ClassConstructorDeclaration>
     {
         protected override void OnExtendedOptionsGUI()
         {
