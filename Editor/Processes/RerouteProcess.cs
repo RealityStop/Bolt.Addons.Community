@@ -13,7 +13,7 @@ namespace Bolt.Addons.Community.Processing
     {
         public override void Process(FlowGraph graph, FlowCanvas canvas)
         {
-            if (canvas.isCreatingConnection)
+            if (FuzzyWindow.instance == null && canvas.isCreatingConnection)
             {
                 var canSpawn = @event != null && @event.keyCode == KeyCode.Space && @event.rawType == EventType.KeyUp;
                 if (!canSpawn) canSpawn = @event != null && @event.keyCode == KeyCode.Space && @event.rawType == EventType.KeyUp;
