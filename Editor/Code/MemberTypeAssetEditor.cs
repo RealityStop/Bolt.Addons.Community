@@ -30,6 +30,8 @@ namespace Bolt.Addons.Community.Code.Editor
         private int fieldsCount;
         private int methodsCount;
 
+        private Color boxBackground => HUMColor.Grey(0.15f);
+
         private void OnEnable()
         {
             //if (constructors == null)
@@ -118,7 +120,7 @@ namespace Bolt.Addons.Community.Code.Editor
                         listOfMethods[index].opened = HUMEditor.Foldout(listOfMethods[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
                             HUMEditor.Changed(() => { listOfMethods[index].methodName = GUILayout.TextField(listOfMethods[index].methodName); }, () => { listOfMethods[index].name = listOfMethods[index].methodName; });
-                            
+
                             if (GUILayout.Button("Edit", GUILayout.Width(60)))
                             {
                                 GraphWindow.OpenActive(listOfMethods[index].GetReference() as GraphReference);
@@ -127,7 +129,7 @@ namespace Bolt.Addons.Community.Code.Editor
                             if (GUILayout.Button("...", GUILayout.Width(19)))
                             {
                                 GenericMenu menu = new GenericMenu();
-                                menu.AddItem(new GUIContent("Delete"), false, (obj) => 
+                                menu.AddItem(new GUIContent("Delete"), false, (obj) =>
                                 {
                                     methods.Remove(obj as TMethodDeclaration);
                                 }, listOfMethods[index]);
@@ -149,7 +151,7 @@ namespace Bolt.Addons.Community.Code.Editor
                                 }
                                 menu.ShowAsContext();
                             }
-                        }, ()=>
+                        }, () =>
                         {
                             HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, new RectOffset(6, 6, 6, 6), new RectOffset(1, 1, 0, 1), () =>
                             {
@@ -161,6 +163,24 @@ namespace Bolt.Addons.Community.Code.Editor
                                 {
                                     shouldUpdate = true;
                                 }
+
+                                GUILayout.Space(4);
+
+                                listOfMethods[index].parametersOpened = HUMEditor.Foldout(listOfMethods[index].parametersOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                {
+                                    GUILayout.Label("Parameters");
+                                }, () =>
+                                {
+                                    var paramMeta = methods[index]["parameters"];
+                                    Inspector.BeginBlock(paramMeta, new Rect());
+                                    LudiqGUI.InspectorLayout(paramMeta, GUIContent.none);
+                                    if (Inspector.EndBlock(paramMeta))
+                                    {
+                                        shouldUpdate = true;
+                                        (listOfMethods[index].graph.units[0] as FunctionUnit).Define();
+                                    }
+                                });
+
                             }, true, false);
                         });
 

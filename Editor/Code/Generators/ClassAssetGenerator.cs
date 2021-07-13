@@ -42,6 +42,11 @@ namespace Bolt.Addons.Community.Code.Editor
                     {
                         var unit = Data.methods[i].graph.units[0] as FunctionUnit;
                         method.Body(FunctionUnitGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0));
+                        
+                        for (int pIndex = 0; pIndex < Data.methods[i].parameters.Count; pIndex++)
+                        {
+                            method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, ParameterModifier.None));
+                        }
                     }
                     @class.AddMethod(method);
                 }

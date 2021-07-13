@@ -30,7 +30,7 @@ namespace Bolt.Addons.Community.Code
         [Inspectable]
         public StructAsset structAsset;
 
-        [Serialize]
+        [Serialize][InspectorWide]
         public List<TypeParam> parameters = new List<TypeParam>();
 
         public AccessModifier scope = AccessModifier.Public;
@@ -39,6 +39,7 @@ namespace Bolt.Addons.Community.Code
 
 #if UNITY_EDITOR
         public bool opened;
+        public bool parametersOpened;
 #endif
 
         public override FlowGraph DefaultGraph()

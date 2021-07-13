@@ -14,6 +14,7 @@ namespace Bolt.Addons.Community.Utility
         public Type type;
 
         [Serialize]
+        [Inspectable]
         public string name;
 
         public bool hasDefault;

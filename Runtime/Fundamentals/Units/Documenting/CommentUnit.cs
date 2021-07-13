@@ -1,8 +1,7 @@
 ﻿using System;
-
-using Bolt;
 using Unity.VisualScripting;
 using UnityEngine;
+using Bolt.Addons.Libraries.Humility;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
 {

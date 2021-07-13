@@ -14,8 +14,10 @@ namespace Bolt.Addons.Community.Code
         }
     }
 
+    [Serializable]
     public sealed class FunctionUnit : Unit
     {
+        [Serialize]
         public MethodDeclaration declaration;
 
         public FunctionType functionType;
@@ -25,7 +27,7 @@ namespace Bolt.Addons.Community.Code
         public ControlOutput invoke;
 
         [DoNotSerialize]
-        public List<ValueOutput> parameterPorts;
+        public List<ValueOutput> parameterPorts = new List<ValueOutput>();
 
         public FunctionUnit() : base() { }
 
@@ -42,7 +44,7 @@ namespace Bolt.Addons.Community.Code
 
             for (int i = 0; i < declaration?.parameters.Count; i++)
             {
-                parameterPorts.Add(ValueOutput(declaration.parameters[i].type, declaration.parameters[i].name));
+                if (declaration.parameters[i].type != null && !string.IsNullOrEmpty(declaration.parameters[i].name)) parameterPorts.Add(ValueOutput(declaration.parameters[i].type, declaration.parameters[i].name));
             }
         }
 

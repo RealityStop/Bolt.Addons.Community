@@ -27,7 +27,7 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
         {
             get => fullPosition; set => fullPosition = value;
         }
-        
+
         public override void DrawBackground()
         {
             if (hash == 0) hash = unit.GetHashCode();
