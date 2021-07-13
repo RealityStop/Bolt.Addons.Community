@@ -52,10 +52,7 @@ namespace Bolt.Addons.Community.Code.Editor
                 }
             }
 
-            if (@namespace != null)
-            {
-                @namespace.AddClass(@class);
-            }
+            @namespace.AddClass(@class);
 
             return @class;
         }

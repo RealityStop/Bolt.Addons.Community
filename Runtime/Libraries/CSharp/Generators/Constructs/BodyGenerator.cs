@@ -11,7 +11,7 @@ namespace Bolt.Addons.Libraries.CSharp
         /// <summary>
         /// Generates the entire body, includes before and after, as a string.
         /// </summary>
-        public override sealed string Generate(int indent)
+        public override string Generate(int indent)
         {
             var before = GenerateBefore(indent);
             var body = GenerateBody(indent + (hideBrackets ? 0 : 1));

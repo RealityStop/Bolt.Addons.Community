@@ -18,7 +18,7 @@ namespace Bolt.Addons.Community.Code.Editor
             if (decorated  != null)
             {
                 var output = string.Empty;
-                NamespaceGenerator @namespace = null;
+                NamespaceGenerator @namespace = NamespaceGenerator.Namespace(string.Empty);
                 if (string.IsNullOrEmpty(Data.title)) return output;
 
                 if (!string.IsNullOrEmpty(Data.category))
@@ -36,8 +36,7 @@ namespace Bolt.Addons.Community.Code.Editor
                     if (structType != null) structType.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
                 }
 
-                if (@namespace != null) return @namespace.Generate(indent);
-                return classType == null ? structType.Generate(indent) : classType.Generate(indent);
+                return @namespace.Generate(indent);
             }
 
             return string.Empty;

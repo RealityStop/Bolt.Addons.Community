@@ -56,6 +56,12 @@ namespace Bolt.Addons.Libraries.CSharp
             return usings;
         }
 
+        public override string Generate(int indent)
+        {
+            if (string.IsNullOrEmpty(@namespace)) return GenerateBefore(indent) + "\n" + GenerateBody(indent) + "\n" + GenerateAfter(indent);
+            return base.Generate(indent);
+        }
+
         protected override string GenerateAfter(int indent)
         {
             return string.Empty;
