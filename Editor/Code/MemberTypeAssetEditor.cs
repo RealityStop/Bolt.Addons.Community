@@ -53,12 +53,6 @@ namespace Bolt.Addons.Community.Code.Editor
                 methodsProp = serializedObject.FindProperty("methods");
             }
 
-            if (fields != null && methods != null &&
-                fieldsProp != null && methodsProp != null)
-            {
-                cached = true;
-            }
-
             shouldUpdate = true;
         }
 

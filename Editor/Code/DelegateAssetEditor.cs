@@ -25,19 +25,12 @@ namespace Bolt.Addons.Community.Code.Editor
         {
             types = typeof(object).Get().Derived().Where((type) => { return !type.IsGenericType && !type.IsAbstract; }).ToList();
             delegateTypes = typeof(object).Get().Derived().Where((type) => { return type.IsSubclassOf(typeof(Delegate)); }).ToList();
-        }
-
-        protected override void Cache()
-        {
-            base.Cache();
 
             if (type == null)
             {
                 type = Metadata.FromProperty(serializedObject.FindProperty("type"))["type"];
                 generics = Metadata.FromProperty(serializedObject.FindProperty("generics"));
             }
-
-            if (type != null) cached = true;
         }
 
         protected override void AfterCategoryGUI()

@@ -11,16 +11,16 @@ namespace Bolt.Addons.Community.Code.Editor
         private Metadata items;
         private SerializedProperty itemsProp;
 
-        protected override void Cache()
+        private void OnEnable()
         {
-            base.Cache();
-
             if (items == null)
             {
                 items = Metadata.FromProperty(serializedObject.FindProperty("items"));
                 itemsProp = serializedObject.FindProperty("items");
                 cached = true;
             }
+
+            shouldUpdate = true;
         }
 
         protected override void OptionsGUI()

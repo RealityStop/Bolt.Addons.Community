@@ -32,16 +32,21 @@ namespace Bolt.Addons.Community.Code.Editor
 
         private bool warningPresent;
 
-        protected virtual void Cache()
+        private void OnEnable()
         {
             if (!EditorPrefs.HasKey("Bolt.Addons.Community.Code.Warning_Present"))
             {
-                EditorPrefs.SetBool("Bolt.Addons.Community.Code.Warning_Present", false);
+                EditorPrefs.SetBool("Bolt.Addons.Community.Code.Warning_Present", true);
+                warningPresent = true;
+            }
+            else
+            {
+                warningPresent = EditorPrefs.GetBool("Bolt.Addons.Community.Code.Warning_Present");
             }
 
-            warningPresent = EditorPrefs.GetBool("Bolt.Addons.Community.Code.Warning_Present");
-
             shouldUpdate = true;
+
+            cached = true;
         }
 
         protected virtual void AfterCategoryGUI() { }
@@ -56,85 +61,77 @@ namespace Bolt.Addons.Community.Code.Editor
 
             if (Target == null) Target = (TAsset)target;
 
-            if (!cached)
+            HUMEditor.Vertical(() =>
             {
-                Cache();
-            }
-
-            if (cached)
-            {
-                HUMEditor.Vertical(() =>
+                HUMEditor.Changed(() =>
                 {
-                    HUMEditor.Changed(() =>
+                    HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 2, 2), () =>
                     {
-                        HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 2, 2), () =>
+                        if (showTitle)
                         {
-                            if (showTitle)
+                            HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
                             {
-                                HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
-                                {
-                                    EditorGUILayout.LabelField("Title", GUILayout.Width(80));
-                                    Target.title = EditorGUILayout.TextField(Target.title);
-                                });
-                            }
+                                EditorGUILayout.LabelField("Title", GUILayout.Width(80));
+                                Target.title = EditorGUILayout.TextField(Target.title);
+                            });
+                        }
 
 
-                            if (showCategory)
+                        if (showCategory)
+                        {
+                            HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
                             {
-                                HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
-                                {
-                                    EditorGUILayout.LabelField("Category", GUILayout.Width(80));
-                                    Target.category = EditorGUILayout.TextField(Target.category);
-                                });
-                            }
+                                EditorGUILayout.LabelField("Category", GUILayout.Width(80));
+                                Target.category = EditorGUILayout.TextField(Target.category);
+                            });
+                        }
 
-                            AfterCategoryGUI();
+                        AfterCategoryGUI();
+                    });
+
+                    EditorGUILayout.Space(4);
+
+                    if (warningPresent)
+                    {
+                        EditorGUILayout.HelpBox("Code Assets are an in preview feature. " +
+                            "Not all functionality is present, and not all nodes have working generators. " +
+                            "There is no guarentee assets will remain in tact. " +
+                            "You may move the output scipts somewhere else for safe keeping.", MessageType.Warning);
+
+                        EditorGUILayout.Space(4);
+
+                        if (GUILayout.Button("Understood. Hide this warning."))
+                        {
+                            EditorPrefs.SetBool("Bolt.Addons.Community.Code.Warning_Present", false);
+                            warningPresent = false;
+                        }
+                    }
+
+                    EditorGUILayout.Space(4);
+
+                    if (showOptions)
+                    {
+                        Target.optionsOpened = HUMEditor.Foldout(Target.optionsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () => { GUILayout.Label("Options"); }, () =>
+                        {
+                            HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                            {
+                                OptionsGUI();
+                            });
                         });
 
                         EditorGUILayout.Space(4);
+                    }
 
-                        if (!warningPresent)
-                        {
-                            EditorGUILayout.HelpBox("Code Assets are an in preview feature. " +
-                                "Not all functionality is present, and not all nodes have working generators. " +
-                                "There is no guarentee assets will remain in tact. " +
-                                "You may move the output scipts somewhere else for safe keeping.", MessageType.Warning);
+                    BeforePreview();
 
-                            EditorGUILayout.Space(4);
+                    EditorGUILayout.Space(4);
 
-                            if (GUILayout.Button("Understood. Hide this warning."))
-                            {
-                                EditorPrefs.SetBool("Bolt.Addons.Community.Code.Warning_Present", true);
-                                warningPresent = true;
-                            }
-                        }
-
-                        EditorGUILayout.Space(4);
-
-                        if (showOptions)
-                        {
-                            Target.optionsOpened = HUMEditor.Foldout(Target.optionsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () => { GUILayout.Label("Options"); }, () =>
-                            {
-                                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
-                                {
-                                    OptionsGUI();
-                                });
-                            });
-
-                            EditorGUILayout.Space(4);
-                        }
-
-                        BeforePreview();
-
-                        EditorGUILayout.Space(4);
-
-                    }, () =>
-                    {
-                        shouldUpdate = true;
-                    });
-
+                }, () =>
+                {
+                    shouldUpdate = true;
                 });
-            }
+
+            });
 
             if (CSharpPreviewWindow.instance != null)
             {
