@@ -32,8 +32,10 @@ namespace Bolt.Addons.Community.Code.Editor
 
         private bool warningPresent;
 
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
+            if (Target == null) Target = (TAsset)target;
+
             if (!EditorPrefs.HasKey("Bolt.Addons.Community.Code.Warning_Present"))
             {
                 EditorPrefs.SetBool("Bolt.Addons.Community.Code.Warning_Present", true);
@@ -55,11 +57,31 @@ namespace Bolt.Addons.Community.Code.Editor
 
         protected virtual void BeforePreview() { }
 
+        protected virtual void OnTypeHeaderGUI()
+        {
+            if (showTitle)
+            {
+                HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
+                {
+                    EditorGUILayout.LabelField("Title", GUILayout.Width(80));
+                    Target.title = EditorGUILayout.TextField(Target.title);
+                });
+            }
+
+
+            if (showCategory)
+            {
+                HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
+                {
+                    EditorGUILayout.LabelField("Category", GUILayout.Width(80));
+                    Target.category = EditorGUILayout.TextField(Target.category);
+                });
+            }
+        }
+
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-
-            if (Target == null) Target = (TAsset)target;
 
             HUMEditor.Vertical(() =>
             {
@@ -67,25 +89,7 @@ namespace Bolt.Addons.Community.Code.Editor
                 {
                     HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 2, 2), () =>
                     {
-                        if (showTitle)
-                        {
-                            HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
-                            {
-                                EditorGUILayout.LabelField("Title", GUILayout.Width(80));
-                                Target.title = EditorGUILayout.TextField(Target.title);
-                            });
-                        }
-
-
-                        if (showCategory)
-                        {
-                            HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
-                            {
-                                EditorGUILayout.LabelField("Category", GUILayout.Width(80));
-                                Target.category = EditorGUILayout.TextField(Target.category);
-                            });
-                        }
-
+                        OnTypeHeaderGUI();
                         AfterCategoryGUI();
                     });
 

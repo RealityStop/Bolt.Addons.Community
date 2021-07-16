@@ -26,6 +26,9 @@ namespace Bolt.Addons.Community
         public static string CommunityEditorFolder => RootCommunityFolder + "Editor/";
         public static string CommunityRuntimeFolder => RootCommunityFolder + "Runtime/";
 
+        public static string CodeEditorFolder => CommunityEditorFolder + "Code/";
+        public static string CodeRuntimeFolder => CommunityRuntimeFolder + "Code/";
+
         public static string FundamentalsEditorFolder => CommunityEditorFolder + "Fundamentals/";
         public static string FundamentalsRuntimeFolder => CommunityRuntimeFolder + "Fundamentals/";
 
@@ -56,6 +59,10 @@ namespace Bolt.Addons.Community
 
                 case CommunityEditorPath.Events:
                     _path = EventsEditorFolder + "Resources/";
+                    break;
+
+                case CommunityEditorPath.Code:
+                    _path = CodeEditorFolder + "Resources/";
                     break;
             }
 

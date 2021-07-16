@@ -11,8 +11,10 @@ namespace Bolt.Addons.Community.Code.Editor
         private Metadata items;
         private SerializedProperty itemsProp;
 
-        private void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
+
             if (items == null)
             {
                 items = Metadata.FromProperty(serializedObject.FindProperty("items"));

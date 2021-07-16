@@ -16,6 +16,7 @@ namespace Bolt.Addons.Libraries.CSharp
 
         public override string Generate(int indent)
         {
+            if (!useAssemblyQualifiedType && type == null) return "/* Parameter type is null */".WarningHighlight();
             var param = isParameters ? "params ".ConstructHighlight() : string.Empty;
             return useAssemblyQualifiedType ? param + assemblyQualifiedType + " " + name : param + type.As().CSharpName() + " " + name.LegalMemberName();
         }
@@ -51,8 +52,8 @@ namespace Bolt.Addons.Libraries.CSharp
 
         public string Using()
         {
-            if (useAssemblyQualifiedType) return string.Empty;
-            return type == typeof(void) || type.IsPrimitive ? string.Empty : type.Namespace;
+            if (useAssemblyQualifiedType || type == null) return string.Empty;
+            return type == typeof(void) || type == typeof(Void) || type.IsPrimitive ? string.Empty : type.Namespace;
         }
 
         public override List<string> Usings()

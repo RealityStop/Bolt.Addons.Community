@@ -321,6 +321,7 @@ namespace Bolt.Addons.Libraries.Humility
 
         public static bool PrimitiveStringOrVoid(this HUMType.Data.Is @is)
         {
+            if (@is.type == null) return false;
             return @is.type.IsPrimitive || @is.type == typeof(string) || @is.type == typeof(void) || @is.type.BaseType == null && @is.type == typeof(object);
         }
 

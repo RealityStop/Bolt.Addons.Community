@@ -21,8 +21,10 @@ namespace Bolt.Addons.Community.Code.Editor
         protected override bool showTitle => false;
         protected override bool showCategory => false;
 
-        private void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
+
             types = typeof(object).Get().Derived().Where((type) => { return !type.IsGenericType && !type.IsAbstract; }).ToList();
             delegateTypes = typeof(object).Get().Derived().Where((type) => { return type.IsSubclassOf(typeof(Delegate)); }).ToList();
 

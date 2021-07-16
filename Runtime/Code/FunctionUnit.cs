@@ -5,6 +5,8 @@ using Unity.VisualScripting;
 namespace Bolt.Addons.Community.Code
 {
     [Serializable]
+    [UnitTitle("Function")]
+    [SpecialUnit]
     public sealed class FunctionUnit : Unit
     {
         public MethodDeclaration declaration;

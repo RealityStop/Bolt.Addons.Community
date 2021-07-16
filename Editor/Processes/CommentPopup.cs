@@ -38,7 +38,7 @@ namespace Bolt.Addons.Community.Processing
 
             HUMEditor.Horizontal(() =>
             {
-                GUILayout.Label("//", GUILayout.Width(10));
+                GUILayout.Label("//", GUILayout.Width(12));
                 GUI.SetNextControlName("commentPopupField");
                 text = GUILayout.TextField(text);
             });

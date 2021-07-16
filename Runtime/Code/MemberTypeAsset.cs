@@ -36,6 +36,7 @@ namespace Bolt.Addons.Community.Code
         public int order;
 
 #if UNITY_EDITOR
+        public Texture2D icon;
         public bool constructorsOpened;
         public bool fieldsOpened;
         public bool methodsOpened;

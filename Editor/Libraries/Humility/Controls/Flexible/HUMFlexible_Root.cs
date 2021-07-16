@@ -233,9 +233,14 @@ namespace Bolt.Addons.Libraries.Humility
             return _opened;
         }
 
-        public static void Texture(Texture2D texture, int width, int height)
+        public static void Image(Texture2D texture, int width, int height)
         {
             GUILayout.Box(GUIContent.none, new GUIStyle() { normal = new GUIStyleState() { background = texture }, margin = new RectOffset(0, 0, 3, 0) }, GUILayout.Width(width), GUILayout.Height(height));
+        }
+
+        public static void Image(Texture2D texture, int width, int height, RectOffset padding, RectOffset margin)
+        {
+            GUILayout.Box(GUIContent.none, new GUIStyle() { normal = new GUIStyleState() { background = texture }, padding = padding, margin = margin }, GUILayout.Width(width), GUILayout.Height(height));
         }
 
         public static void ImageButton(Texture2D normal, Texture2D hover, Texture2D pressed, int width, int height, Action onClicked)

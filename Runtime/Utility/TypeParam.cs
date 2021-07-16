@@ -11,7 +11,7 @@ namespace Bolt.Addons.Community.Utility
     {
         [Serialize]
         [Inspectable]
-        public Type type;
+        public Type type = typeof(object);
 
         [Serialize]
         [Inspectable]
