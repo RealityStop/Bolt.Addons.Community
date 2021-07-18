@@ -19,7 +19,6 @@ namespace Bolt.Addons.Community.Code.Editor
             {
                 items = Metadata.FromProperty(serializedObject.FindProperty("items"));
                 itemsProp = serializedObject.FindProperty("items");
-                cached = true;
             }
 
             shouldUpdate = true;

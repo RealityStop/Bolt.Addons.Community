@@ -31,7 +31,8 @@ namespace Bolt.Addons.Libraries.CSharp
 
             for (int i = 0; i < attributes.Count; i++)
             {
-                output += attributes[i].Generate(indent) + "\n";
+                output += attributes[i].Generate(indent);
+                if (i < attributes.Count - 1) output += "\n";
             }
 
             var hasInterfaces = interfaces.Length > 0;
@@ -63,8 +64,6 @@ namespace Bolt.Addons.Libraries.CSharp
                 output += CodeBuilder.Indent(indent) + methods[i].Generate(indent);
                 if (i < methods.Count - 1) output += "\n";
             }
-
-            if (methods.Count > 0) output += "\n";
 
             return output;
         }
@@ -103,23 +102,23 @@ namespace Bolt.Addons.Libraries.CSharp
         {
             var usings = new List<string>();
 
-            for (int i = 0; i < attributes.Count; i++)
+            for (int i = 0; i < attributes?.Count; i++)
             {
                 usings.MergeUnique(attributes[i].Usings());
             }
 
-            for (int i = 0; i < interfaces.Length; i++)
+            for (int i = 0; i < interfaces?.Length; i++)
             {
                 if (!usings.Contains(interfaces[i].Namespace) && !interfaces[i].IsPrimitive) usings.Add(interfaces[i].Namespace);
             }
 
-            for (int i = 0; i < properties.Count; i++)
+            for (int i = 0; i < properties?.Count; i++)
             {
                 var @namespace = properties[i].type.Namespace;
                 if (!usings.Contains(@namespace) && !properties[i].type.Is().PrimitiveStringOrVoid()) usings.Add(@namespace);
             }
 
-            for (int i = 0; i < methods.Count; i++)
+            for (int i = 0; i < methods?.Count; i++)
             {
                 var @namespace = methods[i].returnType.Namespace;
                 if (!usings.Contains(@namespace) && !methods[i].returnType.Is().PrimitiveStringOrVoid()) usings.Add(@namespace);

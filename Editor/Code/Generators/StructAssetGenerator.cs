@@ -16,15 +16,15 @@ namespace Bolt.Addons.Community.Code.Editor
             if (Data.serialized) @struct.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());
             if (Data.includeInSettings) @struct.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
 
-            for (int i = 0; i < Data.fields.Count; i++)
+            for (int i = 0; i < Data.variables.Count; i++)
             {
-                if (!string.IsNullOrEmpty(Data.fields[i].name) && Data.fields[i].type != null)
+                if (!string.IsNullOrEmpty(Data.variables[i].name) && Data.variables[i].type != null)
                 {
-                    var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, Data.fields[i].type, Data.fields[i].name);
+                    var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, Data.variables[i].type, Data.variables[i].name);
                     if (Data.serialized)
                     {
-                        if (Data.fields[i].inspectable) field.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
-                        if (!Data.fields[i].serialized) field.AddAttribute(AttributeGenerator.Attribute<NonSerializedAttribute>());
+                        if (Data.variables[i].inspectable) field.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
+                        if (!Data.variables[i].serialized) field.AddAttribute(AttributeGenerator.Attribute<NonSerializedAttribute>());
                     }
                     @struct.AddField(field);
                 }

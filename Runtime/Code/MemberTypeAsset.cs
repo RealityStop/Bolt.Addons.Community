@@ -19,7 +19,7 @@ namespace Bolt.Addons.Community.Code
         [Inspectable]
         [InspectorWide]
         [SerializeField]
-        public List<TFieldDeclaration> fields = new List<TFieldDeclaration>();
+        public List<TFieldDeclaration> variables = new List<TFieldDeclaration>();
         [Inspectable]
         [InspectorWide]
         [SerializeField]

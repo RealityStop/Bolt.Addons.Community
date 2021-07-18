@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using UnityEditor;
-using Bolt.Addons.Libraries.CSharp;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
