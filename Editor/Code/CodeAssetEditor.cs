@@ -47,8 +47,6 @@ namespace Bolt.Addons.Community.Code.Editor
             }
 
             shouldUpdate = true;
-
-            cached = true;
         }
 
         protected virtual void AfterCategoryGUI() { }
@@ -82,7 +80,7 @@ namespace Bolt.Addons.Community.Code.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-
+            CSharpPreviewWindow.instance?.preview.Refresh();
             HUMEditor.Vertical(() =>
             {
                 HUMEditor.Changed(() =>
@@ -139,7 +137,11 @@ namespace Bolt.Addons.Community.Code.Editor
 
             if (CSharpPreviewWindow.instance != null)
             {
-                if (shouldUpdate) CSharpPreviewWindow.instance.preview.code = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
+                if (shouldUpdate)
+                {
+                    CSharpPreviewWindow.instance.preview.code = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
+                    CSharpPreviewWindow.instance.preview.Refresh();
+                }
             }
 
             shouldUpdate = false;

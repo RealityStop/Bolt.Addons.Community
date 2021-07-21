@@ -1,6 +1,7 @@
 ﻿using Bolt.Addons.Community.Code;
 using Bolt.Addons.Community.Code.Editor;
 using System;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,7 +16,10 @@ namespace Bolt.Addons.Community.Utility.Editor
         [SerializeReference]
         public CSharpPreview preview = new CSharpPreview();
 
-        private bool cached = false;
+        [SerializeField]
+        private CodeAsset asset;
+
+        private bool cached;
 
         [MenuItem("Window/Community Addons/C# Preview")]
         public static void Open()
@@ -35,14 +39,21 @@ namespace Bolt.Addons.Community.Utility.Editor
         private void OnGUI()
         {
             e = Event.current;
-            if (!cached)
+            if (asset == null || Selection.activeObject != null && Selection.activeObject != asset)
             {
-                var codeAsset = Selection.activeObject as CodeAsset;
-                if (preview.code == null && codeAsset != null) preview.code = CodeGenerator.GetSingleDecorator(codeAsset);
-                cached = true;
+                asset = Selection.activeObject as CodeAsset;
+                if (asset != null) preview.code = CodeGenerator.GetSingleDecorator(asset);
+                preview.Refresh();
+            }
+            else
+            {
+                if (asset != null)
+                {
+                    preview.code = CodeGenerator.GetSingleDecorator(asset);
+                    if (!cached) { preview.Refresh(); cached = true; }
+                }
             }
             preview.DrawLayout();
-            Repaint();
         }
     }
 }

@@ -4,6 +4,7 @@ using UnityEditor;
 using Bolt.Addons.Libraries.Humility;
 using System.Collections.Generic;
 using Bolt.Addons.Libraries.CSharp;
+using Bolt.Addons.Community.Utility.Editor;
 
 namespace Bolt.Addons.Community.Code.Editor
 {
