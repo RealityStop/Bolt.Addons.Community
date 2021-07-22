@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Bolt.Addons.Libraries.Humility;
+using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEngine;
 
 namespace Bolt.Addons.Community.Code
 {
@@ -9,7 +11,9 @@ namespace Bolt.Addons.Community.Code
     [SpecialUnit]
     public sealed class FunctionUnit : Unit
     {
-        public MethodDeclaration declaration;
+        public MethodDeclaration methodDeclaration;
+        public FieldDeclaration fieldDeclaration;
+        public ConstructorDeclaration constructorDeclaration;
 
         public FunctionType functionType;
 
@@ -33,19 +37,73 @@ namespace Bolt.Addons.Community.Code
 
             invoke = ControlOutput("invoke");
 
-            for (int i = 0; i < declaration?.parameters.Count; i++)
+            switch (functionType)
             {
-                if (declaration.parameters[i].type != null && !string.IsNullOrEmpty(declaration.parameters[i].name)) parameterPorts.Add(ValueOutput(declaration.parameters[i].type, declaration.parameters[i].name));
+                case FunctionType.Method:
+                    MethodDefinition();
+                    break;
+
+                case FunctionType.Getter:
+                    GetterDefinition();
+                    break;
+
+                case FunctionType.Setter:
+                    SetterDefinition();
+                    break;
+
+                case FunctionType.Constructor:
+                    ConstructorDefinition();
+                    break;
             }
+        }
+
+        private void ConstructorDefinition()
+        {
+            
+        }
+
+        private void SetterDefinition()
+        {
+            
+        }
+
+        private void GetterDefinition()
+        {
+            
+        }
+
+        private void MethodDefinition()
+        {
+            for (int i = 0; i < methodDeclaration?.parameters.Count; i++)
+            {
+                if (methodDeclaration.parameters[i].type != null && !string.IsNullOrEmpty(methodDeclaration.parameters[i].name)) parameterPorts.Add(ValueOutput(methodDeclaration.parameters[i].type, methodDeclaration.parameters[i].name));
+            }
+        }
+
+        public object New(Type type, params object[] parameters)
+        {
+            if (type.Inherits<ScriptableObject>()) return ScriptableObject.CreateInstance(type);
+            return type.New(parameters);
+        }
+
+        public object Get()
+        {
+            // To Do for Live C#
+            return null;
+        }
+
+        public void Set(object value)
+        {
+            // To Do for Live C#
         }
 
         public void Invoke(params object[] parameters)
         {
-            if (declaration == null) throw new NullReferenceException($"{nameof(declaration)} cannot be null.");
+            if (methodDeclaration == null) throw new NullReferenceException($"{nameof(methodDeclaration)} cannot be null.");
 
-            if (parameters.Length != declaration.parameters.Count) throw new ArgumentOutOfRangeException("parameters", "Parameters are not the correct count or types to invoke this method.");
+            if (parameters.Length != methodDeclaration.parameters.Count) throw new ArgumentOutOfRangeException("parameters", "Parameters are not the correct count or types to invoke this method.");
 
-            var flow = Flow.New(declaration.GetReference() as GraphReference);
+            var flow = Flow.New(methodDeclaration.GetReference() as GraphReference);
 
             for (int i = 0; i < parameterPorts.Count; i++)
             {

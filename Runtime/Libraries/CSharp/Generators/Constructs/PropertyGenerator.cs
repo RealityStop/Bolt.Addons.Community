@@ -148,11 +148,11 @@ namespace Bolt.Addons.Libraries.CSharp
 
                 if (multiStatementGetter || multiStatementSetter)
                 {
-                    return (string.IsNullOrEmpty(getterBody) ? string.Empty : "\n" + CodeBuilder.Indent(indent) + "{\n" + Getter()) + (string.IsNullOrEmpty(setterBody) ? string.Empty : "\n" + Setter() + "\n") + "\n" + CodeBuilder.Indent(indent) + "}";
+                    return (string.IsNullOrEmpty(getterBody) ? "\n" + CodeBuilder.Indent(indent) + "{" : "\n" + CodeBuilder.Indent(indent) + "{\n" + Getter()) + (string.IsNullOrEmpty(setterBody) ? "\n" : (multiStatementGetter ? "\n" : string.Empty) + "\n" + Setter() + "\n") +  CodeBuilder.Indent(indent) + "}";
                 }
                 else
                 {
-                    return "{ " + (string.IsNullOrEmpty(getterBody) ? string.Empty : Getter() + " ") + (string.IsNullOrEmpty(setterBody) ? string.Empty : (string.IsNullOrEmpty(getterBody) ? " " : string.Empty) + Setter() + " ") + "}";
+                    return CodeBuilder.Indent(indent) + "{ " + (string.IsNullOrEmpty(getterBody) ? string.Empty : Getter() + " ") + (string.IsNullOrEmpty(setterBody) ? string.Empty : (string.IsNullOrEmpty(getterBody) ? " " : string.Empty) + Setter() + " ") + "}";
                 }
             }
 
@@ -160,7 +160,7 @@ namespace Bolt.Addons.Libraries.CSharp
             {
                 if (multiStatementGetter)
                 {
-                    return CodeBuilder.Indent(indent + 1) + "get\n".ConstructHighlight() + CodeBuilder.Indent(indent + 1) +"{\n" + CodeBuilder.Indent(indent + 2) + getterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 2)) + "\n" + CodeBuilder.Indent(indent + 1) + "}";
+                    return CodeBuilder.Indent(indent) + CodeBuilder.Indent(indent) + "get \n".ConstructHighlight() + CodeBuilder.Indent(indent + 1) + "{\n" + CodeBuilder.Indent(indent + 2) + getterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 2)) + "\n" + CodeBuilder.Indent(indent + 1) + "}";
                 }
                 else
                 {
@@ -172,7 +172,7 @@ namespace Bolt.Addons.Libraries.CSharp
             {
                 if (multiStatementSetter)
                 {
-                    return CodeBuilder.Indent(indent + 1) + "set \n".ConstructHighlight() + "{\n" + setterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 1)) + "\n}";
+                    return CodeBuilder.Indent(indent) + CodeBuilder.Indent(indent) + "set \n".ConstructHighlight() + CodeBuilder.Indent(indent + 1) + "{\n" + CodeBuilder.Indent(indent + 2) + setterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 2)) + "\n" + CodeBuilder.Indent(indent + 1) + "}";
                 }
                 else
                 {

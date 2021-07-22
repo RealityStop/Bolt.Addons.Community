@@ -65,10 +65,10 @@ namespace Bolt.Addons.Community.Code.Editor
         {
             HUMEditor.Horizontal(() =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(7,7,7,7), new RectOffset(1,1,1,1), () => 
-                {
-                    Target.icon = (Texture2D)EditorGUILayout.ObjectField(GUIContent.none, Target.icon, typeof(Texture2D), false, GUILayout.Width(32), GUILayout.Height(32));
-                }, false, false);
+                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(7, 7, 7, 7), new RectOffset(1, 1, 1, 1), () =>
+                      {
+                          Target.icon = (Texture2D)EditorGUILayout.ObjectField(GUIContent.none, Target.icon, typeof(Texture2D), false, GUILayout.Width(32), GUILayout.Height(32));
+                      }, false, false);
 
                 GUILayout.Space(2);
 
@@ -110,11 +110,134 @@ namespace Bolt.Addons.Community.Code.Editor
             {
                 HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
                 {
-                    Inspector.BeginBlock(variables, new Rect());
-                    LudiqGUI.InspectorLayout(variables, GUIContent.none);
-                    if (Inspector.EndBlock(variables))
+                    var listOfVariables = variables.value as List<TFieldDeclaration>;
+
+                    for (int i = 0; i < listOfVariables.Count; i++)
                     {
-                        shouldUpdate = true;
+                        var index = i;
+                        listOfVariables[index].opened = HUMEditor.Foldout(listOfVariables[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        {
+                            HUMEditor.Changed(() =>
+                            {
+                                listOfVariables[index].name = GUILayout.TextField(listOfVariables[index].name);
+                            }, () =>
+                            {
+                                listOfVariables[index].name = listOfVariables[index].name.LegalMemberName();
+                                var getterFunctionUnit = (listOfVariables[index].getter.graph.units[0] as FunctionUnit);
+                                var setterFunctionUnit = (listOfVariables[index].setter.graph.units[0] as FunctionUnit);
+                                listOfVariables[index].getter.name = listOfVariables[index].name + " Getter";
+                                listOfVariables[index].setter.name = listOfVariables[index].name + " Setter";
+                                getterFunctionUnit.Define();
+                                getterFunctionUnit.Describe();
+                                setterFunctionUnit.Define();
+                                setterFunctionUnit.Describe();
+                            });
+
+                            if (GUILayout.Button("...", GUILayout.Width(19)))
+                            {
+                                GenericMenu menu = new GenericMenu();
+                                menu.AddItem(new GUIContent("Delete"), false, (obj) =>
+                                {
+                                    variables.Remove(obj as TFieldDeclaration);
+                                }, listOfVariables[index]);
+
+                                if (index > 0)
+                                {
+                                    menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                                    {
+                                            // To Do
+                                        }, listOfVariables[index]);
+                                }
+
+                                if (index < methods.Count - 1)
+                                {
+                                    menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                                    {
+                                            // To Do
+                                        }, listOfVariables[index]);
+                                }
+                                menu.ShowAsContext();
+                            }
+                        }, () =>
+                        {
+                            HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, new RectOffset(6, 6, 6, 6), new RectOffset(1, 1, 0, 1), () =>
+                            {
+                                listOfVariables[index].scope = (AccessModifier)EditorGUILayout.EnumPopup("Scope", listOfVariables[index].scope);
+
+                                Inspector.BeginBlock(variables[index]["type"], new Rect());
+                                LudiqGUI.InspectorLayout(variables[index]["type"], new GUIContent("Type"));
+                                if (Inspector.EndBlock(variables[index]["type"]))
+                                {
+                                    shouldUpdate = true;
+                                }
+
+                                GUILayout.Space(4);
+
+                                listOfVariables[index].propertyOpened = HUMEditor.Foldout(listOfVariables[index].propertyOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () => 
+                                {
+                                    listOfVariables[index].isProperty = EditorGUILayout.ToggleLeft("Property", listOfVariables[index].isProperty);
+                                }, () =>
+                                {
+                                    HUMEditor.Disabled(!listOfVariables[index].isProperty, () =>
+                                    {
+                                        HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(4,4,4,4), new RectOffset(1,1,0,1), () =>
+                                        {
+                                            HUMEditor.Horizontal(() =>
+                                            {
+                                                HUMEditor.Changed(() => { listOfVariables[index].get = EditorGUILayout.ToggleLeft("Get", listOfVariables[index].get); }, () => { if (!listOfVariables[index].set) listOfVariables[index].get = true; });
+
+                                                HUMEditor.Disabled(!listOfVariables[index].get, () =>
+                                                {
+                                                    if (GUILayout.Button("Edit", GUILayout.Width(60)))
+                                                    {
+                                                        GraphWindow.OpenActive(listOfVariables[index].getter.GetReference() as GraphReference);
+                                                    }
+                                                });
+                                            });
+
+                                            HUMEditor.Horizontal(() =>
+                                            {
+                                                HUMEditor.Changed(() => { listOfVariables[index].set = EditorGUILayout.ToggleLeft("Set", listOfVariables[index].set); }, () => { if (!listOfVariables[index].set) listOfVariables[index].get = true; });
+
+                                                HUMEditor.Disabled(!listOfVariables[index].set, () =>
+                                                {
+                                                    if (GUILayout.Button("Edit", GUILayout.Width(60)))
+                                                    {
+                                                        GraphWindow.OpenActive(listOfVariables[index].setter.GetReference() as GraphReference);
+                                                    }
+                                                });
+                                            });
+                                        }, true, false);
+                                    });
+                                });
+                            }, true, false);
+                        });
+
+                        GUILayout.Space(4);
+                    }
+
+                    if (GUILayout.Button("+ Add Variable"))
+                    {
+                        var declaration = CreateInstance<TFieldDeclaration>();
+                        var getter = CreateInstance<PropertyGetterMacro>();
+                        var setter = CreateInstance<PropertySetterMacro>();
+                        AssetDatabase.AddObjectToAsset(declaration, Target);
+                        AssetDatabase.AddObjectToAsset(getter, Target);
+                        AssetDatabase.AddObjectToAsset(setter, Target);
+                        listOfVariables.Add(declaration);
+                        var functionGetterUnit = new FunctionUnit(FunctionType.Getter);
+                        var functionSetterUnit = new FunctionUnit(FunctionType.Setter);
+                        functionGetterUnit.fieldDeclaration = declaration;
+                        functionSetterUnit.fieldDeclaration = declaration;
+                        declaration.getter = getter;
+                        declaration.setter = setter;
+                        declaration.getter.graph.units.Add(functionGetterUnit);
+                        declaration.setter.graph.units.Add(functionSetterUnit);
+                        declaration.hideFlags = HideFlags.HideInHierarchy;
+                        getter.hideFlags = HideFlags.HideInHierarchy;
+                        setter.hideFlags = HideFlags.HideInHierarchy;
+                        AssetDatabase.SaveAssets();
+                        AssetDatabase.Refresh();
                     }
                 });
             });
@@ -222,7 +345,7 @@ namespace Bolt.Addons.Community.Code.Editor
                         AssetDatabase.AddObjectToAsset(declaration, Target);
                         listOfMethods.Add(declaration);
                         var functionUnit = new FunctionUnit(FunctionType.Method);
-                        functionUnit.declaration = declaration;
+                        functionUnit.methodDeclaration = declaration;
                         declaration.graph.units.Add(functionUnit);
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();

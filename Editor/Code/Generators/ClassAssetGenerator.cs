@@ -23,13 +23,36 @@ namespace Bolt.Addons.Community.Code.Editor
             {
                 if (!string.IsNullOrEmpty(Data.variables[i].name) && Data.variables[i].type != null)
                 {
-                    var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, Data.variables[i].type, Data.variables[i].name);
-                    if (Data.serialized)
+                    if (Data.variables[i].isProperty)
                     {
-                        if (Data.variables[i].inspectable) field.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
-                        if (!Data.variables[i].serialized) field.AddAttribute(AttributeGenerator.Attribute<NonSerializedAttribute>());
+                        var property = PropertyGenerator.Property(Data.variables[i].scope, Data.variables[i].propertyModifier, Data.variables[i].type, Data.variables[i].name, false);
+                        if (Data.serialized)
+                        {
+                            if (Data.variables[i].inspectable) property.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
+                            if (!Data.variables[i].serialized) property.AddAttribute(AttributeGenerator.Attribute<NonSerializedAttribute>());
+                            if (Data.variables[i].get)
+                            {
+                                property.MultiStatementGetter(AccessModifier.Public, UnitGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
+                                .GenerateControl(null, new ControlGenerationData() { returns = Data.variables[i].type }, 0));
+                            }
+                            if (Data.variables[i].set)
+                            {
+                                property.MultiStatementSetter(AccessModifier.Public, UnitGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
+                                .GenerateControl(null, new ControlGenerationData(), 0));
+                            }
+                        }
+                        @class.AddProperty(property);
                     }
-                    @class.AddField(field);
+                    else
+                    {
+                        var field = FieldGenerator.Field(Data.variables[i].scope, Data.variables[i].fieldModifier, Data.variables[i].type, Data.variables[i].name);
+                        if (Data.serialized)
+                        {
+                            if (Data.variables[i].inspectable) field.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
+                            if (!Data.variables[i].serialized) field.AddAttribute(AttributeGenerator.Attribute<NonSerializedAttribute>());
+                        }
+                        @class.AddField(field);
+                    }
                 }
             }
 

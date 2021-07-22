@@ -39,6 +39,7 @@ namespace Bolt.Addons.Community.Utility.Editor
         private void OnGUI()
         {
             e = Event.current;
+
             if (asset == null || Selection.activeObject != null && Selection.activeObject != asset)
             {
                 asset = Selection.activeObject as CodeAsset;
@@ -53,6 +54,7 @@ namespace Bolt.Addons.Community.Utility.Editor
                     if (!cached) { preview.Refresh(); cached = true; }
                 }
             }
+
             preview.DrawLayout();
         }
     }

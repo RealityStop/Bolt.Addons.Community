@@ -11,13 +11,18 @@ namespace Bolt.Addons.Community.Code
 
         protected override string DefinedShortTitle()
         {
-            if (target.declaration != null) return string.IsNullOrEmpty(target.declaration.methodName) ? target.declaration.name : target.declaration.methodName;
-            return base.DefaultShortTitle();
+            if (target.functionType == FunctionType.Method && target.methodDeclaration != null) return string.IsNullOrEmpty(target.methodDeclaration.methodName) ? target.methodDeclaration.name : target.methodDeclaration.methodName;
+            if (target.functionType == FunctionType.Getter && target.fieldDeclaration != null && !string.IsNullOrEmpty(target.fieldDeclaration.getter.name)) return target.fieldDeclaration.getter.name.Replace(" Getter", string.Empty);
+            if (target.functionType == FunctionType.Setter && target.fieldDeclaration != null && !string.IsNullOrEmpty(target.fieldDeclaration.setter.name)) return target.fieldDeclaration.setter.name.Replace(" Setter", string.Empty);
+            return base.DefinedShortTitle();
         }
 
         protected override string DefinedSubtitle()
         {
-            if (target.declaration != null) return "Entry";
+            if (target.functionType == FunctionType.Method && target.methodDeclaration != null) return "Entry";
+            if (target.functionType == FunctionType.Getter && target.fieldDeclaration != null) return "Get";
+            if (target.functionType == FunctionType.Setter && target.fieldDeclaration != null) return "Set";
+            if (target.functionType == FunctionType.Constructor && target.constructorDeclaration != null) return "Constructor";
             return string.Empty;
         }
 

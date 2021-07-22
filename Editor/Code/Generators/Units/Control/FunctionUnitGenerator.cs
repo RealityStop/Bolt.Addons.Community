@@ -13,7 +13,7 @@ namespace Bolt.Addons.Community.Generation
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             var destination = Unit.invoke.connection?.destination;
-            if (destination == null) return string.Empty;
+            if (!Unit.invoke.hasAnyConnection) return "\n";
             return UnitGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit).GenerateControl(destination, data, indent);
         }
     }
