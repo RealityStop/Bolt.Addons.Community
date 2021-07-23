@@ -24,6 +24,9 @@ namespace Bolt.Addons.Community.Code
         public bool get = true;
         public bool set = true;
 
+        public ClassAsset classAsset;
+        public StructAsset structAsset;
+
         public PropertyGetterMacro getter;
         public PropertySetterMacro setter;
 

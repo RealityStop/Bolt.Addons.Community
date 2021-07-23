@@ -38,12 +38,12 @@ namespace Bolt.Addons.Community.Code.Editor
         {
             base.OnEnable();
 
-            //if (constructors == null)
-            //{
-            //    constructors = Metadata.FromProperty(serializedObject.FindProperty("constructors"));
-            //    constructorsProp = serializedObject.FindProperty("constructors");
-            //    hidden = true;
-            //}
+            if (constructors == null || constructorsProp == null)
+            {
+                constructors = Metadata.FromProperty(serializedObject.FindProperty("constructors"));
+                constructorsProp = serializedObject.FindProperty("constructors");
+            }
+
             if (variables == null || variablesProp == null)
             {
                 variables = Metadata.FromProperty(serializedObject.FindProperty("variables"));
@@ -95,6 +95,8 @@ namespace Bolt.Addons.Community.Code.Editor
 
         protected override void BeforePreview()
         {
+            Constructors();
+            GUILayout.Space(4);
             Variables();
             GUILayout.Space(4);
             Methods();
@@ -219,6 +221,8 @@ namespace Bolt.Addons.Community.Code.Editor
                     if (GUILayout.Button("+ Add Variable"))
                     {
                         var declaration = CreateInstance<TFieldDeclaration>();
+                        if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
+                        if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
                         var getter = CreateInstance<PropertyGetterMacro>();
                         var setter = CreateInstance<PropertySetterMacro>();
                         AssetDatabase.AddObjectToAsset(declaration, Target);
@@ -238,6 +242,128 @@ namespace Bolt.Addons.Community.Code.Editor
                         setter.hideFlags = HideFlags.HideInHierarchy;
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();
+                    }
+                });
+            });
+        }
+
+        private void Constructors()
+        {
+            Target.constructorsOpened = HUMEditor.Foldout(Target.constructorsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            {
+                HUMEditor.Image(PathUtil.Load("constructor_32", CommunityEditorPath.Code).Single(), 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
+                GUILayout.Label("Constructors");
+            }, () =>
+            {
+                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                {
+                    var listOfConstructors = constructors.value as List<TConstructorDeclaration>;
+
+                    for (int i = 0; i < listOfConstructors.Count; i++)
+                    {
+                        var index = i;
+                        listOfConstructors[index].opened = HUMEditor.Foldout(listOfConstructors[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        {
+                            GUILayout.Label($"Constructor {i.ToString()}");
+
+                            if (GUILayout.Button("Edit", GUILayout.Width(60)))
+                            {
+                                GraphWindow.OpenActive(listOfConstructors[index].GetReference() as GraphReference);
+                            }
+
+                            if (GUILayout.Button("...", GUILayout.Width(19)))
+                            {
+                                GenericMenu menu = new GenericMenu();
+                                menu.AddItem(new GUIContent("Delete"), false, (obj) =>
+                                {
+                                    constructors.Remove(obj as TConstructorDeclaration);
+                                    AssetDatabase.RemoveObjectFromAsset(obj as TConstructorDeclaration);
+                                }, listOfConstructors[index]);
+
+                                if (index > 0)
+                                {
+                                    menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                                    {
+                                        // To Do
+                                    }, listOfConstructors[index]);
+                                }
+
+                                if (index < methods.Count - 1)
+                                {
+                                    menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                                    {
+                                        // To Do
+                                    }, listOfConstructors[index]);
+                                }
+                                menu.ShowAsContext();
+                            }
+                        }, () =>
+                        {
+                            HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, new RectOffset(6, 6, 6, 6), new RectOffset(1, 1, 0, 1), () =>
+                            {
+                                listOfConstructors[index].scope = (AccessModifier)EditorGUILayout.EnumPopup("Scope", listOfConstructors[index].scope);
+
+                                GUILayout.Space(4);
+
+                                listOfConstructors[index].parametersOpened = HUMEditor.Foldout(listOfConstructors[index].parametersOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                {
+                                    GUILayout.Label("Parameters");
+                                }, () =>
+                                {
+                                    var paramMeta = constructors[index]["parameters"];
+                                    Inspector.BeginBlock(paramMeta, new Rect());
+                                    LudiqGUI.InspectorLayout(paramMeta, GUIContent.none);
+                                    if (Inspector.EndBlock(paramMeta))
+                                    {
+                                        shouldUpdate = true;
+                                        var funcionUnit = (listOfConstructors[index].graph.units[0] as FunctionUnit);
+                                        funcionUnit.Define();
+                                        funcionUnit.Describe();
+                                    }
+                                });
+
+                            }, true, false);
+                        });
+
+                        GUILayout.Space(4);
+                    }
+
+                    if (GUILayout.Button("+ Add Constructor"))
+                    {
+                        var declaration = CreateInstance<TConstructorDeclaration>();
+                        if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
+                        if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                        declaration.hideFlags = HideFlags.HideInHierarchy;
+                        AssetDatabase.AddObjectToAsset(declaration, Target);
+                        listOfConstructors.Add(declaration);
+                        var functionUnit = new FunctionUnit(FunctionType.Constructor);
+                        functionUnit.constructorDeclaration = declaration;
+                        declaration.graph.units.Add(functionUnit);
+                        AssetDatabase.SaveAssets();
+                        AssetDatabase.Refresh();
+                    }
+
+                    if (methods.Count != methodsCount)
+                    {
+                        if (Target is ClassAsset)
+                        {
+                            for (int i = 0; i < methods.Count; i++)
+                            {
+                                ((TMethodDeclaration)methods[i].value).classAsset = Target as ClassAsset;
+                            }
+                        }
+                        else
+                        {
+                            if (Target is StructAsset)
+                            {
+                                for (int i = 0; i < methods.Count; i++)
+                                {
+                                    ((TMethodDeclaration)methods[i].value).structAsset = Target as StructAsset;
+                                }
+                            }
+                        }
+
+                        methodsCount = methods.Count;
                     }
                 });
             });
@@ -282,6 +408,7 @@ namespace Bolt.Addons.Community.Code.Editor
                                 menu.AddItem(new GUIContent("Delete"), false, (obj) =>
                                 {
                                     methods.Remove(obj as TMethodDeclaration);
+                                    AssetDatabase.RemoveObjectFromAsset(obj as TMethodDeclaration);
                                 }, listOfMethods[index]);
 
                                 if (index > 0)
@@ -339,9 +466,12 @@ namespace Bolt.Addons.Community.Code.Editor
                         GUILayout.Space(4);
                     }
 
-                    if (GUILayout.Button("+ Add Methods"))
+                    if (GUILayout.Button("+ Add Method"))
                     {
                         var declaration = CreateInstance<TMethodDeclaration>();
+                        if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
+                        if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                        declaration.hideFlags = HideFlags.HideInHierarchy;
                         AssetDatabase.AddObjectToAsset(declaration, Target);
                         listOfMethods.Add(declaration);
                         var functionUnit = new FunctionUnit(FunctionType.Method);

@@ -19,6 +19,23 @@ namespace Bolt.Addons.Community.Code.Editor
             if (Data.includeInSettings) @class.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
             if (Data.scriptableObject) @class.AddAttribute(AttributeGenerator.Attribute<CreateAssetMenuAttribute>().AddParameter("menuName", Data.menuName).AddParameter("fileName", Data.fileName).AddParameter("order", Data.order));
 
+            for (int i = 0; i < Data.constructors.Count; i++)
+            {
+                var constructor = ConstructorGenerator.Constructor(Data.constructors[i].scope, Data.constructors[i].modifier, Data.title.LegalMemberName());
+                if (Data.constructors[i].graph.units.Count > 0)
+                {
+                    var unit = Data.constructors[i].graph.units[0] as FunctionUnit;
+                    constructor.Body(FunctionUnitGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0));
+
+                    for (int pIndex = 0; pIndex < Data.constructors[i].parameters.Count; pIndex++)
+                    {
+                        if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(false, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, ParameterModifier.None));
+                    }
+                }
+
+                @class.AddConstructor(constructor);
+            }
+
             for (int i = 0; i < Data.variables.Count; i++)
             {
                 if (!string.IsNullOrEmpty(Data.variables[i].name) && Data.variables[i].type != null)
@@ -30,27 +47,32 @@ namespace Bolt.Addons.Community.Code.Editor
                         {
                             if (Data.variables[i].inspectable) property.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
                             if (!Data.variables[i].serialized) property.AddAttribute(AttributeGenerator.Attribute<NonSerializedAttribute>());
+
                             if (Data.variables[i].get)
                             {
                                 property.MultiStatementGetter(AccessModifier.Public, UnitGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
                                 .GenerateControl(null, new ControlGenerationData() { returns = Data.variables[i].type }, 0));
                             }
+
                             if (Data.variables[i].set)
                             {
                                 property.MultiStatementSetter(AccessModifier.Public, UnitGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
                                 .GenerateControl(null, new ControlGenerationData(), 0));
                             }
                         }
+
                         @class.AddProperty(property);
                     }
                     else
                     {
                         var field = FieldGenerator.Field(Data.variables[i].scope, Data.variables[i].fieldModifier, Data.variables[i].type, Data.variables[i].name);
+
                         if (Data.serialized)
                         {
                             if (Data.variables[i].inspectable) field.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
                             if (!Data.variables[i].serialized) field.AddAttribute(AttributeGenerator.Attribute<NonSerializedAttribute>());
                         }
+
                         @class.AddField(field);
                     }
                 }
@@ -71,6 +93,7 @@ namespace Bolt.Addons.Community.Code.Editor
                             if (!string.IsNullOrEmpty(Data.methods[i].parameters[pIndex].name)) method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, ParameterModifier.None));
                         }
                     }
+
                     @class.AddMethod(method);
                 }
             }

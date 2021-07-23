@@ -59,17 +59,19 @@ namespace Bolt.Addons.Community.Code
 
         private void ConstructorDefinition()
         {
-            
+            for (int i = 0; i < constructorDeclaration?.parameters.Count; i++)
+            {
+                if (constructorDeclaration.parameters[i].type != null && !string.IsNullOrEmpty(constructorDeclaration.parameters[i].name)) parameterPorts.Add(ValueOutput(constructorDeclaration.parameters[i].type, constructorDeclaration.parameters[i].name));
+            }
         }
 
         private void SetterDefinition()
         {
-            
+            parameterPorts.Add(ValueOutput(fieldDeclaration.type, "value"));
         }
 
         private void GetterDefinition()
         {
-            
         }
 
         private void MethodDefinition()

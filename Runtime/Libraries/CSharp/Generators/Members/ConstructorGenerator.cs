@@ -46,7 +46,7 @@ namespace Bolt.Addons.Libraries.CSharp
                 }
             }
 
-            return attributes + CodeBuilder.Indent(indent) + scope.AsString().ToLower() + " " + modifier.AsString() + modSpace + name.LegalMemberName() + "(" + parameters + ")" + (string.IsNullOrEmpty(baseParameters) ? string.Empty : " : base(" + baseParameters + ")");
+            return attributes + CodeBuilder.Indent(indent) + scope.AsString().ToLower().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + name.LegalMemberName().TypeHighlight() + "(" + parameters + ")" + (string.IsNullOrEmpty(baseParameters) ? string.Empty : " : base(" + baseParameters + ")");
         }
 
         protected override sealed string GenerateBody(int indent)
