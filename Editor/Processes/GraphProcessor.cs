@@ -31,7 +31,7 @@ namespace Bolt.Addons.Community.Processing
             var active = GraphWindow.active;
             return reference != null && active != null && active.hasFocus;
         }
-
+         
         public override void OnBind()
         {
             GraphReference reference = null;
