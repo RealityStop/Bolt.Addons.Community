@@ -13,11 +13,11 @@ namespace Bolt.Addons.Community.Processing
             {
                 var path = "Assets/Bolt.Addons.Generated/";
                 HUMIO.Ensure(path).Path();
-                CommentStyle style = AssetDatabase.LoadAssetAtPath<CommentStyle>(path + "GlobalCommentStyle.asset");
+                CommentPalette style = AssetDatabase.LoadAssetAtPath<CommentPalette>(path + "GlobalCommentStyle.asset");
 
                 if (style == null)
                 {
-                    style = ScriptableObject.CreateInstance<CommentStyle>();
+                    style = ScriptableObject.CreateInstance<CommentPalette>();
                     style.name = "GlobalCommentStyle";
                     AssetDatabase.CreateAsset(style, path + "GlobalCommentStyle.asset");
                 }

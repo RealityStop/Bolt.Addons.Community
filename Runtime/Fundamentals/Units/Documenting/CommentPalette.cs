@@ -2,7 +2,7 @@
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
 {
-    public sealed class CommentStyle : ScriptableObject
+    public sealed class CommentPalette : ScriptableObject
     {
         public bool greyScale = false;
         public float colorSpread = 2.4f;

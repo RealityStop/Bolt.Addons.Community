@@ -15,7 +15,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
     public class CommentUnit : Unit
     {
         // Global
-        public static CommentStyle style;
+        public static CommentPalette style;
 
         // Per Instance
         public bool

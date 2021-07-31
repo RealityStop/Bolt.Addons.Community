@@ -84,7 +84,7 @@ namespace Bolt.Community.Addons.Fundamentals.Editor.Controls
         public static Color[,,] colorPalette = new Color[2, 6, 9];  // Main, Custom
         public static Color[,,] fontPalette = new Color[3, 6, 9];  // Main, Colorized, Custom
 
-        static CommentStyle style => CommentUnit.style;
+        static CommentPalette style => CommentUnit.style;
         public static bool initialised = false;
 
         ///////////////////////////   Methods   /////////////////////////////////////////////
