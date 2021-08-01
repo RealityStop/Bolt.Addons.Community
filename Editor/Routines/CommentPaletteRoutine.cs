@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Bolt.Addons.Community.Processing
 {
-    public sealed class CommentStyleRoutine : DeserializedRoutine
+    public sealed class CommentPaletteRoutine : DeserializedRoutine
     {
         public override void Run()
         {

@@ -21,7 +21,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
         public bool
             refresh = true;     // Unused - for optimisation
 
-        [Inspectable]
+        [Inspectable][Serialize]
         public (int palette, int row, int col)
             paletteSelection = (0, 0, 0);
 
