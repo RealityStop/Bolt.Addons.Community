@@ -9,6 +9,7 @@ namespace Bolt.Addons.Community.Processing
     {
         private Type[] types;
         private List<GraphProcess> processes = new List<GraphProcess>();
+        private bool isBound;
 
         public override void Process()
         {
@@ -34,31 +35,17 @@ namespace Bolt.Addons.Community.Processing
          
         public override void OnBind()
         {
-            GraphReference reference = null;
-            if (CanProcess(out reference))
+            for (int i = 0; i < processes.Count; i++)
             {
-                for (int i = 0; i < processes.Count; i++)
-                {
-                    if (reference.graph.GetType() == processes[i].graphType)
-                    {
-                        processes[i].Bind(reference.graph, GraphWindow.activeContext.canvas);
-                    }
-                }
+                processes[i].Bind();
             }
         }
 
         public override void OnUnbind()
         {
-            GraphReference reference = null;
-            if (CanProcess(out reference))
+            for (int i = 0; i < processes.Count; i++)
             {
-                for (int i = 0; i < processes.Count; i++)
-                {
-                    if (reference.graph.GetType() == processes[i].graphType)
-                    {
-                        processes[i].Unbind(reference.graph, GraphWindow.activeContext.canvas);
-                    }
-                }
+                processes[i].Unbind();
             }
         }
 

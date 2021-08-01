@@ -10,11 +10,11 @@ namespace Bolt.Addons.Community.Processing
         private int ticks;
         private bool firstSlash;
 
-        public override void OnBind(FlowGraph graph, FlowCanvas canvas)
+        protected override void OnBind()
         {
         }
 
-        public override void OnUnbind(FlowGraph graph, FlowCanvas canvas)
+        protected override void OnUnbind()
         {
         }
 
