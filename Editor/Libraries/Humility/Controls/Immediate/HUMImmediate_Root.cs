@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -21,6 +22,17 @@ namespace Bolt.Addons.Libraries.Humility
             }
 
             return false;
+        }
+
+        public static void Block(this Metadata metadata, Action check, Action changed, bool recordUndo = true, Rect position = new Rect())
+        {
+            Inspector.BeginBlock(metadata, position);
+            check();
+            if (Inspector.EndBlock(metadata))
+            {
+                changed();
+                if (recordUndo) metadata.RecordUndo();
+            }
         }
 
         public static void Disabled(bool isDisabled, Action action)

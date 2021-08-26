@@ -44,10 +44,12 @@ namespace Bolt.Addons.Community.Utility.Editor
         {
             base.DefinedPort(port, description);
 
+#if !VISUAL_SCRIPTING_1_7_3
             if (port == unit.target)
             {
                 description.icon = PathUtil.Load("EditorWindow", CommunityEditorPath.Fundamentals);
             }
+#endif
         }
     }
 }
