@@ -131,3 +131,4 @@ There are two sets of units currently delivered:
  - AFoolsDuty
  - Eka
  - Silence
+ - PurerLogic
