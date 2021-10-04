@@ -50,7 +50,7 @@ To update, open Packages/manifest.json and remove the dev.bolt.addons entry unde
 ### What's included
 There are two sets of units currently delivered:
 
-> ### Bolt.Addons.Community
+> ### NODES
 
 /Variables
  - **Increment Variable**
@@ -89,7 +89,6 @@ There are two sets of units currently delivered:
  - **Gate**
  - **Edge Trigger**
  - **Change Detect**
- - **DoOnce**
  - **Invoke Delegate**
  - **Bind Delegate**
  - **Unbind Delegate**
@@ -104,8 +103,8 @@ There are two sets of units currently delivered:
 
 /Utility
  - **Convert**	
- - **FlowReroute**
- - **ValueReroute**
+ - **Flow Reroute**
+ - **Value Reroute**
 
 /Graphs
  - **Machine Is**
@@ -127,6 +126,27 @@ There are two sets of units currently delivered:
 	 - **Reverse Linear**
 	 - **Sigmoid**
 
+
+
+> ### ASSETS
+
+*Code Assets are used to generate dependency free C# code.
+
+/Code
+ - **Class** (Experimental)
+ - **Delegate**
+ - **Enum**
+ - **Interface** (Experimental)
+ - **Struct** (Experimental)
+
+/Editor
+ - **Editor Window**
+
+
+> ### UTILITIES
+
+ - **Node Selection to Asset or Embed**
+ - **Compiler Button**
 
 
 ## Current maintainers (aka who to blame)
