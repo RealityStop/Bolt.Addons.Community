@@ -53,7 +53,7 @@ namespace Unity.VisualScripting.Community
             header.style.unityTextAlign = TextAnchor.MiddleCenter;
 
             var label = new Label();
-            label.text = "Convert Unit Selection";
+            label.text = "Convert Node Selection";
             label.style.flexGrow = 1;
 
             var buttonContainer = new VisualElement();
