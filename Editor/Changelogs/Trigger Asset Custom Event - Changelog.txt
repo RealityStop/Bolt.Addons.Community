@@ -1,0 +1,11 @@
+TRIGGER ASSET CUSTOM EVENT Changelog- 1.0.1
+
+1.0.1 Changelog
+____________________________
+
+ - Moved repositories and namespace from Lasm.AssetLibrary.Nodes to Unity.VisualScripting.Community
+
+1.0.0 Changelog
+____________________________
+
+ - Added TriggerAssetCustomEvent node.
