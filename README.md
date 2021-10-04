@@ -117,8 +117,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 
 /Math
  - **Math Op**
- - 
-	 /Functions  (Still in testing, feel free to make suggestions, though!)
+ - **/Functions**
 	 - **Decay**
 	 - **Exponential**
 	 - **Linear**
@@ -130,7 +129,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 
 > ### ASSETS
 
-*Code Assets are used to generate dependency free C# code.
+Code Assets are used to generate dependency free C# code.
 
 /Code
  - **Class** (Experimental)
