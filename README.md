@@ -21,7 +21,7 @@ Open the Unity Package Manager, and click the "+" button in the top-left corner 
 
 and add the following url:
 
-> https://github.com/RealityStop/Bolt.Addons.Community.git#UVSsupport-Dev
+> https://github.com/RealityStop/Bolt.Addons.Community.git
 
 
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
@@ -33,7 +33,7 @@ Then, use the Regenerate Nodes option in Project Settings > Visual Scripting, an
 ### Manual install:
 Alternatively, open Packages/manifest.json and add this line under dependencies:
 
-	"dev.bolt.addons": "https://github.com/RealityStop/Bolt.Addons.Community.git#UVSsupport-Dev"
+	"dev.bolt.addons": "https://github.com/RealityStop/Bolt.Addons.Community.git"
 	
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 	
