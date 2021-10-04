@@ -78,9 +78,9 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 
 /Collections
  - **Random Numbers**
- - **CreateArray**
- - **GetArrayItem**
- - **SetArrayItem**
+ - **Create Array**
+ - **Get Array Item**
+ - **Set Array Item**
  - **Query**
  - **Random Element**
 
