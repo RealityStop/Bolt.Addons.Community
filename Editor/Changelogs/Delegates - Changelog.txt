@@ -1,0 +1,10 @@
+Changelog: Delegates
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Delegates Asset to create AOT friendly Delegate wrappers.
+- Added Invoke Delegate
+- Added Bind Delegate
+- Added Unbind Delegate
+- Added Create Delegate
+- Added Delegate Options for auto populating Funcs and Actions that have been compiled, into the Fuzzy Finder.

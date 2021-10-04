@@ -1,0 +1,7 @@
+Changelog: Comments
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Comment
+- Added shortcut for creating comments with "Ctrl+//"
+- Comment Pallets and design by PurerLogic.

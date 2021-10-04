@@ -6,8 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Bolt.Addons.Community
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.CommunityOptionFetcher")]
     public static class CommunityOptionFetcher
     {
         static object lockObject = new object();

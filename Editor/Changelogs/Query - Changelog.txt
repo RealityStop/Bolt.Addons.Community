@@ -1,0 +1,6 @@
+Changelog: Query
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Query
+- Added Query Operation

@@ -1,0 +1,11 @@
+Changelog: Machine Variables
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Machine Is
+- Added Get Machine
+- Added Get Machines
+- Added Get Machine Variable
+- Added Set Machine Variable
+- Added Has Machine Variable
+- Added Machine Variable Options for auto populating the Fuzzy Finder with ALL Machine variables.

@@ -5,8 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.DefinedEvents.Support
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Support.DefinedEventSupport")]
     static class DefinedEventSupport
     {
         internal static bool IsOptimized()

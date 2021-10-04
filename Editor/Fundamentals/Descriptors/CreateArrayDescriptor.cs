@@ -1,17 +1,12 @@
-﻿using UnityEngine;
-using UnityEditor;
-using Ludiq;
-using Bolt;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Collections.Editor
+﻿namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// The descriptor that sets the icon for CreateMultiArray.
     /// </summary>
-    [Descriptor(typeof(CreateMultiArray))]
-    public class CreateMultiArrayDescriptor : UnitDescriptor<CreateMultiArray>
+    [Descriptor(typeof(CreateArray))]
+    public class CreateArrayDescriptor : UnitDescriptor<CreateArray>
     {
-        public CreateMultiArrayDescriptor(CreateMultiArray unit) : base(unit)
+        public CreateArrayDescriptor(CreateArray unit) : base(unit)
         {
 
         }

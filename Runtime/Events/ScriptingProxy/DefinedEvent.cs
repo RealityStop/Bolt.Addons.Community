@@ -1,13 +1,9 @@
-﻿using Bolt.Addons.Community.DefinedEvents.Units;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 using UnityEngine;
 
-namespace Bolt.Addons.Community
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvent")]
     public static class DefinedEvent
     {
         /// <summary>
@@ -18,7 +14,7 @@ namespace Bolt.Addons.Community
         /// <param name="eventData">This is a filled object of the type of event you want to trigger.</param>
         public static void Trigger(GameObject target, object eventData)
         {
-            DefinedEventUnit.Trigger(target, eventData);
+            DefinedEventNode.Trigger(target, eventData);
         }
 
         /// <summary>
@@ -29,7 +25,7 @@ namespace Bolt.Addons.Community
         /// <param name="eventData">This is a filled object of the type of event you want to trigger.</param>
         public static void TriggerGlobal(object eventData)
         {
-            GlobalDefinedEventUnit.Trigger(eventData);
+            GlobalDefinedEventNode.Trigger(eventData);
         }
 
         /// <summary>
@@ -44,7 +40,7 @@ namespace Bolt.Addons.Community
         /// event, essentially cancelling the call to RegisterListener.</returns>
         public static IDisposable RegisterListener<T>(GameObject target, Action<T> onEvent)
         {
-            return DefinedEventUnit.RegisterListener<T>(target, onEvent);
+            return DefinedEventNode.RegisterListener<T>(target, onEvent);
         }
 
         /// <summary>
@@ -59,7 +55,7 @@ namespace Bolt.Addons.Community
         /// event, essentially cancelling the call to RegisterListener.</returns>
         public static IDisposable RegisterGlobalListener<T>(Action<T> onEvent)
         {
-            return GlobalDefinedEventUnit.RegisterListener<T>(onEvent);
+            return GlobalDefinedEventNode.RegisterListener<T>(onEvent);
         }
     }
 }

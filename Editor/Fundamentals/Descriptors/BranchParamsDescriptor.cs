@@ -1,11 +1,4 @@
-﻿using Ludiq;
-using Bolt;
-using UnityEngine;
-using UnityEditor;
-using System;
-using System.Reflection;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {
     [Descriptor(typeof(BranchParams))]
     public class BranchParamsDescriptor : UnitDescriptor<BranchParams>

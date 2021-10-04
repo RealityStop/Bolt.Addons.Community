@@ -1,0 +1,5 @@
+Changelog: Node Selection to Asset
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Node Selection Utility.

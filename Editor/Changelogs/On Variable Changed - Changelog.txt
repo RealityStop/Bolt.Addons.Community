@@ -1,0 +1,5 @@
+Changelog: On Variable Changed
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added On Variable Changed

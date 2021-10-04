@@ -1,17 +1,8 @@
-
-
-# Bolt.Addons.Community
-A community-driven project for extending Unity Bolt with custom nodes, types, and helpers.
+# Community Addons
+### Unity Visual Scripting Extensions
+A community-driven project for extending Unity Visual Scripting with custom nodes, assets, types, and helpers.
 
 Development is open to the community.
-
-
-#### Why Bolt.Addons.Community and not Bolt.Community.Addons?  
-While the latter flows off of the tongue more naturally, this project aims to be part of a larger ecosystem of addons and so aims for the former.  If auto-adding custom types from namespaces becomes a supported feature of Bolt, Bolt.Addons.X is preferable.
-
-> [Direct Download (requires matching Bolt version)](https://github.com/RealityStop/Bolt.Addons.Community/releases/)
-
-
 
 ----------
 
@@ -30,25 +21,23 @@ Open the Unity Package Manager, and click the "+" button in the top-left corner 
 
 and add the following url:
 
-> https://github.com/RealityStop/Bolt.Addons.Community.git
-
-> **Important**: looking for Unity Visual Scripting (UnityVS) support?  Use https://github.com/RealityStop/Bolt.Addons.Community.git#UVSsupport instead!
+> https://github.com/RealityStop/Bolt.Addons.Community.git#UVSsupport-Dev
 
 
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 
-Then, use the Tools menu to Build Unit Options, and they're ready to go!  Once you've rebuilt your unit options, the new nodes will be available for use.
+Then, use the Regenerate Nodes option in Project Settings > Visual Scripting, and they're ready to go!  Once you've rebuilt your node options, the new nodes will be available for use.
 
 
 
 ### Manual install:
 Alternatively, open Packages/manifest.json and add this line under dependencies:
 
-	"dev.bolt.addons": "https://github.com/RealityStop/Bolt.Addons.Community.git"
+	"dev.bolt.addons": "https://github.com/RealityStop/Bolt.Addons.Community.git#UVSsupport-Dev"
 	
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 	
-Then, use the Tools menu to Build Unit Options, and they're ready to go!  Once you've rebuilt your unit options, the new nodes will be available for use.
+Then, use the Regenerate Nodes option in Project Settings > Visual Scripting, and they're ready to go!  Once you've rebuilt your node options, the new nodes will be available for use.
 
 
 # Updating
@@ -60,16 +49,20 @@ To update, open Packages/manifest.json and remove the dev.bolt.addons entry unde
 
 
 ### What's included
-There are two sets of units currently delivered:
+We include a multitude of assets, nodes, and tooling to extend missing language concepts and provide fundamental utilities and extensions for graphs. Here is what you will find:
 
-> ### Bolt.Addons.Community
 
-/Variables
+--------
+
+
+> ### NODES
+
+Variables
  - **Increment Variable**
  - **Decrement Variable**
  - **Plus Equals**
 
-/Events
+Events
  - **On Every X Seconds**
  - **On Variable Changed**
  - **Manual Event**
@@ -77,44 +70,64 @@ There are two sets of units currently delivered:
  - **Trigger Defined Event**
  - **Global Defined Event**
  - **Trigger Global Defined Event**
+ - **Return Event**
+ - **Event Return**
+ - **Trigger Return Event**
+ - **Editor Window Events**
 
-/Documentation
+Documentation
  - **Todo**
  - **Some Value**
  - **Stuff Happens**
  - **Comment**
 
-/Collections
+Collections
  - **Random Numbers**
- - **CreateMultiArray**		(new in 3.0)
- - **GetArrayItem**		(new in 3.0)
- - **SetArrayItem**		(new in 3.0)
- - **Query**			(new in 3.0)
- - **Random Element**       (new in 3.0)
+ - **Create Array**
+ - **Get Array Item**
+ - **Set Array Item**
+ - **Query**
+ - **Random Element**
 
-/Control
+Control
  - **Branch (Params)**
  - **Gate**
  - **Edge Trigger**
  - **Change Detect**
- - **DoOnce**
+ - **Invoke Delegate**
+ - **Bind Delegate**
+ - **Unbind Delegate**
+ - **Create Delegate**
 
-/Logic
+Logic
  - **Latch**
  - **Polarity**
  - **Between**
  - **Logic (Params)**
  - **Log**
 
-/Utility
- - **Convert**			(new in 3.0)
- - **FlowReroute**		(new in 3.0)
- - **ValueReroute**		(new in 3.0)
+Utility
+ - **Convert**	
+ - **Flow Reroute**
+ - **Value Reroute**
+
+Graphs
+ - **Machine Is**
+ - **Get Machine**
+ - **Get Machines**
+ - **Get Machine Variable**
+ - **Set Machine Variable**
+ - **Has Machine Variable**
  
-/Math
+Editor
+ - **Window Is**
+ - **Get Window Variable**
+ - **Set Window Variable**
+ - **Has Window Variable**
+
+Math
  - **Math Op**
- - 
-	 /Functions  (Still in testing, feel free to make suggestions, though!)
+ - **Functions**
 	 - **Decay**
 	 - **Exponential**
 	 - **Linear**
@@ -122,6 +135,34 @@ There are two sets of units currently delivered:
 	 - **Reverse Linear**
 	 - **Sigmoid**
 
+
+--------
+
+> ### ASSETS
+
+Code Assets are used to generate dependency free C# code.
+
+Code
+ - **Class** (Experimental)
+ - **Delegate**
+ - **Enum**
+ - **Interface** (Experimental)
+ - **Struct** (Experimental)
+
+Editor
+ - **Editor Window**
+
+
+--------
+
+
+> ### UTILITIES
+
+ - **Node Selection to Asset or Embed**
+ - **Compiler Button**
+
+
+--------
 
 
 ## Current maintainers (aka who to blame)
@@ -133,3 +174,4 @@ There are two sets of units currently delivered:
  - AFoolsDuty
  - Eka
  - Silence
+ - PurerLogic

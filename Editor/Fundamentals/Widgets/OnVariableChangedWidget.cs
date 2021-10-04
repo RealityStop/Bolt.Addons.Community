@@ -1,13 +1,7 @@
-﻿using Bolt;
-using Bolt.Addons.Community.Fundamentals;
-using Ludiq;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
+namespace Unity.VisualScripting.Community
 {
     [Widget(typeof(OnVariableChanged))]
     public sealed class OnVariableChangedWidget : UnitWidget<OnVariableChanged>
