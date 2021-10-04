@@ -115,10 +115,15 @@ Graphs
  - **Machine Is**
  - **Get Machine**
  - **Get Machines**
+ - **Get Machine Variable**
+ - **Set Machine Variable**
+ - **Has Machine Variable**
  
 Editor
  - **Window Is**
- - **Window Variables**
+ - **Get Window Variable**
+ - **Set Window Variable**
+ - **Has Window Variable**
 
 Math
  - **Math Op**
