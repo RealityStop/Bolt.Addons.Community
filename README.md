@@ -118,6 +118,9 @@ Graphs
  - **Get Machine Variable**
  - **Set Machine Variable**
  - **Has Machine Variable**
+
+Time
+ - **Yield**
  
 Editor
  - **Window Is**
