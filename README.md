@@ -25,7 +25,7 @@ and add the following url:
 
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 
-Then, use the Tools menu to Build Unit Options, and they're ready to go!  Once you've rebuilt your unit options, the new nodes will be available for use.
+Then, use the Regenerate Nodes option in Project Settings > Visual Scripting, and they're ready to go!  Once you've rebuilt your node options, the new nodes will be available for use.
 
 
 
@@ -36,7 +36,7 @@ Alternatively, open Packages/manifest.json and add this line under dependencies:
 	
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 	
-Then, use the Tools menu to Build Unit Options, and they're ready to go!  Once you've rebuilt your unit options, the new nodes will be available for use.
+Then, use the Regenerate Nodes option in Project Settings > Visual Scripting, and they're ready to go!  Once you've rebuilt your node options, the new nodes will be available for use.
 
 
 # Updating
@@ -48,7 +48,7 @@ To update, open Packages/manifest.json and remove the dev.bolt.addons entry unde
 
 
 ### What's included
-There are two sets of units currently delivered:
+We include a multitude of assets, nodes, and tooling to extend missing language concepts and provide fundamental utilities and extensions for graphs. Here is what you will find:
 
 > ### NODES
 
