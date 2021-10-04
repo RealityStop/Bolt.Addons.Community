@@ -1,17 +1,7 @@
-
-
 # Bolt.Addons.Community
-A community-driven project for extending Unity Bolt with custom nodes, types, and helpers.
+A community-driven project for extending Unity Visual Scripting with custom nodes, assets, types, and helpers.
 
 Development is open to the community.
-
-
-#### Why Bolt.Addons.Community and not Bolt.Community.Addons?  
-While the latter flows off of the tongue more naturally, this project aims to be part of a larger ecosystem of addons and so aims for the former.  If auto-adding custom types from namespaces becomes a supported feature of Bolt, Bolt.Addons.X is preferable.
-
-> [Direct Download (requires matching Bolt version)](https://github.com/RealityStop/Bolt.Addons.Community/releases/)
-
-
 
 ----------
 
@@ -30,7 +20,7 @@ Open the Unity Package Manager, and click the "+" button in the top-left corner 
 
 and add the following url:
 
-> https://github.com/RealityStop/Bolt.Addons.Community.git
+> https://github.com/RealityStop/Bolt.Addons.Community.git#UVSsupport-Dev
 
 
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
@@ -42,7 +32,7 @@ Then, use the Tools menu to Build Unit Options, and they're ready to go!  Once y
 ### Manual install:
 Alternatively, open Packages/manifest.json and add this line under dependencies:
 
-	"dev.bolt.addons": "https://github.com/RealityStop/Bolt.Addons.Community.git"
+	"dev.bolt.addons": "https://github.com/RealityStop/Bolt.Addons.Community.git#UVSsupport-Dev"
 	
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 	
@@ -75,6 +65,10 @@ There are two sets of units currently delivered:
  - **Trigger Defined Event**
  - **Global Defined Event**
  - **Trigger Global Defined Event**
+ - **Return Event**
+ - **Event Return**
+ - **Trigger Return Event**
+ - **Editor Window Events**
 
 /Documentation
  - **Todo**
@@ -84,11 +78,11 @@ There are two sets of units currently delivered:
 
 /Collections
  - **Random Numbers**
- - **CreateMultiArray**		(new in 3.0)
- - **GetArrayItem**		(new in 3.0)
- - **SetArrayItem**		(new in 3.0)
- - **Query**			(new in 3.0)
- - **Random Element**       (new in 3.0)
+ - **CreateArray**
+ - **GetArrayItem**
+ - **SetArrayItem**
+ - **Query**
+ - **Random Element**
 
 /Control
  - **Branch (Params)**
@@ -96,6 +90,10 @@ There are two sets of units currently delivered:
  - **Edge Trigger**
  - **Change Detect**
  - **DoOnce**
+ - **Invoke Delegate**
+ - **Bind Delegate**
+ - **Unbind Delegate**
+ - **Create Delegate**
 
 /Logic
  - **Latch**
@@ -105,10 +103,19 @@ There are two sets of units currently delivered:
  - **Log**
 
 /Utility
- - **Convert**			(new in 3.0)
- - **FlowReroute**		(new in 3.0)
- - **ValueReroute**		(new in 3.0)
+ - **Convert**	
+ - **FlowReroute**
+ - **ValueReroute**
+
+/Graphs
+ - **Machine Is**
+ - **Get Machine**
+ - **Get Machines**
  
+/Editor
+ - **Window Is**
+ - **Window Variables**
+
 /Math
  - **Math Op**
  - 
