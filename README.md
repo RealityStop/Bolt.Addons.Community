@@ -1,4 +1,5 @@
-# Bolt.Addons.Community
+# Community Addons
+### Unity Visual Scripting Extensions
 A community-driven project for extending Unity Visual Scripting with custom nodes, assets, types, and helpers.
 
 Development is open to the community.
@@ -50,14 +51,18 @@ To update, open Packages/manifest.json and remove the dev.bolt.addons entry unde
 ### What's included
 We include a multitude of assets, nodes, and tooling to extend missing language concepts and provide fundamental utilities and extensions for graphs. Here is what you will find:
 
+
+--------
+
+
 > ### NODES
 
-/Variables
+Variables
  - **Increment Variable**
  - **Decrement Variable**
  - **Plus Equals**
 
-/Events
+Events
  - **On Every X Seconds**
  - **On Variable Changed**
  - **Manual Event**
@@ -70,13 +75,13 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
  - **Trigger Return Event**
  - **Editor Window Events**
 
-/Documentation
+Documentation
  - **Todo**
  - **Some Value**
  - **Stuff Happens**
  - **Comment**
 
-/Collections
+Collections
  - **Random Numbers**
  - **Create Array**
  - **Get Array Item**
@@ -84,7 +89,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
  - **Query**
  - **Random Element**
 
-/Control
+Control
  - **Branch (Params)**
  - **Gate**
  - **Edge Trigger**
@@ -94,30 +99,30 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
  - **Unbind Delegate**
  - **Create Delegate**
 
-/Logic
+Logic
  - **Latch**
  - **Polarity**
  - **Between**
  - **Logic (Params)**
  - **Log**
 
-/Utility
+Utility
  - **Convert**	
  - **Flow Reroute**
  - **Value Reroute**
 
-/Graphs
+Graphs
  - **Machine Is**
  - **Get Machine**
  - **Get Machines**
  
-/Editor
+Editor
  - **Window Is**
  - **Window Variables**
 
-/Math
+Math
  - **Math Op**
- - **/Functions**
+ - **Functions**
 	 - **Decay**
 	 - **Exponential**
 	 - **Linear**
@@ -126,26 +131,33 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 	 - **Sigmoid**
 
 
+--------
 
 > ### ASSETS
 
 Code Assets are used to generate dependency free C# code.
 
-/Code
+Code
  - **Class** (Experimental)
  - **Delegate**
  - **Enum**
  - **Interface** (Experimental)
  - **Struct** (Experimental)
 
-/Editor
+Editor
  - **Editor Window**
+
+
+--------
 
 
 > ### UTILITIES
 
  - **Node Selection to Asset or Embed**
  - **Compiler Button**
+
+
+--------
 
 
 ## Current maintainers (aka who to blame)
