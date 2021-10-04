@@ -1,21 +1,18 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.logic
+namespace Unity.VisualScripting.Community
 {
     [UnitTitle("Log")]
     [UnitCategory("Community\\Logic")]
-    public class LogUnit : Unit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.logic.LogUnit")]
+    public class LogNode : Unit
     {
         public const int ArgumentLimit = 10;
 
-        public LogUnit() : base() { }
+        public LogNode() : base() { }
 
         [DoNotSerialize]
         [PortLabelHidden]

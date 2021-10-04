@@ -1,8 +1,8 @@
-﻿using Bolt.Addons.Libraries.CSharp;
-using Bolt.Addons.Libraries.Humility;
+﻿using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
     public abstract class CodeGenerator : Decorator<CodeGenerator, CodeGeneratorAttribute, object>, ICodeGenerator

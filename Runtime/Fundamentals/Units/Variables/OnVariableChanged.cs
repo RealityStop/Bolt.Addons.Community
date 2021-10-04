@@ -1,15 +1,10 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
      [SpecialUnit]
      [UnitCategory("Events/Community/Variables")]
+     [RenamedFrom("Bolt.Addons.Community.Fundamentals.OnVariableChanged")]
      public sealed class OnVariableChanged : MachineEventUnit<EmptyEventArgs>, IUnifiedVariableUnit
      {
         public new class Data : EventUnit<EmptyEventArgs>.Data

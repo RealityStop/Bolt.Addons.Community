@@ -1,5 +1,6 @@
-﻿namespace Bolt.Addons.Libraries.CSharp
+﻿namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
+    [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.OperatorModifier")]
     public enum OperatorModifier
     {
         None,

@@ -1,12 +1,14 @@
 ﻿using Unity.VisualScripting;
 using System;
 using UnityEngine;
-using Bolt.Addons.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.CSharp;
+using System.Collections.Generic;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
     [Inspectable]
+    [RenamedFrom("Bolt.Addons.Community.Code.FieldDeclaration")]
     public abstract class FieldDeclaration : ScriptableObject, ISerializationCallbackReceiver
     {
         [Inspectable]
@@ -24,6 +26,8 @@ namespace Bolt.Addons.Community.Code
         public bool get = true;
         public bool set = true;
 
+        public List<AttributeDeclaration> attributes = new List<AttributeDeclaration>();
+
         public ClassAsset classAsset;
         public StructAsset structAsset;
 
@@ -37,6 +41,7 @@ namespace Bolt.Addons.Community.Code
 #if UNITY_EDITOR
         public bool opened;
         public bool propertyOpened;
+        public bool attributesOpened;
 #endif
 
         public void OnAfterDeserialize()

@@ -1,18 +1,11 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Takes a given float input (0-1) and scales it across the specified range.
     /// </summary>
     [UnitCategory("Community\\Math\\Functions")]
     [RenamedFrom("Bolt.Addons.Community.Custom_Units.Math.Functions.ExponentialFunctionOfRange")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.ExponentialFunctionOfRange")]
     [UnitTitle("Exponential Function of Range")]
     [UnitOrder(4)]
     public class ExponentialFunctionOfRange : Unit

@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
+    [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.EnumValueGenerator")]
     public sealed class EnumValueGenerator : ConstructGenerator
     {
         public string name = string.Empty;

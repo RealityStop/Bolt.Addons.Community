@@ -1,11 +1,7 @@
-using System.Reflection;
 using System.Collections.Generic;
-using Bolt;
 using UnityEngine;
-using Bolt.Addons.Community.DefinedEvents.Support;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.DefinedEvents.Units
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Triggers an Event to all Defined Events listening for this type on the target object.
@@ -13,6 +9,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
     [UnitCategory("Events/Community")]
     [UnitTitle("Trigger Defined Event")]
     [TypeIcon(typeof(BoltUnityEvent))]
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.TriggerDefinedEvent")]
     public class TriggerDefinedEvent : Unit
     {
         #region Event Type Handling
@@ -71,13 +68,11 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
 
         #endregion
 
-
         [DoNotSerialize]
         [PortLabel("Event Target")]
         [PortLabelHidden]
         [NullMeansSelf]
         public ValueInput zzzEventTarget { get; private set; }
-
 
         [DoNotSerialize]
         public List<ValueInput> inputPorts { get; } = new List<ValueInput>();
@@ -96,11 +91,8 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
         [PortLabelHidden]
         public ControlOutput exit { get; private set; }
 
-
         [DoNotSerialize]
         private ReflectedInfo Info;
-
-
 
         protected override void Definition()
         {
@@ -181,7 +173,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
                 }
             }
 
-            DefinedEventUnit.Trigger(flow.GetValue<GameObject>(zzzEventTarget), eventInstance);
+            DefinedEventNode.Trigger(flow.GetValue<GameObject>(zzzEventTarget), eventInstance);
 
             return exit;
         }

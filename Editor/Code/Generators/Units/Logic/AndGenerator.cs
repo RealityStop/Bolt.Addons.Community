@@ -1,6 +1,6 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Generation
+namespace Unity.VisualScripting.Community
 {
     [UnitGenerator(typeof(And))]
     public sealed class AndGenerator : UnitGenerator<And>

@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
 using UnityEditor;
-using Bolt.Addons.Libraries.Humility;
-using Bolt.Addons.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
-using Bolt.Addons.Community.Utility.Editor;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Unity.VisualScripting.Community
 {
     public abstract class CodeAssetEditor<TAsset, TAssetGenerator> : UnityEditor.Editor
         where TAsset : CodeAsset

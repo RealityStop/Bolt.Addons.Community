@@ -1,8 +1,7 @@
-﻿using Unity.VisualScripting;
-using System;
+﻿using System;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Processing
+namespace Unity.VisualScripting.Community
 {
     public abstract class GraphProcess
     {

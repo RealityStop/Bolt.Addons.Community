@@ -1,16 +1,9 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Variables")]
     [UnitShortTitle("Plus Equals")]
     [RenamedFrom("Bolt.Addons.Community.Variables.Units.PlusEquals")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.PlusEquals")]
     [UnitTitle("Plus Equals")]
     public sealed class PlusEquals : VariableAdder
     {

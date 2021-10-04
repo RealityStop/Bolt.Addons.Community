@@ -1,13 +1,14 @@
 ﻿using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Called whenever a specified number of seconds have elapsed.
     /// </summary>
     [UnitCategory("Events/Community/Time")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.OnEveryXSeconds")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.OnEveryXSeconds")]
     public sealed class OnEveryXSeconds : MachineEventUnit<EmptyEventArgs>
     {
         public new class Data : EventUnit<EmptyEventArgs>.Data

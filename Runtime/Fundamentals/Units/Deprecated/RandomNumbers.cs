@@ -1,17 +1,13 @@
-﻿
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.Deprecated
+namespace Unity.VisualScripting.Community.Deprecated
 {
     [UnitCategory("Community\\Collections\\Lists")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.RandomNumbers")]
     [RenamedFrom("Bolt.Addons.Community.Custom_Units.Math.RandomNumbers")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Deprecated.IsNullValue")]
     [UnitTitle("Random Numbers")]
     [TypeIcon(typeof(IList))]
     [Obsolete]

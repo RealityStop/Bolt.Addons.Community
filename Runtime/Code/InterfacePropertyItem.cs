@@ -1,10 +1,11 @@
 ﻿using Unity.VisualScripting;
 using System;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
     [Inspectable]
+    [RenamedFrom("Bolt.Addons.Community.Code.InterfacePropertyItem")]
     public sealed class InterfacePropertyItem
     {
         [Inspectable]

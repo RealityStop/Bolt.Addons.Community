@@ -1,20 +1,13 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Variables")]
     [UnitShortTitle("Decrement Variable")]
     [RenamedFrom("Bolt.Addons.Community.Variables.Units.DecrementUnit")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.DecrementUnit")]
     [UnitTitle("Decrement")]
-    public sealed class DecrementUnit : IncrementUnit
+    public sealed class DecrementNode : IncrementNode
     {
-        public DecrementUnit() : base() { }
+        public DecrementNode() : base() { }
 
         protected override float GetAmount(Flow flow)
         {

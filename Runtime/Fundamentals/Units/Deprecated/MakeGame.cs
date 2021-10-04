@@ -5,7 +5,7 @@
 //using System.Linq;
 //using System.Text;
 
-//namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
+//namespace Unity.VisualScripting.Community.Fundamentals.Units.Documenting
 //{
 //    [UnitCategory("Community\\Documentation")]
 //    [UnitShortTitle("Make Game")]

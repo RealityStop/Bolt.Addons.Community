@@ -1,11 +1,11 @@
 using System;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility
+namespace Unity.VisualScripting.Community
 {
     [TypeIcon(typeof(String))]
     [UnitTitle("Multiline String")]
     [UnitCategory("Community\\Utility")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Utility.MultilineStringUnit")]
     public class MultilineStringUnit : Unit
     {
         [Inspectable]

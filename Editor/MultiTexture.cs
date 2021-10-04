@@ -2,7 +2,7 @@
 
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community
+namespace Unity.VisualScripting.Community
 {
     public static partial class PathUtil
     {

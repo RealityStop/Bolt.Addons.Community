@@ -1,10 +1,9 @@
-﻿using Bolt.Addons.Community.Utility;
-using Unity.VisualScripting;
-using System;
+﻿using Unity.VisualScripting.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
-    public abstract class BindDelegateUnit<TDelegateInterface> : Unit where TDelegateInterface : IDelegate
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.BindDelegateUnit")]
+    public abstract class BindDelegateNode<TDelegateInterface> : Unit where TDelegateInterface : IDelegate
     {
         [Serialize]
         public TDelegateInterface _delegate;
@@ -17,9 +16,9 @@ namespace Bolt.Addons.Community.Fundamentals
         [DoNotSerialize]
         public ValueInput b;
 
-        public BindDelegateUnit() : base() { }
+        public BindDelegateNode() : base() { }
 
-        public BindDelegateUnit(TDelegateInterface @delegate)
+        public BindDelegateNode(TDelegateInterface @delegate)
         {
             this._delegate = @delegate;
         }

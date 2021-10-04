@@ -1,12 +1,9 @@
-﻿using Unity.VisualScripting;
-using Bolt.Addons.Community.Utility;
-
-namespace Bolt.Addons.Community.Fundamentals.Editor
+﻿namespace Unity.VisualScripting.Community
 {
-    [Editor(typeof(UnbindFuncUnit))]
-    public sealed class UnbindFuncUnitEditor : UnbindDelegateUnitEditor<UnbindFuncUnit, IFunc>
+    [Editor(typeof(UnbindFuncNode))]
+    public sealed class UnbindFuncNodeEditor : UnbindDelegateNodeEditor<UnbindFuncNode, IFunc>
     {
-        public UnbindFuncUnitEditor(Metadata metadata) : base(metadata)
+        public UnbindFuncNodeEditor(Metadata metadata) : base(metadata)
         {
         }
 

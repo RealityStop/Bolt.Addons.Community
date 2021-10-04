@@ -1,11 +1,9 @@
 ﻿using UnityEditor;
 using UnityEngine;
-using Bolt.Addons.Community.Code;
-using Bolt.Addons.Community.Code.Editor;
-using Bolt.Addons.Libraries.Humility;
-using Bolt.Addons.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     public static class AssetCompiler
     {

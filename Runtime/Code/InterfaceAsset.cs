@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
     [CreateAssetMenu(fileName = "New Interface", menuName = "Visual Scripting/Community/Code/Interface")]
+    [RenamedFrom("Bolt.Addons.Community.Code.InterfaceAsset")]
     public sealed class InterfaceAsset : CodeAsset
     {
         [Inspectable]

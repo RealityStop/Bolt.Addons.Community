@@ -1,12 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-
-using Bolt;
 using System;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Collections
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Gets an item from a multidimensional array.
@@ -14,6 +10,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
     [UnitCategory("Community/Collections/Arrays")]
     [RenamedFrom("Lasm.BoltExtensions.GetArrayItem")]
     [RenamedFrom("Lasm.UAlive.GetArrayItem")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Collections.GetArrayItem")]
     public sealed class GetArrayItem : Unit
     {
         [Serialize]

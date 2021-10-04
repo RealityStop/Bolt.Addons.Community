@@ -4,8 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Bolt.Addons.Community.DefinedEvents.Support
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Support.ReflectedInfo")]
     class ReflectedInfo
     {
         public static ReflectedInfo For<T>()

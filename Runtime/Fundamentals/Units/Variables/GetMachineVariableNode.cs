@@ -1,16 +1,14 @@
-﻿using System;
-using Unity.VisualScripting;
-
-#if VISUAL_SCRIPTING_1_7
+﻿#if VISUAL_SCRIPTING_1_7
 using SMachine = Unity.VisualScripting.ScriptMachine;
 #else
 using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitTitle("Get Machine Variable")]
-    public sealed class GetMachineVariableUnit : MachineVariableUnit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.GetMachineVariableUnit")]
+    public sealed class GetMachineVariableNode : MachineVariableNode
     {
         [DoNotSerialize]
         public ValueOutput value;

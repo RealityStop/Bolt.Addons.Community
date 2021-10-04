@@ -1,10 +1,8 @@
-﻿using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Utility.Editor
+﻿namespace Unity.VisualScripting.Community
 {
-    public abstract class WindowVariableUnitDescriptor : UnitDescriptor<WindowVariableUnit>
+    public abstract class WindowVariableNodeDescriptor : UnitDescriptor<WindowVariableNode>
     {
-        public WindowVariableUnitDescriptor(WindowVariableUnit unit) : base(unit)
+        public WindowVariableNodeDescriptor(WindowVariableNode unit) : base(unit)
         {
 
         }

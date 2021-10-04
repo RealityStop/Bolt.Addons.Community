@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-namespace Bolt.Addons.Libraries.Humility
+namespace Unity.VisualScripting.Community.Libraries.Humility
 {
     public static partial class HUMValue_Children
     {

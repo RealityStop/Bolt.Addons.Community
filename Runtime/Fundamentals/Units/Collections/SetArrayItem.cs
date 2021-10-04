@@ -1,12 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-
-using Bolt;
 using System;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Collections
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Sets an item from a multidimensional array.
@@ -15,6 +11,7 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
     [UnitCategory("Community/Collections/Arrays")]
     [RenamedFrom("Lasm.BoltExtensions.SetArrayItem")]
     [RenamedFrom("Lasm.UAlive.SetArrayItem")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Collections.SetArrayItem")]
     public class SetArrayItem : Unit
     {
         [Serialize]

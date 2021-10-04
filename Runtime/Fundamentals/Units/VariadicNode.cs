@@ -1,13 +1,10 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.VariadicNode")]
     public abstract class VariadicNode<T> : Unit
     {
         [SerializeAs(nameof(argumentCount))]

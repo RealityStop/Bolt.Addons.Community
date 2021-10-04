@@ -1,16 +1,7 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-
-using Bolt;
-using UnityEngine;
-using Bolt.Addons.Community.Fundamentals.Units.Documenting;
-using Unity.VisualScripting;
-using Bolt.Addons.Libraries.Humility;
+﻿using UnityEngine;
 using UnityEditor;
-using Bolt.Community.Addons.Fundamentals.Editor.Controls;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
+namespace Unity.VisualScripting.Community
 {
     static class Extension
     {
@@ -25,10 +16,10 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
         }
     }
 
-    [Widget(typeof(CommentUnit))]
-    public sealed class CommentUnitWidget : UnitWidget<CommentUnit>
+    [Widget(typeof(CommentNode))]
+    public sealed class CommentNodeWidget : UnitWidget<CommentNode>
     {
-        public CommentUnitWidget(FlowCanvas canvas, CommentUnit unit) : base(canvas, unit) { }
+        public CommentNodeWidget(FlowCanvas canvas, CommentNode unit) : base(canvas, unit) { }
 
         const float
             borderOutside = 12f,
@@ -60,13 +51,13 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.Editor
             if (hash == 0) hash = unit.GetHashCode();
 
             // If first time running, create a palette.
-            if (!CommentUnitInspector.initialised) { CommentUnitInspector.UpdatePalette(); CommentUnitInspector.initialised = true; }
+            if (!CommentNodeInspector.initialised) { CommentNodeInspector.UpdatePalette(); CommentNodeInspector.initialised = true; }
 
             // If unit locked to palette, grab the assigned color
             if (unit.lockedToPalette)
             {
-                unit.color = CommentUnitInspector.colorPalette[unit.customPalette ? 1 : 0, unit.paletteSelection.row, unit.paletteSelection.col] / 3f;
-                unit.fontColor = CommentUnitInspector.fontPalette[(unit.customPalette ? 2 : unit.fontColorize ? 1 : 0), unit.paletteSelection.row, unit.paletteSelection.col];
+                unit.color = CommentNodeInspector.colorPalette[unit.customPalette ? 1 : 0, unit.paletteSelection.row, unit.paletteSelection.col] / 3f;
+                unit.fontColor = CommentNodeInspector.fontPalette[(unit.customPalette ? 2 : unit.fontColorize ? 1 : 0), unit.paletteSelection.row, unit.paletteSelection.col];
             }
 
             // Set text area GUI style

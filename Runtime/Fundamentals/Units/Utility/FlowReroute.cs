@@ -1,12 +1,9 @@
-﻿using Bolt;
-using Unity.VisualScripting;
-
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility
+﻿namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Utility")]
     [RenamedFrom("Lasm.BoltExtensions.FlowReroute")]
     [RenamedFrom("Lasm.UAlive.FlowReroute")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Utility.FlowReroute")]
     public sealed class FlowReroute : Unit
     {
         [DoNotSerialize]

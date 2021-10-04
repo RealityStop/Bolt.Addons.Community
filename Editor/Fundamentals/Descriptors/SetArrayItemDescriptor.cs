@@ -1,10 +1,4 @@
-﻿using UnityEngine;
-using UnityEditor;
-
-using Bolt;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Collections.Editor
+﻿namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// The descriptor that sets the icon for Set Array Item.

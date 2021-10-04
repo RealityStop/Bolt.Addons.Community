@@ -1,19 +1,17 @@
-﻿using Bolt;
-
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility
+namespace Unity.VisualScripting.Community
 {
     [UnitTitle("Convert")]
     [UnitCategory("Community/Utility")]
     [TypeIcon(typeof(object))]
     [RenamedFrom("Lasm.BoltExtensions.ConvertUnit")]
     [RenamedFrom("Lasm.UAlive.ConvertUnit")]
-    public sealed class ConvertUnit : Unit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Utility.ConvertUnit")]
+    public sealed class ConvertNode : Unit
     {
         [Inspectable]
         public ConversionType conversion;

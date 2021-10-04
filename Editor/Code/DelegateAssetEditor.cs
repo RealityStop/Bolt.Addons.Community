@@ -3,11 +3,11 @@ using Unity.VisualScripting;
 using UnityEditor;
 using System;
 using System.Collections.Generic;
-using Bolt.Addons.Libraries.Humility;
-using Bolt.Addons.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Linq;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Unity.VisualScripting.Community
 {
     [CustomEditor(typeof(DelegateAsset))]
     public class DelegateAssetEditor : CodeAssetEditor<DelegateAsset, DelegateAssetGenerator>

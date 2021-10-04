@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
-using Unity.VisualScripting;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 
-namespace Bolt.Addons.Community.Processing
+namespace Unity.VisualScripting.Community
 {
     public sealed class GraphProcessor : GlobalProcess
     {

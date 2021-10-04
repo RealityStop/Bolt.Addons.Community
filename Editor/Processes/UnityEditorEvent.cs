@@ -3,7 +3,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Processing
+namespace Unity.VisualScripting.Community
 {
     public sealed class UnityEditorEvent : DeserializedRoutine
     {

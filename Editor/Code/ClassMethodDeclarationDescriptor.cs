@@ -1,6 +1,6 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Unity.VisualScripting.Community
 {
     [Descriptor(typeof(ClassMethodDeclaration))]
     public sealed class ClassMethodDeclarationDescriptor : MacroDescriptor<ClassMethodDeclaration, MacroDescription>

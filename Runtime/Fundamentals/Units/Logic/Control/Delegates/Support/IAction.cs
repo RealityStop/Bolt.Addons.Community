@@ -1,13 +1,12 @@
-﻿using Bolt.Addons.Community.Fundamentals;
-using System;
-using Unity.VisualScripting;
+﻿using System;
 
-namespace Bolt.Addons.Community.Utility
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Utility.IAction")]
     public interface IAction : IDelegate
     {
         void Invoke(params object[] parameters);
-        void Initialize(Flow flow, ActionUnit unit, Action flowAction);
-        void SetInstance(Flow flow, ActionUnit unit, Action flowAction);
+        void Initialize(Flow flow, ActionNode unit, Action flowAction);
+        void SetInstance(Flow flow, ActionNode unit, Action flowAction);
     }
 }

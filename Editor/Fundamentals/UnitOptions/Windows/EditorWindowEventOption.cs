@@ -1,7 +1,6 @@
 ﻿using System;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Utility.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
     public abstract class EditorWindowEventOption<TUnit> : UnitOption<TUnit> where TUnit : Unit
     {

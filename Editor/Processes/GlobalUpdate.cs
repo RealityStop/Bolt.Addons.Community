@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEditor;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Bolt.Addons.Community.Processing
+namespace Unity.VisualScripting.Community
 {
     public sealed class GlobalUpdate
     {

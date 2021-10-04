@@ -1,10 +1,11 @@
-﻿using Bolt.Addons.Community.Utility;
+﻿using Unity.VisualScripting.Community.Utility;
 using System;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
+    [RenamedFrom("Bolt.Addons.Community.Code.ClassConstructorDeclaration")]
     public sealed class ClassConstructorDeclaration : ConstructorDeclaration
     {
         public override FlowGraph DefaultGraph()

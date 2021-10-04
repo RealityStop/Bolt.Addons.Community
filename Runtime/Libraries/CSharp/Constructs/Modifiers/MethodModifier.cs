@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
+    [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.MethodModifier")]
     public enum MethodModifier
     {
         None,

@@ -1,15 +1,7 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
+﻿namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community\\Documentation")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Documenting.SomeValue")]
     public class SomeValue : Unit
     {
         [Inspectable]

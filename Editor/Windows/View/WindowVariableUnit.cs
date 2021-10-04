@@ -1,13 +1,13 @@
-﻿using Bolt.Addons.Community.Fundamentals;
+﻿using Unity.VisualScripting.Community.Fundamentals;
 using Unity.VisualScripting;
 using UnityEditor;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Editor")]
     [TypeIcon(typeof(EditorWindow))]
     [RenamedFrom("Bolt.Addons.Community.Utility.Editor.EditorWindowVariableUnit")]
-    public abstract class WindowVariableUnit : Unit
+    public abstract class WindowVariableNode : Unit
     {
         [Serialize]
         [Inspectable]

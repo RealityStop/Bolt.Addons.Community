@@ -1,13 +1,13 @@
-﻿using Bolt.Addons.Libraries.Humility;
+﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
-    [Widget(typeof(FunctionUnit))]
-    public sealed class FunctionUnitWidget : UnitWidget<FunctionUnit>
+    [Widget(typeof(FunctionNode))]
+    public sealed class FunctionUnitWidget : UnitWidget<FunctionNode>
     {
-        public FunctionUnitWidget(FlowCanvas canvas, FunctionUnit unit) : base(canvas, unit)
+        public FunctionUnitWidget(FlowCanvas canvas, FunctionNode unit) : base(canvas, unit)
         {
         }
 

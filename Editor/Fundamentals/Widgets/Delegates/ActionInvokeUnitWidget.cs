@@ -1,12 +1,12 @@
 ﻿using Unity.VisualScripting;
-using Bolt.Addons.Community.Utility;
+using Unity.VisualScripting.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor
+namespace Unity.VisualScripting.Community
 {
-    [Widget(typeof(ActionInvokeUnit))]
-    public sealed class ActionInvokeUnitWidget : DelegateInvokeUnitWidget<ActionInvokeUnit, IAction>
+    [Widget(typeof(ActionInvokeNode))]
+    public sealed class ActionInvokeUnitWidget : DelegateInvokeUnitWidget<ActionInvokeNode, IAction>
     {
-        public ActionInvokeUnitWidget(FlowCanvas canvas, ActionInvokeUnit unit) : base(canvas, unit)
+        public ActionInvokeUnitWidget(FlowCanvas canvas, ActionInvokeNode unit) : base(canvas, unit)
         {
         }
     }

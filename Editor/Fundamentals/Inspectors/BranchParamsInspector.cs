@@ -6,7 +6,7 @@
 //using System.Threading.Tasks;
 //using UnityEngine;
 
-//namespace Bolt.Addons.Community.Fundamentals.Editor.Editor.Inspectors
+//namespace Unity.VisualScripting.Community.Inspectors
 //{
 //    [Inspector(typeof(BranchParams))]
 //    public class BranchParamsInspector : ReflectedInspector

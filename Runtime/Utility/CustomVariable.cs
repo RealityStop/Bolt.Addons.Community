@@ -2,10 +2,11 @@
 using System;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community.Utility
 {
     [IncludeInSettings(true)]
     [Serializable][Inspectable]
+    [RenamedFrom("Bolt.Addons.Community.Utility.Editor.CustomVariable")]
     public sealed class CustomVariable
     {
         [Inspectable]

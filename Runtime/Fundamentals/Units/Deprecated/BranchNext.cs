@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community.Deprecated
 {
     /// <summary>
     /// Branches flow by checking if a condition is true or false.
@@ -13,6 +8,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitCategory("Community\\Control")]
     [RenamedFrom("Bolt.Addons.Community.Variables.Units.BranchNext")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchNext")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.BranchNext")]
     [UnitOrder(0)]
     [Obsolete("Use the Branch (Param) node instead!  It supersede this one!")]
     public sealed class BranchNext : Unit, IBranchUnit

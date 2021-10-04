@@ -1,17 +1,13 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
+﻿using System;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community.Deprecated
 {
     /// <summary>
     /// Restricts control flow by only allowing through one control flow until reset.
     /// </summary>
     [UnitCategory("Community\\Control")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.DoOnceV2")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.DoOnceV2")]
     [UnitTitle("Do Once")]
     [TypeIcon(typeof(ISelectUnit))]
     [Obsolete("Use the build in Once Unit!")]
@@ -57,7 +53,6 @@ namespace Bolt.Addons.Community.Fundamentals
         [Inspectable]
         [InspectorToggleLeft]
         public bool boolean { get; set; } = false;
-
 
         /// <summary>
         /// The exit point for the node.

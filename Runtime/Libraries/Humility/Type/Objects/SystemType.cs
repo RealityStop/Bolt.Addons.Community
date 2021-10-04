@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
     [Serializable]
     public sealed class SystemType : ISerializationCallbackReceiver
@@ -9,6 +9,9 @@ namespace Bolt.Addons.Libraries.CSharp
         public Type type;
         [SerializeField][HideInInspector]
         private string qualifiedName;
+
+        public SystemType() { }
+        public SystemType(Type type) { this.type = type; }
 
         public void OnAfterDeserialize()
         {

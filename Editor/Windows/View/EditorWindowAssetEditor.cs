@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     [Editor(typeof(EditorWindowAsset))]
     public sealed class EditorWindowAssetEditor : MacroEditor

@@ -1,12 +1,13 @@
-﻿using Bolt.Addons.Libraries.Humility;
+﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
     /// <summary>
     /// A generator that retains data for creating an attribute as a string.
     /// </summary>
+    [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.AttributeGenerator")]
     public sealed class AttributeGenerator : ConstructGenerator
     {
         public Type type;
@@ -53,6 +54,8 @@ namespace Bolt.Addons.Libraries.CSharp
         {
             var usings = new List<string>();
 
+            if (type == null) return usings;
+
             if (!type.IsPrimitive) usings.Add(type.Namespace);
 
             for (int i = 0; i < parameterValues.Count; i++)
@@ -76,6 +79,14 @@ namespace Bolt.Addons.Libraries.CSharp
         public static AttributeGenerator Attribute<T>() where T : Attribute
         {
             return new AttributeGenerator() { type = typeof(T) };
+        }
+
+        /// <summary>
+        /// Create the attribute generator based on an existing type.
+        /// </summary>
+        public static AttributeGenerator Attribute(Type attributeType)
+        {
+            return new AttributeGenerator() { type = attributeType };
         }
 
         /// <summary>

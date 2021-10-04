@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using SFile = System.IO.File;
 
-namespace Bolt.Addons.Libraries.Humility
+namespace Unity.VisualScripting.Community.Libraries.Humility
 {
     public static partial class HUMIO_Children
     {

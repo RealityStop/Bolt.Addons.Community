@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Bolt.Addons.Libraries.Humility
+namespace Unity.VisualScripting.Community.Libraries.Humility
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public sealed class IconAttribute : Attribute

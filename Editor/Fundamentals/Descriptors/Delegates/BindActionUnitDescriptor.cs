@@ -1,12 +1,9 @@
-﻿using Bolt.Addons.Community.Utility;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals.Editor
+﻿namespace Unity.VisualScripting.Community
 {
-    [Descriptor(typeof(BindActionUnit))]
-    public sealed class BindActionUnitDescriptor : BindDelegateUnitDescriptor<BindActionUnit, IAction>
+    [Descriptor(typeof(BindActionNode))]
+    public sealed class BindActionNodeDescriptor : BindDelegateNodeDescriptor<BindActionNode, IAction>
     {
-        public BindActionUnitDescriptor(BindActionUnit target) : base(target)
+        public BindActionNodeDescriptor(BindActionNode target) : base(target)
         {
         }
 

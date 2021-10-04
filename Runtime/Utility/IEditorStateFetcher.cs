@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Bolt.Addons.Community.Utility
+﻿namespace Unity.VisualScripting.Community.Utility
 {
+    [RenamedFrom("Bolt.Addons.Community.Utility.IEditorStateFetcher")]
     public interface IEditorStateFetcher
     {
         bool IsEditorPaused();

@@ -1,15 +1,16 @@
-﻿using Bolt.Addons.Libraries.Humility;
+﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
     [UnitTitle("Function")]
     [SpecialUnit]
-    public sealed class FunctionUnit : Unit
+    [RenamedFrom("Bolt.Addons.Community.Code.FunctionUnit")]
+    public sealed class FunctionNode : Unit
     {
         public MethodDeclaration methodDeclaration;
         public FieldDeclaration fieldDeclaration;
@@ -24,9 +25,9 @@ namespace Bolt.Addons.Community.Code
         [DoNotSerialize]
         public List<ValueOutput> parameterPorts = new List<ValueOutput>();
 
-        public FunctionUnit() : base() { }
+        public FunctionNode() : base() { }
 
-        public FunctionUnit(FunctionType functionType)
+        public FunctionNode(FunctionType functionType)
         {
             this.functionType = functionType;
         }

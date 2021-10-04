@@ -3,9 +3,9 @@ using UnityEditor;
 using UnityEngine;
 using Unity.VisualScripting;
 using UnityEngine.UIElements;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     public class UtilityWindow : EditorWindow
     {

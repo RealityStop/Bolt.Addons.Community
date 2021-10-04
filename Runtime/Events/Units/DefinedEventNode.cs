@@ -1,15 +1,10 @@
-﻿using Bolt.Addons.Community.DefinedEvents.Support;
-using Bolt.Addons.Community.DefinedEvents.Support.Internal;
-using Bolt.Addons.Community.Utility;
+﻿using Unity.VisualScripting.Community.Utility;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Unity.VisualScripting;
 using UnityEngine;
 
-
-
-namespace Bolt.Addons.Community.DefinedEvents.Units
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Listens for an event by type, rather than by name.  In other respects, it acts similar to the built-in Custom Unit
@@ -17,7 +12,8 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
     [UnitCategory("Events/Community")]
     [UnitTitle("Defined Event")]
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.DefinedEvent")]
-    public class DefinedEventUnit : GameObjectEventUnit<DefinedEventArgs>, IDefinedEventUnit
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.DefinedEventUnit")]
+    public class DefinedEventNode : GameObjectEventUnit<DefinedEventArgs>, IDefinedEventNode
     {
         const string EventName = "OnDefinedEvent";
 

@@ -1,8 +1,9 @@
-﻿using Bolt.Addons.Libraries.Humility;
+﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections.Generic;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
+    [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.TypeGenerator")]
     public abstract class TypeGenerator : BodyGenerator
     {
         protected List<string> usings = new List<string>();

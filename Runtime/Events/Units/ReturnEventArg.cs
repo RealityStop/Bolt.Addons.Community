@@ -1,13 +1,13 @@
 ﻿using System;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.ReturnEvents
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// The arguments for matching events and the trigger.
     /// </summary>
     [RenamedFrom("Lasm.BoltExtensions.ReturnEventArg")]
     [RenamedFrom("Lasm.UAlive.ReturnEventArg")]
+    [RenamedFrom("Bolt.Addons.Community.ReturnEvents.ReturnEventArg")]
     public struct ReturnEventArg
     {
         public readonly TriggerReturnEvent trigger;

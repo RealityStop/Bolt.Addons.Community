@@ -1,11 +1,7 @@
-using System.Reflection;
 using System.Collections.Generic;
-using Bolt;
 using UnityEngine;
-using Bolt.Addons.Community.DefinedEvents.Support;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.DefinedEvents.Units
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Triggers a Global Event to all Global Defined Events listening for this type.
@@ -13,6 +9,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
     [UnitCategory("Events/Community")]
     [UnitTitle("Trigger Global Defined Event")]
     [TypeIcon(typeof(BoltUnityEvent))]
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.TriggerGlobalDefinedEvent")]
     public class TriggerGlobalDefinedEvent : Unit
     {
         #region Event Type Handling
@@ -158,7 +155,7 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
                 }
             }
 
-            GlobalDefinedEventUnit.Trigger(eventInstance);
+            GlobalDefinedEventNode.Trigger(eventInstance);
 
             return exit;
         }

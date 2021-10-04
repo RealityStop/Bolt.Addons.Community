@@ -1,18 +1,10 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.Documenting;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals.Editor.Editor.Widgets
+﻿namespace Unity.VisualScripting.Community
 {
     [Widget(typeof(StuffHappens))]
-    public sealed class StuffHappensUnitWidget : UnitWidget<StuffHappens>
+    public sealed class StuffHappensWidget : UnitWidget<StuffHappens>
     {
 
-        public StuffHappensUnitWidget(FlowCanvas canvas, StuffHappens unit) : base(canvas, unit)
+        public StuffHappensWidget(FlowCanvas canvas, StuffHappens unit) : base(canvas, unit)
         {
         }
 

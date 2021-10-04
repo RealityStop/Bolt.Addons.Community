@@ -1,13 +1,6 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Bolt.Addons.Community.Fundamentals;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitShortTitle("Branch")]
     [UnitTitle("Branch (Params)")]
@@ -15,6 +8,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [TypeIcon(typeof(Unity.VisualScripting.If))]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchAnd")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchParams")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.BranchParams")]
     public sealed class BranchParams : LogicParamNode, IBranchUnit
     {
         public BranchParams() { }

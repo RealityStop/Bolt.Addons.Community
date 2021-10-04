@@ -1,13 +1,6 @@
-﻿using Bolt;
+﻿using UnityEngine;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System.Linq;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     [Widget(typeof(ValueReroute))]
     public sealed class ValueRerouteWidget : UnitWidget<ValueReroute>

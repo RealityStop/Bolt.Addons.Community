@@ -1,16 +1,11 @@
-﻿using Bolt;
+﻿using System;
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Utility")]
     [RenamedFrom("Lasm.BoltExtensions.ValueReroute")]
     [RenamedFrom("Lasm.UAlive.ValueReroute")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Utility.ValueReroute")]
     public sealed class ValueReroute : Unit
     {
         [DoNotSerialize][PortLabelHidden]

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Bolt.Addons.Libraries.Humility
+namespace Unity.VisualScripting.Community.Libraries.Humility
 {
     public static partial class HUMQuery
     {

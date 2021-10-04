@@ -1,6 +1,6 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Generation
+namespace Unity.VisualScripting.Community
 {
     [UnitGenerator(typeof(Negate))]
     public sealed class NegateGenerator : UnitGenerator<Negate>

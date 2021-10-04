@@ -1,13 +1,9 @@
-﻿using Bolt;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility
+﻿namespace Unity.VisualScripting.Community
 {
-    [Descriptor(typeof(ConvertUnit))]
-    public sealed class ConvertUnitDescriptor : UnitDescriptor<ConvertUnit>
+    [Descriptor(typeof(ConvertNode))]
+    public sealed class ConvertNodeDescriptor : UnitDescriptor<ConvertNode>
     {
-        public ConvertUnitDescriptor(ConvertUnit target) : base(target)
+        public ConvertNodeDescriptor(ConvertNode target) : base(target)
         {
         }
 

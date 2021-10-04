@@ -1,18 +1,11 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Takes a given float input (minimum-maximum) and returns a 0-1 value that represents the position along the range (percent).
     /// </summary>
     [UnitCategory("Community\\Math\\Functions")]
     [RenamedFrom("Bolt.Addons.Community.Custom_Units.Math.Functions.LinearFunctionOfRange")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.LinearFunctionOfRange")]
     [UnitTitle("Linear Function of Range")]
     [UnitOrder(2)]
     public class LinearFunctionOfRange : Unit

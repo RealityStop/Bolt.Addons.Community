@@ -1,4 +1,4 @@
-﻿using Bolt.Addons.Libraries.CSharp;
+﻿using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-namespace Bolt.Addons.Libraries.Humility
+namespace Unity.VisualScripting.Community.Libraries.Humility
 {
     public static partial class HUMType_Children
     {
@@ -30,7 +30,7 @@ namespace Bolt.Addons.Libraries.Humility
         {
             if (highlight) return @as.HighlightCSharpName(hideSystemObject, fullName);
             if (@as.type == null) return "null";
-            if (@as.type == typeof(Bolt.Addons.Libraries.CSharp.Void)) return "void";
+            if (@as.type == typeof(CSharp.Void)) return "void";
             if (@as.type.IsConstructedGenericType || @as.type.IsGenericType) return GenericDeclaration(@as.type);
             if (@as.type == typeof(int)) return "int";
             if (@as.type == typeof(string)) return "string";
@@ -49,7 +49,7 @@ namespace Bolt.Addons.Libraries.Humility
         private static string HighlightCSharpName(this HUMType.Data.As @as, bool hideSystemObject = false, bool fullName = false)
         {
             if (@as.type == null) return "null".ConstructHighlight();
-            if (@as.type == typeof(Bolt.Addons.Libraries.CSharp.Void)) return "void".ConstructHighlight();
+            if (@as.type == typeof(CSharp.Void)) return "void".ConstructHighlight();
             if (@as.type.IsConstructedGenericType || @as.type.IsGenericType) return GenericDeclaration(@as.type);
             if (@as.type == typeof(int)) return "int".ConstructHighlight();
             if (@as.type == typeof(string)) return "string".ConstructHighlight();

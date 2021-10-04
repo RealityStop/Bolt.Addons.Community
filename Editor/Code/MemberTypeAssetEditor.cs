@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
-using Unity.VisualScripting;
 using UnityEditor;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections.Generic;
-using Bolt.Addons.Libraries.CSharp;
-using Bolt.Addons.Community.Utility.Editor;
+using Unity.VisualScripting.Community.Libraries.CSharp;
+using System;
+using System.Linq;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Unity.VisualScripting.Community
 {
     public abstract class MemberTypeAssetEditor<TMemberTypeAsset, TMemberTypeGenerator, TFieldDeclaration, TMethodDeclaration, TConstructorDeclaration> : CodeAssetEditor<TMemberTypeAsset, TMemberTypeGenerator>
         where TMemberTypeAsset : MemberTypeAsset<TFieldDeclaration, TMethodDeclaration, TConstructorDeclaration>
@@ -32,7 +32,14 @@ namespace Bolt.Addons.Community.Code.Editor
 
         protected virtual Texture2D DefaultIcon() { return PathUtil.Load("object_32", CommunityEditorPath.Code).Single(); }
 
-        private BoltCore resources;
+        private Type[] attributeTypes = new Type[] { };
+        private Type[] fieldAttributeTypes = new Type[] { };
+        private Type[] propertyAttributeTypes = new Type[] { };
+        private Type[] methodAttributeTypes = new Type[] { };
+        private Type[] structAttributeTypes = new Type[] { };
+        private Type[] classAttributeTypes = new Type[] { };
+        private Type[] enumAttributeTypes = new Type[] { };
+        private Type[] interfaceAttributeTypes = new Type[] { };
 
         protected override void OnEnable()
         {
@@ -58,7 +65,21 @@ namespace Bolt.Addons.Community.Code.Editor
 
             if (Target.icon == null) Target.icon = DefaultIcon();
 
+            CacheConstrainedAttributes();
+
             shouldUpdate = true;
+        }
+
+        private void CacheConstrainedAttributes()
+        {
+            attributeTypes = typeof(Attribute).Get().Derived();
+            classAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Class || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
+            structAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Struct || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
+            enumAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Enum || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
+            interfaceAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Interface || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
+            fieldAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Field || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
+            propertyAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Property || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
+            methodAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Method || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
         }
 
         protected override void OnTypeHeaderGUI()
@@ -125,8 +146,8 @@ namespace Bolt.Addons.Community.Code.Editor
                             }, () =>
                             {
                                 listOfVariables[index].name = listOfVariables[index].name.LegalMemberName();
-                                var getterFunctionUnit = (listOfVariables[index].getter.graph.units[0] as FunctionUnit);
-                                var setterFunctionUnit = (listOfVariables[index].setter.graph.units[0] as FunctionUnit);
+                                var getterFunctionUnit = (listOfVariables[index].getter.graph.units[0] as FunctionNode);
+                                var setterFunctionUnit = (listOfVariables[index].setter.graph.units[0] as FunctionNode);
                                 listOfVariables[index].getter.name = listOfVariables[index].name + " Getter";
                                 listOfVariables[index].setter.name = listOfVariables[index].name + " Setter";
                                 getterFunctionUnit.Define();
@@ -172,6 +193,76 @@ namespace Bolt.Addons.Community.Code.Editor
                                 {
                                     shouldUpdate = true;
                                 }
+
+                                GUILayout.Space(4);
+
+                                listOfVariables[index].attributesOpened = HUMEditor.Foldout(listOfVariables[index].attributesOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                {
+                                    HUMEditor.Image(PathUtil.Load("attributes_16", CommunityEditorPath.Code).Single(), 16, 16);
+                                    GUILayout.Label("Attributes");
+                                }, () =>
+                                {
+                                    HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
+                                    {
+                                        for (int attrIndex = 0; attrIndex < listOfVariables[index].attributes.Count; attrIndex++)
+                                        {
+                                            var attributeMeta = variables[index]["attributes"][attrIndex]["attributeType"];
+                                            var attribute = listOfVariables[index].attributes[attrIndex];
+
+                                            attribute.opened = HUMEditor.Foldout(attribute.opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                            {
+                                                attributeMeta.Block(() =>
+                                                {
+                                                    AttributeTypeField(attribute, AttributeUsageType.Field);
+                                                }, () => 
+                                                {
+                                                    shouldUpdate = true;
+                                                }, false);
+
+                                                if (GUILayout.Button("...", GUILayout.Width(19)))
+                                                {
+                                                    GenericMenu menu = new GenericMenu();
+                                                    menu.AddItem(new GUIContent("Delete"), false, (obj) =>
+                                                    {
+                                                        listOfVariables[index].attributes.Remove(obj as AttributeDeclaration);
+                                                    }, attribute);
+
+                                                    //if (index > 0)
+                                                    //{
+                                                    //    menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                                                    //    {
+                                                    //        // To Do
+                                                    //    }, listOfConstructors[index]);
+                                                    //}
+
+                                                    //if (index < methods.Count - 1)
+                                                    //{
+                                                    //    menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                                                    //    {
+                                                    //        // To Do
+                                                    //    }, listOfConstructors[index]);
+                                                    //}
+                                                    menu.ShowAsContext();
+                                                }
+                                            }, () =>
+                                            {
+                                                var parameters = attribute.parameters;
+
+                                                for (int attrParamIndex = 0; attrParamIndex < parameters.Count; attrParamIndex++)
+                                                {
+
+                                                }
+                                            });
+                                        }
+
+                                        if (listOfVariables[index].attributes.Count > 0) GUILayout.Space(4);
+
+                                        if (GUILayout.Button("+ Add Attributes"))
+                                        {
+                                            listOfVariables[index].attributes.Add(new AttributeDeclaration());
+                                        }
+                                    });
+                                });
 
                                 GUILayout.Space(4);
 
@@ -229,8 +320,8 @@ namespace Bolt.Addons.Community.Code.Editor
                         AssetDatabase.AddObjectToAsset(getter, Target);
                         AssetDatabase.AddObjectToAsset(setter, Target);
                         listOfVariables.Add(declaration);
-                        var functionGetterUnit = new FunctionUnit(FunctionType.Getter);
-                        var functionSetterUnit = new FunctionUnit(FunctionType.Setter);
+                        var functionGetterUnit = new FunctionNode(FunctionType.Getter);
+                        var functionSetterUnit = new FunctionNode(FunctionType.Setter);
                         functionGetterUnit.fieldDeclaration = declaration;
                         functionSetterUnit.fieldDeclaration = declaration;
                         declaration.getter = getter;
@@ -245,6 +336,55 @@ namespace Bolt.Addons.Community.Code.Editor
                     }
                 });
             });
+        }
+
+        private enum AttributeUsageType
+        {
+            Class,
+            Struct,
+            Enum,
+            Interface,
+            Field,
+            Property,
+            Method
+        }
+
+        private void AttributeTypeField(AttributeDeclaration attribute, AttributeUsageType usage)
+        {
+            GUILayout.Label(" ", GUILayout.Height(20));
+            var position = GUILayoutUtility.GetLastRect();
+
+            Type[] types = new Type[] { };
+
+            switch (usage)
+            {
+                case AttributeUsageType.Class:
+                    types = classAttributeTypes;
+                    break;
+                case AttributeUsageType.Struct:
+                    types = structAttributeTypes;
+                    break;
+                case AttributeUsageType.Enum:
+                    types = enumAttributeTypes;
+                    break;
+                case AttributeUsageType.Interface:
+                    types = interfaceAttributeTypes;
+                    break;
+                case AttributeUsageType.Field:
+                    types = fieldAttributeTypes;
+                    break;
+                case AttributeUsageType.Property:
+                    types = propertyAttributeTypes;
+                    break;
+                case AttributeUsageType.Method:
+                    types = methodAttributeTypes;
+                    break;
+            }
+
+            attribute.SetType(LudiqGUI.TypeField(position, GUIContent.none, attribute.GetAttributeType(), () =>
+            {
+                return new TypeOptionTree(types);
+            }));
         }
 
         private void Constructors()
@@ -280,21 +420,21 @@ namespace Bolt.Addons.Community.Code.Editor
                                     AssetDatabase.RemoveObjectFromAsset(obj as TConstructorDeclaration);
                                 }, listOfConstructors[index]);
 
-                                if (index > 0)
-                                {
-                                    menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
-                                    {
-                                        // To Do
-                                    }, listOfConstructors[index]);
-                                }
+                                //if (index > 0)
+                                //{
+                                //    menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                                //    {
+                                //        // To Do
+                                //    }, listOfConstructors[index]);
+                                //}
 
-                                if (index < methods.Count - 1)
-                                {
-                                    menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
-                                    {
-                                        // To Do
-                                    }, listOfConstructors[index]);
-                                }
+                                //if (index < methods.Count - 1)
+                                //{
+                                //    menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                                //    {
+                                //        // To Do
+                                //    }, listOfConstructors[index]);
+                                //}
                                 menu.ShowAsContext();
                             }
                         }, () =>
@@ -316,7 +456,7 @@ namespace Bolt.Addons.Community.Code.Editor
                                     if (Inspector.EndBlock(paramMeta))
                                     {
                                         shouldUpdate = true;
-                                        var funcionUnit = (listOfConstructors[index].graph.units[0] as FunctionUnit);
+                                        var funcionUnit = (listOfConstructors[index].graph.units[0] as FunctionNode);
                                         funcionUnit.Define();
                                         funcionUnit.Describe();
                                     }
@@ -336,7 +476,7 @@ namespace Bolt.Addons.Community.Code.Editor
                         declaration.hideFlags = HideFlags.HideInHierarchy;
                         AssetDatabase.AddObjectToAsset(declaration, Target);
                         listOfConstructors.Add(declaration);
-                        var functionUnit = new FunctionUnit(FunctionType.Constructor);
+                        var functionUnit = new FunctionNode(FunctionType.Constructor);
                         functionUnit.constructorDeclaration = declaration;
                         declaration.graph.units.Add(functionUnit);
                         AssetDatabase.SaveAssets();
@@ -392,7 +532,7 @@ namespace Bolt.Addons.Community.Code.Editor
                             }, () =>
                             {
                                 listOfMethods[index].name = listOfMethods[index].methodName.LegalMemberName();
-                                var funcionUnit = (listOfMethods[index].graph.units[0] as FunctionUnit);
+                                var funcionUnit = (listOfMethods[index].graph.units[0] as FunctionNode);
                                 funcionUnit.Define();
                                 funcionUnit.Describe();
                             });
@@ -454,7 +594,7 @@ namespace Bolt.Addons.Community.Code.Editor
                                     if (Inspector.EndBlock(paramMeta))
                                     {
                                         shouldUpdate = true;
-                                        var funcionUnit = (listOfMethods[index].graph.units[0] as FunctionUnit);
+                                        var funcionUnit = (listOfMethods[index].graph.units[0] as FunctionNode);
                                         funcionUnit.Define();
                                         funcionUnit.Describe();
                                     }
@@ -474,7 +614,7 @@ namespace Bolt.Addons.Community.Code.Editor
                         declaration.hideFlags = HideFlags.HideInHierarchy;
                         AssetDatabase.AddObjectToAsset(declaration, Target);
                         listOfMethods.Add(declaration);
-                        var functionUnit = new FunctionUnit(FunctionType.Method);
+                        var functionUnit = new FunctionNode(FunctionType.Method);
                         functionUnit.methodDeclaration = declaration;
                         declaration.graph.units.Add(functionUnit);
                         AssetDatabase.SaveAssets();

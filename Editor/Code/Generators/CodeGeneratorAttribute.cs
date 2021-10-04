@@ -1,7 +1,7 @@
-﻿using Bolt.Addons.Libraries.Humility;
+﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Unity.VisualScripting.Community
 {
     public sealed class CodeGeneratorAttribute : DecoratorAttribute
     {

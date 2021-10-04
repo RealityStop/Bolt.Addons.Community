@@ -1,12 +1,12 @@
-﻿using Bolt.Addons.Community.Utility;
+﻿using Unity.VisualScripting.Community.Utility;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor
+namespace Unity.VisualScripting.Community
 {
-    [Descriptor(typeof(UnbindFuncUnit))]
-    public sealed class UnbindFuncUnitDescriptor : UnbindDelegateUnitDescriptor<UnbindFuncUnit, IFunc>
+    [Descriptor(typeof(UnbindFuncNode))]
+    public sealed class UnbindFuncNodeDescriptor : UnbindDelegateNodeDescriptor<UnbindFuncNode, IFunc>
     {
-        public UnbindFuncUnitDescriptor(UnbindFuncUnit target) : base(target)
+        public UnbindFuncNodeDescriptor(UnbindFuncNode target) : base(target)
         {
         }
 

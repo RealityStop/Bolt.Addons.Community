@@ -1,14 +1,9 @@
-using Bolt.Addons.Community.DefinedEvents.Support;
-using Bolt.Addons.Community.DefinedEvents.Support.Internal;
-using Bolt.Addons.Community.Utility;
+using Unity.VisualScripting.Community.Utility;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Unity.VisualScripting;
-using UnityEngine;
 
-
-namespace Bolt.Addons.Community.DefinedEvents.Units
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Listens for an event by type, rather than by name.  In other respects, it acts similar
@@ -18,7 +13,8 @@ namespace Bolt.Addons.Community.DefinedEvents.Units
     [UnitCategory("Events/Community")]
     [UnitTitle("Global Defined Event")]
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.GlobalDefinedEvent")]
-    public class GlobalDefinedEventUnit : EventUnit<DefinedEventArgs>, IDefinedEventUnit
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.GlobalDefinedEventUnit")]
+    public class GlobalDefinedEventNode : EventUnit<DefinedEventArgs>, IDefinedEventNode
     {
         const string EventName = "OnGlobalDefinedEvent";
 

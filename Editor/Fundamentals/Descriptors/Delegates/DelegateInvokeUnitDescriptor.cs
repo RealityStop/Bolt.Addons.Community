@@ -1,13 +1,10 @@
-﻿using Bolt.Addons.Community.Utility;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals.Editor
+﻿namespace Unity.VisualScripting.Community
 {
-    public abstract class DelegateInvokeUnitDescriptor<T, TDelegate> : UnitDescriptor<T>
-        where T : DelegateInvokeUnit<TDelegate>
+    public abstract class DelegateInvokeNodeDesriptor<T, TDelegate> : UnitDescriptor<T>
+        where T : DelegateInvokeNode<TDelegate>
         where TDelegate : IDelegate
     {
-        public DelegateInvokeUnitDescriptor(T target) : base(target)
+        public DelegateInvokeNodeDesriptor(T target) : base(target)
         {
         }
 

@@ -1,13 +1,7 @@
-﻿using Unity.VisualScripting;
-using UnityEngine;
-using Bolt.Addons.Community.Fundamentals.Units.Utility;
-using Bolt.Addons.Libraries.Humility;
-using Bolt.Addons.Community.Utility.Editor;
-using Bolt.Addons.Community.Fundamentals.Units.Documenting;
-using UnityEditor;
-using Bolt.Addons.Community.Fundamentals.Editor.Editor;
+﻿using UnityEngine;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Bolt.Addons.Community.Processing
+namespace Unity.VisualScripting.Community
 {
     public sealed class RerouteProcess : GraphProcess<FlowGraph, FlowCanvas>
     {

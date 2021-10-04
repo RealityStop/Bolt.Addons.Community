@@ -3,10 +3,11 @@ using Unity.VisualScripting;
 using System;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
     [Inspectable]
+    [RenamedFrom("Bolt.Addons.Community.Code.MemberTypeAsset")]
     public abstract class MemberTypeAsset<TFieldDeclaration, TMethodDeclaration, TConstructorDeclaration> : CodeAsset
         where TFieldDeclaration : FieldDeclaration
         where TMethodDeclaration : MethodDeclaration

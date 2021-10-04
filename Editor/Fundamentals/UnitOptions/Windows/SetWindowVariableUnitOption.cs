@@ -1,18 +1,17 @@
 ﻿using System;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Utility.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
-    [FuzzyOption(typeof(SetWindowVariableUnit))]
-    public class SetWindowVariableUnitOption : UnitOption<SetWindowVariableUnit>
+    [FuzzyOption(typeof(SetWindowVariableNode))]
+    public class SetWindowVariableNodeOption : UnitOption<SetWindowVariableNode>
     {
         private string name;
         private EditorWindowAsset asset;
 
         [Obsolete(Serialization.ConstructorWarning)]
-        public SetWindowVariableUnitOption() : base() { }
+        public SetWindowVariableNodeOption() : base() { }
 
-        public SetWindowVariableUnitOption(SetWindowVariableUnit unit) : base(unit)
+        public SetWindowVariableNodeOption(SetWindowVariableNode unit) : base(unit)
         {
         }
 

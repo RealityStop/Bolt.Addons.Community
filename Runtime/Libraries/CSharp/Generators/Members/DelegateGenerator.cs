@@ -1,9 +1,10 @@
-﻿using Bolt.Addons.Libraries.Humility;
+﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
+    [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.DelegateGenerator")]
     public sealed class DelegateGenerator : MemberGenerator
     {
         private List<ParameterGenerator> parameters = new List<ParameterGenerator>();

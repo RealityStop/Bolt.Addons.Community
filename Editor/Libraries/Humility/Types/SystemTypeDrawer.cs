@@ -4,9 +4,9 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using System;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
     [CustomPropertyDrawer(typeof(SystemType))]
     public sealed class SystemTypeDrawer : PropertyDrawer

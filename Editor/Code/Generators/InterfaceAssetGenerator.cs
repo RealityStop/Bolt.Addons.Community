@@ -1,8 +1,8 @@
-﻿using Bolt.Addons.Libraries.CSharp;
+﻿using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Unity.VisualScripting.Community
 {
     [CodeGenerator(typeof(InterfaceAsset))]
     [Serializable]

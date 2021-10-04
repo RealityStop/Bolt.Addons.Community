@@ -1,16 +1,15 @@
-using Unity.VisualScripting;
-
 #if VISUAL_SCRIPTING_1_7
 using SMachine = Unity.VisualScripting.ScriptMachine;
 #else
 using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Graphs")]
     [TypeIcon(typeof(SMachine))]
-    public abstract class MachineVariableUnit : Unit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.MachineVariableUnit")]
+    public abstract class MachineVariableNode : Unit
     {
         [Serialize]
         [Inspectable]

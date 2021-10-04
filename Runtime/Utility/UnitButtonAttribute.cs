@@ -1,19 +1,14 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
 
-
-namespace Bolt.Addons.Community.Utility
+namespace Unity.VisualScripting.Community.Utility
 {
     [RenamedFrom("Bolt.Community.Addons.Utility.UnitButtonAttribute")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-    public class UnitButtonAttribute : Attribute
+    public class NodeButtonAttribute : Attribute
     {
         public string action;
 
-        public UnitButtonAttribute(string action)
+        public NodeButtonAttribute(string action)
         {
             this.action = action;
         }

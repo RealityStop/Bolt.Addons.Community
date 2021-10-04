@@ -1,20 +1,14 @@
-﻿using Bolt.Addons.Community.Fundamentals;
+﻿using System;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
     [FuzzyOption(typeof(SetDictionaryVariableItem))]
-    public class SetDictionaryVariableItemUnitOption : UnifiedVariableUnitOption<SetDictionaryVariableItem>
+    public class SetDictionaryVariableItemNodeOption : UnifiedVariableUnitOption<SetDictionaryVariableItem>
     {
         [Obsolete(Serialization.ConstructorWarning)]
-        public SetDictionaryVariableItemUnitOption() : base() { }
+        public SetDictionaryVariableItemNodeOption() : base() { }
 
-        public SetDictionaryVariableItemUnitOption(VariableKind kind, string defaultName = null) : base(kind, defaultName) { }
+        public SetDictionaryVariableItemNodeOption(VariableKind kind, string defaultName = null) : base(kind, defaultName) { }
 
         protected override string NamedLabel(bool human)
         {

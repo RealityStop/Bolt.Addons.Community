@@ -1,20 +1,14 @@
-﻿using Bolt.Addons.Community.Fundamentals;
+﻿using System;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
-    [FuzzyOption(typeof(DecrementUnit))]
-    public class DecrementUnitOption : UnifiedVariableUnitOption<DecrementUnit>
+    [FuzzyOption(typeof(DecrementNode))]
+    public class DecrementNodeOption : UnifiedVariableUnitOption<DecrementNode>
     {
         [Obsolete(Serialization.ConstructorWarning)]
-        public DecrementUnitOption() : base() { }
+        public DecrementNodeOption() : base() { }
 
-        public DecrementUnitOption(VariableKind kind, string defaultName = null) : base(kind, defaultName) { }
+        public DecrementNodeOption(VariableKind kind, string defaultName = null) : base(kind, defaultName) { }
 
         protected override string NamedLabel(bool human)
         {

@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.DefinedEvents.Support.Internal
+namespace Unity.VisualScripting.Community
 {
-    interface IDefinedEventUnit
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Support.Internal.IDefinedEventUnit")]
+    interface IDefinedEventNode
     {
         List<ValueOutput> outputPorts { get; }
     }

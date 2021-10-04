@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
-    [Widget(typeof(WindowVariableUnit))]
-    public class WindowVariableUnitWidget : UnitWidget<WindowVariableUnit>
+    [Widget(typeof(WindowVariableNode))]
+    public class WindowVariableNodeWidget : UnitWidget<WindowVariableNode>
     {
-        public WindowVariableUnitWidget(FlowCanvas canvas, WindowVariableUnit unit) : base(canvas, unit)
+        public WindowVariableNodeWidget(FlowCanvas canvas, WindowVariableNode unit) : base(canvas, unit)
         {
             nameInspectorConstructor = (metadata) => new VariableNameInspector(metadata, GetNameSuggestions);
         }

@@ -1,15 +1,13 @@
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Time")]
     [UnitTitle("Yield")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.WaitForEnumerator")]
-    public sealed class YieldUnit : WaitUnit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.YieldUnit")]
+    public sealed class YieldNode : WaitUnit
     {
         [UnitHeaderInspectable]
         public EnumeratorType type;

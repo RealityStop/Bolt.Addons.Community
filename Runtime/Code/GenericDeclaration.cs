@@ -1,11 +1,12 @@
 ﻿using Unity.VisualScripting;
 using System;
-using Bolt.Addons.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [Inspectable]
     [Serializable]
+    [RenamedFrom("Bolt.Addons.Community.Code.GenericDeclaration")]
     public sealed class GenericDeclaration
     {
         [Inspectable]

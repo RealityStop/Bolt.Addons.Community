@@ -1,16 +1,15 @@
-﻿using Bolt.Addons.Libraries.CSharp;
-using Unity.VisualScripting;
+﻿using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
-    [FuzzyOption(typeof(ActionUnit))]
-    public sealed class ActionUnitOption : UnitOption<ActionUnit>
+    [FuzzyOption(typeof(ActionNode))]
+    public sealed class ActionNodeOption : UnitOption<ActionNode>
     {
         [Obsolete()]
-        public ActionUnitOption() : base() { }
+        public ActionNodeOption() : base() { }
 
-        public ActionUnitOption(ActionUnit unit) : base(unit)
+        public ActionNodeOption(ActionNode unit) : base(unit)
         {
         }
 

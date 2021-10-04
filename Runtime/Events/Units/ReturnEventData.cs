@@ -1,12 +1,13 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.ReturnEvents
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Wraps up the arg data we used on the event, to use with the EventReturn unit.
     /// </summary>
     [RenamedFrom("Lasm.BoltExtensions.ReturnEventData")]
     [RenamedFrom("Lasm.UAlive.ReturnEventData")]
+    [RenamedFrom("Bolt.Addons.Community.ReturnEvents.ReturnEventData")]
     public class ReturnEventData
     {
         /// <summary>

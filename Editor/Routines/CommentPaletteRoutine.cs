@@ -1,15 +1,14 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.Documenting;
-using Bolt.Addons.Libraries.Humility;
+﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Processing
+namespace Unity.VisualScripting.Community
 {
     public sealed class CommentPaletteRoutine : DeserializedRoutine
     {
         public override void Run()
         {
-            if (CommentUnit.style == null)
+            if (CommentNode.style == null)
             {
                 var path = "Assets/Bolt.Addons.Generated/";
                 HUMIO.Ensure(path).Path();
@@ -22,7 +21,7 @@ namespace Bolt.Addons.Community.Processing
                     AssetDatabase.CreateAsset(style, path + "GlobalCommentStyle.asset");
                 }
 
-                CommentUnit.style = style;
+                CommentNode.style = style;
             }
         }
     }

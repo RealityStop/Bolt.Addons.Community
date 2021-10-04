@@ -1,17 +1,11 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Latches a boolean value until it is reset.
     /// </summary>
     [UnitCategory("Community\\Logic")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.Latch")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Latch")]
     public sealed class Latch : Unit
     {
         public Latch() : base() { }

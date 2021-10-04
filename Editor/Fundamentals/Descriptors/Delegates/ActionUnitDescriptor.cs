@@ -1,11 +1,9 @@
-﻿using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals.Editor
+﻿namespace Unity.VisualScripting.Community
 {
-    [Descriptor(typeof(ActionUnit))]
-    public sealed class ActionUnitDescriptor : DelegateUnitDescriptor<ActionUnit>
+    [Descriptor(typeof(ActionNode))]
+    public sealed class ActionNodeDescriptor : DelegateNodeDescriptor<ActionNode>
     {
-        public ActionUnitDescriptor(ActionUnit target) : base(target)
+        public ActionNodeDescriptor(ActionNode target) : base(target)
         {
         }
 

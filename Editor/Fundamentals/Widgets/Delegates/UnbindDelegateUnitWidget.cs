@@ -4,12 +4,12 @@ using UnityEditor;
 using System.Collections.Generic;
 using System;
 using System.Reflection;
-using Bolt.Addons.Community.Utility;
+using Unity.VisualScripting.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor
+namespace Unity.VisualScripting.Community
 {
     public abstract class UnbindDelegateUnitWidget<T, TDelegate> : UnitWidget<T>
-        where T : UnbindDelegateUnit<TDelegate>
+        where T : UnbindDelegateNode<TDelegate>
         where TDelegate : IDelegate
     {
         public UnbindDelegateUnitWidget(FlowCanvas canvas, T unit) : base(canvas, unit)

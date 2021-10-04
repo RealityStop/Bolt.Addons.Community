@@ -1,10 +1,4 @@
-﻿using UnityEngine;
-
-using Bolt;
-using Unity.VisualScripting;
-using UnityEditor;
-
-namespace Bolt.Addons.Community.ReturnEvents.Editor
+﻿namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// A descriptor that assigns the ReturnEvents icon.

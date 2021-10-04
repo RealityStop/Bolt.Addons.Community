@@ -1,20 +1,14 @@
-﻿using Bolt.Addons.Community.Fundamentals;
+﻿using System;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
     [FuzzyOption(typeof(PlusEquals))]
-    public class PlusEqualUnitOption : UnifiedVariableUnitOption<PlusEquals>
+    public class PlusEqualNodeOption : UnifiedVariableUnitOption<PlusEquals>
     {
         [Obsolete(Serialization.ConstructorWarning)]
-        public PlusEqualUnitOption() : base() { }
+        public PlusEqualNodeOption() : base() { }
 
-        public PlusEqualUnitOption(VariableKind kind, string defaultName = null) : base(kind, defaultName) { }
+        public PlusEqualNodeOption(VariableKind kind, string defaultName = null) : base(kind, defaultName) { }
 
         protected override string NamedLabel(bool human)
         {

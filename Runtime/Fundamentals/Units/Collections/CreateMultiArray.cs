@@ -1,12 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-
-using Bolt;
 using System;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Collections
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Create a new multi dimensional array.
@@ -16,7 +12,8 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
     [RenamedFrom("Lasm.BoltExtensions.CreateArray")]
     [RenamedFrom("Lasm.BoltExtensions.CreateMultiArray")]
     [RenamedFrom("Lasm.UAlive.CreateMultiArray")]
-    public sealed class CreateMultiArray : Unit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Collections.CreateMultiArray")]
+    public sealed class CreateArray : Unit
     {
         [Serialize]
         private int _dimensions = 2;

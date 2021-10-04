@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Bolt.Addons.Community.Generation
+namespace Unity.VisualScripting.Community
 {
     public sealed class ControlGenerationData
     {

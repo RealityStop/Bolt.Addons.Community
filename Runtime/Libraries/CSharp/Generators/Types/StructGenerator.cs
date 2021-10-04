@@ -1,9 +1,10 @@
-﻿using Bolt.Addons.Libraries.Humility;
+﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
+    [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.StructGenerator")]
     public sealed class StructGenerator : TypeGenerator
     {
         private RootAccessModifier scope;
@@ -92,28 +93,28 @@ namespace Bolt.Addons.Libraries.CSharp
                 if (!string.IsNullOrEmpty(fields[i].name)) output += fields[i].Generate(indent) + (i < fields.Count - 1 ? "\n" : string.Empty);
             }
 
-            output += fields.Count > 0 && (properties.Count > 0 || constructors.Count > 0 || methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n" : string.Empty;
+            output += fields.Count > 0 && (properties.Count > 0 || constructors.Count > 0 || methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n\n" : string.Empty;
 
             for (int i = 0; i < properties.Count; i++)
             {
-                if (!string.IsNullOrEmpty(properties[i].name)) output += properties[i].Generate(indent) + (i < properties.Count - 1 ? "\n" : string.Empty);
+                if (!string.IsNullOrEmpty(properties[i].name)) output += properties[i].Generate(indent) + (i < properties.Count - 1 ? "\n\n" : string.Empty);
             }
 
-            output += properties.Count > 0 && (constructors.Count > 0 || methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n" : string.Empty;
+            output += properties.Count > 0 && (constructors.Count > 0 || methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n\n" : string.Empty;
 
             for (int i = 0; i < constructors.Count; i++)
             {
-                output += constructors[i].Generate(indent) + (i < constructors.Count - 1 ? "\n" : string.Empty);
+                output += constructors[i].Generate(indent) + (i < constructors.Count - 1 ? "\n\n" : string.Empty);
             }
 
-            output += constructors.Count > 0 && (methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n" : string.Empty;
+            output += constructors.Count > 0 && (methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n\n" : string.Empty;
 
             for (int i = 0; i < methods.Count; i++)
             {
                 if (!string.IsNullOrEmpty(methods[i].name)) output += methods[i].Generate(indent) + (i < methods.Count - 1 ? "\n\n" : string.Empty);
             }
 
-            output += methods.Count > 0 && (classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n" : string.Empty;
+            output += methods.Count > 0 && (classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n\n" : string.Empty;
 
             for (int i = 0; i < classes.Count; i++)
             {
@@ -121,7 +122,7 @@ namespace Bolt.Addons.Libraries.CSharp
                 output += i < classes.Count - 1 ? "\n\n" : string.Empty;
             }
 
-            output += classes.Count > 0 && (structs.Count > 0 || enums.Count > 0) ? "\n" : string.Empty;
+            output += classes.Count > 0 && (structs.Count > 0 || enums.Count > 0) ? "\n\n" : string.Empty;
 
             for (int i = 0; i < structs.Count; i++)
             {
@@ -129,7 +130,7 @@ namespace Bolt.Addons.Libraries.CSharp
                 output += i < structs.Count - 1 ? "\n\n" : string.Empty;
             }
 
-            output += structs.Count > 0 && enums.Count > 0 ? "\n" : string.Empty;
+            output += structs.Count > 0 && enums.Count > 0 ? "\n\n" : string.Empty;
 
             for (int i = 0; i < enums.Count; i++)
             {

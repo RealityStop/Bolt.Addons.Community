@@ -1,17 +1,14 @@
-﻿using Bolt.Addons.Community.Fundamentals;
+﻿using System;
 
-using System;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
-    [FuzzyOption(typeof(GetMachineVariableUnit))]
-    public class GetMachineVariableUnitOption : UnitOption<GetMachineVariableUnit>
+    [FuzzyOption(typeof(GetMachineVariableNode))]
+    public class GetMachineVariableNodeOption : UnitOption<GetMachineVariableNode>
     {
         [Obsolete(Serialization.ConstructorWarning)]
-        public GetMachineVariableUnitOption() : base() { }
+        public GetMachineVariableNodeOption() : base() { }
 
-        public GetMachineVariableUnitOption(GetMachineVariableUnit unit) : base(unit)
+        public GetMachineVariableNodeOption(GetMachineVariableNode unit) : base(unit)
         {
         }
 

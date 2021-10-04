@@ -1,19 +1,9 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.logic;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals.Editor.Editor.Descriptors
+﻿namespace Unity.VisualScripting.Community
 {
-    [Descriptor(typeof(LogUnit))]
-    public class LogUnitDescriptor : UnitDescriptor<LogUnit>
+    [Descriptor(typeof(LogNode))]
+    public class LogNodeDescriptor : UnitDescriptor<LogNode>
     {
-        public LogUnitDescriptor(LogUnit target) : base(target)
+        public LogNodeDescriptor(LogNode target) : base(target)
         {
         }
 

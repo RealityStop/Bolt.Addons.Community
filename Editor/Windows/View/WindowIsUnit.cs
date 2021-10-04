@@ -1,11 +1,11 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Editor")]
     [UnitTitle("Is Window")]
-    [TypeIcon(typeof(GetWindowVariableUnit))]
-    public sealed class WindowIsUnit : Unit
+    [TypeIcon(typeof(GetWindowVariableNode))]
+    public sealed class WindowIsNode : Unit
     {
         [UnitHeaderInspectable]
         public EditorWindowAsset asset;

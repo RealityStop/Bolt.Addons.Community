@@ -1,8 +1,9 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
     [IncludeInSettings(true)]
+    [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.Void")]
     public struct Void
     {
     }

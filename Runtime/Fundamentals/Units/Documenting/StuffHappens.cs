@@ -1,13 +1,7 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
+﻿namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community\\Documentation")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Documenting.StuffHappens")]
     public class StuffHappens : Unit
     {
 

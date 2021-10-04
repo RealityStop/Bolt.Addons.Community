@@ -1,7 +1,8 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Code.PropertySetterMacro")]
     public sealed class PropertySetterMacro : Macro<FlowGraph>
     {
 #if UNITY_EDITOR

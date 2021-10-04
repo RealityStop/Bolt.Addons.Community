@@ -1,15 +1,12 @@
-﻿using Bolt;
-
-using System;
-using Unity.VisualScripting;
+﻿using System;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
-    [Widget(typeof(ConvertUnit))]
-    public sealed class ConvertUnitWidget : UnitWidget<ConvertUnit>
+    [Widget(typeof(ConvertNode))]
+    public sealed class ConvertNodeWidget : UnitWidget<ConvertNode>
     {
-        public ConvertUnitWidget(FlowCanvas canvas, ConvertUnit unit) : base(canvas, unit)
+        public ConvertNodeWidget(FlowCanvas canvas, ConvertNode unit) : base(canvas, unit)
         {
         }
 

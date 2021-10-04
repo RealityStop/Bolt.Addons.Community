@@ -5,11 +5,11 @@ using UnityEngine;
 using UnityEditor;
 
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
-    [CustomPropertyDrawer(typeof(UnitButton))]
+    [CustomPropertyDrawer(typeof(NodeButton))]
     [RenamedFrom("Bolt.Community.Addons.Utility.Editor.UnitButtonPropertyDrawer")]
-    public class UnitButtonPropertyDrawer : PropertyDrawer
+    public class NodeButtonPropertyDrawer : PropertyDrawer
     {
 
     }

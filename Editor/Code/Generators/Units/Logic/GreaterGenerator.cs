@@ -1,7 +1,7 @@
 ﻿using Unity.VisualScripting;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Bolt.Addons.Community.Generation
+namespace Unity.VisualScripting.Community
 {
     [UnitGenerator(typeof(Greater))]
     public sealed class GreaterGenerator : UnitGenerator<Greater>

@@ -1,17 +1,16 @@
-﻿using Bolt.Addons.Community.Utility;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using Unity.VisualScripting.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Control/Delegates")]
     [TypeIcon(typeof(Flow))]
-    public sealed class ActionUnit : DelegateUnit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.ActionUnit")]
+    public sealed class ActionNode : DelegateUnit
     {
         public IAction _action => _delegate as IAction;
 
-        public ActionUnit() : base() { }
-        public ActionUnit(IDelegate del) : base(del)
+        public ActionNode() : base() { }
+        public ActionNode(IDelegate del) : base(del)
         {
 
         }

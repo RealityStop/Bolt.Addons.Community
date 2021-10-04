@@ -1,18 +1,11 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Restricts control flow by only allowing through one control flow until reset.
     /// </summary>
     [UnitCategory("Community\\Control")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.EdgeTrigger")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.EdgeTrigger")]
     [TypeIcon(typeof(ISelectUnit))]
     public sealed class EdgeTrigger : Unit
     {

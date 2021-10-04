@@ -1,12 +1,10 @@
-﻿using Unity.VisualScripting;
-using Bolt.Addons.Community.Utility;
-
-namespace Bolt.Addons.Community.Fundamentals.Editor
+﻿
+namespace Unity.VisualScripting.Community
 {
-    [Editor(typeof(FuncInvokeUnit))]
-    public sealed class FuncInvokeUnitEditor : DelegateInvokeUnitEditor<FuncInvokeUnit, IFunc>
+    [Editor(typeof(FuncInvokeNode))]
+    public sealed class FuncInvokeNodeEditor : DelegateInvokeNodeEditor<FuncInvokeNode, IFunc>
     {
-        public FuncInvokeUnitEditor(Metadata metadata) : base(metadata)
+        public FuncInvokeNodeEditor(Metadata metadata) : base(metadata)
         {
         }
 

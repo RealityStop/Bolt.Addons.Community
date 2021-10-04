@@ -1,19 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 
-using System.Reflection;
-using System;
-using Unity.VisualScripting;
-using Bolt.Addons.Community.Fundamentals.Units.Documenting;
-using System.Linq.Expressions;
-using Bolt.Addons.Libraries.Humility;
-
-namespace Bolt.Community.Addons.Fundamentals.Editor.Controls
+namespace Unity.VisualScripting.Community
 {
-    [Inspector(typeof(CommentUnit)), CanEditMultipleObjects]
-    public class CommentUnitInspector : Inspector
+    [Inspector(typeof(CommentNode)), CanEditMultipleObjects]
+    public class CommentNodeInspector : Inspector
     {
         // Constants
         const float
@@ -63,7 +54,7 @@ namespace Bolt.Community.Addons.Fundamentals.Editor.Controls
             commentGUI = new GUIStyle(GUI.skin.textField) { fontSize = 11, wordWrap = true },
             buttonGUI = new GUIStyle(GUI.skin.button) { fontSize = 9 };
 
-        static CommentUnit
+        static CommentNode
             copyUnit,
             unit;
 
@@ -84,7 +75,7 @@ namespace Bolt.Community.Addons.Fundamentals.Editor.Controls
         public static Color[,,] colorPalette = new Color[2, 6, 9];  // Main, Custom
         public static Color[,,] fontPalette = new Color[3, 6, 9];  // Main, Colorized, Custom
 
-        static CommentPalette style => CommentUnit.style;
+        static CommentPalette style => CommentNode.style;
         public static bool initialised = false;
 
         ///////////////////////////   Methods   /////////////////////////////////////////////
@@ -173,7 +164,7 @@ namespace Bolt.Community.Addons.Fundamentals.Editor.Controls
 
 
         // Required Methods
-        public CommentUnitInspector(Metadata metadata) : base(metadata) { }
+        public CommentNodeInspector(Metadata metadata) : base(metadata) { }
 
         protected override float GetHeight(float width, GUIContent label)
         {
@@ -194,7 +185,7 @@ namespace Bolt.Community.Addons.Fundamentals.Editor.Controls
 
             xWidth = position.width;
             xFieldRatio = (xWidth < 336 ? ((335 - xWidth) / xFieldDivision) + xFieldDivision / 10f : 0) + ((xWidth - 335) / xFieldDivision);
-            unit = (CommentUnit)metadata.value;
+            unit = (CommentNode)metadata.value;
 
             // Initially copy settings to selected unit if Copy is Active
             if (copyACTIVE && copyUnit != null)

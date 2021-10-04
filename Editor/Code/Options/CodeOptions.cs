@@ -1,16 +1,10 @@
-﻿using UnityEngine;
-using UnityEditor;
+﻿using UnityEditor;
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Reflection;
-using Bolt.Addons.Community.Fundamentals.Editor.UnitOptions;
-using Bolt.Addons.Community.Utility;
-using Bolt.Addons.Community.Fundamentals;
-using Bolt.Addons.Libraries.CSharp;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Unity.VisualScripting.Community
 {
     [InitializeAfterPlugins]
     public static class CodeOptions
@@ -74,18 +68,18 @@ namespace Bolt.Addons.Community.Code.Editor
                     {
                         if (typeof(IAction).IsAssignableFrom(types[type]))
                         {
-                            yield return new ActionUnitOption(new ActionUnit(Activator.CreateInstance(types[type] as System.Type) as IAction));
-                            yield return new ActionInvokeUnitOption(new ActionInvokeUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
-                            yield return new BindActionUnitOption(new BindActionUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
-                            yield return new UnbindActionUnitOption(new UnbindActionUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
+                            yield return new ActionNodeOption(new ActionNode(Activator.CreateInstance(types[type] as System.Type) as IAction));
+                            yield return new ActionInvokeNodeOption(new ActionInvokeNode() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
+                            yield return new BindActionNodeOption(new BindActionNode() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
+                            yield return new UnbindActionNodeOption(new UnbindActionNode() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IAction });
                         }
 
                         if (typeof(IFunc).IsAssignableFrom(types[type]))
                         {
-                            yield return new FuncUnitOption(new FuncUnit(Activator.CreateInstance(types[type] as System.Type) as IFunc));
-                            yield return new FuncInvokeUnitOption(new FuncInvokeUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
-                            yield return new BindFuncUnitOption(new BindFuncUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
-                            yield return new UnbindFuncUnitOption(new UnbindFuncUnit() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
+                            yield return new FuncNodeOption(new FuncNode(Activator.CreateInstance(types[type] as System.Type) as IFunc));
+                            yield return new FuncInvokeNodeOption(new FuncInvokeNode() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
+                            yield return new BindFuncNodeOption(new BindFuncNode() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
+                            yield return new UnbindFuncNodeOption(new UnbindFuncNode() { _delegate = Activator.CreateInstance(types[type] as System.Type) as IFunc });
                         }
                     }
                 }

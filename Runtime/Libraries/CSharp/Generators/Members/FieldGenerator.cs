@@ -1,10 +1,11 @@
-﻿using Bolt.Addons.Libraries.Humility;
+﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
-using static Bolt.Addons.Libraries.Humility.HUMType_Children;
+using static Unity.VisualScripting.Community.Libraries.Humility.HUMType_Children;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
+    [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.FieldGenerator")]
     public sealed class FieldGenerator : ConstructGenerator
     {
         public AccessModifier scope;

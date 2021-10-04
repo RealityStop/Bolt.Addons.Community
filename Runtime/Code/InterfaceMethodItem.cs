@@ -1,12 +1,13 @@
 ﻿using Unity.VisualScripting;
 using System;
 using System.Collections.Generic;
-using Bolt.Addons.Community.Utility;
+using Unity.VisualScripting.Community.Utility;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
     [Inspectable]
+    [RenamedFrom("Bolt.Addons.Community.Code.InterfaceMethodItem")]
     public sealed class InterfaceMethodItem
     {
         [Inspectable]

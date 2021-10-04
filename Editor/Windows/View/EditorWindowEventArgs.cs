@@ -1,4 +1,4 @@
-﻿namespace Bolt.Addons.Community.Utility.Editor
+﻿namespace Unity.VisualScripting.Community
 {
     public struct EditorWindowEventArgs
     {

@@ -1,8 +1,8 @@
-﻿using Bolt.Addons.Libraries.Humility;
-using Bolt.Addons.Libraries.CSharp;
+﻿using Unity.VisualScripting.Community.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Generation
+namespace Unity.VisualScripting.Community
 {
     [UnitGenerator(typeof(Unit))]
     public class UnitGenerator : Decorator<UnitGenerator, UnitGeneratorAttribute, Unit>

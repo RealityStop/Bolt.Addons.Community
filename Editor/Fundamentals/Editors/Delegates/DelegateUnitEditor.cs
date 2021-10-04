@@ -1,18 +1,16 @@
-﻿using Unity.VisualScripting;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System;
 using System.Reflection;
-using Bolt.Addons.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor
+namespace Unity.VisualScripting.Community
 {
-    public abstract class DelegateUnitEditor<T, TDelegate> : UnitEditor 
+    public abstract class DelegateNodeEditor<T, TDelegate> : UnitEditor 
         where T : DelegateUnit
         where TDelegate : IDelegate
     {
-        public DelegateUnitEditor(Metadata metadata) : base(metadata)
+        public DelegateNodeEditor(Metadata metadata) : base(metadata)
         {
         }
 

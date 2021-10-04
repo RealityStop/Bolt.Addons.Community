@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.DefinedEvents.Support.Internal
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Support.Internal.IDefinedEventTriggerUnit")]
     interface IDefinedEventTriggerUnit
     {
         List<ValueInput> inputPorts { get; }

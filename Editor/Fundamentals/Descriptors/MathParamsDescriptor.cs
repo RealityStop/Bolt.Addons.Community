@@ -1,11 +1,4 @@
-﻿
-using Bolt;
-using UnityEngine;
-using UnityEditor;
-using System;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {
     [Descriptor(typeof(MathParamNode))]
     public class MathParamsDescriptor : UnitDescriptor<MathParamNode>

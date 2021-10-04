@@ -1,18 +1,9 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.Documenting;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals.Editor.Editor.Widgets
+﻿namespace Unity.VisualScripting.Community
 {
     [Widget(typeof(Todo))]
-    public sealed class TodoUnitWidget : UnitWidget<Todo>
+    public sealed class TodoWidget : UnitWidget<Todo>
     {
-
-        public TodoUnitWidget(FlowCanvas canvas, Todo unit) : base(canvas, unit)
+        public TodoWidget(FlowCanvas canvas, Todo unit) : base(canvas, unit)
         {
         }
 

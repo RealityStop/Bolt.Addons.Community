@@ -1,20 +1,14 @@
-﻿using Bolt.Addons.Community.Fundamentals;
+﻿using System;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
-    [FuzzyOption(typeof(IncrementUnit))]
-    public class IncrementUnitOption : UnifiedVariableUnitOption<IncrementUnit>
+    [FuzzyOption(typeof(IncrementNode))]
+    public class IncrementNodeOption : UnifiedVariableUnitOption<IncrementNode>
     {
         [Obsolete(Serialization.ConstructorWarning)]
-        public IncrementUnitOption() : base() { }
+        public IncrementNodeOption() : base() { }
 
-        public IncrementUnitOption(VariableKind kind, string defaultName = null) : base(kind, defaultName) { }
+        public IncrementNodeOption(VariableKind kind, string defaultName = null) : base(kind, defaultName) { }
 
         protected override string NamedLabel(bool human)
         {

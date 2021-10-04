@@ -1,17 +1,11 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {   
     /// <summary>
      /// Returns whether the value is within the given range (inclusive).
      /// </summary>
     [UnitCategory("Community\\Logic")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.Between")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Between")]
     [TypeIcon(typeof(Unity.VisualScripting.And))]
     public class Between : Unit
     {

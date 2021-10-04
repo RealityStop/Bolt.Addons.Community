@@ -1,10 +1,10 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor
+namespace Unity.VisualScripting.Community
 {
-    public abstract class DelegateUnitDescriptor<T> : UnitDescriptor<T> where T : DelegateUnit
+    public abstract class DelegateNodeDescriptor<T> : UnitDescriptor<T> where T : DelegateUnit
     {
-        public DelegateUnitDescriptor(T target) : base(target)
+        public DelegateNodeDescriptor(T target) : base(target)
         {
         }
 

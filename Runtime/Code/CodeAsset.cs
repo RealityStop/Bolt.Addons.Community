@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
 using Unity.VisualScripting;
 using System;
-using Bolt.Addons.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
+    [RenamedFrom("Bolt.Addons.Community.Code.CodeAsset")]
     public abstract class CodeAsset : ScriptableObject
     {
         [Inspectable]

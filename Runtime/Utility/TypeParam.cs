@@ -1,14 +1,13 @@
-using Bolt.Addons.Libraries.CSharp;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Utility
+namespace Unity.VisualScripting.Community.Utility
 {
     [Serializable]
     [Inspectable]
+    [RenamedFrom("Bolt.Addons.Community.Utility.TypeParam")]
     public sealed class TypeParam
-    {
+    { 
         [Serialize]
         [Inspectable]
         public Type type = typeof(object);

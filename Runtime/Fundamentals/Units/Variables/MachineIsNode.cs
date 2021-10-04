@@ -1,17 +1,16 @@
-﻿using Unity.VisualScripting;
-
-#if VISUAL_SCRIPTING_1_7
+﻿#if VISUAL_SCRIPTING_1_7
 using SMachine = Unity.VisualScripting.ScriptMachine;
 #else
 using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitTitle("Machine Is")]
     [TypeIcon(typeof(SMachine))]
     [UnitCategory("Community/Graphs")]
-    public sealed class MachineIsUnit : Unit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.MachineIsUnit")]
+    public sealed class MachineIsNode : Unit
     {
         [DoNotSerialize]
         [NullMeansSelf]

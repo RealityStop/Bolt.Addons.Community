@@ -1,12 +1,9 @@
-﻿using Bolt;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-
 using System;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Collections
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// A unit for using Linq querying operations in a Bolt graph.
@@ -16,7 +13,8 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
     [TypeIcon(typeof(IEnumerable))]
     [RenamedFrom("Lasm.BoltExtensions.QueryUnit")]
     [RenamedFrom("Lasm.UAlive.QueryUnit")]
-    public class QueryUnit : Unit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Collections.QueryUnit")]
+    public class QueryNode : Unit
     {
         [UnitHeaderInspectable(null)]
         [InspectorWide]

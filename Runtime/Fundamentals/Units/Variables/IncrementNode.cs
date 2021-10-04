@@ -1,20 +1,13 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Variables")]
     [UnitShortTitle("Increment Variable")]
     [RenamedFrom("Bolt.Addons.Community.Variables.Units.IncrementUnit")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.IncrementUnit")]
     [UnitTitle("Increment")]
-    public class IncrementUnit : VariableAdder
+    public class IncrementNode : VariableAdder
     {
-        public IncrementUnit() : base() { }
+        public IncrementNode() : base() { }
 
         /// <summary>
         /// The value assigned to the variable before incrementing.

@@ -1,11 +1,9 @@
-﻿using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Utility.Editor
+﻿namespace Unity.VisualScripting.Community
 {
-    [Widget(typeof(WindowIsUnit))]
-    public class WindowIsUnitWidget : UnitWidget<WindowIsUnit>
+    [Widget(typeof(WindowIsNode))]
+    public class WindowIsNodeWidget : UnitWidget<WindowIsNode>
     {
-        public WindowIsUnitWidget(FlowCanvas canvas, WindowIsUnit unit) : base(canvas, unit)
+        public WindowIsNodeWidget(FlowCanvas canvas, WindowIsNode unit) : base(canvas, unit)
         {
         }
 

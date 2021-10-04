@@ -1,16 +1,15 @@
-﻿using Unity.VisualScripting;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System;
 using UnityEngine;
-using Bolt.Addons.Libraries.Humility;
-using Bolt.Addons.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community.Utility
 {
     [IncludeInSettings(true)]
     [Serializable]
     [Inspectable]
+    [RenamedFrom("Bolt.Addons.Community.Utility.Editor.CustomVariables")]
     public sealed class CustomVariables
     {
         [SerializeField]

@@ -1,11 +1,10 @@
-﻿using Bolt.Addons.Community.Utility;
-using System;
-using Unity.VisualScripting;
+﻿using Unity.VisualScripting.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Control/Delegates")]
-    public sealed class BindFuncUnit : BindDelegateUnit<IFunc>
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.BindFuncUnit")]
+    public sealed class BindFuncNode : BindDelegateNode<IFunc>
     {
     }
 }

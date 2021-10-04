@@ -1,12 +1,7 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
+﻿using System;
 using UnityObject = UnityEngine.Object;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community.Deprecated
 {
     /// <summary>
     /// Returns whether the value is within the given range (inclusive).
@@ -14,6 +9,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitCategory("Nulls")]
     [UnitTitle("Is Null")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.IsNullValue")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.IsNullValue")]
     [TypeIcon(typeof(Null))]
     [Obsolete("This unit can be replaced by the built-in Equals (not Object.Equals, but the Bolt one in Logic)")]
     public class IsNullValue : Unit
@@ -27,7 +23,6 @@ namespace Bolt.Addons.Community.Fundamentals
         [PortLabelHidden]
         public ValueInput input { get; private set; }
 
-
         /// <summary>
         /// The minimum value (inclusive)
         /// </summary>
@@ -35,14 +30,12 @@ namespace Bolt.Addons.Community.Fundamentals
         [PortLabel("Null")]
         public ValueOutput isNull { get; private set; }
 
-
         /// <summary>
         /// The maximum value (inclusive)
         /// </summary>
         [DoNotSerialize]
         [PortLabel("Not Null")]
         public ValueOutput isNotNull { get; private set; }
-
 
         protected override void Definition()
         {

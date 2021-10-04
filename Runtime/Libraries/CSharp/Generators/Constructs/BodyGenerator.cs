@@ -1,10 +1,9 @@
-﻿using UnityEngine;
-
-namespace Bolt.Addons.Libraries.CSharp
+﻿namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
     /// <summary>
     /// A generator that sets up a body { } for you. Easily add what comes before, during, and after the body.
     /// </summary>
+    [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.BodyGenerator")]
     public abstract class BodyGenerator : ConstructGenerator
     {
         public bool hideBrackets;

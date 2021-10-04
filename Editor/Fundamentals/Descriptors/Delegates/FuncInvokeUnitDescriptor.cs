@@ -1,15 +1,15 @@
-﻿using Bolt.Addons.Community.Utility;
+﻿using Unity.VisualScripting.Community.Utility;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor
+namespace Unity.VisualScripting.Community
 {
-    [Descriptor(typeof(FuncInvokeUnit))]
-    public sealed class FuncInvokeUnitDescriptor : DelegateInvokeUnitDescriptor<FuncInvokeUnit, IFunc>
+    [Descriptor(typeof(FuncInvokeNode))]
+    public sealed class FuncInvokeNodeDescriptor : DelegateInvokeNodeDesriptor<FuncInvokeNode, IFunc>
     {
         protected override string Prefix => "Invoke";
         protected override string FallbackName => "Func";
 
-        public FuncInvokeUnitDescriptor(FuncInvokeUnit target) : base(target)
+        public FuncInvokeNodeDescriptor(FuncInvokeNode target) : base(target)
         {
         }
 

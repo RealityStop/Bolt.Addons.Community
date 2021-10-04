@@ -1,13 +1,14 @@
-﻿using Bolt.Addons.Community.Utility;
-using Bolt.Addons.Libraries.CSharp;
+﻿using Unity.VisualScripting.Community.Utility;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
     [Inspectable]
+    [RenamedFrom("Bolt.Addons.Community.Code.ConstructorDeclaration")]
     public abstract class ConstructorDeclaration : Macro<FlowGraph>
     {
         public AccessModifier scope;

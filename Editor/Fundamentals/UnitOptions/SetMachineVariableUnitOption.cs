@@ -1,19 +1,17 @@
-﻿using Bolt.Addons.Community.Fundamentals;
-using System;
-using Unity.VisualScripting;
+﻿using System;
 
-namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
-    [FuzzyOption(typeof(SetMachineVariableUnit))]
-    public class SetMachineVariableUnitOption : UnitOption<SetMachineVariableUnit>
+    [FuzzyOption(typeof(SetMachineVariableNode))]
+    public class SetMachineVariableNodeOption : UnitOption<SetMachineVariableNode>
     {
         private string name;
         private ScriptGraphAsset asset;
 
         [Obsolete(Serialization.ConstructorWarning)]
-        public SetMachineVariableUnitOption() : base() { }
+        public SetMachineVariableNodeOption() : base() { }
 
-        public SetMachineVariableUnitOption(SetMachineVariableUnit unit) : base(unit)
+        public SetMachineVariableNodeOption(SetMachineVariableNode unit) : base(unit)
         {
         }
 

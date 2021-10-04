@@ -1,15 +1,8 @@
-﻿
-
-using Bolt.Addons.Libraries.CSharp;
-using System;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Utility
+﻿namespace Unity.VisualScripting.Community.Utility
 {
     [Inspectable]
     [RenamedFrom("Bolt.Community.Addons.Utility.UnitButton")]
-    public class UnitButton
+    public class NodeButton
     {
         public System.Action action;
     }

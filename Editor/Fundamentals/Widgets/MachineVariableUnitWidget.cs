@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Collections.Editor
+namespace Unity.VisualScripting.Community
 {
-    [Widget(typeof(MachineVariableUnit))]
-    public class MachineVariableUnitWidget : UnitWidget<MachineVariableUnit>
+    [Widget(typeof(MachineVariableNode))]
+    public class MachineVariableNodeWidget : UnitWidget<MachineVariableNode>
     {
-        public MachineVariableUnitWidget(FlowCanvas canvas, MachineVariableUnit unit) : base(canvas, unit)
+        public MachineVariableNodeWidget(FlowCanvas canvas, MachineVariableNode unit) : base(canvas, unit)
         {
             nameInspectorConstructor = (metadata) => new VariableNameInspector(metadata, GetNameSuggestions);
         }

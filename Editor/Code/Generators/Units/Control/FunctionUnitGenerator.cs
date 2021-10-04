@@ -1,12 +1,9 @@
-﻿using Bolt.Addons.Community.Code;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Generation
+﻿namespace Unity.VisualScripting.Community
 {
-    [UnitGenerator(typeof(FunctionUnit))]
-    public sealed class FunctionUnitGenerator : UnitGenerator<FunctionUnit>
+    [UnitGenerator(typeof(FunctionNode))]
+    public sealed class FunctionUnitGenerator : UnitGenerator<FunctionNode>
     {
-        public FunctionUnitGenerator(FunctionUnit unit) : base(unit)
+        public FunctionUnitGenerator(FunctionNode unit) : base(unit)
         {
         }
 

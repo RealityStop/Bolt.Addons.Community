@@ -1,11 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using Bolt;
 using System;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.ReturnEvents
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// The Event that starts some logic before return back flow and a value.
@@ -13,6 +10,7 @@ namespace Bolt.Addons.Community.ReturnEvents
     [UnitCategory("Events/Community/Returns")]
     [RenamedFrom("Lasm.BoltExtensions.ReturnEvent")]
     [RenamedFrom("Lasm.UAlive.ReturnEvent")]
+    [RenamedFrom("Bolt.Addons.Community.ReturnEvents.ReturnEvent")]
     public sealed class ReturnEvent : GlobalEventUnit<ReturnEventArg>
     {
         [Serialize]

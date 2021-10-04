@@ -1,10 +1,8 @@
 ﻿using UnityEditor;
 using UnityEngine;
-using Bolt.Addons.Libraries.Humility;
-using Bolt.Addons.Community.Fundamentals.Units.Documenting;
-using Unity.VisualScripting;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Bolt.Addons.Community.Processing
+namespace Unity.VisualScripting.Community
 {
     public sealed class CommentPopup : EditorWindow
     {
@@ -48,7 +46,7 @@ namespace Bolt.Addons.Community.Processing
             if (Event.current.keyCode == KeyCode.Return && Event.current.rawType == EventType.KeyUp)
             {
                 var canvas = GraphWindow.activeContext?.canvas as FlowCanvas;
-                canvas?.AddUnit(new CommentUnit() { comment = text, color = new Color(Random.Range(0.1f, 0.6f), Random.Range(0.1f, 0.6f), Random.Range(0.1f, 0.6f)) }, placement);
+                canvas?.AddUnit(new CommentNode() { comment = text, color = new Color(Random.Range(0.1f, 0.6f), Random.Range(0.1f, 0.6f), Random.Range(0.1f, 0.6f)) }, placement);
                 Close();
             }
             else

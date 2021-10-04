@@ -1,9 +1,10 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Editor")]
-    public abstract class ProxyEditorUnit : Unit
+    [RenamedFrom("Bolt.Addons.Community.ProxyEditorUnit")]
+    public abstract class ProxyEditorNode : Unit
     {
         [DoNotSerialize]
         public ValueInput fauxInput;

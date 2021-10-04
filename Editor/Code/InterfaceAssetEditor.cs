@@ -1,11 +1,11 @@
 ﻿using UnityEngine;
 using Unity.VisualScripting;
 using UnityEditor;
-using Bolt.Addons.Libraries.Humility;
-using Bolt.Addons.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Unity.VisualScripting.Community
 {
     [CustomEditor(typeof(InterfaceAsset))]
     public class InterfaceAssetEditor : CodeAssetEditor<InterfaceAsset, InterfaceAssetGenerator>

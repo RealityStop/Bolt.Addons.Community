@@ -1,19 +1,8 @@
-﻿using Bolt.Addons.Community.Fundamentals;
-using Bolt.Addons.Community.Fundamentals.Editor.UnitOptions;
-using Bolt.Addons.Community.Utility;
-using Bolt.Addons.Community.Utility.Editor;
-using Bolt.Addons.Community.Utility.Editor.UnitOptions;
-using Bolt.Addons.Community.Variables.Editor.UnitOptions;
-using Bolt.Addons.Libraries.Humility;
-using System;
+﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Unity.VisualScripting;
-using UnityEditor;
-using UnityEngine;
 
-namespace Bolt.Addons.Community.Variables.Editor
+namespace Unity.VisualScripting.Community.Variables.Editor
 {
     [InitializeAfterPlugins]
     public static class Options
@@ -28,26 +17,26 @@ namespace Bolt.Addons.Community.Variables.Editor
 
         private static IEnumerable<IUnitOption> GetStaticOptions()
         {
-            yield return new IncrementUnitOption(VariableKind.Flow);
-            yield return new IncrementUnitOption(VariableKind.Graph);
-            yield return new IncrementUnitOption(VariableKind.Object);
-            yield return new IncrementUnitOption(VariableKind.Scene);
-            yield return new IncrementUnitOption(VariableKind.Application);
-            yield return new IncrementUnitOption(VariableKind.Saved);
+            yield return new IncrementNodeOption(VariableKind.Flow);
+            yield return new IncrementNodeOption(VariableKind.Graph);
+            yield return new IncrementNodeOption(VariableKind.Object);
+            yield return new IncrementNodeOption(VariableKind.Scene);
+            yield return new IncrementNodeOption(VariableKind.Application);
+            yield return new IncrementNodeOption(VariableKind.Saved);
 
-            yield return new DecrementUnitOption(VariableKind.Flow);
-            yield return new DecrementUnitOption(VariableKind.Graph);
-            yield return new DecrementUnitOption(VariableKind.Object);
-            yield return new DecrementUnitOption(VariableKind.Scene);
-            yield return new DecrementUnitOption(VariableKind.Application);
-            yield return new DecrementUnitOption(VariableKind.Saved);
+            yield return new DecrementNodeOption(VariableKind.Flow);
+            yield return new DecrementNodeOption(VariableKind.Graph);
+            yield return new DecrementNodeOption(VariableKind.Object);
+            yield return new DecrementNodeOption(VariableKind.Scene);
+            yield return new DecrementNodeOption(VariableKind.Application);
+            yield return new DecrementNodeOption(VariableKind.Saved);
 
-            yield return new PlusEqualUnitOption(VariableKind.Flow);
-            yield return new PlusEqualUnitOption(VariableKind.Graph);
-            yield return new PlusEqualUnitOption(VariableKind.Object);
-            yield return new PlusEqualUnitOption(VariableKind.Scene);
-            yield return new PlusEqualUnitOption(VariableKind.Application);
-            yield return new PlusEqualUnitOption(VariableKind.Saved);
+            yield return new PlusEqualNodeOption(VariableKind.Flow);
+            yield return new PlusEqualNodeOption(VariableKind.Graph);
+            yield return new PlusEqualNodeOption(VariableKind.Object);
+            yield return new PlusEqualNodeOption(VariableKind.Scene);
+            yield return new PlusEqualNodeOption(VariableKind.Application);
+            yield return new PlusEqualNodeOption(VariableKind.Saved);
 
             yield return new OnVariableChangedOption(VariableKind.Graph);
             yield return new OnVariableChangedOption(VariableKind.Object);
@@ -55,17 +44,17 @@ namespace Bolt.Addons.Community.Variables.Editor
             yield return new OnVariableChangedOption(VariableKind.Application);
             yield return new OnVariableChangedOption(VariableKind.Saved);
 
-            yield return new GetDictionaryVariableItemUnitOption(VariableKind.Graph);
-            yield return new GetDictionaryVariableItemUnitOption(VariableKind.Object);
-            yield return new GetDictionaryVariableItemUnitOption(VariableKind.Scene);
-            yield return new GetDictionaryVariableItemUnitOption(VariableKind.Application);
-            yield return new GetDictionaryVariableItemUnitOption(VariableKind.Saved);
+            yield return new GetDictionaryVariableItemNodeOption(VariableKind.Graph);
+            yield return new GetDictionaryVariableItemNodeOption(VariableKind.Object);
+            yield return new GetDictionaryVariableItemNodeOption(VariableKind.Scene);
+            yield return new GetDictionaryVariableItemNodeOption(VariableKind.Application);
+            yield return new GetDictionaryVariableItemNodeOption(VariableKind.Saved);
 
-            yield return new SetDictionaryVariableItemUnitOption(VariableKind.Graph);
-            yield return new SetDictionaryVariableItemUnitOption(VariableKind.Object);
-            yield return new SetDictionaryVariableItemUnitOption(VariableKind.Scene);
-            yield return new SetDictionaryVariableItemUnitOption(VariableKind.Application);
-            yield return new SetDictionaryVariableItemUnitOption(VariableKind.Saved);
+            yield return new SetDictionaryVariableItemNodeOption(VariableKind.Graph);
+            yield return new SetDictionaryVariableItemNodeOption(VariableKind.Object);
+            yield return new SetDictionaryVariableItemNodeOption(VariableKind.Scene);
+            yield return new SetDictionaryVariableItemNodeOption(VariableKind.Application);
+            yield return new SetDictionaryVariableItemNodeOption(VariableKind.Saved);
         }
 
         private static IEnumerable<IUnitOption> MachineVariableOptions()
@@ -78,8 +67,8 @@ namespace Bolt.Addons.Community.Variables.Editor
 
                 for (int varIndex = 0; varIndex < variables.Length; varIndex++)
                 {
-                    yield return new SetMachineVariableUnitOption(new SetMachineVariableUnit() { asset = assets[i], defaultName = variables[varIndex].name });
-                    yield return new GetMachineVariableUnitOption(new GetMachineVariableUnit() { asset = assets[i], defaultName = variables[varIndex].name });
+                    yield return new SetMachineVariableNodeOption(new SetMachineVariableNode() { asset = assets[i], defaultName = variables[varIndex].name });
+                    yield return new GetMachineVariableNodeOption(new GetMachineVariableNode() { asset = assets[i], defaultName = variables[varIndex].name });
                 }
             }
         }
@@ -102,12 +91,12 @@ namespace Bolt.Addons.Community.Variables.Editor
             {
                 var variables = assets[i].variables.variables;
 
-                yield return new WindowIsUnitOption(new WindowIsUnit() { asset = assets[i] });
+                yield return new WindowIsNodeOption(new WindowIsNode() { asset = assets[i] });
 
                 for (int varIndex = 0; varIndex < variables.Count; varIndex++)
                 {
-                    yield return new GetWindowVariableUnitOption(new GetWindowVariableUnit() { asset = assets[i], defaultName = variables[varIndex].name });
-                    yield return new SetWindowVariableUnitOption(new SetWindowVariableUnit() { asset = assets[i], defaultName = variables[varIndex].name });
+                    yield return new GetWindowVariableNodeOption(new GetWindowVariableNode() { asset = assets[i], defaultName = variables[varIndex].name });
+                    yield return new SetWindowVariableNodeOption(new SetWindowVariableNode() { asset = assets[i], defaultName = variables[varIndex].name });
                 }
             }
         }

@@ -5,9 +5,10 @@ using Unity.VisualScripting;
 using UnityEngine.Serialization;
 using UnityEngine.Scripting.APIUpdating;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [CreateAssetMenu(menuName = "Visual Scripting/Community/Code/Class")]
+    [RenamedFrom("Bolt.Addons.Community.Code.ClassAsset")]
     public class ClassAsset : MemberTypeAsset<ClassFieldDeclaration, ClassMethodDeclaration, ClassConstructorDeclaration>
     {
         [Inspectable]

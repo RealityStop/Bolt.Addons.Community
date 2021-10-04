@@ -1,11 +1,9 @@
-﻿using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Collections.Editor
+﻿namespace Unity.VisualScripting.Community
 {
-    [Descriptor(typeof(SetMachineVariableUnit))]
-    public sealed class SetMachineVariableUnitDescriptor : MachineVariableUnitDescriptor
+    [Descriptor(typeof(SetMachineVariableNode))]
+    public sealed class SetMachineVariableNodeDescriptor : MachineVariableNodeDescriptor
     {
-        public SetMachineVariableUnitDescriptor(SetMachineVariableUnit unit) : base(unit)
+        public SetMachineVariableNodeDescriptor(SetMachineVariableNode unit) : base(unit)
         {
 
         }

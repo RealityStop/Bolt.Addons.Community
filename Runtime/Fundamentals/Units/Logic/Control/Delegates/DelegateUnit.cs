@@ -1,11 +1,9 @@
-﻿using Bolt.Addons.Community.Utility;
-using Unity.VisualScripting;
+﻿using Unity.VisualScripting.Community.Utility;
 using System.Collections.Generic;
-using System;
-using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.DelegateUnit")]
     public abstract class DelegateUnit : Unit
     {
         [Serialize]

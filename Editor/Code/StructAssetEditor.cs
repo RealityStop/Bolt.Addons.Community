@@ -1,6 +1,6 @@
 ﻿using UnityEditor;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Unity.VisualScripting.Community
 {
     [CustomEditor(typeof(StructAsset))]
     public sealed class StructAssetEditor : MemberTypeAssetEditor<StructAsset, StructAssetGenerator, StructFieldDeclaration, StructMethodDeclaration, StructConstructorDeclaration>

@@ -1,18 +1,11 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {
     [UnitShortTitle("Logic")]
     [UnitTitle("Logic (Params)")]
     [UnitCategory("Community\\Logic")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.LogicParams")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.OrParam")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.LogicParams")]
     public sealed class LogicParams : LogicParamNode
     {
         public LogicParams() { }

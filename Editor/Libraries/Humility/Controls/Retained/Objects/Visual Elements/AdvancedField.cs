@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Bolt.Addons.Libraries.Humility
+namespace Unity.VisualScripting.Community.Libraries.Humility
 {
     public abstract class AdvancedField<TFieldElement, T> : VisualElement where TFieldElement : BaseField<T>, new()
     {

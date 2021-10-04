@@ -1,6 +1,6 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Events/Community/Editor/Window")]
     public abstract class EditorWindowEvent<TArgs> : ManualEventUnit<TArgs>

@@ -1,14 +1,12 @@
-﻿using Bolt.Addons.Community.Utility;
-using System;
-using Unity.VisualScripting;
+﻿using System;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
-    [FuzzyOption(typeof(BindActionUnit))]
-    public sealed class BindActionUnitOption : BindDelegateUnitOption<BindActionUnit, IAction>
+    [FuzzyOption(typeof(BindActionNode))]
+    public sealed class BindActionNodeOption : BindDelegateNodeOption<BindActionNode, IAction>
     {
         [Obsolete()]
-        public BindActionUnitOption() : base() { }
+        public BindActionNodeOption() : base() { }
 
         protected override string Label(bool human)
         {
@@ -16,7 +14,7 @@ namespace Bolt.Addons.Community.Fundamentals.Editor.UnitOptions
             return base.Label(human);
         }
 
-        public BindActionUnitOption(BindActionUnit unit) : base(unit)
+        public BindActionNodeOption(BindActionNode unit) : base(unit)
         {
         }
     }

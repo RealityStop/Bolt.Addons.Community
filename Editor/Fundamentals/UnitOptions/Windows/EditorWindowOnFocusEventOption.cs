@@ -1,7 +1,6 @@
 ﻿using System;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Utility.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
     [FuzzyOption(typeof(EditorWindowOnFocus))]
     public sealed class EditorWindowOnFocusEventOption : EditorWindowEventOption<EditorWindowOnFocus>

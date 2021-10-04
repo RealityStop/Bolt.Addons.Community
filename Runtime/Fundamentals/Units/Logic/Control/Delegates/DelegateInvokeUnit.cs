@@ -1,11 +1,10 @@
-﻿using Bolt.Addons.Community.Utility;
-using Unity.VisualScripting;
+﻿using Unity.VisualScripting.Community.Utility;
 using System.Collections.Generic;
-using System;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
-    public abstract class DelegateInvokeUnit<TDelegateInterface> : Unit where TDelegateInterface : IDelegate
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.DelegateInvokeUnit")]
+    public abstract class DelegateInvokeNode<TDelegateInterface> : Unit where TDelegateInterface : IDelegate
     {
         [Serialize]
         public TDelegateInterface _delegate;
@@ -26,9 +25,9 @@ namespace Bolt.Addons.Community.Fundamentals
 
         protected virtual bool isPure => false;
 
-        public DelegateInvokeUnit() : base() { }
+        public DelegateInvokeNode() : base() { }
 
-        public DelegateInvokeUnit(TDelegateInterface @delegate)
+        public DelegateInvokeNode(TDelegateInterface @delegate)
         {
             this._delegate = @delegate;
         }

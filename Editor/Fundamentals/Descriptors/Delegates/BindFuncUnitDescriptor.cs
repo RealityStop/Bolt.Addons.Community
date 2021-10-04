@@ -1,12 +1,9 @@
-﻿using Bolt.Addons.Community.Utility;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Fundamentals.Editor
+﻿namespace Unity.VisualScripting.Community
 {
-    [Descriptor(typeof(BindFuncUnit))]
-    public sealed class BindFuncUnitDescriptor : BindDelegateUnitDescriptor<BindFuncUnit, IFunc>
+    [Descriptor(typeof(BindFuncNode))]
+    public sealed class BindFuncNodeDescriptor : BindDelegateNodeDescriptor<BindFuncNode, IFunc>
     {
-        public BindFuncUnitDescriptor(BindFuncUnit target) : base(target)
+        public BindFuncNodeDescriptor(BindFuncNode target) : base(target)
         {
         }
 

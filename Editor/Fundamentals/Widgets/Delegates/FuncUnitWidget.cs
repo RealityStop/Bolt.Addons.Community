@@ -1,12 +1,12 @@
 ﻿using Unity.VisualScripting;
-using Bolt.Addons.Community.Utility;
+using Unity.VisualScripting.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor
+namespace Unity.VisualScripting.Community
 {
-    [Widget(typeof(FuncUnit))]
+    [Widget(typeof(FuncNode))]
     public sealed class FuncUnitWidget : DelegateUnitWidget<IFunc>
     {
-        public FuncUnitWidget(FlowCanvas canvas, FuncUnit unit) : base(canvas, unit)
+        public FuncUnitWidget(FlowCanvas canvas, FuncNode unit) : base(canvas, unit)
         {
         }
     }

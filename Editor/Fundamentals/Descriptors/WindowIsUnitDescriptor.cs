@@ -1,11 +1,9 @@
-﻿using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Utility.Editor
+﻿namespace Unity.VisualScripting.Community
 {
-    [Descriptor(typeof(WindowIsUnit))]
-    public sealed class WindowIsUnitDescriptor : UnitDescriptor<WindowIsUnit>
+    [Descriptor(typeof(WindowIsNode))]
+    public sealed class WindowIsNodeDescriptor : UnitDescriptor<WindowIsNode>
     {
-        public WindowIsUnitDescriptor(WindowIsUnit unit) : base(unit)
+        public WindowIsNodeDescriptor(WindowIsNode unit) : base(unit)
         {
 
         }

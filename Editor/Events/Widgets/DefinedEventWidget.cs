@@ -1,56 +1,48 @@
-﻿using Bolt.Addons.Community.DefinedEvents.Units;
+﻿
+//namespace Unity.VisualScripting.Community.DefinedEvents.Editor.Widgets
+//{
+//    //[Widget(typeof(TargettedDefinedEvent))]
+//    //public sealed class DefinedEventWidget : UnitWidget<TargettedDefinedEvent>
+//    //{
+//    //    public DefinedEventWidget(FlowCanvas canvas, TargettedDefinedEvent unit) : base(canvas, unit)
+//    //    {
+//    //        Debug.Log($"hi2");
+//    //    }
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEditor;
-using UnityEngine;
+//    //    protected override float GetHeaderAddonHeight(float width)
+//    //    {
+//    //        return EditorGUIUtility.singleLineHeight;
+//    //    }
 
-namespace Bolt.Addons.Community.DefinedEvents.Editor.Widgets
-{
-    //[Widget(typeof(TargettedDefinedEvent))]
-    //public sealed class DefinedEventWidget : UnitWidget<TargettedDefinedEvent>
-    //{
-    //    public DefinedEventWidget(FlowCanvas canvas, TargettedDefinedEvent unit) : base(canvas, unit)
-    //    {
-    //        Debug.Log($"hi2");
-    //    }
+//    //    public override void BeforeFrame()
+//    //    {
+//    //        base.BeforeFrame();
 
-    //    protected override float GetHeaderAddonHeight(float width)
-    //    {
-    //        return EditorGUIUtility.singleLineHeight;
-    //    }
+//    //        if (GetHeaderAddonWidth() != headerAddonPosition.width ||
+//    //            GetHeaderAddonHeight(headerAddonPosition.width) != headerAddonPosition.height)
+//    //        {
+//    //            Reposition();
+//    //        }
+//    //    }
 
-    //    public override void BeforeFrame()
-    //    {
-    //        base.BeforeFrame();
+//    //    protected override void DrawHeaderAddon()
+//    //    {
+//    //        using (LudiqGUIUtility.labelWidth.Override(75)) // For reflected inspectors / custom property drawers
+//    //        using (Inspector.adaptiveWidth.Override(true))
+//    //        {
+//    //            EditorGUI.BeginChangeCheck();
 
-    //        if (GetHeaderAddonWidth() != headerAddonPosition.width ||
-    //            GetHeaderAddonHeight(headerAddonPosition.width) != headerAddonPosition.height)
-    //        {
-    //            Reposition();
-    //        }
-    //    }
+//    //            if (unit.IsRestricted)
+//    //                LudiqGUI.Inspector(metadata["restrictedEventType"], headerAddonPosition, GUIContent.none);
+//    //            else
+//    //                LudiqGUI.Inspector(metadata["eventType"], headerAddonPosition, GUIContent.none);
 
-    //    protected override void DrawHeaderAddon()
-    //    {
-    //        using (LudiqGUIUtility.labelWidth.Override(75)) // For reflected inspectors / custom property drawers
-    //        using (Inspector.adaptiveWidth.Override(true))
-    //        {
-    //            EditorGUI.BeginChangeCheck();
-
-    //            if (unit.IsRestricted)
-    //                LudiqGUI.Inspector(metadata["restrictedEventType"], headerAddonPosition, GUIContent.none);
-    //            else
-    //                LudiqGUI.Inspector(metadata["eventType"], headerAddonPosition, GUIContent.none);
-
-    //            if (EditorGUI.EndChangeCheck())
-    //            {
-    //                unit.EnsureDefined();
-    //                Reposition();
-    //            }
-    //        }
-    //    }
-    //}
-}
+//    //            if (EditorGUI.EndChangeCheck())
+//    //            {
+//    //                unit.EnsureDefined();
+//    //                Reposition();
+//    //            }
+//    //        }
+//    //    }
+//    //}
+//}

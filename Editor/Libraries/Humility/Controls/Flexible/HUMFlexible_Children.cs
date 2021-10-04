@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Bolt.Addons.Libraries.Humility
+namespace Unity.VisualScripting.Community.Libraries.Humility
 {
     public static partial class HUMEditor_Flexible_Children
     {

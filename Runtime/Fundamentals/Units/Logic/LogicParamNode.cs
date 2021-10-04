@@ -1,13 +1,8 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using System.Collections.Generic;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.LogicParamNode")]
     public abstract class LogicParamNode : VariadicNode<bool>
     {
         public enum BranchType { And, Or, GreaterThan, LessThan, Equal }

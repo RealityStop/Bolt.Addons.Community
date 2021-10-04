@@ -1,18 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-using System.Reflection;
-using System;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
-    [Inspector(typeof(UnitButton))]
-    [RenamedFrom("Bolt.Community.Addons.Utility.Editor.UnitButtonInspector")]
-    public class UnitButtonInspector : Inspector
+    [Inspector(typeof(NodeButton))]
+    public class NodeButtonInspector : Inspector
     {
-        public UnitButtonInspector(Metadata metadata) : base(metadata) { }
+        public NodeButtonInspector(Metadata metadata) : base(metadata) { }
 
         protected override float GetHeight(float width, GUIContent label)
         {
@@ -36,7 +29,7 @@ namespace Bolt.Addons.Community.Utility.Editor
 
             if (GUI.Button(buttonPosition, "Trigger", new GUIStyle(UnityEditor.EditorStyles.miniButton)))
             {
-                var attribute = metadata.GetAttribute<UnitButtonAttribute>(true);
+                var attribute = metadata.GetAttribute<NodeButtonAttribute>(true);
 
                 if (attribute != null)
                 {

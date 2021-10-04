@@ -1,6 +1,6 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Generation
+namespace Unity.VisualScripting.Community
 {
     [UnitGenerator(typeof(ExclusiveOr))]
     public sealed class ExclusiveOrGenerator : UnitGenerator<ExclusiveOr>

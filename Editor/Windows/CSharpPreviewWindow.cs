@@ -1,11 +1,8 @@
-﻿using Bolt.Addons.Community.Code;
-using Bolt.Addons.Community.Code.Editor;
-using System;
-using Unity.VisualScripting;
+﻿using System;
 using UnityEditor;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
     public sealed class CSharpPreviewWindow : EditorWindow

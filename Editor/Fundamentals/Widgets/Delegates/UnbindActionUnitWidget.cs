@@ -1,12 +1,12 @@
 ﻿using Unity.VisualScripting;
-using Bolt.Addons.Community.Utility;
+using Unity.VisualScripting.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor
+namespace Unity.VisualScripting.Community
 {
-    [Widget(typeof(UnbindActionUnit))]
-    public sealed class UnbindActionUnitWidget : UnbindDelegateUnitWidget<UnbindActionUnit, IAction>
+    [Widget(typeof(UnbindActionNode))]
+    public sealed class UnbindActionUnitWidget : UnbindDelegateUnitWidget<UnbindActionNode, IAction>
     {
-        public UnbindActionUnitWidget(FlowCanvas canvas, UnbindActionUnit unit) : base(canvas, unit)
+        public UnbindActionUnitWidget(FlowCanvas canvas, UnbindActionNode unit) : base(canvas, unit)
         {
         }
     }

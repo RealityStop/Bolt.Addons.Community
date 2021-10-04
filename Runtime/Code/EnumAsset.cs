@@ -2,9 +2,10 @@
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [CreateAssetMenu(menuName = "Visual Scripting/Community/Code/Enum")]
+    [RenamedFrom("Bolt.Addons.Community.Code.EnumAsset")]
     public class EnumAsset : CodeAsset
     {
         [Inspectable]

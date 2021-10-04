@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using Bolt.Addons.Community.Utility;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using System.Collections.Generic;
+using Unity.VisualScripting.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Control/Delegates")]
     [TypeIcon(typeof(Flow))]
-    public sealed class ActionInvokeUnit : DelegateInvokeUnit<IAction>
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.ActionInvokeUnit")]
+    public sealed class ActionInvokeNode : DelegateInvokeNode<IAction>
     {
         protected override void Invoke(Flow flow, List<object> values)
         {

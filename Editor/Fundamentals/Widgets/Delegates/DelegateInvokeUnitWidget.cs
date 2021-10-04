@@ -4,12 +4,12 @@ using UnityEditor;
 using System.Collections.Generic;
 using System;
 using System.Reflection;
-using Bolt.Addons.Community.Utility;
+using Unity.VisualScripting.Community.Utility;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor
+namespace Unity.VisualScripting.Community
 {
     public abstract class DelegateInvokeUnitWidget<T, TDelegate> : UnitWidget<T> 
-        where T : DelegateInvokeUnit<TDelegate>
+        where T : DelegateInvokeNode<TDelegate>
         where TDelegate : IDelegate
     {
         public DelegateInvokeUnitWidget(FlowCanvas canvas, T unit) : base(canvas, unit)

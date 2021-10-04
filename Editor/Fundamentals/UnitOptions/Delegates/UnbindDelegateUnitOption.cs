@@ -1,18 +1,16 @@
-﻿using Bolt.Addons.Community.Utility;
-using Bolt.Addons.Libraries.CSharp;
-using Unity.VisualScripting;
+﻿using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
-    public abstract class UnbindDelegateUnitOption<TUnbindDelegateUnit, TDelegateInterface> : UnitOption<TUnbindDelegateUnit>
-       where TUnbindDelegateUnit : UnbindDelegateUnit<TDelegateInterface>
+    public abstract class UnbindDelegateNodeOption<TUnbindDelegateUnit, TDelegateInterface> : UnitOption<TUnbindDelegateUnit>
+       where TUnbindDelegateUnit : UnbindDelegateNode<TDelegateInterface>
        where TDelegateInterface : IDelegate
     {
         [Obsolete()]
-        public UnbindDelegateUnitOption() : base() { }
+        public UnbindDelegateNodeOption() : base() { }
 
-        public UnbindDelegateUnitOption(TUnbindDelegateUnit unit) : base(unit)
+        public UnbindDelegateNodeOption(TUnbindDelegateUnit unit) : base(unit)
         {
         }
 

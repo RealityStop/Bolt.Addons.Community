@@ -1,7 +1,7 @@
-﻿using Bolt.Addons.Libraries.CSharp;
+﻿using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Generation
+namespace Unity.VisualScripting.Community
 {
     [UnitGenerator(typeof(Break))]
     public sealed class BreakGenerator : UnitGenerator<Break>

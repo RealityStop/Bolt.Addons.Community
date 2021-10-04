@@ -1,7 +1,7 @@
 ﻿using Unity.VisualScripting;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Bolt.Addons.Community.Generation
+namespace Unity.VisualScripting.Community
 {
     [UnitGenerator(typeof(LessOrEqual))]
     public sealed class LessOrEqualGenerator : UnitGenerator<LessOrEqual>

@@ -1,11 +1,7 @@
 using System.Collections;
-
-using UnityEngine;
 using System;
-using Assets.BAC.Runtime.Fundamentals.Units.Variables;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
 	/* Implementors Note:
 	 * 
@@ -14,26 +10,19 @@ namespace Bolt.Addons.Community.Fundamentals
 	 * older VariableUnit class, which has been obsoleted.
 	 */
 
-
 	/// <summary>
 	/// Sets a dictionary item with the specified key.
 	/// </summary>
     [UnitTitle("Set Dictionary Variable")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.SetDictionaryVariableItem")]
 	public sealed class SetDictionaryVariableItem : DictionaryVariableItem
 	{
-
-
-
-
 		/// <summary>
 		/// The entry point to assign the variable reference.
 		/// </summary>
 		[DoNotSerialize]
 		[PortLabelHidden]
 		public ControlInput assign { get; set; }
-
-
-
 
 		/// <summary>
 		/// The value to assign to the variable.
@@ -43,15 +32,12 @@ namespace Bolt.Addons.Community.Fundamentals
 		[PortLabelHidden]
 		public ValueInput newValue { get; private set; }
 
-
-
 		/// <summary>
 		/// The action to execute once the variable has been assigned.
 		/// </summary>
 		[DoNotSerialize]
 		[PortLabelHidden]
 		public ControlOutput assigned { get; set; }
-
 
 		/// <summary>
 		/// The value obtained from the dictionary.

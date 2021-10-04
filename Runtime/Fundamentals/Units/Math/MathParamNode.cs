@@ -1,17 +1,12 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using System.Collections.Generic;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitShortTitle("Math")]
     [UnitTitle("Math Op")]
     [UnitCategory("Community\\Math")]
     [TypeIcon(typeof(Absolute<float>))]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.MathParamNode")]
     public class MathParamNode : VariadicNode<float>
     {
         public enum MathType { Add, Subtract, Multiply, Divide }

@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 using UnityEditor;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Linq;
 using Unity.VisualScripting;
-using Bolt.Addons.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     public sealed class EditorWindowVariables : EditorWindow
     {

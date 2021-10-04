@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using UnityEditor;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community.Utility
 {
+    [RenamedFrom("Bolt.Addons.Community.Utility.Editor.EditorStateFetcher")]
     public class EditorStateFetcher : IEditorStateFetcher
     {
         public bool IsEditorPaused()

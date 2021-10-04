@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
-using Bolt.Addons.Libraries.CSharp;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
     public sealed class CSharpPreview

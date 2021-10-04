@@ -1,18 +1,14 @@
-﻿
-using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Linq;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Collections
+namespace Unity.VisualScripting.Community
 {
     [UnitTitle("Random Element")]
     [UnitCategory("Collections")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Collections.RandomElementUnit")]
     [TypeIcon(typeof(IEnumerable))]
-    public class RandomElementUnit : Unit
+    public class RandomElementNode : Unit
     {
         /// <summary>
         /// The Control Input entered when we want a random element
@@ -33,13 +29,11 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
         [DoNotSerialize]
         public ValueInput collection;
 
-
         /// <summary>
         /// The ValueOutput for the randomly selected key.
         /// </summary>
         [DoNotSerialize]
         public ValueOutput key;
-
 
         /// <summary>
         /// The ValueOutput for the randomly selected value.
@@ -47,14 +41,8 @@ namespace Bolt.Addons.Community.Fundamentals.Units.Collections
         [DoNotSerialize]
         public ValueOutput value;
 
-
-
         [Inspectable]
         public bool Dictionary;
-
-
-        
-
 
         protected override void Definition()
         {

@@ -1,8 +1,4 @@
-﻿
-using Bolt;
-using Unity.VisualScripting;
-
-namespace Bolt.Addons.Community.ReturnEvents.Editor
+﻿namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// The visuals for the ReturnEvent Unit.

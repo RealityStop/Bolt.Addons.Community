@@ -11,7 +11,7 @@ using NestedNode = Unity.VisualScripting.SubgraphUnit;
 using NestedNode = Unity.VisualScripting.SuperUnit;
 #endif
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     public static partial class UnitSelection
     {

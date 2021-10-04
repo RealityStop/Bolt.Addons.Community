@@ -2,9 +2,9 @@
 using UnityEngine;
 using System;
 using System.Reflection;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
     /// <summary>
     /// Gives you access to utilities methods to more easily build custom code.

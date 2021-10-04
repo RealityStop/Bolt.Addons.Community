@@ -1,10 +1,10 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Editor")]
     [UnitTitle("Set Window Variable")]
-    public sealed class SetWindowVariableUnit : WindowVariableUnit
+    public sealed class SetWindowVariableNode : WindowVariableNode
     {
         [DoNotSerialize]
         public ControlInput enter;

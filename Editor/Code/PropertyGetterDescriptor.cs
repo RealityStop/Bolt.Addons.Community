@@ -1,6 +1,6 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Code.Editor
+namespace Unity.VisualScripting.Community
 {
     [Descriptor(typeof(PropertyGetterMacro))]
     public sealed class PropertyGetterDescriptor : MacroDescriptor<PropertyGetterMacro, MacroDescription>

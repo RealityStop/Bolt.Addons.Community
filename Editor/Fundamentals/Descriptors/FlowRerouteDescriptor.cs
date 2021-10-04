@@ -1,9 +1,4 @@
-﻿using Bolt;
-using Unity.VisualScripting;
-using UnityEditor;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
+﻿namespace Unity.VisualScripting.Community
 {
     [Descriptor(typeof(FlowReroute))]
     public sealed class FlowRerouteDescriptor : UnitDescriptor<FlowReroute>

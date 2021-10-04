@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using UnityEngine;
 
-namespace Bolt.Addons.Libraries.Humility {
+namespace Unity.VisualScripting.Community.Libraries.Humility {
     public static partial class HUMString
     {
         public static Data.Remove Remove(this string text, string remove)

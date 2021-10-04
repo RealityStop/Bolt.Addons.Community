@@ -1,20 +1,17 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.Documenting;
-using System;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using System;
 
-namespace Bolt.Addons.Community.Utility.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
-    [FuzzyOption(typeof(GetWindowVariableUnit))]
-    public class GetWindowVariableUnitOption : UnitOption<GetWindowVariableUnit>
+    [FuzzyOption(typeof(GetWindowVariableNode))]
+    public class GetWindowVariableNodeOption : UnitOption<GetWindowVariableNode>
     {
         private string name;
         private EditorWindowAsset asset;
 
         [Obsolete(Serialization.ConstructorWarning)]
-        public GetWindowVariableUnitOption() : base() { }
+        public GetWindowVariableNodeOption() : base() { }
 
-        public GetWindowVariableUnitOption(GetWindowVariableUnit unit) : base(unit)
+        public GetWindowVariableNodeOption(GetWindowVariableNode unit) : base(unit)
         {
         }
 

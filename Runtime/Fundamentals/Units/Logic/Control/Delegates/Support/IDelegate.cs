@@ -1,7 +1,9 @@
 ﻿using System;
+using Unity.VisualScripting.Community.Utility;
 
-namespace Bolt.Addons.Community.Utility
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Utility.IDelegate")]
     public interface IDelegate
     {
         string DisplayName { get; }

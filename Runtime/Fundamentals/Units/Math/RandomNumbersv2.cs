@@ -1,13 +1,8 @@
-﻿
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Returns a list of random numbers from the specified range.
@@ -16,6 +11,7 @@ namespace Bolt.Addons.Community.Fundamentals
     [UnitTitle("Random Numbers")]
     [TypeIcon(typeof(IList))]
     [UnitOrder(20)]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.RandomNumbersv2")]
     public class RandomNumbersv2 : Unit
     {
         public RandomNumbersv2() : base() { }

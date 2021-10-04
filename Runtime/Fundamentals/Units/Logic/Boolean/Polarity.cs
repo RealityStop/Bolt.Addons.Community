@@ -1,17 +1,12 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {    /// <summary>
      /// Returns whether the value is within the given range (inclusive).
      /// </summary>
     [UnitCategory("Community\\Logic")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.Polarity")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Polarity")]
     [TypeIcon(typeof(Unity.VisualScripting.Comparison))]
     public class Polarity : Unit
     {

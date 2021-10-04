@@ -1,11 +1,7 @@
 using System.Collections;
-
-using UnityEngine;
 using System;
-using Assets.BAC.Runtime.Fundamentals.Units.Variables;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
 	/* Implementors Note:
 	 * 
@@ -14,11 +10,11 @@ namespace Bolt.Addons.Community.Fundamentals
 	 * older VariableUnit class, which has been obsoleted.
 	 */
 
-
 	/// <summary>
 	/// Gets a dictionary item with the specified key.
 	/// </summary>
     [UnitTitle("Get Dictionary Variable")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.GetDictionaryVariableItem")]
 	public sealed class GetDictionaryVariableItem : DictionaryVariableItem
 	{
 		/// <summary>

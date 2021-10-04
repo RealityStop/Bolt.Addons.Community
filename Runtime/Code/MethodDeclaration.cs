@@ -2,13 +2,14 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
-using Bolt.Addons.Community.Utility;
-using Bolt.Addons.Libraries.CSharp;
+using Unity.VisualScripting.Community.Utility;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Bolt.Addons.Community.Code
+namespace Unity.VisualScripting.Community
 {
     [Serializable]
     [Inspectable]
+    [RenamedFrom("Bolt.Addons.Community.Code.MethodDeclaration")]
     public abstract class MethodDeclaration : Macro<FlowGraph>
     {
         [Inspectable]

@@ -1,17 +1,13 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
+﻿using System;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community.Deprecated
 {
     /// <summary>
     /// Restricts control flow by only allowing through one control flow until reset.
     /// </summary>
     [UnitCategory("Community\\Control")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.DoOnce")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.DoOnce")]
     [UnitTitle("Do Once")]
     [TypeIcon(typeof(ISelectUnit))]
     [Obsolete]
@@ -47,7 +43,6 @@ namespace Bolt.Addons.Community.Fundamentals
 
             Succession(enter, exit);
         }
-
 
         public ControlOutput Enter(Flow flow)
         {

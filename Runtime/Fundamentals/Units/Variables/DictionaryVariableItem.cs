@@ -1,14 +1,9 @@
-﻿using Bolt;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.VisualScripting;
+﻿using System;
 using UnityEngine;
 
-namespace Assets.BAC.Runtime.Fundamentals.Units.Variables
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Assets.BAC.Runtime.Fundamentals.Units.Variables.DictionaryVariableItem")]
     public abstract class DictionaryVariableItem : UnifiedVariableUnit
 	{
 		[SerializeAs(nameof(keyType))]

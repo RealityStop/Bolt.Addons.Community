@@ -1,13 +1,6 @@
-﻿using Bolt;
+﻿using UnityEngine;
 
-using UnityEngine;
-using UnityEditor;
-using System.Linq;
-using Unity.VisualScripting;
-using System.Collections.Generic;
-using Bolt.Addons.Libraries.Humility;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility
+namespace Unity.VisualScripting.Community
 {
     [Widget(typeof(FlowReroute))]
     public sealed class FlowRerouteWidget : UnitWidget<FlowReroute>

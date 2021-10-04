@@ -1,13 +1,12 @@
-﻿using Bolt.Addons.Community.Utility;
-using Unity.VisualScripting;
+﻿using Unity.VisualScripting.Community.Utility;
 using System.Collections.Generic;
-using System;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Control/Delegates")]
     [TypeIcon(typeof(Flow))]
-    public sealed class FuncInvokeUnit : DelegateInvokeUnit<IFunc>
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.FuncInvokeUnit")]
+    public sealed class FuncInvokeNode : DelegateInvokeNode<IFunc>
     {
         [DoNotSerialize]
         public ValueOutput @return;

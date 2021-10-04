@@ -1,8 +1,8 @@
 ﻿using Unity.VisualScripting;
 using System.Linq;
-using Bolt.Addons.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Bolt.Addons.Community.Generation
+namespace Unity.VisualScripting.Community
 {
     [UnitGenerator(typeof(SwitchOnInteger))]
     public sealed class SwitchOnIntegerGenerator : UnitGenerator<SwitchOnInteger>

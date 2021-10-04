@@ -1,16 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using Bolt;
-using Unity.VisualScripting;
-
-#if VISUAL_SCRIPTING_1_7
+﻿#if VISUAL_SCRIPTING_1_7
 using SMachine = Unity.VisualScripting.ScriptMachine;
 #else
 using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
 
-namespace Bolt.Addons.Community.ReturnEvents
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// The Unit that returns your flow and value back to the Complete port of the initial trigger unit.
@@ -18,6 +12,7 @@ namespace Bolt.Addons.Community.ReturnEvents
     [UnitCategory("Events/Community/Returns")][UnitShortTitle("Return")][UnitSubtitle("Return Event")]
     [RenamedFrom("Lasm.BoltExtensions.EventReturn")]
     [RenamedFrom("Lasm.UAlive.EventReturn")]
+    [RenamedFrom("Bolt.Addons.Community.ReturnEvents.EventReturn")]
     public sealed class EventReturn : Unit
     {
         /// <summary>

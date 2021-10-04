@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Bolt.Addons.Libraries.Humility
+namespace Unity.VisualScripting.Community.Libraries.Humility
 {
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = true, Inherited = true)]
     public sealed class InheritsAttribute : Attribute

@@ -1,18 +1,17 @@
 ﻿using System;
-using Unity.VisualScripting;
 using UnityEngine;
-using Bolt.Addons.Libraries.Humility;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
+namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("Lasm.Bolt.Comments.CommentUnit")]
     [RenamedFrom("Lasm.BoltAddons.Helpers.CommentUnit")]
-    [TypeIcon(typeof(CommentUnit))]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Documenting.CommentUnit")]
+    [TypeIcon(typeof(CommentNode))]
     [UnitTitle("Comment")]
     [UnitShortTitle("")]
     [UnitCategory("Community\\Documentation")]
     [Serializable]
-    public class CommentUnit : Unit
+    public class CommentNode : Unit
     {
         // Global
         public static CommentPalette style;

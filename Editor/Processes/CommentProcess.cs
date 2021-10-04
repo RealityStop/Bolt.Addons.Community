@@ -1,9 +1,7 @@
-﻿using Unity.VisualScripting;
-using UnityEngine;
-using Bolt.Addons.Libraries.Humility;
-using UnityEditor;
+﻿using UnityEngine;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Bolt.Addons.Community.Processing
+namespace Unity.VisualScripting.Community
 {
     public sealed class CommentProcess : GraphProcess<FlowGraph, FlowCanvas>
     {

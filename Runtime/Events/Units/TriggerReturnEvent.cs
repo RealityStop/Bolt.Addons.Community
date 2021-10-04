@@ -1,11 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using Bolt;
 using System.Linq;
-using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.ReturnEvents
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// The Unit for triggering a Return Event.
@@ -14,6 +11,7 @@ namespace Bolt.Addons.Community.ReturnEvents
     [RenamedFrom("Lasm.BoltExtensions.TriggerReturnEvent")]
     [RenamedFrom("Lasm.UAlive.TriggerReturnEvent")]
     [TypeIcon(typeof(BoltUnityEvent))]
+    [RenamedFrom("Bolt.Addons.Community.ReturnEvents.TriggerReturnEvent")]
     public sealed class TriggerReturnEvent : GlobalEventUnit<ReturnEventArg>
     {
         /// <summary>
@@ -36,7 +34,6 @@ namespace Bolt.Addons.Community.ReturnEvents
         /// </summary>
         [UnitHeaderInspectable("Global")]
         public bool global;
-
 
         /// <summary>
         /// The value we store the returning value in, so we can return this to the result value port.

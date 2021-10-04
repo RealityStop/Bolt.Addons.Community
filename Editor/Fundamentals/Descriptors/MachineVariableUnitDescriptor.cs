@@ -1,11 +1,8 @@
-﻿using Unity.VisualScripting;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Collections.Editor
+﻿namespace Unity.VisualScripting.Community
 {
-    public abstract class MachineVariableUnitDescriptor : UnitDescriptor<MachineVariableUnit>
+    public abstract class MachineVariableNodeDescriptor : UnitDescriptor<MachineVariableNode>
     {
-        public MachineVariableUnitDescriptor(MachineVariableUnit unit) : base(unit)
+        public MachineVariableNodeDescriptor(MachineVariableNode unit) : base(unit)
         {
 
         }

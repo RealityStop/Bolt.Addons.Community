@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Bolt.Addons.Libraries.CSharp
+namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
     public interface IDefinable
     {

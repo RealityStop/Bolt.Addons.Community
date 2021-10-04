@@ -1,17 +1,12 @@
-﻿using Bolt;
-using Bolt.Addons.Community.Utility;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
+﻿using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.FlowEvents
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Events/Community/Editor")]
     [UnitShortTitle("Manual Event")]
     [UnitTitle("Manual Event")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.FlowEvents.ManualEvent")]
     public class ManualEvent : MachineEventUnit<EmptyEventArgs>, IGraphElementWithData
     {
         /*
@@ -25,7 +20,6 @@ namespace Bolt.Addons.Community.Fundamentals.Units.FlowEvents
         Coroutine,      Play,       Yes,    Defer,
 
         */
-
 
         public new class Data : EventUnit<EmptyEventArgs>.Data
         {
@@ -42,9 +36,8 @@ namespace Bolt.Addons.Community.Fundamentals.Units.FlowEvents
 
         [DoNotSerialize]
         [UnitHeaderInspectable]
-        [UnitButton("TriggerButton")]
-        public UnitButton triggerButton;
-
+        [NodeButton("TriggerButton")]
+        public NodeButton triggerButton;
 
         //Tracked class-wide (because it updates outside of the graph scope)
         [DoNotSerialize]

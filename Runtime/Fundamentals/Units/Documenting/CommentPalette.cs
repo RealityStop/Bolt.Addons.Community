@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Documenting
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Documenting.CommentPalette")]
     public sealed class CommentPalette : ScriptableObject
     {
         public bool greyScale = false;

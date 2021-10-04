@@ -1,12 +1,9 @@
-﻿using Unity.VisualScripting;
-using Bolt.Addons.Community.Utility;
-
-namespace Bolt.Addons.Community.Fundamentals.Editor
+﻿namespace Unity.VisualScripting.Community
 {
-    [Editor(typeof(BindActionUnit))]
-    public sealed class BindActionUnitEditor : BindDelegateUnitEditor<BindActionUnit, IAction>
+    [Editor(typeof(BindActionNode))]
+    public sealed class BindActionNodeEditor : BindDelegateNodeEditor<BindActionNode, IAction>
     {
-        public BindActionUnitEditor(Metadata metadata) : base(metadata)
+        public BindActionNodeEditor(Metadata metadata) : base(metadata)
         {
         }
 

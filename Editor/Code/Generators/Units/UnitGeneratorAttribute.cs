@@ -1,7 +1,7 @@
 ﻿using System;
-using Bolt.Addons.Libraries.Humility;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Bolt.Addons.Community.Generation
+namespace Unity.VisualScripting.Community
 {
     public sealed class UnitGeneratorAttribute : DecoratorAttribute
     {

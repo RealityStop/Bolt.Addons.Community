@@ -8,12 +8,13 @@ using SMachine = Unity.VisualScripting.ScriptMachine;
 using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitTitle("Get Machine")]
     [TypeIcon(typeof(SMachine))]
     [UnitCategory("Community/Graphs")]
-    public sealed class GetMachineUnit : Unit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.GetMachineUnit")]
+    public sealed class GetMachineNode : Unit
     {
         [DoNotSerialize]
         [NullMeansSelf]

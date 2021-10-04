@@ -1,6 +1,6 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Utility.Editor
+namespace Unity.VisualScripting.Community
 {
     [Descriptor(typeof(EditorWindowAsset))]
     public sealed class EditorWindowAssetDescriptor : MacroDescriptor<EditorWindowAsset, MacroDescription>

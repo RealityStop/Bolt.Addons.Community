@@ -1,13 +1,13 @@
-﻿using Bolt.Addons.Community.Utility;
+﻿using Unity.VisualScripting.Community.Utility;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor
+namespace Unity.VisualScripting.Community
 {
-    public abstract class UnbindDelegateUnitDescriptor<T, TInterface> : UnitDescriptor<T>
-        where T : UnbindDelegateUnit<TInterface>
+    public abstract class UnbindDelegateNodeDescriptor<T, TInterface> : UnitDescriptor<T>
+        where T : UnbindDelegateNode<TInterface>
         where TInterface : IDelegate
     {
-        public UnbindDelegateUnitDescriptor(T target) : base(target)
+        public UnbindDelegateNodeDescriptor(T target) : base(target)
         {
         }
 

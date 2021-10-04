@@ -1,18 +1,14 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting;
+﻿using System;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community.Deprecated
 {
     /// <summary>
     /// Branches flow by checking if a condition is true or false.
     /// </summary>
     [UnitCategory("Community\\Control")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchGreater")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.BranchGreater")]
     [UnitOrder(1)]
     [Obsolete("Use the Branch (Param) node instead!  It supersede this one!")]
     public sealed class BranchGreater : ComparisonBranch

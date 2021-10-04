@@ -1,11 +1,11 @@
 ﻿using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Editor
+namespace Unity.VisualScripting.Community
 {
-    [Descriptor(typeof(FuncUnit))]
-    public sealed class FuncUnitDescriptor : DelegateUnitDescriptor<FuncUnit>
+    [Descriptor(typeof(FuncNode))]
+    public sealed class FuncNodeDescriptor : DelegateNodeDescriptor<FuncNode>
     {
-        public FuncUnitDescriptor(FuncUnit target) : base(target)
+        public FuncNodeDescriptor(FuncNode target) : base(target)
         {
         }
         

@@ -1,15 +1,14 @@
-﻿using Unity.VisualScripting;
-
-#if VISUAL_SCRIPTING_1_7
+﻿#if VISUAL_SCRIPTING_1_7
 using SMachine = Unity.VisualScripting.ScriptMachine;
 #else
 using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitTitle("Set Machine Variable")]
-    public sealed class SetMachineVariableUnit : MachineVariableUnit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.SetMachineVariableUnit")]
+    public sealed class SetMachineVariableNode : MachineVariableNode
     {
         [DoNotSerialize]
         public ControlInput enter;
