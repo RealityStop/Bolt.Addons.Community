@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community
 {

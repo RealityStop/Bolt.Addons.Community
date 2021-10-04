@@ -1,6 +1,4 @@
-﻿using Unity.VisualScripting;
-
-namespace Unity.VisualScripting.Community
+﻿namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Events/Community/Editor/Window")]
     public abstract class EditorWindowEvent<TArgs> : ManualEventUnit<TArgs>

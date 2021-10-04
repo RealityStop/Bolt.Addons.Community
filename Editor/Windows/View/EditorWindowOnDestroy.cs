@@ -1,6 +1,4 @@
-﻿using Unity.VisualScripting;
-
-namespace Unity.VisualScripting.Community
+﻿namespace Unity.VisualScripting.Community
 {
     [UnitSurtitle("Editor Window")]
     [UnitTitle("On Destroy")]

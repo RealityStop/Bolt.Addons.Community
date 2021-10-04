@@ -1,6 +1,4 @@
-﻿using Unity.VisualScripting;
-
-namespace Unity.VisualScripting.Community
+﻿namespace Unity.VisualScripting.Community
 {
     [Descriptor(typeof(EditorWindowAsset))]
     public sealed class EditorWindowAssetDescriptor : MacroDescriptor<EditorWindowAsset, MacroDescription>

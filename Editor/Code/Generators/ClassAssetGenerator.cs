@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community
                 if (Data.constructors[i].graph.units.Count > 0)
                 {
                     var unit = Data.constructors[i].graph.units[0] as FunctionNode;
-                    constructor.Body(FunctionUnitGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0));
+                    constructor.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0));
 
                     for (int pIndex = 0; pIndex < Data.constructors[i].parameters.Count; pIndex++)
                     {
@@ -52,13 +52,13 @@ namespace Unity.VisualScripting.Community
 
                         if (Data.variables[i].get)
                         {
-                            property.MultiStatementGetter(AccessModifier.Public, UnitGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
+                            property.MultiStatementGetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
                             .GenerateControl(null, new ControlGenerationData() { returns = Data.variables[i].type }, 0));
                         }
 
                         if (Data.variables[i].set)
                         {
-                            property.MultiStatementSetter(AccessModifier.Public, UnitGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
+                            property.MultiStatementSetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
                             .GenerateControl(null, new ControlGenerationData(), 0));
                         }
 
@@ -88,7 +88,7 @@ namespace Unity.VisualScripting.Community
                     if (Data.methods[i].graph.units.Count > 0)
                     {
                         var unit = Data.methods[i].graph.units[0] as FunctionNode;
-                        method.Body(FunctionUnitGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0));
+                        method.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0));
                         
                         for (int pIndex = 0; pIndex < Data.methods[i].parameters.Count; pIndex++)
                         {

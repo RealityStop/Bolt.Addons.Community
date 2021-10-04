@@ -60,10 +60,10 @@ namespace Unity.VisualScripting.Community
             buttonContainer.style.flexDirection = FlexDirection.Row;
             buttonContainer.style.height = 24;
 
-            var macroButton = new Button(() => { UnitSelection.Convert(GraphSource.Macro); }) { text = "To Macro" };
+            var macroButton = new Button(() => { NodeSelection.Convert(GraphSource.Macro); }) { text = "To Macro" };
             macroButton.style.flexGrow = 1;
 
-            var embedButton = new Button(() => { UnitSelection.Convert(GraphSource.Embed); }) { text = "To Embed" };
+            var embedButton = new Button(() => { NodeSelection.Convert(GraphSource.Embed); }) { text = "To Embed" };
             embedButton.style.flexGrow = 1;
 
             buttonContainer.Add(macroButton);

@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using Unity.VisualScripting;
 using UnityEngine;
-using Unity.VisualScripting.Community.Fundamentals;
 
 namespace Unity.VisualScripting.Community
 {
@@ -20,7 +19,7 @@ namespace Unity.VisualScripting.Community
 
         public override string Generate(int indent)
         { 
-            NamespaceGenerator @namespace = NamespaceGenerator.Namespace("Bolt.Addons.Generated");
+            NamespaceGenerator @namespace = NamespaceGenerator.Namespace("Unity.VisualScripting.Community.Generated");
 
             if (Data != null)
             {
