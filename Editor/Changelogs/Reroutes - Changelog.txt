@@ -1,0 +1,7 @@
+Changelog: Reroutes
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Flow Reroute
+- Added Value Reroute
+- Added Reroute Shortcut using 'Spacebar' while a port is being dragged.

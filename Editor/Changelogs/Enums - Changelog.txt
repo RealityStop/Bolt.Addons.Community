@@ -1,0 +1,6 @@
+Changelog: Enums
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Enum Asset
+- Added Asset Compiler Utility.

@@ -1,0 +1,7 @@
+Changelog: Arrays
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Get Array Item
+- Added Set Array Item
+- Added Create Array
