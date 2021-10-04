@@ -10,7 +10,7 @@ namespace Unity.VisualScripting.Community
         {
             if (CommentNode.style == null)
             {
-                var path = "Assets/Bolt.Addons.Generated/";
+                var path = "Assets/Unity.VisualScripting.Community.Generated/";
                 HUMIO.Ensure(path).Path();
                 CommentPalette style = AssetDatabase.LoadAssetAtPath<CommentPalette>(path + "GlobalCommentStyle.asset");
 

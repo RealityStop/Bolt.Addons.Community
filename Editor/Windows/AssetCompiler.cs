@@ -9,18 +9,21 @@ namespace Unity.VisualScripting.Community
     {
         public static void Compile()
         {
-            var path = Application.dataPath + "/Bolt.Addons.Generated/";
+            var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
+            var oldPath = Application.dataPath + "/Bolt.Addons.Generated/";
             var scriptsPath = path + "Scripts/";
             var csharpPath = scriptsPath + "Objects/";
             var delegatesPath = scriptsPath + "Delegates/";
             var enumPath = scriptsPath + "Enums/";
 
+            HUMIO.Ensure(oldPath).Path();
             HUMIO.Ensure(path).Path();
             HUMIO.Ensure(scriptsPath).Path();
             HUMIO.Ensure(delegatesPath).Path();
             HUMIO.Ensure(csharpPath).Path();
             HUMIO.Ensure(enumPath).Path();
 
+            HUMIO.Delete(oldPath);
             HUMIO.Delete(delegatesPath);
             HUMIO.Delete(csharpPath);
             HUMIO.Delete(enumPath);
