@@ -74,6 +74,7 @@ Events
  - **Event Return**
  - **Trigger Return Event**
  - **Editor Window Events**
+ - **Trigger Asset Custom Event**
 
 Documentation
  - **Todo**
@@ -126,7 +127,6 @@ Editor
  - **Window Is**
  - **Get Window Variable**
  - **Set Window Variable**
- - **Has Window Variable**
 
 Math
  - **Math Op**
