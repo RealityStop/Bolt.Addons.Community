@@ -23,6 +23,9 @@ and add the following url:
 
 > https://github.com/RealityStop/Bolt.Addons.Community.git
 
+For BOLT use branch `bolt-main` with this url:
+
+> https://github.com/RealityStop/Bolt.Addons.Community.git#bolt-main
 
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 
