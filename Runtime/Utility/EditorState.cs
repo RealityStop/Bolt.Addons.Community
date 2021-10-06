@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UnityEngine;
 
-namespace Bolt.Addons.Community.Utility
+namespace Unity.VisualScripting.Community.Utility
 {
+    [RenamedFrom("Bolt.Addons.Community.Utility.EditorState")]
     public static class EditorState
     {
         public static IEditorStateFetcher Fetcher { get; set; }
@@ -35,9 +33,7 @@ namespace Bolt.Addons.Community.Utility
                 }
             }
         }
-
-
-
+        
         public static bool IsEditorPaused()
         {
             if (Fetcher != null)

@@ -1,7 +1,4 @@
-﻿using Ludiq;
-using Bolt;
-
-namespace Bolt.Addons.Community.ReturnEvents.Editor
+﻿namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// The visuals for the TriggerReturnEvent Unit.

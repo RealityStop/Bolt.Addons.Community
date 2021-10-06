@@ -1,0 +1,8 @@
+Changelog: Return Events
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Return Event
+- Added Event Return
+- Added Trigger Return Event
+- Added C# Trigger Return Event with Callback

@@ -1,4 +1,4 @@
-﻿//using Ludiq;
+﻿//
 //using System;
 //using System.Collections.Generic;
 //using System.Linq;
@@ -6,7 +6,7 @@
 //using System.Threading.Tasks;
 //using UnityEngine;
 
-//namespace Bolt.Addons.Community.Fundamentals.Editor.Editor.Inspectors
+//namespace Unity.VisualScripting.Community.Inspectors
 //{
 //    [Inspector(typeof(BranchParams))]
 //    public class BranchParamsInspector : ReflectedInspector
@@ -14,7 +14,6 @@
 //        public BranchParamsInspector(Metadata metadata) : base(metadata)
 //        {
 //        }
-///*
 //        protected override void OnMemberGUI(Metadata member, Rect memberPosition)
 //        {
 //            Debug.Log(member.path);

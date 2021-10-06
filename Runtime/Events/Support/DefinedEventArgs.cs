@@ -1,8 +1,9 @@
 using System;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.DefinedEvents.Support
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Support.DefinedEventArgs")]
     public struct DefinedEventArgs
     {
         public object eventData;

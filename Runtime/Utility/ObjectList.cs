@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using Ludiq;
 
-namespace Bolt.Addons.Community.Utility
+namespace Unity.VisualScripting.Community.Utility
 {
     /// <summary>
     /// An AOTDictuonary replacement that can be serialized and saved.
     /// </summary>
     [Serializable][Inspectable][IncludeInSettings(true)]
-    [RenamedFrom("Lasm.BoltExtensions.IO.ObjectList")]
-    [RenamedFrom("Lasm.BoltExtensions.ObjectList")]
-    [RenamedFrom("Lasm.UAlive.ObjectList")]
+    [RenamedFrom("Bolt.Addons.Community.Utility.ObjectList")]
     public sealed class ObjectList : List<object> { }
 }
 

@@ -1,0 +1,6 @@
+Changelog: Random of Collection
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Random Number
+- Added Random Element

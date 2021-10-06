@@ -1,0 +1,9 @@
+Changelog: Editor Windows
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Editor Window Graph Asset.
+- Added Editor Window View for using the Windows you create. Root windows can be opened via Window > Community Addons > New Editor Window View
+- Added Window Is
+- Added Get Window Variable
+- Added Set Window Variable

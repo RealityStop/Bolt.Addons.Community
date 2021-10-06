@@ -1,0 +1,7 @@
+Changelog: Placeholders
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Some Value
+- Added Stuff Happens
+- Added To Do

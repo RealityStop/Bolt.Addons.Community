@@ -1,0 +1,7 @@
+Changelog: Variable Math Operators
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added Increment Variable
+- Added Decrement Variable
+- Added Plus Equals Variable

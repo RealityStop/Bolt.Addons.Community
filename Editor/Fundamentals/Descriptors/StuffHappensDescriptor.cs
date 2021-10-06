@@ -1,12 +1,4 @@
-﻿using Bolt.Addons.Community.Fundamentals.Units.Documenting;
-using Ludiq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-
-namespace Bolt.Addons.Community.Fundamentals.Editor.Editor.Descriptors
+﻿namespace Unity.VisualScripting.Community
 {
     [Descriptor(typeof(StuffHappens))]
     public class StuffHappensDescriptor : UnitDescriptor<StuffHappens>

@@ -1,96 +1,71 @@
-﻿using Bolt;
-using Ludiq;
-using UnityEngine;
-using UnityEditor;
-using System.Linq;
+﻿using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility
+namespace Unity.VisualScripting.Community
 {
     [Widget(typeof(FlowReroute))]
     public sealed class FlowRerouteWidget : UnitWidget<FlowReroute>
     {
-        private static FlowReroute addedUnit = null;
-        private static bool keyPressed;
-
         public FlowRerouteWidget(FlowCanvas canvas, FlowReroute unit) : base(canvas, unit)
         {
         }
 
         public override void DrawForeground()
         {
-            Ludiq.GraphGUI.Node(new Rect(position.x, position.y, _position.width, _position.height), NodeShape.Square, NodeColor.Gray, isSelected);
-        }
+            var inputHasConnection = inputs[0].port.hasAnyConnection;
+            var outputHasConnection = outputs[0].port.hasAnyConnection;
+            mouseIsOver = new Rect(_position.x-20, _position.y-10, mouseIsOver ? 80 : 40, 40).Contains(mousePosition);
 
-        protected override bool showIcons => true;
-        
-        public override bool foregroundRequiresInput => true;
-
-        public override void Update()
-        {
-            if (addedUnit == null && keyPressed && SourceIsReroute())
+#if VISUAL_SCRIPTING_1_7_3
+            _position.width = 26;
+            GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height-4), NodeShape.Square, NodeColor.Gray, isSelected);
+#else
+            if (isSelected || mouseIsOver || !inputHasConnection || !outputHasConnection)
             {
-                addedUnit = new FlowReroute();
-                addedUnit.position = canvas.mousePosition - new Vector2(14, 14);
-                ((FlowGraph)graph).units.Add(addedUnit);
-                unit.output.ValidlyConnectTo(addedUnit.input);
-                canvas.connectionSource = addedUnit.output;
+                _position.width = 26;
+                GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height-4), NodeShape.Square, NodeColor.Gray, isSelected);
             }
             else
             {
-                if (addedUnit == null && HasSource() && HasConnections() && IsConnecting() && SourceIsReroute() && DestinationIsNotReroute())
-                {
-                    if (canvas.hoveredWidget as UnitInputPortWidget<ControlInput> != null && !keyPressed) canvas.CancelConnection();
-                }
+                _position.width = -19;
             }
+#endif
 
-            if (addedUnit != null) canvas.connectionSource = addedUnit.output;
-
-            if (!keyPressed)
-            {
-                addedUnit = null;
-            }
+            Reposition();
         }
 
-        private bool DestinationIsNotReroute()
-        {
-            return canvas.connectionSource.connections.Any((connection) => { return connection.destination.unit.GetType() != typeof(FlowReroute); });
-        }
+        EditorTexture flowIcon;
 
-        private bool HasSource()
-        {
-            return canvas.connectionSource != null;
-        }
+        public override bool foregroundRequiresInput => true;
 
-        private bool HasConnections()
-        {
-            return canvas.connectionSource.connections != null;
-        }
-
-        private bool SourceIsReroute()
-        {
-            return canvas.connectionSource == unit.output;
-        }
-
-        private bool IsConnecting()
-        {
-            return canvas.isCreatingConnection;
-        }
+        private bool mouseIsOver;
 
         public override void CachePosition()
         {
+            var inputPort = inputs[0].port;
+            var outputPort = outputs[0].port;
+            var inputHasConnection = inputPort.hasAnyConnection;
+            var outputHasConnection = outputPort.hasAnyConnection;
             _position.x = unit.position.x;
             _position.y = unit.position.y;
+
+#if VISUAL_SCRIPTING_1_7_3
             _position.width = 26;
-            _position.height = 26;
+#else
+            _position.width = !inputHasConnection || !outputHasConnection || isSelected || mouseIsOver ? 26 : - 19;
+#endif
 
-            inputs[0].y = _position.y + 5;
-            outputs[0].y = _position.y + 5;
-        }
+            _position.height = 20;
 
-        public override void HandleCapture()
-        {
-            base.HandleCapture();
-            keyPressed = e.keyCode == KeyCode.Space;
+            inputs[0].y = _position.y+5;
+            outputs[0].y = _position.y+5;
+
+#if !VISUAL_SCRIPTING_1_7_3
+            if (flowIcon == null && (inputPort.Descriptor()).description.icon != null) flowIcon = ((UnitPortDescriptor)inputPort.Descriptor()).description.icon;
+
+            if (inputHasConnection && !outputHasConnection) { ((UnitPortDescriptor)inputPort.Descriptor()).description.icon = null; }
+            ((UnitPortDescriptor)inputPort.Descriptor()).description.icon = !inputHasConnection || isSelected || mouseIsOver ? flowIcon : null;
+            ((UnitPortDescriptor)outputPort.Descriptor()).description.icon = !outputHasConnection || isSelected || mouseIsOver ? flowIcon : null;
+#endif
         }
     }
 } 

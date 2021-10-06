@@ -1,8 +1,8 @@
 {
 	"name": "dev.bolt.addons",
-	"version": "3.1.3",
-	"displayName": "Community Addons for Bolt",
-	"description": "A collection of Unit Addons for Bolt.",
+	"version": "4.0.0",
+	"displayName": "Community Addons for Unity Visual Scripting",
+	"description": "A collection of Nodes, Assets, Utilities, and other assets for Unity Visual Scripting.",
 	"unity": "2018.4",
 	"dependencies": {},
 	"keywords": [

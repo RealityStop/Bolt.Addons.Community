@@ -1,0 +1,8 @@
+Changelog: Defined Events
+Version: 1.0.0
+
+Changelog for 1.0.0:
+- Added IDefinedEvent
+- Added IDefinedEventTrigger
+- Added Global Event and Trigger
+- Added Game Object Event and Trigger

@@ -1,7 +1,14 @@
 {
     "name": "Bolt.Addons.Community.Editor",
+    "rootNamespace": "",
     "references": [
-        "GUID:e46719400fbb27b4d8f5114be79b259c"
+        "GUID:54cb1906aeb4e4264bc1d2aa3818a43f",
+        "GUID:23f3c6063e13e4fd9addce3606ff4e42",
+        "GUID:f10496e9d78b943308af5e7e9e4543c8",
+        "GUID:4a1f8feb9bcc2f14e92b27fc6b4b9007",
+        "GUID:21b0c8d1703a94250bfac916590cea4f",
+        "GUID:ea715009a4efd4c6cbc85be3ae097dd3",
+        "GUID:315d634a9ac6d460a9515f5a56be6311"
     ],
     "includePlatforms": [
         "Editor"
@@ -12,6 +19,17 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.visualscripting",
+            "expression": "1.7.1",
+            "define": "VISUAL_SCRIPTING_1_7"
+        },
+        {
+            "name": "com.unity.visualscripting",
+            "expression": "[1.7.3]",
+            "define": "VISUAL_SCRIPTING_1_7_3"
+        }
+    ],
     "noEngineReferences": false
 }

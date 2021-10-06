@@ -1,11 +1,6 @@
-﻿using Bolt.Addons.Community.Fundamentals;
-using Ludiq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System;
 
-namespace Bolt.Addons.Community.Variables.Editor.UnitOptions
+namespace Unity.VisualScripting.Community
 {
     [FuzzyOption(typeof(OnVariableChanged))]
     public class OnVariableChangedOption : UnitOption<OnVariableChanged>

@@ -1,9 +1,4 @@
-﻿using Bolt;
-using Ludiq;
-using UnityEditor;
-using UnityEngine;
-
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility.Editor
+﻿namespace Unity.VisualScripting.Community
 {
     [Descriptor(typeof(ValueReroute))]
     public sealed class ValueRerouteDescriptor : UnitDescriptor<ValueReroute>

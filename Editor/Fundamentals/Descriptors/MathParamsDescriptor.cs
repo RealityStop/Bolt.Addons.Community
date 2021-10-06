@@ -1,10 +1,4 @@
-﻿using Ludiq;
-using Bolt;
-using UnityEngine;
-using UnityEditor;
-using System;
-
-namespace Bolt.Addons.Community.Fundamentals
+﻿namespace Unity.VisualScripting.Community
 {
     [Descriptor(typeof(MathParamNode))]
     public class MathParamsDescriptor : UnitDescriptor<MathParamNode>
@@ -15,10 +9,10 @@ namespace Bolt.Addons.Community.Fundamentals
         {
             switch (unit.OperationType)
             {
-                case MathParamNode.MathType.Add: return typeof(Bolt.GenericAdd).Icon();
-                case MathParamNode.MathType.Subtract: return typeof(Bolt.GenericSubtract).Icon();
-                case MathParamNode.MathType.Multiply: return typeof(Bolt.GenericMultiply).Icon();
-                case MathParamNode.MathType.Divide: return typeof(Bolt.GenericDivide).Icon();
+                case MathParamNode.MathType.Add: return typeof(Unity.VisualScripting.GenericSum).Icon();
+                case MathParamNode.MathType.Subtract: return typeof(Unity.VisualScripting.GenericSubtract).Icon();
+                case MathParamNode.MathType.Multiply: return typeof(Unity.VisualScripting.GenericMultiply).Icon();
+                case MathParamNode.MathType.Divide: return typeof(Unity.VisualScripting.GenericDivide).Icon();
                 default: return base.DefinedIcon();
             }
         }

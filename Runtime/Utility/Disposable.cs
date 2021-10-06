@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Bolt.Addons.Community.Utility
+namespace Unity.VisualScripting.Community.Utility
 {
+    [RenamedFrom("Bolt.Addons.Community.Utility.Disposable")]
     public class Disposable : IDisposable
     {
         public static IDisposable Create(Action action)

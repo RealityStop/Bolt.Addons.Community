@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine.Scripting;
-
+﻿using UnityEngine.Scripting;
 
 [assembly:Preserve]
 
-namespace Bolt.Addons.Community
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.CommunityOptions")]
     public class CommunityOptions
     {
         public virtual bool DefinedEvent_ForceOptimizedInEditor { get; } = false;
