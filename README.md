@@ -78,6 +78,7 @@ Events
  - **Trigger Return Event**
  - **Editor Window Events**
  - **Trigger Asset Custom Event**
+ - **Reset Graph Listener**
 
 Documentation
  - **Todo**
