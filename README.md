@@ -4,6 +4,9 @@ A community-driven project for extending Unity Visual Scripting with custom node
 
 Development is open to the community.
 
+## Master Branch is now UVS:
+We made the switch. To get all UVS based updates, please follow the master branch, and dev branch.
+
 ----------
 
 # Installing
