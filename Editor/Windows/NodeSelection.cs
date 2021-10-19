@@ -404,18 +404,23 @@ namespace Unity.VisualScripting.Community
 
         private static void CopyControlConnectionData(FlowGraph superUnitGraph, GraphInput graphInput, GraphOutput graphOutput, List<ConnectionData> connectionData)
         {
-            Dictionary<string, PortType> keyType = new Dictionary<string, PortType>();
+            List<string> keys = new List<string>();
 
             for (int i = 0; i < connectionData.Count; i++)
             {
                 var index = i;
 
+                var _key = GetKeyName(connectionData[i], keys);
+
+                if (!keys.Contains(_key)) keys.Add(_key);
+
                 switch (connectionData[i].source)
                 {
                     case ConnectionDataSource.GraphInput:
+                        
                         superUnitGraph.controlInputDefinitions.Add(new ControlInputDefinition()
                         {
-                            key = connectionData[index].key
+                            key = _key
                         });
                         superUnitGraph.PortDefinitionsChanged();
                         graphInput.controlOutputs.Single((op) => { return op.key == connectionData[index].key; }).ConnectToValid(superUnitGraph.units[connectionData[index].destinationUnitIndex].controlInputs.ToList()[connectionData[index].destinationInputIndex] as ControlInput);
@@ -425,11 +430,11 @@ namespace Unity.VisualScripting.Community
                     case ConnectionDataSource.GraphOutput:
                         superUnitGraph.controlOutputDefinitions.Add(new ControlOutputDefinition()
                         {
-                            key = connectionData[index].key
+                            key = _key
                         });
                         superUnitGraph.PortDefinitionsChanged();
-                        graphOutput.controlInputs.Single((op) => { return op.key == connectionData[index].key; }).ConnectToValid(superUnitGraph.units[connectionData[index].sourceUnitIndex].controlOutputs.ToList()[connectionData[index].sourceOutputIndex] as ControlOutput);
-                        connectionData[index].subgraph.controlOutputs.Single((op) => { return op.key == connectionData[index].key; }).ConnectToValid(connectionData[index].externalPort as ControlInput);
+                        graphOutput.controlInputs.Single((op) => { return op.key == _key; }).ConnectToValid(superUnitGraph.units[connectionData[index].sourceUnitIndex].controlOutputs.ToList()[connectionData[index].sourceOutputIndex] as ControlOutput);
+                        connectionData[index].subgraph.controlOutputs.Single((op) => { return op.key == _key; }).ConnectToValid(connectionData[index].externalPort as ControlInput);
                         break;
 
                     case ConnectionDataSource.Node:
@@ -442,11 +447,15 @@ namespace Unity.VisualScripting.Community
 
         private static void CopyValueConnectionData(FlowGraph superUnitGraph, GraphInput graphInput, GraphOutput graphOutput, List<ConnectionData> connectionData)
         {
-            Dictionary<string, PortType> keyType = new Dictionary<string, PortType>();
+            List<string> keys = new List<string>();
 
             for (int i = 0; i < connectionData.Count; i++)
             {
                 var index = i;
+
+                var _key = GetKeyName(connectionData[i], keys);
+
+                if (!keys.Contains(_key)) keys.Add(_key);
 
                 switch (connectionData[index].source)
                 {
@@ -455,23 +464,23 @@ namespace Unity.VisualScripting.Community
                         var isDefault = def != null;
                         superUnitGraph.valueInputDefinitions.Add(new ValueInputDefinition()
                         {
-                            key = connectionData[index].key,
+                            key = _key,
                             type = connectionData[index].valueType
                         });
                         superUnitGraph.PortDefinitionsChanged();
-                        graphInput.valueOutputs.Single((op) => { return op.key == connectionData[index].key; }).ConnectToValid(superUnitGraph.units[connectionData[index].destinationUnitIndex].valueInputs.ToList()[connectionData[index].destinationInputIndex] as ValueInput);
-                        connectionData[index].subgraph.valueInputs.Single((op) => { return op.key == connectionData[index].key; }).ConnectToValid(connectionData[index].externalPort as ValueOutput);
+                        graphInput.valueOutputs.Single((op) => { return op.key == _key; }).ConnectToValid(superUnitGraph.units[connectionData[index].destinationUnitIndex].valueInputs.ToList()[connectionData[index].destinationInputIndex] as ValueInput);
+                        connectionData[index].subgraph.valueInputs.Single((op) => { return op.key == _key; }).ConnectToValid(connectionData[index].externalPort as ValueOutput);
                         break;
 
                     case ConnectionDataSource.GraphOutput:
                         superUnitGraph.valueOutputDefinitions.Add(new ValueOutputDefinition()
                         {
-                            key = connectionData[index].key,
+                            key = _key,
                             type = connectionData[index].valueType,
                         });
                         superUnitGraph.PortDefinitionsChanged();
-                        graphOutput.valueInputs.Single((op) => { return op.key == connectionData[index].key; }).ConnectToValid(superUnitGraph.units[connectionData[index].sourceUnitIndex].valueOutputs.ToList()[connectionData[index].sourceOutputIndex] as ValueOutput);
-                        connectionData[index].subgraph.valueOutputs.Single((op) => { return op.key == connectionData[index].key; }).ConnectToValid(connectionData[index].externalPort as ValueInput);
+                        graphOutput.valueInputs.Single((op) => { return op.key == _key; }).ConnectToValid(superUnitGraph.units[connectionData[index].sourceUnitIndex].valueOutputs.ToList()[connectionData[index].sourceOutputIndex] as ValueOutput);
+                        connectionData[index].subgraph.valueOutputs.Single((op) => { return op.key == _key; }).ConnectToValid(connectionData[index].externalPort as ValueInput);
                         break;
 
                     case ConnectionDataSource.Node:
@@ -479,6 +488,23 @@ namespace Unity.VisualScripting.Community
                         superUnitGraph.units[connectionData[index].destinationUnitIndex].valueInputs.ToList()[connectionData[index].destinationInputIndex] as ValueInput));
                         break;
                 }
+            }
+        }
+
+        private static string GetKeyName(ConnectionData data, List<string> keys)
+        {
+            if (!keys.Contains(data.key) || data.externalPort.GetType() == typeof(ControlOutput))
+            {
+                return data.key;
+            }
+            else
+            {
+                var count = 1;
+                while (keys.Contains(data.key + count.ToString()))
+                {
+                    count++;
+                }
+                return data.key + count.ToString();
             }
         }
 
