@@ -60,12 +60,21 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             for (int i = 0; i < parameterValues.Count; i++)
             {
+                if (parameterValues[i] == null || parameterValues[i].GetType() == null || string.IsNullOrEmpty(parameterValues[i].GetType().Namespace))
+                {
+                    continue;
+                }
+
                 var @namespace = parameterValues[i].GetType().Namespace;
                 if (!usings.Contains(@namespace) && !parameterValues[i].GetType().Is().PrimitiveStringOrVoid()) usings.Add(@namespace);
             }
 
             for (int i = 0; i < parameterValuesWithLabel.Count; i++)
             {
+                if (parameterValuesWithLabel[i].Item2 == null || parameterValuesWithLabel[i].Item2.GetType() == null || string.IsNullOrEmpty(parameterValuesWithLabel[i].Item2.GetType().Namespace))
+                {
+                    continue;
+                }
                 var @namespace = parameterValuesWithLabel[i].Item2.GetType().Namespace;
                 if (!usings.Contains(@namespace) && !parameterValuesWithLabel[i].Item2.GetType().Is().PrimitiveStringOrVoid()) usings.Add(@namespace);
             }
