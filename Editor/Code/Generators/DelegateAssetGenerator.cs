@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Unity.VisualScripting;
 using UnityEngine;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -198,7 +199,7 @@ namespace Unity.VisualScripting.Community
         private string GetCompoundTitle()
         {
             var gens = string.Empty;
-            var gen = Data.type.type.Name;
+            var gen = "_" + Data.type.type.Name;
 
             if (gen.Contains("`")) { gen = gen.RemoveAfterFirst("`".ToCharArray()[0]).LegalMemberName(); } else { gen = gen.LegalMemberName(); }
 
