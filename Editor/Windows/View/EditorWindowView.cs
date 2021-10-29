@@ -66,6 +66,15 @@ namespace Unity.VisualScripting.Community
         public Event e { get; private set; }
 
         private bool firstPass = true;
+        
+#if UNITY_2021_2_OR_NEWER
+        public IEnumerable<object> GetAotStubs(HashSet<object> visited)
+        {
+            return graph.GetAotStubs(visited);
+        }
+#else
+        public IEnumerable<object> aotStubs => graph.aotStubs;
+#endif
 
         private void OnHeaderGUI() 
         {
