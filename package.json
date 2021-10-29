@@ -1,6 +1,6 @@
 {
 	"name": "dev.bolt.addons",
-	"version": "4.0",
+	"version": "4.0.0",
 	"displayName": "Community Addons for Unity Visual Scripting",
 	"description": "A collection of Nodes, Assets, Utilities and other Addons for Unity Visual Scripting.",
 	"unity": "2018.4",
