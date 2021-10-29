@@ -47,7 +47,14 @@ namespace Unity.VisualScripting.Community
 
         public UnityEngine.Object serializedObject => asset;
 
+#if VISUAL_SCRIPTING_1_7_5_OR_GREATER
+        public IEnumerable<object> GetAotStubs(HashSet<object> visited)
+        {
+            return visited;
+        } 
+#else
         public IEnumerable<object> aotStubs => graph.aotStubs;
+#endif
 
         [SerializeReference]
         private IGraph _graph = new FlowGraph();
