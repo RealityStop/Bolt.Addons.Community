@@ -47,8 +47,6 @@ namespace Unity.VisualScripting.Community
 
         public UnityEngine.Object serializedObject => asset;
 
-        public IEnumerable<object> aotStubs => graph.aotStubs;
-
         [SerializeReference]
         private IGraph _graph = new FlowGraph();
         public IGraph graph { get => asset == null ? _graph : asset.graph; set { if (asset == null) { _graph = value; } else { asset.graph = (FlowGraph)value; } } }
