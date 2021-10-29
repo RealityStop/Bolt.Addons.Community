@@ -47,8 +47,6 @@ namespace Unity.VisualScripting.Community
 
         public UnityEngine.Object serializedObject => asset;
 
-        public IEnumerable<object> aotStubs => graph.aotStubs;
-
         [SerializeReference]
         private IGraph _graph = new FlowGraph();
         public IGraph graph { get => asset == null ? _graph : asset.graph; set { if (asset == null) { _graph = value; } else { asset.graph = (FlowGraph)value; } } }
@@ -66,6 +64,15 @@ namespace Unity.VisualScripting.Community
         public Event e { get; private set; }
 
         private bool firstPass = true;
+        
+#if UNITY_2021_2_OR_NEWER
+        public IEnumerable<object> GetAotStubs(HashSet<object> visited)
+        {
+            return graph.GetAotStubs(visited);
+        }
+#else
+        public IEnumerable<object> aotStubs => graph.aotStubs;
+#endif
 
         private void OnHeaderGUI() 
         {
