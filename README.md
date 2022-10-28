@@ -1,3 +1,11 @@
+> This project is no longer maintained.  The orginal creators have moved on and are no longer active in the Bolt community.  
+>
+> However, this is an open source project!  Check for forks, create one yourself, or become an active maintainer!
+
+
+
+
+
 # Community Addons
 ### Unity Visual Scripting Extensions
 A community-driven project for extending Unity Visual Scripting with custom nodes, assets, types, and helpers.
