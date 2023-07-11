@@ -16,7 +16,7 @@ Development is open to the community.
 
 # Installing
 
-To import the addon, use one of the following methods:
+To import the addon, use the following method:
 
 
 > **Important**: if updating from a pre-3.0 version, please *DELETE* any Bolt.Addons.Community dll files.  By default these were placed in your *Plugins* folder.
