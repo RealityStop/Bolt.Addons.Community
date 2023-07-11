@@ -12,10 +12,6 @@ A community-driven project for extending Unity Visual Scripting with custom node
 
 Development is open to the community.
 
-## Branches
-
-Unity Visual Scripting is now this master branch. To use Bolt, use the branch `bolt-main`. Be aware, the Bolt branch will no longer be receiving updates.
-
 ----------
 
 # Installing
