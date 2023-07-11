@@ -121,7 +121,7 @@ Utility
  - **Convert**	
  - **Flow Reroute**
  - **Value Reroute**
- - **Copy To Clipboard
+ - **Copy To Clipboard**
  - **Counter**
  - **Is Empty or Whitespace**
 
