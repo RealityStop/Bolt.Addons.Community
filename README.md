@@ -164,6 +164,10 @@ Code
 
 Editor
  - **Editor Window**
+ - **Unit Generator Window**
+ - **Unit Descriptor Generator Window**
+   (The Unit Generator doesnt generate logic for the
+   Unit only the Ports this generator is just a time saver)
 
 
 --------
