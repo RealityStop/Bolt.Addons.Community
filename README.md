@@ -78,6 +78,10 @@ Events
  - **Editor Window Events**
  - **Trigger Asset Custom Event**
  - **Reset Graph Listener**
+ - **ChannelEvent**
+ - TriggerChannelEvent**
+ - Wait for Task Event**
+ - **Send Task Event**
 
 Documentation
  - **Todo**
@@ -102,6 +106,8 @@ Control
  - **Bind Delegate**
  - **Unbind Delegate**
  - **Create Delegate**
+ - **Limited Trigger**
+ - **Chance Flow**
 
 Logic
  - **Latch**
@@ -109,11 +115,15 @@ Logic
  - **Between**
  - **Logic (Params)**
  - **Log**
+ - **Toggle Bool**
 
 Utility
  - **Convert**	
  - **Flow Reroute**
  - **Value Reroute**
+ - **Copy To Clipboard
+ - **Counter**
+ - **Is Empty or Whitespace**
 
 Graphs
  - **Machine Is**
