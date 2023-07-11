@@ -79,8 +79,8 @@ Events
  - **Trigger Asset Custom Event**
  - **Reset Graph Listener**
  - **ChannelEvent**
- - TriggerChannelEvent**
- - Wait for Task Event**
+ - **TriggerChannelEvent**
+ - **Wait for Task Event**
  - **Send Task Event**
 
 Documentation
