@@ -16,8 +16,8 @@ public class CustomNodeGeneratorWindow : EditorWindow
     private bool useMachineEventUnit;
     private bool useEventUnit;
 
-
     private Vector2 scrollPosition;
+    private string filePath = "";
 
     [MenuItem("Window/Community Addons/Custom Node Generator")]
     public static void ShowWindow()
@@ -58,11 +58,34 @@ public class CustomNodeGeneratorWindow : EditorWindow
 
         if (GUILayout.Button("Generate Custom Node"))
         {
+            ShowSaveFileDialog();
+        }
+    }
+
+    private void ShowSaveFileDialog()
+    {
+        string defaultFileName = $"{fileName.Replace(" ", "")}.cs";
+        string defaultDirectory = "Assets";
+        filePath = EditorUtility.SaveFilePanel("Save Generated Code", defaultDirectory, defaultFileName, "cs");
+
+        if (!string.IsNullOrEmpty(filePath))
+        {
             GenerateCustomNodeCode();
         }
     }
 
+    private void GenerateCustomNodeCode()
+    {
+        string code = GenerateCustomNodeTemplate(fileName, GetSelectedUnitType());
+        SaveGeneratedCode(code);
+    }
 
+    private void SaveGeneratedCode(string code)
+    {
+        System.IO.File.WriteAllText(filePath, code);
+        AssetDatabase.Refresh();
+        Debug.Log($"Generated custom node code saved at {filePath}");
+    }
 
     private void DrawInputList(List<InputData> inputs, string title, bool showTypeOptions = true)
     {
@@ -192,16 +215,16 @@ public class CustomNodeGeneratorWindow : EditorWindow
     {
         return new Type[]
         {
-        typeof(bool),
-        typeof(int),
-        typeof(float),
-        typeof(string),
-        typeof(Vector2),
-        typeof(Vector3),
-        typeof(Vector4),
-        typeof(GameObject),
-        typeof(Transform),
-        typeof(Color),
+            typeof(bool),
+            typeof(int),
+            typeof(float),
+            typeof(string),
+            typeof(Vector2),
+            typeof(Vector3),
+            typeof(Vector4),
+            typeof(GameObject),
+            typeof(Transform),
+            typeof(Color),
             // Add more compatible types here...
         };
     }
@@ -225,22 +248,15 @@ public class CustomNodeGeneratorWindow : EditorWindow
         return type.Name;
     }
 
-    private void GenerateCustomNodeCode()
-{
-    string code = GenerateCustomNodeTemplate(fileName, GetSelectedUnitType());
-    SaveGeneratedCode(code, fileName);
-}
-
-private string GetSelectedUnitType()
-{
-    if (useMachineEventUnit)
-        return "MachineEventUnit<EmptyEventArgs>";
-    else if (useEventUnit)
-        return "EventUnit<EmptyEventArgs>";
-    else
-        return "Unit";
-}
-
+    private string GetSelectedUnitType()
+    {
+        if (useMachineEventUnit)
+            return "MachineEventUnit<EmptyEventArgs>";
+        else if (useEventUnit)
+            return "EventUnit<EmptyEventArgs>";
+        else
+            return "Unit";
+    }
 
     private string GenerateCustomNodeTemplate(string fileName, string unitType)
     {
@@ -263,18 +279,18 @@ public class {fileName.Replace(" ", "")} : {unitType}
 ";
         }
 
-            // Setup variables for ControlInputs
-            for (int i = 0; i < controlInputs.Count; i++)
+        // Setup variables for ControlInputs
+        for (int i = 0; i < controlInputs.Count; i++)
         {
             string inputName = string.IsNullOrEmpty(controlInputs[i].name) ? $"ControlInput{i}" : controlInputs[i].name;
             template += $@"
     [DoNotSerialize]";
-if (controlInputs[i].HideLabel) 
-                {{
-                    template += $@"
-    [PortLabelHidden]";
-                }}
+            if (controlInputs[i].HideLabel)
+            {
                 template += $@"
+    [PortLabelHidden]";
+            }
+            template += $@"
     public ControlInput {inputName};";
         }
 
@@ -284,12 +300,12 @@ if (controlInputs[i].HideLabel)
             string outputName = string.IsNullOrEmpty(controlOutputs[i].name) ? $"ControlOutput{i}" : controlOutputs[i].name;
             template += $@"
     [DoNotSerialize]";
-if (controlOutputs[i].HideLabel) 
-                {{
-                    template += $@"
-    [PortLabelHidden]";
-                }}
+            if (controlOutputs[i].HideLabel)
+            {
                 template += $@"
+    [PortLabelHidden]";
+            }
+            template += $@"
     public ControlOutput {outputName};";
         }
 
@@ -301,7 +317,7 @@ if (controlOutputs[i].HideLabel)
                 string inputName = string.IsNullOrEmpty(valueInputs[i].name) ? $"ValueInput{i}" : valueInputs[i].name;
                 template += $@"
     [NullMeansSelf]";
-                if (valueInputs[i].HideLabel) 
+                if (valueInputs[i].HideLabel)
                 {
                     template += $@"
     [PortLabelHidden]";
@@ -315,11 +331,11 @@ if (controlOutputs[i].HideLabel)
                 string inputName = string.IsNullOrEmpty(valueInputs[i].name) ? $"ValueInput{i}" : valueInputs[i].name;
                 template += $@"
     [DoNotSerialize]";
-    if (valueInputs[i].HideLabel) 
-                {{
+                if (valueInputs[i].HideLabel)
+                {
                     template += $@"
     [PortLabelHidden]";
-                }}
+                }
                 template += $@"
     public ValueInput {inputName};";
             }
@@ -331,12 +347,12 @@ if (controlOutputs[i].HideLabel)
             string outputName = string.IsNullOrEmpty(valueOutputs[i].name) ? $"ValueOutput{i}" : valueOutputs[i].name;
             template += $@"
     [DoNotSerialize]";
-    if (valueOutputs[i].HideLabel) 
-                {{
-                    template += $@"
-    [PortLabelHidden]";
-                }}
+            if (valueOutputs[i].HideLabel)
+            {
                 template += $@"
+    [PortLabelHidden]";
+            }
+            template += $@"
     public ValueOutput {outputName};";
         }
 
@@ -350,8 +366,8 @@ if (controlOutputs[i].HideLabel)
         base.Definition();";
         }
 
-            // ControlInputs
-            foreach (InputData input in controlInputs)
+        // ControlInputs
+        foreach (InputData input in controlInputs)
         {
             string inputName = string.IsNullOrEmpty(input.name) ? $"ControlInput{controlInputs.IndexOf(input)}" : input.name;
             template += $@"
@@ -406,27 +422,16 @@ if (controlOutputs[i].HideLabel)
 
     public ControlOutput _Enter_(Flow flow) 
     {
+        // Enter your logic here. You can add more methods if needed.
 
-        //Enter your logic here, You can add more methods if needed.
-
-        //Put the name of the output you want to trigger when the node is entered.
+        // Put the name of the output you want to trigger when the node is entered.
         return null;
-
     }
 }";
 
         return template;
     }
-
-    private void SaveGeneratedCode(string code, string fileName)
-    {
-        string filePath = $"Assets/{fileName.Replace(" ", "")}.cs";
-        System.IO.File.WriteAllText(filePath, code);
-        AssetDatabase.Refresh();
-        Debug.Log($"Generated custom node code saved at {filePath}");
-    }
 }
-
 
 [Serializable]
 public class InputData
