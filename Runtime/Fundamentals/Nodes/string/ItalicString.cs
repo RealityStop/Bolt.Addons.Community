@@ -1,7 +1,7 @@
 using Unity.VisualScripting;
 
 [UnitTitle("Italic")]//Unit title
-[UnitCategory("Community\\String")]
+[UnitCategory("Community\\Utility\\string")]
 [TypeIcon(typeof(string))]//Unit icon
 public class ItalicString : Unit
 {
