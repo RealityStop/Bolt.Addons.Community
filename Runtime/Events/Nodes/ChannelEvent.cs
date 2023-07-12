@@ -2,7 +2,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 
 [UnitTitle("ChannelEvent")]
-[UnitCategory("Events")]
+[UnitCategory("Events\\Community")]
 public class ChannelEvent : EventUnit<EmptyEventArgs>
 {
     [UnitHeaderInspectable("Channel")]
