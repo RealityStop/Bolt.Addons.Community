@@ -7,7 +7,7 @@ namespace Bolt.Addons.Community.Fundamentals
     /// Once triggered will wait until a Send Event node gets triggered.
     /// </summary>
 
-    [UnitCategory("Events")]
+    [UnitCategory("Events\\Community")]
     [UnitTitle("Wait For Task Event")]
     [TypeIcon(typeof(CustomEvent))]
     public class WaitForNode : Unit
