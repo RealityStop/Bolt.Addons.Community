@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 
 [UnitTitle("Color")]//Unit title
-[UnitCategory("Community\\String")]
+[UnitCategory("Community\\Utility\\string")]
 [TypeIcon(typeof(string))]//Unit icon
 public class ColorString : Unit
 {
