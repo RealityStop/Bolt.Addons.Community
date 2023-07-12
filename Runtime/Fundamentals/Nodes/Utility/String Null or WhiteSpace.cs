@@ -2,7 +2,7 @@ using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals.Units.Utility
 {
-    [UnitCategory("Community\\Utility")]
+    [UnitCategory("Community\\Utility\\string")]
     [UnitTitle("IsEmptyOrWhitespace")]
     [TypeIcon(typeof(string))]
     public class StringNullorWhiteSpace : Unit
