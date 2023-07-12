@@ -7,7 +7,7 @@ namespace Bolt.Addons.Community.Fundamentals
     /// Triggers A Wait For Event node if it one is waiting.
     /// </summary>
     [UnitTitle("SendTaskEvent")]
-    [UnitCategory("Events")]
+    [UnitCategory("Events\\Community")]
     [TypeIcon(typeof(EventUnit<EmptyEventArgs>))]
     public class TriggerNextTask : Unit
     {
