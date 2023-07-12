@@ -276,8 +276,7 @@ public class CustomNodeGeneratorWindow : EditorWindow
 
     private string GenerateCustomNodeTemplate(string fileName, string unitType)
     {
-        string template = $@"using Bolt.Addons.Community.Fundamentals;
-using System.Collections;
+        string template = $@"using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
