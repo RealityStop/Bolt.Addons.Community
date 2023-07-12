@@ -215,19 +215,35 @@ public class CustomNodeGeneratorWindow : EditorWindow
     {
         return new Type[]
         {
-            typeof(bool),
-            typeof(int),
-            typeof(float),
-            typeof(string),
-            typeof(Vector2),
-            typeof(Vector3),
-            typeof(Vector4),
-            typeof(GameObject),
-            typeof(Transform),
-            typeof(Color),
+        typeof(bool),
+        typeof(int),
+        typeof(float),
+        typeof(string),
+        typeof(Vector2),
+        typeof(Vector3),
+        typeof(Vector4),
+        typeof(GameObject),
+        typeof(Transform),
+        typeof(Color),
+        typeof(Rigidbody),
+        typeof(AudioClip),
+        typeof(Texture),
+        typeof(Sprite),
+        typeof(Material),
+        typeof(AnimationClip),
+        typeof(AudioSource),
+        typeof(Camera),
+        typeof(Collider),
+        typeof(Collider2D),
+        typeof(Mesh),
+        typeof(Animation),
+        typeof(Shader),
+        typeof(Light),
+        typeof(AudioListener),
             // Add more compatible types here...
         };
     }
+
 
     private string[] GetReadableTypeNames(Type[] types)
     {
