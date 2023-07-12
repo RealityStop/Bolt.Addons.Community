@@ -1,7 +1,7 @@
 using Unity.VisualScripting;
 
 [UnitTitle("Strikethrough")]//Unit title
-[UnitCategory("Community\\String")]
+[UnitCategory("Community\\Utility\\string")]
 [TypeIcon(typeof(string))]//Unit icon
 public class StrikethroughString : Unit
 {
