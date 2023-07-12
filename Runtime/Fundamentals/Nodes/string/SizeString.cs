@@ -1,7 +1,7 @@
 using Unity.VisualScripting;
 
 [UnitTitle("Size")]//Unit title
-[UnitCategory("Community\\String")]
+[UnitCategory("Community\\Utility\\string")]
 [TypeIcon(typeof(string))]//Unit icon
 public class SizeString : Unit
 {
