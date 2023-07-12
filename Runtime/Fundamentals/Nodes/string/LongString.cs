@@ -4,7 +4,7 @@ namespace Unity.VisualScripting.Community
 {
     [TypeIcon(typeof(String))]
     [UnitTitle("Multiline String")]
-    [UnitCategory("Community\\Utility")]
+    [UnitCategory("Community\\String")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Utility.MultilineStringUnit")]
     public class MultilineStringNode : Unit
     {
