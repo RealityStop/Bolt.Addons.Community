@@ -4,7 +4,7 @@ using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals
 {
-    [UnitCategory("Events")]
+    [UnitCategory("Events\\Community")]
     [UnitTitle("TriggerChannelEvent")]
     [TypeIcon(typeof(CustomEvent))]
     public class TriggerChannelEvent : Unit
