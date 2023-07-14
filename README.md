@@ -140,6 +140,7 @@ Editor
 
 Math
  - **Math Op**
+ - **Negate Value**
  - **Functions**
 	 - **Decay**
 	 - **Exponential**
