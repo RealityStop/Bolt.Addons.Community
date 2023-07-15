@@ -194,3 +194,4 @@ Editor
  - Eka
  - Silence
  - PurerLogic
+ - S2NX7
