@@ -22,7 +22,8 @@ public class CustomNodeGeneratorWindow : EditorWindow
     [MenuItem("Window/Community Addons/Custom Node Generator")]
     public static void ShowWindow()
     {
-        GetWindow<CustomNodeGeneratorWindow>("Custom Node Generator");
+        var window = GetWindow<CustomNodeGeneratorWindow>("Custom Node Generator");
+        window.minSize = new Vector2(1000, 400);
     }
 
     private int selectedOption = 0;
@@ -32,9 +33,13 @@ public class CustomNodeGeneratorWindow : EditorWindow
     {
         GUILayout.Label("Custom Node Generator", EditorStyles.boldLabel);
 
+        GUILayout.Space(10);
+
         fileName = EditorGUILayout.TextField("File Name", fileName);
 
-        EditorGUILayout.Space();
+        catagory = EditorGUILayout.TextField("Category", catagory);
+
+        GUILayout.Space(10);
 
         scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 
@@ -49,6 +54,8 @@ public class CustomNodeGeneratorWindow : EditorWindow
             useEventUnit = selectedOption == 2;
         }
 
+        GUILayout.Space(10);
+
         DrawInputList(controlInputs, "Control Inputs", false);
         DrawInputList(controlOutputs, "Control Outputs", false);
         DrawValueInputList(valueInputs, "Value Inputs");
@@ -56,7 +63,12 @@ public class CustomNodeGeneratorWindow : EditorWindow
 
         EditorGUILayout.EndScrollView();
 
-        if (GUILayout.Button("Generate Custom Node"))
+        GUILayout.Space(10);
+
+        GUIStyle fontSize = new GUIStyle(GUI.skin.button);
+        fontSize.fontSize = 16; // Adjust the font size as needed
+
+        if (GUILayout.Button("Generate Custom Node", fontSize, GUILayout.Height(30)))
         {
             ShowSaveFileDialog();
         }
@@ -104,6 +116,10 @@ public class CustomNodeGeneratorWindow : EditorWindow
             }
             GUILayout.EndHorizontal();
 
+            GUILayout.Space(5);
+
+            EditorGUI.indentLevel++;
+
             inputs[i].name = EditorGUILayout.TextField("Name", inputs[i].name);
             inputs[i].HideLabel = EditorGUILayout.Toggle("Hide Label", inputs[i].HideLabel);
 
@@ -112,9 +128,11 @@ public class CustomNodeGeneratorWindow : EditorWindow
                 inputs[i].type = DrawTypeDropdown(inputs[i].type);
             }
 
+            EditorGUI.indentLevel--;
+
             GUILayout.EndVertical();
 
-            EditorGUILayout.Space();
+            GUILayout.Space(10);
         }
 
         if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
@@ -122,7 +140,7 @@ public class CustomNodeGeneratorWindow : EditorWindow
             inputs.Add(new InputData());
         }
 
-        EditorGUILayout.Space();
+        GUILayout.Space(10);
     }
 
     private void DrawValueInputList(List<ValueInputData> valueInputs, string title)
@@ -142,6 +160,10 @@ public class CustomNodeGeneratorWindow : EditorWindow
             }
             GUILayout.EndHorizontal();
 
+            GUILayout.Space(5);
+
+            EditorGUI.indentLevel++;
+
             valueInputs[i].name = EditorGUILayout.TextField("Name", valueInputs[i].name);
             valueInputs[i].type = DrawTypeDropdown(valueInputs[i].type);
             valueInputs[i].HideLabel = EditorGUILayout.Toggle("Hide Label", valueInputs[i].HideLabel);
@@ -151,9 +173,11 @@ public class CustomNodeGeneratorWindow : EditorWindow
                 valueInputs[i].nullMeansSelf = EditorGUILayout.Toggle("Null Means Self", valueInputs[i].nullMeansSelf);
             }
 
+            EditorGUI.indentLevel--;
+
             GUILayout.EndVertical();
 
-            EditorGUILayout.Space();
+            GUILayout.Space(10);
         }
 
         if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
@@ -161,7 +185,7 @@ public class CustomNodeGeneratorWindow : EditorWindow
             valueInputs.Add(new ValueInputData());
         }
 
-        EditorGUILayout.Space();
+        GUILayout.Space(10);
     }
 
     private void DrawValueOutputList(List<ValueOutputData> valueOutputs, string title)
@@ -181,13 +205,19 @@ public class CustomNodeGeneratorWindow : EditorWindow
             }
             GUILayout.EndHorizontal();
 
+            GUILayout.Space(5);
+
+            EditorGUI.indentLevel++;
+
             valueOutputs[i].name = EditorGUILayout.TextField("Name", valueOutputs[i].name);
             valueOutputs[i].HideLabel = EditorGUILayout.Toggle("Hide Label", valueOutputs[i].HideLabel);
             valueOutputs[i].type = DrawTypeDropdown(valueOutputs[i].type);
 
+            EditorGUI.indentLevel--;
+
             GUILayout.EndVertical();
 
-            EditorGUILayout.Space();
+            GUILayout.Space(10);
         }
 
         if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
@@ -195,7 +225,7 @@ public class CustomNodeGeneratorWindow : EditorWindow
             valueOutputs.Add(new ValueOutputData());
         }
 
-        EditorGUILayout.Space();
+        GUILayout.Space(10);
     }
 
     private Type DrawTypeDropdown(Type selectedType)
@@ -215,44 +245,38 @@ public class CustomNodeGeneratorWindow : EditorWindow
     {
         return new Type[]
         {
-        typeof(bool),
-        typeof(int),
-        typeof(float),
-        typeof(string),
-        typeof(Vector2),
-        typeof(Vector3),
-        typeof(Vector4),
-        typeof(GameObject),
-        typeof(Transform),
-        typeof(Color),
-        typeof(Rigidbody),
-        typeof(AudioClip),
-        typeof(Texture),
-        typeof(Sprite),
-        typeof(Material),
-        typeof(AnimationClip),
-        typeof(AudioSource),
-        typeof(Camera),
-        typeof(Collider),
-        typeof(Collider2D),
-        typeof(Mesh),
-        typeof(Animation),
-        typeof(Shader),
-        typeof(Light),
-        typeof(AudioListener),
+            typeof(bool),
+            typeof(int),
+            typeof(float),
+            typeof(string),
+            typeof(Vector2),
+            typeof(Vector3),
+            typeof(Vector4),
+            typeof(GameObject),
+            typeof(Transform),
+            typeof(Color),
+            typeof(Rigidbody),
+            typeof(AudioClip),
+            typeof(Texture),
+            typeof(Sprite),
+            typeof(Material),
+            typeof(AnimationClip),
+            typeof(AudioSource),
+            typeof(Camera),
+            typeof(Collider),
+            typeof(Collider2D),
+            typeof(Mesh),
+            typeof(Animation),
+            typeof(Shader),
+            typeof(Light),
+            typeof(AudioListener),
             // Add more compatible types here...
         };
     }
 
-
     private string[] GetReadableTypeNames(Type[] types)
     {
-        string[] typeNames = new string[types.Length];
-        for (int i = 0; i < types.Length; i++)
-        {
-            typeNames[i] = GetShortTypeName(types[i]);
-        }
-        return typeNames;
+        return types.Select(type => GetShortTypeName(type)).ToArray();
     }
 
     private string GetShortTypeName(Type type)
@@ -274,6 +298,8 @@ public class CustomNodeGeneratorWindow : EditorWindow
             return "Unit";
     }
 
+    private string catagory = "Community/YourCatagory";
+
     private string GenerateCustomNodeTemplate(string fileName, string unitType)
     {
         string template = $@"using System.Collections;
@@ -281,6 +307,13 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
+";
+        if (!string.IsNullOrEmpty(catagory))
+        {
+            template += $@"[UnitCategory(""{catagory}"")]";
+        }
+
+        template += $@"
 [UnitTitle(""{fileName}"")]//Unit title
 [TypeIcon(typeof(object))]//Unit icon
 public class {fileName.Replace(" ", "")} : {unitType}
@@ -442,8 +475,7 @@ public class {fileName.Replace(" ", "")} : {unitType}
         // Put the name of the output you want to trigger when the node is entered.
         return null;
     }
-}";
-
+}"; 
         return template;
     }
 }
