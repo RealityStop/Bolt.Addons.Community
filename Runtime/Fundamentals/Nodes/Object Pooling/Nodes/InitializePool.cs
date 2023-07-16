@@ -2,7 +2,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 
 
-    [UnitCategory("Object Pooling")]
+    [UnitCategory("Community\\ObjectPooling")]
     [UnitTitle("Initialize Pool")]
     public class InitializePoolNode : Unit
     {
