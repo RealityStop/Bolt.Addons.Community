@@ -11,7 +11,7 @@ public class InitializePoolNodeDescriptor : UnitDescriptor<InitializePoolNode>
     }
     protected override EditorTexture DefinedIcon()
     {
-        string iconFullPath = "Assets/Object Pooling/Icons/database-data-quality-icon.png";
+        string iconFullPath = "Packages/dev.bolt.addons/Runtime/Fundamentals/Nodes/Object Pooling/Icons/database-data-quality-icon.png";
         Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconFullPath);
         return EditorTexture.Single(icon);
     }
