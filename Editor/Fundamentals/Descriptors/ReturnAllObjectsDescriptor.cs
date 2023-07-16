@@ -11,7 +11,7 @@ public class ReturnAllObjectsToPoolNodeDescriptor : UnitDescriptor<ReturnAllObje
     }
     protected override EditorTexture DefinedIcon()
     {
-        string iconFullPath = "Assets/Object Pooling/Icons/data-update-icon.png";
+        string iconFullPath = "Packages/dev.bolt.addons/Runtime/Fundamentals/Nodes/Object Pooling/Icons/data-update-icon.png";
         Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconFullPath);
         return EditorTexture.Single(icon);
     }
