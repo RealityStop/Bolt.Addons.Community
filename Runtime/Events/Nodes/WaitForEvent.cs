@@ -3,10 +3,6 @@ using Unity.VisualScripting;
 
 namespace Bolt.Addons.Community.Fundamentals
 {
-    /// <summary>
-    /// Once triggered will wait until a Send Event node gets triggered.
-    /// </summary>
-
     [UnitCategory("Events\\Community")]
     [UnitTitle("Wait For Task Event")]
     [TypeIcon(typeof(CustomEvent))]
@@ -22,6 +18,8 @@ namespace Bolt.Addons.Community.Fundamentals
 
         private bool isWaiting;
 
+        private GraphReference stack;
+
         protected override void Definition()
         {
             enter = ControlInput(nameof(enter), Wait);
@@ -30,31 +28,26 @@ namespace Bolt.Addons.Community.Fundamentals
             Succession(enter, exit);
         }
 
-
-
         private ControlOutput Wait(Flow flow)
         {
+            if (isWaiting)
+                return null;
+
+            stack = flow.stack.ToReference();
+
             isWaiting = true;
-            WaitForEvent(flow);
-            
+            EventBus.Register<EmptyEventArgs>(CommunityEvents.WaitForEvent, OnEventTriggered);
             return null;
         }
 
-
-        private ControlOutput WaitForEvent(Flow flow)
+        private void OnEventTriggered(EmptyEventArgs args)
         {
-
-            EventBus.Register<GameObject>(CommunityEvents.WaitForEvent, i =>
+            if (isWaiting)
             {
-                if (isWaiting)
-                {
-                    flow.Invoke(exit);
-
-                    isWaiting = false;
-                }
-            });
-
-            return null;
+                isWaiting = false;
+                Flow flow = Flow.New(stack);
+                flow.Run(exit);
+            }
         }
     }
 }
