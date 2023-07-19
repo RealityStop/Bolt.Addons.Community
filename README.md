@@ -122,6 +122,14 @@ Utility
  - **Copy To Clipboard**
  - **Counter**
  - **Is Empty or Whitespace**
+   String
+ - **Bold**
+ - **Size**
+ - **Color**
+ - **Italiz**
+ - **Strikethrough**
+ - **Underline**
+ - **Reverse String**
 
 Object Pooling
  - **Initialize Object Pool**
