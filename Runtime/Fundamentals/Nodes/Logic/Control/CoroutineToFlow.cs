@@ -18,7 +18,7 @@ public class CorutineConverter : Unit
     {
         In = ControlInput("In", Convert);
         Converted = ControlOutput("Flow");
-        Corutine = ControlOutput("Corutine");
+        Corutine = ControlOutput("Coroutine");
 
         Succession(In, Converted);
         Succession(In, Corutine);
