@@ -4,7 +4,7 @@ using Unity.VisualScripting;
 namespace Bolt.Addons.Community.Fundamentals
 {
     [UnitCategory("Events\\Community\\Input")]
-    [UnitTitle("OnKeysPressed")]
+    [UnitTitle("OnKeys")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.OnDualKeyInput")]
     [TypeIcon(typeof(OnKeyboardInput))]
     public class OnKeysPressed : MachineEventUnit<EmptyEventArgs>
