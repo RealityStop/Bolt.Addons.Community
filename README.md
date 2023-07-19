@@ -122,7 +122,8 @@ Utility
  - **Copy To Clipboard**
  - **Counter**
  - **Is Empty or Whitespace**
-   String
+   
+String
  - **Bold**
  - **Size**
  - **Color**
