@@ -127,7 +127,7 @@ String
  - **Bold**
  - **Size**
  - **Color**
- - **Italiz**
+ - **Italic**
  - **Strikethrough**
  - **Underline**
  - **Reverse String**
