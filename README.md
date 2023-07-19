@@ -201,7 +201,7 @@ Editor
 --------
 
 
-## Current maintainers (aka who to blame)
+## Previous maintainers (aka who to blame)
  - Reality.Stop()
  - JasonJonesLASM
  
