@@ -184,6 +184,7 @@ Math
 	 - **Logarithmic**
 	 - **Reverse Linear**
 	 - **Sigmoid**
+  - Negate Value
 
 
 --------
