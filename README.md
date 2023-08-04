@@ -1,6 +1,6 @@
-> This project is no longer maintained.  The orginal creators have moved on and are no longer active in the Bolt community.  
->
-> However, this is an open source project!  Check for forks, create one yourself, or become an active maintainer!
+> The orginal creators have moved on and are no longer active in the Bolt community.
+> 
+> But there are new maintainers!
 
 
 
@@ -12,11 +12,15 @@ A community-driven project for extending Unity Visual Scripting with custom node
 
 Development is open to the community.
 
+## Branches
+
+Unity Visual Scripting is now this master branch. To use Bolt, use the branch `bolt-main`. Be aware, the Bolt branch will no longer be receiving updates.
+
 ----------
 
 # Installing
 
-To import the addon, use the following method:
+To import the addon, use one of the following methods:
 
 
 > **Important**: if updating from a pre-3.0 version, please *DELETE* any Bolt.Addons.Community dll files.  By default these were placed in your *Plugins* folder.
@@ -29,11 +33,24 @@ Open the Unity Package Manager, and click the "+" button in the top-left corner 
 
 and add the following url:
 
-> https://github.com/S2NX7/Bolt.Addons.Community.git
+> https://github.com/RealityStop/Bolt.Addons.Community.git
+
+For BOLT use branch `bolt-main` with this url:
+
+> https://github.com/RealityStop/Bolt.Addons.Community.git#bolt-main
 
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 
 Then, use the Regenerate Nodes option in Project Settings > Visual Scripting, and they're ready to go!  Once you've rebuilt your node options, the new nodes will be available for use.
+
+
+
+### Manual install:
+Alternatively, open Packages/manifest.json and add this line under dependencies:
+
+	"dev.bolt.addons": "https://github.com/RealityStop/Bolt.Addons.Community.git"
+	
+(for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 	
 Then, use the Regenerate Nodes option in Project Settings > Visual Scripting, and they're ready to go!  Once you've rebuilt your node options, the new nodes will be available for use.
 
@@ -122,7 +139,7 @@ Utility
  - **Copy To Clipboard**
  - **Counter**
  - **Is Empty or Whitespace**
-   
+
 String
  - **Bold**
  - **Size**
@@ -138,6 +155,7 @@ Object Pooling
  - **Return Object To Pool**
  - **Return All Objects To Pool**
 
+
 Graphs
  - **Machine Is**
  - **Get Machine**
@@ -145,7 +163,7 @@ Graphs
  - **Get Machine Variable**
  - **Set Machine Variable**
  - **Has Machine Variable**
- 
+
 Time
  - **Yield**
  - **Enumerator**
@@ -157,7 +175,6 @@ Editor
 
 Math
  - **Math Op**
- - **Negate Value**
  - **Functions**
 	 - **Decay**
 	 - **Exponential**
@@ -184,9 +201,6 @@ Editor
  - **Editor Window**
  - **Unit Generator Window**
  - **Unit Descriptor Generator Window**
-   
-   (The Unit Generator doesnt generate logic for the
-   Unit only the Ports this generator is just a time saver, You have to add your own logic)
 
 
 --------
@@ -200,8 +214,11 @@ Editor
 
 --------
 
+## Current Maintainers
+ - S2NX7
+ - Spyboticer
 
-## Previous maintainers
+## Previous maintainers (aka who to blame)
  - Reality.Stop()
  - JasonJonesLASM
  
@@ -211,4 +228,3 @@ Editor
  - Eka
  - Silence
  - PurerLogic
- - S2NX7
