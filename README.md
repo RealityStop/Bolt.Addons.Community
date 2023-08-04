@@ -12,15 +12,11 @@ A community-driven project for extending Unity Visual Scripting with custom node
 
 Development is open to the community.
 
-## Branches
-
-Unity Visual Scripting is now this master branch. To use Bolt, use the branch `bolt-main`. Be aware, the Bolt branch will no longer be receiving updates.
-
 ----------
 
 # Installing
 
-To import the addon, use one of the following methods:
+To import the addon, use the following method:
 
 
 > **Important**: if updating from a pre-3.0 version, please *DELETE* any Bolt.Addons.Community dll files.  By default these were placed in your *Plugins* folder.
@@ -33,24 +29,11 @@ Open the Unity Package Manager, and click the "+" button in the top-left corner 
 
 and add the following url:
 
-> https://github.com/RealityStop/Bolt.Addons.Community.git
-
-For BOLT use branch `bolt-main` with this url:
-
-> https://github.com/RealityStop/Bolt.Addons.Community.git#bolt-main
+> https://github.com/S2NX7/Bolt.Addons.Community.git
 
 (for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 
 Then, use the Regenerate Nodes option in Project Settings > Visual Scripting, and they're ready to go!  Once you've rebuilt your node options, the new nodes will be available for use.
-
-
-
-### Manual install:
-Alternatively, open Packages/manifest.json and add this line under dependencies:
-
-	"dev.bolt.addons": "https://github.com/RealityStop/Bolt.Addons.Community.git"
-	
-(for more information, or if errors are encountered, see https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 	
 Then, use the Regenerate Nodes option in Project Settings > Visual Scripting, and they're ready to go!  Once you've rebuilt your node options, the new nodes will be available for use.
 
@@ -91,6 +74,10 @@ Events
  - **Editor Window Events**
  - **Trigger Asset Custom Event**
  - **Reset Graph Listener**
+ - **ChannelEvent**
+ - **TriggerChannelEvent**
+ - **Wait for Task Event**
+ - **Send Task Event**
 
 Documentation
  - **Todo**
@@ -115,6 +102,10 @@ Control
  - **Bind Delegate**
  - **Unbind Delegate**
  - **Create Delegate**
+ - **Limited Trigger**
+ - **Chance Flow**
+ - **FlowToCoroutine**
+ - **CoroutineToFlow**
 
 Logic
  - **Latch**
@@ -122,11 +113,30 @@ Logic
  - **Between**
  - **Logic (Params)**
  - **Log**
+ - **Toggle Bool**
 
 Utility
  - **Convert**	
  - **Flow Reroute**
  - **Value Reroute**
+ - **Copy To Clipboard**
+ - **Counter**
+ - **Is Empty or Whitespace**
+   
+String
+ - **Bold**
+ - **Size**
+ - **Color**
+ - **Italic**
+ - **Strikethrough**
+ - **Underline**
+ - **Reverse String**
+
+Object Pooling
+ - **Initialize Object Pool**
+ - **Retrive Object From Pool**
+ - **Return Object To Pool**
+ - **Return All Objects To Pool**
 
 Graphs
  - **Machine Is**
@@ -135,7 +145,7 @@ Graphs
  - **Get Machine Variable**
  - **Set Machine Variable**
  - **Has Machine Variable**
-
+ 
 Time
  - **Yield**
  - **Enumerator**
@@ -147,6 +157,7 @@ Editor
 
 Math
  - **Math Op**
+ - **Negate Value**
  - **Functions**
 	 - **Decay**
 	 - **Exponential**
@@ -171,6 +182,11 @@ Code
 
 Editor
  - **Editor Window**
+ - **Unit Generator Window**
+ - **Unit Descriptor Generator Window**
+   
+   (The Unit Generator doesnt generate logic for the
+   Unit only the Ports this generator is just a time saver, You have to add your own logic)
 
 
 --------
@@ -185,7 +201,7 @@ Editor
 --------
 
 
-## Current maintainers (aka who to blame)
+## Previous maintainers
  - Reality.Stop()
  - JasonJonesLASM
  
@@ -195,3 +211,4 @@ Editor
  - Eka
  - Silence
  - PurerLogic
+ - S2NX7
