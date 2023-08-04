@@ -123,6 +123,8 @@ Control
  - **Chance Flow**
  - **FlowToCoroutine**
  - **CoroutineToFlow**
+ - **WaitForManualPress**
+ - **If**
 
 Logic
  - **Latch**
