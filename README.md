@@ -1,6 +1,6 @@
-> This project is no longer maintained.  The orginal creators have moved on and are no longer active in the Bolt community.  
->
-> However, this is an open source project!  Check for forks, create one yourself, or become an active maintainer!
+> The orginal creators have moved on and are no longer active in the Bolt community.
+> 
+> But there are new maintainers!
 
 
 
@@ -91,6 +91,10 @@ Events
  - **Editor Window Events**
  - **Trigger Asset Custom Event**
  - **Reset Graph Listener**
+ - **ChannelEvent**
+ - **TriggerChannelEvent**
+ - **Wait for Task Event**
+ - **Send Task Event**
 
 Documentation
  - **Todo**
@@ -115,6 +119,10 @@ Control
  - **Bind Delegate**
  - **Unbind Delegate**
  - **Create Delegate**
+ - **Limited Trigger**
+ - **Chance Flow**
+ - **FlowToCoroutine**
+ - **CoroutineToFlow**
 
 Logic
  - **Latch**
@@ -122,11 +130,31 @@ Logic
  - **Between**
  - **Logic (Params)**
  - **Log**
+ - **Toggle Bool**
 
 Utility
  - **Convert**	
  - **Flow Reroute**
  - **Value Reroute**
+ - **Copy To Clipboard**
+ - **Counter**
+ - **Is Empty or Whitespace**
+
+String
+ - **Bold**
+ - **Size**
+ - **Color**
+ - **Italic**
+ - **Strikethrough**
+ - **Underline**
+ - **Reverse String**
+
+Object Pooling
+ - **Initialize Object Pool**
+ - **Retrive Object From Pool**
+ - **Return Object To Pool**
+ - **Return All Objects To Pool**
+
 
 Graphs
  - **Machine Is**
@@ -171,6 +199,8 @@ Code
 
 Editor
  - **Editor Window**
+ - **Unit Generator Window**
+ - **Unit Descriptor Generator Window**
 
 
 --------
@@ -184,8 +214,11 @@ Editor
 
 --------
 
+## Current Maintainers
+ - S2NX7
+ - Spyboticer
 
-## Current maintainers (aka who to blame)
+## Previous maintainers (aka who to blame)
  - Reality.Stop()
  - JasonJonesLASM
  

@@ -10,7 +10,7 @@ namespace Unity.VisualScripting.Community
 {
     [IncludeInSettings(true)]
     [Serializable]
-    public sealed class EditorWindowView : EditorWindow, IMacro
+    public sealed class EditorWindowView : EditorWindow
     {
         public EditorWindowAsset asset;
         VisualElement header;
