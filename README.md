@@ -140,6 +140,7 @@ Utility
  - **Copy To Clipboard**
  - **Counter**
  - **Is Empty or Whitespace**
+ - **HDRColors**
 
 String
  - **Bold**
