@@ -56,3 +56,15 @@ public class CustomObjectPool : MonoBehaviour
         return activeObjects;
     }
 }
+
+public struct PoolData 
+{
+    public CustomObjectPool pool;
+    public GameObject arg;
+
+    public PoolData(CustomObjectPool Pool, GameObject args) 
+    {
+        pool = Pool;
+        arg = args;
+    }
+}
