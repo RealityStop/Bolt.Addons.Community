@@ -89,7 +89,6 @@ namespace Unity.VisualScripting.Community
             if (EndBlock(metadata))
             {
                 metadata.RecordUndo();
-                metadata.value = arrow;
             }
         }
 
