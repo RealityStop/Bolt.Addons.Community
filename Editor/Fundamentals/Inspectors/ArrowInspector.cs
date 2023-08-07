@@ -29,7 +29,6 @@ namespace Unity.VisualScripting.Community
 
         protected override void OnGUI(Rect position, GUIContent label)
         {
-
             // Draw the header
             Rect headerRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight * 2);
             GUI.Label(headerRect, "Arrow Inspector", headerStyle);
