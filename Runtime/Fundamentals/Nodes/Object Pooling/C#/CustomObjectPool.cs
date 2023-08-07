@@ -39,6 +39,8 @@ public class CustomObjectPool : MonoBehaviour
         // Keep track of active objects
         activeObjects.Add(obj);
 
+        EventBus.Trigger(ObjectPoolEvents.OnRetrieved, new(this, obj));
+
         return obj;
     }
 
@@ -49,6 +51,8 @@ public class CustomObjectPool : MonoBehaviour
         // Remove from active objects and add back to the queue
         activeObjects.Remove(obj);
         objectPoolQueue.Enqueue(obj);
+
+        EventBus.Trigger(ObjectPoolEvents.OnReturned, new(this, obj));
     }
 
     public List<GameObject> GetActiveObjects()
