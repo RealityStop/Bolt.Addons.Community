@@ -57,7 +57,7 @@ public class CustomObjectPool : MonoBehaviour
     }
 }
 
-public struct class ObjectPoolEvents 
+public static class ObjectPoolEvents 
 {
     public static string OnRetrieved = "Retrieved";
     public static string OnReturned = "Returned";
