@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Unity.VisualScripting
+using Unity.VisualScripting;
 
 public class CustomObjectPool : MonoBehaviour
 {
