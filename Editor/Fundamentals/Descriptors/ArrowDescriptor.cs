@@ -11,7 +11,7 @@ public class ArrowDescriptor : UnitDescriptor<Arrow>
     }
     protected override EditorTexture DefinedIcon()
     {
-        string iconFullPath = "Assets/ArrowIcon.png";
+        string iconFullPath = "Packages/dev.bolt.addons/Editor/Fundamentals/Resources/ArrowIcon.png";
         Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconFullPath);
         return EditorTexture.Single(icon);
     }
