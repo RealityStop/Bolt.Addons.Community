@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -50,6 +50,9 @@ namespace Unity.VisualScripting.Community
             }
         }
 
+        [UnitHeaderInspectable("LogType")]
+        public LogType type;
+
         protected override void Definition()
         {
             format = ValueInput<string>(nameof(format), "");
@@ -90,8 +93,23 @@ namespace Unity.VisualScripting.Community
                 return val.ToString();
             });
 
-            Debug.Log(string.Format(flow.GetValue<string>(format), stringArgs.ToArray()));
+            switch (type) 
+            {
+                case LogType.Log: Debug.Log(string.Format(flow.GetValue<string>(format), stringArgs.ToArray()));
+                    break;
+                case LogType.Warning: Debug.LogWarning(string.Format(flow.GetValue<string>(format), stringArgs.ToArray()));
+                    break;
+                case LogType.Error: Debug.LogError(string.Format(flow.GetValue<string>(format), stringArgs.ToArray()));
+                    break;
+            }
             return output;
         }
+    }
+
+    public enum LogType 
+    {
+        Log,
+        Warning,
+        Error,
     }
 }

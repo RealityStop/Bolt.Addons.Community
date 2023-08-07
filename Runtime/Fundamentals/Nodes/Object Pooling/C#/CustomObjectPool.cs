@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.VisualScripting;
 
 public class CustomObjectPool : MonoBehaviour
 {
@@ -39,6 +40,8 @@ public class CustomObjectPool : MonoBehaviour
         // Keep track of active objects
         activeObjects.Add(obj);
 
+        EventBus.Trigger<PoolData>(ObjectPoolEvents.OnRetrieved, new(this, obj));
+
         return obj;
     }
 
@@ -49,10 +52,30 @@ public class CustomObjectPool : MonoBehaviour
         // Remove from active objects and add back to the queue
         activeObjects.Remove(obj);
         objectPoolQueue.Enqueue(obj);
+
+        EventBus.Trigger<PoolData>(ObjectPoolEvents.OnReturned, new(this, obj));
     }
 
     public List<GameObject> GetActiveObjects()
     {
         return activeObjects;
+    }
+}
+
+public static class ObjectPoolEvents 
+{
+    public static string OnRetrieved = "Retrieved";
+    public static string OnReturned = "Returned";
+}
+
+public struct PoolData 
+{
+    public CustomObjectPool pool;
+    public GameObject arg;
+
+    public PoolData(CustomObjectPool Pool, GameObject args) 
+    {
+        pool = Pool;
+        arg = args;
     }
 }
