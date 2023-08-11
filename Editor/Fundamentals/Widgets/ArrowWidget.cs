@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community
         private const float DottedLineWidths = 4f;
         private const float unitSquareSize = 4f; // Adjust this value to control the size of the unit square
 
-        public DividerNode(FlowCanvas canvas, Arrow unit) : base(canvas, unit)
+        public ArrowNode(FlowCanvas canvas, Arrow unit) : base(canvas, unit)
         {
         }
 
