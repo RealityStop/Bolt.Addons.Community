@@ -153,13 +153,13 @@ String
 
 Object Pooling
  - **Initialize Object Pool**
- - **Retrive Object From Pool**
- - **Return Object To Pool**
- - **Return All Objects To Pool**
-    Events
-    - **On Retreived**
-    - **On Returned**
-
+ - **Retrive Object**
+ - **Return Object**
+ - **Return All**
+	 - **Events**
+         - *On Retrived*
+         - *On Returned*
+           
 Graphs
  - **Machine Is**
  - **Get Machine**
