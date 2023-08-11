@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community
 {
     [Widget(typeof(Arrow))]
-    public class DividerNode : UnitWidget<Arrow>
+    public class ArrowNode : UnitWidget<Arrow>
     {
         private const float arrowWidth = 10f;
         private const float arrowHeight = 10f;
