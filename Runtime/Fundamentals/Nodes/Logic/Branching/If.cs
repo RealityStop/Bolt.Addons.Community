@@ -1,12 +1,16 @@
 using UnityEngine;
 using Unity.VisualScripting;
+using System.Collections;
+using System;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
     [UnitTitle("If")]
     [UnitCategory("Community/Control")]
     [TypeIcon(typeof(Unity.VisualScripting.If))]
-    public class If : Unit
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.If")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.BetterIf")]
+    public class BetterIf : Unit
     {
         [DoNotSerialize]
         [PortLabelHidden]
@@ -21,11 +25,12 @@ namespace Bolt.Addons.Community.Fundamentals
         [DoNotSerialize]
         public ControlOutput False;
         [DoNotSerialize]
+        [PortLabel("Next")]
         public ControlOutput Finished;
 
         protected override void Definition()
         {
-            In = ControlInput(nameof(In), Enter);
+            In = ControlInputCoroutine(nameof(In), Enter, EnterCoroutine);
             True = ControlOutput(nameof(True));
             False = ControlOutput(nameof(False));
             Finished = ControlOutput(nameof(Finished));
@@ -35,32 +40,40 @@ namespace Bolt.Addons.Community.Fundamentals
             Succession(In, True);
             Succession(In, False);
             Succession(In, Finished);
+            Requirement(Condition, In);
         }
 
-        private ControlOutput Enter(Flow flow) 
+        private IEnumerator EnterCoroutine(Flow flow)
         {
             bool condition = flow.GetValue<bool>(Condition);
 
-            if (flow.isCoroutine)
+            if (condition)
             {
-                GraphReference reference = flow.stack.ToReference();
-                Flow _flow = Flow.New(reference);
-                _flow.StartCoroutine(Finished);
+                yield return True;
             }
             else
             {
-                flow.Invoke(Finished);
+                yield return False;
             }
+
+            yield return Finished;
+        }
+
+        private ControlOutput Enter(Flow flow)
+        {
+            bool condition = flow.GetValue<bool>(Condition);
 
             if (condition)
             {
-                return True;
+                flow.Invoke(True);
             }
             else
             {
-                return False;
+                flow.Invoke(False);
             }
-            
+
+            return Finished;
+
         }
-    }  
+    }
 }
