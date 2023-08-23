@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 2fe8bb2b7a00a419abafca9e35b37b06
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 175821
+  packageName: Bolt Unity Events
+  packageVersion: 1.0
+  assetPath: Assets/Plugins/Bolt Unity Events/Runtime/OnUnityEvent.cs
+  uploadId: 382012

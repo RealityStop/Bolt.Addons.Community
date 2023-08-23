@@ -8,12 +8,26 @@ namespace Unity.VisualScripting.Community
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Utility.ValueReroute")]
     public sealed class ValueReroute : Unit
     {
-        [DoNotSerialize][PortLabelHidden]
+        [DoNotSerialize]
+        [PortLabelHidden]
         public ValueInput input;
-        [DoNotSerialize][PortLabelHidden]
+        [DoNotSerialize]
+        [PortLabelHidden]
         public ValueOutput output;
         [Serialize]
         public Type portType = typeof(object);
+
+        [Inspectable]
+        public bool SnapToGrid;
+
+        [Inspectable]
+        public bool inputVisible = true;
+
+        [Inspectable]
+        public bool outputVisible = true;
+
+        [Inspectable]
+        public bool showFlowOnHover = true;
 
         protected override void Definition()
         {

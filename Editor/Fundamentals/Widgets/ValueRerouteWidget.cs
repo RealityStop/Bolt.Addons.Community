@@ -22,7 +22,7 @@ namespace Unity.VisualScripting.Community
             if (isSelected || mouseIsOver || !inputHasConnection || !outputHasConnection)
             {
                 _position.width = 26;
-                GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height-4), NodeShape.Square, NodeColor.Gray, isSelected);
+                GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height - 4), NodeShape.Square, NodeColor.Gray, isSelected);
             }
             else
             {
@@ -34,6 +34,8 @@ namespace Unity.VisualScripting.Community
         }
 
         EditorTexture valueIcon;
+
+        protected override bool snapToGrid => unit.SnapToGrid;
 
         public override bool foregroundRequiresInput => true;
 
@@ -51,7 +53,7 @@ namespace Unity.VisualScripting.Community
 #if VISUAL_SCRIPTING_1_7_3
             _position.width = 26;
 #else
-            _position.width = !inputHasConnection || !outputHasConnection || isSelected || mouseIsOver ? 26 : - 19;
+            _position.width = !inputHasConnection || !outputHasConnection || isSelected || mouseIsOver ? 26 : -19;
 #endif
 
             _position.height = 20;
