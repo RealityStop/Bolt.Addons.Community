@@ -233,4 +233,4 @@ Editor
  - Eka
  - Silence
  - PurerLogic
- - Thomas S.
+ - Tomate Salat
