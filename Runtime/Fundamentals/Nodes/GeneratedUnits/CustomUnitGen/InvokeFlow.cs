@@ -23,7 +23,7 @@ public class InvokeFlow : GeneratedUnit
         Requirement(Output, Enter);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent)
+    public override string GeneratorLogic(int indent)
     {
         return CodeBuilder.Indent(indent) + $"flow".ConstructHighlight() + CodeBuilder.Highlight(".Invoke", "FFFF4D") + $"({GenerateValue(Output)}); \n";
     }

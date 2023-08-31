@@ -23,7 +23,7 @@ public class Base : GeneratedUnit
     }
 
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent)
+    public override string GeneratorLogic(int indent)
     {
         return $"base.{GenerateValue(Input)}(); \n";
     }

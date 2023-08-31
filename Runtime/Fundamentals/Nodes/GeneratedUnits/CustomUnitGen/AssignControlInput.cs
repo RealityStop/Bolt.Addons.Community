@@ -36,7 +36,7 @@ public class AssignControlInput : GeneratedUnit
         Requirement(MethodName, Enter);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent)
+    public override string GeneratorLogic(int indent)
     {
         if (!Coroutine)
         {

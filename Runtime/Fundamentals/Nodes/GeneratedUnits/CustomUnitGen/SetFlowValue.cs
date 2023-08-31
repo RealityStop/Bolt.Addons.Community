@@ -36,7 +36,7 @@ public class FlowSetValue : GeneratedUnit
         Requirement(Value, Enter);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent)
+    public override string GeneratorLogic(int indent)
     {
         return $"{GenerateValue(Flow)}.SetValue({GenerateValue(VariableName)}, {GenerateValue(Value)});";
     }

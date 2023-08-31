@@ -16,7 +16,7 @@ public class AssignControlOutput : GeneratedUnit
         VariableName = ValueInput<string>(nameof(VariableName), default);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent)
+    public override string GeneratorLogic(int indent)
     {
         return $"{GenerateValue(VariableName)} = ControlOutput(nameof({GenerateValue(VariableName)})); \n";
     }

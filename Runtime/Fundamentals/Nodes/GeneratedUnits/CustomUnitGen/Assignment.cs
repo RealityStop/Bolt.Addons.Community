@@ -27,7 +27,7 @@ public class Assignment : GeneratedUnit
         Requirement(Output, Enter);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent)
+    public override string GeneratorLogic(int indent)
     {
         return $"Assignment({GenerateValue(Input)}, {GenerateValue(Output)}); \n";
     }

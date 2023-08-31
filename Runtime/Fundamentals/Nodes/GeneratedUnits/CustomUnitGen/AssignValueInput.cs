@@ -32,7 +32,7 @@ public class AssignValueInput : GeneratedUnit
         Requirement(VariableName, Enter);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent)
+    public override string GeneratorLogic(int indent)
     {
         bool nullmeansSelf = false;
         if (VariableType == typeof(GameObject)) 

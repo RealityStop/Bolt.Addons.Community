@@ -27,7 +27,7 @@ public class Succession : GeneratedUnit
         Requirement(Output, Enter);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent)
+    public override string GeneratorLogic(int indent)
     {
         return $"Succession({GenerateValue(Input)}, {GenerateValue(Output)}); \n";
     }
