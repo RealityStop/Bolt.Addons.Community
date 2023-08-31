@@ -15,8 +15,8 @@ public class Return : GeneratedUnit
         Data = ValueInput<object>(nameof(Data), default);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent, NodeGenerator generator)
+    public override string GeneratorLogic(ControlGenerationData data, int indent)
     {
-        return CodeBuilder.Indent(indent) + CodeBuilder.Highlight($"return", "FF6BE8") + $" {generator.GenerateValue(Data)};";
+        return CodeBuilder.Indent(indent) + CodeBuilder.Highlight($"return", "FF6BE8") + $" {GenerateValue(Data)};";
     }
 }

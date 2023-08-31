@@ -29,13 +29,13 @@ public class FlowGetValue : GeneratedUnit
         Requirement(VariableName, Enter);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent, NodeGenerator generator)
+    public override string GeneratorLogic(ControlGenerationData data, int indent)
     {
         return "";
     }
 
-    public override string GeneratorOutput(NodeGenerator generator)
+    public override string GeneratorOutput()
     {
-        return $"flow.GetValue<{ValueType.CSharpFullName()}>({generator.GenerateValue(VariableName)}){(Enter.hasValidConnection ? ";" : "")}";
+        return $"flow.GetValue<{ValueType.CSharpFullName()}>({GenerateValue(VariableName)}){(Enter.hasValidConnection ? ";" : "")}";
     }
 }

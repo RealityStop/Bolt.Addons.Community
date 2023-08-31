@@ -21,8 +21,8 @@ public class AssignValueOutput : GeneratedUnit
         VariableName = ValueInput<string>(nameof(VariableName), default);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent, NodeGenerator generator)
+    public override string GeneratorLogic(ControlGenerationData data, int indent)
     {
-        return $"{generator.GenerateValue(VariableName)} = ValueOutput<{VariableType.CSharpFullName()}>(nameof({generator.GenerateValue(VariableName)})); \n";
+        return $"{GenerateValue(VariableName)} = ValueOutput<{VariableType.CSharpFullName()}>(nameof({GenerateValue(VariableName)})); \n";
     }
 }

@@ -25,8 +25,8 @@ public class Requirement : GeneratedUnit
         Requirement(_ControlInput, Enter);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent, NodeGenerator generator)
+    public override string GeneratorLogic(ControlGenerationData data, int indent)
     {
-        return $"Requirement({generator.GenerateValue(Input)}, {generator.GenerateValue(_ControlInput)}); \n";
+        return $"Requirement({GenerateValue(Input)}, {GenerateValue(_ControlInput)}); \n";
     }
 }

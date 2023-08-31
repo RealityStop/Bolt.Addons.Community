@@ -16,6 +16,10 @@ public class FlowSetValue : GeneratedUnit
     [PortLabelHidden]
     public ValueInput Value;
 
+    [DoNotSerialize]
+    [PortLabelHidden]
+    public ValueInput Flow;
+
     [UnitHeaderInspectable("Type")]
     public Type ValueType;
 
@@ -23,19 +27,17 @@ public class FlowSetValue : GeneratedUnit
     {
         base.Definition();
 
-        VariableName = ValueInput<string>(nameof(VariableName), default);
+        Flow = ValueInput<Flow>(nameof(Flow));
+        VariableName = ValueInput(nameof(VariableName), "Port");
         Value = ValueInput<object>(nameof(Value));
 
         Requirement(VariableName, Enter);
+        Requirement(Flow, Enter);
+        Requirement(Value, Enter);
     }
 
-    public override ControlOutput Logic(Flow flow)
+    public override string GeneratorLogic(ControlGenerationData data, int indent)
     {
-        flow.SetValue(Value, "");
-        return base.Logic(flow);
-    }
-    public override string GeneratorLogic(ControlGenerationData data, int indent, NodeGenerator generator)
-    {
-        return $"flow.SetValue({generator.GenerateValue(VariableName)}, {generator.GenerateValue(Value)});";
+        return $"{GenerateValue(Flow)}.SetValue({GenerateValue(VariableName)}, {GenerateValue(Value)});";
     }
 }

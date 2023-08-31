@@ -26,14 +26,30 @@ public abstract class GeneratedUnit : Unit
         return Exit;
     }
 
-    public virtual string GeneratorLogic(ControlGenerationData data, int indent, NodeGenerator generator) 
+    public virtual string GeneratorLogic(ControlGenerationData data, int indent) 
     {
         return $"/* Create logic Generator */";
     }
 
-    public virtual string GeneratorOutput(NodeGenerator generator)
+    public virtual string GeneratorOutput()
     {
         return $"/* Create output Generator */";
+    }
+
+    public virtual string GenerateValue(ValueInput input)
+    {
+        if (input.hasValidConnection)
+        {
+            return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
+        }
+        else if (input.hasDefaultValue)
+        {
+            return this.defaultValues[input.key].ToString();
+        }
+        else
+        {
+            return $"/*{input.key} Requires Input*/";
+        }
     }
 }
 

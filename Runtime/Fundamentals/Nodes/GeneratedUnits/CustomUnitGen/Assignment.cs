@@ -3,17 +3,17 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using UnityEngine;
 
-[UnitTitle("Succession")]//Unit title
+[UnitTitle("Assignment")]//Unit title
 [UnitCategory("Community/CodeGenerators/Unit")]
 [TypeIcon(typeof(Flow))]//Unit icon
-public class Succession : GeneratedUnit
+public class Assignment : GeneratedUnit
 {
     [DoNotSerialize]
     [PortLabel("ControlInput")]
     public ValueInput Input;
 
     [DoNotSerialize]
-    [PortLabel("ControlOutput")]
+    [PortLabel("ValueOutput")]
     public ValueInput Output;
 
     protected override void Definition()
@@ -29,6 +29,6 @@ public class Succession : GeneratedUnit
 
     public override string GeneratorLogic(ControlGenerationData data, int indent)
     {
-        return $"Succession({GenerateValue(Input)}, {GenerateValue(Output)}); \n";
+        return $"Assignment({GenerateValue(Input)}, {GenerateValue(Output)}); \n";
     }
 }

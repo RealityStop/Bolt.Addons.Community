@@ -1,23 +1,30 @@
+using System;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using UnityEngine;
 
-[UnitTitle("AssignControlOutput")]//Unit title
+[UnitTitle("Base")]//Unit title
 [UnitCategory("Community/CodeGenerators/Unit")]
 [TypeIcon(typeof(Flow))]//Unit icon
-public class AssignControlOutput : GeneratedUnit
+public class Base : GeneratedUnit
 {
+    public string method = "YourMethod";//
+
     [DoNotSerialize]
-    public ValueInput VariableName;
+    [PortLabel("MethodName")]
+    public ValueInput Input;
 
     protected override void Definition()
     {
         base.Definition();
-        VariableName = ValueInput<string>(nameof(VariableName), default);
+
+        Input = ValueInput<string>(nameof(Input));
+        Input.SetDefaultValue(method);
     }
+
 
     public override string GeneratorLogic(ControlGenerationData data, int indent)
     {
-        return $"{GenerateValue(VariableName)} = ControlOutput(nameof({GenerateValue(VariableName)})); \n";
+        return $"base.{GenerateValue(Input)}(); \n";
     }
 }

@@ -32,15 +32,15 @@ public class AssignValueInput : GeneratedUnit
         Requirement(VariableName, Enter);
     }
 
-    public override string GeneratorLogic(ControlGenerationData data, int indent, NodeGenerator generator)
+    public override string GeneratorLogic(ControlGenerationData data, int indent)
     {
         bool nullmeansSelf = false;
         if (VariableType == typeof(GameObject)) 
         {
-            nullmeansSelf = bool.Parse(generator.GenerateValue(NullMeansSelf));
+            nullmeansSelf = bool.Parse(GenerateValue(NullMeansSelf));
         }
 
-        string assign = $"{generator.GenerateValue(VariableName)} = ValueInput<{VariableType.CSharpFullName()}>(nameof({generator.GenerateValue(VariableName)}), default)" + (nullmeansSelf ? "" : ";");
+        string assign = $"{GenerateValue(VariableName)} = ValueInput<{VariableType.CSharpFullName()}>(nameof({GenerateValue(VariableName)}), default)" + (nullmeansSelf ? "" : ";");
         string shouldmeanSelf = nullmeansSelf ? $".NullMeansSelf();" : "";
         return assign + shouldmeanSelf + "\n";
     }
