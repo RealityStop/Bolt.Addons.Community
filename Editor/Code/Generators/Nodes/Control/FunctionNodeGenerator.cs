@@ -10,8 +10,16 @@
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             var destination = Unit.invoke.connection?.destination;
-            if (!Unit.invoke.hasAnyConnection) return "\n";
-            return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit).GenerateControl(destination, data, indent);
+            if (!Unit.invoke.hasAnyConnection)
+                return "\n";
+
+            return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                .GenerateControl(destination, data, indent);
+        }
+
+        public override string GenerateValue(ValueOutput output)
+        {
+            return output.key;
         }
     }
 }
