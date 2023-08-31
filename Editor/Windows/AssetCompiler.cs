@@ -1,7 +1,8 @@
-﻿using UnityEditor;
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using UnityEditor;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -35,6 +36,7 @@ namespace Unity.VisualScripting.Community
             HUMIO.Ensure(enumPath).Path();
 
             var classes = HUMAssets.Find().Assets().OfType<ClassAsset>();
+            var Units = HUMAssets.Find().Assets().OfType<UnitAsset>();
             var structs = HUMAssets.Find().Assets().OfType<StructAsset>();
             var enums = HUMAssets.Find().Assets().OfType<EnumAsset>();
             var delegates = HUMAssets.Find().Assets().OfType<DelegateAsset>();
@@ -44,6 +46,13 @@ namespace Unity.VisualScripting.Community
                 var fullPath = csharpPath + classes[i].title.LegalMemberName() + ".cs";
                 HUMIO.Save(ClassAssetGenerator.GetSingleDecorator(classes[i]).GenerateClean(0)).Custom(fullPath).Text(false);
                 classes[i].lastCompiledName = classes[i].category + (string.IsNullOrEmpty(classes[i].category) ? string.Empty : ".") + classes[i].title.LegalMemberName();
+            }
+
+            for (int i = 0; i < Units.Count; i++)
+            {
+                var fullPath = csharpPath + Units[i].title.LegalMemberName() + ".cs";
+                HUMIO.Save(UnitAssetGenerator.GetSingleDecorator(Units[i]).GenerateClean(0)).Custom(fullPath).Text(false);
+                Units[i].lastCompiledName = Units[i].category + (string.IsNullOrEmpty(Units[i].category) ? string.Empty : ".") + Units[i].title.LegalMemberName();
             }
 
             for (int i = 0; i < structs.Count; i++)
@@ -66,7 +75,80 @@ namespace Unity.VisualScripting.Community
                 var code = generator.GenerateClean(0);
                 var fullPath = delegatesPath + delegates[i].title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName() + ".cs";
                 HUMIO.Save(code).Custom(fullPath).Text(false);
-                delegates[i].lastCompiledName = delegates[i].category + (string.IsNullOrEmpty(delegates[i].category) ? string.Empty : ".") + delegates[i].title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName(); 
+                delegates[i].lastCompiledName = delegates[i].category + (string.IsNullOrEmpty(delegates[i].category) ? string.Empty : ".") + delegates[i].title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName();
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        public static void CompileSelected()
+        {
+            var selectedClasses = Selection.GetFiltered<ClassAsset>(SelectionMode.Assets).ToList();
+            var selectedUnits = Selection.GetFiltered<UnitAsset>(SelectionMode.Assets).ToList();
+            var selectedStructs = Selection.GetFiltered<StructAsset>(SelectionMode.Assets).ToList();
+            var selectedEnums = Selection.GetFiltered<EnumAsset>(SelectionMode.Assets).ToList();
+            var selectedDelegates = Selection.GetFiltered<DelegateAsset>(SelectionMode.Assets).ToList();
+
+            var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
+            var oldPath = Application.dataPath + "/Bolt.Addons.Generated/";
+            var scriptsPath = path + "Scripts/";
+            var csharpPath = scriptsPath + "Objects/";
+            var delegatesPath = scriptsPath + "Delegates/";
+            var enumPath = scriptsPath + "Enums/";
+
+            HUMIO.Ensure(oldPath).Path();
+            HUMIO.Ensure(path).Path();
+            HUMIO.Ensure(scriptsPath).Path();
+            HUMIO.Ensure(delegatesPath).Path();
+            HUMIO.Ensure(csharpPath).Path();
+            HUMIO.Ensure(enumPath).Path();
+
+            HUMIO.Delete(oldPath);
+            HUMIO.Delete(delegatesPath);
+            HUMIO.Delete(csharpPath);
+            HUMIO.Delete(enumPath);
+
+            HUMIO.Ensure(path).Path();
+            HUMIO.Ensure(scriptsPath).Path();
+            HUMIO.Ensure(delegatesPath).Path();
+            HUMIO.Ensure(csharpPath).Path();
+            HUMIO.Ensure(enumPath).Path();
+
+            foreach (var asset in selectedClasses)
+            {
+                var fullPath = csharpPath + asset.title.LegalMemberName() + ".cs";
+                HUMIO.Save(ClassAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
+                asset.lastCompiledName = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
+            }
+            foreach (var asset in selectedUnits)
+            {
+                var fullPath = csharpPath + asset.title.LegalMemberName() + ".cs";
+                HUMIO.Save(UnitAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
+                asset.lastCompiledName = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
+            }
+            foreach (var asset in selectedStructs)
+            {
+                var fullPath = csharpPath + asset.title.LegalMemberName() + ".cs";
+                HUMIO.Save(StructAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
+                asset.lastCompiledName = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
+
+            }
+            foreach (var asset in selectedEnums)
+            {
+                var fullPath = enumPath + asset.title.LegalMemberName() + ".cs";
+                HUMIO.Save(EnumAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
+                asset.lastCompiledName = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
+
+            }
+            foreach (var asset in selectedDelegates)
+            {
+                var generator = DelegateAssetGenerator.GetSingleDecorator(asset);
+                var code = generator.GenerateClean(0);
+                var fullPath = delegatesPath + asset.title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName() + ".cs";
+                HUMIO.Save(code).Custom(fullPath).Text(false);
+                asset.lastCompiledName = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName();
+
             }
 
             AssetDatabase.SaveAssets();

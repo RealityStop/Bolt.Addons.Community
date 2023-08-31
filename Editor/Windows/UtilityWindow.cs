@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 using UnityEngine.UIElements;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -35,6 +36,7 @@ namespace Unity.VisualScripting.Community
 
             container.Add(SelectionToSuperUnit());
             container.Add(GenerateCode());
+            container.Add(GenerateSelected());
             container.Add(QuickAccess());
 
             minSize = new Vector2(250, minSize.y);
@@ -98,6 +100,54 @@ namespace Unity.VisualScripting.Community
             buttonContainer.style.height = 24;
 
             var compileButton = new Button(() => { AssetCompiler.Compile(); }) { text = "Compile" };
+            compileButton.style.flexGrow = 1;
+
+            buttonContainer.Add(compileButton);
+
+            header.Add(label);
+            container.Add(header);
+            container.Add(hint);
+            container.Add(buttonContainer);
+            return container;
+        }
+
+        private VisualElement GenerateSelected()
+        {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Column;
+
+            var header = new BorderedRectangle(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2);
+            header.style.height = 24;
+            header.style.marginBottom = 4;
+            header.style.unityTextAlign = TextAnchor.MiddleCenter;
+            header.style.marginTop = 6;
+
+            var label = new Label();
+            label.text = "Compile Selected Assets";
+            label.style.flexGrow = 1;
+
+            var hint = new HelpBox("Clicking 'Compile' will generate C# scripts for all selected code assets 'Class, Units, Structs, Enums, Delegates' to ensure complete AOT Safety on all platforms.", HelpBoxMessageType.Info);
+            hint.Set().Padding(6);
+
+            var buttonContainer = new VisualElement();
+            buttonContainer.style.flexDirection = FlexDirection.Row;
+            buttonContainer.style.height = 24;
+
+            var compileButton = new Button(() =>
+            {
+                var selectedClasses = Selection.GetFiltered<ClassAsset>(SelectionMode.Assets).ToList();
+                var selectedUnits = Selection.GetFiltered<UnitAsset>(SelectionMode.Assets).ToList();
+                var selectedStructs = Selection.GetFiltered<StructAsset>(SelectionMode.Assets).ToList();
+                var selectedEnums = Selection.GetFiltered<EnumAsset>(SelectionMode.Assets).ToList();
+                var selectedDelegates = Selection.GetFiltered<DelegateAsset>(SelectionMode.Assets).ToList();
+
+                if (selectedClasses.Count > 0 || selectedUnits.Count > 0 || selectedStructs.Count > 0 || selectedEnums.Count > 0 || selectedDelegates.Count > 0)
+                {
+                    AssetCompiler.CompileSelected();
+                }
+            })
+            { text = "Compile Selected" };
+
             compileButton.style.flexGrow = 1;
 
             buttonContainer.Add(compileButton);

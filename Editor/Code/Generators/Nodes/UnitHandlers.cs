@@ -33,7 +33,7 @@ namespace Unity.VisualScripting.Community.Generated
                 var output = string.Empty;
                 output += (Unit.exit.hasValidConnection ? (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty);
                 return output;
-               
+
             }
 
             public override string GenerateValue(ValueOutput output)
@@ -250,7 +250,7 @@ namespace Unity.VisualScripting.Community.Generated
                     {
                         return string.Empty;
                     }
-                }); 
+                });
                 return string.Join(", ", argumentValues);
             }
 
@@ -264,9 +264,9 @@ namespace Unity.VisualScripting.Community.Generated
                     {
                         output += (Unit.target.hasValidConnection ? GenerateValue(Unit.target) + Unit.member.ToDeclarer().ToString().Remove(0, Unit.member.ToDeclarer().ToString().IndexOf('.')) : Unit.member.ToPseudoDeclarer()) + $"({(GenerateArguments(Unit.inputParameters.Values.ToList()).Length > 0 ? GenerateArguments(Unit.inputParameters.Values.ToList()) : string.Empty)}); \n";
                     }
-                    else 
+                    else
                     {
-                        output += Unit.member.targetType.Namespace+ "." + Unit.member.ToDeclarer() + $"({(GenerateArguments(Unit.inputParameters.Values.ToList()).Length > 0 ? GenerateArguments(Unit.inputParameters.Values.ToList()) : string.Empty)}); \n";
+                        output += Unit.member.targetType.Namespace + "." + Unit.member.ToDeclarer() + $"({(GenerateArguments(Unit.inputParameters.Values.ToList()).Length > 0 ? GenerateArguments(Unit.inputParameters.Values.ToList()) : string.Empty)}); \n";
                     }
                     output += (Unit.exit.hasAnyConnection ? (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty);
 
@@ -359,14 +359,14 @@ namespace Unity.VisualScripting.Community.Generated
                     {
                         return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
                     }
-                    else if(Unit.input.hasDefaultValue)
+                    else if (Unit.input.hasDefaultValue)
                     {
                         return DefaultValueFormatters[Unit.defaultValues[input.key].GetType()](Unit.defaultValues[input.key]);
                     }
                 }
 
                 return base.GenerateValue(input);
-            } 
+            }
         }
 
 
@@ -1085,31 +1085,6 @@ namespace Unity.VisualScripting.Community.Generated
 
     }
 
-    [NodeGenerator(typeof(Unity.VisualScripting.Break))]
-    public sealed class BreakGenerator : NodeGenerator<Unity.VisualScripting.Break>
-    {
-        public BreakGenerator(Unity.VisualScripting.Break unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
     [NodeGenerator(typeof(Unity.VisualScripting.Cache))]
     public sealed class CacheGenerator : NodeGenerator<Unity.VisualScripting.Cache>
     {
@@ -1212,7 +1187,7 @@ namespace Unity.VisualScripting.Community.Generated
 
                 if (Unit.body.hasAnyConnection)
                 {
-                    output += (Unit.body.connection.destination.unit as Unit).GenerateControl(Unit.body.connection.destination, data, indent +2);
+                    output += (Unit.body.connection.destination.unit as Unit).GenerateControl(Unit.body.connection.destination, data, indent + 2);
                     output += "\n";
                 }
 
@@ -1338,32 +1313,6 @@ namespace Unity.VisualScripting.Community.Generated
         }
     }
 
-
-    [NodeGenerator(typeof(Unity.VisualScripting.If))]
-    public sealed class IfGenerator : NodeGenerator<Unity.VisualScripting.If>
-    {
-        public IfGenerator(Unity.VisualScripting.If unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
     [NodeGenerator(typeof(Unity.VisualScripting.Once))]
     public sealed class OnceGenerator : NodeGenerator<Unity.VisualScripting.Once>
     {
@@ -1442,105 +1391,10 @@ namespace Unity.VisualScripting.Community.Generated
         }
     }
 
-    [NodeGenerator(typeof(Unity.VisualScripting.SelectOnEnum))]
-
-    public sealed class SelectOnEnumGenerator : NodeGenerator<Unity.VisualScripting.SelectOnEnum>
-    {
-        public SelectOnEnumGenerator(Unity.VisualScripting.SelectOnEnum unit) : base(unit)
-        {
-        }
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-    }
     [NodeGenerator(typeof(Unity.VisualScripting.SelectOnFlow))]
     public sealed class SelectOnFlowGenerator : NodeGenerator<Unity.VisualScripting.SelectOnFlow>
     {
         public SelectOnFlowGenerator(Unity.VisualScripting.SelectOnFlow unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.SelectOnInteger))]
-    public sealed class SelectOnIntegerGenerator : NodeGenerator<Unity.VisualScripting.SelectOnInteger>
-    {
-        public SelectOnIntegerGenerator(Unity.VisualScripting.SelectOnInteger unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.SelectOnString))]
-    public sealed class SelectOnStringGenerator : NodeGenerator<Unity.VisualScripting.SelectOnString>
-    {
-        public SelectOnStringGenerator(Unity.VisualScripting.SelectOnString unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.SelectUnit))]
-    public sealed class SelectUnitGenerator : NodeGenerator<Unity.VisualScripting.SelectUnit>
-    {
-        public SelectUnitGenerator(Unity.VisualScripting.SelectUnit unit) : base(unit)
         {
         }
 
@@ -3869,285 +3723,10 @@ namespace Unity.VisualScripting.Community.Generated
 
     }
 
-    [NodeGenerator(typeof(Unity.VisualScripting.Literal))]
-    public sealed class LiteralGenerator : NodeGenerator<Unity.VisualScripting.Literal>
-    {
-        public LiteralGenerator(Unity.VisualScripting.Literal unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.And))]
-    public sealed class AndGenerator : NodeGenerator<Unity.VisualScripting.And>
-    {
-        public AndGenerator(Unity.VisualScripting.And unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
     [NodeGenerator(typeof(Unity.VisualScripting.Comparison))]
     public sealed class ComparisonGenerator : NodeGenerator<Unity.VisualScripting.Comparison>
     {
         public ComparisonGenerator(Unity.VisualScripting.Comparison unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.Equal))]
-    public sealed class EqualGenerator : NodeGenerator<Unity.VisualScripting.Equal>
-    {
-        public EqualGenerator(Unity.VisualScripting.Equal unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.ExclusiveOr))]
-    public sealed class ExclusiveOrGenerator : NodeGenerator<Unity.VisualScripting.ExclusiveOr>
-    {
-        public ExclusiveOrGenerator(Unity.VisualScripting.ExclusiveOr unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.Greater))]
-    public sealed class GreaterGenerator : NodeGenerator<Unity.VisualScripting.Greater>
-    {
-        public GreaterGenerator(Unity.VisualScripting.Greater unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.GreaterOrEqual))]
-    public sealed class GreaterOrEqualGenerator : NodeGenerator<Unity.VisualScripting.GreaterOrEqual>
-    {
-        public GreaterOrEqualGenerator(Unity.VisualScripting.GreaterOrEqual unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.Less))]
-    public sealed class LessGenerator : NodeGenerator<Unity.VisualScripting.Less>
-    {
-        public LessGenerator(Unity.VisualScripting.Less unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.LessOrEqual))]
-    public sealed class LessOrEqualGenerator : NodeGenerator<Unity.VisualScripting.LessOrEqual>
-    {
-        public LessOrEqualGenerator(Unity.VisualScripting.LessOrEqual unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.Negate))]
-    public sealed class NegateGenerator : NodeGenerator<Unity.VisualScripting.Negate>
-    {
-        public NegateGenerator(Unity.VisualScripting.Negate unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.NotEqual))]
-    public sealed class NotEqualGenerator : NodeGenerator<Unity.VisualScripting.NotEqual>
-    {
-        public NotEqualGenerator(Unity.VisualScripting.NotEqual unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.Or))]
-    public sealed class OrGenerator : NodeGenerator<Unity.VisualScripting.Or>
-    {
-        public OrGenerator(Unity.VisualScripting.Or unit) : base(unit)
         {
         }
 
@@ -6186,7 +5765,7 @@ namespace Unity.VisualScripting.Community.Generated
 
                 output += "\n" + CodeBuilder.CloseBody(indent);
 
-                if (Unit.ifNotNull.hasValidConnection) 
+                if (Unit.ifNotNull.hasValidConnection)
                 {
                     output += "\n";
                     output += CodeBuilder.Indent(indent) + (Unit.ifNotNull.connection.destination.unit as Unit).GenerateControl(Unit.ifNotNull.connection.destination, data, indent);
@@ -7262,8 +6841,8 @@ namespace Unity.VisualScripting.Community.Generated
                 else if (Unit.valueOutputs.Count == 0)
                 {
                     output += "/* Add a value Output for a return type */";
-                } 
-                else if (Unit.nest.graph.title == string.Empty) 
+                }
+                else if (Unit.nest.graph.title == string.Empty)
                 {
                     output += "/* Add a title for the local function */";
                 }
@@ -7276,7 +6855,7 @@ namespace Unity.VisualScripting.Community.Generated
 
                     output += (connection.connection.destination.unit as Unit).GenerateControl(connection.connection.destination, data, indent);
                     output += "\n";
-                    
+
                 }
             }
 
@@ -7524,7 +7103,7 @@ namespace Unity.VisualScripting.Community.Generated
             var generatorLogicMethod = unit.GetType().GetMethod("GeneratorLogic", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (generatorLogicMethod != null)
             {
-                var _data = new object[] { data, indent };
+                var _data = new object[] { indent };
                 var methodResult = generatorLogicMethod.Invoke(unit, _data) as string;
                 generatedCode += methodResult;
             }
@@ -7567,16 +7146,40 @@ namespace Unity.VisualScripting.Community.Generated
 
                 return generatedCode;
             }
-            else 
+            else
             {
                 return string.Empty;
             }
         }
     }
 
+    [NodeGenerator(typeof(Return))]
+    public class ReturnUnitGenerator : NodeGenerator<Return>
+    {
+        public ReturnUnitGenerator(Return unit) : base(unit)
+        {
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            return CodeBuilder.Indent(indent) + CodeBuilder.Highlight($"return", "FF6BE8") + $" {GenerateValue(Unit.Data)};";
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].ToString();
+            }
+            else
+            {
+                return $"/*{input.key} Requires Input*/";
+            }
+        }
+    }
+
 }
-
-
-
-
-
