@@ -26,7 +26,7 @@ public abstract class GeneratedUnit : Unit
         return Exit;
     }
 
-    public virtual string GeneratorLogic(ControlGenerationData data, int indent) 
+    public virtual string GeneratorLogic(int indent) 
     {
         return $"/* Create logic Generator */";
     }
@@ -40,7 +40,7 @@ public abstract class GeneratedUnit : Unit
     {
         if (input.hasValidConnection)
         {
-            return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
+            return "/* Generated Units do not support connected ports */";
         }
         else if (input.hasDefaultValue)
         {
