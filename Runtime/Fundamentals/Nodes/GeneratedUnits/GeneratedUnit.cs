@@ -1,7 +1,6 @@
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using UnityEngine;
-using static Unity.VisualScripting.Community.NodeGenerator;
 
 [UnitCategory("Community/CodeGenerators")]
 public abstract class GeneratedUnit : Unit
