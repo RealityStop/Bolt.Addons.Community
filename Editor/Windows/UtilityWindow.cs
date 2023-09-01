@@ -100,7 +100,7 @@ namespace Unity.VisualScripting.Community
             buttonContainer.style.height = 24;
 
             var compileButton = new Button(() => { AssetCompiler.Compile(); }) { text = "Compile" };
-            compileButton.style.flexGrow = 1.25f;
+            compileButton.style.flexGrow = 1;
 
             var compileSelectedButton = new Button(() => { AssetCompiler.CompileSelected(); }) { text = "Compile Selected" };
             compileSelectedButton.style.flexGrow = 1;
