@@ -77,8 +77,13 @@ namespace Unity.VisualScripting.Community
             structAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Struct || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
             enumAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Enum || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
             interfaceAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Interface || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
-            fieldAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Field || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
-            propertyAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Property || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
+            fieldAttributeTypes = attributeTypes.Where((attr) =>
+            {
+                var attributeUsage = attr.GetAttribute<AttributeUsageAttribute>();
+                return attributeUsage != null &&
+                       (attributeUsage.ValidOn == AttributeTargets.Field || attributeUsage.ValidOn == AttributeTargets.All ||
+                        typeof(Attribute).IsAssignableFrom(attr) || attr == typeof(DoNotSerializeAttribute));
+            }).ToArray(); propertyAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Property || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
             methodAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Method || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
         }
 
