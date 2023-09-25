@@ -37,7 +37,7 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize]
         [UnitHeaderInspectable]
         [InspectableIf(nameof(IsRestricted))]
-        [Unity.VisualScripting.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+        [IDefinedEventFilter]
         public System.Type restrictedEventType
         {
             get
