@@ -1,25 +1,7 @@
-using System;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
-
-[System.Serializable]
-[Inspectable]
-public class IDefinedEventType
+namespace Unity.VisualScripting.Community
 {
-    [Inspectable]
-    public Type type;
-
-    public IDefinedEventType()
+    [RenamedFrom("Bolt.Addons.Community.IDefinedEvent")]
+    public interface IDefinedEvent
     {
-    }
-
-    public IDefinedEventType(Type type)
-    {
-        this.type = type;
-    }
-
-    public static implicit operator IDefinedEventType(Type type)
-    {
-        return new IDefinedEventType(type);
     }
 }
