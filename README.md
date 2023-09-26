@@ -2,7 +2,7 @@
 > 
 > But there are new maintainers!
 
-**There are some incompatibility issues found with Defined Events and you should use Unity Visual Scripting version : 1.8.0. Until its fixed**
+**There are some incompatibility issues found with Defined Events and you should use Unity Visual Scripting version : 1.8.0. Until its fixed.**
 
 
 # Community Addons
