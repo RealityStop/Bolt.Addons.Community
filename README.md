@@ -223,7 +223,6 @@ Editor
 
 ## Current Maintainers
  - S2NX7
- - Spyboticer
 
 ## Previous maintainers (aka who to blame)
  - Reality.Stop()
@@ -236,3 +235,4 @@ Editor
  - Silence
  - PurerLogic
  - Tomate Salat
+ - Spyboticer
