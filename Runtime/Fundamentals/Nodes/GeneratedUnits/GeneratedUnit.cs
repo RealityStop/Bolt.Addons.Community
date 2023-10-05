@@ -2,7 +2,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using UnityEngine;
 
-[UnitCategory("Community/CodeGenerators")]
+[UnitCategory("Community/Code")]
 public abstract class GeneratedUnit : Unit
 {
     [DoNotSerialize]
@@ -13,6 +13,8 @@ public abstract class GeneratedUnit : Unit
     [PortLabelHidden]
     public ControlInput Enter;
 
+    public string NameSpace;
+
     protected override void Definition()
     {
         Enter = ControlInput(nameof(Enter), Logic);
@@ -20,18 +22,18 @@ public abstract class GeneratedUnit : Unit
         Succession(Enter, Exit);
     }
 
-    public virtual ControlOutput Logic(Flow flow) 
+    public virtual ControlOutput Logic(Flow flow)
     {
         Debug.LogWarning("This node is only for the code generators to understand what to do it does not work in a normal graph");
         return Exit;
     }
 
-    public virtual string GeneratorLogic(int indent) 
+    public virtual string GeneratorLogic(int indent)
     {
         return $"/* Create logic Generator */";
     }
 
-    public virtual string GeneratorOutput()
+    public virtual string GeneratorOutput(ValueOutput output)
     {
         return $"/* Create output Generator */";
     }
@@ -48,7 +50,7 @@ public abstract class GeneratedUnit : Unit
         }
         else
         {
-            return $"/*{input.key} Requires Input*/";
+            return $"/* {input.key} Requires Input */";
         }
     }
 }
