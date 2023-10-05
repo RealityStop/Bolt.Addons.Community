@@ -1,15 +1,25 @@
+using PlasticGui.Configuration.CloudEdition.Welcome;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using UnityEngine;
 
 [UnitTitle("AssignControlInput")]//Unit title
-[UnitCategory("Community/CodeGenerators/Unit")]
+[UnitCategory("Community/Code/Unit")]
 [TypeIcon(typeof(Flow))]//Unit icon
-public class AssignControlInput : GeneratedUnit
+public class AssignControlInput : Unit
 {
     [DoNotSerialize]
+    [PortLabelHidden]
+    public ControlOutput Exit;
+
+    [DoNotSerialize]
+    [PortLabelHidden]
+    public ControlInput Enter;
+
+    [DoNotSerialize]
     [PortLabel("ControlInput")]
-    public ValueInput VariableName;
+    [AllowsNull]
+    public ValueInput _controlInput;
 
     [DoNotSerialize]
     public ValueInput MethodName;
@@ -22,36 +32,25 @@ public class AssignControlInput : GeneratedUnit
 
     protected override void Definition()
     {
-        base.Definition();
-        VariableName = ValueInput(nameof(VariableName), "Input");
+        Enter = ControlInput(nameof(Enter), Logic);
+        Exit = ControlOutput(nameof(Exit));
+        _controlInput = ValueInput<ControlInput>(nameof(_controlInput)).AllowsNull();
         MethodName = ValueInput(nameof(MethodName), "Method");
 
-        if (Coroutine) 
+        if (Coroutine)
         {
             CoroutineMethodName = ValueInput<string>(nameof(CoroutineMethodName), "CoroutineMethod");
             Requirement(CoroutineMethodName, Enter);
         }
 
-        Requirement(VariableName, Enter);
+        Requirement(_controlInput, Enter);
         Requirement(MethodName, Enter);
+        Succession(Enter, Exit);
     }
 
-    public override string GeneratorLogic(int indent)
+    public ControlOutput Logic(Flow flow)
     {
-        if (!Coroutine)
-        {
-            return $"{GenerateValue(VariableName)} = ControlInput(nameof({GenerateValue(VariableName)}), {(GenerateValue(MethodName).Length == 0 ? "/* Requires Method Name */": $"{GenerateValue(MethodName)}")}); \n";
-        }
-        else 
-        {
-            if (string.IsNullOrEmpty(GenerateValue(MethodName)) || string.IsNullOrWhiteSpace(GenerateValue(MethodName)))
-            {
-                return $"{GenerateValue(VariableName)} = ControlInputCoroutine(nameof({GenerateValue(VariableName)}), {(GenerateValue(CoroutineMethodName).Length == 0 ? "/* Requires CoroutineMethod Name */": $"{GenerateValue(CoroutineMethodName)}")}); \n";
-            }
-            else 
-            {
-                return $"{GenerateValue(VariableName)} = ControlInputCoroutine(nameof({GenerateValue(VariableName)}), {GenerateValue(MethodName)}, {(GenerateValue(CoroutineMethodName).Length == 0 ? "/* Requires CoroutineMethod Name */" : $"{GenerateValue(CoroutineMethodName)}")}); \n";
-            }
-        }
+        Debug.LogWarning("This node is only for the code generators to understand what to do it does not work in a normal graph");
+        return Exit;
     }
 }

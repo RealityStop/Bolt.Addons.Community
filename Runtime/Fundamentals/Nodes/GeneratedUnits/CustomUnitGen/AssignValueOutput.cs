@@ -3,26 +3,50 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using UnityEngine;
 
-[UnitTitle("AssignValueOutput")]//Unit title
-[UnitCategory("Community/CodeGenerators/Unit")]
-[TypeIcon(typeof(Flow))]//Unit icon
-public class AssignValueOutput : GeneratedUnit
+[UnitTitle("AssignValueOutput")]
+[UnitCategory("Community/Code/Unit")]
+[TypeIcon(typeof(Flow))]
+public class AssignValueOutput : Unit
 {
     [DoNotSerialize]
     [PortLabelHidden]
-    public ValueInput VariableName;
+    public ControlOutput Exit;
+
+    [DoNotSerialize]
+    [PortLabelHidden]
+    public ControlInput Enter;
+
+    [DoNotSerialize]
+    [PortLabelHidden]
+    public ValueInput valueOutput;
+
+    [DoNotSerialize]
+    [PortLabelHidden]
+    public ValueInput MethodName;
 
     [UnitHeaderInspectable("Type")]
-    public Type VariableType;
+    public Type VariableType = typeof(object);
+
+    [UnitHeaderInspectable("TriggersMethod")]
+    public bool triggersMethod;
 
     protected override void Definition()
     {
-        base.Definition();
-        VariableName = ValueInput<string>(nameof(VariableName), default);
+        Enter = ControlInput(nameof(Enter), Logic);
+        Exit = ControlOutput(nameof(Exit));
+        valueOutput = ValueInput<ValueOutput>(nameof(valueOutput));
+
+        if (triggersMethod)
+        {
+            MethodName = ValueInput(nameof(MethodName), "Method");
+        }
+
+        Succession(Enter, Exit);
     }
 
-    public override string GeneratorLogic(int indent)
+    public ControlOutput Logic(Flow flow)
     {
-        return $"{GenerateValue(VariableName)} = ValueOutput<{VariableType.CSharpFullName()}>(nameof({GenerateValue(VariableName)})); \n";
+        Debug.LogWarning("This node is only for the code generators to understand what to do it does not work in a normal graph");
+        return Exit;
     }
 }

@@ -1,23 +1,33 @@
 using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
 using UnityEngine;
 
-[UnitTitle("AssignControlOutput")]//Unit title
-[UnitCategory("Community/CodeGenerators/Unit")]
-[TypeIcon(typeof(Flow))]//Unit icon
-public class AssignControlOutput : GeneratedUnit
+[UnitTitle("AssignControlOutput")]
+[UnitCategory("Community/Code/Unit")]
+[TypeIcon(typeof(Flow))]
+public class AssignControlOutput : Unit
 {
     [DoNotSerialize]
-    public ValueInput VariableName;
+    [PortLabelHidden]
+    public ControlOutput Exit;
+
+    [DoNotSerialize]
+    [PortLabelHidden]
+    public ControlInput Enter;
+
+    [DoNotSerialize]
+    public ValueInput controlOutput;
 
     protected override void Definition()
     {
-        base.Definition();
-        VariableName = ValueInput<string>(nameof(VariableName), default);
+        Enter = ControlInput(nameof(Enter), Logic);
+        Exit = ControlOutput(nameof(Exit));
+        controlOutput = ValueInput<ControlOutput>(nameof(controlOutput));
+        Succession(Enter, Exit);
     }
 
-    public override string GeneratorLogic(int indent)
+    public ControlOutput Logic(Flow flow)
     {
-        return $"{GenerateValue(VariableName)} = ControlOutput(nameof({GenerateValue(VariableName)})); \n";
+        Debug.LogWarning("This node is only for the code generators to understand what to do it does not work in a normal graph");
+        return Exit;
     }
 }
