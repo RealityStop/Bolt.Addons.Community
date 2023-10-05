@@ -34,7 +34,7 @@ public class FlowGetValue : GeneratedUnit
         return "";
     }
 
-    public override string GeneratorOutput()
+    public override string GeneratorOutput(ValueOutput output)
     {
         return $"flow.GetValue<{ValueType.CSharpFullName()}>({GenerateValue(VariableName)}){(Enter.hasValidConnection ? ";" : "")}";
     }

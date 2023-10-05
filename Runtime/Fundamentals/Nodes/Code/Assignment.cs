@@ -1,69 +1,47 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+using UnityEngine;
 
-namespace Unity.VisualScripting
+namespace Unity.VisualScripting.Community
 {
-    public sealed class Assignment
+    [UnitTitle("Assignment")]//Unit title
+    [UnitCategory("Community/Code/Unit")]
+    [TypeIcon(typeof(Flow))]//Unit icon
+    public class Assignment : Unit
     {
-        public Assignment(Member assigner, Type assigneeType)
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ControlOutput Exit;
+
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ControlInput Enter;
+
+        [DoNotSerialize]
+        [PortLabel("ControlInput")]
+        [AllowsNull]
+        public ValueInput Input;
+
+        [DoNotSerialize]
+        [PortLabel("ValueOutput")]
+        [AllowsNull]
+        public ValueInput Output;
+
+        protected override void Definition()
         {
-            Ensure.That(nameof(assigneeType)).IsNotNull(assigneeType);
+            Enter = ControlInput(nameof(Enter), Logic);
+            Exit = ControlOutput(nameof(Exit));
 
-            this.assigner = assigner;
+            Input = ValueInput<ControlInput>(nameof(Input)).AllowsNull();
+            Output = ValueInput<ControlOutput>(nameof(Output)).AllowsNull();
 
-            var assignsAttribute = assigner.info.GetAttribute<AssignsAttribute>();
-            assignee = new Member(assigneeType, assignsAttribute?.memberName ?? assigner.name.FirstCharacterToLower());
-            requiresAPI = assigner.info.HasAttribute<RequiresUnityAPIAttribute>();
-            cache = assignsAttribute?.cache ?? true;
-
-            assigner.Prewarm();
-            assignee.Prewarm();
+            Requirement(Input, Enter);
+            Requirement(Output, Enter);
+            Succession(Enter, Exit);
         }
 
-        public Member assigner { get; }
-        public Member assignee { get; }
-        public bool requiresAPI { get; }
-        public bool cache { get; }
-
-        public void Run(object assigner, object assignee)
+        public ControlOutput Logic(Flow flow)
         {
-            if (requiresAPI)
-            {
-                UnityAPI.Async(() => _Run(assigner, assignee));
-            }
-            else
-            {
-                _Run(assigner, assignee);
-            }
-        }
-
-        private void _Run(object assigner, object assignee)
-        {
-            var oldValue = this.assignee.Get(assignee);
-            var newValue = ConversionUtility.Convert(this.assigner.Invoke(assigner), this.assignee.type);
-
-            this.assignee.Set(assignee, newValue);
-
-            if (!Equals(oldValue, newValue))
-            {
-                if (assigner is IAssigner _assigner)
-                {
-                    _assigner.ValueChanged();
-                }
-            }
-        }
-
-        public static IEnumerable<Assignment> Fetch(Type descriptorType, Type descriptionType)
-        {
-            var bindingFlags = BindingFlags.Instance |
-                BindingFlags.Public |
-                BindingFlags.NonPublic;
-
-            return descriptorType.GetMethods(bindingFlags)
-                .Where(m => m.HasAttribute<AssignsAttribute>())
-                .Select(m => new Assignment(m.ToManipulator(descriptorType), descriptionType));
+            Debug.LogWarning("This node is only for the code generators to understand what to do it does not work in a normal graph");
+            return Exit;
         }
     }
 }
