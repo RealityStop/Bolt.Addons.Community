@@ -539,6 +539,13 @@ namespace Unity.VisualScripting.Community
                         for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
                         {
                             AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
+                            foreach (var param in attributes[attrIndex].parameters)
+                            {
+                                if (!attrGenerator.parameterValues.Contains(param))
+                                {
+                                    attrGenerator.AddParameter(param.defaultValue);
+                                }
+                            }
                             property.AddAttribute(attrGenerator);
                         }
 
@@ -576,6 +583,13 @@ namespace Unity.VisualScripting.Community
                         for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
                         {
                             AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
+                            foreach (var param in attributes[attrIndex].parameters)
+                            {
+                                if (!attrGenerator.parameterValues.Contains(param))
+                                {
+                                    attrGenerator.AddParameter(param.defaultValue);
+                                }
+                            }
                             field.AddAttribute(attrGenerator);
                         }
 

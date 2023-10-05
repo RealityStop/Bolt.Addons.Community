@@ -19,7 +19,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         {
             if (!useAssemblyQualifiedType && type == null) return "/* Parameter type is null */".WarningHighlight();
             var param = isParameters ? "params ".ConstructHighlight() : string.Empty;
-            return useAssemblyQualifiedType ? param + assemblyQualifiedType + " " + name : param + type.As().CSharpName() + " " + name.LegalMemberName();
+            return useAssemblyQualifiedType ? param + assemblyQualifiedType + " " + name.VariableHighlight() : ((modifier != ParameterModifier.None) ? modifier.ToString().ToLower().ConstructHighlight() + " " : string.Empty) + param + type.As().CSharpName() + " " + name.LegalMemberName().VariableHighlight();
         }
 
         private ParameterGenerator()
