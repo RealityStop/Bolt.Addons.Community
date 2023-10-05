@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using System.Linq;
+using Codice.CM.SEIDInfo;
+using Unity.VisualScripting.Community.Utility;
 
 namespace Unity.VisualScripting.Community
 {
@@ -24,9 +26,14 @@ namespace Unity.VisualScripting.Community
         protected Metadata methods;
         protected SerializedProperty methodsProp;
 
+        protected Metadata typeIcon;
+        protected SerializedProperty typeIconProp;
+
         private int constructorsCount;
         private int fieldsCount;
         private int methodsCount;
+
+        public Dictionary<string, object> AttributeParameters;
 
         private Color boxBackground => HUMColor.Grey(0.15f);
 
@@ -63,7 +70,18 @@ namespace Unity.VisualScripting.Community
                 methodsProp = serializedObject.FindProperty("methods");
             }
 
-            if (Target.icon == null) Target.icon = DefaultIcon();
+            if (typeof(TMemberTypeAsset) != typeof(UnitAsset))
+            {
+                if (Target.icon == null) Target.icon = DefaultIcon();
+            }
+            else
+            {
+                if (typeIcon == null || typeIconProp == null)
+                {
+                    typeIcon = Metadata.FromProperty(serializedObject.FindProperty("TypeIcon"));
+                    typeIconProp = serializedObject.FindProperty("TypeIcon");
+                }
+            }
 
             CacheConstrainedAttributes();
 
@@ -89,13 +107,43 @@ namespace Unity.VisualScripting.Community
 
         protected override void OnTypeHeaderGUI()
         {
-            HUMEditor.Horizontal(() =>
+            HUMEditor.Horizontal(GUIStyle.none, () =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(7, 7, 7, 7), new RectOffset(1, 1, 1, 1), () =>
-                      {
-                          Target.icon = (Texture2D)EditorGUILayout.ObjectField(GUIContent.none, Target.icon, typeof(Texture2D), false, GUILayout.Width(32), GUILayout.Height(32));
-                      }, false, false);
 
+                if (typeof(TMemberTypeAsset) != typeof(UnitAsset))
+                {
+                    HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(7, 7, 7, 7), new RectOffset(1, 1, 1, 1), () =>
+                    {
+                        Target.icon = (Texture2D)EditorGUILayout.ObjectField(GUIContent.none, Target.icon, typeof(Texture2D), false, GUILayout.Width(32), GUILayout.Height(32));
+                    }, false, false);
+                }
+                else
+                {
+                    typeIcon.Block(() =>
+                    {
+                        float labelHeight = 15f;
+
+                        GUILayout.Label(" TypeIcon ", GUILayout.Height(labelHeight));
+                        var labelPosition = GUILayoutUtility.GetLastRect();
+
+                        Rect typeFieldPosition = new Rect(labelPosition.x + 1, labelPosition.y + 20, labelPosition.width, EditorGUIUtility.singleLineHeight);
+
+                        Type[] types = Codebase.settingsAssemblies
+                            .SelectMany(a => a.GetTypes().Where(type => !type.IsAbstract && !type.IsGenericTypeDefinition))
+                            .ToArray();
+
+                        (typeIcon.value as SystemType).type = LudiqGUI.TypeField(typeFieldPosition, GUIContent.none, (typeIcon.value as SystemType).type, () =>
+                        {
+                            return new TypeOptionTree(types);
+                        }, new GUIContent("null"));
+                    },
+                    () =>
+                    {
+                        shouldUpdate = true;
+                    }, true);
+
+
+                }
                 GUILayout.Space(2);
 
                 HUMEditor.Vertical(() =>
@@ -128,6 +176,26 @@ namespace Unity.VisualScripting.Community
             Methods();
         }
 
+        private void MoveItemUp<T>(List<T> list, int index)
+        {
+            if (index > 0)
+            {
+                T item = list[index];
+                list.RemoveAt(index);
+                list.Insert(index - 1, item);
+            }
+        }
+
+        private void MoveItemDown<T>(List<T> list, int index)
+        {
+            if (index < list.Count - 1)
+            {
+                T item = list[index];
+                list.RemoveAt(index);
+                list.Insert(index + 1, item);
+            }
+        }
+
         private void Variables()
         {
             Target.fieldsOpened = HUMEditor.Foldout(Target.fieldsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
@@ -145,6 +213,7 @@ namespace Unity.VisualScripting.Community
                         var index = i;
                         listOfVariables[index].opened = HUMEditor.Foldout(listOfVariables[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
+
                             HUMEditor.Changed(() =>
                             {
                                 listOfVariables[index].name = GUILayout.TextField(listOfVariables[index].name);
@@ -173,16 +242,16 @@ namespace Unity.VisualScripting.Community
                                 {
                                     menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
                                     {
-                                            // To Do
-                                        }, listOfVariables[index]);
+                                        MoveItemUp(listOfVariables, index);
+                                    }, listOfVariables[index]);
                                 }
 
-                                if (index < methods.Count - 1)
+                                if (index < listOfVariables.Count - 1)
                                 {
                                     menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
                                     {
-                                            // To Do
-                                        }, listOfVariables[index]);
+                                        MoveItemDown(listOfVariables, index);
+                                    }, listOfVariables[index]);
                                 }
                                 menu.ShowAsContext();
                             }
@@ -219,66 +288,233 @@ namespace Unity.VisualScripting.Community
                                                 attributeMeta.Block(() =>
                                                 {
                                                     AttributeTypeField(attribute, AttributeUsageType.Field);
-                                                }, () => 
+                                                }, () =>
                                                 {
+                                                    attribute.parameters.Clear();
+                                                    attribute.constructor = 0;
                                                     shouldUpdate = true;
-                                                }, false);
+                                                }, true);
 
                                                 if (GUILayout.Button("...", GUILayout.Width(19)))
                                                 {
                                                     GenericMenu menu = new GenericMenu();
                                                     menu.AddItem(new GUIContent("Delete"), false, (obj) =>
                                                     {
-                                                        listOfVariables[index].attributes.Remove(obj as AttributeDeclaration);
+                                                        AttributeDeclaration attrToRemove = obj as AttributeDeclaration;
+                                                        listOfVariables[index].attributes.Remove(attrToRemove);
+
+                                                        foreach (var Constructor in attrToRemove.GetAttributeType().GetConstructors())
+                                                        {
+                                                            foreach (var parameter in Constructor.GetParameters())
+                                                            {
+                                                                if (parameter.ParameterType == typeof(string))
+                                                                {
+                                                                    TypeParam paramToRemove = attrToRemove.parameters.FirstOrDefault(param => param.name == parameter.Name);
+                                                                    if (paramToRemove != null)
+                                                                    {
+                                                                        attribute.constructor = 0;
+                                                                        attrToRemove.parameters.Remove(paramToRemove);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
                                                     }, attribute);
 
-                                                    //if (index > 0)
-                                                    //{
-                                                    //    menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
-                                                    //    {
-                                                    //        // To Do
-                                                    //    }, listOfConstructors[index]);
-                                                    //}
+                                                    List<AttributeDeclaration> attributeList = listOfVariables[index].attributes;
 
-                                                    //if (index < methods.Count - 1)
-                                                    //{
-                                                    //    menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
-                                                    //    {
-                                                    //        // To Do
-                                                    //    }, listOfConstructors[index]);
-                                                    //}
+                                                    if (attrIndex > 0)
+                                                    {
+                                                        menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                                                        {
+                                                            var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
+                                                            if (attributeIndex > 0)
+                                                            {
+                                                                var temp = attributeList[attributeIndex];
+                                                                attributeList[attributeIndex] = attributeList[attributeIndex - 1];
+                                                                attributeList[attributeIndex - 1] = temp;
+                                                            }
+                                                        }, attribute);
+                                                    }
+
+                                                    if (attrIndex < listOfVariables[index].attributes.Count - 1)
+                                                    {
+                                                        menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                                                        {
+                                                            var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
+                                                            if (attributeIndex < attributeList.Count - 1)
+                                                            {
+                                                                var temp = attributeList[attributeIndex];
+                                                                attributeList[attributeIndex] = attributeList[attributeIndex + 1];
+                                                                attributeList[attributeIndex + 1] = temp;
+                                                            }
+                                                        }, attribute);
+                                                    }
                                                     menu.ShowAsContext();
                                                 }
                                             }, () =>
                                             {
-                                                var parameters = attribute.parameters;
+                                                string[] constructorNames = attribute.GetAttributeType().GetConstructors()
+                                                    .Select(constructor =>
+                                                    {
+                                                        string paramInfo = string.Join(", ", constructor.GetParameters()
+                                                            .Select(param => $"{param.ParameterType.As().CSharpName(false, false, false)}"));
+                                                        return $"{attribute.GetAttributeType().DisplayName()}({paramInfo})";
+                                                    })
+                                                    .ToArray();
 
-                                                for (int attrParamIndex = 0; attrParamIndex < parameters.Count; attrParamIndex++)
+                                                if (attribute.constructor != attribute.selectedconstructor)
                                                 {
-
+                                                    attribute.parameters.Clear();
                                                 }
+
+                                                attribute.selectedconstructor = attribute.constructor;
+
+                                                attribute.constructor = EditorGUILayout.Popup("Select Attribute Type : ", attribute.constructor, constructorNames);
+
+                                                var selectedConstructor = attribute.GetAttributeType().GetConstructors()[attribute.constructor];
+
+                                                if (selectedConstructor != null)
+                                                {
+                                                    var paramIndex = 0;
+
+                                                    foreach (var parameter in selectedConstructor.GetParameters())
+                                                    {
+                                                        EditorGUILayout.BeginHorizontal();
+
+                                                        GUILayout.Label(parameter.Name + " : ", GUILayout.Width(150));
+
+                                                        TypeParam Param = attribute.parameters.FirstOrDefault(param => param.name == parameter.Name);
+
+                                                        if (Param == null)
+                                                        {
+                                                            attribute.AddParameter(parameter.Name, parameter.ParameterType, GetDefaultParameterValue(parameter.ParameterType));
+                                                            Param = attribute.parameters.First(param => param.name == parameter.Name);
+                                                        }
+
+                                                        if (Param.defaultValue == null)
+                                                        {
+                                                            Param.defaultValue = GetDefaultParameterValue(parameter.ParameterType);
+                                                        }
+
+                                                        if (parameter.ParameterType == typeof(string))
+                                                        {
+                                                            string updatedValue = GUILayout.TextField(Param.stringValue);
+
+                                                            if (updatedValue != Param.stringValue)
+                                                            {
+                                                                Param.stringValue = updatedValue;
+                                                            }
+                                                            Param.defaultValue = Param.stringValue;
+                                                        }
+                                                        else if (parameter.ParameterType == typeof(int))
+                                                        {
+                                                            int updatedValue = EditorGUILayout.IntField(Param.intValue);
+
+                                                            if (updatedValue != Param.intValue)
+                                                            {
+                                                                Param.intValue = updatedValue;
+                                                            }
+                                                            Param.defaultValue = Param.intValue;
+                                                        }
+                                                        else if (parameter.ParameterType == typeof(float))
+                                                        {
+                                                            float updatedValue = EditorGUILayout.FloatField(Param.floatValue);
+
+                                                            if (updatedValue != Param.floatValue)
+                                                            {
+                                                                Param.floatValue = updatedValue;
+                                                            }
+                                                            Param.defaultValue = Param.floatValue;
+                                                        }
+                                                        else if (parameter.ParameterType == typeof(bool))
+                                                        {
+                                                            bool updatedValue = EditorGUILayout.Toggle(Param.boolValue);
+                                                            if (updatedValue != Param.boolValue)
+                                                            {
+                                                                Param.boolValue = updatedValue;
+                                                            }
+                                                            Param.defaultValue = Param.boolValue;
+                                                        }
+                                                        else if (parameter.ParameterType == typeof(Type))
+                                                        {
+                                                            var paramMeta = variables[index]["attributes"][attrIndex]["parameters"][paramIndex]["Paramtype"];
+
+                                                            Type updatedValue = (Type)Param.defaultValue;
+
+                                                            paramMeta.Block(() =>
+                                                            {
+                                                                GUILayout.Label(" ", GUILayout.Height(20));
+                                                                var position = GUILayoutUtility.GetLastRect();
+
+                                                                Type[] types = Codebase.settingsAssemblies
+                                                                    .SelectMany(a => a.GetTypes().Where(type => !type.IsAbstract && !type.IsGenericTypeDefinition))
+                                                                    .ToArray();
+
+                                                                listOfVariables[index].attributes[attrIndex].parameters[paramIndex].Paramtype.type = LudiqGUI.TypeField(position, GUIContent.none, listOfVariables[index].attributes[attrIndex].parameters[paramIndex].Paramtype.type, () =>
+                                                                {
+                                                                    return new TypeOptionTree(types);
+                                                                });
+
+                                                                if (listOfVariables[index].attributes[attrIndex].parameters[paramIndex].Paramtype.type != (Type)Param.defaultValue)
+                                                                {
+                                                                    updatedValue = listOfVariables[index].attributes[attrIndex].parameters[paramIndex].Paramtype.type;
+                                                                    Param.defaultValue = updatedValue;
+                                                                }
+
+                                                            },
+                                                            () =>
+                                                            {
+                                                                shouldUpdate = true;
+                                                            }, true);
+                                                        }
+                                                        else if (parameter.ParameterType.IsEnum)
+                                                        {
+                                                            string[] enumValues = Enum.GetNames(parameter.ParameterType);
+
+                                                            int selectedIndex = Param.EnumValue;
+
+                                                            int updatedIndex = EditorGUILayout.Popup(selectedIndex, enumValues);
+
+                                                            if (updatedIndex != selectedIndex)
+                                                            {
+                                                                Param.EnumValue = updatedIndex;
+                                                            }
+                                                            Param.defaultValue = Enum.Parse(parameter.ParameterType, enumValues[updatedIndex]);
+                                                        }
+                                                        else
+                                                        {
+                                                            GUILayout.Label($"Does Not Support {parameter.ParameterType.DisplayName()}");
+                                                        }
+
+                                                        EditorGUILayout.EndHorizontal();
+
+                                                        paramIndex++;
+                                                    }
+
+                                                    paramIndex = 0;
+                                                }
+                                                if (listOfVariables[index].attributes.Count > 0) GUILayout.Space(4);
                                             });
                                         }
-
-                                        if (listOfVariables[index].attributes.Count > 0) GUILayout.Space(4);
-
                                         if (GUILayout.Button("+ Add Attributes"))
                                         {
-                                            listOfVariables[index].attributes.Add(new AttributeDeclaration());
+                                            var attribute = new AttributeDeclaration();
+                                            attribute.SetType(typeof(SerializeField));
+                                            listOfVariables[index].attributes.Add(attribute);
                                         }
                                     });
                                 });
 
                                 GUILayout.Space(4);
 
-                                listOfVariables[index].propertyOpened = HUMEditor.Foldout(listOfVariables[index].propertyOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () => 
+                                listOfVariables[index].propertyOpened = HUMEditor.Foldout(listOfVariables[index].propertyOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                                 {
                                     listOfVariables[index].isProperty = EditorGUILayout.ToggleLeft("Property", listOfVariables[index].isProperty);
                                 }, () =>
                                 {
                                     HUMEditor.Disabled(!listOfVariables[index].isProperty, () =>
                                     {
-                                        HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(4,4,4,4), new RectOffset(1,1,0,1), () =>
+                                        HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                                         {
                                             HUMEditor.Horizontal(() =>
                                             {
@@ -289,6 +525,20 @@ namespace Unity.VisualScripting.Community
                                                     if (GUILayout.Button("Edit", GUILayout.Width(60)))
                                                     {
                                                         GraphWindow.OpenActive(listOfVariables[index].getter.GetReference() as GraphReference);
+                                                        var listOfgetterGraphVars = listOfVariables[index].getter.graph.variables;
+                                                        foreach (var variable in listOfVariables)
+                                                        {
+
+                                                            listOfVariables[index].getter.graph.variables.Set(variable.name, null);
+                                                            var matchingGetterGraphVar = listOfgetterGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
+
+                                                            if (matchingGetterGraphVar != null)
+                                                            {
+                                                                SerializableType type = matchingGetterGraphVar.typeHandle;
+                                                                type.Identification = variable.type.AssemblyQualifiedName;
+                                                                matchingGetterGraphVar.typeHandle = type;
+                                                            }
+                                                        }
                                                     }
                                                 });
                                             });
@@ -302,6 +552,19 @@ namespace Unity.VisualScripting.Community
                                                     if (GUILayout.Button("Edit", GUILayout.Width(60)))
                                                     {
                                                         GraphWindow.OpenActive(listOfVariables[index].setter.GetReference() as GraphReference);
+                                                        var listOfsetterGraphVars = listOfVariables[index].setter.graph.variables;
+                                                        foreach (var variable in listOfVariables)
+                                                        {
+                                                            listOfVariables[index].setter.graph.variables.Set(variable.name, null);
+                                                            var matchingSetterGraphVar = listOfsetterGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
+
+                                                            if (matchingSetterGraphVar != null)
+                                                            {
+                                                                SerializableType type = matchingSetterGraphVar.typeHandle;
+                                                                type.Identification = variable.type.AssemblyQualifiedName;
+                                                                matchingSetterGraphVar.typeHandle = type;
+                                                            }
+                                                        }
                                                     }
                                                 });
                                             });
@@ -336,11 +599,56 @@ namespace Unity.VisualScripting.Community
                         declaration.hideFlags = HideFlags.HideInHierarchy;
                         getter.hideFlags = HideFlags.HideInHierarchy;
                         setter.hideFlags = HideFlags.HideInHierarchy;
+                        var listOfgetterGraphVars = declaration.getter.graph.variables;
+                        var listOfsetterGraphVars = declaration.setter.graph.variables;
+                        foreach (var variable in listOfVariables)
+                        {
+                            declaration.getter.graph.variables.Set(variable.name, null);
+                            var matchingGetterGraphVar = listOfgetterGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
+
+                            if (matchingGetterGraphVar != null)
+                            {
+                                // Update the typeHandle of the matching graphvar
+                                SerializableType type = matchingGetterGraphVar.typeHandle;
+                                type.Identification = variable.type.AssemblyQualifiedName;
+                                matchingGetterGraphVar.typeHandle = type;
+                            }
+                            declaration.setter.graph.variables.Set(variable.name, null);
+                            var matchingSetterGraphVar = listOfsetterGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
+
+                            if (matchingSetterGraphVar != null)
+                            {
+                                SerializableType type = matchingSetterGraphVar.typeHandle;
+                                type.Identification = variable.type.AssemblyQualifiedName;
+                                matchingSetterGraphVar.typeHandle = type;
+                            }
+                        }
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();
                     }
                 });
             });
+        }
+
+        private object GetDefaultParameterValue(Type parameterType)
+        {
+            if (parameterType == typeof(string))
+            {
+                return " ";
+            }
+            else if (parameterType == typeof(int))
+            {
+                return 0;
+            }
+            else if (parameterType == typeof(bool))
+            {
+                return false;
+            }
+            else if (parameterType == typeof(Type))
+            {
+                return typeof(float);
+            }
+            return parameterType.PseudoDefault();
         }
 
         private enum AttributeUsageType
@@ -414,6 +722,22 @@ namespace Unity.VisualScripting.Community
                             if (GUILayout.Button("Edit", GUILayout.Width(60)))
                             {
                                 GraphWindow.OpenActive(listOfConstructors[index].GetReference() as GraphReference);
+                                var listOfVariables = variables.value as List<TFieldDeclaration>;
+                                var listOfGraphVars = listOfConstructors[index].graph.variables;
+                                foreach (var variable in listOfVariables)
+                                {
+                                    listOfConstructors[index].graph.variables.Set(variable.name, null);
+                                    // Find the corresponding graphvar by matching on the variable's name
+                                    var matchingGraphVar = listOfGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
+
+                                    if (matchingGraphVar != null)
+                                    {
+                                        // Update the typeHandle of the matching graphvar
+                                        SerializableType type = matchingGraphVar.typeHandle;
+                                        type.Identification = variable.type.AssemblyQualifiedName;
+                                        matchingGraphVar.typeHandle = type;
+                                    }
+                                }
                             }
 
                             if (GUILayout.Button("...", GUILayout.Width(19)))
@@ -425,21 +749,21 @@ namespace Unity.VisualScripting.Community
                                     AssetDatabase.RemoveObjectFromAsset(obj as TConstructorDeclaration);
                                 }, listOfConstructors[index]);
 
-                                //if (index > 0)
-                                //{
-                                //    menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
-                                //    {
-                                //        // To Do
-                                //    }, listOfConstructors[index]);
-                                //}
+                                if (index > 0)
+                                {
+                                    menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                                    {
+                                        MoveItemUp(listOfConstructors, index);
+                                    }, listOfConstructors[index]);
+                                }
 
-                                //if (index < methods.Count - 1)
-                                //{
-                                //    menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
-                                //    {
-                                //        // To Do
-                                //    }, listOfConstructors[index]);
-                                //}
+                                if (index < methods.Count - 1)
+                                {
+                                    menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                                    {
+                                        MoveItemDown(listOfConstructors, index);
+                                    }, listOfConstructors[index]);
+                                }
                                 menu.ShowAsContext();
                             }
                         }, () =>
@@ -461,9 +785,9 @@ namespace Unity.VisualScripting.Community
                                     if (Inspector.EndBlock(paramMeta))
                                     {
                                         shouldUpdate = true;
-                                        var funcionUnit = (listOfConstructors[index].graph.units[0] as FunctionNode);
-                                        funcionUnit.Define();
-                                        funcionUnit.Describe();
+                                        var functionUnit = (listOfConstructors[index].graph.units[0] as FunctionNode);
+                                        functionUnit.Define();
+                                        functionUnit.Describe();
                                     }
                                 });
 
@@ -484,6 +808,22 @@ namespace Unity.VisualScripting.Community
                         var functionUnit = new FunctionNode(FunctionType.Constructor);
                         functionUnit.constructorDeclaration = declaration;
                         declaration.graph.units.Add(functionUnit);
+                        var listOfVariables = variables.value as List<TFieldDeclaration>;
+                        var listOfGraphVars = declaration.graph.variables;
+                        foreach (var variable in listOfVariables)
+                        {
+                            declaration.graph.variables.Set(variable.name, null);
+
+                            var matchingGraphVar = listOfGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
+
+                            if (matchingGraphVar != null)
+                            {
+                                SerializableType type = matchingGraphVar.typeHandle;
+                                type.Identification = variable.type.AssemblyQualifiedName;
+                                matchingGraphVar.typeHandle = type;
+                            }
+                        }
+
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();
                     }
@@ -529,6 +869,7 @@ namespace Unity.VisualScripting.Community
                     for (int i = 0; i < listOfMethods.Count; i++)
                     {
                         var index = i;
+
                         listOfMethods[index].opened = HUMEditor.Foldout(listOfMethods[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
                             HUMEditor.Changed(() =>
@@ -545,6 +886,22 @@ namespace Unity.VisualScripting.Community
                             if (GUILayout.Button("Edit", GUILayout.Width(60)))
                             {
                                 GraphWindow.OpenActive(listOfMethods[index].GetReference() as GraphReference);
+                                var listOfVariables = variables.value as List<TFieldDeclaration>;
+                                var listOfGraphVars = listOfMethods[index].graph.variables;
+                                foreach (var variable in listOfVariables)
+                                {
+                                    listOfMethods[index].graph.variables.Set(variable.name, null);
+                                    // Find the corresponding graphvar by matching on the variable's name
+                                    var matchingGraphVar = listOfGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
+
+                                    if (matchingGraphVar != null)
+                                    {
+                                        // Update the typeHandle of the matching graphvar
+                                        SerializableType type = matchingGraphVar.typeHandle;
+                                        type.Identification = variable.type.AssemblyQualifiedName;
+                                        matchingGraphVar.typeHandle = type;
+                                    }
+                                }
                             }
 
                             if (GUILayout.Button("...", GUILayout.Width(19)))
@@ -560,7 +917,7 @@ namespace Unity.VisualScripting.Community
                                 {
                                     menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
                                     {
-                                        // To Do
+                                        MoveItemUp(listOfMethods, index);
                                     }, listOfMethods[index]);
                                 }
 
@@ -568,7 +925,7 @@ namespace Unity.VisualScripting.Community
                                 {
                                     menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
                                     {
-                                        // To Do
+                                        MoveItemDown(listOfMethods, index);
                                     }, listOfMethods[index]);
                                 }
                                 menu.ShowAsContext();
@@ -622,6 +979,23 @@ namespace Unity.VisualScripting.Community
                         var functionUnit = new FunctionNode(FunctionType.Method);
                         functionUnit.methodDeclaration = declaration;
                         declaration.graph.units.Add(functionUnit);
+                        var listOfVariables = variables.value as List<TFieldDeclaration>;
+                        var listOfGraphVars = declaration.graph.variables;
+                        foreach (var variable in listOfVariables)
+                        {
+                            declaration.graph.variables.Set(variable.name, null);
+                            // Find the corresponding graphvar by matching on the variable's name
+                            var matchingGraphVar = listOfGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
+
+                            if (matchingGraphVar != null)
+                            {
+                                // Update the typeHandle of the matching graphvar
+                                SerializableType type = matchingGraphVar.typeHandle;
+                                type.Identification = variable.type.AssemblyQualifiedName;
+                                matchingGraphVar.typeHandle = type;
+                            }
+                        }
+
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();
                     }

@@ -13,9 +13,8 @@ namespace Unity.VisualScripting.Community
         [SerializeReference]
         public CSharpPreview preview = new CSharpPreview();
 
-        [SerializeField]
-        private CodeAsset asset;
-
+        private CodeAsset codeAsset;
+        private ScriptGraphAsset graphAsset;
         private bool cached;
 
         [MenuItem("Window/Community Addons/C# Preview")]
@@ -36,20 +35,28 @@ namespace Unity.VisualScripting.Community
         private void OnGUI()
         {
             e = Event.current;
+            codeAsset = Selection.activeObject as CodeAsset;
+            graphAsset = Selection.activeObject as ScriptGraphAsset;
 
-            if (asset == null || Selection.activeObject != null && Selection.activeObject != asset)
+            if (codeAsset != null)
             {
-                asset = Selection.activeObject as CodeAsset;
-                if (asset != null) preview.code = CodeGenerator.GetSingleDecorator(asset);
-                preview.Refresh();
+                preview.code = CodeGenerator.GetSingleDecorator(codeAsset);
+                cached = true;
+            }
+            else if (graphAsset != null && GraphWindow.active != null)
+            {
+                preview.code = CodeGenerator.GetSingleDecorator(graphAsset);
+                cached = true;
             }
             else
             {
-                if (asset != null)
-                {
-                    preview.code = CodeGenerator.GetSingleDecorator(asset);
-                    if (!cached) { preview.Refresh(); cached = true; }
-                }
+                cached = false;
+            }
+
+            if (!cached)
+            {
+                preview.Refresh();
+                cached = true;
             }
 
             preview.DrawLayout();

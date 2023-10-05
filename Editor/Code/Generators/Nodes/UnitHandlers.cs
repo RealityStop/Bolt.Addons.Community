@@ -2,23 +2,17 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
+using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
+using UnityEngine.Windows;
 
 namespace Unity.VisualScripting.Community.Generated
 {
-    public static class GeneratedGenerators
+    public sealed class GeneratedGenerators
     {
-        private static Dictionary<Type, Func<object, string>> DefaultValueFormatters = new Dictionary<Type, Func<object, string>>
-            {
-                { typeof(float), value => $"{value}f".NumericHighlight() },
-                { typeof(string), value => $"\"{value}\"".StringHighlight() },
-                { typeof(bool), value => value.ToString().ToLower().ConstructHighlight() },
-                { typeof(Color), value => "new".ConstructHighlight() + " Color".ConstructHighlight() + $"{value.ToString().Replace("RGBA", "")}" }
-            };
 
         [NodeGenerator(typeof(Unity.VisualScripting.CreateStruct))]
         public sealed class CreateStructGenerator : NodeGenerator<Unity.VisualScripting.CreateStruct>
@@ -31,8 +25,9 @@ namespace Unity.VisualScripting.Community.Generated
             {
 
                 var output = string.Empty;
+                if (Unit.enter.hasValidConnection && !Unit.output.hasValidConnection) output += GenerateStructInstance(indent);
                 output += (Unit.exit.hasValidConnection ? (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty);
-                return output;
+                return CodeBuilder.Indent(indent) + output;
 
             }
 
@@ -40,48 +35,15 @@ namespace Unity.VisualScripting.Community.Generated
             {
                 if (output == Unit.output)
                 {
-                    return $"new {Unit.type.CSharpFullName()}()";
+                    return $"new {Unit.type.As().CSharpName()}()";
                 }
 
                 return base.GenerateValue(output);
             }
 
-            private string GenerateStructInstance()
+            private string GenerateStructInstance(int indent)
             {
-                var parameterValues = new List<string>();
-
-                foreach (var parameter in Unit.valueInputs)
-                {
-                    var sourceUnit = parameter.connections.FirstOrDefault()?.source.unit as Unit;
-                    var destinationValueInput = parameter.connections.FirstOrDefault()?.destination as ValueInput;
-
-                    var generatedValue = sourceUnit.GenerateValue(destinationValueInput);
-                    parameterValues.Add(generatedValue);
-                }
-
-                var parameterString = string.Join(", ", parameterValues);
-
-                return $"new {Unit.type.CSharpFullName()}({GenerateArguments(Unit.valueInputs as List<ValueInput>)})";
-            }
-
-            private string GenerateArguments(List<ValueInput> arguments)
-            {
-                var argumentValues = arguments.Select(arg =>
-                {
-                    if (arg.hasValidConnection)
-                    {
-                        return GenerateValue(arg);
-                    }
-                    else if (arg.hasDefaultValue && DefaultValueFormatters.ContainsKey(Unit.defaultValues[arg.key].GetType()))
-                    {
-                        return DefaultValueFormatters[Unit.defaultValues[arg.key].GetType()](Unit.defaultValues[arg.key]);
-                    }
-                    else
-                    {
-                        return string.Empty;
-                    }
-                });
-                return string.Join(", ", argumentValues);
+                return $"new {Unit.type.As().CSharpName()}();\n";
             }
         }
 
@@ -114,6 +76,7 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public GetMemberGenerator(Unity.VisualScripting.GetMember unit) : base(unit)
             {
+                NameSpace = Unit.member.declaringType.Namespace;
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -123,19 +86,41 @@ namespace Unity.VisualScripting.Community.Generated
 
             public override string GenerateValue(ValueOutput output)
             {
+                var transformText = (CSharpPreview.AutomaticallyGetTransform && Unit.member.targetType == typeof(Transform)) ? ".transform" : string.Empty;
+
                 if (Unit.target != null)
                 {
                     if (Unit.target.hasValidConnection)
                     {
-                        var memberName = Unit.member.targetTypeName;
+                        string type;
 
-                        var outputCode = GenerateValue(Unit.target) + $".{memberName}";
+                        if (Unit.member.isField)
+                        {
+                            type = Unit.member.fieldInfo.Name;
+                        }
+                        else if (Unit.member.isProperty)
+                        {
+                            type = Unit.member.name;
+                        }
+                        else
+                        {
+                            type = Unit.member.ToPseudoDeclarer().ToString();
+                        }
+                        var outputCode = GenerateValue(Unit.target) + transformText + $".{type}";
 
                         return outputCode;
                     }
+                    else
+                    {
+                        return $"{GenerateValue(Unit.target)}.{Unit.member.name}";
+                    }
                 }
-                return CodeBuilder.WarningHighlight("/* Get Member Requires Input */");
+                else
+                {
+                    return Unit.member.ToString();
+                }
             }
+
 
             public override string GenerateValue(ValueInput input)
             {
@@ -149,7 +134,17 @@ namespace Unity.VisualScripting.Community.Generated
                         }
                         else if (Unit.target.hasDefaultValue)
                         {
-                            return Unit.defaultValues[input.key].ToString();
+                            var defaultValue = Unit.defaultValues[input.key];
+
+                            if (Unit.target.type == typeof(GameObject))
+                            {
+                                return "gameObject";
+                            }
+                            else
+                            {
+                                return defaultValue.As().Code(false, true, true);
+                            }
+
                         }
                         else
                         {
@@ -166,8 +161,11 @@ namespace Unity.VisualScripting.Community.Generated
         [NodeGenerator(typeof(Unity.VisualScripting.InvokeMember))]
         public sealed class InvokeMemberGenerator : NodeGenerator<Unity.VisualScripting.InvokeMember>
         {
+            private int codeindent;
+
             public InvokeMemberGenerator(Unity.VisualScripting.InvokeMember unit) : base(unit)
             {
+                NameSpace = Unit.member.declaringType.Namespace;
             }
 
             public override string GenerateValue(ValueInput input)
@@ -178,59 +176,107 @@ namespace Unity.VisualScripting.Community.Generated
                 }
                 else if (input.hasDefaultValue)
                 {
-                    if (typeof(Type).IsAssignableFrom(Unit.defaultValues[input.key].GetType()))
-                    {
-                        var type = (Type)Unit.defaultValues[input.key];
-                        return $"typeof({type.CSharpFullName()})";
-                    }
-                    else
-                    {
-                        return Unit.defaultValues[input.key].ToString(); ;
-                    }
+                    return Unit.defaultValues[input.key].As().Code(true, false, true);
                 }
                 else
                 {
-                    return $"/* \"{input.key} Requires Input\"\" */";
+                    return $"/* \"{input.key} Requires Input\" */";
                 }
             }
 
             public override string GenerateValue(ValueOutput output)
             {
+                var transformText = (CSharpPreview.AutomaticallyGetTransform && Unit.member.targetType == typeof(Transform)) ? ".transform" : string.Empty;
+
                 if (output == Unit.result)
                 {
                     if (output.hasValidConnection)
                     {
-                        if (Unit.member.isConstructor)
+                        if (Unit.enter.hasValidConnection)
                         {
-                            return $"new {Unit.member.declaringType}({GenerateArguments(Unit.inputParameters.Values.ToList())})";
-                        }
-                        else
-                        {
-                            if (Unit.inputParameters.Count > 0)
+                            if (Unit.member.isConstructor)
                             {
-                                string Output = string.Empty;
+                                return $"new ".ConstructHighlight() + $"{Unit.member.declaringType}".TypeHighlight() + $"({GenerateArguments(Unit.inputParameters.Values.ToList())})";
+                            }
+                            else if (Unit.outputParameters.Count > 0)
+                            {
+                                string Memberparams = string.Empty;
+                                var count = 0;
 
-                                if (Unit.target != null)
+                                foreach (var param in Unit.member.GetParameterInfos())
                                 {
-                                    if (Unit.target.hasValidConnection)
+                                    if (param.IsOut)
                                     {
-                                        Output += (Unit.target.connection.source.unit as Unit).GenerateValue(Unit.target.connection.source);
-                                        Output += Unit.member.ToDeclarer().ToString().Remove(0, Unit.member.ToDeclarer().ToString().IndexOf(".")) + $"({GenerateArguments(Unit.inputParameters.Values.ToList())})";
-                                        return Output;
+                                        Memberparams += "out ".ConstructHighlight() + $"{param.ParameterType.As().CSharpName(false, false, true)} {param.Name}".Replace("&", "").Replace("%", "");
+                                        Memberparams += ", ";
                                     }
-                                    else if (Unit.target.hasDefaultValue)
+                                    else
                                     {
-                                        Output += $"\"{Unit.defaultValues[Unit.target.key]}\"";
-                                        return Output;
+                                        Memberparams += $"{GenerateValue(Unit.valueInputs[count])}";
+
+                                        if (count < Unit.inputParameters.Count - 1)
+                                        {
+                                            Memberparams += ", ";
+                                        }
+                                        count++;
                                     }
                                 }
 
-                                return $"{Unit.member.targetType.Namespace + "." + Unit.member.ToDeclarer()}({GenerateArguments(Unit.inputParameters.Values.ToList())})";
+                                string methodCall = (Unit.target != null ? Unit.target.hasValidConnection ? GenerateValue(Unit.target) + transformText + Unit.member.ToDeclarer().ToString().Remove(0, Unit.member.ToDeclarer().ToString().IndexOf('.')) : $"/* {Unit.member.name} Requires Target */" : Unit.member.ToPseudoDeclarer().ToSafeString());
+
+                                return $"{methodCall}({Memberparams})";
+                            }
+                            else
+                            {
+                                string methodCall = (Unit.target != null ? Unit.target.hasValidConnection ? GenerateValue(Unit.target) + transformText + Unit.member.ToDeclarer().ToString().Remove(0, Unit.member.ToDeclarer().ToString().IndexOf('.')) : $"/* {Unit.member.name} Requires Target */" : Unit.member.ToPseudoDeclarer().ToSafeString());
+
+                                return $"{methodCall}({(GenerateArguments(Unit.inputParameters.Values.ToList()).Length > 0 ? GenerateArguments(Unit.inputParameters.Values.ToList()) : string.Empty)})";
+                            }
+
+                        }
+                        else
+                        {
+                            if (Unit.member.isConstructor)
+                            {
+                                return $"new ".ConstructHighlight() + $"{Unit.member.declaringType}".TypeHighlight() + $"({GenerateArguments(Unit.inputParameters.Values.ToList())})";
+                            }
+                            else
+                            {
+                                if (Unit.valueInputs.Count > 0)
+                                {
+                                    string outputParams = (Unit.outputParameters.Count > 0 ? "," + string.Join(", ", Unit.outputParameters.Select(p => $" out ".ConstructHighlight() + $"{p.Value.type} {p.Value.key.Replace("&", "").Replace("%", "")}")) : string.Empty);
+
+                                    string Output = string.Empty;
+
+                                    if (Unit.target != null)
+                                    {
+                                        if (Unit.target.hasValidConnection)
+                                        {
+                                            Output += (Unit.target.connection.source.unit as Unit).GenerateValue(Unit.target.connection.source) + transformText;
+                                            Output += Unit.member.ToDeclarer().ToString().Remove(0, Unit.member.ToDeclarer().ToString().IndexOf(".")) + $"({GenerateArguments(Unit.inputParameters.Values.ToList())}" + $"{outputParams})";
+                                            return Output;
+                                        }
+                                        else if (Unit.target.hasDefaultValue)
+                                        {
+                                            Output += CodeBuilder.Indent(codeindent) + Unit.defaultValues[Unit.target.key].As().Code(true, false, true, "") + transformText;
+                                            return Output;
+                                        }
+                                        else
+                                        {
+                                            Output += $"/* {Unit.member.name} Requires Target */";
+                                            return Output;
+                                        }
+                                    }
+                                    return $"{Unit.member.ToPseudoDeclarer()}({GenerateArguments(Unit.inputParameters.Values.ToList())}" + $"{outputParams})";
+                                }
                             }
                         }
                     }
                 }
-
+                else if (Unit.outputParameters.ContainsValue(output))
+                {
+                    return output.key.Replace("&", "").Replace("%", "").VariableHighlight();
+                }
                 return base.GenerateValue(output);
             }
 
@@ -242,32 +288,78 @@ namespace Unity.VisualScripting.Community.Generated
                     {
                         return GenerateValue(arg);
                     }
-                    else if (arg.hasDefaultValue && DefaultValueFormatters.ContainsKey(Unit.defaultValues[arg.key].GetType()))
+                    else if (arg.hasDefaultValue)
                     {
-                        return DefaultValueFormatters[Unit.defaultValues[arg.key].GetType()](Unit.defaultValues[arg.key]);
+                        return Unit.defaultValues[arg.key].As().Code(true, false, true, "");
                     }
                     else
                     {
                         return string.Empty;
                     }
                 });
-                return string.Join(", ", argumentValues);
+
+                var argumentString = string.Join(", ", argumentValues).Trim();
+
+                if (argumentString.EndsWith(","))
+                {
+                    argumentString = argumentString.Substring(0, argumentString.Length - 1);
+                }
+
+                return argumentString;
             }
+
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
             {
+                codeindent = indent;
+
+                var transformText = (CSharpPreview.AutomaticallyGetTransform && Unit.member.targetType == typeof(Transform)) ? ".transform" : string.Empty;
+
                 if (input == Unit.enter)
                 {
                     var output = string.Empty;
 
                     if (Unit.target != null)
                     {
-                        output += (Unit.target.hasValidConnection ? GenerateValue(Unit.target) + Unit.member.ToDeclarer().ToString().Remove(0, Unit.member.ToDeclarer().ToString().IndexOf('.')) : Unit.member.ToPseudoDeclarer()) + $"({(GenerateArguments(Unit.inputParameters.Values.ToList()).Length > 0 ? GenerateArguments(Unit.inputParameters.Values.ToList()) : string.Empty)}); \n";
+                        if (Unit.target.hasValidConnection)
+                        {
+                            if (Unit.result != null)
+                            {
+                                if (!Unit.result.hasValidConnection)
+                                {
+                                    output += "\n";
+                                    output += CodeBuilder.Indent(indent) + (Unit.target.hasValidConnection ? GenerateValue(Unit.target) + transformText + Unit.member.ToDeclarer().ToString().Remove(0, Unit.member.ToDeclarer().ToString().IndexOf('.')) : Unit.member.ToPseudoDeclarer()) + $"({(GenerateArguments(Unit.inputParameters.Values.ToList()).Length > 0 ? GenerateArguments(Unit.inputParameters.Values.ToList()) : string.Empty)}); \n";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            output += $"/* {Unit.member.name} Requires Target */";
+                        }
                     }
                     else
                     {
-                        output += Unit.member.targetType.Namespace + "." + Unit.member.ToDeclarer() + $"({(GenerateArguments(Unit.inputParameters.Values.ToList()).Length > 0 ? GenerateArguments(Unit.inputParameters.Values.ToList()) : string.Empty)}); \n";
+                        if (Unit.result != null)
+                        {
+                            if (!Unit.result.hasValidConnection)
+                            {
+                                if (Unit.member.isConstructor)
+                                {
+                                    output += CodeBuilder.Indent(indent) + $"new ".ConstructHighlight() + $"{Unit.member.declaringType}".TypeHighlight() + $"({GenerateArguments(Unit.inputParameters.Values.ToList())});\n";
+                                }
+                                else
+                                {
+                                    output += CodeBuilder.Indent(indent) + Unit.member.targetType + $"({(GenerateArguments(Unit.inputParameters.Values.ToList()).Length > 0 ? GenerateArguments(Unit.inputParameters.Values.ToList()) : string.Empty)}); \n";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            output += "\n";
+                            output += CodeBuilder.Indent(indent) + Unit.member.ToPseudoDeclarer() + $"({(GenerateArguments(Unit.inputParameters.Values.ToList()).Length > 0 ? GenerateArguments(Unit.inputParameters.Values.ToList()) : string.Empty)}); \n";
+                        }
                     }
+
                     output += (Unit.exit.hasAnyConnection ? (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty);
 
                     return output;
@@ -277,105 +369,66 @@ namespace Unity.VisualScripting.Community.Generated
             }
         }
 
-
-        [NodeGenerator(typeof(Unity.VisualScripting.SetMember))]
-        public sealed class SetMemberGenerator : NodeGenerator<Unity.VisualScripting.SetMember>
+        [NodeGenerator(typeof(SetMember))]
+        public sealed class SetMemberGenerator : NodeGenerator<SetMember>
         {
-            public SetMemberGenerator(Unity.VisualScripting.SetMember unit) : base(unit)
+            public SetMemberGenerator(SetMember unit) : base(unit)
             {
+                NameSpace = Unit.member.declaringType.Namespace;
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
             {
-                var output = string.Empty;
-
                 if (input == Unit.assign)
                 {
+                    var output = string.Empty;
+                    var targetValue = GenerateValue(Unit.target);
+                    var memberName = Unit.member.name;
+                    var inputValue = GenerateValue(Unit.input);
 
-                    var value = GenerateValue(Unit.input);
+                    var transformText = (CSharpPreview.AutomaticallyGetTransform && Unit.member.targetType == typeof(Transform)) ? ".transform" : string.Empty;
+                    output += "\n" + CodeBuilder.Indent(indent) + $"{targetValue}{transformText}.{memberName} = {inputValue};\n";
 
-                    output += CodeBuilder.Indent(indent) + $"{GenerateValue(Unit.target)}{Unit.member.ToPseudoDeclarer().ToString().Remove(0, Unit.member.ToDeclarer().ToString().IndexOf('.'))} = {value};\n";
+                    output += (Unit.assigned.hasValidConnection) ? (Unit.assigned.connection.destination.unit as Unit).GenerateControl(Unit.assigned.connection.destination, data, indent) : string.Empty;
 
-                    output += (Unit.assigned.hasAnyConnection ? (Unit.assigned.connection.destination.unit as Unit).GenerateControl(Unit.assigned.connection.destination, data, indent) : string.Empty);
+                    return CodeBuilder.Indent(indent) + output;
                 }
 
-                return output;
+                return null;
             }
 
             public override string GenerateValue(ValueOutput output)
             {
-                if (output == Unit.output)
-                {
-                    if (Unit.output.hasValidConnection && Unit.target.hasValidConnection)
-                    {
-                        return $"{Unit.member}";
-                    }
-                    else
-                    {
-                        if (Unit.target.hasDefaultValue)
-                        {
-                            return $"{Unit.member}";
-                        }
-                        else
-                        {
-                            return "/*Set Member target Requires Input*/";
-                        }
-                    }
-                }
-                else if (output == Unit.targetOutput)
-                {
-                    if (Unit.targetOutput.hasValidConnection)
-                    {
-                        return GenerateValue(Unit.target);
-                    }
-                }
+                var transformText = (CSharpPreview.AutomaticallyGetTransform && Unit.member.targetType == typeof(Transform)) ? ".transform" : string.Empty;
 
-                return base.GenerateValue(output);
+                return GenerateValue(Unit.target) + transformText + $".{Unit.member.name}";
             }
 
             public override string GenerateValue(ValueInput input)
             {
-                if (input == Unit.target)
+                if (input.hasValidConnection)
                 {
-                    if (Unit.target.hasValidConnection)
-                    {
-                        return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
-                    }
-                    else
-                    {
-                        if (Unit.target.hasDefaultValue)
-                        {
-                            return $"{DefaultValueFormatters[Unit.defaultValues[input.key].GetType()](Unit.defaultValues[input.key])}".Contains("new") ? $"{DefaultValueFormatters[Unit.defaultValues[input.key].GetType()](Unit.defaultValues[input.key])}" : $"new {DefaultValueFormatters[Unit.defaultValues[input.key].GetType()](Unit.defaultValues[input.key])}";
-                        }
-                        else
-                        {
-                            return "/*Set Member target Requires Input*/";
-                        }
-                    }
+                    return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
                 }
-                else if (input == Unit.input)
+                else if (input.hasDefaultValue)
                 {
-                    if (Unit.input.hasValidConnection)
-                    {
-                        return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
-                    }
-                    else if (Unit.input.hasDefaultValue)
-                    {
-                        return DefaultValueFormatters[Unit.defaultValues[input.key].GetType()](Unit.defaultValues[input.key]);
-                    }
+                    return Unit.defaultValues[input.key].As().Code(true, true, true, "");
                 }
-
-                return base.GenerateValue(input);
+                else
+                {
+                    return $"/* {input.key} requires input */";
+                }
             }
         }
-
 
         [NodeGenerator(typeof(Unity.VisualScripting.CountItems))]
         public sealed class CountItemsGenerator : NodeGenerator<Unity.VisualScripting.CountItems>
         {
             private string list;
+
             public CountItemsGenerator(Unity.VisualScripting.CountItems unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -387,7 +440,7 @@ namespace Unity.VisualScripting.Community.Generated
             {
                 if (output == Unit.count)
                 {
-                    var list = "System.Collections.Generic." + GenerateValue(Unit.collection);
+                    var list = GenerateValue(Unit.collection);
                     return list + ".Count";
                 }
 
@@ -400,7 +453,6 @@ namespace Unity.VisualScripting.Community.Generated
                 {
                     if (input.hasValidConnection)
                     {
-                        // Generate code for the input value
                         return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
                     }
                 }
@@ -416,21 +468,38 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public AddDictionaryItemGenerator(Unity.VisualScripting.AddDictionaryItem unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
             {
-                return base.GenerateControl(input, data, indent);
+                var output = string.Empty;
+
+                output += CodeBuilder.Indent(indent) + $"{GenerateValue(Unit.dictionaryInput)}.Add({GenerateValue(Unit.key)}, {GenerateValue(Unit.value)});\n";
+
+                output += (Unit.exit.hasValidConnection) ? "\n" + (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty;
+                return output;
             }
 
             public override string GenerateValue(ValueOutput output)
             {
-                return base.GenerateValue(output);
+                return GenerateValue(Unit.dictionaryInput);
             }
 
             public override string GenerateValue(ValueInput input)
             {
-                return base.GenerateValue(input);
+                if (input.hasValidConnection)
+                {
+                    return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+                }
+                else if (input.hasDefaultValue)
+                {
+                    return Unit.defaultValues[input.key].As().Code(true, true, true, "");
+                }
+                else
+                {
+                    return $"/* {input.key} requires input */";
+                }
             }
 
 
@@ -441,21 +510,39 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public ClearDictionaryGenerator(Unity.VisualScripting.ClearDictionary unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
             {
-                return base.GenerateControl(input, data, indent);
+                var output = string.Empty;
+
+                output += CodeBuilder.Indent(indent) + GenerateValue(Unit.dictionaryInput) + ".Clear();\n";
+
+                output += (Unit.exit.hasValidConnection) ? "\n" + (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty;
+
+                return output;
             }
 
             public override string GenerateValue(ValueOutput output)
             {
-                return base.GenerateValue(output);
+                return GenerateValue(Unit.dictionaryInput);
             }
 
             public override string GenerateValue(ValueInput input)
             {
-                return base.GenerateValue(input);
+                if (input.hasValidConnection)
+                {
+                    return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+                }
+                else if (input.hasDefaultValue)
+                {
+                    return Unit.defaultValues[input.key].As().Code(true, true, true, "");
+                }
+                else
+                {
+                    return $"/* {input.key} requires input */";
+                }
             }
 
 
@@ -466,6 +553,7 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public CreateDictionaryGenerator(Unity.VisualScripting.CreateDictionary unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -475,7 +563,7 @@ namespace Unity.VisualScripting.Community.Generated
 
             public override string GenerateValue(ValueOutput output)
             {
-                return base.GenerateValue(output);
+                return "new ".ConstructHighlight() + "Dictionary<object, object>".TypeHighlight() + "()";
             }
 
             public override string GenerateValue(ValueInput input)
@@ -491,6 +579,7 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public DictionaryContainsKeyGenerator(Unity.VisualScripting.DictionaryContainsKey unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -500,12 +589,23 @@ namespace Unity.VisualScripting.Community.Generated
 
             public override string GenerateValue(ValueOutput output)
             {
-                return base.GenerateValue(output);
+                return $"{GenerateValue(Unit.dictionary)}.ContainsKey({GenerateValue(Unit.key)})";
             }
 
             public override string GenerateValue(ValueInput input)
             {
-                return base.GenerateValue(input);
+                if (input.hasValidConnection)
+                {
+                    return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+                }
+                else if (input.hasDefaultValue)
+                {
+                    return Unit.defaultValues[input.key].As().Code(true, true, true, "");
+                }
+                else
+                {
+                    return $"/* {input.key} requires input */";
+                }
             }
 
 
@@ -516,6 +616,7 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public GetDictionaryItemGenerator(Unity.VisualScripting.GetDictionaryItem unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -525,15 +626,24 @@ namespace Unity.VisualScripting.Community.Generated
 
             public override string GenerateValue(ValueOutput output)
             {
-                return base.GenerateValue(output);
+                return $"{GenerateValue(Unit.dictionary)}[{GenerateValue(Unit.key)}]";
             }
 
             public override string GenerateValue(ValueInput input)
             {
-                return base.GenerateValue(input);
+                if (input.hasValidConnection)
+                {
+                    return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+                }
+                else if (input.hasDefaultValue)
+                {
+                    return Unit.defaultValues[input.key].As().Code(true, true, true, "");
+                }
+                else
+                {
+                    return $"/* {input.key} requires input */";
+                }
             }
-
-
         }
 
         [NodeGenerator(typeof(Unity.VisualScripting.MergeDictionaries))]
@@ -541,6 +651,7 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public MergeDictionariesGenerator(Unity.VisualScripting.MergeDictionaries unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -550,15 +661,43 @@ namespace Unity.VisualScripting.Community.Generated
 
             public override string GenerateValue(ValueOutput output)
             {
-                return base.GenerateValue(output);
+                var builder = new StringBuilder();
+
+                var parameters = string.Empty;
+
+                foreach (var Input in Unit.multiInputs)
+                {
+                    if (Input.hasValidConnection)
+                    {
+                        parameters += GenerateValue(Input);
+
+                        if (!Input.Equals(Unit.multiInputs.Last(input => input.hasValidConnection)))
+                        {
+                            parameters += ", ";
+                        }
+                    }
+                }
+
+                builder.AppendLine($"CodeGenUtils.MergeDictionaries({parameters})");
+
+                return builder.ToString();
             }
 
             public override string GenerateValue(ValueInput input)
             {
-                return base.GenerateValue(input);
+                if (input.hasValidConnection)
+                {
+                    return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+                }
+                else if (input.hasDefaultValue)
+                {
+                    return Unit.defaultValues[input.key].As().Code(true, true, true, "");
+                }
+                else
+                {
+                    return $"/* {input.key} requires input */";
+                }
             }
-
-
         }
 
         [NodeGenerator(typeof(Unity.VisualScripting.RemoveDictionaryItem))]
@@ -566,24 +705,39 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public RemoveDictionaryItemGenerator(Unity.VisualScripting.RemoveDictionaryItem unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
             {
-                return base.GenerateControl(input, data, indent);
+                var output = string.Empty;
+
+                output += CodeBuilder.Indent(indent) + $"{GenerateValue(Unit.dictionaryInput)}.Remove({GenerateValue(Unit.key)});\n";
+
+                output += (Unit.exit.hasValidConnection) ? "\n" + (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty;
+                return output;
             }
 
             public override string GenerateValue(ValueOutput output)
             {
-                return base.GenerateValue(output);
+                return GenerateValue(Unit.dictionaryInput);
             }
 
             public override string GenerateValue(ValueInput input)
             {
-                return base.GenerateValue(input);
+                if (input.hasValidConnection)
+                {
+                    return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+                }
+                else if (input.hasDefaultValue)
+                {
+                    return Unit.defaultValues[input.key].As().Code(true, true, true, "");
+                }
+                else
+                {
+                    return $"/* {input.key} requires input */";
+                }
             }
-
-
         }
 
         [NodeGenerator(typeof(Unity.VisualScripting.SetDictionaryItem))]
@@ -591,24 +745,34 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public SetDictionaryItemGenerator(Unity.VisualScripting.SetDictionaryItem unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
             {
-                return base.GenerateControl(input, data, indent);
-            }
+                var output = string.Empty;
 
-            public override string GenerateValue(ValueOutput output)
-            {
-                return base.GenerateValue(output);
+                output += CodeBuilder.Indent(indent) + $"{GenerateValue(Unit.dictionary)}[{GenerateValue(Unit.key)}] = {GenerateValue(Unit.value)};\n";
+
+                output += (Unit.exit.hasValidConnection) ? "\n" + (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty;
+                return output;
             }
 
             public override string GenerateValue(ValueInput input)
             {
-                return base.GenerateValue(input);
+                if (input.hasValidConnection)
+                {
+                    return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+                }
+                else if (input.hasDefaultValue)
+                {
+                    return Unit.defaultValues[input.key].As().Code(true, true, true, "");
+                }
+                else
+                {
+                    return $"/* {input.key} requires input */";
+                }
             }
-
-
         }
 
         [NodeGenerator(typeof(Unity.VisualScripting.FirstItem))]
@@ -616,6 +780,7 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public FirstItemGenerator(Unity.VisualScripting.FirstItem unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -625,15 +790,24 @@ namespace Unity.VisualScripting.Community.Generated
 
             public override string GenerateValue(ValueOutput output)
             {
-                return base.GenerateValue(output);
+                return GenerateValue(Unit.collection) + "[0]";
             }
 
             public override string GenerateValue(ValueInput input)
             {
-                return base.GenerateValue(input);
+                if (input.hasValidConnection)
+                {
+                    return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+                }
+                else if (input.hasDefaultValue)
+                {
+                    return Unit.defaultValues[input.key].As().Code(true, true, true, "");
+                }
+                else
+                {
+                    return $"/* {input.key} requires input */";
+                }
             }
-
-
         }
 
         [NodeGenerator(typeof(Unity.VisualScripting.LastItem))]
@@ -641,6 +815,7 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public LastItemGenerator(Unity.VisualScripting.LastItem unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -650,12 +825,23 @@ namespace Unity.VisualScripting.Community.Generated
 
             public override string GenerateValue(ValueOutput output)
             {
-                return base.GenerateValue(output);
+                return GenerateValue(Unit.collection) + $"[{GenerateValue(Unit.collection)}.Count - 1]";
             }
 
             public override string GenerateValue(ValueInput input)
             {
-                return base.GenerateValue(input);
+                if (input.hasValidConnection)
+                {
+                    return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+                }
+                else if (input.hasDefaultValue)
+                {
+                    return Unit.defaultValues[input.key].As().Code(true, true, true, "");
+                }
+                else
+                {
+                    return $"/* {input.key} requires input */";
+                }
             }
 
 
@@ -666,6 +852,7 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public AddListItemGenerator(Unity.VisualScripting.AddListItem unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -676,7 +863,6 @@ namespace Unity.VisualScripting.Community.Generated
                 {
                     var list = GenerateValue(Unit.listInput);
 
-                    // Generate code to clear the list
                     output += CodeBuilder.Indent(indent) + $"{list}.Add({GenerateValue(Unit.item)});\n";
                 }
 
@@ -717,6 +903,7 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public ClearListGenerator(Unity.VisualScripting.ClearList unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -729,8 +916,7 @@ namespace Unity.VisualScripting.Community.Generated
                     {
                         var list = GenerateValue(Unit.listInput);
 
-                        // Generate code to clear the list
-                        output += CodeBuilder.Indent(indent) + $"{list}.Clear();\n";
+                        output += $"{list}.Clear();\n";
                     }
 
                     output += (Unit.exit.hasAnyConnection ? (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty);
@@ -773,11 +959,11 @@ namespace Unity.VisualScripting.Community.Generated
         {
             public CreateListGenerator(Unity.VisualScripting.CreateList unit) : base(unit)
             {
+                NameSpace = "System.Collections.Generic";
             }
 
             public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
             {
-
                 return base.GenerateControl(input, data, indent);
             }
 
@@ -789,9 +975,25 @@ namespace Unity.VisualScripting.Community.Generated
                     if (output.hasValidConnection)
                     {
                         var connectedInputs = Unit.inputs.Select(input => GenerateValue((ValueInput)input));
-                        var script = $"new List<object> {{ {string.Join(", ", connectedInputs)} }}";
+                        var firstInput = Unit.multiInputs.FirstOrDefault();
+                        if (firstInput != null && firstInput.hasValidConnection)
+                        {
+                            string elementType = string.Empty;
 
-                        return script;
+                            var secondInput = Unit.multiInputs.ElementAtOrDefault(1);
+                            if (secondInput != null)
+                            {
+                                elementType = secondInput != null && secondInput.hasValidConnection && secondInput.connection.source.type == firstInput.connection.source.type
+                                    ? firstInput.connection.source.type.DisplayName()
+                                    : "object";
+                            }
+                            else
+                            {
+                                elementType = firstInput.connection.source.type.DisplayName();
+                            }
+                            var script = $"new List<{elementType}> {{ {string.Join(", ", connectedInputs)} }}";
+                            return script;
+                        }
                     }
                 }
 
@@ -816,6 +1018,7 @@ namespace Unity.VisualScripting.Community.Generated
     {
         public GetListItemGenerator(Unity.VisualScripting.GetListItem unit) : base(unit)
         {
+            NameSpace = "System.Collections.Generic";
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -884,6 +1087,7 @@ namespace Unity.VisualScripting.Community.Generated
     {
         public InsertListItemGenerator(InsertListItem unit) : base(unit)
         {
+            NameSpace = "System.Collections.Generic";
         }
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
@@ -936,6 +1140,7 @@ namespace Unity.VisualScripting.Community.Generated
     {
         public ListContainsItemGenerator(Unity.VisualScripting.ListContainsItem unit) : base(unit)
         {
+            NameSpace = "System.Collections.Generic";
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -990,6 +1195,7 @@ namespace Unity.VisualScripting.Community.Generated
     {
         public MergeListsGenerator(Unity.VisualScripting.MergeLists unit) : base(unit)
         {
+            NameSpace = "System.Collections";
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -999,27 +1205,51 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            var builder = new StringBuilder();
+
+            var parameters = string.Empty;
+
+            foreach (var Input in Unit.multiInputs)
+            {
+                if (Input.hasValidConnection)
+                {
+                    parameters += GenerateValue(Input);
+
+                    if (!Input.Equals(Unit.multiInputs.Last(input => input.hasValidConnection)))
+                    {
+                        parameters += ", ";
+                    }
+                }
+            }
+
+            builder.AppendLine($"CodeGenUtils.MergeLists({parameters})");
+
+            return builder.ToString();
         }
+
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
         }
-
-
     }
+
 
     [NodeGenerator(typeof(Unity.VisualScripting.RemoveListItem))]
     public sealed class RemoveListItemGenerator : NodeGenerator<Unity.VisualScripting.RemoveListItem>
     {
         public RemoveListItemGenerator(Unity.VisualScripting.RemoveListItem unit) : base(unit)
         {
+            NameSpace = "System.Collections.Generic";
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var output = string.Empty;
+
+            output += GenerateValue(Unit.listInput) + $".Remove({GenerateValue(Unit.item)})\n";
+            output += Unit.exit.hasValidConnection ? (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty;
+            return CodeBuilder.Indent(indent) + output;
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -1029,7 +1259,7 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
         }
 
 
@@ -1040,6 +1270,7 @@ namespace Unity.VisualScripting.Community.Generated
     {
         public RemoveListItemAtGenerator(Unity.VisualScripting.RemoveListItemAt unit) : base(unit)
         {
+            NameSpace = "System.Collections.Generic";
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -1065,6 +1296,7 @@ namespace Unity.VisualScripting.Community.Generated
     {
         public SetListItemGenerator(Unity.VisualScripting.SetListItem unit) : base(unit)
         {
+            NameSpace = "System.Collections.Generic";
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -1092,7 +1324,6 @@ namespace Unity.VisualScripting.Community.Generated
 
         public CacheGenerator(Unity.VisualScripting.Cache unit) : base(unit)
         {
-            // Generate the random string only once
             randomString = GenerateRandomString();
         }
 
@@ -1180,15 +1411,14 @@ namespace Unity.VisualScripting.Community.Generated
                 var condition = GenerateValue(Unit.lastIndex);
                 var iterator = GenerateValue(Unit.step);
 
-                output += CodeBuilder.Indent(indent) + $"for (int i = {initialization}; i < {condition}; i += {iterator})";
+                output += $"for".ControlHighlight() + "(int".ConstructHighlight() + " i ".VariableHighlight() + $"= {initialization}; " + "i".VariableHighlight() + $" < {condition}; " + "i".VariableHighlight() + $" += {iterator})";
                 output += "\n";
                 output += CodeBuilder.OpenBody(indent);
                 output += "\n";
 
                 if (Unit.body.hasAnyConnection)
                 {
-                    output += (Unit.body.connection.destination.unit as Unit).GenerateControl(Unit.body.connection.destination, data, indent + 2);
-                    output += "\n";
+                    output += (Unit.body.connection.destination.unit as Unit).GenerateControl(Unit.body.connection.destination, data, indent + 1);
                 }
 
                 output += CodeBuilder.CloseBody(indent);
@@ -1198,7 +1428,6 @@ namespace Unity.VisualScripting.Community.Generated
             {
                 output += "\n";
                 output += (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent);
-                output += "\n";
             }
 
 
@@ -1207,7 +1436,7 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return "i".VariableHighlight();
         }
 
         public override string GenerateValue(ValueInput input)
@@ -1270,7 +1499,7 @@ namespace Unity.VisualScripting.Community.Generated
             {
                 var collection = GenerateValue(Unit.collection);
 
-                output += CodeBuilder.Indent(indent) + $"foreach (var item in {collection})";
+                output += "\n" + CodeBuilder.Indent(indent) + $"foreach".ControlHighlight() + " (" + "var".ConstructHighlight() + " item".VariableHighlight() + " in ".ConstructHighlight() + $"{collection})";
                 output += "\n";
                 output += CodeBuilder.OpenBody(indent);
                 output += "\n";
@@ -1296,7 +1525,7 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return "item".VariableHighlight();
         }
 
         public override string GenerateValue(ValueInput input)
@@ -1316,12 +1545,11 @@ namespace Unity.VisualScripting.Community.Generated
     [NodeGenerator(typeof(Unity.VisualScripting.Once))]
     public sealed class OnceGenerator : NodeGenerator<Unity.VisualScripting.Once>
     {
-        private string uniqueId;
 
         public OnceGenerator(Unity.VisualScripting.Once unit) : base(unit)
         {
             // Generate a unique identifier for the Once node
-            uniqueId = GenerateRandomString();
+            UniqueID = GenerateRandomString();
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -1330,9 +1558,7 @@ namespace Unity.VisualScripting.Community.Generated
 
             if (input == Unit.enter)
             {
-                output += CodeBuilder.Indent(indent) + $"var Once_{uniqueId} = false;";
-                output += "\n";
-                output += CodeBuilder.Indent(indent) + $"if (!Once_{uniqueId})";
+                output += CodeBuilder.Indent(indent) + $"if".ConstructHighlight() + $"(!Once_{UniqueID})";
                 output += "\n";
                 output += CodeBuilder.OpenBody(indent);
                 output += "\n";
@@ -1343,24 +1569,20 @@ namespace Unity.VisualScripting.Community.Generated
                     output += "\n";
                 }
 
-                output += CodeBuilder.Indent(indent + 1) + $"Once_{uniqueId} = true;";
+                output += CodeBuilder.Indent(indent + 1) + $"Once_{UniqueID} = " + "true".ConstructHighlight() + ";";
                 output += "\n";
                 output += CodeBuilder.CloseBody(indent);
                 output += "\n";
-            }
-            else if (input == Unit.reset)
-            {
-                output += CodeBuilder.Indent(indent) + $"Once_{uniqueId} = false;";
-                output += "\n";
-            }
 
-            if (Unit.after.hasValidConnection)
-            {
-                if (Unit.after.hasAnyConnection)
+                if (Unit.after.hasValidConnection)
                 {
                     output += (Unit.after.connection.destination.unit as Unit).GenerateControl(Unit.after.connection.destination, data, indent);
-                    output += "\n";
                 }
+            }
+
+            else if (input == Unit.reset)
+            {
+                output += CodeBuilder.Indent(indent) + $"Once_{UniqueID} = " + "false".ConstructHighlight() + ";";
             }
 
             return output;
@@ -1382,7 +1604,7 @@ namespace Unity.VisualScripting.Community.Generated
             var random = new System.Random();
             var randomString = new StringBuilder();
 
-            for (int i = 0; i < 5; i++) // You can adjust the length of the random string here
+            for (int i = 0; i < 5; i++)
             {
                 randomString.Append(chars[random.Next(chars.Length)]);
             }
@@ -1425,82 +1647,12 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.SwitchOnEnum))]
-    public sealed class SwitchOnEnumGenerator : NodeGenerator<Unity.VisualScripting.SwitchOnEnum>
-    {
-        public SwitchOnEnumGenerator(Unity.VisualScripting.SwitchOnEnum unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.SwitchOnInteger))]
-    public sealed class SwitchOnIntegerGenerator : NodeGenerator<Unity.VisualScripting.SwitchOnInteger>
-    {
-        public SwitchOnIntegerGenerator(Unity.VisualScripting.SwitchOnInteger unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.SwitchOnString))]
-    public sealed class SwitchOnStringGenerator : NodeGenerator<Unity.VisualScripting.SwitchOnString>
-    {
-        public SwitchOnStringGenerator(Unity.VisualScripting.SwitchOnString unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
+            string output = string.Empty;
+            foreach (ControlOutput _output in Unit.multiOutputs)
+            {
+                output += _output.hasValidConnection ? (_output.connection.destination.unit as Unit).GenerateControl(_output.connection.destination, data, indent) + "\n" : string.Empty;
+            }
+            return output;
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -1525,7 +1677,14 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            if (!Unit.custom)
+            {
+                return CodeBuilder.Indent(indent) + $"throw ".ControlHighlight() + $" new ".ConstructHighlight() + "Exception".TypeHighlight() + $"({GenerateValue(Unit.message)})";
+            }
+            else
+            {
+                return CodeBuilder.Indent(indent) + $"throw ".ControlHighlight() + $"{GenerateValue(Unit.exception)}";
+            }
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -1535,7 +1694,18 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -1600,7 +1770,21 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var code = string.Empty;
+            code += CodeBuilder.Indent(indent) + "try".ConstructHighlight() + "\n";
+            code += CodeBuilder.OpenBody(indent) + "\n";
+            code += (Unit.@try.hasValidConnection) ? (Unit.@try.connection.destination.unit as Unit).GenerateControl(Unit.@try.connection.destination, data, indent + 1) : string.Empty;
+            code += "\n" + CodeBuilder.CloseBody(indent) + "\n";
+            code += CodeBuilder.Indent(indent) + "catch".ConstructHighlight() + $" ({Unit.exceptionType}) \n";
+            code += CodeBuilder.OpenBody(indent) + "\n";
+            code += (Unit.@catch.hasValidConnection) ? (Unit.@catch.connection.destination.unit as Unit).GenerateControl(Unit.@catch.connection.destination, data, indent + 1) : string.Empty;
+            code += "\n" + CodeBuilder.CloseBody(indent) + "\n";
+            code += CodeBuilder.Indent(indent) + "finally".ConstructHighlight() + "\n";
+            code += CodeBuilder.OpenBody(indent) + "\n";
+            code += (Unit.@finally.hasValidConnection) ? (Unit.@finally.connection.destination.unit as Unit).GenerateControl(Unit.@finally.connection.destination, data, indent + 1) : string.Empty;
+            code += "\n" + CodeBuilder.CloseBody(indent) + "\n";
+
+            return code;
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -1612,8 +1796,6 @@ namespace Unity.VisualScripting.Community.Generated
         {
             return base.GenerateValue(input);
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.While))]
@@ -1900,7 +2082,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -1925,7 +2117,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -1950,7 +2152,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -1975,7 +2187,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2000,7 +2222,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2050,7 +2282,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2075,7 +2317,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2100,7 +2352,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2125,7 +2387,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2150,7 +2422,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2175,7 +2457,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2575,7 +2867,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2600,7 +2902,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2625,7 +2937,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2650,7 +2972,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2675,7 +3007,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2700,7 +3042,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2725,7 +3077,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2750,7 +3112,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2775,7 +3147,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2800,7 +3182,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2825,7 +3217,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2850,7 +3252,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2875,7 +3287,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2900,7 +3322,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2925,7 +3357,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2950,7 +3392,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -2975,7 +3427,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3030,7 +3492,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3055,7 +3527,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3070,22 +3552,72 @@ namespace Unity.VisualScripting.Community.Generated
 
 
     }
+    /*
+        [NodeGenerator(typeof(Unity.VisualScripting.OnCollisionEnter))]
+        public sealed class OnCollisionEnterGenerator : NodeGenerator<Unity.VisualScripting.OnCollisionEnter>
+        {
+            public OnCollisionEnterGenerator(Unity.VisualScripting.OnCollisionEnter unit) : base(unit)
+            {
+            }
 
-    [NodeGenerator(typeof(Unity.VisualScripting.OnCollisionEnter))]
-    public sealed class OnCollisionEnterGenerator : NodeGenerator<Unity.VisualScripting.OnCollisionEnter>
+            public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+            {
+                var destination = Unit.controlOutputs
+                    .Select(port => port.connection?.destination)
+                    .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+                if (destination != null)
+                {
+                    return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                        .GenerateControl(destination, data, indent);
+                }
+
+                return "\n";
+            }
+
+            public override string GenerateValue(ValueOutput output)
+            {
+                return base.GenerateValue(output);
+            }
+
+            public override string GenerateValue(ValueInput input)
+            {
+                return base.GenerateValue(input);
+            }
+        }
+    */
+    [NodeGenerator(typeof(Unity.VisualScripting.CollisionEventUnit))]
+    public sealed class CollisionEventGenerator : NodeGenerator<Unity.VisualScripting.CollisionEventUnit>
     {
-        public OnCollisionEnterGenerator(Unity.VisualScripting.OnCollisionEnter unit) : base(unit)
+        public CollisionEventGenerator(Unity.VisualScripting.CollisionEventUnit unit) : base(unit)
         {
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            if (output != Unit.data)
+            {
+                return "collision." + output.key;
+            }
+            else
+            {
+                return "collision";
+            }
         }
 
         public override string GenerateValue(ValueInput input)
@@ -3105,20 +3637,28 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return "collision." + output.key;
         }
 
         public override string GenerateValue(ValueInput input)
         {
             return base.GenerateValue(input);
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.OnCollisionStay))]
@@ -3130,7 +3670,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3155,7 +3705,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3180,7 +3740,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3205,7 +3775,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3230,7 +3810,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3255,7 +3845,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3280,7 +3880,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3305,7 +3915,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3330,7 +3950,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3355,7 +3985,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3380,7 +4020,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3405,7 +4055,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3430,7 +4090,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3455,7 +4125,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3480,7 +4160,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3505,7 +4195,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var destination = Unit.controlOutputs
+                .Select(port => port.connection?.destination)
+                .FirstOrDefault(output => output != null && output.unit is Unit) as ControlInput;
+
+            if (destination != null)
+            {
+                return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit)
+                    .GenerateControl(destination, data, indent);
+            }
+
+            return "\n";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3534,11 +4234,18 @@ namespace Unity.VisualScripting.Community.Generated
 
             if (input == Unit.enter)
             {
-                string eventName = GenerateValue(Unit.name);
+                var eventName = GenerateValue(Unit.name);
                 string eventArgs = GenerateAllArguments(Unit.arguments);
 
-                output += CodeBuilder.Indent(indent) + $"CustomEvent.Trigger({GenerateValue(Unit.target)}, {eventName}, {eventArgs})";
-                output += "\n";
+                /*if (!CSharpPreview.UseCustomEventsAsMethods)
+                 {*/
+                output += CodeBuilder.Indent(indent) + $"CustomEvent".TypeHighlight() + $".Trigger({GenerateValue(Unit.target)}, {eventName}, {eventArgs});\n";
+                /*                }
+                                else 
+                                {
+                                    output += CodeBuilder.Indent(indent) + GenerateValue(Unit.target) + eventName + $"({eventArgs});\n";
+                                }*/
+                output += (Unit.exit.hasValidConnection) ? (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty;
             }
 
             return output;
@@ -3547,14 +4254,24 @@ namespace Unity.VisualScripting.Community.Generated
         private string GenerateAllArguments(List<ValueInput> arguments)
         {
             List<string> argumentValues = new List<string>();
-
+            /*if (!CSharpPreview.UseCustomEventsAsMethods)
+            {
+                foreach (var argument in arguments)
+                {
+                    string argumentValue = GenerateValue(argument);
+                    argumentValues.Add(argumentValue);
+                }
+                return $"new ".ConstructHighlight() + $"object".TypeHighlight() + $"[] {{ {string.Join(", ", argumentValues)} }}";
+            }
+            else 
+            {*/
             foreach (var argument in arguments)
             {
                 string argumentValue = GenerateValue(argument);
                 argumentValues.Add(argumentValue);
             }
-
-            return $"new object[] {{ {string.Join(", ", argumentValues)} }}";
+            return string.Join(", ", argumentValues);
+            //}
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -3564,7 +4281,7 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueInput input)
         {
-            if (input == Unit.name || input == Unit.target || Unit.arguments.Contains(input))
+            if (input == Unit.name || input == Unit.target)
             {
                 if (input == Unit.name)
                 {
@@ -3574,23 +4291,44 @@ namespace Unity.VisualScripting.Community.Generated
                     }
                     else
                     {
-                        return Unit.defaultValues[input.key].ToString();
+                        /*if (!CSharpPreview.UseCustomEventsAsMethods)
+                        {*/
+                        return Unit.defaultValues[input.key].As().Code(false);
+                        /*}
+                        else 
+                        {
+                            return Unit.defaultValues[input.key].ToString();
+                        }*/
                     }
                 }
                 else if (input == Unit.target)
                 {
                     if (input.hasValidConnection)
                     {
-                        return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
+                        return/* (CSharpPreview.UseCustomEventsAsMethods) ? (input.connection.source.unit as Unit).GenerateValue(input.connection.source) + "." : */(input.connection.source.unit as Unit).GenerateValue(input.connection.source);
                     }
                     else
                     {
-                        return CodeBuilder.WarningHighlight("/*Requires Object Input*/");
+                        /*if (!CSharpPreview.UseCustomEventsAsMethods)
+                        {*/
+                        return CodeBuilder.WarningHighlight("/* Requires GameObject Input */");
+                        /*}
+                        else 
+                        {
+                            return "";
+                        }*/
                     }
+                }
+            }
+            else if (Unit.arguments.Contains(input))
+            {
+                if (input.hasValidConnection)
+                {
+                    return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
                 }
                 else
                 {
-                    return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
+                    return $"/* {input.key} Requires Input */";
                 }
             }
 
@@ -3762,12 +4500,23 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.dividend)} / {GenerateValue(Unit.divisor)}";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -3787,15 +4536,25 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.dividend)} % {GenerateValue(Unit.divisor)}";
         }
+
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.GenericMultiply))]
@@ -3812,12 +4571,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.a)} * {GenerateValue(Unit.b)}";
         }
+
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -3837,12 +4611,26 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.minuend)} - {GenerateValue(Unit.subtrahend)}";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -3861,18 +4649,20 @@ namespace Unity.VisualScripting.Community.Generated
         }
         public override string GenerateValue(ValueOutput output)
         {
+            // Generate code for summing up all inputs
             if (output == Unit.sum)
             {
-                if (output.hasValidConnection)
+                // Create a list to store the generated values
+                List<string> values = new List<string>();
+
+                // Iterate through all inputs and add their generated values
+                foreach (var input in Unit.multiInputs)
                 {
-                    var connectedInputs = Unit.inputs
-                        .Where(input => input is ValueInput)
-                        .Select(input => GenerateValue((ValueInput)input));
-
-                    var script = string.Join(" + ", connectedInputs);
-
-                    return script;
+                    values.Add(GenerateValue(input));
                 }
+
+                // Join the values with ' + ' as separator
+                return string.Join(" + ", values);
             }
 
             return base.GenerateValue(output);
@@ -3881,24 +4671,21 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueInput input)
         {
-            if (Unit.multiInputs.Contains(input))
+            if (input.hasValidConnection)
             {
-                if (input.hasValidConnection)
-                {
-                    var summands = new List<string>();
-
-                    var sourceUnit = input.connection.source.unit as Unit;
-                    summands.Add(sourceUnit.GenerateValue(input.connection.source));
-
-                    return $"{string.Join(" + ", summands)}";
-                }
-                else
-                {
-                    return "/* Port Requires input */";
-                }
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
             }
-
-            return base.GenerateValue(input);
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
     }
@@ -3918,12 +4705,26 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"Mathf.Abs({GenerateValue(Unit.input)})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -3943,15 +4744,34 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            List<string> inputCodeList = Unit.multiInputs.Select(input =>
+            {
+                return GenerateValue(input);
+            }).ToList();
+
+            string Parameters = string.Join(", ", inputCodeList);
+
+            return $"CodeGenUtils.CalculateAverage({Parameters})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.ScalarDivide))]
@@ -3968,12 +4788,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.dividend)} / {GenerateValue(Unit.divisor)}";
         }
+
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -3993,16 +4828,30 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+
+            return $"Math.Pow({GenerateValue(Unit.@base)}, {GenerateValue(Unit.exponent)})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
+
 
     [NodeGenerator(typeof(Unity.VisualScripting.ScalarLerp))]
     public sealed class ScalarLerpGenerator : NodeGenerator<Unity.VisualScripting.ScalarLerp>
@@ -4018,12 +4867,26 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"Mathf.Lerp({GenerateValue(Unit.a)}, {GenerateValue(Unit.b)}, {GenerateValue(Unit.t)})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4043,12 +4906,34 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+
+            List<string> inputCodeList = Unit.multiInputs.Select(input =>
+            {
+                return GenerateValue(input);
+            }).ToList();
+
+            string Parameters = string.Join(", ", inputCodeList);
+
+            return $"CodeGenUtils.CalculateMax({Parameters})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4068,12 +4953,33 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            List<string> inputCodeList = Unit.multiInputs.Select(input =>
+            {
+                return GenerateValue(input);
+            }).ToList();
+
+            string Parameters = string.Join(", ", inputCodeList);
+
+            return $"CodeGenUtils.CalculateMin({Parameters})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4093,12 +4999,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.dividend)} % {GenerateValue(Unit.divisor)}";
         }
+
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4118,15 +5039,24 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"Mathf.MoveTowards({GenerateValue(Unit.current)}, {GenerateValue(Unit.target)}, {GenerateValue(Unit.maxDelta)})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.ScalarMultiply))]
@@ -4143,12 +5073,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.a)} * {GenerateValue(Unit.b)}";
         }
+
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4168,12 +5113,26 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"CodeGenUtils.Normalize({GenerateValue(Unit.input)})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(true, false, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4193,12 +5152,26 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.input)} * Time.deltaTime";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(true, false, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4218,6 +5191,11 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
+            if (output == Unit.root)
+            {
+                return $"Math.Pow({GenerateValue(Unit.radicand)}, 1 / {GenerateValue(Unit.degree)})";
+            }
+
             return base.GenerateValue(output);
         }
 
@@ -4225,9 +5203,8 @@ namespace Unity.VisualScripting.Community.Generated
         {
             return base.GenerateValue(input);
         }
-
-
     }
+
 
     [NodeGenerator(typeof(Unity.VisualScripting.ScalarRound))]
     public sealed class ScalarRoundGenerator : NodeGenerator<Unity.VisualScripting.ScalarRound>
@@ -4243,16 +5220,40 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            switch (Unit.rounding)
+            {
+                case ScalarRound.Rounding.Floor:
+                    return $"Mathf.FloorToInt({GenerateValue(Unit.input)})";
+                case ScalarRound.Rounding.AwayFromZero:
+                    return $"Mathf.RoundToInt({GenerateValue(Unit.input)})";
+                case ScalarRound.Rounding.Ceiling:
+                    return $"Mathf.CeilToInt({GenerateValue(Unit.input)})";
+                default:
+                    return base.GenerateValue(output);
+            }
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
+
+
 
     [NodeGenerator(typeof(Unity.VisualScripting.ScalarSubtract))]
     public sealed class ScalarSubtractGenerator : NodeGenerator<Unity.VisualScripting.ScalarSubtract>
@@ -4268,12 +5269,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.minuend)} - {GenerateValue(Unit.subtrahend)}";
         }
+
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4293,16 +5309,46 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
+            // Generate code for summing up all inputs
+            if (output == Unit.sum)
+            {
+                // Create a list to store the generated values
+                List<string> values = new List<string>();
+
+                // Iterate through all inputs and add their generated values
+                foreach (var input in Unit.multiInputs)
+                {
+                    values.Add(GenerateValue(input));
+                }
+
+                // Join the values with ' + ' as separator
+                return string.Join(" + ", values);
+            }
+
             return base.GenerateValue(output);
         }
 
+
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
+
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector2Absolute))]
     public sealed class Vector2AbsoluteGenerator : NodeGenerator<Unity.VisualScripting.Vector2Absolute>
@@ -4318,12 +5364,26 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"new Vector2(Mathf.Abs({GenerateValue(Unit.input)}.x), Mathf.Abs({GenerateValue(Unit.input)}.y))";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4343,12 +5403,26 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"UnityEngine.Vector2.Angle({GenerateValue(Unit.a)}, {GenerateValue(Unit.b)})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4543,12 +5617,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.dividend)} % {GenerateValue(Unit.divisor)}";
         }
+
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4593,15 +5682,37 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
+            // Check if both inputs have valid connections
+            if (Unit.a.hasValidConnection && Unit.b.hasValidConnection)
+            {
+                string vectorA = GenerateValue(Unit.a);
+                string vectorB = GenerateValue(Unit.b);
+
+                return $"new Vector2({vectorA}.x * {vectorB}.x, {vectorA}.y * {vectorB}.y)";
+            }
+
+            // Handle other cases if needed
             return base.GenerateValue(output);
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector2Normalize))]
@@ -4618,15 +5729,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.input)}.normalized";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector2PerSecond))]
@@ -4643,15 +5766,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.input)} * Time.deltaTime";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector2Project))]
@@ -4668,15 +5803,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"Vector2.Dot({GenerateValue(Unit.a)}, {GenerateValue(Unit.b)}) * {GenerateValue(Unit.b)}.normalized";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector2Round))]
@@ -4693,16 +5840,49 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
+            if (output == Unit.output)
+            {
+                // Generate code to round each component of the input Vector2 separately
+                string xRoundingCode = GenerateRoundingCode(Unit.rounding, GenerateValue(Unit.input), "x");
+                string yRoundingCode = GenerateRoundingCode(Unit.rounding, GenerateValue(Unit.input), "y");
+
+                return $"new Vector2({xRoundingCode}, {yRoundingCode})";
+            }
             return base.GenerateValue(output);
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input *//*";
+            }
         }
 
-
+        private string GenerateRoundingCode(Round<Vector2, Vector2>.Rounding roundingMethod, string value, string component)
+        {
+            switch (roundingMethod)
+            {
+                case Round<Vector2, Vector2>.Rounding.Floor:
+                    return $"Mathf.Floor({value}.{component})";
+                case Round<Vector2, Vector2>.Rounding.AwayFromZero:
+                    return $"Mathf.Round({value}.{component})";
+                case Round<Vector2, Vector2>.Rounding.Ceiling:
+                    return $"Mathf.Ceil({value}.{component})";
+                default:
+                    return $"{value}.{component}"; // Default to the original value if rounding is not specified
+            }
+        }
     }
+
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector2Subtract))]
     public sealed class Vector2SubtractGenerator : NodeGenerator<Unity.VisualScripting.Vector2Subtract>
@@ -4718,12 +5898,32 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
+            // Generate code for the subtract operation
+            if (output == Unit.difference)
+            {
+                return $"{GenerateValue(Unit.minuend)} - {GenerateValue(Unit.subtrahend)}";
+            }
+
             return base.GenerateValue(output);
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -4743,15 +5943,44 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
+            // Generate code for summing up all inputs
+            if (output == Unit.sum)
+            {
+                // Create a list to store the generated values
+                List<string> values = new List<string>();
+
+                // Iterate through all inputs and add their generated values
+                foreach (var input in Unit.multiInputs)
+                {
+                    values.Add(GenerateValue(input));
+                }
+
+                // Join the values with ' + ' as separator
+                return string.Join(" + ", values);
+            }
+
             return base.GenerateValue(output);
         }
 
+
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector3Absolute))]
@@ -4868,15 +6097,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"Vector3.Distance({GenerateValue(Unit.a)}, {GenerateValue(Unit.b)})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector3Divide))]
@@ -5018,12 +6259,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.dividend)} % {GenerateValue(Unit.divisor)}";
         }
+
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -5059,6 +6315,7 @@ namespace Unity.VisualScripting.Community.Generated
     {
         public Vector3MultiplyGenerator(Unity.VisualScripting.Vector3Multiply unit) : base(unit)
         {
+            NameSpace = "UnityEngine";
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -5068,16 +6325,35 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
+            // Check if both inputs have valid connections
+            if (Unit.a.hasValidConnection && Unit.b.hasValidConnection)
+            {
+                string vectorA = GenerateValue(Unit.a);
+                string vectorB = GenerateValue(Unit.b);
+
+                return $"new ".ConstructHighlight() + "Vector3".TypeHighlight() + $"({vectorA}.x * {vectorB}.x,{vectorA}.y * {vectorB}.y,{vectorA}.z * {vectorB}.z)";
+            }
+
             return base.GenerateValue(output);
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
+
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector3Normalize))]
     public sealed class Vector3NormalizeGenerator : NodeGenerator<Unity.VisualScripting.Vector3Normalize>
@@ -5093,15 +6369,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"Vector3.Normalize({GenerateValue(Unit.input)})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector3PerSecond))]
@@ -5118,15 +6406,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.input)} * Time.deltaTime";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector3Project))]
@@ -5143,15 +6443,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"Vector3.Project({GenerateValue(Unit.a)}, {GenerateValue(Unit.a)})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector3Round))]
@@ -5168,15 +6480,37 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            switch (Unit.rounding)
+            {
+                case Round<Vector3, Vector3>.Rounding.Floor:
+                    return $"Mathf.Floor(new Vector3({GenerateValue(Unit.input)}.x, {GenerateValue(Unit.input)}.y, {GenerateValue(Unit.input)}.z))";
+                case Round<Vector3, Vector3>.Rounding.AwayFromZero:
+                    return $"Mathf.Round(new Vector3({GenerateValue(Unit.input)}.x, {GenerateValue(Unit.input)}.y, {GenerateValue(Unit.input)}.z))";
+                case Round<Vector3, Vector3>.Rounding.Ceiling:
+                    return $"Mathf.Ceil(new Vector3({GenerateValue(Unit.input)}.x, {GenerateValue(Unit.input)}.y, {GenerateValue(Unit.input)}.z))";
+                default:
+                    return base.GenerateValue(output);
+            }
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector3Subtract))]
@@ -5193,12 +6527,32 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
+            // Generate code for the subtract operation
+            if (output == Unit.difference)
+            {
+                return $"{GenerateValue(Unit.minuend)} - {GenerateValue(Unit.subtrahend)}";
+            }
+
             return base.GenerateValue(output);
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -5218,12 +6572,43 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
+            // Generate code for summing up all inputs
+            if (output == Unit.sum)
+            {
+                // Create a list to store the generated values
+                List<string> values = new List<string>();
+
+                // Iterate through all inputs and add their generated values
+                foreach (var input in Unit.multiInputs)
+                {
+                    values.Add(GenerateValue(input));
+                }
+
+                // Join the values with ' + ' as separator
+                return string.Join(" + ", values);
+            }
+
             return base.GenerateValue(output);
         }
 
+
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(true, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -5443,12 +6828,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.dividend)} % {GenerateValue(Unit.divisor)}";
         }
+
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -5518,15 +6918,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"Vector4.Normalize({GenerateValue(Unit.input)})";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector4PerSecond))]
@@ -5543,15 +6955,27 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return $"{GenerateValue(Unit.input)} * Time.deltaTime";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector4Round))]
@@ -5568,15 +6992,37 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            switch (Unit.rounding)
+            {
+                case Round<Vector4, Vector4>.Rounding.Floor:
+                    return $"Mathf.FloorToInt({GenerateValue(Unit.input)})";
+                case Round<Vector4, Vector4>.Rounding.AwayFromZero:
+                    return $"Mathf.RoundToInt({GenerateValue(Unit.input)})";
+                case Round<Vector4, Vector4>.Rounding.Ceiling:
+                    return $"Mathf.CeilToInt({GenerateValue(Unit.input)})";
+                default:
+                    return base.GenerateValue(output);
+            }
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
-
-
     }
 
     [NodeGenerator(typeof(Unity.VisualScripting.Vector4Subtract))]
@@ -5593,12 +7039,32 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
+            // Generate code for the subtract operation
+            if (output == Unit.difference)
+            {
+                return $"{GenerateValue(Unit.minuend)} - {GenerateValue(Unit.subtrahend)}";
+            }
+
             return base.GenerateValue(output);
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -5618,12 +7084,43 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueOutput output)
         {
+            // Generate code for summing up all inputs
+            if (output == Unit.sum)
+            {
+                // Create a list to store the generated values
+                List<string> values = new List<string>();
+
+                // Iterate through all inputs and add their generated values
+                foreach (var input in Unit.multiInputs)
+                {
+                    values.Add(GenerateValue(input));
+                }
+
+                // Join the values with ' + ' as separator
+                return string.Join(" + ", values);
+            }
+
             return base.GenerateValue(output);
         }
 
+
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -5661,19 +7158,37 @@ namespace Unity.VisualScripting.Community.Generated
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            var _output = string.Empty;
+            var ValueInput = connectedValueInputs.FirstOrDefault(valueInput => valueInput.key == output.key);
+
+            if (ValueInput != null)
+            {
+                _output += GenerateValue(ValueInput);
+            }
+            else
+            {
+                _output += $"/* Missing Value Input: {output.key} */";
+            }
+
+            return _output;
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return input.unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -5688,18 +7203,39 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return base.GenerateControl(input, data, indent);
+            var output = string.Empty;
+
+            var controloutput = connectedGraphOutputs.FirstOrDefault(output => output.key == input.key);
+
+            if (controloutput != null)
+            {
+                output += (controloutput.hasValidConnection) ? GetSingleDecorator(controloutput.connection.destination.unit as Unit, controloutput.connection.destination.unit as Unit)
+                .GenerateControl(controloutput.connection.destination, data, indent) : string.Empty;
+            }
+
+            return output;
         }
 
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
+            return GenerateValue(Unit.valueInputs[output.key]);
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return base.GenerateValue(input);
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
 
@@ -5752,24 +7288,34 @@ namespace Unity.VisualScripting.Community.Generated
             {
                 var valueToCheck = GenerateValue(Unit.input);
 
-                output += CodeBuilder.Indent(indent) + $"if ({valueToCheck} == null)";
+                output += CodeBuilder.Indent(indent) + $"if".ConstructHighlight() + $"({valueToCheck}" + " != " + "null".ConstructHighlight() + ")";
                 output += "\n";
                 output += CodeBuilder.OpenBody(indent);
                 output += "\n";
 
-                if (Unit.ifNull.hasAnyConnection)
+                if (Unit.ifNotNull.hasValidConnection)
                 {
-                    var nullindent = CodeBuilder.Indent(indent);
-                    output += nullindent + (Unit.ifNull.connection.destination.unit as Unit).GenerateControl(Unit.ifNull.connection.destination, data, indent + 1);
+                    output += CodeBuilder.Indent(indent) + (Unit.ifNotNull.connection.destination.unit as Unit).GenerateControl(Unit.ifNotNull.connection.destination, data, indent + 1);
                 }
 
                 output += "\n" + CodeBuilder.CloseBody(indent);
 
-                if (Unit.ifNotNull.hasValidConnection)
+                if (Unit.ifNull.hasAnyConnection)
                 {
                     output += "\n";
-                    output += CodeBuilder.Indent(indent) + (Unit.ifNotNull.connection.destination.unit as Unit).GenerateControl(Unit.ifNotNull.connection.destination, data, indent);
+                    output += CodeBuilder.Indent(indent) + "else".ConstructHighlight();
+                    output += "\n";
+                    output += CodeBuilder.OpenBody(indent);
+                    output += "\n";
+                    output += CodeBuilder.Indent(indent) + (Unit.ifNull.connection.destination.unit as Unit).GenerateControl(Unit.ifNull.connection.destination, data, indent + 1);
+                    output += "\n" + CodeBuilder.CloseBody(indent);
                 }
+                else
+                {
+                    output += "\n";
+                }
+
+
             }
 
             return output;
@@ -5901,17 +7447,17 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return "/* Does not support Timer */";
+            return "/* Timer node not supported */";
         }
 
         public override string GenerateValue(ValueOutput output)
         {
-            return "/* Does not support Timer */";
+            return "/* Timer node not supported */";
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            return "/* Does not support Timer */";
+            return "/* Timer node not supported */";
         }
     }
 
@@ -5926,7 +7472,7 @@ namespace Unity.VisualScripting.Community.Generated
         {
             var output = string.Empty;
 
-            output += "yield return new WaitForEndOfFrame();";
+            output += CodeBuilder.Indent(indent) + "yield return ".ControlHighlight() + "new ".ConstructHighlight() + "WaitForEndOfFrame();";
 
             if (Unit.exit.hasValidConnection)
             {
@@ -5958,7 +7504,7 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return "/* Watf for flow Not supported */";
+            return "/* Wait for flow Not supported */";
         }
 
         public override string GenerateValue(ValueOutput output)
@@ -5985,7 +7531,7 @@ namespace Unity.VisualScripting.Community.Generated
         {
             var output = string.Empty;
 
-            output += "yield return null;\n";
+            output += CodeBuilder.Indent(indent) + "yield return ".ControlHighlight() + "null".ConstructHighlight() + ";\n";
 
             if (Unit.exit.hasValidConnection)
             {
@@ -6019,16 +7565,15 @@ namespace Unity.VisualScripting.Community.Generated
         {
             var output = string.Empty;
 
-            output += CodeBuilder.Indent(indent);
             if (!Unit.unscaledTime.hasValidConnection)
             {
                 if (!GenerateValue(Unit.unscaledTime).Equals("true", StringComparison.OrdinalIgnoreCase))
                 {
-                    output += "yield return new WaitForSeconds(" + GenerateValue(Unit.seconds) + ");\n";
+                    output += CodeBuilder.Indent(indent) + "yield return ".ControlHighlight() + "new ".ConstructHighlight() + "WaitForSeconds(" + GenerateValue(Unit.seconds) + ");\n";
                 }
                 else
                 {
-                    output += "yield return new WaitForSecondsRealtime(" + GenerateValue(Unit.seconds) + ");\n";
+                    output += CodeBuilder.Indent(indent) + "yield return ".ControlHighlight() + "new ".ConstructHighlight() + "WaitForSecondsRealtime(" + GenerateValue(Unit.seconds) + ");\n";
                 }
 
                 output += "\n";
@@ -6042,7 +7587,7 @@ namespace Unity.VisualScripting.Community.Generated
             }
             else
             {
-                return "/* Use default value WaitForSeconds does not support connected value */";
+                return CodeBuilder.Indent(indent) + "/* Use default value WaitForSeconds does not support connected value */";
             }
         }
 
@@ -6053,30 +7598,18 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateValue(ValueInput input)
         {
-            if (input == Unit.seconds)
+            if (input.hasValidConnection)
             {
-                if (Unit.seconds.hasValidConnection)
-                {
-                    return (Unit.seconds.connection.source.unit as Unit).GenerateValue(Unit.seconds.connection.source);
-                }
-                else
-                {
-                    return Unit.defaultValues[input.key].ToString();
-                }
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
             }
-            else if (input == Unit.unscaledTime)
+            else if (input.hasDefaultValue)
             {
-                if (Unit.unscaledTime.hasValidConnection)
-                {
-                    return false.ToString();
-                }
-                else
-                {
-                    return Unit.defaultValues[input.key].ToString();
-                }
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
             }
-
-            return base.GenerateValue(input);
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
     }
@@ -6094,11 +7627,11 @@ namespace Unity.VisualScripting.Community.Generated
 
             if (Unit.condition.hasValidConnection)
             {
-                output += $"yield return new WaitUntil(() => {GenerateValue(Unit.condition)}; \n";
+                output += CodeBuilder.Indent(indent) + $"yield return ".ControlHighlight() + "new ".ConstructHighlight() + "WaitUntil(() => {GenerateValue(Unit.condition)}; \n";
             }
             else
             {
-                return "/*WaitUntil requires condition*/";
+                return CodeBuilder.Indent(indent) + "/*WaitUntil requires condition*/";
             }
 
             if (Unit.exit.hasValidConnection)
@@ -6139,11 +7672,11 @@ namespace Unity.VisualScripting.Community.Generated
 
             if (Unit.condition.hasAnyConnection)
             {
-                output += $"yield return new WaitWhile(() => {GenerateValue(Unit.condition)};\n";
+                output += CodeBuilder.Indent(indent) + $"yield return ".ControlHighlight() + "new ".ConstructHighlight() + "WaitWhile(() => {GenerateValue(Unit.condition)};\n";
             }
             else
             {
-                return "/*WaitWhile requires condition*/";
+                return CodeBuilder.Indent(indent) + "/*WaitWhile requires condition*/";
             }
 
             if (Unit.exit.hasValidConnection)
@@ -6189,9 +7722,9 @@ namespace Unity.VisualScripting.Community.Generated
             {
                 foreach (var connection in output.connections)
                 {
-                    if (connection.destination is ValueInput connectedInput)
+                    if (connection.destination is ValueInput)
                     {
-                        return GenerateValue(Unit.name);
+                        return GenerateValue(Unit.name).VariableHighlight();
                     }
                 }
             }
@@ -6683,136 +8216,73 @@ namespace Unity.VisualScripting.Community.Generated
     [NodeGenerator(typeof(Unity.VisualScripting.SetVariable))]
     public sealed class SetVariableGenerator : NodeGenerator<Unity.VisualScripting.SetVariable>
     {
-        public SetVariableGenerator(Unity.VisualScripting.SetVariable unit) : base(unit)
-        {
-        }
+        public SetVariableGenerator(Unity.VisualScripting.SetVariable unit) : base(unit) { }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             var output = string.Empty;
 
-            data.mustReturn = true;
-
             if (input == Unit.assign)
             {
-                if (!data.localNames.Contains(GenerateValue(Unit.name)))
+                var varName = GenerateValue(Unit.name);
+                var varValue = GenerateValue(Unit.input);
+
+                if (!data.localNames.Contains(varName))
                 {
-                    output += "\n";
-                    data.AddLocalName(GenerateValue(Unit.name));
-                    if (Unit.input.hasValidConnection && Unit.input.connection.source.unit.GetType() != typeof(Null))
-                    {
-                        output += CodeBuilder.Indent(indent) + $"var {GenerateValue(Unit.name)}".ConstructHighlight();
-                        output += $" = {GenerateValue(Unit.input)};";
-                    }
-                    else
-                    {
-                        if (Unit.graph.variables.IsDefined(GenerateValue(Unit.name)))
-                        {
-                            output += CodeBuilder.Indent(indent) + CodeBuilder.TypeHighlight($"{Unit.graph.variables.Get(GenerateValue(Unit.name)).GetType().DisplayName()}") + $" {GenerateValue(Unit.name)}";
-                            if (Unit.graph.variables.Get(GenerateValue(Unit.name)).GetType().IsValueType)
-                            {
-                                if (!Unit.graph.variables.Get(GenerateValue(Unit.name)).GetType().IsStruct())
-                                {
-                                    if (Unit.graph.variables.Get(GenerateValue(Unit.name)).GetType() != typeof(float))
-                                    {
-                                        output += " = " + Unit.graph.variables.Get(GenerateValue(Unit.name)) + ";";
-                                    }
-                                    else
-                                    {
-                                        output += " = " + Unit.graph.variables.Get(GenerateValue(Unit.name)) + "f;";
-                                    }
-                                }
-                                else
-                                {
-                                    output += " = " + CodeBuilder.ConstructHighlight("new ") + Unit.graph.variables.Get(GenerateValue(Unit.name)).GetType().DisplayName() + "()";
-                                }
-                            }
-                            else if (Unit.graph.variables.Get(GenerateValue(Unit.name)).GetType().GetConstructors().Count() > 0)
-                            {
-                                if (Unit.graph.variables.Get(GenerateValue(Unit.name)).GetType() != typeof(string))
-                                {
-                                    output += " = " + CodeBuilder.ConstructHighlight("new ") + Unit.graph.variables.Get(GenerateValue(Unit.name)) + "();";
-                                }
-                                else
-                                {
-                                    output += " = " + CodeBuilder.ConstructHighlight("new ") + Unit.graph.variables.Get(GenerateValue(Unit.name)) + "(\"\");";
-                                }
-                            }
-                            else
-                            {
-                                output += " = null;";
-                            }
-                        }
-
-                        output += "\n";
-                    }
+                    data.AddLocalName(varName);
+                    output += CodeBuilder.Indent(indent) + ((Unit.input.hasValidConnection) ? (Unit.kind == VariableKind.Flow ? "var".ConstructHighlight() : Unit.input.connection.source.type.As().CSharpName(false, false, true).TypeHighlight()) + " " + GenerateValue(Unit.name).VariableHighlight() + " = " + GenerateValue(Unit.input) + ";\n" : "/* Set variable requires value */ \n");
                 }
-
-
                 else
                 {
-                    output += "\n";
-                    output += CodeBuilder.Indent(indent) + $"{GenerateValue(Unit.name)}".ConstructHighlight() + $" = {GenerateValue(Unit.input)};";
-
-                    output += "\n";
+                    output += CodeBuilder.Indent(indent) + $"{varName}".VariableHighlight() + $" = {varValue};\n";
                 }
-
-                output += (Unit.assigned.hasAnyConnection ? (Unit.assigned.connection.destination.unit as Unit).GenerateControl(Unit.assigned.connection.destination, data, indent) : string.Empty);
+                output += (Unit.assigned.hasValidConnection) ? (Unit.assigned.connection.destination.unit as Unit).GenerateControl(Unit.assigned.connection.destination, data, indent) : string.Empty;
                 return output;
             }
 
             return base.GenerateControl(input, data, indent);
         }
+
         public override string GenerateValue(ValueOutput output)
         {
-            if (output == Unit.output)
+            if (output == Unit.output && output.hasValidConnection)
             {
-                foreach (var connection in output.connections)
-                {
-                    if (connection.destination is ValueInput connectedInput)
-                    {
-                        string generatedValue = GenerateValue(Unit.name);
-                        return $"{(generatedValue.Length > 0 ? generatedValue : string.Empty)}";
-                    }
-                }
+                var varName = GenerateValue(Unit.name);
+                return string.IsNullOrEmpty(varName) ? string.Empty : varName.VariableHighlight();
             }
 
-            return base.GenerateValue(output); // Output value is the same as the corresponding input value
+            return base.GenerateValue(output);
         }
 
         public override string GenerateValue(ValueInput input)
         {
-            if (input == Unit.name || input == Unit.input)
+            if (input == Unit.name)
             {
-                if (input == Unit.name)
+                if (input.hasValidConnection)
                 {
-                    if (Unit.name.hasValidConnection)
+                    return (Unit.name.connection.source.unit as Unit).GenerateValue(Unit.name.connection.source);
+                }
+                else
+                {
+                    if (Unit.defaultValues[input.key].ToString() != string.Empty)
                     {
-                        string generatedValue = (Unit.name.connection.source.unit as Unit).GenerateValue(Unit.name.connection.source);
-                        return generatedValue.Length > 0 ? generatedValue : string.Empty;
+                        return Unit.defaultValues[input.key].ToString();
                     }
                     else
                     {
-                        string defaultValue = Unit.defaultValues[input.key].ToString();
-                        return defaultValue.Length > 0 ? defaultValue : string.Empty;
+                        return "null".ConstructHighlight();
                     }
                 }
-                else if (input == Unit.input)
-                {
-                    if (Unit.input.hasValidConnection)
-                    {
-                        return (Unit.input.connection.source.unit as Unit).GenerateValue(Unit.input.connection.source);
-                    }
-                    else
-                    {
-                        return " = null";
-                    }
-                }
+            }
+            else if (input == Unit.input)
+            {
+                return input.hasValidConnection ? (Unit.input.connection.source.unit as Unit).GenerateValue(Unit.input.connection.source) : "null";
             }
 
             return base.GenerateValue(input);
         }
     }
+
 
     [NodeGenerator(typeof(Unity.VisualScripting.SubgraphUnit))]
     public sealed class SubgraphUnitGenerator : NodeGenerator<Unity.VisualScripting.SubgraphUnit>
@@ -6825,145 +8295,84 @@ namespace Unity.VisualScripting.Community.Generated
         {
             var output = string.Empty;
 
+            var graphinput = Unit.nest.graph.units.FirstOrDefault(unit => unit is GraphInput) as Unit;
+            var graphOutput = Unit.nest.graph.units.FirstOrDefault(unit => unit is GraphOutput) as Unit;
+            var subgraphName = Unit.nest.graph.title.Length > 0 ? Unit.nest.graph.title : "UnnamedSubgraph";
+            if (CSharpPreview.ShowSubgraphComment)
+            {
+                if (graphinput != null || graphOutput != null)
+                {
+                    output += "\n" + CodeBuilder.Indent(indent) + $"//Subgraph: \"{subgraphName}\"_Port({input.key}) \n".CommentHighlight();
+                }
+                else
+                {
+                    output += "\n" + CodeBuilder.Indent(indent) + $"/* Subgraph \"{subgraphName}\" is empty */ \n";
+                }
+            }
+
             var control = Unit.controlInputs[input.key];
 
-            if (input == control)
-            {
-                var methodContent = GenerateMethodContent(Unit, input, data);
 
-                if (Unit.valueOutputs.Count > 0 && Unit.nest.graph.title != string.Empty)
+            if (input.hasValidConnection)
+            {
+                if (graphinput != null)
                 {
-                    output += $"{CodeBuilder.Indent(indent)}{Unit.valueOutputs[0].type.DisplayName()} {Unit.nest.graph.title}()\n";
-                    output += CodeBuilder.Indent(indent) + "{\n";
-                    output += CodeBuilder.Indent(indent) + 1 + methodContent;
-                    output += CodeBuilder.Indent(indent) + "}\n";
-                }
-                else if (Unit.valueOutputs.Count == 0)
-                {
-                    output += "/* Add a value Output for a return type */";
-                }
-                else if (Unit.nest.graph.title == string.Empty)
-                {
-                    output += "/* Add a title for the local function */";
+                    var _output = graphinput.controlOutputs[input.key];
+                    output += CodeBuilder.Indent(indent) + ((_output.hasValidConnection) ? (_output.connection.destination.unit as Unit).GenerateControl(_output.connection.destination, data, indent) : string.Empty);
                 }
             }
 
-            foreach (var connection in Unit.controlOutputs)
+
+            var connectedGraphOutputs = new List<ControlOutput>();
+
+            foreach (var _output in Unit.controlOutputs)
             {
-                if (connection.hasValidConnection)
+                if (_output.hasValidConnection)
                 {
-
-                    output += (connection.connection.destination.unit as Unit).GenerateControl(connection.connection.destination, data, indent);
-                    output += "\n";
-
+                    connectedGraphOutputs.Add(_output);
                 }
             }
+
+            if (graphOutput != null) GetSingleDecorator(graphOutput, graphOutput).connectedGraphOutputs = connectedGraphOutputs;
+
+            var connectedValueInputs = new List<ValueInput>();
+
+            foreach (var _valueinput in Unit.valueInputs)
+            {
+                if (_valueinput.hasValidConnection || _valueinput.hasDefaultValue)
+                {
+                    connectedValueInputs.Add(_valueinput);
+                }
+            }
+
+            if (graphinput != null) GetSingleDecorator(graphinput, graphinput).connectedValueInputs = connectedValueInputs;
 
             return output;
         }
 
-        private string GenerateMethodContent(SubgraphUnit unit, ControlInput input, ControlGenerationData data)
+        public override string GenerateValue(ValueInput input)
         {
-            var output = string.Empty;
-
-            foreach (var _input in unit.nest.graph.controlConnections)
+            if (input.hasValidConnection)
             {
-                var connectedUnit = _input.destination.unit as Unit;
-                output += connectedUnit.GenerateControl(_input.destination, data, 1);
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
             }
-            return output;
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
         }
 
         public override string GenerateValue(ValueOutput output)
         {
-            return base.GenerateValue(output);
-        }
+            var graphOutput = Unit.nest.graph.units.FirstOrDefault(unit => unit is GraphOutput) as Unit;
 
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
+            return GetSingleDecorator(graphOutput, graphOutput).GenerateValue(output);
         }
     }
-
-
-
-
-#if USING_NEW_INPUT_SYSTEM
-    [NodeGenerator(typeof(Unity.VisualScripting.InputSystem.OnInputSystemEventButton))]
-    public sealed class OnInputSystemEventButtonGenerator : NodeGenerator<Unity.VisualScripting.InputSystem.OnInputSystemEventButton>
-    {
-        public OnInputSystemEventButtonGenerator(Unity.VisualScripting.InputSystem.OnInputSystemEventButton unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.InputSystem.OnInputSystemEventFloat))]
-    public sealed class OnInputSystemEventFloatGenerator : NodeGenerator<Unity.VisualScripting.InputSystem.OnInputSystemEventFloat>
-    {
-        public OnInputSystemEventFloatGenerator(Unity.VisualScripting.InputSystem.OnInputSystemEventFloat unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-
-    [NodeGenerator(typeof(Unity.VisualScripting.InputSystem.OnInputSystemEventVector2))]
-    public sealed class OnInputSystemEventVector2Generator : NodeGenerator<Unity.VisualScripting.InputSystem.OnInputSystemEventVector2>
-    {
-        public OnInputSystemEventVector2Generator(Unity.VisualScripting.InputSystem.OnInputSystemEventVector2 unit) : base(unit)
-        {
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return base.GenerateValue(output);
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            return base.GenerateValue(input);
-        }
-
-
-    }
-#endif
 
     [NodeGenerator(typeof(Unity.VisualScripting.Community.BetterIf))]
     public sealed class BetterIfGenerator : NodeGenerator<Unity.VisualScripting.Community.BetterIf>
@@ -7036,11 +8445,11 @@ namespace Unity.VisualScripting.Community.Generated
 
             if (input == Unit.input)
             {
-                output += $"UnityEngine.Debug.Log({GenerateValue(Unit.format)});";
+                output += $"Debug.Log({GenerateValue(Unit.format)});";
                 output += (Unit.output.hasAnyConnection ? (Unit.output.connection.destination.unit as Unit).GenerateControl(Unit.output.connection.destination, data, indent) : string.Empty);
             }
 
-            return output;
+            return CodeBuilder.Indent(indent) + output;
         }
         public override string GenerateValue(ValueInput input)
         {
@@ -7052,13 +8461,7 @@ namespace Unity.VisualScripting.Community.Generated
                 }
                 else if (input.hasDefaultValue)
                 {
-                    var value = Unit.defaultValues[input.key].ToString();
-
-                    if (value == "")
-                    {
-                        return "\"\"";
-                    }
-                    else { return $"\"{value}\""; }
+                    var value = Unit.defaultValues[input.key].As().Code(false);
                 }
             }
 
@@ -7094,6 +8497,7 @@ namespace Unity.VisualScripting.Community.Generated
     {
         public GeneratedUnitGenerator(GeneratedUnit unit) : base(unit)
         {
+            NameSpace = Unit.NameSpace;
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -7112,7 +8516,8 @@ namespace Unity.VisualScripting.Community.Generated
             {
                 generatedCode += (Unit.Exit.hasAnyConnection ? (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent) : string.Empty);
             }
-            return generatedCode;
+
+            return CodeBuilder.Indent(indent) + generatedCode;
         }
 
         public override string GenerateValue(ValueInput input)
@@ -7140,7 +8545,9 @@ namespace Unity.VisualScripting.Community.Generated
 
                 if (generatorLogicMethod != null)
                 {
-                    var methodResult = generatorLogicMethod.Invoke(unit, new object[0]) as string;
+                    object[] data = new object[1];
+                    data[0] = output;
+                    var methodResult = generatorLogicMethod.Invoke(unit, data) as string;
                     generatedCode += methodResult;
                 }
 
@@ -7162,7 +8569,7 @@ namespace Unity.VisualScripting.Community.Generated
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return CodeBuilder.Indent(indent) + CodeBuilder.Highlight($"return", "FF6BE8") + $" {GenerateValue(Unit.Data)};";
+            return CodeBuilder.Indent(indent) + $"return".ControlHighlight() + $" {GenerateValue(Unit.Data)};";
         }
 
         public override string GenerateValue(ValueInput input)
@@ -7182,4 +8589,691 @@ namespace Unity.VisualScripting.Community.Generated
         }
     }
 
+    [NodeGenerator(typeof(ActionNode))]
+    public class ActionNodeGenerator : NodeGenerator<ActionNode>
+    {
+        public ActionNodeGenerator(ActionNode unit) : base(unit)
+        {
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            return base.GenerateControl(input, data, indent);
+        }
+
+        public override string GenerateValue(ValueOutput output)
+        {
+            if (output == Unit.@delegate)
+            {
+                var parameters = string.Empty;
+
+                if (Unit.parameters.Count > 0)
+                {
+                    var count = 0;
+                    parameters += "<";
+                    foreach (var _param in Unit.parameters)
+                    {
+                        parameters += _param.type.ToString();
+
+                        if (count != Unit.parameters.Count - 1)
+                        {
+                            parameters += ", ";
+                        }
+                    }
+                    parameters += ">";
+                }
+                return $"new {Unit._delegate.DisplayName}{parameters}()";
+            }
+
+            return base.GenerateValue(output);
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].ToString();
+            }
+            else
+            {
+                return $"/*{input.key} Requires Input*/";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(YieldReturn))]
+    public class YieldReturnGenerator : NodeGenerator<YieldReturn>
+    {
+        public YieldReturnGenerator(YieldReturn unit) : base(unit)
+        {
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            return CodeBuilder.Indent(indent) + $"yield return".ControlHighlight() + $" {GenerateValue(Unit.value)};";
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].ToString();
+            }
+            else
+            {
+                return $"/*{input.key} Requires Input*/";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(NegativeValueNode))]
+    public class NegativeValueNodeGenerator : NodeGenerator<NegativeValueNode>
+    {
+        public NegativeValueNodeGenerator(NegativeValueNode unit) : base(unit)
+        {
+        }
+
+        public override string GenerateValue(ValueOutput output)
+        {
+            switch (Unit.type)
+            {
+                case NegateType.Float: return $"-{GenerateValue(Unit.Float)}";
+                case NegateType.Int: return $"-{GenerateValue(Unit.Int)}";
+                case NegateType.Vector2: return $"-{GenerateValue(Unit.Vector2)}";
+                case NegateType.Vector3: return $"-{GenerateValue(Unit.Vector3)}";
+            }
+            return base.GenerateValue(output);
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(Cast))]
+    public class CastGenerator : NodeGenerator<Cast>
+    {
+        public CastGenerator(Cast unit) : base(unit)
+        {
+            NameSpace = Unit.CastType.Namespace;
+        }
+
+        public override string GenerateValue(ValueOutput output)
+        {
+            return $"({Unit.CastType.As().CSharpName(false).TypeHighlight()}){GenerateValue(Unit.value)}";
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                // Handle the case where the input requires an input (error message or throw exception)
+                return $"/* {input.key} Requires Input */";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(AsUnit))]
+    public class AsGenerator : NodeGenerator<AsUnit>
+    {
+        public AsGenerator(AsUnit unit) : base(unit)
+        {
+            NameSpace = Unit.AsType.Namespace;
+        }
+
+        public override string GenerateValue(ValueOutput output)
+        {
+            return $"({GenerateValue(Unit.value)}" + " as ".ConstructHighlight() + $"{Unit.AsType.As().CSharpName(false).TypeHighlight()})";
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                // If the input has a valid connection, generate code for it
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                // If there's a default value, use it
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input ";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(AssignValueInput))]
+    public class AssignValueInputGenerator : NodeGenerator<AssignValueInput>
+    {
+        public AssignValueInputGenerator(AssignValueInput unit) : base(unit)
+        {
+            NameSpace = Unit.VariableType.Namespace;
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            bool nullmeansSelf = false;
+
+            if (Unit.VariableType == typeof(GameObject))
+            {
+                nullmeansSelf = bool.Parse(GenerateValue(Unit.NullMeansSelf).RemoveHighlights().RemoveMarkdown());
+            }
+
+            if (Unit.Input.hasValidConnection)
+            {
+                var output = string.Empty;
+                string _default = Unit.DefaultValue ? Unit.Default.hasValidConnection || Unit.Default.hasDefaultValue ? $", {GenerateValue(Unit.Default)}" : ", default" : "";
+
+                output += (Unit.Exit.hasValidConnection) ? (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent) : string.Empty;
+
+                string assign = $"{GenerateValue(Unit.Input)} = ValueInput" + $"{(!Unit.DefaultValue || !Unit.Default.hasDefaultValue || Unit.VariableType == typeof(GameObject) ? "<" + Unit.VariableType.As().CSharpName(false, false, true) + ">" : string.Empty)}" + $"(nameof({GenerateValue(Unit.Input)}){_default})" + (nullmeansSelf ? "" : ";");
+                string shouldmeanSelf = nullmeansSelf ? $".NullMeansSelf();" : "";
+                return assign + shouldmeanSelf + "\n" + output;
+            }
+            else
+            {
+                var output = string.Empty;
+                output += (Unit.Exit.hasValidConnection) ? (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent) : string.Empty;
+                return "/* Requires Value Input */\n" + output;
+            }
+
+
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input ";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(AssignControlInput))]
+    public class AssignControlInputGenerator : NodeGenerator<AssignControlInput>
+    {
+        public AssignControlInputGenerator(AssignControlInput unit) : base(unit)
+        {
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            var output = string.Empty;
+            if (Unit._controlInput.hasValidConnection)
+            {
+                if (Unit.Exit.hasValidConnection)
+                {
+                    output += (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent);
+                }
+
+                if (!Unit.Coroutine)
+                {
+                    return $"{GenerateValue(Unit._controlInput)} = ControlInput(nameof({GenerateValue(Unit._controlInput)}), {(GenerateValue(Unit.MethodName).Length == 0 ? "/* Requires Method Name */" : $"{GenerateValue(Unit.MethodName)}")}); \n" + output;
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(GenerateValue(Unit.MethodName)) || string.IsNullOrWhiteSpace(GenerateValue(Unit.MethodName)))
+                    {
+                        return $"{GenerateValue(Unit._controlInput)} = ControlInputCoroutine(nameof({GenerateValue(Unit._controlInput)}), {(GenerateValue(Unit.CoroutineMethodName).Length == 0 ? "/* Requires CoroutineMethod Name */" : $"{GenerateValue(Unit.CoroutineMethodName)}")}); \n" + output;
+                    }
+                    else
+                    {
+                        return $"{GenerateValue(Unit._controlInput)} = ControlInputCoroutine(nameof({GenerateValue(Unit._controlInput)}), {GenerateValue(Unit.MethodName)}, {(GenerateValue(Unit.CoroutineMethodName).Length == 0 ? "/* Requires CoroutineMethod Name */" : $"{GenerateValue(Unit.CoroutineMethodName)}")}); \n" + output;
+                    }
+                }
+            }
+            else
+            {
+                if (Unit.Exit.hasValidConnection)
+                {
+                    output += (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent);
+                }
+                return "/* Requires Control Input */\n" + output;
+            }
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].ToString();
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input ";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(AssignControlOutput))]
+    public class AssignControlOutputGenerator : NodeGenerator<AssignControlOutput>
+    {
+        public AssignControlOutputGenerator(AssignControlOutput unit) : base(unit)
+        {
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            var output = string.Empty;
+            if (Unit.controlOutput.hasValidConnection)
+            {
+                if (Unit.Exit.hasValidConnection)
+                {
+                    output += (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent);
+                }
+
+                return $"{GenerateValue(Unit.controlOutput)} = ControlOutput(nameof({GenerateValue(Unit.controlOutput)})); \n" + output;
+            }
+            else
+            {
+                if (Unit.Exit.hasValidConnection)
+                {
+                    output += (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent);
+                }
+                return "/* Requires Control Input */\n" + output;
+            }
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true, "");
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input ";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(AssignValueOutput))]
+    public class AssignValueOutputGenerator : NodeGenerator<AssignValueOutput>
+    {
+        public AssignValueOutputGenerator(AssignValueOutput unit) : base(unit)
+        {
+            NameSpace = Unit.VariableType.Namespace;
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            if (Unit.valueOutput.hasValidConnection)
+            {
+                var output = string.Empty;
+                output += (Unit.Exit.hasValidConnection) ? (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent) : string.Empty;
+                return $"{GenerateValue(Unit.valueOutput)} = ValueOutput<{Unit.VariableType.As().CSharpName(false, false, true)}>(nameof({GenerateValue(Unit.valueOutput)}){(Unit.triggersMethod ? $", {GenerateValue(Unit.MethodName)}" : string.Empty)}); \n" + output;
+            }
+            else
+            {
+                var output = string.Empty;
+                output += (Unit.Exit.hasValidConnection) ? (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent) : string.Empty;
+                return "/* Requires Value Input */\n" + output;
+            }
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].ToString();
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input ";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(Assignment))]
+    public class AssignmentGenerator : NodeGenerator<Unity.VisualScripting.Community.Assignment>
+    {
+        public AssignmentGenerator(Assignment unit) : base(unit)
+        {
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            if (Unit.Input.hasValidConnection && Unit.Output.hasValidConnection)
+            {
+                var output = string.Empty;
+                output += (Unit.Exit.hasValidConnection) ? (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent) : string.Empty;
+                return $"Assignment({GenerateValue(Unit.Input)}, {GenerateValue(Unit.Output)}); \n" + output;
+            }
+            else
+            {
+                var output = string.Empty;
+                output += (Unit.Exit.hasValidConnection) ? (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent) : string.Empty;
+                return "/* Missing Inputs */\n" + output;
+            }
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true);
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input ";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(Succession))]
+    public class SuccessionGenerator : NodeGenerator<Unity.VisualScripting.Community.Succession>
+    {
+        public SuccessionGenerator(Succession unit) : base(unit)
+        {
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            if (Unit.Input.hasValidConnection && Unit.Output.hasValidConnection)
+            {
+                var output = string.Empty;
+                output += (Unit.Exit.hasValidConnection) ? (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent) : string.Empty;
+                return $"Succession({GenerateValue(Unit.Input)}, {GenerateValue(Unit.Output)}); \n" + output;
+            }
+            else
+            {
+                var output = string.Empty;
+                output += (Unit.Exit.hasValidConnection) ? (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent) : string.Empty;
+                return "/* Missing Inputs */\n" + output;
+            }
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true);
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input ";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(Requirement))]
+    public class RequirementGenerator : NodeGenerator<Unity.VisualScripting.Community.Requirement>
+    {
+        public RequirementGenerator(Requirement unit) : base(unit)
+        {
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            if (Unit.Input.hasValidConnection && Unit._ControlInput.hasValidConnection)
+            {
+                var output = string.Empty;
+                output += (Unit.Exit.hasValidConnection) ? (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent) : string.Empty;
+                return $"Requirement({GenerateValue(Unit.Input)}, {GenerateValue(Unit._ControlInput)}); \n" + output;
+            }
+            else
+            {
+                var output = string.Empty;
+                output += (Unit.Exit.hasValidConnection) ? (Unit.Exit.connection.destination.unit as Unit).GenerateControl(Unit.Exit.connection.destination, data, indent) : string.Empty;
+                return "/* Missing Inputs */\n" + output;
+            }
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true);
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input ";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(YieldNode))]
+    public class YieldNodeGenerator : NodeGenerator<YieldNode>
+    {
+        public YieldNodeGenerator(YieldNode unit) : base(unit)
+        {
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            var output = string.Empty;
+
+            switch (Unit.type)
+            {
+                case YieldNode.EnumeratorType.YieldInstruction:
+                    output += CodeBuilder.Indent(indent) + $"yield return ".ControlHighlight() + $"{GenerateValue(Unit.instruction)};";
+                    break;
+                case YieldNode.EnumeratorType.Enumerator:
+                    output += CodeBuilder.Indent(indent) + $"yield return ".ControlHighlight() + $"{GenerateValue(Unit.enumerator)};";
+                    break;
+                case YieldNode.EnumeratorType.Coroutine:
+                    output += CodeBuilder.Indent(indent) + $"yield return ".ControlHighlight() + $"{GenerateValue(Unit.coroutine)};";
+                    break;
+            }
+
+            output += (Unit.exit.hasValidConnection) ? "\n" + (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty;
+
+            return output;
+        }
+
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true);
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
+        }
+    }
+
+    [NodeGenerator(typeof(QueryNode))]
+    public class QueryNodeGenerator : NodeGenerator<QueryNode>
+    {
+        string returnString = "return".ControlHighlight();
+
+        public QueryNodeGenerator(QueryNode unit) : base(unit)
+        {
+            NameSpace = "System.Linq";
+        }
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            var output = string.Empty;
+
+            switch (Unit.operation)
+            {
+                case QueryOperation.Any:
+                    output += CodeBuilder.Indent(indent) + $"var ".ConstructHighlight() + "result ".VariableHighlight() + $"= {GenerateValue(Unit.collection)}" +
+                              $".Any();";
+                    break;
+                case QueryOperation.AnyWithCondition:
+                    output += CodeBuilder.Indent(indent) + $"var ".ConstructHighlight() + "result ".VariableHighlight() + $"= {GenerateValue(Unit.collection)}" +
+                              $".Any({GenerateLambda(Unit.condition, data, indent)});";
+                    break;
+                case QueryOperation.First:
+                    output += CodeBuilder.Indent(indent) + $"var ".ConstructHighlight() + "result ".VariableHighlight() + $"= {GenerateValue(Unit.collection)}" +
+                              $".First({GenerateLambda(Unit.condition, data, indent)});";
+                    break;
+                case QueryOperation.FirstOrDefault:
+                    output += CodeBuilder.Indent(indent) + $"var ".ConstructHighlight() + "result ".VariableHighlight() + $"= {GenerateValue(Unit.collection)}" +
+                              $".FirstOrDefault({GenerateLambda(Unit.condition, data, indent)});";
+                    break;
+                case QueryOperation.OrderBy:
+                    output += CodeBuilder.Indent(indent) + $"var ".ConstructHighlight() + "result ".VariableHighlight() + $"= {GenerateValue(Unit.collection)}" +
+                              $".OrderBy({GenerateLambda(Unit.key, data, indent)});";
+                    break;
+                case QueryOperation.OrderByDescending:
+                    output += CodeBuilder.Indent(indent) + $"var ".ConstructHighlight() + "result ".VariableHighlight() + $"= {GenerateValue(Unit.collection)}" +
+                              $".OrderByDescending({GenerateLambda(Unit.key, data, indent)});";
+                    break;
+                case QueryOperation.Single:
+                    output += CodeBuilder.Indent(indent) + $"var ".ConstructHighlight() + "result ".VariableHighlight() + $"= {GenerateValue(Unit.collection)}" +
+                              $".Single({GenerateLambda(Unit.condition, data, indent)});";
+                    break;
+                case QueryOperation.Where:
+                    output += CodeBuilder.Indent(indent) + $"var ".ConstructHighlight() + "result ".VariableHighlight() + $"= {GenerateValue(Unit.collection)}" +
+                              $".Where({GenerateLambda(Unit.condition, data, indent)});";
+                    break;
+                default:
+                    break;
+            }
+
+            output += (Unit.exit.hasValidConnection) ? "\n" + (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent) : string.Empty;
+
+            return output;
+        }
+
+        public override string GenerateValue(ValueOutput output)
+        {
+            if (output == Unit.item)
+            {
+                return "x".VariableHighlight();
+            }
+            else if (output == Unit.result)
+            {
+                return "result".VariableHighlight();
+            }
+
+            return base.GenerateValue(output);
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true);
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
+        }
+
+        private string GenerateLambda(ValueInput predicateInput, ControlGenerationData data, int Indent)
+        {
+            var body = string.Empty;
+
+            if (Unit.body.hasValidConnection)
+            {
+                body += GetSingleDecorator(Unit.body.connection.destination.unit as Unit, Unit.body.connection.destination.unit as Unit).GenerateControl(Unit.body.connection.destination, data, Indent + 1) + "\n";
+            }
+
+            return CodeBuilder.MultiLineLambda("x".VariableHighlight(), body + "\n" + CodeBuilder.Indent(Indent + 1) + returnString + " " + GenerateValue(predicateInput) + ";", Indent);
+        }
+    }
+
+    [NodeGenerator(typeof(Unity.VisualScripting.Community.CreateDictionary))]
+    public class CreateDictionaryGenerator : NodeGenerator<Unity.VisualScripting.Community.CreateDictionary>
+    {
+        public CreateDictionaryGenerator(Unity.VisualScripting.Community.CreateDictionary unit) : base(unit)
+        {
+            NameSpace = "System.Collections.Generic";
+        }
+
+        public override string GenerateValue(ValueOutput output)
+        {
+            return "new ".ConstructHighlight() + "Dictionary".TypeHighlight() + $"<{Unit.KeyType.DisplayName().TypeHighlight()}, {Unit.ValueType.DisplayName().TypeHighlight()}>()";
+        }
+
+        public override string GenerateValue(ValueInput input)
+        {
+            if (input.hasValidConnection)
+            {
+                return ((Unit)input.connection.source.unit).GenerateValue(input.connection.source);
+            }
+            else if (input.hasDefaultValue)
+            {
+                return unit.defaultValues[input.key].As().Code(false, true, true);
+            }
+            else
+            {
+                return $"/* {input.key} Requires Input */";
+            }
+        }
+    }
 }

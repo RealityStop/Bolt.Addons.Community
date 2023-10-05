@@ -40,6 +40,7 @@ namespace Unity.VisualScripting.Community
             var enums = HUMAssets.Find().Assets().OfType<EnumAsset>();
             var delegates = HUMAssets.Find().Assets().OfType<DelegateAsset>();
             var units = HUMAssets.Find().Assets().OfType<UnitAsset>().ToList();
+            var scriptGraphs = HUMAssets.Find().Assets().OfType<ScriptGraphAsset>().ToList();
 
             for (int i = 0; i < classes.Count; i++)
             {
@@ -78,6 +79,12 @@ namespace Unity.VisualScripting.Community
                 units[i].lastCompiledName = units[i].category + (string.IsNullOrEmpty(units[i].category) ? string.Empty : ".") + units[i].title.LegalMemberName();
             }
 
+            for (int i = 0; i < scriptGraphs.Count; i++)
+            {
+                var fullPath = csharpPath + scriptGraphs[i].graph.title.LegalMemberName() + ".cs";
+                HUMIO.Save(ScriptGraphAssetGenerator.GetSingleDecorator(scriptGraphs[i]).GenerateClean(0)).Custom(fullPath).Text(false);
+            }
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
@@ -89,6 +96,7 @@ namespace Unity.VisualScripting.Community
             var selectedEnums = Selection.GetFiltered<EnumAsset>(SelectionMode.Assets).ToList();
             var selectedDelegates = Selection.GetFiltered<DelegateAsset>(SelectionMode.Assets).ToList();
             var selectedUnits = Selection.GetFiltered<UnitAsset>(SelectionMode.Assets).ToList();
+            var selectedScriptGraphs = Selection.GetFiltered<ScriptGraphAsset>(SelectionMode.Assets).ToList();
 
             var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
             var oldPath = Application.dataPath + "/Bolt.Addons.Generated/";
@@ -121,6 +129,13 @@ namespace Unity.VisualScripting.Community
                 HUMIO.Ensure(fullPath).Path();
                 HUMIO.Save(UnitAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
                 asset.lastCompiledName = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
+            }
+            foreach (var asset in selectedScriptGraphs)
+            {
+                var fullPath = csharpPath + asset.graph.title.LegalMemberName() + ".cs";
+                HUMIO.Delete(fullPath);
+                HUMIO.Ensure(fullPath).Path();
+                HUMIO.Save(ScriptGraphAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
             }
             foreach (var asset in selectedStructs)
             {

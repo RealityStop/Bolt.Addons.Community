@@ -1,5 +1,7 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
+using System.Collections.Generic;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community
 {
@@ -20,6 +22,11 @@ namespace Unity.VisualScripting.Community
         [InspectorWide]
         [SerializeField]
         public Type unitArgs = typeof(EmptyEventArgs);
+        public bool usingsFoldout;
+
+        public Action<Type> onValueChanged;
+
+        public SystemType TypeIcon = new SystemType() { type = typeof(Null) };
 
         public void OnAfterDeserialize()
         {
@@ -32,15 +39,5 @@ namespace Unity.VisualScripting.Community
             PreviousType = unitArgs.AssemblyQualifiedName;
             UnitPreviousType = unitType.AssemblyQualifiedName;
         }
-    }
-    public enum UnitType
-    {
-        Unit,
-        EventUnit,
-        VariadicNode,
-        GeneratedUnit,
-        MachineEventUnit,
-        GlobalEventUnit,
-        GameObjectEventUnit
     }
 }

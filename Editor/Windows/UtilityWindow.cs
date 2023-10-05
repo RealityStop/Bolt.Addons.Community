@@ -36,6 +36,7 @@ namespace Unity.VisualScripting.Community
 
             container.Add(SelectionToSuperUnit());
             container.Add(GenerateCode());
+            container.Add(GenerateSelectedCode());
             container.Add(QuickAccess());
             container.Add(RegenerateNodesButton());
 
@@ -92,7 +93,7 @@ namespace Unity.VisualScripting.Community
             label.text = "Asset Compilation";
             label.style.flexGrow = 1;
 
-            var hint = new HelpBox("Click 'Compile' to generate C# scripts for Defined Events, Funcs, and Actions for complete AOT Safety on all platforms.", HelpBoxMessageType.Info);
+            var hint = new HelpBox("Click 'Compile' to generate C# scripts for Defined Events, Funcs, Units, and Actions for complete AOT Safety on all platforms.", HelpBoxMessageType.Info);
             hint.Set().Padding(6);
 
             var buttonContainer = new VisualElement();
@@ -100,16 +101,36 @@ namespace Unity.VisualScripting.Community
             buttonContainer.style.height = 24;
 
             var compileButton = new Button(() => { AssetCompiler.Compile(); }) { text = "Compile" };
+            compileButton.style.maxWidth = buttonContainer.contentRect.width;
             compileButton.style.flexGrow = 1;
 
-            var compileSelectedButton = new Button(() => { AssetCompiler.CompileSelected(); }) { text = "Compile Selected" };
-            compileSelectedButton.style.flexGrow = 1;
-
             buttonContainer.Add(compileButton);
-            buttonContainer.Add(compileSelectedButton);
 
             header.Add(label);
             container.Add(header);
+            container.Add(hint);
+            container.Add(buttonContainer);
+            return container;
+        }
+
+        private VisualElement GenerateSelectedCode()
+        {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Column;
+
+            var hint = new HelpBox("Click 'Compile Selected' to generate C# scripts for selected Defined Events, Funcs, Units, and Actions for complete AOT Safety on all platforms.", HelpBoxMessageType.Info);
+            hint.Set().Padding(6);
+
+            var buttonContainer = new VisualElement();
+            buttonContainer.style.flexDirection = FlexDirection.Row;
+            buttonContainer.style.height = 24;
+
+            var compileSelectedButton = new Button(() => { AssetCompiler.CompileSelected(); }) { text = "Compile Selected" };
+            compileSelectedButton.style.maxWidth = buttonContainer.contentRect.width;
+            compileSelectedButton.style.flexGrow = 1;
+
+            buttonContainer.Add(compileSelectedButton);
+
             container.Add(hint);
             container.Add(buttonContainer);
             return container;
@@ -154,7 +175,7 @@ namespace Unity.VisualScripting.Community
             buttonContainer.style.flexDirection = FlexDirection.Row;
             buttonContainer.style.height = 24;
 
-            var regenerateButton = new Button(() => { RegenerateNodes(); }) { text = "Regenerate Nodes" };
+            var regenerateButton = new Button(() => { UnitBase.Rebuild(); }) { text = "Regenerate Nodes" };
             regenerateButton.style.flexGrow = 1;
 
             buttonContainer.Add(regenerateButton);
@@ -162,11 +183,5 @@ namespace Unity.VisualScripting.Community
             container.Add(buttonContainer);
             return container;
         }
-
-        private void RegenerateNodes()
-        {
-            UnitBase.Rebuild();
-        }
-
     }
 }
