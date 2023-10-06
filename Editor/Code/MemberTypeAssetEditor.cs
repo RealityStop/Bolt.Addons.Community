@@ -7,6 +7,8 @@ using System;
 using System.Linq;
 using Codice.CM.SEIDInfo;
 using Unity.VisualScripting.Community.Utility;
+using System.Reflection;
+using System.Collections;
 
 namespace Unity.VisualScripting.Community
 {
@@ -99,7 +101,7 @@ namespace Unity.VisualScripting.Community
             {
                 var attributeUsage = attr.GetAttribute<AttributeUsageAttribute>();
                 return attributeUsage != null &&
-                       (attributeUsage.ValidOn == AttributeTargets.Field || attributeUsage.ValidOn == AttributeTargets.All ||
+                       (attributeUsage.ValidOn == AttributeTargets.Field || attributeUsage.ValidOn == AttributeTargets.Property ||
                         typeof(Attribute).IsAssignableFrom(attr) || attr == typeof(DoNotSerializeAttribute));
             }).ToArray(); propertyAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Property || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
             methodAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Method || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
@@ -353,12 +355,14 @@ namespace Unity.VisualScripting.Community
                                                 }
                                             }, () =>
                                             {
+                                                var attributeParamMeta = variables[index]["attributes"][attrIndex]["parameters"];
+
                                                 string[] constructorNames = attribute.GetAttributeType().GetConstructors()
                                                     .Select(constructor =>
                                                     {
                                                         string paramInfo = string.Join(", ", constructor.GetParameters()
                                                             .Select(param => $"{param.ParameterType.As().CSharpName(false, false, false)}"));
-                                                        return $"{attribute.GetAttributeType().DisplayName()}({paramInfo})";
+                                                        return $"{attribute.GetAttributeType().DisplayName()}({paramInfo})".RemoveHighlights().RemoveMarkdown();
                                                     })
                                                     .ToArray();
 
@@ -369,7 +373,7 @@ namespace Unity.VisualScripting.Community
 
                                                 attribute.selectedconstructor = attribute.constructor;
 
-                                                attribute.constructor = EditorGUILayout.Popup("Select Attribute Type : ", attribute.constructor, constructorNames);
+                                                attribute.constructor = EditorGUILayout.Popup("Select Type : ", attribute.constructor, constructorNames);
 
                                                 var selectedConstructor = attribute.GetAttributeType().GetConstructors()[attribute.constructor];
 
@@ -379,10 +383,6 @@ namespace Unity.VisualScripting.Community
 
                                                     foreach (var parameter in selectedConstructor.GetParameters())
                                                     {
-                                                        EditorGUILayout.BeginHorizontal();
-
-                                                        GUILayout.Label(parameter.Name + " : ", GUILayout.Width(150));
-
                                                         TypeParam Param = attribute.parameters.FirstOrDefault(param => param.name == parameter.Name);
 
                                                         if (Param == null)
@@ -393,101 +393,43 @@ namespace Unity.VisualScripting.Community
 
                                                         if (Param.defaultValue == null)
                                                         {
-                                                            Param.defaultValue = GetDefaultParameterValue(parameter.ParameterType);
-                                                        }
+                                                            var value = Param.GetDefaultValue();
 
-                                                        if (parameter.ParameterType == typeof(string))
-                                                        {
-                                                            string updatedValue = GUILayout.TextField(Param.stringValue);
-
-                                                            if (updatedValue != Param.stringValue)
+                                                            if (value == null)
                                                             {
-                                                                Param.stringValue = updatedValue;
+                                                                Param.defaultValue = GetDefaultParameterValue(parameter.ParameterType);
                                                             }
-                                                            Param.defaultValue = Param.stringValue;
-                                                        }
-                                                        else if (parameter.ParameterType == typeof(int))
-                                                        {
-                                                            int updatedValue = EditorGUILayout.IntField(Param.intValue);
-
-                                                            if (updatedValue != Param.intValue)
+                                                            else
                                                             {
-                                                                Param.intValue = updatedValue;
+                                                                Param.defaultValue = value;
                                                             }
-                                                            Param.defaultValue = Param.intValue;
                                                         }
-                                                        else if (parameter.ParameterType == typeof(float))
+
+                                                        var isParamsParameter = parameter.IsDefined(typeof(ParamArrayAttribute));
+
+                                                        Param.isParamsParameter = isParamsParameter;
+
+                                                        if (!isParamsParameter && Param.defaultValue is not IList)
                                                         {
-                                                            float updatedValue = EditorGUILayout.FloatField(Param.floatValue);
-
-                                                            if (updatedValue != Param.floatValue)
-                                                            {
-                                                                Param.floatValue = updatedValue;
-                                                            }
-                                                            Param.defaultValue = Param.floatValue;
-                                                        }
-                                                        else if (parameter.ParameterType == typeof(bool))
-                                                        {
-                                                            bool updatedValue = EditorGUILayout.Toggle(Param.boolValue);
-                                                            if (updatedValue != Param.boolValue)
-                                                            {
-                                                                Param.boolValue = updatedValue;
-                                                            }
-                                                            Param.defaultValue = Param.boolValue;
-                                                        }
-                                                        else if (parameter.ParameterType == typeof(Type))
-                                                        {
-                                                            var paramMeta = variables[index]["attributes"][attrIndex]["parameters"][paramIndex]["Paramtype"];
-
-                                                            Type updatedValue = (Type)Param.defaultValue;
-
-                                                            paramMeta.Block(() =>
-                                                            {
-                                                                GUILayout.Label(" ", GUILayout.Height(20));
-                                                                var position = GUILayoutUtility.GetLastRect();
-
-                                                                Type[] types = Codebase.settingsAssemblies
-                                                                    .SelectMany(a => a.GetTypes().Where(type => !type.IsAbstract && !type.IsGenericTypeDefinition))
-                                                                    .ToArray();
-
-                                                                listOfVariables[index].attributes[attrIndex].parameters[paramIndex].Paramtype.type = LudiqGUI.TypeField(position, GUIContent.none, listOfVariables[index].attributes[attrIndex].parameters[paramIndex].Paramtype.type, () =>
-                                                                {
-                                                                    return new TypeOptionTree(types);
-                                                                });
-
-                                                                if (listOfVariables[index].attributes[attrIndex].parameters[paramIndex].Paramtype.type != (Type)Param.defaultValue)
-                                                                {
-                                                                    updatedValue = listOfVariables[index].attributes[attrIndex].parameters[paramIndex].Paramtype.type;
-                                                                    Param.defaultValue = updatedValue;
-                                                                }
-
-                                                            },
-                                                            () =>
+                                                            Inspector.BeginBlock(attributeParamMeta[paramIndex]["defaultValue"], new Rect());
+                                                            LudiqGUI.InspectorLayout(attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType), new GUIContent(parameter.Name + ":"));
+                                                            if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
                                                             {
                                                                 shouldUpdate = true;
-                                                            }, true);
-                                                        }
-                                                        else if (parameter.ParameterType.IsEnum)
-                                                        {
-                                                            string[] enumValues = Enum.GetNames(parameter.ParameterType);
-
-                                                            int selectedIndex = Param.EnumValue;
-
-                                                            int updatedIndex = EditorGUILayout.Popup(selectedIndex, enumValues);
-
-                                                            if (updatedIndex != selectedIndex)
-                                                            {
-                                                                Param.EnumValue = updatedIndex;
                                                             }
-                                                            Param.defaultValue = Enum.Parse(parameter.ParameterType, enumValues[updatedIndex]);
                                                         }
                                                         else
                                                         {
-                                                            GUILayout.Label($"Does Not Support {parameter.ParameterType.DisplayName()}");
+                                                            Inspector.BeginBlock(attributeParamMeta[paramIndex]["defaultValue"], new Rect());
+
+                                                            attributeParamMeta[paramIndex]["defaultValue"].value = Param.defaultValue;
+
+                                                            LudiqGUI.InspectorLayout(attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType), new GUIContent(parameter.Name + ":"));
+                                                            if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
+                                                            {
+                                                                shouldUpdate = true;
+                                                            }
                                                         }
-
-                                                        EditorGUILayout.EndHorizontal();
-
                                                         paramIndex++;
                                                     }
 
@@ -717,7 +659,7 @@ namespace Unity.VisualScripting.Community
                         var index = i;
                         listOfConstructors[index].opened = HUMEditor.Foldout(listOfConstructors[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
-                            GUILayout.Label($"Constructor {i.ToString()}");
+                            GUILayout.Label($"Constructor {i}");
 
                             if (GUILayout.Button("Edit", GUILayout.Width(60)))
                             {
@@ -727,12 +669,10 @@ namespace Unity.VisualScripting.Community
                                 foreach (var variable in listOfVariables)
                                 {
                                     listOfConstructors[index].graph.variables.Set(variable.name, null);
-                                    // Find the corresponding graphvar by matching on the variable's name
                                     var matchingGraphVar = listOfGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
 
                                     if (matchingGraphVar != null)
                                     {
-                                        // Update the typeHandle of the matching graphvar
                                         SerializableType type = matchingGraphVar.typeHandle;
                                         type.Identification = variable.type.AssemblyQualifiedName;
                                         matchingGraphVar.typeHandle = type;
