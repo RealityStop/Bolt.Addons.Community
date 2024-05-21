@@ -17,6 +17,7 @@ namespace Unity.VisualScripting.Community
                 settings = ScriptableObject.CreateInstance<CSharpPreviewSettings>();
                 settings.name = "CSharpPreviewSettings";
                 AssetDatabase.CreateAsset(settings, path + "CSharpPreviewSettings.asset");
+                settings.Initalize();
             }
 
             CSharpPreview.NumericColor = settings.NumericColor;
