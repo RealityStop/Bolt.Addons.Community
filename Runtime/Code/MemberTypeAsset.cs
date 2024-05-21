@@ -25,6 +25,10 @@ namespace Unity.VisualScripting.Community
         [InspectorWide]
         [SerializeField]
         public List<TMethodDeclaration> methods = new List<TMethodDeclaration>();
+
+        [SerializeField]
+        public List<AttributeDeclaration> attributes = new List<AttributeDeclaration>();
+
         [Inspectable]
         public bool inspectable = true;
         [Inspectable]
@@ -41,6 +45,8 @@ namespace Unity.VisualScripting.Community
         public bool constructorsOpened;
         public bool fieldsOpened;
         public bool methodsOpened;
+        public bool attributesOpened;
+        public bool requiredInfoOpened;
 #endif
     }
 }
