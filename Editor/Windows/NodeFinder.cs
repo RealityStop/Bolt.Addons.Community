@@ -200,7 +200,7 @@ namespace Unity.VisualScripting.Community
                                        foreach (var match in list)
                                        {
                                            var pathNames = GetUnitPath(match.Reference);
-                                           if (match.Matches.Contains(MatchType.Error) && _matchError && _checkScriptGraphAssets)
+                                           if (match.Matches.Contains(MatchType.Error) && _matchError)
                                            {
                                                isShowingErrors = true;
                                                var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
@@ -255,7 +255,7 @@ namespace Unity.VisualScripting.Community
                                        foreach (var match in list)
                                        {
                                            var pathNames = GetUnitPath(match.Reference);
-                                           if (match.Matches.Contains(MatchType.Error) && _matchError && _checkScriptMachines)
+                                           if (match.Matches.Contains(MatchType.Error) && _matchError)
                                            {
                                                isShowingErrors = true;
                                                var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
@@ -310,7 +310,7 @@ namespace Unity.VisualScripting.Community
                                        foreach (var match in list)
                                        {
                                            var pathNames = GetUnitPath(match.Reference);
-                                           if (match.Matches.Contains(MatchType.Error) && _matchError && _checkStateGraphAssets)
+                                           if (match.Matches.Contains(MatchType.Error) && _matchError)
                                            {
                                                isShowingErrors = true;
                                                var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
@@ -607,7 +607,14 @@ namespace Unity.VisualScripting.Community
                         _matchObjects.Add(newMatch);
                         if (_matchScriptMachineMap.TryGetValue(newMatch.ScriptMachine, out var list))
                         {
-                            list.Add(newMatch);
+                            if (!list.Any(match => match.Unit == newMatch.Unit))
+                            {
+                                list.Add(newMatch);
+                            }
+                            else
+                            {
+                                list[list.IndexOf(list.First(match => match.Unit == newMatch.Unit))] = newMatch;
+                            }
                         }
                         else
                         {
@@ -1126,11 +1133,6 @@ namespace Unity.VisualScripting.Community
             foreach (var match in list)
             {
                 if (match.Matches.Contains(MatchType.Unit))
-                {
-                    return true;
-                }
-
-                if (_matchError && match.Matches.Contains(MatchType.Error))
                 {
                     return true;
                 }
