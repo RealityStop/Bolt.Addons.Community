@@ -186,4 +186,54 @@ public static class AotSupportMethods
         if (_namespace.Contains("UnityEditor") || _namespace.Contains("NUnit")) return false;
         return true;
     }
+
+    public class TypeGroup : IEquatable<TypeGroup>
+    {
+        public TypeGroup(params Type[] types)
+        {
+            this.types = types.ToList();
+        }
+
+        public List<Type> types = new List<Type>();
+
+        public bool Equals(TypeGroup other)
+        {
+            if (other == null || other.types.Count != types.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < types.Count; i++)
+            {
+                if (types[i] != other.types[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is TypeGroup other)
+            {
+                return Equals(other);
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                foreach (var type in types)
+                {
+                    hash = hash * 23 + type.GetHashCode();
+                }
+                return hash;
+            }
+        }
+    }
 }
