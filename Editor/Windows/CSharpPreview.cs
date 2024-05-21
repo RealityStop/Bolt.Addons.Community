@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
     [Serializable]
     public sealed class CSharpPreview
     {
-        string output = string.Empty;
+        public string output = string.Empty;
 
         [SerializeField]
         private Vector2 scrollPosition;
@@ -369,7 +369,6 @@ namespace Unity.VisualScripting.Community
             Settings.InterfaceColor = InterfaceColor;
             Settings.TypeColor = TypeColor;
             Settings.ShowSubgraphComment = ShowSubgraphComment;
-            Settings.AutomaticallyGetTransform = AutomaticallyGetTransform;
             EditorPrefs.SetString("VariableColor", VariableColor.ToHexString());
             EditorPrefs.SetString("StringColor", StringColor.ToHexString());
             EditorPrefs.SetString("NumericColor", NumericColor.ToHexString());
