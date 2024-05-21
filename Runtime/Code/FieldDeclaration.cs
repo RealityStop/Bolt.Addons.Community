@@ -3,7 +3,6 @@ using System;
 using UnityEngine;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
-using Unity.Plastic.Newtonsoft.Json;
 
 namespace Unity.VisualScripting.Community
 {
@@ -67,7 +66,7 @@ namespace Unity.VisualScripting.Community
 
             if (!string.IsNullOrEmpty(serializedValue) && !string.IsNullOrEmpty(serializedValueType) && Type.GetType(serializedValueType) != typeof(Delegate))
             {
-                value = JsonConvert.DeserializeObject(serializedValue, Type.GetType(serializedValueType));
+                //value = JsonUtility.FromJson(serializedValue, Type.GetType(serializedValueType));
             }
         }
 
@@ -85,6 +84,10 @@ namespace Unity.VisualScripting.Community
             {
                 serializedValue = string.Empty;
                 return;
+            }
+            else
+            {
+                //serializedValue = JsonUtility.ToJson(value);
             }
         }
     }

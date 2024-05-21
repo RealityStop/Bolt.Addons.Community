@@ -1,7 +1,6 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using UnityEngine;
-using Unity.Plastic.Newtonsoft.Json;
 
 namespace Unity.VisualScripting.Community.Utility
 {
@@ -32,19 +31,16 @@ namespace Unity.VisualScripting.Community.Utility
 
         [Serialize]
         [SerializeField]
-        private string defaultValueSerialized;
-        
-        [SerializeField]
-        [Serialize]
-        private string defaultValueType;
+        private SerializationData defaultValueSerialized;
+    
 
         public ParameterModifier modifier = ParameterModifier.None;
 
         public object GetDefaultValue()
         {
-            if (!string.IsNullOrEmpty(defaultValueSerialized) && !string.IsNullOrEmpty(defaultValueType))
+            if (!string.IsNullOrEmpty(defaultValueSerialized.json))
             {
-                return JsonConvert.DeserializeObject(defaultValueSerialized, Type.GetType(defaultValueType));
+                return defaultValueSerialized.Deserialize();
             }
 
             return defaultValue;
@@ -54,13 +50,13 @@ namespace Unity.VisualScripting.Community.Utility
         {
             if (defaultValue != null) 
             { 
-                defaultValueSerialized = JsonConvert.SerializeObject(defaultValue);
-                defaultValueType = defaultValue.GetType().AssemblyQualifiedName;
+                defaultValueSerialized = defaultValue.Serialize();
             }
         }
         
         public void OnAfterDeserialize()
         {
+            defaultValue = GetDefaultValue();
         }
     }
 }
