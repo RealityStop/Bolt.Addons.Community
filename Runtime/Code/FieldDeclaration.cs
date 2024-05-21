@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
+using Unity.Plastic.Newtonsoft.Json;
 
 namespace Unity.VisualScripting.Community
 {
@@ -17,6 +18,11 @@ namespace Unity.VisualScripting.Community
         public bool inspectable = true;
         [Inspectable]
         public bool serialized = true;
+
+        [Inspectable]
+        public object value;
+
+        public string FieldName;
 
         public AccessModifier scope;
         public FieldModifier fieldModifier;
@@ -38,6 +44,14 @@ namespace Unity.VisualScripting.Community
         [HideInInspector]
         private string qualifiedName;
 
+        [SerializeField]
+        [HideInInspector]
+        private string serializedValue;
+
+        [SerializeField]
+        [HideInInspector]
+        private string serializedValueType;
+
 #if UNITY_EDITOR
         public bool opened;
         public bool propertyOpened;
@@ -50,7 +64,12 @@ namespace Unity.VisualScripting.Community
             {
                 type = Type.GetType(qualifiedName);
             }
-        } 
+
+            if (!string.IsNullOrEmpty(serializedValue) && !string.IsNullOrEmpty(serializedValueType) && Type.GetType(serializedValueType) != typeof(Delegate))
+            {
+                value = JsonConvert.DeserializeObject(serializedValue, Type.GetType(serializedValueType));
+            }
+        }
 
         public void OnBeforeSerialize()
         {
@@ -61,6 +80,19 @@ namespace Unity.VisualScripting.Community
             }
 
             qualifiedName = type.AssemblyQualifiedName;
+
+            if (value == null)
+            {
+                serializedValue = string.Empty;
+                return;
+            }
         }
     }
+}
+
+[Serializable]
+public class DelegateInfo
+{
+    public string MethodName { get; set; }
+    public string TypeName { get; set; }
 }

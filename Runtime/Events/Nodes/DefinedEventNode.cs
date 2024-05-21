@@ -1,4 +1,5 @@
-﻿using Unity.VisualScripting.Community.Utility;
+﻿
+using Unity.VisualScripting.Community.Utility;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -17,13 +18,13 @@ namespace Unity.VisualScripting.Community
     {
         const string EventName = "OnDefinedEvent";
 
-        #region Event Type Handling
+        #region Previous Event Type Handling (for backward compatibility)
         [SerializeAs(nameof(eventType))]
         private System.Type _eventType;
         
 
         [DoNotSerialize]
-        [InspectableIf(nameof(IsNotRestricted))]
+        //[InspectableIf(nameof(IsNotRestricted))]
         public System.Type eventType
         {
             get {
@@ -35,9 +36,8 @@ namespace Unity.VisualScripting.Community
         }
 
         [DoNotSerialize]
-        [UnitHeaderInspectable]
-        [InspectableIf(nameof(IsRestricted))]
-        [Unity.VisualScripting.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+        //[UnitHeaderInspectable]
+        //[InspectableIf(nameof(IsRestricted))]
         public System.Type restrictedEventType
         {
             get
@@ -50,6 +50,28 @@ namespace Unity.VisualScripting.Community
             }
         }
 
+        #endregion
+
+        #region New Event Type Handling
+        [SerializeAs(nameof(NeweventType))]
+        private IDefinedEventType New_eventType;
+
+        [DoNotSerialize]
+        public IDefinedEventType NeweventType
+        {
+            get { return New_eventType; }
+            set { New_eventType = value; }
+        }
+
+        [DoNotSerialize]
+        [UnitHeaderInspectable]
+        [InspectableIf(nameof(IsRestricted))]
+        public IDefinedEventType NewrestrictedEventType
+        {
+            get { return New_eventType; }
+            set { New_eventType = value; }
+        }
+
         public bool IsRestricted
         {
             get { return CommunityOptionFetcher.DefinedEvent_RestrictEventTypes; }
@@ -59,8 +81,7 @@ namespace Unity.VisualScripting.Community
         {
             get { return !IsRestricted; }
         }
-        #endregion
-
+#endregion
 
         [DoNotSerialize]
         public List<ValueOutput> outputPorts { get; } = new List<ValueOutput>();
@@ -69,32 +90,40 @@ namespace Unity.VisualScripting.Community
         private ReflectedInfo Info;
 
         public override Type MessageListenerType => null;
+
         protected override string hookName => EventName;
-
-
 
         protected override bool ShouldTrigger(Flow flow, DefinedEventArgs args)
         {
-            return args.eventData.GetType() == _eventType;
+            return args.eventData.GetType() == NeweventType.type;
         }
-
 
         protected override void Definition()
         {
             base.Definition();
 
+            // For backward compatibility, convert the Type to IDefinedEventType
+            if (restrictedEventType != null)
+            {
+                NewrestrictedEventType = new IDefinedEventType(restrictedEventType);
+                restrictedEventType = null;
+            }
+
+            if (NewrestrictedEventType == null)
+            {
+                NewrestrictedEventType = new IDefinedEventType();
+            }
+
             BuildFromInfo();
         }
-
-
 
         private void BuildFromInfo()
         {
             outputPorts.Clear();
-            if (_eventType == null)
+            if (NeweventType.type == null)
                 return;
 
-            Info = ReflectedInfo.For(_eventType);
+            Info = ReflectedInfo.For(NeweventType.type);
             foreach (var field in Info.reflectedFields)
             {
                 outputPorts.Add(ValueOutput(field.Value.FieldType, field.Value.Name));

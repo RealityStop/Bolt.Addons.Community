@@ -1,112 +1,114 @@
-using UnityEngine;
-using Unity.VisualScripting;
-using System;
-using System.Collections.Generic;
-using Unity.VisualScripting.Community;
+//This was giving problems
 
-[Widget(typeof(ValueConnection))]
-public sealed class ValueConnectionWidget : UnitConnectionWidget<ValueConnection>
-{
-    private bool canTrigger = true;
-    private Color _color = Color.white;
+// using UnityEngine;
+// using Unity.VisualScripting;
+// using System;
+// using System.Collections.Generic;
+// using Unity.VisualScripting.Community;
 
-    public ValueConnectionWidget(FlowCanvas canvas, ValueConnection connection) : base(canvas, connection)
-    {
-    }
+// [Widget(typeof(ValueConnection))]
+// public sealed class ValueConnectionWidget : UnitConnectionWidget<ValueConnection>
+// {
+//     private bool canTrigger = true;
+//     private Color _color = Color.white;
 
-    public override void HandleInput()
-    {
-        base.HandleInput();
+//     public ValueConnectionWidget(FlowCanvas canvas, ValueConnection connection) : base(canvas, connection)
+//     {
+//     }
 
-        var outputFlowReroute = (connection.source.unit as ValueReroute);
-        var inputFlowReroute = (connection.destination.unit as ValueReroute);
+//     public override void HandleInput()
+//     {
+//         base.HandleInput();
 
-        if (selection.Contains(connection.destination.unit) && outputFlowReroute != null)
-        {
-            if (selection.Contains(outputFlowReroute))
-            {
-                if (e.keyCode == KeyCode.Backspace && e.rawType == EventType.KeyDown && canTrigger)
-                {
-                    canTrigger = false;
+//         var outputFlowReroute = (connection.source.unit as ValueReroute);
+//         var inputFlowReroute = (connection.destination.unit as ValueReroute);
 
-                    outputFlowReroute.outputVisible = !outputFlowReroute.outputVisible;
+//         if (selection.Contains(connection.destination.unit) && outputFlowReroute != null)
+//         {
+//             if (selection.Contains(outputFlowReroute))
+//             {
+//                 if (e.keyCode == KeyCode.Backspace && e.rawType == EventType.KeyDown && canTrigger)
+//                 {
+//                     canTrigger = false;
 
-                }
+//                     outputFlowReroute.outputVisible = !outputFlowReroute.outputVisible;
 
-                if (e.keyCode == KeyCode.Backspace && e.rawType == EventType.KeyUp)
-                {
-                    canTrigger = true;
-                }
-            }
-        }
+//                 }
 
-        if (selection.Contains(connection.source.unit) && inputFlowReroute != null)
-        {
-            if (selection.Contains(inputFlowReroute))
-            {
-                if (e.keyCode == KeyCode.Backspace && e.rawType == EventType.KeyDown && canTrigger)
-                {
-                    canTrigger = false;
+//                 if (e.keyCode == KeyCode.Backspace && e.rawType == EventType.KeyUp)
+//                 {
+//                     canTrigger = true;
+//                 }
+//             }
+//         }
 
-                    inputFlowReroute.inputVisible = !inputFlowReroute.inputVisible;
+//         if (selection.Contains(connection.source.unit) && inputFlowReroute != null)
+//         {
+//             if (selection.Contains(inputFlowReroute))
+//             {
+//                 if (e.keyCode == KeyCode.Backspace && e.rawType == EventType.KeyDown && canTrigger)
+//                 {
+//                     canTrigger = false;
 
-                }
+//                     inputFlowReroute.inputVisible = !inputFlowReroute.inputVisible;
 
-                if (e.keyCode == KeyCode.Backspace && e.rawType == EventType.KeyUp)
-                {
-                    canTrigger = true;
-                }
-            }
-        }
-    }
+//                 }
 
-    protected override void DrawConnection()
-    {
-        var outputFlowReroute = (connection.source.unit as ValueReroute);
-        var inputFlowReroute = (connection.destination.unit as ValueReroute);
+//                 if (e.keyCode == KeyCode.Backspace && e.rawType == EventType.KeyUp)
+//                 {
+//                     canTrigger = true;
+//                 }
+//             }
+//         }
+//     }
 
-        if (outputFlowReroute != null && !outputFlowReroute.outputVisible)
-        {
-            if (clippingPosition.Contains(mousePosition) && outputFlowReroute.showFlowOnHover)
-            {
-                base.DrawConnection();
-            }
-            return;
-        }
-        else if (inputFlowReroute != null && !inputFlowReroute.inputVisible)
-        {
-            if (clippingPosition.Contains(mousePosition) && inputFlowReroute.showFlowOnHover)
-            {
-                base.DrawConnection();
-            }
-            return;
-        }
+//     protected override void DrawConnection()
+//     {
+//         var outputFlowReroute = (connection.source.unit as ValueReroute);
+//         var inputFlowReroute = (connection.destination.unit as ValueReroute);
 
-        base.DrawConnection();
-    }
+//         if (outputFlowReroute != null && !outputFlowReroute.outputVisible)
+//         {
+//             if (clippingPosition.Contains(mousePosition) && outputFlowReroute.showFlowOnHover)
+//             {
+//                 base.DrawConnection();
+//             }
+//             return;
+//         }
+//         else if (inputFlowReroute != null && !inputFlowReroute.inputVisible)
+//         {
+//             if (clippingPosition.Contains(mousePosition) && inputFlowReroute.showFlowOnHover)
+//             {
+//                 base.DrawConnection();
+//             }
+//             return;
+//         }
 
-    protected override bool colorIfActive => !BoltFlow.Configuration.animateControlConnections || !BoltFlow.Configuration.animateValueConnections;
+//         base.DrawConnection();
+//     }
 
-    #region Droplets
+//     protected override bool colorIfActive => !BoltFlow.Configuration.animateControlConnections || !BoltFlow.Configuration.animateValueConnections;
 
-    public override IEnumerable<IWidget> subWidgets => base.subWidgets;
+//     #region Droplets
 
-    protected override bool showDroplets => BoltFlow.Configuration.animateControlConnections;
+//     public override IEnumerable<IWidget> subWidgets => base.subWidgets;
 
-    public override Color color => Unity.VisualScripting.ValueConnectionWidget.DetermineColor(connection.source.type, connection.destination.type);
+//     protected override bool showDroplets => BoltFlow.Configuration.animateControlConnections;
 
-    protected override Vector2 GetDropletSize()
-    {
-        return BoltFlow.Icons.valuePortConnected?[12].Size() ?? 13 * Vector2.one;
-    }
+//     public override Color color => Unity.VisualScripting.ValueConnectionWidget.DetermineColor(connection.source.type, connection.destination.type);
 
-    protected override void DrawDroplet(Rect position)
-    {
-        if (BoltFlow.Icons.valuePortConnected != null)
-        {
-            GUI.DrawTexture(position, BoltFlow.Icons.valuePortConnected[12]);
-        }
-    }
+//     protected override Vector2 GetDropletSize()
+//     {
+//         return BoltFlow.Icons.valuePortConnected?[12].Size() ?? 13 * Vector2.one;
+//     }
 
-    #endregion
-}
+//     protected override void DrawDroplet(Rect position)
+//     {
+//         if (BoltFlow.Icons.valuePortConnected != null)
+//         {
+//             GUI.DrawTexture(position, BoltFlow.Icons.valuePortConnected[12]);
+//         }
+//     }
+
+//     #endregion
+// }

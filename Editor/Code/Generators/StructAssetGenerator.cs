@@ -1,6 +1,7 @@
 ﻿using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using Unity.VisualScripting;
+using System.Collections;
 
 namespace Unity.VisualScripting.Community
 {
@@ -16,17 +17,215 @@ namespace Unity.VisualScripting.Community
             if (Data.serialized) @struct.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());
             if (Data.includeInSettings) @struct.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
 
-            for (int i = 0; i < Data.variables.Count; i++)
+            foreach(var attribute in Data.attributes)
+            {
+                var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
+                foreach (var param in attribute.parameters)
+                {
+                    if(param.defaultValue is IList list)
+                    {
+                        if(param.isParamsParameter)
+                        {
+                            foreach(var item in list)
+                            {
+                                attrGenerator.AddParameter(item);
+                            }
+                        }
+                        else
+                        {
+                            if (!attrGenerator.parameterValues.Contains(param))
+                            {
+                                attrGenerator.AddParameter(param.defaultValue);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (!attrGenerator.parameterValues.Contains(param))
+                        {
+                            attrGenerator.AddParameter(param.defaultValue);
+                        }
+                    }
+                }
+                @struct.AddAttribute(attrGenerator);
+            }
+
+            for (int i = 0; i < Data.constructors.Count; i++)
+            {
+                var constructor = ConstructorGenerator.Constructor(Data.constructors[i].scope, Data.constructors[i].modifier, Data.title.LegalMemberName());
+                if (Data.constructors[i].graph.units.Count > 0)
+                {
+                    var unit = Data.constructors[i].graph.units[0] as FunctionNode;
+                    var data = new ControlGenerationData();
+                    for (int item = 0; item < Data.variables.Count; item++)
+                    {
+                        data.AddLocalName(Data.variables[item].name);
+                    }
+
+                    constructor.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, data, 0));
+
+                    for (int pIndex = 0; pIndex < Data.constructors[i].parameters.Count; pIndex++)
+                    {
+                        if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(false, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, Libraries.CSharp.ParameterModifier.None));
+                    }
+                }
+
+                @struct.AddConstructor(constructor);
+            }
+
+           for (int i = 0; i < Data.variables.Count; i++)
             {
                 if (!string.IsNullOrEmpty(Data.variables[i].name) && Data.variables[i].type != null)
                 {
-                    var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, Data.variables[i].type, Data.variables[i].name);
-                    if (Data.serialized)
+                    var attributes = Data.variables[i].attributes;
+
+                    if (Data.variables[i].isProperty)
                     {
-                        if (Data.variables[i].inspectable) field.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
-                        if (!Data.variables[i].serialized) field.AddAttribute(AttributeGenerator.Attribute<NonSerializedAttribute>());
+                        var property = PropertyGenerator.Property(Data.variables[i].scope, Data.variables[i].propertyModifier, Data.variables[i].type, Data.variables[i].name, false);
+
+                        for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
+                        {
+                            AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
+                            foreach (var param in attributes[attrIndex].parameters)
+                            {
+                                if(param.defaultValue is IList list)
+                                {
+                                    if(param.isParamsParameter)
+                                    {
+                                        foreach(var item in list)
+                                        {
+                                            attrGenerator.AddParameter(item);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        attrGenerator.AddParameter(param.defaultValue);
+                                    }
+                                }
+                                else
+                                {
+                                    if (!attrGenerator.parameterValues.Contains(param))
+                                    {
+                                        attrGenerator.AddParameter(param.defaultValue);
+                                    }
+                                }
+                            }
+                            property.AddAttribute(attrGenerator);
+                        }
+
+                        if (Data.variables[i].get)
+                        {
+                            property.MultiStatementGetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
+                            .GenerateControl(null, new ControlGenerationData() { returns = Data.variables[i].type }, 0));
+                        }
+
+                        if (Data.variables[i].set)
+                        {
+                            property.MultiStatementSetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
+                            .GenerateControl(null, new ControlGenerationData(), 0));
+                        }
+
+                        @struct.AddProperty(property);
                     }
-                    @struct.AddField(field);
+                    else
+                    {
+                        var field = FieldGenerator.Field(Data.variables[i].scope, Data.variables[i].fieldModifier, Data.variables[i].type, Data.variables[i].name);
+
+                        if (Data.serialized)
+                        {
+                            if (Data.variables[i].inspectable) field.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
+                            if (!Data.variables[i].serialized) field.AddAttribute(AttributeGenerator.Attribute<NonSerializedAttribute>());
+                        }
+
+                        for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
+                        {
+                            AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
+                            foreach (var param in attributes[attrIndex].parameters)
+                            {
+                                if(param.defaultValue is IList list)
+                                {
+                                    if(param.isParamsParameter)
+                                    {
+                                        foreach(var item in list)
+                                        {
+                                            attrGenerator.AddParameter(item);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        attrGenerator.AddParameter(param.defaultValue);
+                                    }
+                                }
+                                else
+                                {
+                                    if (!attrGenerator.parameterValues.Contains(param))
+                                    {
+                                        attrGenerator.AddParameter(param.defaultValue);
+                                    }
+                                }
+                            }
+                            field.AddAttribute(attrGenerator);
+                        }
+
+                        @struct.AddField(field);
+                    }
+                }
+            }
+
+            for (int i = 0; i < Data.methods.Count; i++)
+            {
+                if (!string.IsNullOrEmpty(Data.methods[i].name) && Data.methods[i].returnType != null)
+                {
+                    var method = MethodGenerator.Method(Data.methods[i].scope, Data.methods[i].modifier, Data.methods[i].returnType, Data.methods[i].name);
+                    var attributes = Data.methods[i].attributes;
+
+                    for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
+                    {
+                        AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
+                        foreach (var param in attributes[attrIndex].parameters)
+                        {
+                            if(param.defaultValue is IList list)
+                            {
+                                if(param.isParamsParameter)
+                                {
+                                    foreach(var item in list)
+                                    {
+                                        attrGenerator.AddParameter(item);
+                                    }
+                                }
+                                else
+                                {
+                                    attrGenerator.AddParameter(param.defaultValue);
+                                }
+                            }
+                            else
+                            {
+                                if (!attrGenerator.parameterValues.Contains(param))
+                                {
+                                    attrGenerator.AddParameter(param.defaultValue);
+                                }
+                            }
+                        }
+                        method.AddAttribute(attrGenerator);
+                    }
+                    if (Data.methods[i].graph.units.Count > 0)
+                    {
+                        var unit = Data.methods[i].graph.units[0] as FunctionNode;
+                        var data = new ControlGenerationData();
+                        for (int item = 0; item < Data.variables.Count; item++)
+                        {
+                            data.AddLocalName(Data.variables[item].name);
+                        }
+
+                        method.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, data, 0));
+
+                        for (int pIndex = 0; pIndex < Data.methods[i].parameters.Count; pIndex++)
+                        {
+                            if (!string.IsNullOrEmpty(Data.methods[i].parameters[pIndex].name)) method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, Libraries.CSharp.ParameterModifier.None));
+                        }
+                    }
+
+                    @struct.AddMethod(method);
                 }
             }
 

@@ -1,6 +1,7 @@
 ﻿using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using UnityEngine;
+using System.Collections;
 
 namespace Unity.VisualScripting.Community
 {
@@ -16,6 +17,39 @@ namespace Unity.VisualScripting.Community
             if (Data.serialized) @class.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());
             if (Data.includeInSettings) @class.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
             if (Data.scriptableObject) @class.AddAttribute(AttributeGenerator.Attribute<CreateAssetMenuAttribute>().AddParameter("menuName", Data.menuName).AddParameter("fileName", Data.fileName).AddParameter("order", Data.order));
+
+            foreach(var attribute in Data.attributes)
+            {
+                var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
+                foreach (var param in attribute.parameters)
+                {
+                    if(param.defaultValue is IList list)
+                    {
+                        if(param.isParamsParameter)
+                        {
+                            foreach(var item in list)
+                            {
+                                attrGenerator.AddParameter(item);
+                            }
+                        }
+                        else
+                        {
+                            if (!attrGenerator.parameterValues.Contains(param))
+                            {
+                                attrGenerator.AddParameter(param.defaultValue);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (!attrGenerator.parameterValues.Contains(param))
+                        {
+                            attrGenerator.AddParameter(param.defaultValue);
+                        }
+                    }
+                }
+                @class.AddAttribute(attrGenerator);
+            }
 
             for (int i = 0; i < Data.constructors.Count; i++)
             {
@@ -47,6 +81,30 @@ namespace Unity.VisualScripting.Community
                         for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
                         {
                             AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
+                            foreach (var param in attributes[attrIndex].parameters)
+                            {
+                                if(param.defaultValue is IList list)
+                                {
+                                    if(param.isParamsParameter)
+                                    {
+                                        foreach(var item in list)
+                                        {
+                                            attrGenerator.AddParameter(item);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        attrGenerator.AddParameter(param.defaultValue);
+                                    }
+                                }
+                                else
+                                {
+                                    if (!attrGenerator.parameterValues.Contains(param))
+                                    {
+                                        attrGenerator.AddParameter(param.defaultValue);
+                                    }
+                                }
+                            }
                             property.AddAttribute(attrGenerator);
                         }
 
@@ -72,6 +130,30 @@ namespace Unity.VisualScripting.Community
                         for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
                         {
                             AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
+                            foreach (var param in attributes[attrIndex].parameters)
+                            {
+                                if(param.defaultValue is IList list)
+                                {
+                                    if(param.isParamsParameter)
+                                    {
+                                        foreach(var item in list)
+                                        {
+                                            attrGenerator.AddParameter(item);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        attrGenerator.AddParameter(param.defaultValue);
+                                    }
+                                }
+                                else
+                                {
+                                    if (!attrGenerator.parameterValues.Contains(param))
+                                    {
+                                        attrGenerator.AddParameter(param.defaultValue);
+                                    }
+                                }
+                            }
                             field.AddAttribute(attrGenerator);
                         }
 
@@ -85,6 +167,36 @@ namespace Unity.VisualScripting.Community
                 if (!string.IsNullOrEmpty(Data.methods[i].name) && Data.methods[i].returnType != null)
                 {
                     var method = MethodGenerator.Method(Data.methods[i].scope, Data.methods[i].modifier, Data.methods[i].returnType, Data.methods[i].name);
+                    var attributes = Data.methods[i].attributes;
+                    for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
+                    {
+                        AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
+                        foreach (var param in attributes[attrIndex].parameters)
+                        {
+                            if(param.defaultValue is IList list)
+                            {
+                                if(param.isParamsParameter)
+                                {
+                                    foreach(var item in list)
+                                    {
+                                        attrGenerator.AddParameter(item);
+                                    }
+                                }
+                                else
+                                {
+                                    attrGenerator.AddParameter(param.defaultValue);
+                                }
+                            }
+                            else
+                            {
+                                if (!attrGenerator.parameterValues.Contains(param))
+                                {
+                                    attrGenerator.AddParameter(param.defaultValue);
+                                }
+                            }
+                        }
+                        method.AddAttribute(attrGenerator);
+                    }
                     if (Data.methods[i].graph.units.Count > 0)
                     {
                         var unit = Data.methods[i].graph.units[0] as FunctionNode;

@@ -412,19 +412,19 @@ namespace Unity.VisualScripting.Community
 
                 var _key = GetKeyName(connectionData[i], keys);
 
-                if (!keys.Contains(_key)) keys.Add(_key);
+                keys.Add(_key);
 
                 switch (connectionData[i].source)
                 {
                     case ConnectionDataSource.GraphInput:
-                        
+
                         superUnitGraph.controlInputDefinitions.Add(new ControlInputDefinition()
                         {
                             key = _key
                         });
                         superUnitGraph.PortDefinitionsChanged();
-                        graphInput.controlOutputs.Single((op) => { return op.key == connectionData[index].key; }).ConnectToValid(superUnitGraph.units[connectionData[index].destinationUnitIndex].controlInputs.ToList()[connectionData[index].destinationInputIndex] as ControlInput);
-                        connectionData[index].subgraph.controlInputs.Single((op) => { return op.key == connectionData[index].key; }).ConnectToValid(connectionData[index].externalPort as ControlOutput);
+                        graphInput.controlOutputs.Single((op) => { return op.key == _key; }).ConnectToValid(superUnitGraph.units[connectionData[index].destinationUnitIndex].controlInputs.ToList()[connectionData[index].destinationInputIndex] as ControlInput);
+                        connectionData[index].subgraph.controlInputs.Single((op) => { return op.key == _key; }).ConnectToValid(connectionData[index].externalPort as ControlOutput);
                         break;
 
                     case ConnectionDataSource.GraphOutput:
@@ -455,7 +455,7 @@ namespace Unity.VisualScripting.Community
 
                 var _key = GetKeyName(connectionData[i], keys);
 
-                if (!keys.Contains(_key)) keys.Add(_key);
+                keys.Add(_key);
 
                 switch (connectionData[index].source)
                 {
@@ -493,8 +493,27 @@ namespace Unity.VisualScripting.Community
 
         private static string GetKeyName(ConnectionData data, List<string> keys)
         {
+            if (data == null)
+            {
+                var count = 1;
+                while (keys.Contains("Input" + count.ToString()))
+                {
+                    count++;
+                }
+                return "Input" + count.ToString();
+            }
+
             if (!keys.Contains(data.key) || data.externalPort.GetType() == typeof(ControlOutput))
             {
+                if (data.externalPort.GetType() == typeof(ControlOutput) && keys.Contains(data.key))
+                {
+                    var count = 1;
+                    while (keys.Contains(data.key + count.ToString()))
+                    {
+                        count++;
+                    }
+                    return data.key + count.ToString();
+                }
                 return data.key;
             }
             else

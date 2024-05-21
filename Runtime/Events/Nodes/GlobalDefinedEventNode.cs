@@ -1,3 +1,4 @@
+
 using Unity.VisualScripting.Community.Utility;
 using System;
 using System.Collections.Generic;
@@ -18,47 +19,46 @@ namespace Unity.VisualScripting.Community
     {
         const string EventName = "OnGlobalDefinedEvent";
 
-        #region Event Type Handling
+        #region Previous Event Type Handling (for backward compatibility)
 
         [SerializeAs(nameof(eventType))]
-        private System.Type _eventType;
+        private Type _eventType;
 
-
-        /// <summary>
-        /// The event type that will trigger this event.
-        /// </summary>
         [DoNotSerialize]
-        //[UnitHeaderInspectable("Event Type")]
-        [InspectableIf(nameof(IsNotRestricted))]
-        public System.Type eventType
+        public Type eventType
         {
-            get
-            {
-                return _eventType;
-            }
-            set
-            {
-                _eventType = value;
-            }
+            get { return _eventType; }
+            set { _eventType = value; }
         }
 
-        /// <summary>
-        /// The event type that will trigger this event.
-        /// </summary>
+        [DoNotSerialize]
+        public Type restrictedEventType
+        {
+            get { return _eventType; }
+            set { _eventType = value; }
+        }
+
+        #endregion
+
+        #region New Event Type Handling
+
+        [SerializeAs(nameof(NeweventType))]
+        private IDefinedEventType New_eventType;
+
+        [DoNotSerialize]
+        public IDefinedEventType NeweventType
+        {
+            get { return New_eventType; }
+            set { New_eventType = value; }
+        }
+
         [DoNotSerialize]
         [UnitHeaderInspectable]
         [InspectableIf(nameof(IsRestricted))]
-        [Unity.VisualScripting.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
-        public System.Type restrictedEventType
+        public IDefinedEventType NewrestrictedEventType
         {
-            get
-            {
-                return _eventType;
-            }
-            set
-            {
-                _eventType = value;
-            }
+            get { return New_eventType; }
+            set { New_eventType = value; }
         }
 
         public bool IsRestricted
@@ -83,29 +83,41 @@ namespace Unity.VisualScripting.Community
 
         protected override bool ShouldTrigger(Flow flow, DefinedEventArgs args)
         {
-            return args.eventData.GetType() == eventType;
+            return args.eventData.GetType() == NeweventType.type;
         }
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return ConstructHook(eventType);
+            return ConstructHook(NeweventType.type);
         }
 
         protected override void Definition()
         {
             base.Definition();
 
-            BuildFromInfo();
+            // For backward compatibility, convert the Type to IDefinedEventType
+            if (restrictedEventType != null)
+            {
+                NewrestrictedEventType = new IDefinedEventType(restrictedEventType);
+                restrictedEventType = null;
+            }
+
+            if (NewrestrictedEventType == null)
+            {
+                NewrestrictedEventType = new IDefinedEventType();
+            }
+
+            BuildFromInfo();          
         }
 
 
         private void BuildFromInfo()
         {
             outputPorts.Clear();
-            if (eventType == null)
+            if (NeweventType == null)
                 return;
 
-            Info = ReflectedInfo.For(eventType);
+            Info = ReflectedInfo.For(NeweventType.type);
             foreach (var field in Info.reflectedFields)
             {
                 outputPorts.Add(ValueOutput(field.Value.FieldType, field.Value.Name));
@@ -153,7 +165,6 @@ namespace Unity.VisualScripting.Community
             EventHook hook = ConstructHook(eventData.GetType());
             EventBus.Trigger(hook, new DefinedEventArgs(eventData));
         }
-
 
         public static IDisposable RegisterListener<T>(Action<T> onEvent)
         {

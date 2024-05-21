@@ -1,6 +1,7 @@
-﻿using Unity.VisualScripting.Community.Libraries.Humility;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using System;
+using UnityEditor;
 
 namespace Unity.VisualScripting.Community.Variables.Editor
 {
@@ -17,59 +18,39 @@ namespace Unity.VisualScripting.Community.Variables.Editor
 
         private static IEnumerable<IUnitOption> GetStaticOptions()
         {
-            yield return new IncrementNodeOption(VariableKind.Flow);
-            yield return new IncrementNodeOption(VariableKind.Graph);
-            yield return new IncrementNodeOption(VariableKind.Object);
-            yield return new IncrementNodeOption(VariableKind.Scene);
-            yield return new IncrementNodeOption(VariableKind.Application);
-            yield return new IncrementNodeOption(VariableKind.Saved);
-
-            yield return new DecrementNodeOption(VariableKind.Flow);
-            yield return new DecrementNodeOption(VariableKind.Graph);
-            yield return new DecrementNodeOption(VariableKind.Object);
-            yield return new DecrementNodeOption(VariableKind.Scene);
-            yield return new DecrementNodeOption(VariableKind.Application);
-            yield return new DecrementNodeOption(VariableKind.Saved);
-
-            yield return new PlusEqualNodeOption(VariableKind.Flow);
-            yield return new PlusEqualNodeOption(VariableKind.Graph);
-            yield return new PlusEqualNodeOption(VariableKind.Object);
-            yield return new PlusEqualNodeOption(VariableKind.Scene);
-            yield return new PlusEqualNodeOption(VariableKind.Application);
-            yield return new PlusEqualNodeOption(VariableKind.Saved);
-
-            yield return new OnVariableChangedOption(VariableKind.Graph);
-            yield return new OnVariableChangedOption(VariableKind.Object);
-            yield return new OnVariableChangedOption(VariableKind.Scene);
-            yield return new OnVariableChangedOption(VariableKind.Application);
-            yield return new OnVariableChangedOption(VariableKind.Saved);
-
-            yield return new GetDictionaryVariableItemNodeOption(VariableKind.Graph);
-            yield return new GetDictionaryVariableItemNodeOption(VariableKind.Object);
-            yield return new GetDictionaryVariableItemNodeOption(VariableKind.Scene);
-            yield return new GetDictionaryVariableItemNodeOption(VariableKind.Application);
-            yield return new GetDictionaryVariableItemNodeOption(VariableKind.Saved);
-
-            yield return new SetDictionaryVariableItemNodeOption(VariableKind.Graph);
-            yield return new SetDictionaryVariableItemNodeOption(VariableKind.Object);
-            yield return new SetDictionaryVariableItemNodeOption(VariableKind.Scene);
-            yield return new SetDictionaryVariableItemNodeOption(VariableKind.Application);
-            yield return new SetDictionaryVariableItemNodeOption(VariableKind.Saved);
+            foreach (var variableKind in Enum.GetValues(typeof(VariableKind)).Cast<VariableKind>())
+            {
+                yield return new IncrementNodeOption(variableKind);
+                yield return new DecrementNodeOption(variableKind);
+                yield return new PlusEqualNodeOption(variableKind);
+                yield return new OnVariableChangedOption(variableKind);
+                yield return new GetDictionaryVariableItemNodeOption(variableKind);
+                yield return new SetDictionaryVariableItemNodeOption(variableKind);
+            }
         }
 
         private static IEnumerable<IUnitOption> MachineVariableOptions()
         {
-            var assets = HUMAssets.Find().Assets().OfType<ScriptGraphAsset>();
+            List<IUnitOption> options = new List<IUnitOption>();
 
-            for (int i = 0; i < assets.Count; i++)
+            string[] scriptGraphAssetGuids = AssetDatabase.FindAssets($"t:{typeof(ScriptGraphAsset)}");
+            foreach (var scriptGraphAssetGuid in scriptGraphAssetGuids)
             {
-                var variables = assets[i].graph.variables.ToArrayPooled();
+                string assetPath = AssetDatabase.GUIDToAssetPath(scriptGraphAssetGuid);
+                ScriptGraphAsset scriptGraphAsset = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(assetPath);
 
-                for (int varIndex = 0; varIndex < variables.Length; varIndex++)
+                var variables = scriptGraphAsset.graph.variables;
+
+                foreach (var variable in variables)
                 {
-                    yield return new SetMachineVariableNodeOption(new SetMachineVariableNode() { asset = assets[i], defaultName = variables[varIndex].name });
-                    yield return new GetMachineVariableNodeOption(new GetMachineVariableNode() { asset = assets[i], defaultName = variables[varIndex].name });
+                    options.Add(new SetMachineVariableNodeOption(new SetMachineVariableNode() { asset = scriptGraphAsset, defaultName = variable.name }));
+                    options.Add(new GetMachineVariableNodeOption(new GetMachineVariableNode() { asset = scriptGraphAsset, defaultName = variable.name }));
                 }
+            }
+
+            foreach (var option in options)
+            {
+                yield return option;
             }
         }
 
@@ -85,19 +66,28 @@ namespace Unity.VisualScripting.Community.Variables.Editor
 
         private static IEnumerable<IUnitOption> DynamicEditorOptions()
         {
-            var assets = HUMAssets.Find().Assets().OfType<EditorWindowAsset>();
+            List<IUnitOption> options = new List<IUnitOption>();
 
-            for (int i = 0; i < assets.Count; i++)
+            string[] editorWindowAssetGuids = AssetDatabase.FindAssets($"t:{typeof(EditorWindowAsset)}");
+            foreach (var editorWindowAssetGuid in editorWindowAssetGuids)
             {
-                var variables = assets[i].variables.variables;
+                string assetPath = AssetDatabase.GUIDToAssetPath(editorWindowAssetGuid);
+                EditorWindowAsset editorWindowAsset = AssetDatabase.LoadAssetAtPath<EditorWindowAsset>(assetPath);
 
-                yield return new WindowIsNodeOption(new WindowIsNode() { asset = assets[i] });
+                var variables = editorWindowAsset.variables.variables;
 
-                for (int varIndex = 0; varIndex < variables.Count; varIndex++)
+                options.Add(new WindowIsNodeOption(new WindowIsNode() { asset = editorWindowAsset }));
+
+                foreach (var variable in variables)
                 {
-                    yield return new GetWindowVariableNodeOption(new GetWindowVariableNode() { asset = assets[i], defaultName = variables[varIndex].name });
-                    yield return new SetWindowVariableNodeOption(new SetWindowVariableNode() { asset = assets[i], defaultName = variables[varIndex].name });
+                    options.Add(new GetWindowVariableNodeOption(new GetWindowVariableNode() { asset = editorWindowAsset, defaultName = variable.name }));
+                    options.Add(new SetWindowVariableNodeOption(new SetWindowVariableNode() { asset = editorWindowAsset, defaultName = variable.name }));
                 }
+            }
+
+            foreach (var option in options)
+            {
+                yield return option;
             }
         }
     }

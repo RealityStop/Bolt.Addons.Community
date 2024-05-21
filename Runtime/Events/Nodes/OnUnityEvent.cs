@@ -1,14 +1,20 @@
 using System;
+using System.IO;
+using System.Linq;
 using System.Reflection;
+using UnityEngine;
 using UnityEngine.Events;
 
-namespace Unity.VisualScripting.Community {
+namespace Unity.VisualScripting.Community
+{
 
-    internal class OnUnityEventData : EventUnit<EventData>.Data {
+    internal class OnUnityEventData : EventUnit<EventData>.Data
+    {
         public object EventListener { get; set; }
     }
 
-    public class EventData {
+    public class EventData
+    {
         public object Value0 { get; set; }
         public object Value1 { get; set; }
         public object Value2 { get; set; }
@@ -17,7 +23,8 @@ namespace Unity.VisualScripting.Community {
 
     [UnitTitle("On Unity Event")]
     [UnitCategory("Events")]
-    public class OnUnityEvent : EventUnit<EventData> {
+    public class OnUnityEvent : EventUnit<EventData>
+    {
         protected override bool register => false;
 
         [DoNotSerialize]
@@ -25,26 +32,31 @@ namespace Unity.VisualScripting.Community {
 
         public Type Type { get; private set; }
 
-        public override IGraphElementData CreateData() {
+        public override IGraphElementData CreateData()
+        {
             return new OnUnityEventData();
         }
 
-        protected override void Definition() {
+        protected override void Definition()
+        {
             base.Definition();
 
             UnityEvent = ValueInput<UnityEventBase>("event");
 
-            if (Type != null) {
+            if (Type != null)
+            {
                 var genericArguments = Type.GetGenericArguments();
-                for (var i = 0; i < genericArguments.Length; i++) {
+                for (var i = 0; i < genericArguments.Length; i++)
+                {
                     ValueOutput(genericArguments[i], $"arg{i}");
                 }
             }
         }
-        
-        public override void StartListening(GraphStack stack) {
+
+        public override void StartListening(GraphStack stack)
+        {
             var data = GetData(stack);
-            
+
             if (data.EventListener != null || !UnityEvent.hasValidConnection) return;
 
             UpdatePorts();
@@ -53,17 +65,18 @@ namespace Unity.VisualScripting.Community {
             var eventBase = Flow.FetchValue<UnityEventBase>(UnityEvent, stackRef);
             var method = Type.GetMethod(nameof(UnityEngine.Events.UnityEvent.AddListener));
             var delegateType = method?.GetParameters()[0].ParameterType;
-            
+
             data.EventListener = CreateAction(delegateType, stackRef);
-            
+
             method?.Invoke(eventBase, new[] { data.EventListener });
         }
 
-        public override void StopListening(GraphStack stack) {
+        public override void StopListening(GraphStack stack)
+        {
             var data = GetData(stack);
 
             if (data.EventListener == null) return;
-            
+
             var stackRef = stack.ToReference();
             var eventBase = Flow.FetchValue<UnityEventBase>(UnityEvent, stackRef);
             var method = Type.GetMethod(nameof(UnityEngine.Events.UnityEvent.RemoveListener));
@@ -71,32 +84,65 @@ namespace Unity.VisualScripting.Community {
 
             data.EventListener = null;
         }
-        
-        public void UpdatePorts() {
+
+        public void UpdatePorts()
+        {
             Type = GetEventType();
             Define();
         }
 
-        private Type GetEventType() {
+        private Type GetEventType()
+        {
             var eventType = UnityEvent?.connection?.source?.type;
 
-            while (eventType != null && eventType.BaseType != typeof(UnityEventBase)) {
+            while (eventType != null && eventType.BaseType != typeof(UnityEventBase))
+            {
                 eventType = eventType.BaseType;
             }
 
             return eventType;
         }
 
-        private object CreateAction(Type delegateType, GraphReference reference) {
+        private object CreateAction(Type delegateType, GraphReference reference)
+        {
             var numParams = delegateType.GetGenericArguments().Length;
 
-            if (numParams == 0) {
-                void Action() {
+            if (numParams == 0)
+            {
+                void Action()
+                {
                     Trigger(reference, new EventData());
                 }
-
-                return (UnityAction) Action;
+                return (UnityAction)Action;
             }
+
+#if ENABLE_IL2CPP
+
+            if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.LinuxEditor || Application.platform == RuntimePlatform.OSXEditor)
+            {
+                string methodName;
+
+                if (numParams == 1) methodName = nameof(OneParamHandler);
+                else if (numParams == 2) methodName = nameof(TwoParamsHandler);
+                else if (numParams == 3) methodName = nameof(ThreeParamsHandler);
+                else methodName = nameof(FourParamsHandler);
+
+                var method = GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.InvokeMethod);
+
+                return method?.MakeGenericMethod(delegateType.GetGenericArguments()).Invoke(this, new object[] { reference });
+            }
+            else if (GetAotSupportMethodsType() != null)
+            {
+                Type aotSupportMethodsType = GetAotSupportMethodsType();
+                var method = aotSupportMethodsType.GetMethods().First(method => method.ReturnType == delegateType);
+                return method?.Invoke(null, new object[] { reference, this });
+            }
+            else
+            {
+                throw new InvalidOperationException("Could not find AOT Support Methods");
+            }
+ 
+#else
 
             string methodName;
 
@@ -107,29 +153,40 @@ namespace Unity.VisualScripting.Community {
 
             var method = GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.InvokeMethod);
 
-            return method?.MakeGenericMethod(delegateType.GetGenericArguments()).Invoke(this, new object[] {reference});
+            return method?.MakeGenericMethod(delegateType.GetGenericArguments()).Invoke(this, new object[] { reference });
+#endif
+
         }
 
-        internal UnityAction<T> OneParamHandler<T>(GraphReference reference) {
-            return arg0 => {
-                Trigger(reference, new EventData {
+        internal UnityAction<T1> OneParamHandler<T1>(GraphReference reference)
+        {
+            return arg0 =>
+            {
+                Trigger(reference, new EventData
+                {
                     Value0 = arg0
                 });
             };
         }
 
-        internal UnityAction<T0, T1> TwoParamsHandler<T0, T1>(GraphReference reference) {
-            return (arg0, arg1) => {
-                Trigger(reference, new EventData {
+        internal UnityAction<T1, T2> TwoParamsHandler<T1, T2>(GraphReference reference)
+        {
+            return (arg0, arg1) =>
+            {
+                Trigger(reference, new EventData
+                {
                     Value0 = arg0,
                     Value1 = arg1
                 });
             };
         }
 
-        internal UnityAction<T0, T1, T2> ThreeParamsHandler<T0, T1, T2>(GraphReference reference) {
-            return (arg0, arg1, arg2) => {
-                Trigger(reference, new EventData {
+        internal UnityAction<T1, T2, T3> ThreeParamsHandler<T1, T2, T3>(GraphReference reference)
+        {
+            return (arg0, arg1, arg2) =>
+            {
+                Trigger(reference, new EventData
+                {
                     Value0 = arg0,
                     Value1 = arg1,
                     Value2 = arg2
@@ -137,9 +194,12 @@ namespace Unity.VisualScripting.Community {
             };
         }
 
-        internal UnityAction<T0, T1, T2, T3> FourParamsHandler<T0, T1, T2, T3>(GraphReference reference) {
-            return (arg0, arg1, arg2, arg3) => {
-                Trigger(reference, new EventData {
+        internal UnityAction<T1, T2, T3, T4> FourParamsHandler<T1, T2, T3, T4>(GraphReference reference)
+        {
+            return (arg0, arg1, arg2, arg3) =>
+            {
+                Trigger(reference, new EventData
+                {
                     Value0 = arg0,
                     Value1 = arg1,
                     Value2 = arg2,
@@ -148,18 +208,39 @@ namespace Unity.VisualScripting.Community {
             };
         }
 
-        protected override void AssignArguments(Flow flow, EventData args) {
+        protected override void AssignArguments(Flow flow, EventData args)
+        {
             var numOutputs = valueOutputs.Count;
-            
-            if(numOutputs > 0) flow.SetValue(valueOutputs[0], args.Value0);
-            if(numOutputs > 1) flow.SetValue(valueOutputs[1], args.Value1);
-            if(numOutputs > 2) flow.SetValue(valueOutputs[2], args.Value2);
-            if(numOutputs > 3) flow.SetValue(valueOutputs[3], args.Value3);
+
+            if (numOutputs > 0) flow.SetValue(valueOutputs[0], args.Value0);
+            if (numOutputs > 1) flow.SetValue(valueOutputs[1], args.Value1);
+            if (numOutputs > 2) flow.SetValue(valueOutputs[2], args.Value2);
+            if (numOutputs > 3) flow.SetValue(valueOutputs[3], args.Value3);
         }
 
-        private OnUnityEventData GetData(GraphPointer stack) {
+        private OnUnityEventData GetData(GraphPointer stack)
+        {
             return stack.GetElementData<OnUnityEventData>(this);
         }
-        
+
+        private Type GetAotSupportMethodsType()
+        {
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            foreach (Assembly assembly in assemblies)
+            {
+                Type[] types = assembly.GetTypes();
+
+                foreach (Type type in types)
+                {
+                    if (type.Name == "AotSupportMethods")
+                    {
+                        return type;
+                    }
+                }
+            }
+            return null;
+        }
+
     }
 }

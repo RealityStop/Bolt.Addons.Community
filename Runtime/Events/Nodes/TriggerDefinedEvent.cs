@@ -1,3 +1,4 @@
+
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,18 +13,14 @@ namespace Unity.VisualScripting.Community
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.TriggerDefinedEvent")]
     public class TriggerDefinedEvent : Unit
     {
-        #region Event Type Handling
 
+        #region Previous Event Type Handling (for backward compatibility)
         [SerializeAs(nameof(eventType))]
         private System.Type _eventType;
 
 
-        /// <summary>
-        /// The event type that will trigger this event.
-        /// </summary>
         [DoNotSerialize]
-        //[UnitHeaderInspectable("Event Type")]
-        [InspectableIf(nameof(IsNotRestricted))]
+        //[InspectableIf(nameof(IsNotRestricted))]
         public System.Type eventType
         {
             get
@@ -36,13 +33,9 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        /// <summary>
-        /// The event type that will trigger this event.
-        /// </summary>
         [DoNotSerialize]
-        [UnitHeaderInspectable]
-        [InspectableIf(nameof(IsRestricted))]
-        [Unity.VisualScripting.TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+        //[UnitHeaderInspectable]
+        //[InspectableIf(nameof(IsRestricted))]
         public System.Type restrictedEventType
         {
             get
@@ -55,6 +48,27 @@ namespace Unity.VisualScripting.Community
             }
         }
 
+        #endregion
+
+        #region New Event Type Handling
+        [SerializeAs(nameof(NeweventType))]
+        private IDefinedEventType New_eventType;
+
+        [DoNotSerialize]
+        public IDefinedEventType NeweventType
+        {
+            get { return New_eventType; }
+            set { New_eventType = value; }
+        }
+
+        [DoNotSerialize]
+        [UnitHeaderInspectable]
+        [InspectableIf(nameof(IsRestricted))]
+        public IDefinedEventType NewrestrictedEventType
+        {
+            get { return New_eventType; }
+            set { New_eventType = value; }
+        }
 
         public bool IsRestricted
         {
@@ -65,7 +79,6 @@ namespace Unity.VisualScripting.Community
         {
             get { return !IsRestricted; }
         }
-
         #endregion
 
         [DoNotSerialize]
@@ -96,6 +109,18 @@ namespace Unity.VisualScripting.Community
 
         protected override void Definition()
         {
+            // For backward compatibility, convert the Type to IDefinedEventType
+            if (restrictedEventType != null)
+            {
+                NewrestrictedEventType = new IDefinedEventType(restrictedEventType);
+                restrictedEventType = null;
+            }
+
+            if (NewrestrictedEventType == null)
+            {
+                NewrestrictedEventType = new IDefinedEventType();
+            }
+
             enter = ControlInput(nameof(enter), Trigger);
 
             exit = ControlOutput(nameof(exit));
@@ -111,10 +136,10 @@ namespace Unity.VisualScripting.Community
         private void BuildFromInfo()
         {
             inputPorts.Clear();
-            if (_eventType == null)
+            if (New_eventType.type == null)
                 return;
 
-            Info = ReflectedInfo.For(_eventType);
+            Info = ReflectedInfo.For(New_eventType.type);
             foreach (var field in Info.reflectedFields)
             {
                 if (field.Value.FieldType == typeof(bool))
@@ -152,9 +177,9 @@ namespace Unity.VisualScripting.Community
         private ControlOutput Trigger(Flow flow)
         {
 
-            if (_eventType == null) return exit;
+            if (New_eventType.type == null) return exit;
 
-            var eventInstance = System.Activator.CreateInstance(_eventType);
+            var eventInstance = System.Activator.CreateInstance(New_eventType.type);
 
             for (var i = 0; i < inputPorts.Count; i++)
             {

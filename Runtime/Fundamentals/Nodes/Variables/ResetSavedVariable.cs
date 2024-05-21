@@ -12,7 +12,8 @@ public class ResetSavedVariable : Unit
 
     [UnitHeaderInspectable("Keys")]
     [DoNotSerialize]
-    public int KeyCount {
+    public int KeyCount
+    {
         get
         {
             return Mathf.Max(1, _argumentCount);
@@ -22,7 +23,7 @@ public class ResetSavedVariable : Unit
             _argumentCount = Mathf.Clamp(value, 1, 10);
         }
     }
-    
+
     [DoNotSerialize]
     [PortLabelHidden]
     public ControlInput Reset;
@@ -41,7 +42,7 @@ public class ResetSavedVariable : Unit
 
         for (int i = 0; i < KeyCount; i++)
         {
-            var input = ValueInput<string>("Key " + i, "");
+            var input = ValueInput("Key " + i, "");
             Requirement(input, Reset);
             Keys.Add(input);
         }
@@ -49,18 +50,16 @@ public class ResetSavedVariable : Unit
         Succession(Reset, OnReset);
     }
 
-    public ControlOutput _Enter_(Flow flow) 
+    public ControlOutput _Enter_(Flow flow)
     {
         foreach (var Key in Keys)
         {
             string key = flow.GetValue<string>(Key);
 
-            var initalvariable = SavedVariables.initial[key];
-            SavedVariables.saved[key] = initalvariable;
+            var initalvariable = SavedVariables.initial.GetDeclaration(key).CloneViaFakeSerialization();
+            SavedVariables.saved[key] = initalvariable.value;
 
-            SavedVariables.current[key] = initalvariable;
-
-            SavedVariables.SaveDeclarations(SavedVariables.saved);
+            if (SavedVariables.current != SavedVariables.initial) SavedVariables.current[key] = initalvariable.value;
         }
         return OnReset;
     }
