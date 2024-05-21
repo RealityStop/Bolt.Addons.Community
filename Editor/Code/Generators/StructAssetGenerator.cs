@@ -2,6 +2,8 @@
 using System;
 using Unity.VisualScripting;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -17,16 +19,16 @@ namespace Unity.VisualScripting.Community
             if (Data.serialized) @struct.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());
             if (Data.includeInSettings) @struct.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
 
-            foreach(var attribute in Data.attributes)
+            foreach (var attribute in Data.attributes)
             {
                 var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
                 foreach (var param in attribute.parameters)
                 {
-                    if(param.defaultValue is IList list)
+                    if (param.defaultValue is IList list)
                     {
-                        if(param.isParamsParameter)
+                        if (param.isParamsParameter)
                         {
-                            foreach(var item in list)
+                            foreach (var item in list)
                             {
                                 attrGenerator.AddParameter(item);
                             }
@@ -55,6 +57,14 @@ namespace Unity.VisualScripting.Community
                 var constructor = ConstructorGenerator.Constructor(Data.constructors[i].scope, Data.constructors[i].modifier, Data.title.LegalMemberName());
                 if (Data.constructors[i].graph.units.Count > 0)
                 {
+                    var usings = new List<string>();
+                    foreach (var _unit in Data.constructors[i].graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
+                    {
+                        if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
+                            usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                    }
+
+                    @struct.AddUsings(usings);
                     var unit = Data.constructors[i].graph.units[0] as FunctionNode;
                     var data = new ControlGenerationData();
                     for (int item = 0; item < Data.variables.Count; item++)
@@ -73,7 +83,7 @@ namespace Unity.VisualScripting.Community
                 @struct.AddConstructor(constructor);
             }
 
-           for (int i = 0; i < Data.variables.Count; i++)
+            for (int i = 0; i < Data.variables.Count; i++)
             {
                 if (!string.IsNullOrEmpty(Data.variables[i].name) && Data.variables[i].type != null)
                 {
@@ -88,11 +98,11 @@ namespace Unity.VisualScripting.Community
                             AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
                             foreach (var param in attributes[attrIndex].parameters)
                             {
-                                if(param.defaultValue is IList list)
+                                if (param.defaultValue is IList list)
                                 {
-                                    if(param.isParamsParameter)
+                                    if (param.isParamsParameter)
                                     {
-                                        foreach(var item in list)
+                                        foreach (var item in list)
                                         {
                                             attrGenerator.AddParameter(item);
                                         }
@@ -115,12 +125,28 @@ namespace Unity.VisualScripting.Community
 
                         if (Data.variables[i].get)
                         {
+                            var usings = new List<string>();
+                            foreach (var _unit in Data.variables[i].getter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
+                            {
+                                if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
+                                    usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                            }
+
+                            @struct.AddUsings(usings);
                             property.MultiStatementGetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
                             .GenerateControl(null, new ControlGenerationData() { returns = Data.variables[i].type }, 0));
                         }
 
                         if (Data.variables[i].set)
                         {
+                            var usings = new List<string>();
+                            foreach (var _unit in Data.variables[i].setter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
+                            {
+                                if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
+                                    usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                            }
+
+                            @struct.AddUsings(usings);
                             property.MultiStatementSetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
                             .GenerateControl(null, new ControlGenerationData(), 0));
                         }
@@ -142,11 +168,11 @@ namespace Unity.VisualScripting.Community
                             AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
                             foreach (var param in attributes[attrIndex].parameters)
                             {
-                                if(param.defaultValue is IList list)
+                                if (param.defaultValue is IList list)
                                 {
-                                    if(param.isParamsParameter)
+                                    if (param.isParamsParameter)
                                     {
-                                        foreach(var item in list)
+                                        foreach (var item in list)
                                         {
                                             attrGenerator.AddParameter(item);
                                         }
@@ -184,11 +210,11 @@ namespace Unity.VisualScripting.Community
                         AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
                         foreach (var param in attributes[attrIndex].parameters)
                         {
-                            if(param.defaultValue is IList list)
+                            if (param.defaultValue is IList list)
                             {
-                                if(param.isParamsParameter)
+                                if (param.isParamsParameter)
                                 {
-                                    foreach(var item in list)
+                                    foreach (var item in list)
                                     {
                                         attrGenerator.AddParameter(item);
                                     }
@@ -210,6 +236,14 @@ namespace Unity.VisualScripting.Community
                     }
                     if (Data.methods[i].graph.units.Count > 0)
                     {
+                        var usings = new List<string>();
+                        foreach (var _unit in Data.methods[i].graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
+                        {
+                            if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
+                                usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                        }
+
+                        @struct.AddUsings(usings);
                         var unit = Data.methods[i].graph.units[0] as FunctionNode;
                         var data = new ControlGenerationData();
                         for (int item = 0; item < Data.variables.Count; item++)
