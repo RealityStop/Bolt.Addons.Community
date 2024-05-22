@@ -173,313 +173,319 @@ namespace Unity.VisualScripting.Community
         private void DrawResults()
         {
             HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
-                           {
-                               _scrollViewRoot = EditorGUILayout.BeginScrollView(_scrollViewRoot);
+            {
+                _scrollViewRoot = EditorGUILayout.BeginScrollView(_scrollViewRoot);
 
-                               bool empty = string.IsNullOrEmpty(_pattern) || _matchObjects.Count == 0;
-                               bool isShowingErrors = false;
-                               // Display Script Graph results
-                               if (!empty)
-                               {
-                                   foreach (var key in _sortedScriptGraphKey)
-                                   {
-                                       var list = _matchScriptGraphMap[key];
-                                       if (!ShouldShowItem(list)) continue;
+                bool empty = string.IsNullOrEmpty(_pattern) || _matchObjects.Count == 0;
+                bool isShowingErrors = false;
 
-                                       EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                                       var icon = EditorGUIUtility.ObjectContent(key, typeof(ScriptGraphAsset));
-                                       var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                                       {
-                                           fontStyle = FontStyle.Bold,
-                                           fontSize = 14,
-                                           alignment = TextAnchor.MiddleLeft,
-                                           richText = true
-                                       };
-                                       GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
+                // Display Script Graph results
+                if (!empty)
+                {
+                    foreach (var key in _sortedScriptGraphKey)
+                    {
+                        var list = _matchScriptGraphMap[key];
+                        if (!ShouldShowItem(list)) continue;
 
-                                       foreach (var match in list)
-                                       {
-                                           var pathNames = GetUnitPath(match.Reference);
-                                           if (match.Matches.Contains(MatchType.Error) && _matchError)
-                                           {
-                                               isShowingErrors = true;
-                                               var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+                        EditorGUIUtility.SetIconSize(new Vector2(16, 16));
+                        var icon = EditorGUIUtility.ObjectContent(key, typeof(ScriptGraphAsset));
+                        var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                        {
+                            fontStyle = FontStyle.Bold,
+                            fontSize = 14,
+                            alignment = TextAnchor.MiddleLeft,
+                            richText = true
+                        };
+                        GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
 
-                                               // Create the GUIStyle and enable rich text
-                                               var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                               {
-                                                   alignment = TextAnchor.MiddleLeft,
-                                                   richText = true // Enable rich text
-                                               };
+                        foreach (var match in list)
+                        {
+                            var pathNames = GetUnitPath(match.Reference);
+                            if (match.Matches.Contains(MatchType.Error) && _matchError)
+                            {
+                                isShowingErrors = true;
+                                var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
 
-                                               // Display the button with the formatted label
-                                               if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                               {
-                                                   FocusMatchObject(match);
-                                               }
-                                           }
-                                           else
-                                           {
-                                               var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
-                                               var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                               {
-                                                   alignment = TextAnchor.MiddleLeft,
-                                                   richText = true
-                                               };
+                                // Create the GUIStyle and enable rich text
+                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                {
+                                    alignment = TextAnchor.MiddleLeft,
+                                    richText = true // Enable rich text
+                                };
 
-                                               if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                               {
-                                                   FocusMatchObject(match);
-                                               }
-                                           }
-                                       }
-                                   }
+                                // Display the button with the formatted label
+                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                {
+                                    FocusMatchObject(match);
+                                }
+                            }
+                            else
+                            {
+                                var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
+                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                {
+                                    alignment = TextAnchor.MiddleLeft,
+                                    richText = true
+                                };
 
-                                   //Display ScriptMachine Graph Results
-                                   foreach (var key in _sortedScriptMachineKey)
-                                   {
-                                       var list = _matchScriptMachineMap[key];
-                                       if (!ShouldShowItem(list)) continue;
-                                       isShowingErrors = true;
-                                       EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                                       var icon = typeof(GameObject).Icon()[1];
-                                       var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                                       {
-                                           fontStyle = FontStyle.Bold,
-                                           fontSize = 14,
-                                           alignment = TextAnchor.MiddleLeft,
-                                           richText = true
-                                       };
-                                       GUILayout.Label(new GUIContent(key.name, icon), headerStyle);
+                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                {
+                                    FocusMatchObject(match);
+                                }
+                            }
+                        }
+                    }
 
-                                       foreach (var match in list)
-                                       {
-                                           var pathNames = GetUnitPath(match.Reference);
-                                           if (match.Matches.Contains(MatchType.Error) && _matchError)
-                                           {
-                                               isShowingErrors = true;
-                                               var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+                    // Display ScriptMachine Graph Results
+                    foreach (var key in _sortedScriptMachineKey)
+                    {
+                        var list = _matchScriptMachineMap[key];
+                        if (!ShouldShowItem(list)) continue;
+                        isShowingErrors = true;
+                        EditorGUIUtility.SetIconSize(new Vector2(16, 16));
 
-                                               // Create the GUIStyle and enable rich text
-                                               var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                               {
-                                                   alignment = TextAnchor.MiddleLeft,
-                                                   richText = true // Enable rich text
-                                               };
+                        // Using GameObject's default icon
+                        var icon = EditorGUIUtility.IconContent("GameObject Icon");
+                        var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                        {
+                            fontStyle = FontStyle.Bold,
+                            fontSize = 14,
+                            alignment = TextAnchor.MiddleLeft,
+                            richText = true
+                        };
 
-                                               // Display the button with the formatted label
-                                               if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                               {
-                                                   FocusMatchObject(match);
-                                               }
-                                           }
-                                           else
-                                           {
-                                               var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
-                                               var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                               {
-                                                   alignment = TextAnchor.MiddleLeft,
-                                                   richText = true
-                                               };
+                        GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
 
-                                               if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                               {
-                                                   FocusMatchObject(match);
-                                               }
-                                           }
-                                       }
-                                   }
+                        foreach (var match in list)
+                        {
+                            var pathNames = GetUnitPath(match.Reference);
+                            if (match.Matches.Contains(MatchType.Error) && _matchError)
+                            {
+                                isShowingErrors = true;
+                                var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
 
-                                   // Display State Graph results
-                                   foreach (var key in _sortedStateGraphKey)
-                                   {
-                                       var list = _matchStateGraphMap[key];
-                                       if (!ShouldShowItem(list)) continue;
+                                // Create the GUIStyle and enable rich text
+                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                {
+                                    alignment = TextAnchor.MiddleLeft,
+                                    richText = true // Enable rich text
+                                };
 
-                                       EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                                       var icon = EditorGUIUtility.ObjectContent(key, typeof(StateGraphAsset));
-                                       var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                                       {
-                                           fontStyle = FontStyle.Bold,
-                                           fontSize = 14,
-                                           alignment = TextAnchor.MiddleLeft,
-                                           richText = true
-                                       };
-                                       GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
+                                // Display the button with the formatted label
+                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                {
+                                    FocusMatchObject(match);
+                                }
+                            }
+                            else
+                            {
+                                var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
+                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                {
+                                    alignment = TextAnchor.MiddleLeft,
+                                    richText = true
+                                };
 
-                                       foreach (var match in list)
-                                       {
-                                           var pathNames = GetUnitPath(match.Reference);
-                                           if (match.Matches.Contains(MatchType.Error) && _matchError)
-                                           {
-                                               isShowingErrors = true;
-                                               var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                {
+                                    FocusMatchObject(match);
+                                }
+                            }
+                        }
+                    }
 
-                                               var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                               {
-                                                   alignment = TextAnchor.MiddleLeft,
-                                                   richText = true
-                                               };
+                    // Display State Graph results
+                    foreach (var key in _sortedStateGraphKey)
+                    {
+                        var list = _matchStateGraphMap[key];
+                        if (!ShouldShowItem(list)) continue;
 
-                                               if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                               {
-                                                   FocusMatchObject(match);
-                                               }
-                                           }
-                                           else
-                                           {
-                                               var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
-                                               var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                               {
-                                                   alignment = TextAnchor.MiddleLeft,
-                                                   richText = true
-                                               };
+                        EditorGUIUtility.SetIconSize(new Vector2(16, 16));
+                        var icon = EditorGUIUtility.ObjectContent(key, typeof(StateGraphAsset));
+                        var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                        {
+                            fontStyle = FontStyle.Bold,
+                            fontSize = 14,
+                            alignment = TextAnchor.MiddleLeft,
+                            richText = true
+                        };
+                        GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
 
-                                               if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                               {
-                                                   FocusMatchObject(match);
-                                               }
-                                           }
-                                       }
-                                   }
-                               }
-                               else
-                               {
-                                   if (_checkScriptGraphAssets)
-                                   {
-                                       foreach (var key in _sortedScriptGraphKey)
-                                       {
-                                           var list = _matchScriptGraphMap[key];
-                                           if (!IsError(list)) continue;
-                                           isShowingErrors = true;
-                                           EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                                           var icon = EditorGUIUtility.ObjectContent(key, typeof(ScriptGraphAsset));
-                                           var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                                           {
-                                               fontStyle = FontStyle.Bold,
-                                               fontSize = 14,
-                                               alignment = TextAnchor.MiddleLeft,
-                                               richText = true
-                                           };
-                                           GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
+                        foreach (var match in list)
+                        {
+                            var pathNames = GetUnitPath(match.Reference);
+                            if (match.Matches.Contains(MatchType.Error) && _matchError)
+                            {
+                                isShowingErrors = true;
+                                var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
 
-                                           foreach (var match in list)
-                                           {
-                                               if (match.Matches.Contains(MatchType.Error))
-                                               {
-                                                   var pathNames = GetUnitPath(match.Reference);
+                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                {
+                                    alignment = TextAnchor.MiddleLeft,
+                                    richText = true
+                                };
 
-                                                   var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                {
+                                    FocusMatchObject(match);
+                                }
+                            }
+                            else
+                            {
+                                var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
+                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                {
+                                    alignment = TextAnchor.MiddleLeft,
+                                    richText = true
+                                };
 
-                                                   // Create the GUIStyle and enable rich text
-                                                   var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                                   {
-                                                       alignment = TextAnchor.MiddleLeft,
-                                                       richText = true // Enable rich text
-                                                   };
+                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                {
+                                    FocusMatchObject(match);
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (_checkScriptGraphAssets)
+                    {
+                        foreach (var key in _sortedScriptGraphKey)
+                        {
+                            var list = _matchScriptGraphMap[key];
+                            if (!IsError(list)) continue;
+                            isShowingErrors = true;
+                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
+                            var icon = EditorGUIUtility.ObjectContent(key, typeof(ScriptGraphAsset));
+                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                            {
+                                fontStyle = FontStyle.Bold,
+                                fontSize = 14,
+                                alignment = TextAnchor.MiddleLeft,
+                                richText = true
+                            };
+                            GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
 
-                                                   // Display the button with the formatted label
-                                                   if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                                   {
-                                                       FocusMatchObject(match);
-                                                   }
-                                               }
-                                           }
-                                       }
-                                   }
+                            foreach (var match in list)
+                            {
+                                if (match.Matches.Contains(MatchType.Error))
+                                {
+                                    var pathNames = GetUnitPath(match.Reference);
 
-                                   if (_checkScriptMachines)
-                                   {
-                                       //Display ScriptMachine Graph Results
-                                       foreach (var key in _sortedScriptMachineKey)
-                                       {
-                                           var list = _matchScriptMachineMap[key];
-                                           if (!IsError(list)) continue;
-                                           isShowingErrors = true;
-                                           EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                                           var icon = typeof(ScriptMachine).Icon()[1];
-                                           var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                                           {
-                                               fontStyle = FontStyle.Bold,
-                                               fontSize = 14,
-                                               alignment = TextAnchor.MiddleLeft,
-                                               richText = true
-                                           };
-                                           GUILayout.Label(new GUIContent(key.name, icon), headerStyle);
+                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
 
-                                           foreach (var match in list)
-                                           {
-                                               if (match.Matches.Contains(MatchType.Error))
-                                               {
-                                                   var pathNames = GetUnitPath(match.Reference);
+                                    // Create the GUIStyle and enable rich text
+                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                    {
+                                        alignment = TextAnchor.MiddleLeft,
+                                        richText = true // Enable rich text
+                                    };
 
-                                                   var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+                                    // Display the button with the formatted label
+                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                    {
+                                        FocusMatchObject(match);
+                                    }
+                                }
+                            }
+                        }
+                    }
 
-                                                   var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                                   {
-                                                       alignment = TextAnchor.MiddleLeft,
-                                                       richText = true
-                                                   };
+                    if (_checkScriptMachines)
+                    {
+                        // Display ScriptMachine Graph Results
+                        foreach (var key in _sortedScriptMachineKey)
+                        {
+                            var list = _matchScriptMachineMap[key];
+                            if (!IsError(list)) continue;
+                            isShowingErrors = true;
+                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
 
-                                                   if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                                   {
-                                                       FocusMatchObject(match);
-                                                   }
-                                               }
-                                           }
-                                       }
-                                   }
+                            // Using GameObject's default icon
+                            var icon = EditorGUIUtility.IconContent("GameObject Icon");
+                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                            {
+                                fontStyle = FontStyle.Bold,
+                                fontSize = 14,
+                                alignment = TextAnchor.MiddleLeft,
+                                richText = true
+                            };
+                            GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
 
-                                   if (_checkStateGraphAssets)
-                                   {
-                                       // Display State Graph results
-                                       foreach (var key in _sortedStateGraphKey)
-                                       {
-                                           var list = _matchStateGraphMap[key];
-                                           if (!IsError(list)) continue;
-                                           isShowingErrors = true;
-                                           EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                                           var icon = EditorGUIUtility.ObjectContent(key, typeof(StateGraphAsset));
-                                           var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                                           {
-                                               fontStyle = FontStyle.Bold,
-                                               fontSize = 14,
-                                               alignment = TextAnchor.MiddleLeft,
-                                               richText = true
-                                           };
-                                           GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
+                            foreach (var match in list)
+                            {
+                                if (match.Matches.Contains(MatchType.Error))
+                                {
+                                    var pathNames = GetUnitPath(match.Reference);
 
-                                           foreach (var match in list)
-                                           {
-                                               if (match.Matches.Contains(MatchType.Error))
-                                               {
-                                                   var pathNames = GetUnitPath(match.Reference);
+                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
 
-                                                   var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                    {
+                                        alignment = TextAnchor.MiddleLeft,
+                                        richText = true
+                                    };
 
-                                                   var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                                   {
-                                                       alignment = TextAnchor.MiddleLeft,
-                                                       richText = true
-                                                   };
+                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                    {
+                                        FocusMatchObject(match);
+                                    }
+                                }
+                            }
+                        }
+                    }
 
-                                                   if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                                   {
-                                                       FocusMatchObject(match);
-                                                   }
-                                               }
-                                           }
-                                       }
-                                   }
-                               }
+                    if (_checkStateGraphAssets)
+                    {
+                        // Display State Graph results
+                        foreach (var key in _sortedStateGraphKey)
+                        {
+                            var list = _matchStateGraphMap[key];
+                            if (!IsError(list)) continue;
+                            isShowingErrors = true;
+                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
+                            var icon = EditorGUIUtility.ObjectContent(key, typeof(StateGraphAsset));
+                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                            {
+                                fontStyle = FontStyle.Bold,
+                                fontSize = 14,
+                                alignment = TextAnchor.MiddleLeft,
+                                richText = true
+                            };
+                            GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
 
-                               if (empty && !isShowingErrors)
-                               {
-                                   EditorGUILayout.HelpBox("No results found.", MessageType.Info);
-                               }
+                            foreach (var match in list)
+                            {
+                                if (match.Matches.Contains(MatchType.Error))
+                                {
+                                    var pathNames = GetUnitPath(match.Reference);
 
-                               EditorGUILayout.EndScrollView();
-                           });
+                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+
+                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                    {
+                                        alignment = TextAnchor.MiddleLeft,
+                                        richText = true
+                                    };
+
+                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                    {
+                                        FocusMatchObject(match);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (empty && !isShowingErrors)
+                {
+                    EditorGUILayout.HelpBox("No results found.", MessageType.Info);
+                }
+
+                EditorGUILayout.EndScrollView();
+            });
         }
 
         private Texture GetUnitIcon(Unit unit)
