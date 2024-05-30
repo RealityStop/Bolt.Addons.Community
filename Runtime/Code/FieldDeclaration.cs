@@ -43,14 +43,6 @@ namespace Unity.VisualScripting.Community
         [HideInInspector]
         private string qualifiedName;
 
-        [SerializeField]
-        [HideInInspector]
-        private string serializedValue;
-
-        [SerializeField]
-        [HideInInspector]
-        private string serializedValueType;
-
 #if UNITY_EDITOR
         public bool opened;
         public bool propertyOpened;
