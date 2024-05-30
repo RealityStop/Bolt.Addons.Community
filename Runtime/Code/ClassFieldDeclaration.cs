@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -23,12 +23,10 @@ namespace Unity.VisualScripting.Community
 
         [SerializeField]
         [HideInInspector]
-        [Serialize]
         private SerializationData serializedValue;
 
         [SerializeField]
         [HideInInspector]
-        [Serialize]
         private SerializationData serializedValueType;
 
         public void OnAfterDeserialize()
