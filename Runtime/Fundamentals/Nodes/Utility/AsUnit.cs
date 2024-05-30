@@ -19,6 +19,8 @@ namespace Unity.VisualScripting.Community
         [PortLabelHidden]
         public ValueOutput Result;
 
+        public override bool canDefine => AsType != null;
+
         protected override void Definition()
         {
             Value = ValueInput<object>(nameof(Value));
