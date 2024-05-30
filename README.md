@@ -2,10 +2,6 @@
 > 
 > But there are new maintainers!
 
-**It looks like there are some compatibility hiccups with Defined Events. 
-To steer clear of any trouble, just make sure you've got Unity Visual Scripting version 1.8.0 until its fixed.**
-
-
 # Community Addons
 ### Unity Visual Scripting Extensions
 A community-driven project for extending Unity Visual Scripting with custom nodes, assets, types, and helpers.
@@ -126,6 +122,7 @@ Control
  - **CoroutineToFlow**
  - **WaitForManualPress**
  - **If**
+ - **ElseIf**
 
 Logic
  - **Latch**
@@ -136,7 +133,8 @@ Logic
  - **Toggle Bool**
 
 Utility
- - **Convert**	
+ - **Convert**
+ - **As**
  - **Flow Reroute**
  - **Value Reroute**
  - **Copy To Clipboard**
@@ -236,3 +234,4 @@ Editor
  - PurerLogic
  - Tomate Salat
  - Spyboticer
+ - omega-ult
