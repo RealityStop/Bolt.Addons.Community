@@ -51,6 +51,7 @@ public class ElseIfUnit : Unit
             var valueInput = ValueInput<bool>(i.ToString());
             elseIfConditions.Add(valueInput);
             relations.Add(new UnitRelation(valueInput, controlOutput));
+            Requirement(valueInput, Enter);
         }
 
         Else = ControlOutput(nameof(Else));
