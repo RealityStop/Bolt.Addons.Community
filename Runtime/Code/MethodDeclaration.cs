@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Utility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Newtonsoft.Json;
 
 namespace Unity.VisualScripting.Community
 {
@@ -25,6 +26,10 @@ namespace Unity.VisualScripting.Community
         [HideInInspector]
         private string qualifiedReturnTypeName;
 
+        [SerializeField]
+        [HideInInspector]
+        private string serializedParams;
+
         [Inspectable]
         public ClassAsset classAsset;
 
@@ -34,6 +39,8 @@ namespace Unity.VisualScripting.Community
         [Serialize][InspectorWide]
         public List<TypeParam> parameters = new List<TypeParam>();
 
+        public List<AttributeDeclaration> attributes = new List<AttributeDeclaration>();
+
         public AccessModifier scope = AccessModifier.Public;
 
         public MethodModifier modifier = MethodModifier.None;
@@ -41,6 +48,7 @@ namespace Unity.VisualScripting.Community
 #if UNITY_EDITOR
         public bool opened;
         public bool parametersOpened;
+        public bool attributesOpened;
 #endif
 
         public override FlowGraph DefaultGraph()
@@ -56,6 +64,11 @@ namespace Unity.VisualScripting.Community
             {
                 returnType = Type.GetType(qualifiedReturnTypeName);
             }
+
+            if (!string.IsNullOrEmpty(serializedParams)) 
+            {
+                parameters = (List<TypeParam>)JsonConvert.DeserializeObject(serializedParams, typeof(List<TypeParam>));
+            }
         }
 
         protected override void OnBeforeSerialize()
@@ -69,6 +82,14 @@ namespace Unity.VisualScripting.Community
             }
 
             qualifiedReturnTypeName = returnType.AssemblyQualifiedName;
+
+            if (parameters == null) 
+            {
+                serializedParams = string.Empty;
+                return;
+            }
+            
+            serializedParams = JsonConvert.SerializeObject(parameters);
         }
     }
 }

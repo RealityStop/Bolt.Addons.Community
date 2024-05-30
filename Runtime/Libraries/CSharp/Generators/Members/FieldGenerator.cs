@@ -23,6 +23,17 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         private FieldGenerator() { }
 
+        public static FieldGenerator Field(AccessModifier scope, FieldModifier modifier, Type type, string name, object defaultValue)
+        {
+            var field = new FieldGenerator();
+            field.scope = scope;
+            field.modifier = modifier;
+            field.type = type;
+            field.name = name.LegalMemberName();
+            field.defaultValue = defaultValue;
+            return field;
+        }
+
         public static FieldGenerator Field(AccessModifier scope, FieldModifier modifier, Type type, string name)
         {
             var field = new FieldGenerator();
@@ -34,7 +45,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return field;
         }
 
-        public static FieldGenerator Field(AccessModifier scope, FieldModifier modifier, string typeName, string typeNamespace, string name, string defaultValue = null, HighlightType highlightType = HighlightType.None) 
+
+        public static FieldGenerator Field(AccessModifier scope, FieldModifier modifier, string typeName, string typeNamespace, string name, string defaultValue = null, HighlightType highlightType = HighlightType.None)
         {
             var field = new FieldGenerator();
             field.scope = scope;
@@ -83,7 +95,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (attributes.Count > 0) _attributes += "\n";
             var modSpace = (modifier == FieldModifier.None) ? string.Empty : " ";
             var definition = CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + (typeIsString ? stringType.WithHighlight(highlightType) : type.As().CSharpName()) + " " + name.LegalMemberName();
-            var output = !isString && (defaultValue == null || defaultValue.Equals(HUMValue.Create().New(type))) ? ";" : " = " + (isString ? stringDefault : defaultValue.As().Code(true) + ";");
+            var output = !isString && (defaultValue == null || defaultValue.Equals(HUMValue.Create().New(type))) ? ";" : " = " + (isString ? stringDefault : defaultValue.As().Code(true, true) + ";");
             return _attributes + definition + output;
         }
 

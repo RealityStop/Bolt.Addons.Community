@@ -13,8 +13,7 @@ namespace Unity.VisualScripting.Community
         [SerializeReference]
         public CSharpPreview preview = new CSharpPreview();
 
-        [SerializeField]
-        private CodeAsset asset;
+        public static CodeAsset asset;
 
         private bool cached;
 

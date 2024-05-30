@@ -87,11 +87,12 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         public enum HighlightType
         {
             None,
-            Enum, 
+            Enum,
             Interface,
             Type,
             Construct,
-            Comment
+            Comment,
+            Variable
         }
 
         public static string WithHighlight(this string text, HighlightType type)
@@ -110,6 +111,8 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                     return text.EnumHighlight();
                 case HighlightType.Type:
                     return text.TypeHighlight();
+                case HighlightType.Variable:
+                    return text.VariableHighlight();
                 default:
                     return text;
             }
@@ -289,10 +292,10 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (includeSelf) result.Add(derived.type);
             return result.ToArray();
         }
-        
+
         /// <summary>
-         /// Returns all types that derive or have a base type of a this type.
-         /// </summary>
+        /// Returns all types that derive or have a base type of a this type.
+        /// </summary>
         public static Type[] All(this HUMType.Data.Get derived, bool includeSelf = false)
         {
             List<Type> result = new List<Type>();
@@ -344,7 +347,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == null) return "null";
             if (type == typeof(void)) return "void";
             if (type == typeof(bool)) return @as.value.ToString().ToLower();
-            if (type == typeof(float)) return @as.value.ToString() + "f";
+            if (type == typeof(float)) return @as.value.ToString().Replace(",", ".") + "f";
             if (type == typeof(string)) return @"""" + @as.value.ToString() + @"""";
             if (type == typeof(UnityEngine.GameObject)) return "null";
             if (type == typeof(int) || type == typeof(uint) || type == typeof(byte) || type == typeof(long) || type == typeof(short) || type == typeof(double)) return @as.value.ToString();
@@ -354,8 +357,9 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)
                 {
+                    if (type.IsGenericType) return isLiteral ? Literal(@as.value, newLineLiteral) : "new ".ConstructHighlight() + GenericDeclaration(type) + "()";
                     if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, newLineLiteral) : "new " + GenericDeclaration(type) + "(" + parameters + ")";
-                    return isLiteral ? Literal(@as.value, newLineLiteral) : "new " + type.Name +  "(" + parameters + ")";
+                    return isLiteral ? Literal(@as.value, newLineLiteral) : "new " + type.Name + "(" + parameters + ")";
                 }
                 else
                 {
@@ -373,7 +377,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == null) return "null".ConstructHighlight();
             if (type == typeof(void)) return "void".ConstructHighlight();
             if (type == typeof(bool)) return @as.value.ToString().ToLower().ConstructHighlight();
-            if (type == typeof(float)) return (@as.value.ToString() + "f").NumericHighlight();
+            if (type == typeof(float)) return (@as.value.ToString().Replace(",", ".") + "f").NumericHighlight();
             if (type == typeof(string)) return (@"""" + @as.value.ToString() + @"""").StringHighlight();
             if (type == typeof(UnityEngine.GameObject)) return "null".ConstructHighlight();
             if (type == typeof(int) || type == typeof(uint) || type == typeof(byte) || type == typeof(long) || type == typeof(short) || type == typeof(double)) return @as.value.ToString().NumericHighlight();
@@ -382,12 +386,13 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)
                 {
-                    if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, newLineLiteral) : "new ".ConstructHighlight() + GenericDeclaration(type) +"(" + parameters + ")";
+                    if (type.IsGenericType) return isLiteral ? Literal(@as.value, newLineLiteral) : "new ".ConstructHighlight() + GenericDeclaration(type) + "()";
+                    if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, newLineLiteral) : "new ".ConstructHighlight() + GenericDeclaration(type) + "(" + parameters + ")";
                     return isLiteral ? Literal(@as.value, newLineLiteral) : "new ".ConstructHighlight() + type.Name.TypeHighlight() + "(" + parameters + ")";
                 }
                 else
                 {
-                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral? Literal(@as.value, newLineLiteral) : "new ".ConstructHighlight() + type.Name.TypeHighlight() + "(" + parameters + ")";
+                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, newLineLiteral) : "new ".ConstructHighlight() + type.Name.TypeHighlight() + "(" + parameters + ")";
                 }
             }
 
@@ -400,14 +405,81 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             var output = string.Empty;
             var usableFields = new List<FieldInfo>();
             var isMultiLine = fields.Length > 2;
+            if (value is IDictionary Dictionary && Dictionary.Count > 0)
+            {
+                isMultiLine = true;
+            }
 
-            output += (newLine ? "\n" : string.Empty) + "new ".ConstructHighlight() + value.GetType().Name.TypeHighlight() + "()" + (isMultiLine ? "\n" + "{" + "\n" : " { ");
+            output += (newLine ? "\n" : string.Empty) + "new ".ConstructHighlight() + (!value.GetType().IsGenericType ? value.GetType().Name.TypeHighlight() : GenericDeclaration(value.GetType())) + "()" + (isMultiLine ? "\n" + "{" + "\n" : " { ");
 
             for (int i = 0; i < fields.Length; i++)
             {
                 if (fields[i].IsPublic && !fields[i].IsStatic && !fields[i].IsInitOnly)
                 {
                     usableFields.Add(fields[i]);
+                }
+            }
+
+            if (value.GetType().IsGenericType)
+            {
+                if (value is IList list)
+                {
+                    int index = 0;
+                    foreach (var item in list)
+                    {
+                        output += item.As().Code(true, true);
+                        if (++index != list.Count)
+                        {
+                            output += ", ";
+                        }
+                    }
+                }
+                else if (value is IDictionary dictionary)
+                {
+                    int index = 0;
+                    foreach (DictionaryEntry entry in dictionary)
+                    {
+                        output += CodeBuilder.Indent(1) + "{ ";
+                        output += entry.Key.As().Code(true, true);
+                        output += ", ";
+                        output += entry.Value.As().Code(true, true);
+                        output += "}";
+                        if (++index != dictionary.Count)
+                        {
+                            output += ", \n";
+                        }
+                    }
+                }
+            }
+            else if (value is AotList || value is AotDictionary)
+            {
+                if (value is AotList list)
+                {
+                    int index = 0;
+                    foreach (var item in list)
+                    {
+                        output += item.As().Code(true, true);
+                        if (++index != list.Count)
+                        {
+                            output += ", ";
+                        }
+                    }
+                }
+                else if (value is AotDictionary dictionary)
+                {
+                    int index = 0;
+                    foreach (DictionaryEntry entry in dictionary)
+                    {
+                        output += CodeBuilder.Indent(1) + "{ ";
+                        output += entry.Key.As().Code(true, true);
+                        output += ", ";
+                        output += entry.Value.As().Code(true, true);
+                        output += "}";
+                        if (++index != dictionary.Count)
+                        {
+                            output += ", \n";
+                        }
+                    }
                 }
             }
 
@@ -422,7 +494,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return output;
         }
 
-        public static string GenericDeclaration(Type type, params Type[] declaredGenerics)
+        public static string GenericDeclaration(Type type)
         {
             var output = string.Empty;
 
@@ -442,5 +514,76 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
             return output;
         }
+
+        public static string GenericDeclaration(Type type, List<Type> parameters)
+        {
+            var output = string.Empty;
+
+            if (!type.IsConstructedGenericType && !type.IsGenericType) return type.As().CSharpName();
+            output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight();
+
+            if (parameters.Count > 0)
+            {
+                output += "<";
+                for (int i = 0; i < parameters.Count; i++)
+                {
+                    output += parameters[i].As().CSharpName();
+                    if (i < parameters.Count - 1) output += ", ";
+                }
+                output += ">";
+            }
+            else
+            {
+                output += "<";
+
+                var args = type.GetGenericArguments();
+
+                for (int i = 0; i < args.Length; i++)
+                {
+                    output += args[i].As().CSharpName();
+                    if (i < args.Length - 1) output += ", ";
+                }
+
+                output += ">";
+            }
+
+            return output;
+        }
+
+        public static string GenericDeclaration(Type type, params Type[] parameters)
+        {
+            var output = string.Empty;
+
+            if (!type.IsConstructedGenericType && !type.IsGenericType) return type.As().CSharpName();
+            output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight();
+
+            if (parameters.Length > 0)
+            {
+                output += "<";
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    output += parameters[i].As().CSharpName();
+                    if (i < parameters.Length - 1) output += ", ";
+                }
+                output += ">";
+            }
+            else
+            {
+                output += "<";
+
+                var args = type.GetGenericArguments();
+
+                for (int i = 0; i < args.Length; i++)
+                {
+                    output += args[i].As().CSharpName();
+                    if (i < args.Length - 1) output += ", ";
+                }
+
+                output += ">";
+            }
+
+            return output;
+        }
+
     }
 }

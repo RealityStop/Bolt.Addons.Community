@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 using UnityEngine.UIElements;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -35,7 +36,10 @@ namespace Unity.VisualScripting.Community
 
             container.Add(SelectionToSuperUnit());
             container.Add(GenerateCode());
+            container.Add(GenerateSelectedCode());
             container.Add(QuickAccess());
+            container.Add(RegenerateNodesButton());
+            container.Add(NodeFinderButton());
 
             minSize = new Vector2(250, minSize.y);
 
@@ -87,10 +91,10 @@ namespace Unity.VisualScripting.Community
             header.style.marginTop = 6;
 
             var label = new Label();
-            label.text = "Compile Assets";
+            label.text = "Asset Compilation";
             label.style.flexGrow = 1;
 
-            var hint = new HelpBox("Clicking 'Compile' will generate C# scripts for Defined Events, Funcs, and Actions to ensure complete AOT Safety on all platforms.", HelpBoxMessageType.Info);
+            var hint = new HelpBox("Generate C# scripts for Defined Events, Funcs, and Actions for complete AOT Safety on all platforms.", HelpBoxMessageType.Info);
             hint.Set().Padding(6);
 
             var buttonContainer = new VisualElement();
@@ -98,6 +102,7 @@ namespace Unity.VisualScripting.Community
             buttonContainer.style.height = 24;
 
             var compileButton = new Button(() => { AssetCompiler.Compile(); }) { text = "Compile" };
+            compileButton.style.maxWidth = buttonContainer.contentRect.width;
             compileButton.style.flexGrow = 1;
 
             buttonContainer.Add(compileButton);
@@ -105,6 +110,23 @@ namespace Unity.VisualScripting.Community
             header.Add(label);
             container.Add(header);
             container.Add(hint);
+            container.Add(buttonContainer);
+            return container;
+        }
+
+        private VisualElement GenerateSelectedCode()
+        {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Column;
+            var buttonContainer = new VisualElement();
+            buttonContainer.style.flexDirection = FlexDirection.Row;
+            buttonContainer.style.height = 24;
+
+            var compileSelectedButton = new Button(() => { AssetCompiler.CompileSelected(); }) { text = "Compile Selected" };
+            compileSelectedButton.style.maxWidth = buttonContainer.contentRect.width;
+            compileSelectedButton.style.flexGrow = 1;
+
+            buttonContainer.Add(compileSelectedButton);
             container.Add(buttonContainer);
             return container;
         }
@@ -135,6 +157,42 @@ namespace Unity.VisualScripting.Community
 
             header.Add(label);
             container.Add(header);
+            container.Add(buttonContainer);
+            return container;
+        }
+
+        private VisualElement RegenerateNodesButton()
+        {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Column;
+
+            var buttonContainer = new VisualElement();
+            buttonContainer.style.flexDirection = FlexDirection.Row;
+            buttonContainer.style.height = 24;
+
+            var regenerateButton = new Button(() => { UnitBase.Rebuild(); }) { text = "Regenerate Nodes" };
+            regenerateButton.style.flexGrow = 1;
+
+            buttonContainer.Add(regenerateButton);
+
+            container.Add(buttonContainer);
+            return container;
+        }
+
+        private VisualElement NodeFinderButton()
+        {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Column;
+
+            var buttonContainer = new VisualElement();
+            buttonContainer.style.flexDirection = FlexDirection.Row;
+            buttonContainer.style.height = 24;
+
+            var regenerateButton = new Button(() => { NodeFinderWindow.Open(); }) { text = "Node Finder" };
+            regenerateButton.style.flexGrow = 1;
+
+            buttonContainer.Add(regenerateButton);
+
             container.Add(buttonContainer);
             return container;
         }

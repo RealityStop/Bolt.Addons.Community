@@ -3,6 +3,8 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Reflection;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -16,7 +18,8 @@ namespace Unity.VisualScripting.Community
         [SerializeField]
         private SystemType attributeType = new SystemType();
         public List<TypeParam> parameters = new List<TypeParam>();
-        public int constructor;
+        public int constructor = 0;
+        public int selectedconstructor;
         private string serializedTypeName;
 
 #if UNITY_EDITOR
@@ -41,7 +44,6 @@ namespace Unity.VisualScripting.Community
             if (attributeType.type != type)
             {
                 attributeType.type = type;
-                SetParameters();
             }
         }
 
@@ -50,8 +52,25 @@ namespace Unity.VisualScripting.Community
             return attributeType.type;
         }
 
-        private void SetParameters()
+        public void AddParameter(string name, Type type, object value)
         {
+            TypeParam matchingParam = parameters.FirstOrDefault(param => param.name == name);
+
+            if (matchingParam != null)
+            {
+                matchingParam.defaultValue = value;
+            }
+            else
+            {
+                TypeParam paramValue = new TypeParam
+                {
+                    name = name,
+                    type = type,
+                    defaultValue = value
+                };
+
+                parameters.Add(paramValue);
+            }
         }
     }
 }

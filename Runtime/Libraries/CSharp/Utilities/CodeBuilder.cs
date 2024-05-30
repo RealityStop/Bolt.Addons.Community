@@ -11,6 +11,20 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
     /// </summary>
     public static class CodeBuilder
     {
+        #region Colors
+        public static string EnumColor = "FFFFBB";
+        public static string ConstructColor = "4488FF";
+        public static string WarningColor = "CC3333";
+        public static string InterfaceColor = "DDFFBB";
+        public static string TypeColor = "33EEAA";
+        public static string StringColor = "CC8833";
+        public static string NumericColor = "DDFFBB";
+        public static string CommentColor = "009900";
+        public static string SummaryColor = "00CC00";
+        public static string VariableColor = "00FFFF";
+        public static string RecommendationColor = "FFD700";
+        #endregion
+
         /// <summary>
         /// Creates the opening of a new body as a string.
         /// </summary>
@@ -208,7 +222,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static string Parameters(this List<ParameterGenerator> parameters)
         {
             var output = "(";
-            for (int i = 0; i< parameters.Count; i++)
+            for (int i = 0; i < parameters.Count; i++)
             {
                 output += parameters[i].Generate(0);
                 if (i < parameters.Count - 1) output += ", ";
@@ -262,6 +276,14 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return "(" + parameters + ")=>{ " + body + " }";
         }
 
+        public static string MultiLineLambda(string parameters, string body, int Indent)
+        {
+            return $"({parameters}) =>" + "\n" +
+                   "{" + "\n" +
+                    CodeBuilder.Indent(Indent) + body + "\n" +
+                   "}";
+        }
+
         public static string Assign(string member, string value, Type castedType)
         {
             return member + " = " + "(" + castedType.As().CSharpName() + ")" + value + ";";
@@ -274,7 +296,12 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string Return(string value)
         {
-            return "return " + value + ";";
+            return "return ".ControlHighlight() + value + ";";
+        }
+
+        public static string CastAs(this string value, Type type)
+        {
+            return $"({type.As().CSharpName()}){value}";
         }
 
         public static string LegalMemberName(this string memberName)
@@ -320,55 +347,78 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return output;
         }
 
+        public static string MakeRecommendation(string Message)
+        {
+            return $"/*(Recommendation) {Message}*/".RecommendationHighlight();
+        }
+
         public static string WarningHighlight(this string code)
         {
-            return Highlight(code, "CC3333");
+            return Highlight(code, WarningColor);
         }
 
         public static string ConstructHighlight(this string code)
         {
-            return Highlight(code, "4488FF");
+            return Highlight(code, ConstructColor);
         }
 
         public static string InterfaceHighlight(this string code)
         {
-            return Highlight(code, "DDFFBB");
+            return Highlight(code, InterfaceColor);
         }
 
         public static string EnumHighlight(this string code)
         {
-            return Highlight(code, "FFFFBB");
+
+            return Highlight(code, EnumColor);
         }
 
         public static string TypeHighlight(this string code)
         {
-            return Highlight(code, "33EEAA");
+            return Highlight(code, TypeColor);
         }
 
         public static string StringHighlight(this string code)
         {
-            return Highlight(code, "CC8833");
+            return Highlight(code, StringColor);
         }
 
         public static string NumericHighlight(this string code)
         {
-            return Highlight(code, "DDFFBB");
+            return Highlight(code, NumericColor);
         }
 
         public static string CommentHighlight(this string code)
         {
-            return Highlight(code, "009900");
+            return Highlight(code, CommentColor);
         }
 
         public static string SummaryHighlight(this string code)
         {
-            return Highlight(code, "00CC00");
+            return Highlight(code, SummaryColor);
         }
+
+        public static string VariableHighlight(this string code)
+        {
+            return Highlight(code, VariableColor);
+        }
+
+        public static string ControlHighlight(this string code)
+        {
+            return Highlight(code, "FF6BE8");
+        }
+
+        public static string RecommendationHighlight(this string code)
+        {
+            return Highlight(code, RecommendationColor);
+        }
+
 
         public static string RemoveHighlights(this string code)
         {
             return code.RemoveBetween("[BeginUAPreviewHighlight]", "[EndUAPreviewHighlight]");
         }
+
 
         public static string RemoveMarkdown(this string code)
         {

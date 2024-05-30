@@ -26,7 +26,7 @@ namespace Unity.VisualScripting.Community
         {
             if (output == Unit.output)
             {
-                return "!" + GenerateValue(Unit.input);
+                return "!(" + GenerateValue(Unit.input) + ")";
             }
 
             return base.GenerateValue(output);

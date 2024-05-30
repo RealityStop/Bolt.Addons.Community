@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using System.Linq;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 public class CustomNodeGeneratorWindow : EditorWindow
 {
@@ -15,9 +16,18 @@ public class CustomNodeGeneratorWindow : EditorWindow
     private bool useUnit;
     private bool useMachineEventUnit;
     private bool useEventUnit;
+    private bool openFileAfterGeneration = true;
+    private Type[] alltypes;
 
     private Vector2 scrollPosition;
     private string filePath = "";
+
+    private void OnEnable()
+    {
+        alltypes = Codebase.settingsAssemblies
+        .SelectMany(a => a.GetTypes().Where(type => !type.IsGenericTypeDefinition))
+        .ToArray();
+    }
 
     [MenuItem("Window/Community Addons/Custom Node Generator")]
     public static void ShowWindow()
@@ -38,6 +48,7 @@ public class CustomNodeGeneratorWindow : EditorWindow
         fileName = EditorGUILayout.TextField("File Name", fileName);
 
         catagory = EditorGUILayout.TextField("Category", catagory);
+        openFileAfterGeneration = EditorGUILayout.Toggle("Open Generated File", openFileAfterGeneration);
 
         GUILayout.Space(10);
 
@@ -66,7 +77,7 @@ public class CustomNodeGeneratorWindow : EditorWindow
         GUILayout.Space(10);
 
         GUIStyle fontSize = new GUIStyle(GUI.skin.button);
-        fontSize.fontSize = 16; // Adjust the font size as needed
+        fontSize.fontSize = 16;
 
         if (GUILayout.Button("Generate Custom Node", fontSize, GUILayout.Height(30)))
         {
@@ -97,42 +108,56 @@ public class CustomNodeGeneratorWindow : EditorWindow
         System.IO.File.WriteAllText(filePath, code);
         AssetDatabase.Refresh();
         Debug.Log($"Generated custom node code saved at {filePath}");
+
+        if (openFileAfterGeneration)
+        {
+            EditorUtility.OpenWithDefaultApp(filePath);
+        }
     }
 
     private void DrawInputList(List<InputData> inputs, string title, bool showTypeOptions = true)
     {
         GUILayout.Label(title, EditorStyles.boldLabel);
 
-        for (int i = 0; i < inputs.Count; i++)
-        {
-            GUILayout.BeginVertical(GUI.skin.box);
+        List<int> indicesToRemove = new List<int>();
 
+        foreach (InputData input in inputs)
+        {
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"Input {i + 1}", EditorStyles.boldLabel);
+
+            GUILayout.Label($"Input {inputs.IndexOf(input) + 1}", EditorStyles.boldLabel);
+
             if (GUILayout.Button("Remove", GUILayout.Width(60)))
             {
-                inputs.RemoveAt(i);
-                break;
+                indicesToRemove.Add(inputs.IndexOf(input));
             }
+
             GUILayout.EndHorizontal();
 
             GUILayout.Space(5);
 
             EditorGUI.indentLevel++;
 
-            inputs[i].name = EditorGUILayout.TextField("Name", inputs[i].name);
-            inputs[i].HideLabel = EditorGUILayout.Toggle("Hide Label", inputs[i].HideLabel);
+            input.name = EditorGUILayout.TextField("Name", input.name);
+            input.methodName = EditorGUILayout.TextField("Method Name", input.methodName);
+            input.HideLabel = EditorGUILayout.Toggle("Hide Label", input.HideLabel);
 
             if (showTypeOptions)
             {
-                inputs[i].type = DrawTypeDropdown(inputs[i].type);
+                DrawTypeDropdown(input, input.type);
             }
 
             EditorGUI.indentLevel--;
 
-            GUILayout.EndVertical();
-
             GUILayout.Space(10);
+        }
+
+        foreach (int index in indicesToRemove)
+        {
+            if (index >= 0 && index < inputs.Count)
+            {
+                inputs.RemoveAt(index);
+            }
         }
 
         if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
@@ -147,37 +172,45 @@ public class CustomNodeGeneratorWindow : EditorWindow
     {
         GUILayout.Label(title, EditorStyles.boldLabel);
 
-        for (int i = 0; i < valueInputs.Count; i++)
-        {
-            GUILayout.BeginVertical(GUI.skin.box);
+        List<int> indicesToRemove = new List<int>();
 
+        foreach (ValueInputData valueInput in valueInputs)
+        {
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"Value Input {i + 1}", EditorStyles.boldLabel);
+
+            GUILayout.Label($"Value Input {valueInputs.IndexOf(valueInput) + 1}", EditorStyles.boldLabel);
+
             if (GUILayout.Button("Remove", GUILayout.Width(60)))
             {
-                valueInputs.RemoveAt(i);
-                break;
+                indicesToRemove.Add(valueInputs.IndexOf(valueInput));
             }
+
             GUILayout.EndHorizontal();
 
             GUILayout.Space(5);
 
             EditorGUI.indentLevel++;
 
-            valueInputs[i].name = EditorGUILayout.TextField("Name", valueInputs[i].name);
-            valueInputs[i].type = DrawTypeDropdown(valueInputs[i].type);
-            valueInputs[i].HideLabel = EditorGUILayout.Toggle("Hide Label", valueInputs[i].HideLabel);
+            valueInput.name = EditorGUILayout.TextField("Name", valueInput.name);
+            DrawTypeDropdown(valueInput, valueInput.type);
+            valueInput.HideLabel = EditorGUILayout.Toggle("Hide Label", valueInput.HideLabel);
 
-            if (valueInputs[i].type == typeof(GameObject))
+            if (valueInput.type == typeof(GameObject) || typeof(Component).IsAssignableFrom(valueInput.type))
             {
-                valueInputs[i].nullMeansSelf = EditorGUILayout.Toggle("Null Means Self", valueInputs[i].nullMeansSelf);
+                valueInput.nullMeansSelf = EditorGUILayout.Toggle("Null Means Self", valueInput.nullMeansSelf);
             }
 
             EditorGUI.indentLevel--;
 
-            GUILayout.EndVertical();
-
             GUILayout.Space(10);
+        }
+
+        foreach (int index in indicesToRemove)
+        {
+            if (index >= 0 && index < valueInputs.Count)
+            {
+                valueInputs.RemoveAt(index);
+            }
         }
 
         if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
@@ -192,32 +225,45 @@ public class CustomNodeGeneratorWindow : EditorWindow
     {
         GUILayout.Label(title, EditorStyles.boldLabel);
 
-        for (int i = 0; i < valueOutputs.Count; i++)
-        {
-            GUILayout.BeginVertical(GUI.skin.box);
+        List<int> indicesToRemove = new List<int>();
 
+        foreach (ValueOutputData valueOutput in valueOutputs)
+        {
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"Value Output {i + 1}", EditorStyles.boldLabel);
+
+            GUILayout.Label($"Value Output {valueOutputs.IndexOf(valueOutput) + 1}", EditorStyles.boldLabel);
+
             if (GUILayout.Button("Remove", GUILayout.Width(60)))
             {
-                valueOutputs.RemoveAt(i);
-                break;
+                indicesToRemove.Add(valueOutputs.IndexOf(valueOutput));
             }
+
             GUILayout.EndHorizontal();
 
             GUILayout.Space(5);
 
             EditorGUI.indentLevel++;
 
-            valueOutputs[i].name = EditorGUILayout.TextField("Name", valueOutputs[i].name);
-            valueOutputs[i].HideLabel = EditorGUILayout.Toggle("Hide Label", valueOutputs[i].HideLabel);
-            valueOutputs[i].type = DrawTypeDropdown(valueOutputs[i].type);
+            valueOutput.name = EditorGUILayout.TextField("Name", valueOutput.name);
+            DrawTypeDropdown(valueOutput, valueOutput.type);
+            valueOutput.HideLabel = EditorGUILayout.Toggle("Hide Label", valueOutput.HideLabel);
+            valueOutput.triggersMethod = EditorGUILayout.Toggle("Triggers Method", valueOutput.triggersMethod);
 
+            if (valueOutput.triggersMethod) 
+            {
+                valueOutput.methodName = EditorGUILayout.TextField("Method Name", valueOutput.methodName);
+            }
             EditorGUI.indentLevel--;
 
-            GUILayout.EndVertical();
-
             GUILayout.Space(10);
+        }
+
+        foreach (int index in indicesToRemove)
+        {
+            if (index >= 0 && index < valueOutputs.Count)
+            {
+                valueOutputs.RemoveAt(index);
+            }
         }
 
         if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
@@ -228,50 +274,78 @@ public class CustomNodeGeneratorWindow : EditorWindow
         GUILayout.Space(10);
     }
 
-    private Type DrawTypeDropdown(Type selectedType)
+
+    private void DrawTypeDropdown(object Input, Type selectedType)
     {
-        Type[] types = GetCompatibleTypes();
+        Type[] types = alltypes;
+
+        ValueOutputData outputData = null;
+        ValueInputData inputData = null;
+        InputData inputDataInput = null;
+        GUIContent buttonContent = new GUIContent();
+
+        var lastRect = GUILayoutUtility.GetLastRect();
+
+        if (Input is ValueOutputData)
+        {
+            outputData = (ValueOutputData)Input;
+        }
+        else if (Input is ValueInputData)
+        {
+            inputData = (ValueInputData)Input;
+        }
+        else if (Input is InputData)
+        {
+            inputDataInput = (InputData)Input;
+        }
 
         int selectedIndex = Array.IndexOf(types, selectedType);
         if (selectedIndex < 0)
             selectedIndex = 0;
 
-        selectedIndex = EditorGUILayout.Popup("Type", selectedIndex, GetReadableTypeNames(types));
-
-        return types[selectedIndex];
-    }
-
-    private Type[] GetCompatibleTypes()
-    {
-        return new Type[]
+        if (Input is ValueInputData)
         {
-            typeof(bool),
-            typeof(int),
-            typeof(float),
-            typeof(string),
-            typeof(Vector2),
-            typeof(Vector3),
-            typeof(Vector4),
-            typeof(GameObject),
-            typeof(Transform),
-            typeof(Color),
-            typeof(Rigidbody),
-            typeof(AudioClip),
-            typeof(Texture),
-            typeof(Sprite),
-            typeof(Material),
-            typeof(AnimationClip),
-            typeof(AudioSource),
-            typeof(Camera),
-            typeof(Collider),
-            typeof(Collider2D),
-            typeof(Mesh),
-            typeof(Animation),
-            typeof(Shader),
-            typeof(Light),
-            typeof(AudioListener),
-            // Add more compatible types here...
-        };
+            if (inputData.type != null)
+            {
+                buttonContent = new GUIContent(inputData.type.CSharpName(false).RemoveHighlights().RemoveMarkdown(), inputData.type.Icon()?[IconSize.Small]);
+            }
+            else
+            {
+                buttonContent = new GUIContent("Choose Type");
+            }
+        }
+        else if (Input is ValueOutputData)
+        {
+            if (outputData.type != null)
+            {
+                buttonContent = new GUIContent(outputData.type.CSharpName(false).RemoveHighlights().RemoveMarkdown(), outputData.type.Icon()?[IconSize.Small]);
+            }
+            else
+            {
+                buttonContent = new GUIContent("Choose Type");
+            }
+        }
+
+        if (GUILayout.Button(buttonContent, GUILayout.MaxHeight(19f)))
+        {
+            LudiqGUI.FuzzyDropdown(lastRect, new TypeOptionTree(types), selectedIndex, (index) =>
+            {
+                if (inputData != null)
+                {
+                    inputData.type = (Type)index;
+                }
+
+                if (outputData != null)
+                {
+                    outputData.type = (Type)index;
+                }
+
+                if (inputDataInput != null)
+                {
+                    inputDataInput.type = (Type)index;
+                }
+            });
+        }
     }
 
     private string[] GetReadableTypeNames(Type[] types)
@@ -339,7 +413,7 @@ public class {fileName.Replace(" ", "")} : {unitType}
     [PortLabelHidden]";
             }
             template += $@"
-    public ControlInput {inputName};";
+    public ControlInput {inputName.Replace(" ", "")};";
         }
 
         // Setup variables for ControlOutputs
@@ -354,13 +428,13 @@ public class {fileName.Replace(" ", "")} : {unitType}
     [PortLabelHidden]";
             }
             template += $@"
-    public ControlOutput {outputName};";
+    public ControlOutput {outputName.Replace(" ", "")};";
         }
 
         // Setup variables for ValueInputs
         for (int i = 0; i < valueInputs.Count; i++)
         {
-            if (valueInputs[i].type == typeof(GameObject) && valueInputs[i].nullMeansSelf)
+            if (valueInputs[i].nullMeansSelf)
             {
                 string inputName = string.IsNullOrEmpty(valueInputs[i].name) ? $"ValueInput{i}" : valueInputs[i].name;
                 template += $@"
@@ -372,7 +446,7 @@ public class {fileName.Replace(" ", "")} : {unitType}
                 }
                 template += $@"
     [DoNotSerialize]
-    public ValueInput {inputName};";
+    public ValueInput {inputName.Replace(" ", "")};";
             }
             else
             {
@@ -385,7 +459,7 @@ public class {fileName.Replace(" ", "")} : {unitType}
     [PortLabelHidden]";
                 }
                 template += $@"
-    public ValueInput {inputName};";
+    public ValueInput {inputName.Replace(" ", "")};";
             }
         }
 
@@ -401,7 +475,7 @@ public class {fileName.Replace(" ", "")} : {unitType}
     [PortLabelHidden]";
             }
             template += $@"
-    public ValueOutput {outputName};";
+    public ValueOutput {outputName.Replace(" ", "")};";
         }
 
         // Definition method
@@ -419,7 +493,7 @@ public class {fileName.Replace(" ", "")} : {unitType}
         {
             string inputName = string.IsNullOrEmpty(input.name) ? $"ControlInput{controlInputs.IndexOf(input)}" : input.name;
             template += $@"
-        {inputName} = ControlInput(nameof({inputName}), _Enter_);";
+        {inputName.Replace(" ", "")} = ControlInput(nameof({inputName.Replace(" ", "")}), {input.methodName});";
         }
 
         // ControlOutputs
@@ -427,7 +501,7 @@ public class {fileName.Replace(" ", "")} : {unitType}
         {
             string outputName = string.IsNullOrEmpty(output.name) ? $"ControlOutput{controlOutputs.IndexOf(output)}" : output.name;
             template += $@"
-        {outputName} = ControlOutput(nameof({outputName}));";
+        {outputName.Replace(" ", "")} = ControlOutput(nameof({outputName.Replace(" ", "")}));";
         }
 
         // ValueInputs
@@ -435,15 +509,15 @@ public class {fileName.Replace(" ", "")} : {unitType}
         {
             string valueInputName = string.IsNullOrEmpty(valueInput.name) ? $"ValueInput{valueInputs.IndexOf(valueInput)}" : valueInput.name;
 
-            if (valueInput.type == typeof(GameObject) && valueInput.nullMeansSelf)
+            if (valueInput.nullMeansSelf)
             {
                 template += $@"
-        {valueInputName} = ValueInput<{GetShortTypeName(valueInput.type)}>(nameof({valueInputName}), default).NullMeansSelf();";
+        {valueInputName.Replace(" ", "")} = ValueInput<{valueInput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueInputName.Replace(" ", "")}), default).NullMeansSelf();";
             }
             else
             {
                 template += $@"
-        {valueInputName} = ValueInput<{GetShortTypeName(valueInput.type)}>(nameof({valueInputName}), default);";
+        {valueInputName.Replace(" ", "")} = ValueInput<{valueInput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueInputName.Replace(" ", "")}), default);";
             }
         }
 
@@ -452,7 +526,7 @@ public class {fileName.Replace(" ", "")} : {unitType}
         {
             string valueOutputName = string.IsNullOrEmpty(valueOutput.name) ? $"ValueOutput{valueOutputs.IndexOf(valueOutput)}" : valueOutput.name;
             template += $@"
-        {valueOutputName} = ValueOutput<{GetShortTypeName(valueOutput.type)}>(nameof({valueOutputName}));";
+        {valueOutputName.Replace(" ", "")} = ValueOutput<{valueOutput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueOutputName.Replace(" ", "")}){(valueOutput.triggersMethod ? $", {valueOutput.methodName}" : string.Empty)});";
         }
 
         foreach (InputData input in controlInputs)
@@ -461,46 +535,104 @@ public class {fileName.Replace(" ", "")} : {unitType}
             {
                 string outputName = string.IsNullOrEmpty(outputData.name) ? $"ControlOutput{controlOutputs.IndexOf(outputData)}" : outputData.name;
                 template += $@"
-        Succession({input.name}, {outputName});";
+        Succession({input.name.Replace(" ", "")}, {outputName.Replace(" ", "")});";
             }
         }
 
         template += @"
-    }
+    }";
 
-    public ControlOutput _Enter_(Flow flow) 
-    {
+        foreach (InputData input in controlInputs) {
+            template += $@"
+    public ControlOutput {input.methodName}(Flow flow) 
+    {{
         // Enter your logic here. You can add more methods if needed.
 
         // Put the name of the output you want to trigger when the node is entered.
         return null;
-    }
-}"; 
+    }}";
+        }
+        foreach (ValueOutputData valueOutput in valueOutputs)
+        {
+            if (valueOutput.triggersMethod)
+            {
+                template += @$"
+    public {valueOutput.type.DisplayName()} {valueOutput.methodName}(Flow flow)
+    {{
+
+
+
+        return null;
+    }}
+";
+            }
+        }
+        template += @"
+}";
         return template;
-    }
 }
 
 [Serializable]
-public class InputData
+public class InputData : ISerializationCallbackReceiver
 {
     public string name;
     public bool HideLabel;
+    public string methodName;
     public Type type;
+
+    private string previousType;
+
+    public void OnAfterDeserialize()
+    {
+        type = Type.GetType(previousType);
+    }
+
+    public void OnBeforeSerialize()
+    {
+        previousType = type.AssemblyQualifiedName;
+    }
 }
 
 [Serializable]
-public class ValueInputData
+public class ValueInputData : ISerializationCallbackReceiver
 {
     public string name;
     public Type type;
     public bool HideLabel;
     public bool nullMeansSelf;
+
+    private string previousType;
+
+    public void OnAfterDeserialize()
+    {
+        type = Type.GetType(previousType);
+    }
+
+    public void OnBeforeSerialize()
+    {
+        previousType = type.AssemblyQualifiedName;
+    }
 }
 
-[Serializable]
-public class ValueOutputData
-{
-    public string name;
-    public bool HideLabel;
-    public Type type;
+    [Serializable]
+    public class ValueOutputData : ISerializationCallbackReceiver
+    {
+        public string name;
+        public bool HideLabel;
+        public bool triggersMethod;
+        public string methodName;
+        public Type type;
+
+        private string previousType;
+
+        public void OnAfterDeserialize()
+        {
+            type = Type.GetType(previousType);
+        }
+
+        public void OnBeforeSerialize()
+        {
+            previousType = type.AssemblyQualifiedName;
+        }
+    }
 }

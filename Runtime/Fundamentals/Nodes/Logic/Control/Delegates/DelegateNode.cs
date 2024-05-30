@@ -11,6 +11,8 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize]
         public ValueOutput @delegate;
 
+        [DoNotSerialize]
+        public ValueOutput Callback;
         public string name;
 
         [DoNotSerialize]
@@ -41,6 +43,13 @@ namespace Unity.VisualScripting.Community
 
             if (_delegate != null)
             {
+                Callback = ValueOutput(_delegate.GetDelegateType(), nameof(Callback), (flow) =>
+                {
+                    var _flow = Flow.New(flow.stack.AsReference());
+                    InitializeDelegate(_flow, _delegate.initialized);
+                    return _delegate.GetDelegate();
+                });
+
                 @delegate = ValueOutput(_delegate.GetType(), "delegate", (flow) =>
                 {
                     var _flow = Flow.New(flow.stack.AsReference());
