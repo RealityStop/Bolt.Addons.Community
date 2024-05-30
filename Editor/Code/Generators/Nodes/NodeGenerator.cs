@@ -70,7 +70,7 @@ namespace Unity.VisualScripting.Community
         }
         public string GetNextValueUnit(ValueInput valueInput, bool MakeSelectable = true)
         {
-            return valueInput.hasValidConnection ? MakeSelectable ? CodeUtility.MakeSelectable(unit, (valueInput.connection.source.unit as Unit).GenerateValue(valueInput.connection.source)) : (valueInput.connection.source.unit as Unit).GenerateValue(valueInput.connection.source) : string.Empty;
+            return valueInput.hasValidConnection ? MakeSelectable ? CodeUtility.MakeSelectable(valueInput.connection.source.unit as Unit, (valueInput.connection.source.unit as Unit).GenerateValue(valueInput.connection.source)) : (valueInput.connection.source.unit as Unit).GenerateValue(valueInput.connection.source) : string.Empty;
         }
     }
 

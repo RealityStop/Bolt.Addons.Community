@@ -87,25 +87,25 @@ public sealed class InvokeMemberGenerator : NodeGenerator<Unity.VisualScripting.
             {
                 if (Unit.target == null)
                 {
-                    output += new CodeLine($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}({GenerateArguments(Unit.inputParameters.Values.ToList())})", indent);
+                    output += CodeUtility.MakeSelectable(Unit, new CodeLine($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}({GenerateArguments(Unit.inputParameters.Values.ToList())})", indent));
                 }
                 else
                 {
                     if (Unit.member.pseudoDeclaringType == typeof(GameObject) && Unit.target.hasValidConnection && Unit.target.connection.source.type.IsSubclassOf(typeof(Component)))
                     {
-                        output += new CodeLine($"{GenerateValue(Unit.target)}.gameObject.GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>().{Unit.member.name}({GenerateArguments(Unit.inputParameters.Values.ToList())})", indent);
+                        output += CodeUtility.MakeSelectable(Unit, new CodeLine($"{GenerateValue(Unit.target)}.gameObject.GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>().{Unit.member.name}({GenerateArguments(Unit.inputParameters.Values.ToList())})", indent));
                     }
                     else if (Unit.target.hasValidConnection && Unit.target.type != Unit.target.connection.source.type && Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                     {
-                        output += new CodeLine(new ValueCode(GenerateValue(Unit.target) + GetComponent(Unit.target) + Unit.member.name + $"({GenerateArguments(Unit.inputParameters.Values.ToList())})", typeof(GameObject), ShouldCast(Unit.target)), indent);
+                        output += CodeUtility.MakeSelectable(Unit, new CodeLine(new ValueCode(GenerateValue(Unit.target) + GetComponent(Unit.target) + Unit.member.name + $"({GenerateArguments(Unit.inputParameters.Values.ToList())})", typeof(GameObject), ShouldCast(Unit.target)), indent));
                     }
                     else if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                     {
-                        output += new CodeLine($"{GenerateValue(Unit.target)}{GetComponent(Unit.target)}{Unit.member.name}({GenerateArguments(Unit.inputParameters.Values.ToList())})", indent);
+                        output += CodeUtility.MakeSelectable(Unit, new CodeLine($"{GenerateValue(Unit.target)}{GetComponent(Unit.target)}{Unit.member.name}({GenerateArguments(Unit.inputParameters.Values.ToList())})", indent));
                     }
                     else
                     {
-                        output += new CodeLine($"{GenerateValue(Unit.target)}.{Unit.member.name}({GenerateArguments(Unit.inputParameters.Values.ToList())})", indent);
+                        output += CodeUtility.MakeSelectable(Unit, new CodeLine($"{GenerateValue(Unit.target)}.{Unit.member.name}({GenerateArguments(Unit.inputParameters.Values.ToList())})", indent));
                     }
                 }
             }
@@ -119,8 +119,8 @@ public sealed class InvokeMemberGenerator : NodeGenerator<Unity.VisualScripting.
     {
         if (input.hasValidConnection)
         {
-            if (input.type.IsSubclassOf(typeof(Component))) return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), typeof(GameObject), ShouldCast(input)) + new ValueCode($"{(input.connection.source.type == typeof(GameObject) ? $".GetComponent<{input.type.As().CSharpName(false, true)}>()" : string.Empty)}");
-            return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), input.type, ShouldCast(input)) + new ValueCode($"{(input.type.IsSubclassOf(typeof(Component)) && input.connection.source.type == typeof(GameObject) ? $".GetComponent<{input.type.As().CSharpName(false, true)}>()" : string.Empty)}");
+            if (input.type.IsSubclassOf(typeof(Component))) return new ValueCode(GetNextValueUnit(input), typeof(GameObject), ShouldCast(input)) + new ValueCode($"{(input.connection.source.type == typeof(GameObject) ? $".GetComponent<{input.type.As().CSharpName(false, true)}>()" : string.Empty)}");
+            return new ValueCode(GetNextValueUnit(input), input.type, ShouldCast(input)) + new ValueCode($"{(input.type.IsSubclassOf(typeof(Component)) && input.connection.source.type == typeof(GameObject) ? $".GetComponent<{input.type.As().CSharpName(false, true)}>()" : string.Empty)}");
         }
         else if (input.hasDefaultValue)
         {

@@ -26,11 +26,11 @@ public sealed class SetMemberGenerator : NodeGenerator<SetMember>
             {
                 var targetValue = GenerateValue(Unit.target);
 
-                output += "\n" + new CodeLine(new ValueCode($"{targetValue}.{memberName} = {inputValue}"), indent);
+                output += "\n" + CodeUtility.MakeSelectable(Unit, new CodeLine(new ValueCode($"{targetValue}.{memberName} = {inputValue}"), indent));
             }
             else
             {
-                output += "\n" + new CodeLine(new ValueCode(Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + $".{memberName} = {inputValue}"), indent);
+                output += "\n" + CodeUtility.MakeSelectable(Unit, new CodeLine(new ValueCode(Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + $".{memberName} = {inputValue}"), indent));
             }
             output += Unit.assigned.hasValidConnection ? (Unit.assigned.connection.destination.unit as Unit).GenerateControl(Unit.assigned.connection.destination, data, indent) : string.Empty;
 
@@ -51,7 +51,7 @@ public sealed class SetMemberGenerator : NodeGenerator<SetMember>
         {
             if (input.hasValidConnection)
             {
-                return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
+                return GetNextValueUnit(input);
             }
             else if (input.hasDefaultValue)
             {
@@ -68,9 +68,9 @@ public sealed class SetMemberGenerator : NodeGenerator<SetMember>
             {
                 if (input.type.IsSubclassOf(typeof(Component)) || input.type == typeof(GameObject))
                 {
-                    return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), typeof(GameObject), ShouldCast(input)) + new ValueCode($"{GetComponent(Unit.target)}");
+                    return new ValueCode(GetNextValueUnit(input), typeof(GameObject), ShouldCast(input)) + new ValueCode($"{GetComponent(Unit.target)}");
                 }
-                return (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
+                return GetNextValueUnit(input);
             }
             else
             {
@@ -85,9 +85,12 @@ public sealed class SetMemberGenerator : NodeGenerator<SetMember>
                         return "gameObject".VariableHighlight();
                     }
                 }
+                else
+                {
+                    return Unit.defaultValues[input.key].As().Code(true, true, true, "");
+                }
             }
         }
-        return "";
     }
 
     string GetComponent(ValueInput valueInput)
