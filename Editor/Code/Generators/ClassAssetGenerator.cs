@@ -353,14 +353,12 @@ namespace Unity.VisualScripting.Community
                     method.AddParameter(ParameterGenerator.Parameter(param.name, param.type, ParameterModifier.None));
                 }
 
-                var generationData = new ControlGenerationData();
                 foreach (var variable in Data.variables)
                 {
-                    generationData.AddLocalNameInScope(variable.FieldName);
+                    methodGenerator.Data.AddLocalNameInScope(variable.FieldName);
                 }
                 method.Body(methodGenerator.MethodBody);
                 @class.AddMethod(method);
-                generationData.ExitScope();
             }
         }
     }
