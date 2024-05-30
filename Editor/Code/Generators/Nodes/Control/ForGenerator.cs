@@ -24,32 +24,27 @@ public sealed class ForGenerator : NodeGenerator<Unity.VisualScripting.For>
             var condition = GenerateValue(Unit.lastIndex);
             var iterator = GenerateValue(Unit.step);
 
-            data.AddLocalName("i");
-
-            if (data.localNames.Any(name => name.Contains("i") && name.Length > 1 && char.IsDigit(name[1])))
-            {
-                variable = data.localNames.Last(name => name.Contains("i") && name.Length > 1 && char.IsDigit(name[1]));
-            }
+            variable = data.AddLocalNameInScope("i");
             
-            output += CodeBuilder.Indent(indent) + $"for".ControlHighlight() + "(int".ConstructHighlight() + $" {variable} ".VariableHighlight() + $"= {initialization}; " + variable.VariableHighlight() + $" < {condition}; " + variable.VariableHighlight() + $" += {iterator})";
+            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"for".ControlHighlight() + "(int".ConstructHighlight() + $" {variable} ".VariableHighlight() + $"= {initialization}; " + variable.VariableHighlight() + $" < {condition}; " + variable.VariableHighlight() + $" += {iterator})");
             output += "\n";
-            output += CodeBuilder.OpenBody(indent);
+            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
             output += "\n";
 
             if (Unit.body.hasAnyConnection)
             {
                 data.NewScope();
-                output += (Unit.body.connection.destination.unit as Unit).GenerateControl(Unit.body.connection.destination, data, indent + 1);
+                output += GetNextUnit(Unit.body, data, indent + 1);
                 data.ExitScope();
             }
 
-            output += "\n" + CodeBuilder.CloseBody(indent);
+            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
         }
 
         if (Unit.exit.hasAnyConnection)
         {
             output += "\n";
-            output += (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent);
+            output += GetNextUnit(Unit.exit, data, indent);
         }
 
 
@@ -65,7 +60,7 @@ public sealed class ForGenerator : NodeGenerator<Unity.VisualScripting.For>
     {
         if (input.hasValidConnection)
         {
-            return input.connection.source.type == typeof(object) ? $"(({input.type.DisplayName().TypeHighlight()})" + (input.connection.source.unit as Unit).GenerateValue(input.connection.source) + ")" : string.Empty + (input.connection.source.unit as Unit).GenerateValue(input.connection.source);
+            return CodeUtility.MakeSelectable(input.connection.source.unit as Unit, new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), input.type, ShouldCast(input)));
         }
         else
         {

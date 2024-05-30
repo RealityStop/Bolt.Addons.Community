@@ -20,6 +20,7 @@ namespace Unity.VisualScripting.Community
             if (Data.includeInSettings) @class.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
             if (Data.scriptableObject) @class.AddAttribute(AttributeGenerator.Attribute<CreateAssetMenuAttribute>().AddParameter("menuName", Data.menuName).AddParameter("fileName", Data.fileName).AddParameter("order", Data.order));
 
+            var decorators = new Dictionary<Type, List<NodeGenerator>>();
             foreach (var attribute in Data.attributes)
             {
                 var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
@@ -61,12 +62,28 @@ namespace Unity.VisualScripting.Community
                     var usings = new List<string>();
                     foreach (var _unit in Data.constructors[i].graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                     {
-                        if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
-                            usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                        var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
+                        if (decorators.TryGetValue(_unit.GetType(), out List<NodeGenerator> list))
+                        {
+                            decorators[_unit.GetType()].Add(generator);
+                        }
+                        else
+                        {
+                            decorators.Add(_unit.GetType(), new List<NodeGenerator>() { generator });
+                        }
+                        if (!string.IsNullOrEmpty(generator.NameSpace))
+                            usings.Add(generator.NameSpace);
                     }
-                    var unit = Data.constructors[i].graph.units[0] as FunctionNode;
-                    constructor.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0));
+                    var generationData = new ControlGenerationData();
+                    foreach (var variable in Data.variables)
+                    {
+                        generationData.AddLocalNameInScope(variable.FieldName);
+                    }
 
+                    generationData.returns = Data.variables[i].type;
+                    var unit = Data.constructors[i].graph.units[0] as FunctionNode;
+                    constructor.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, generationData, 0));
+                    generationData.ExitScope();
                     for (int pIndex = 0; pIndex < Data.constructors[i].parameters.Count; pIndex++)
                     {
                         if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(false, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, ParameterModifier.None));
@@ -119,13 +136,30 @@ namespace Unity.VisualScripting.Community
 
                         if (Data.variables[i].get)
                         {
+                            var generationData = new ControlGenerationData();
+                            foreach (var variable in Data.variables)
+                            {
+                                generationData.AddLocalNameInScope(variable.FieldName);
+                            }
+
+                            generationData.returns = Data.variables[i].type;
                             property.MultiStatementGetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
-                            .GenerateControl(null, new ControlGenerationData() { returns = Data.variables[i].type }, 0));
+                            .GenerateControl(null, generationData, 0));
+                            generationData.ExitScope();
                             var usings = new List<string>();
                             foreach (var _unit in Data.variables[i].getter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                             {
-                                if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
-                                    usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                                var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
+                                if (decorators.TryGetValue(_unit.GetType(), out List<NodeGenerator> list))
+                                {
+                                    decorators[_unit.GetType()].Add(generator);
+                                }
+                                else
+                                {
+                                    decorators.Add(_unit.GetType(), new List<NodeGenerator>() { generator });
+                                }
+                                if (!string.IsNullOrEmpty(generator.NameSpace))
+                                    usings.Add(generator.NameSpace);
                             }
 
                             @class.AddUsings(usings);
@@ -133,13 +167,30 @@ namespace Unity.VisualScripting.Community
 
                         if (Data.variables[i].set)
                         {
+                            var generationData = new ControlGenerationData();
+                            foreach (var variable in Data.variables)
+                            {
+                                generationData.AddLocalNameInScope(variable.FieldName);
+                            }
+
+                            generationData.returns = Data.variables[i].type;
                             property.MultiStatementSetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
-                            .GenerateControl(null, new ControlGenerationData(), 0));
+                            .GenerateControl(null, generationData, 0));
+                            generationData.ExitScope();
                             var usings = new List<string>();
                             foreach (var _unit in Data.variables[i].setter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                             {
-                                if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
-                                    usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                                var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
+                                if (decorators.TryGetValue(_unit.GetType(), out List<NodeGenerator> list))
+                                {
+                                    decorators[_unit.GetType()].Add(generator);
+                                }
+                                else
+                                {
+                                    decorators.Add(_unit.GetType(), new List<NodeGenerator>() { generator });
+                                }
+                                if (!string.IsNullOrEmpty(generator.NameSpace))
+                                    usings.Add(generator.NameSpace);
                             }
 
                             @class.AddUsings(usings);
@@ -149,7 +200,7 @@ namespace Unity.VisualScripting.Community
                     }
                     else
                     {
-                        var field = FieldGenerator.Field(Data.variables[i].scope, Data.variables[i].fieldModifier, Data.variables[i].type, Data.variables[i].name);
+                        var field = FieldGenerator.Field(Data.variables[i].scope, Data.variables[i].fieldModifier, Data.variables[i].type, Data.variables[i].name, Data.variables[i].defaultValue);
                         for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
                         {
                             AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
@@ -225,13 +276,27 @@ namespace Unity.VisualScripting.Community
                         var usings = new List<string>();
                         foreach (var _unit in Data.methods[i].graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                         {
-                            if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
-                                usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                            var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
+                            if (decorators.TryGetValue(_unit.GetType(), out List<NodeGenerator> list))
+                            {
+                                decorators[_unit.GetType()].Add(generator);
+                            }
+                            else
+                            {
+                                decorators.Add(_unit.GetType(), new List<NodeGenerator>() { generator });
+                            }
+                            if (!string.IsNullOrEmpty(generator.NameSpace))
+                                usings.Add(generator.NameSpace);
                         }
-
+                        var generationData = new ControlGenerationData();
+                        foreach (var variable in Data.variables)
+                        {
+                            generationData.AddLocalNameInScope(variable.FieldName);
+                        }
                         @class.AddUsings(usings);
                         var unit = Data.methods[i].graph.units[0] as FunctionNode;
-                        method.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0));
+                        method.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, generationData, 0));
+                        generationData.ExitScope();
 
                         for (int pIndex = 0; pIndex < Data.methods[i].parameters.Count; pIndex++)
                         {
@@ -243,9 +308,59 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
+            foreach (var key in decorators.Keys)
+            {
+                foreach (var generator in decorators[key])
+                {
+                    TriggerHandleOtherGenerators(key, @class, generator);
+                }
+            }
+
             @namespace.AddClass(@class);
 
             return @class;
+        }
+
+        private void TriggerHandleOtherGenerators(Type type, ClassGenerator @class, NodeGenerator generator)
+        {
+            GetType().GetMethod(nameof(HandleOtherGenerators), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.NonPublic).MakeGenericMethod(type).Invoke(this, new object[] { @class, generator });
+        }
+
+        private void HandleOtherGenerators<T>(ClassGenerator @class, NodeGenerator generator) where T : Unit
+        {
+            if (generator is VariableNodeGenerator<T> variableGenerator)
+            {
+                var count = 0;
+                while (@class.fields.Any(field => field.name == variableGenerator.Name))
+                {
+                    variableGenerator.count = count;
+                    count++;
+                }
+                @class.AddField(FieldGenerator.Field(variableGenerator.AccessModifier, variableGenerator.FieldModifier, variableGenerator.Type, variableGenerator.Name));
+            }
+            else if (generator is MethodNodeGenerator<T> methodGenerator)
+            {
+                var count = 0;
+                while (@class.methods.Any(method => method.name == methodGenerator.Name))
+                {
+                    methodGenerator.count = count;
+                    count++;
+                }
+                var method = MethodGenerator.Method(methodGenerator.AccessModifier, methodGenerator.MethodModifier, methodGenerator.Type, methodGenerator.Name);
+                foreach (var param in methodGenerator.Parameters)
+                {
+                    method.AddParameter(ParameterGenerator.Parameter(param.name, param.type, ParameterModifier.None));
+                }
+
+                var generationData = new ControlGenerationData();
+                foreach (var variable in Data.variables)
+                {
+                    generationData.AddLocalNameInScope(variable.FieldName);
+                }
+                method.Body(methodGenerator.MethodBody);
+                @class.AddMethod(method);
+                generationData.ExitScope();
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ using System.Collections;
 [NodeGenerator(typeof(Unity.VisualScripting.ForEach))]
 public sealed class ForEachGenerator : NodeGenerator<Unity.VisualScripting.ForEach>
 {
+    private string variable = "item";
     public ForEachGenerator(Unity.VisualScripting.ForEach unit) : base(unit)
     {
     }
@@ -21,25 +22,27 @@ public sealed class ForEachGenerator : NodeGenerator<Unity.VisualScripting.ForEa
         if (input == Unit.enter)
         {
             var collection = GenerateValue(Unit.collection);
-
-            output += "\n" + CodeBuilder.Indent(indent) + $"foreach".ControlHighlight() + " (" + "var".ConstructHighlight() + " item".VariableHighlight() + " in ".ConstructHighlight() + $"{collection})";
+            variable = data.AddLocalNameInScope("item");
+            output += CodeUtility.MakeSelectable(Unit, "\n" + CodeBuilder.Indent(indent) + $"foreach".ControlHighlight() + " (" + "var".ConstructHighlight() + $" {variable}".VariableHighlight() + " in ".ConstructHighlight() + $"{collection})");
             output += "\n";
-            output += CodeBuilder.OpenBody(indent);
+            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
             output += "\n";
 
             if (Unit.body.hasAnyConnection)
             {
-                output += (Unit.body.connection.destination.unit as Unit).GenerateControl(Unit.body.connection.destination, data, indent + 1);
+                data.NewScope();
+                output += GetNextUnit(Unit.body, data, indent + 1);
+                data.ExitScope();
                 output += "\n";
             }
 
-            output += CodeBuilder.CloseBody(indent);
+            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
         }
 
         if (Unit.exit.hasAnyConnection)
         {
             output += "\n";
-            output += (Unit.exit.connection.destination.unit as Unit).GenerateControl(Unit.exit.connection.destination, data, indent);
+            output += GetNextUnit(Unit.exit, data, indent);
             output += "\n";
         }
 
@@ -48,7 +51,21 @@ public sealed class ForEachGenerator : NodeGenerator<Unity.VisualScripting.ForEa
 
     public override string GenerateValue(ValueOutput output)
     {
-        return "item".VariableHighlight();
+        if (output == Unit.currentItem)
+        {
+            return variable.VariableHighlight();
+        }
+        else
+        {
+            if (Unit.dictionary)
+            {
+                return GenerateValue(Unit.collection) + $".Values.IndexOf({variable.VariableHighlight()})";
+            }
+            else
+            {
+                return GenerateValue(Unit.collection) + $".IndexOf({variable.VariableHighlight()})";
+            }
+        }
     }
 
     public override string GenerateValue(ValueInput input)
@@ -57,14 +74,7 @@ public sealed class ForEachGenerator : NodeGenerator<Unity.VisualScripting.ForEa
         {
             if (input.hasValidConnection)
             {
-                if(Unit.dictionary)
-                {
-                    return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), typeof(IDictionary), ShouldCast(input));
-                }
-                else
-                {
-                    return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), typeof(IEnumerable), ShouldCast(input));
-                }
+                return CodeUtility.MakeSelectable(input.connection.source.unit as Unit, new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable), ShouldCast(input)));
             }
         }
 

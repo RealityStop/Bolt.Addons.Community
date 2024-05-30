@@ -48,6 +48,8 @@ namespace Unity.VisualScripting.Community
         private Type[] propertyAttributeTypes = new Type[] { };
         private Type[] structAttributeTypes = new Type[] { };
 
+        private Type ValueInspectorType;
+
         private enum AttributeUsageType
         {
             Class,
@@ -80,7 +82,7 @@ namespace Unity.VisualScripting.Community
         protected override void OnEnable()
         {
             base.OnEnable();
-
+            ValueInspectorType = AppDomain.CurrentDomain.GetAssemblies().SelectMany(Assembly => Assembly.GetTypes()).First(type => type.Namespace == "Unity.VisualScripting" && type.Name == "ValueInspector");
             if (constructors == null || constructorsProp == null)
             {
                 constructors = Metadata.FromProperty(serializedObject.FindProperty("constructors"));
@@ -108,7 +110,7 @@ namespace Unity.VisualScripting.Community
             //TODO: add Custom Unit Generator
             // if (typeof(TMemberTypeAsset) != typeof(UnitAsset))
             // {
-                if (Target.icon == null) Target.icon = DefaultIcon();
+            if (Target.icon == null) Target.icon = DefaultIcon();
             // }
             // else
             // {
@@ -145,20 +147,20 @@ namespace Unity.VisualScripting.Community
             {
                 // if (typeof(TMemberTypeAsset) != typeof(UnitAsset))
                 // {
-                    HUMEditor.Vertical().Box(
-                    HUMEditorColor.DefaultEditorBackground, Color.black,
-                    new RectOffset(7, 7, 7, 7),
-                    new RectOffset(1, 1, 1, 1),
-                    () =>
-                    {
-                        Target.icon = (Texture2D)EditorGUILayout.ObjectField(
-                        GUIContent.none,
-                        Target.icon,
-                        typeof(Texture2D),
-                        false,
-                        GUILayout.Width(32),
-                        GUILayout.Height(32));
-                    }, false, false);
+                HUMEditor.Vertical().Box(
+                HUMEditorColor.DefaultEditorBackground, Color.black,
+                new RectOffset(7, 7, 7, 7),
+                new RectOffset(1, 1, 1, 1),
+                () =>
+                {
+                    Target.icon = (Texture2D)EditorGUILayout.ObjectField(
+                    GUIContent.none,
+                    Target.icon,
+                    typeof(Texture2D),
+                    false,
+                    GUILayout.Width(32),
+                    GUILayout.Height(32));
+                }, false, false);
                 // }
                 // else
                 // {
@@ -524,20 +526,6 @@ namespace Unity.VisualScripting.Community
                             if (GUILayout.Button("Edit", GUILayout.Width(60)))
                             {
                                 GraphWindow.OpenActive(listOfConstructors[index].GetReference() as GraphReference);
-                                var listOfVariables = variables.value as List<TFieldDeclaration>;
-                                var listOfGraphVars = listOfConstructors[index].graph.variables;
-                                foreach (var variable in listOfVariables)
-                                {
-                                    listOfConstructors[index].graph.variables.Set(variable.name, null);
-                                    var matchingGraphVar = listOfGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
-
-                                    if (matchingGraphVar != null)
-                                    {
-                                        SerializableType type = matchingGraphVar.typeHandle;
-                                        type.Identification = variable.type.AssemblyQualifiedName;
-                                        matchingGraphVar.typeHandle = type;
-                                    }
-                                }
                             }
 
                             if (GUILayout.Button("...", GUILayout.Width(19)))
@@ -611,21 +599,6 @@ namespace Unity.VisualScripting.Community
                         functionUnit.constructorDeclaration = declaration;
                         declaration.graph.units.Add(functionUnit);
                         var listOfVariables = variables.value as List<TFieldDeclaration>;
-                        var listOfGraphVars = declaration.graph.variables;
-                        foreach (var variable in listOfVariables)
-                        {
-                            declaration.graph.variables.Set(variable.name, null);
-
-                            var matchingGraphVar = listOfGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
-
-                            if (matchingGraphVar != null)
-                            {
-                                SerializableType type = matchingGraphVar.typeHandle;
-                                type.Identification = variable.type.AssemblyQualifiedName;
-                                matchingGraphVar.typeHandle = type;
-                            }
-                        }
-
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();
                     }
@@ -710,19 +683,6 @@ namespace Unity.VisualScripting.Community
                             {
                                 GraphWindow.OpenActive(listOfMethods[index].GetReference() as GraphReference);
                                 var listOfVariables = variables.value as List<TFieldDeclaration>;
-                                var listOfGraphVars = listOfMethods[index].graph.variables;
-                                foreach (var variable in listOfVariables)
-                                {
-                                    listOfMethods[index].graph.variables.Set(variable.name, variable.value ?? null);
-                                    var matchingGraphVar = listOfGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
-
-                                    if (matchingGraphVar != null)
-                                    {
-                                        SerializableType type = matchingGraphVar.typeHandle;
-                                        type.Identification = variable.type.AssemblyQualifiedName;
-                                        matchingGraphVar.typeHandle = type;
-                                    }
-                                }
                             }
 
                             if (GUILayout.Button("...", GUILayout.Width(19)))
@@ -988,25 +948,9 @@ namespace Unity.VisualScripting.Community
                         AssetDatabase.AddObjectToAsset(declaration, Target);
                         listOfMethods.Add(declaration);
                         var functionUnit = new FunctionNode(FunctionType.Method);
-                        
+
                         functionUnit.methodDeclaration = declaration;
                         declaration.graph.units.Add(functionUnit);
-                        
-                        declaration.graph.units.Add(functionUnit);
-                        var listOfVariables = variables.value as List<TFieldDeclaration>;
-                        var listOfGraphVars = declaration.graph.variables;
-                        foreach (var variable in listOfVariables)
-                        {
-                            declaration.graph.variables.Set(variable.name, (variable.value != null ? variable.value : null));
-                            var matchingGraphVar = listOfGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
-
-                            if (matchingGraphVar != null)
-                            {
-                                SerializableType type = matchingGraphVar.typeHandle;
-                                type.Identification = variable.type.AssemblyQualifiedName;
-                                matchingGraphVar.typeHandle = type;
-                            }
-                        }
 
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();
@@ -1038,7 +982,7 @@ namespace Unity.VisualScripting.Community
             });
         }
 
-         private void Variables()
+        private void Variables()
         {
             Target.fieldsOpened = HUMEditor.Foldout(Target.fieldsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
             {
@@ -1120,6 +1064,42 @@ namespace Unity.VisualScripting.Community
                                 if (Inspector.EndBlock(variables[index]["type"]))
                                 {
                                     shouldUpdate = true;
+                                }
+
+                                if (target is ClassAsset)
+                                {
+                                    variables[index]["type"].valueChanged += (type) =>
+                                    {
+                                        variables[index]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
+                                        if (variables[index]["defaultValue"].value?.GetType() == type as Type)
+                                        {
+                                            return;
+                                        }
+
+                                        if (type == null)
+                                        {
+                                            variables[index]["defaultValue"].value = null;
+                                        }
+                                        else if (ConversionUtility.CanConvert(variables[index]["defaultValue"].value, type as Type, true))
+                                        {
+                                            variables[index]["defaultValue"].value = ConversionUtility.Convert(variables[index]["defaultValue"].value, type as Type);
+                                        }
+                                        else
+                                        {
+                                            variables[index]["defaultValue"].value = (type as Type).Default();
+                                        }
+
+                                        variables[index]["defaultValue"].InferOwnerFromParent();
+                                    };
+
+                                    var inspector = variables[index]["defaultValue"].Inspector();
+                                    typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
+                                    Inspector.BeginBlock(variables[index]["defaultValue"], new Rect(10, 10, 10, 10));
+                                    inspector.DrawLayout(new GUIContent("Value               "));
+                                    if (Inspector.EndBlock(variables[index]["defaultValue"]))
+                                    {
+                                        shouldUpdate = true;
+                                    }
                                 }
 
                                 GUILayout.Space(4);
@@ -1327,20 +1307,6 @@ namespace Unity.VisualScripting.Community
                                                     if (GUILayout.Button("Edit", GUILayout.Width(60)))
                                                     {
                                                         GraphWindow.OpenActive(listOfVariables[index].getter.GetReference() as GraphReference);
-                                                        var listOfgetterGraphVars = listOfVariables[index].getter.graph.variables;
-                                                        foreach (var variable in listOfVariables)
-                                                        {
-
-                                                            listOfVariables[index].getter.graph.variables.Set(variable.name, null);
-                                                            var matchingGetterGraphVar = listOfgetterGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
-
-                                                            if (matchingGetterGraphVar != null)
-                                                            {
-                                                                SerializableType type = matchingGetterGraphVar.typeHandle;
-                                                                type.Identification = variable.type.AssemblyQualifiedName;
-                                                                matchingGetterGraphVar.typeHandle = type;
-                                                            }
-                                                        }
                                                     }
                                                 });
                                             });
@@ -1362,19 +1328,6 @@ namespace Unity.VisualScripting.Community
                                                     if (GUILayout.Button("Edit", GUILayout.Width(60)))
                                                     {
                                                         GraphWindow.OpenActive(listOfVariables[index].setter.GetReference() as GraphReference);
-                                                        var listOfsetterGraphVars = listOfVariables[index].setter.graph.variables;
-                                                        foreach (var variable in listOfVariables)
-                                                        {
-                                                            listOfVariables[index].setter.graph.variables.Set(variable.name, null);
-                                                            var matchingSetterGraphVar = listOfsetterGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
-
-                                                            if (matchingSetterGraphVar != null)
-                                                            {
-                                                                SerializableType type = matchingSetterGraphVar.typeHandle;
-                                                                type.Identification = variable.type.AssemblyQualifiedName;
-                                                                matchingSetterGraphVar.typeHandle = type;
-                                                            }
-                                                        }
                                                     }
                                                 });
                                             });
@@ -1409,29 +1362,6 @@ namespace Unity.VisualScripting.Community
                         declaration.hideFlags = HideFlags.HideInHierarchy;
                         getter.hideFlags = HideFlags.HideInHierarchy;
                         setter.hideFlags = HideFlags.HideInHierarchy;
-                        var listOfgetterGraphVars = declaration.getter.graph.variables;
-                        var listOfsetterGraphVars = declaration.setter.graph.variables;
-                        foreach (var variable in listOfVariables)
-                        {
-                            declaration.getter.graph.variables.Set(variable.name, null);
-                            var matchingGetterGraphVar = listOfgetterGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
-
-                            if (matchingGetterGraphVar != null)
-                            {
-                                SerializableType type = matchingGetterGraphVar.typeHandle;
-                                type.Identification = variable.type.AssemblyQualifiedName;
-                                matchingGetterGraphVar.typeHandle = type;
-                            }
-                            declaration.setter.graph.variables.Set(variable.name, null);
-                            var matchingSetterGraphVar = listOfsetterGraphVars.FirstOrDefault(graphvar => graphvar.name == variable.name);
-
-                            if (matchingSetterGraphVar != null)
-                            {
-                                SerializableType type = matchingSetterGraphVar.typeHandle;
-                                type.Identification = variable.type.AssemblyQualifiedName;
-                                matchingSetterGraphVar.typeHandle = type;
-                            }
-                        }
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();
                     }

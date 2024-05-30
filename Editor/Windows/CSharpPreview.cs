@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEditor;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Unity.VisualScripting.Community
 {
@@ -121,7 +122,7 @@ namespace Unity.VisualScripting.Community
 
             if (GUILayout.Button("Compile", LudiqStyles.toolbarButton, GUILayout.Width(80)))
             {
-                Selection.activeObject = CSharpPreviewWindow.asset;
+                UnityEditor.Selection.activeObject = CSharpPreviewWindow.asset;
                 AssetCompiler.CompileSelected();
             }
 
@@ -130,6 +131,8 @@ namespace Unity.VisualScripting.Community
             if (GUILayout.Button("Copy to Clipboard", LudiqStyles.toolbarButton, GUILayout.Width(150)))
             {
                 var outputToCopy = RemoveColorTags(output);
+                outputToCopy = CodeUtility.RemoveCustomHighlights(outputToCopy);
+                outputToCopy = CodeUtility.RemoveAllSelectableTags(outputToCopy);
                 EditorGUIUtility.systemCopyBuffer = outputToCopy;
             }
 
@@ -187,7 +190,7 @@ namespace Unity.VisualScripting.Community
 
         private string RemoveColorTags(string input)
         {
-            return Regex.Replace(input, @"<color=#[0-9a-fA-F]{6}>|</color>", string.Empty);
+            return Regex.Replace(input, @"<color=#[0-9a-fA-F]{6,8}>|</color>", string.Empty);
         }
 
         private void CodeWindow()
@@ -199,27 +202,19 @@ namespace Unity.VisualScripting.Community
                     output = code.Generate(0);
                 }
 
-                output = output.Replace("/*", "<color=#CC3333>/*");
-                output = output.Replace("*/", "*/</color>");
-                output = output.RemoveMarkdown();
-
-                labelStyle = new GUIStyle(GUI.skin.label)
+                if (output.Length > 0)
                 {
-                    richText = true,
-                    stretchWidth = true,
-                    stretchHeight = true,
-                    alignment = TextAnchor.UpperLeft,
-                    wordWrap = true,
-                    fontSize = (int)(17.0f * zoomFactor)
-                };
-                labelStyle.normal.background = null;
+                    output = Regex.Replace(output, @"/\*(?!.*\(Recommendation\))", "<color=#CC3333>/*");
+                    output = output.Replace("*/", "*/</color>");
+                    output = output.RemoveMarkdown();
+                }
 
                 readOnlyTextStyle = new GUIStyle(GUI.skin.textArea)
                 {
                     richText = true,
                     stretchWidth = true,
                     wordWrap = false,
-                    fontSize = (int)(17.0f * zoomFactor),
+                    fontSize = (int)(EditorGUIUtility.singleLineHeight * zoomFactor),
                     normal = { textColor = Color.white, background = null },
                     border = new RectOffset(0, 0, 0, 0),
                     padding = new RectOffset(10, 10, 10, 10)
@@ -229,7 +224,7 @@ namespace Unity.VisualScripting.Community
                 {
                     richText = true,
                     alignment = TextAnchor.UpperRight,
-                    fontSize = (int)(17.0f * zoomFactor),
+                    fontSize = (int)(EditorGUIUtility.singleLineHeight * zoomFactor),
                     normal = { textColor = Color.grey, background = null },
                     border = new RectOffset(0, 0, 0, 0),
                     padding = new RectOffset(10, 10, 10, 10)
@@ -246,21 +241,60 @@ namespace Unity.VisualScripting.Community
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, true, true);
             GUILayout.BeginHorizontal();
-
-            GUILayout.BeginVertical(GUILayout.Width(40));  // Adjust width to align properly
+            GUILayout.BeginVertical(GUILayout.Width(40));
             GUILayout.Label(lineNumbers, lineNumberStyle);
             GUILayout.EndVertical();
 
-            GUILayout.BeginVertical();
             if (isSelectable)
             {
-                GUILayout.TextArea(output, readOnlyTextStyle, GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
+                if (GraphWindow.activeContext != null)
+                {
+                    var selection = GraphWindow.active.context.canvas.selection;
+                    var code = selection
+                        .Where(selected => selected is Unit)
+                        .Cast<Unit>()
+                        .SelectMany(unit =>
+                        {
+                            if (unit.controlInputs.Any(input => input.hasValidConnection))
+                            {
+                                return unit.controlInputs
+                                    .Where(input => input.hasValidConnection)
+                                    .Select(input => unit.GenerateControl(input, new ControlGenerationData(), 0).RemoveMarkdown());
+                            }
+                            else
+                            {
+                                if (unit.controlOutputs.Any(output => output.hasValidConnection))
+                                {
+                                    return new List<string>
+                                    {
+                                    unit.GenerateControl(null, new ControlGenerationData(), 0).RemoveMarkdown()
+                                    };
+                                }
+                                else return Enumerable.Empty<string>();
+                            }
+                        })
+                        .ToList();
+
+                    var codeString = string.Join("\n", code);
+
+                    var codeLinesToHighlight = codeString.Split('\n').ToList();
+
+                    foreach (var item in GraphWindow.active.context.canvas.selection)
+                    {
+                        output = CodeUtility.HighlightCode(output, item.ToString());
+                    }
+
+                    GUILayout.TextArea(CodeUtility.RemoveAllSelectableTags(output), readOnlyTextStyle, GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
+                }
+                else
+                {
+                    GUILayout.TextArea(CodeUtility.RemoveAllSelectableTags(output), readOnlyTextStyle, GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
+                }
             }
             else
             {
                 GUILayout.Label(output, readOnlyTextStyle);
             }
-            GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();
             GUILayout.EndScrollView();
