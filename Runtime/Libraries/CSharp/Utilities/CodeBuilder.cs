@@ -22,6 +22,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static string CommentColor = "009900";
         public static string SummaryColor = "00CC00";
         public static string VariableColor = "00FFFF";
+        public static string RecommendationColor = "FFD700";
         #endregion
 
         /// <summary>
@@ -346,6 +347,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return output;
         }
 
+        public static string MakeRecommendation(string Message)
+        {
+            return $"/*(Recommendation) {Message}*/".RecommendationHighlight();
+        }
+
         public static string WarningHighlight(this string code)
         {
             return Highlight(code, WarningColor);
@@ -401,6 +407,12 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         {
             return Highlight(code, "FF6BE8");
         }
+
+        public static string RecommendationHighlight(this string code)
+        {
+            return Highlight(code, RecommendationColor);
+        }
+
 
         public static string RemoveHighlights(this string code)
         {

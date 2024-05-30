@@ -295,6 +295,7 @@ namespace Unity.VisualScripting.Community
                         }
                         @class.AddUsings(usings);
                         var unit = Data.methods[i].graph.units[0] as FunctionNode;
+                        generationData.NewScope();
                         method.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, generationData, 0));
                         generationData.ExitScope();
 

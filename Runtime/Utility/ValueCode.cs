@@ -15,15 +15,17 @@ public class ValueCode
         this.castType = castType;
     }
 
-    public ValueCode(string code, Type castType, bool shouldCast)
+    public ValueCode(string code, Type castType, bool shouldCast, bool convertType = true)
     {
         this.code = code;
         if (shouldCast)
         {
             this.castType = castType;
         }
+        this.convertType = convertType;
     }
 
+    private bool convertType;
     private Type castType;
     private string code;
     public bool isCasted
@@ -36,8 +38,8 @@ public class ValueCode
 
     public string GetCode()
     {
-        var cast = isCasted ? $"(({castType.As().CSharpName(false, true)})" : string.Empty;
-        var _code = cast + code + (isCasted ? ")" : string.Empty);
+        var cast = isCasted ? convertType ? $"(({castType.As().CSharpName(false, true)})" : $"({castType.As().CSharpName(false, true)})" : string.Empty;
+        var _code = cast + code + (isCasted && convertType ? ")" : string.Empty);
         return _code;
     }
 
@@ -49,5 +51,10 @@ public class ValueCode
     public static string operator -(ValueCode valueCode, string str)
     {
         return valueCode.GetCode().Replace(str, "");
+    }
+
+    public override string ToString()
+    {
+        return GetCode();
     }
 }

@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         [InspectorLabel("Type")]
         [InspectorWide(true)]
-        public Type AsType;
+        public Type AsType = typeof(float);
         [DoNotSerialize]
         [PortLabelHidden]
         public ValueInput Value;

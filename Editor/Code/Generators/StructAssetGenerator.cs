@@ -67,13 +67,13 @@ namespace Unity.VisualScripting.Community
                     @struct.AddUsings(usings);
                     var unit = Data.constructors[i].graph.units[0] as FunctionNode;
                     var data = new ControlGenerationData();
+                    data.NewScope();
                     for (int item = 0; item < Data.variables.Count; item++)
                     {
-                        data.AddLocalName(Data.variables[item].name);
+                        data.AddLocalNameInScope(Data.variables[item].name);
                     }
-
                     constructor.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, data, 0));
-
+                    data.ExitScope();
                     for (int pIndex = 0; pIndex < Data.constructors[i].parameters.Count; pIndex++)
                     {
                         if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(false, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, Libraries.CSharp.ParameterModifier.None));
@@ -133,8 +133,15 @@ namespace Unity.VisualScripting.Community
                             }
 
                             @struct.AddUsings(usings);
+                            var data = new ControlGenerationData();
+                            data.NewScope();
+                            foreach (var variable in Data.variables.Where(variable => variable.FieldName != Data.variables[i].FieldName))
+                            {
+                                data.AddLocalNameInScope(variable.FieldName);
+                            }
                             property.MultiStatementGetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
                             .GenerateControl(null, new ControlGenerationData() { returns = Data.variables[i].type }, 0));
+                            data.ExitScope();
                         }
 
                         if (Data.variables[i].set)
@@ -147,8 +154,15 @@ namespace Unity.VisualScripting.Community
                             }
 
                             @struct.AddUsings(usings);
+                            var data = new ControlGenerationData();
+                            data.NewScope();
+                            foreach (var variable in Data.variables.Where(variable => variable.FieldName != Data.variables[i].FieldName))
+                            {
+                                data.AddLocalNameInScope(variable.FieldName);
+                            }
                             property.MultiStatementSetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
-                            .GenerateControl(null, new ControlGenerationData(), 0));
+                            .GenerateControl(null, data, 0));
+                            data.ExitScope();
                         }
 
                         @struct.AddProperty(property);
@@ -246,13 +260,13 @@ namespace Unity.VisualScripting.Community
                         @struct.AddUsings(usings);
                         var unit = Data.methods[i].graph.units[0] as FunctionNode;
                         var data = new ControlGenerationData();
+                        data.NewScope();
                         for (int item = 0; item < Data.variables.Count; item++)
                         {
-                            data.AddLocalName(Data.variables[item].name);
+                            data.AddLocalNameInScope(Data.variables[item].name);
                         }
-
                         method.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, data, 0));
-
+                        data.ExitScope();
                         for (int pIndex = 0; pIndex < Data.methods[i].parameters.Count; pIndex++)
                         {
                             if (!string.IsNullOrEmpty(Data.methods[i].parameters[pIndex].name)) method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, Libraries.CSharp.ParameterModifier.None));

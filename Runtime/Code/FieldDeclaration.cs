@@ -9,7 +9,7 @@ namespace Unity.VisualScripting.Community
     [Serializable]
     [Inspectable]
     [RenamedFrom("Bolt.Addons.Community.Code.FieldDeclaration")]
-    public abstract class FieldDeclaration : ScriptableObject, ISerializationCallbackReceiver
+    public abstract class FieldDeclaration : ScriptableObject
     {
         [Inspectable]
         public Type type = typeof(int);
@@ -57,45 +57,5 @@ namespace Unity.VisualScripting.Community
         public bool attributesOpened;
 #endif
 
-        public void OnAfterDeserialize()
-        {
-            if (!(string.IsNullOrWhiteSpace(qualifiedName) || string.IsNullOrEmpty(qualifiedName)))
-            {
-                type = Type.GetType(qualifiedName);
-            }
-
-            if (!string.IsNullOrEmpty(serializedValue) && !string.IsNullOrEmpty(serializedValueType) && Type.GetType(serializedValueType) != typeof(Delegate))
-            {
-                //value = JsonUtility.FromJson(serializedValue, Type.GetType(serializedValueType));
-            }
-        }
-
-        public void OnBeforeSerialize()
-        {
-            if (type == null)
-            {
-                qualifiedName = string.Empty;
-                return;
-            }
-
-            qualifiedName = type.AssemblyQualifiedName;
-
-            if (value == null)
-            {
-                serializedValue = string.Empty;
-                return;
-            }
-            else
-            {
-                //serializedValue = JsonUtility.ToJson(value);
-            }
-        }
     }
-}
-
-[Serializable]
-public class DelegateInfo
-{
-    public string MethodName { get; set; }
-    public string TypeName { get; set; }
 }

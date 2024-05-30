@@ -32,9 +32,19 @@ namespace Unity.VisualScripting.Community.Utility
         [Serialize]
         [SerializeField]
         private SerializationData defaultValueSerialized;
-    
+
 
         public ParameterModifier modifier = ParameterModifier.None;
+        public TypeParam()
+        {
+        }
+        
+        public TypeParam(Type type, string name)
+        {
+            this.type = type;
+            this.name = name;
+            Paramtype = new SystemType(type);
+        }
 
         public object GetDefaultValue()
         {
@@ -48,12 +58,12 @@ namespace Unity.VisualScripting.Community.Utility
 
         public void OnBeforeSerialize()
         {
-            if (defaultValue != null) 
-            { 
+            if (defaultValue != null)
+            {
                 defaultValueSerialized = defaultValue.Serialize();
             }
         }
-        
+
         public void OnAfterDeserialize()
         {
             defaultValue = GetDefaultValue();

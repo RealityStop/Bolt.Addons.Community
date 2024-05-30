@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
+using Void = Unity.VisualScripting.Community.Libraries.CSharp.Void;
 
 namespace Unity.VisualScripting.Community
 {
@@ -48,7 +50,7 @@ namespace Unity.VisualScripting.Community
             return scopeNames.Peek();
         }
 
-        public void AddLocalNameInScope(string name)
+        public string AddLocalNameInScope(string name)
         {
             if (scopeNames.Count > 0)
             {
@@ -64,11 +66,12 @@ namespace Unity.VisualScripting.Community
                 }
 
                 scope.scopeNames.Add(newName);
+                return newName;
             }
             else
             {
                 NewScope();
-                AddLocalNameInScope(name);
+                return AddLocalNameInScope(name);
             }
         }
 
@@ -79,6 +82,16 @@ namespace Unity.VisualScripting.Community
 
 
         public ControlGenerationData() { }
+        public ControlGenerationData(ControlGenerationData data)
+        {
+            returns = data.returns ?? typeof(Void);
+            mustBreak = data.mustBreak;
+            hasBroke = data.hasBroke;
+            mustReturn = data.mustReturn;
+            hasReturned = data.hasReturned;
+            localNames = data.localNames;
+            scopeNames = data.scopeNames;
+        }
 
         public class GeneratorScope
         {
