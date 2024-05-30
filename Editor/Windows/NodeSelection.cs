@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
@@ -432,6 +432,7 @@ namespace Unity.VisualScripting.Community
                         {
                             key = _key
                         });
+
                         superUnitGraph.PortDefinitionsChanged();
                         graphOutput.controlInputs.Single((op) => { return op.key == _key; }).ConnectToValid(superUnitGraph.units[connectionData[index].sourceUnitIndex].controlOutputs.ToList()[connectionData[index].sourceOutputIndex] as ControlOutput);
                         connectionData[index].subgraph.controlOutputs.Single((op) => { return op.key == _key; }).ConnectToValid(connectionData[index].externalPort as ControlInput);
@@ -503,7 +504,7 @@ namespace Unity.VisualScripting.Community
                 return "Input" + count.ToString();
             }
 
-            if (!keys.Contains(data.key) || data.externalPort.GetType() == typeof(ControlOutput))
+            if (data.externalPort != null && data.externalPort.GetType() == typeof(ControlOutput))
             {
                 if (data.externalPort.GetType() == typeof(ControlOutput) && keys.Contains(data.key))
                 {
@@ -514,6 +515,14 @@ namespace Unity.VisualScripting.Community
                     }
                     return data.key + count.ToString();
                 }
+                else
+                {
+                    return data.key;
+                }
+            }
+
+            if (!keys.Contains(data.key))
+            {
                 return data.key;
             }
             else
