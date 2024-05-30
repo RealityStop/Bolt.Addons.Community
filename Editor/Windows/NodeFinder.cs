@@ -25,6 +25,7 @@ namespace Unity.VisualScripting.Community
             public List<MatchType> Matches;
             public ScriptGraphAsset ScriptGraphAsset;
             public ScriptMachine ScriptMachine;
+            public StateMachine StateMachine;
             public StateGraphAsset StateGraphAsset;
             public GraphReference Reference;
             public string FullTypeName;
@@ -38,11 +39,14 @@ namespace Unity.VisualScripting.Community
         private bool _checkScriptGraphAssets = true;
         private bool _checkStateGraphAssets = true;
         private bool _checkScriptMachines = true;
+        private bool _checkStateMachines = true;
         private List<MatchObject> _matchObjects = new();
         private Dictionary<ScriptGraphAsset, List<MatchObject>> _matchScriptGraphMap = new();
         private Dictionary<ScriptMachine, List<MatchObject>> _matchScriptMachineMap = new();
+        private Dictionary<StateMachine, List<MatchObject>> _matchStateMachineMap = new();
         private List<ScriptGraphAsset> _sortedScriptGraphKey = new();
         private List<ScriptMachine> _sortedScriptMachineKey = new();
+        private List<StateMachine> _sortedStateMachineKey = new();
         private Dictionary<StateGraphAsset, List<MatchObject>> _matchStateGraphMap = new();
         private List<StateGraphAsset> _sortedStateGraphKey = new();
         private float errorCheckInterval = 1.0f;
@@ -56,7 +60,10 @@ namespace Unity.VisualScripting.Community
         public static void Open()
         {
             var window = GetWindow<NodeFinderWindow>();
-            window.titleContent = new GUIContent("Node finder");
+
+            // Get the built-in search icon
+            GUIContent searchIconContent = EditorGUIUtility.IconContent("d_ViewToolZoom");
+            window.titleContent = new GUIContent("Node Finder", searchIconContent.image);
         }
 
         private void OnDisable()
@@ -65,7 +72,9 @@ namespace Unity.VisualScripting.Community
             _matchScriptGraphMap.Clear();
             _sortedScriptGraphKey.Clear();
             _matchScriptMachineMap.Clear();
+            _matchStateMachineMap.Clear();
             _sortedScriptMachineKey.Clear();
+            _sortedStateMachineKey.Clear();
             _matchStateGraphMap.Clear();
             _sortedStateGraphKey.Clear();
         }
@@ -138,11 +147,13 @@ namespace Unity.VisualScripting.Community
                                              bool prevCheckScriptGraphAssets = _checkScriptGraphAssets;
                                              bool prevCheckStateGraphAssets = _checkStateGraphAssets;
                                              bool prevCheckScriptMachines = _checkScriptMachines;
+                                             bool prevCheckStateMachines = _checkStateMachines;
                                              bool prevMatchError = _matchError;
 
                                              _checkScriptGraphAssets = GUILayout.Toggle(_checkScriptGraphAssets, "ScriptGraphAssets", EditorStyles.toolbarButton);
                                              _checkStateGraphAssets = GUILayout.Toggle(_checkStateGraphAssets, "StateGraphAssets", EditorStyles.toolbarButton);
                                              _checkScriptMachines = GUILayout.Toggle(_checkScriptMachines, "ScriptMachines", EditorStyles.toolbarButton);
+                                             _checkStateMachines = GUILayout.Toggle(_checkStateMachines, "StateMachines", EditorStyles.toolbarButton);
                                              _matchError = GUILayout.Toggle(_matchError, "Errors", EditorStyles.toolbarButton);
 
 
@@ -157,6 +168,11 @@ namespace Unity.VisualScripting.Community
                                              }
 
                                              if (_checkScriptMachines != prevCheckScriptMachines)
+                                             {
+                                                 Search();
+                                             }
+
+                                             if (_checkStateMachines != prevCheckStateMachines)
                                              {
                                                  Search();
                                              }
@@ -179,9 +195,9 @@ namespace Unity.VisualScripting.Community
                 bool empty = string.IsNullOrEmpty(_pattern) || _matchObjects.Count == 0;
                 bool isShowingErrors = false;
 
-                // Display Script Graph results
                 if (!empty)
                 {
+                    // Display Script Graph results
                     foreach (var key in _sortedScriptGraphKey)
                     {
                         var list = _matchScriptGraphMap[key];
@@ -241,7 +257,6 @@ namespace Unity.VisualScripting.Community
                     {
                         var list = _matchScriptMachineMap[key];
                         if (!ShouldShowItem(list)) continue;
-                        isShowingErrors = true;
                         EditorGUIUtility.SetIconSize(new Vector2(16, 16));
 
                         // Using GameObject's default icon
@@ -254,7 +269,65 @@ namespace Unity.VisualScripting.Community
                             richText = true
                         };
 
-                        GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
+                        GUILayout.Label(new GUIContent(key.name + "(ScriptMachine)", icon.image), headerStyle);
+
+                        foreach (var match in list)
+                        {
+                            var pathNames = GetUnitPath(match.Reference);
+                            if (match.Matches.Contains(MatchType.Error) && _matchError)
+                            {
+                                isShowingErrors = true;
+                                var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+
+                                // Create the GUIStyle and enable rich text
+                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                {
+                                    alignment = TextAnchor.MiddleLeft,
+                                    richText = true // Enable rich text
+                                };
+
+                                // Display the button with the formatted label
+                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                {
+                                    FocusMatchObject(match);
+                                }
+                            }
+                            else
+                            {
+                                var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
+                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                {
+                                    alignment = TextAnchor.MiddleLeft,
+                                    richText = true
+                                };
+
+                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                {
+                                    FocusMatchObject(match);
+                                }
+                            }
+                        }
+                    }
+
+                    // Display StateMachine Graph Results
+                    foreach (var key in _sortedStateMachineKey)
+                    {
+                        var list = _matchStateMachineMap[key];
+                        if (!ShouldShowItem(list)) continue;
+
+                        EditorGUIUtility.SetIconSize(new Vector2(16, 16));
+
+                        // Using GameObject's default icon
+                        var icon = EditorGUIUtility.IconContent("GameObject Icon");
+                        var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                        {
+                            fontStyle = FontStyle.Bold,
+                            fontSize = 14,
+                            alignment = TextAnchor.MiddleLeft,
+                            richText = true
+                        };
+
+                        GUILayout.Label(new GUIContent(key.name + "(StateMachine)", icon.image), headerStyle);
 
                         foreach (var match in list)
                         {
@@ -411,7 +484,51 @@ namespace Unity.VisualScripting.Community
                                 alignment = TextAnchor.MiddleLeft,
                                 richText = true
                             };
-                            GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
+                            GUILayout.Label(new GUIContent(key.name + "(ScriptMachine)", icon.image), headerStyle);
+
+                            foreach (var match in list)
+                            {
+                                if (match.Matches.Contains(MatchType.Error))
+                                {
+                                    var pathNames = GetUnitPath(match.Reference);
+
+                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+
+                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                    {
+                                        alignment = TextAnchor.MiddleLeft,
+                                        richText = true
+                                    };
+
+                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                    {
+                                        FocusMatchObject(match);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (_checkStateMachines)
+                    {
+                        // Display ScriptMachine Graph Results
+                        foreach (var key in _sortedStateMachineKey)
+                        {
+                            var list = _matchStateMachineMap[key];
+                            if (!IsError(list)) continue;
+                            isShowingErrors = true;
+                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
+
+                            // Using GameObject's default icon
+                            var icon = EditorGUIUtility.IconContent("GameObject Icon");
+                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                            {
+                                fontStyle = FontStyle.Bold,
+                                fontSize = 14,
+                                alignment = TextAnchor.MiddleLeft,
+                                richText = true
+                            };
+                            GUILayout.Label(new GUIContent(key.name + "(StateMachine)", icon.image), headerStyle);
 
                             foreach (var match in list)
                             {
@@ -569,7 +686,7 @@ namespace Unity.VisualScripting.Community
                     {
                         var reference = element.Item1;
                         var unit = element.Item2;
-                        var newMatch = MatchUnit(unit, baseRef);
+                        var newMatch = MatchUnit(unit, reference);
                         if (newMatch == null) continue;
                         newMatch.ScriptGraphAsset = asset;
                         newMatch.Reference = reference;
@@ -600,13 +717,13 @@ namespace Unity.VisualScripting.Community
             {
                 foreach (var machine in UnityObjectUtility.FindObjectsOfTypeIncludingInactive<ScriptMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
                 {
-                    if (machine.GetReference().graph is not FlowGraph flowGraph) continue;
+                    if (machine == null || machine.GetReference() == null || machine.GetReference().graph is not FlowGraph flowGraph) continue;
                     var baseRef = machine.GetReference().AsReference();
                     foreach (var element in TraverseFlowGraph(baseRef))
                     {
                         var reference = element.Item1;
                         var unit = element.Item2;
-                        var newMatch = MatchUnit(unit, baseRef);
+                        var newMatch = MatchUnit(unit, reference);
                         if (newMatch == null) continue;
                         newMatch.ScriptMachine = machine;
                         newMatch.Reference = reference;
@@ -633,6 +750,43 @@ namespace Unity.VisualScripting.Community
                 _sortedScriptMachineKey.Sort((a, b) => string.Compare(a.nest.graph.title, b.nest.graph.title, StringComparison.Ordinal));
             }
 
+            if (_checkStateMachines)
+            {
+                foreach (var machine in UnityObjectUtility.FindObjectsOfTypeIncludingInactive<StateMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
+                {
+                    if (machine == null || machine.GetReference() == null || machine.GetReference().graph is not StateGraph flowGraph) continue;
+                    var baseRef = machine.GetReference().AsReference();
+                    foreach (var element in TraverseStateGraph(baseRef))
+                    {
+                        var reference = element.Item1;
+                        var unit = element.Item2;
+                        var newMatch = MatchUnit(unit, reference);
+                        if (newMatch == null) continue;
+                        newMatch.StateMachine = machine;
+                        newMatch.Reference = reference;
+                        _matchObjects.Add(newMatch);
+                        if (_matchStateMachineMap.TryGetValue(newMatch.StateMachine, out var list))
+                        {
+                            if (!list.Any(match => match.Unit == newMatch.Unit))
+                            {
+                                list.Add(newMatch);
+                            }
+                            else
+                            {
+                                list[list.IndexOf(list.First(match => match.Unit == newMatch.Unit))] = newMatch;
+                            }
+                        }
+                        else
+                        {
+                            _matchStateMachineMap[newMatch.StateMachine] = new List<MatchObject>() { newMatch };
+                        }
+                    }
+                }
+
+                _sortedStateMachineKey = _matchStateMachineMap.Keys.ToList();
+                _sortedStateMachineKey.Sort((a, b) => string.Compare(a.nest.graph.title, b.nest.graph.title, StringComparison.Ordinal));
+            }
+
             if (_checkStateGraphAssets)
             {
                 var guids = AssetDatabase.FindAssets("t:StateGraphAsset", null);
@@ -646,12 +800,12 @@ namespace Unity.VisualScripting.Community
                     {
                         var reference = element.Item1;
                         var unit = element.Item2;
-                        var newMatch = MatchUnit(unit, baseRef);
+                        var newMatch = MatchUnit(unit, reference);
                         if (newMatch == null) continue;
                         newMatch.StateGraphAsset = asset;
                         newMatch.Reference = reference;
                         _matchObjects.Add(newMatch);
-                        if (_matchScriptGraphMap.TryGetValue(newMatch.ScriptGraphAsset, out var list))
+                        if (_matchStateGraphMap.TryGetValue(newMatch.StateGraphAsset, out var list))
                         {
                             if (!list.Any(match => match.Unit == newMatch.Unit))
                             {
@@ -664,7 +818,7 @@ namespace Unity.VisualScripting.Community
                         }
                         else
                         {
-                            _matchScriptGraphMap[newMatch.ScriptGraphAsset] = new List<MatchObject>() { newMatch };
+                            _matchStateGraphMap[newMatch.StateGraphAsset] = new List<MatchObject>() { newMatch };
                         }
                     }
                 }
@@ -683,6 +837,8 @@ namespace Unity.VisualScripting.Community
             _sortedStateGraphKey.Clear();
             _matchScriptMachineMap.Clear();
             _sortedScriptMachineKey.Clear();
+            _matchStateMachineMap.Clear();
+            _sortedStateMachineKey.Clear();
 
             var matchWord = new Regex(_pattern, RegexOptions.IgnoreCase);
             // for script graphs.
@@ -726,7 +882,7 @@ namespace Unity.VisualScripting.Community
             {
                 foreach (var machine in UnityObjectUtility.FindObjectsOfTypeIncludingInactive<ScriptMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
                 {
-                    if (machine.GetReference().graph is not FlowGraph flowGraph) continue;
+                    if (machine == null || machine.GetReference() == null || machine.GetReference().graph is not FlowGraph flowGraph) continue;
                     var baseRef = machine.GetReference().AsReference();
                     foreach (var element in TraverseFlowGraph(baseRef))
                     {
@@ -750,6 +906,36 @@ namespace Unity.VisualScripting.Community
 
                 _sortedScriptMachineKey = _matchScriptMachineMap.Keys.ToList();
                 _sortedScriptMachineKey.Sort((a, b) => string.Compare(a.nest.graph.title, b.nest.graph.title, StringComparison.Ordinal));
+            }
+
+            if (_checkStateMachines)
+            {
+                foreach (var machine in UnityObjectUtility.FindObjectsOfTypeIncludingInactive<StateMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
+                {
+                    if (machine == null || machine.GetReference() == null || machine.GetReference().graph is not StateGraph stateGraph) continue;
+                    var baseRef = machine.GetReference().AsReference();
+                    foreach (var element in TraverseStateGraph(baseRef))
+                    {
+                        var reference = element.Item1;
+                        var unit = element.Item2;
+                        var newMatch = MatchUnit(matchWord, unit);
+                        if (newMatch == null) continue;
+                        newMatch.StateMachine = machine;
+                        newMatch.Reference = reference;
+                        _matchObjects.Add(newMatch);
+                        if (_matchStateMachineMap.TryGetValue(newMatch.StateMachine, out var list))
+                        {
+                            list.Add(newMatch);
+                        }
+                        else
+                        {
+                            _matchStateMachineMap[newMatch.StateMachine] = new List<MatchObject>() { newMatch };
+                        }
+                    }
+                }
+
+                _sortedStateMachineKey = _matchStateMachineMap.Keys.ToList();
+                _sortedStateMachineKey.Sort((a, b) => string.Compare(a.nest.graph.title, b.nest.graph.title, StringComparison.Ordinal));
             }
 
             if (_checkStateGraphAssets)
