@@ -1,4 +1,4 @@
-﻿using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 
@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
 
         public string GenerateClean(int indent)
         {
-            return Generate(indent).RemoveHighlights().RemoveMarkdown();
+            return CodeUtility.RemoveAllSelectableTags(CodeUtility.RemoveCustomHighlights(Generate(indent).RemoveHighlights().RemoveMarkdown()));
         }
     }
 
