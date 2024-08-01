@@ -4,12 +4,12 @@ using UnityEngine;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Utility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using Newtonsoft.Json;
 
 namespace Unity.VisualScripting.Community
 {
     [Serializable]
     [Inspectable]
+    [TypeIcon(typeof(Method))]
     [RenamedFrom("Bolt.Addons.Community.Code.MethodDeclaration")]
     public abstract class MethodDeclaration : Macro<FlowGraph>
     {
@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
 
         [Inspectable]
         [TypeFilter(Abstract = true, Classes = true, Enums = true, Generic = false, Interfaces = true,
-            Nested = true, NonPublic = false, NonSerializable = true, Object = true, Obsolete = false, OpenConstructedGeneric = false, 
+            Nested = true, NonPublic = false, NonSerializable = true, Object = true, Obsolete = false, OpenConstructedGeneric = false,
             Primitives = true, Public = true, Reference = true, Sealed = true, Static = false, Structs = true, Value = true)]
         public Type returnType = typeof(Libraries.CSharp.Void);
 
@@ -26,9 +26,17 @@ namespace Unity.VisualScripting.Community
         [HideInInspector]
         private string qualifiedReturnTypeName;
 
+        /// <summary>
+        /// Left this to not overwrite current methodParameters
+        /// and instead get the parameters from this and move it to the serializtion variable
+        /// </summary>
         [SerializeField]
         [HideInInspector]
         private string serializedParams;
+
+        [SerializeField]
+        [HideInInspector]
+        private SerializationData serialization;
 
         [Inspectable]
         public ClassAsset classAsset;
@@ -36,9 +44,11 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public StructAsset structAsset;
 
-        [Serialize][InspectorWide]
+        [Serialize]
+        [InspectorWide]
         public List<TypeParam> parameters = new List<TypeParam>();
 
+        [Serialize]
         public List<AttributeDeclaration> attributes = new List<AttributeDeclaration>();
 
         public AccessModifier scope = AccessModifier.Public;
@@ -65,10 +75,19 @@ namespace Unity.VisualScripting.Community
                 returnType = Type.GetType(qualifiedReturnTypeName);
             }
 
-            if (!string.IsNullOrEmpty(serializedParams)) 
+            foreach (var param in parameters)
             {
-                parameters = (List<TypeParam>)JsonConvert.DeserializeObject(serializedParams, typeof(List<TypeParam>));
+                param.OnAfterDeserialize();
             }
+            // if (!string.IsNullOrEmpty(serializedParams))
+            // {
+            //     parameters = (List<TypeParam>)new SerializationData(serializedParams).Deserialize();
+            //     serializedParams = null;
+            // }
+            // else if (!string.IsNullOrEmpty(serialization.json))
+            // {
+            //     parameters = (List<TypeParam>)serialization.Deserialize();
+            // }
         }
 
         protected override void OnBeforeSerialize()
@@ -82,14 +101,24 @@ namespace Unity.VisualScripting.Community
             }
 
             qualifiedReturnTypeName = returnType.AssemblyQualifiedName;
-
-            if (parameters == null) 
+            foreach (var param in parameters)
             {
-                serializedParams = string.Empty;
-                return;
+                param.OnBeforeSerialize();
             }
-            
-            serializedParams = JsonConvert.SerializeObject(parameters);
+            // if (parameters == null)
+            // {
+            //     serializedParams = null;
+            //     serialization = new SerializationData();
+            //     return;
+            // }
+
+            // serialization = parameters.Serialize();
         }
+    }
+    /// <summary>
+    /// This is a empty class used for the typeIcon
+    /// </summary>
+    public class Method
+    {
     }
 }

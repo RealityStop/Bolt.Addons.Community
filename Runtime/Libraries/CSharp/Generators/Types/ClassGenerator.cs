@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -199,7 +200,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
             else
             {
-                if (!inherits.Is().PrimitiveStringOrVoid()) usings.Add(inherits.Namespace);
+                if (inherits != null && !inherits.Is().PrimitiveStringOrVoid()) usings.Add(inherits.Namespace);
             }
 
             var interfaceList = new List<string>();
@@ -235,7 +236,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         }
 
         
-
+        public ClassGenerator Inherit(Type type)
+        {
+            inherits = type;
+            return this;
+        }
         /// <summary>
         /// Add an interface to this class.
         /// </summary>

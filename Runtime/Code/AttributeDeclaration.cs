@@ -14,13 +14,12 @@ namespace Unity.VisualScripting.Community
     public class AttributeDeclaration
     {
         [Inspectable]
-        [Serialize]
         [SerializeField]
         private SystemType attributeType = new SystemType();
+        [SerializeField]
         public List<TypeParam> parameters = new List<TypeParam>();
         public int constructor = 0;
         public int selectedconstructor;
-        private string serializedTypeName;
 
 #if UNITY_EDITOR
         public bool opened;

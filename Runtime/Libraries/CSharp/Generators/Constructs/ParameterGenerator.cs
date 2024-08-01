@@ -1,6 +1,9 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting.Community.Utility;
+using System.Linq;
+using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -15,11 +18,16 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public bool isLiteral;
         public ParameterModifier modifier;
 
+        public List<AttributeDeclaration> attributes;
+
         public override string Generate(int indent)
         {
             if (!useAssemblyQualifiedType && type == null) return "/* Parameter type is null */".WarningHighlight();
+            var _attributes = attributes != null && attributes.Count > 0 ? string.Join(" ", attributes.Select(attr => $"[{attr.GetAttributeType().As().CSharpName()}]")) + " " : string.Empty;
             var param = isParameters ? "params ".ConstructHighlight() : string.Empty;
-            return useAssemblyQualifiedType ? param + assemblyQualifiedType + " " + name.VariableHighlight() : param + type.As().CSharpName() + " " + name.LegalMemberName().VariableHighlight();
+            var _modifier = modifier != ParameterModifier.None ? modifier.AsString().ConstructHighlight() + " " : string.Empty;
+            var parameter = _attributes + (useAssemblyQualifiedType ? param + _modifier + assemblyQualifiedType + " " + name.VariableHighlight() : param + _modifier + type.As().CSharpName() + " " + name.LegalMemberName().VariableHighlight());
+            return parameter;
         }
 
         private ParameterGenerator()
@@ -34,8 +42,23 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             parameter.type = type;
             parameter.modifier = modifier;
             parameter.isLiteral = isLiteral;
-            parameter.isParameters = isParameters;
+            if (modifier == ParameterModifier.None)
+                parameter.isParameters = isParameters;
             parameter.useAssemblyQualifiedType = false;
+            return parameter;
+        }
+
+        public static ParameterGenerator Parameter(string name, Type type, ParameterModifier modifier, List<AttributeDeclaration> attributes, bool isLiteral = false, bool isParameters = false)
+        {
+            var parameter = new ParameterGenerator();
+            parameter.name = name;
+            parameter.type = type;
+            parameter.modifier = modifier;
+            parameter.isLiteral = isLiteral;
+            if (modifier == ParameterModifier.None)
+                parameter.isParameters = isParameters;
+            parameter.useAssemblyQualifiedType = false;
+            parameter.attributes = attributes;
             return parameter;
         }
 
@@ -47,7 +70,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             parameter.useAssemblyQualifiedType = true;
             parameter.modifier = modifier;
             parameter.isLiteral = isLiteral;
-            parameter.isParameters = isParameters;
+            if (modifier == ParameterModifier.None)
+                parameter.isParameters = isParameters;
             return parameter;
         }
 

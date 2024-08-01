@@ -14,6 +14,7 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             UnitBase.staticUnitsExtensions.Add(StaticEditorOptions);
             UnitBase.dynamicUnitsExtensions.Add(DynamicEditorOptions);
             UnitBase.dynamicUnitsExtensions.Add(MachineVariableOptions);
+            UnitBase.contextualUnitsExtensions.Add(InheritedMembersOptions);
         }
 
         private static IEnumerable<IUnitOption> GetStaticOptions()
@@ -89,6 +90,111 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             {
                 yield return option;
             }
+        }
+
+        private static IEnumerable<IUnitOption> InheritedMembersOptions(GraphReference reference)
+        {
+            var classAsset = GetClassAsset(reference.macro);
+            var inheritedType = classAsset.GetInheritedType();
+            if (classAsset != null)
+            {
+                yield return new AssetTypeOption(new AssetType(classAsset));
+                foreach (var method in classAsset.methods)
+                {
+                    yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.Invoke));
+                    if (method.returnType != typeof(void) && method.returnType != typeof(Libraries.CSharp.Void))
+                        yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.ReturnValue));
+                }
+
+                foreach (var field in classAsset.variables)
+                {
+                    yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Get));
+                    yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Set));
+                }
+
+                foreach (var method in inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                {
+                    if (method.IsPrivate || method.IsProperty() || method.IsEvent()) continue;
+
+                    if (method.IsAbstract || method.IsVirtual)
+                    {
+                        yield return new BaseMethodUnitOption(new BaseMethodCall(new Member(inheritedType, method), MethodType.Invoke));
+                        if (method.ReturnType != typeof(void) && method.GetParameters().All(param => !param.HasOutModifier() && !param.ParameterType.IsByRef))
+                            yield return new BaseMethodUnitOption(new BaseMethodCall(new Member(inheritedType, method), MethodType.ReturnValue));
+                    }
+                    else
+                    {
+                        yield return new InheritedMethodUnitOption(new InheritedMethodCall(new Member(inheritedType, method), MethodType.Invoke));
+                        if (method.ReturnType != typeof(void))
+                            yield return new InheritedMethodUnitOption(new InheritedMethodCall(new Member(inheritedType, method), MethodType.ReturnValue));
+                    }
+                }
+
+                foreach (var property in inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Where(property => property.GetMethod?.IsAbstract == true || property.SetMethod?.IsAbstract == true))
+                {
+                    if (property.GetMethod != null && !property.GetMethod.IsPrivate)
+                    {
+                        yield return new BasePropertyGetterUnitOption(new BasePropertyGetterUnit(new Member(inheritedType, property)));
+                    }
+
+                    if (property.SetMethod != null && !property.SetMethod.IsPrivate)
+                    {
+                        yield return new BasePropertySetterUnitOption(new BasePropertySetterUnit(new Member(inheritedType, property)));
+                    }
+                }
+
+                foreach (var field in inheritedType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                {
+                    if (field.IsPrivate) continue;
+                    yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Get));
+                    yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Set));
+                }
+
+                foreach (var property in inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                {
+                    if (property.GetMethod != null && !property.GetMethod.IsPrivate)
+                    {
+                        yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, property), ActionDirection.Get));
+                    }
+
+                    if (property.SetMethod != null && !property.SetMethod.IsPrivate)
+                    {
+                        yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, property), ActionDirection.Set));
+                    }
+                }
+            }
+        }
+
+
+        private static ClassAsset GetClassAsset(IMacro macro)
+        {
+            if (macro is ConstructorDeclaration constructorDeclaration)
+            {
+                return constructorDeclaration.classAsset;
+            }
+            else if (macro is PropertyGetterMacro propertyGetterMacro)
+            {
+                return propertyGetterMacro.classAsset;
+            }
+            else if (macro is PropertySetterMacro propertySetterMacro)
+            {
+                return propertySetterMacro.classAsset;
+            }
+            else if (macro is MethodDeclaration methodDeclaration)
+            {
+                return methodDeclaration.classAsset;
+            }
+            return null;
+        }
+
+        private static bool IsEvent(this MethodInfo methodInfo)
+        {
+            return methodInfo.Name.Contains("add_") || methodInfo.Name.Contains("remove_");
+        }
+
+        private static bool IsProperty(this MethodInfo methodInfo)
+        {
+            return methodInfo.Name.Contains("get_") || methodInfo.Name.Contains("set_");
         }
     }
 }

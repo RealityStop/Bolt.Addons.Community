@@ -3,9 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.InteropServices;
+using NUnit.Framework.Internal;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Utility;
+using Unity.VisualScripting.ReorderableList;
 using UnityEditor;
 using UnityEngine;
 
@@ -41,6 +45,7 @@ namespace Unity.VisualScripting.Community
         private int constructorsCount;
         private Type[] enumAttributeTypes = new Type[] { };
         private Type[] fieldAttributeTypes = new Type[] { };
+        private Type[] parameterAttributeTypes = new Type[] { };
         private int fieldsCount;
         private Type[] interfaceAttributeTypes = new Type[] { };
         private Type[] methodAttributeTypes = new Type[] { };
@@ -58,7 +63,8 @@ namespace Unity.VisualScripting.Community
             Interface,
             Field,
             Property,
-            Method
+            Method,
+            Parameter
         }
 
         private Color boxBackground => HUMColor.Grey(0.15f);
@@ -70,11 +76,375 @@ namespace Unity.VisualScripting.Community
             Variables();
             GUILayout.Space(4);
             Methods();
-            // if (typeof(TMemberTypeAsset) == typeof(UnitAsset))
+
+            // Check if the target is a ClassAsset and if it has required information
+            if (typeof(TMemberTypeAsset) == typeof(ClassAsset) && (Target as ClassAsset).inheritsType)
+            {
+                GUILayout.Space(4);
+                RequiredInfo();
+            }
+        }
+
+        private bool RequiresInfo()
+        {
+            var classAsset = Target as ClassAsset;
+            var inheritedType = classAsset.inherits.type;
+
+            // Check for abstract methods
+            if (inheritedType == null) return false;
+            if (inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Where(m => !m.Name.Contains("get_") && !m.Name.Contains("set_")).Any(m => m.IsAbstract && !MethodExists(m)))
+            {
+                return true;
+            }
+
+            // Check for abstract properties
+            if (inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Any(p => (p.GetMethod?.IsAbstract == true || p.SetMethod?.IsAbstract == true) && !PropertyExists(p)))
+            {
+                return true;
+            }
+
+            // // Check for abstract events
+            // if (inheritedType.GetEvents(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Any(e => e.GetAddMethod(true)?.IsAbstract == true || e.GetRemoveMethod(true)?.IsAbstract == true))
             // {
-            //     GUILayout.Space(4);
-            //     RequiredInfo();
+            //     return true;
             // }
+
+            // Check if the inherited type is not abstract and is a class with parameterized constructors
+            if (!inheritedType.IsAbstract && inheritedType.IsClass)
+            {
+                if (inheritedType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                    .Any(constructor => constructor.GetParameters().Length > 0 && !ConstructorExists(constructor)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool ConstructorExists(ConstructorInfo c)
+        {
+            var listOfConstructors = constructors.value as List<TConstructorDeclaration>;
+            if (typeof(TMemberTypeAsset) == typeof(ClassAsset))
+            {
+                foreach (var constructor in listOfConstructors)
+                {
+                    foreach (var param in constructor.parameters.Where(param => !param.showCall))
+                    {
+                        param.showCall = true;
+                    }
+                    if (constructor.scope != c.GetScope()) continue;
+                    var inheritedType = (Target as ClassAsset).inherits.type;
+                    var constructorParameters = c.GetParameters();
+                    bool requiredParametersHaveBase = constructor.parameters.Where(parameter => parameter.useInCall).Select(parameter => parameter.type).SequenceEqual(constructorParameters.Select(parameter => parameter.ParameterType));
+                    if (!requiredParametersHaveBase)
+                    {
+                        continue;
+                    }
+
+                    if (!constructor.parameters.Where(parameter => parameter.useInCall).Select(parameter => parameter.modifier).SequenceEqual(constructorParameters.Select(parameter => parameter.GetModifier()))) continue;
+
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool MethodExists(MethodInfo m)
+        {
+            var listOfMethods = methods.value as List<TMethodDeclaration>;
+            if (!listOfMethods.Any(method => method.methodName == m.Name)) return false;
+            foreach (var method in listOfMethods.Where(method => method.methodName == m.Name))
+            {
+                if (method.scope != m.GetScope()) continue;
+                if (method.modifier != MethodModifier.Override) continue;
+                if (method.parameters.Count != m.GetParameters().Length) continue;
+                if (method.returnType != m.ReturnType) continue;
+                if (!method.parameters.Select(parameter => parameter.type).SequenceEqual(m.GetParameters().Select(parameter => parameter.ParameterType))) continue;
+                if (!method.parameters.Select(parameter => parameter.modifier).SequenceEqual(m.GetParameters().Select(parameter => parameter.GetModifier()))) continue;
+                return true;
+            }
+            return false;
+        }
+
+        private bool PropertyExists(PropertyInfo p)
+        {
+            var listOfFields = variables.value as List<TFieldDeclaration>;
+            if (!listOfFields.Any(field => field.name == p.Name)) return false;
+            foreach (var property in listOfFields.Where(fields => fields.FieldName == p.Name && fields.isProperty))
+            {
+                if (property.scope != p.GetScope()) continue;
+                if (property.propertyModifier != PropertyModifier.Override) continue;
+                if (property.type != p.PropertyType) continue;
+                /* If a getter is not expected but present || If a getter is expected but not present */
+                if ((property.get && !p.CanRead) || (!property.get && p.CanRead)) continue;
+                /* If a setter is not expected but present || If a setter is expected but not present */
+                if ((property.set && !p.CanWrite) || (!property.set && p.CanWrite)) continue;
+                if (p.CanRead)
+                {
+                    if (property.getterScope != p.GetGetMethod(true).GetScope()) continue;
+                }
+
+                if (p.CanWrite)
+                {
+                    if (property.setterScope != p.GetSetMethod(true).GetScope()) continue;
+                }
+
+                return true;
+            }
+            return false;
+        }
+
+        private void RequiredInfo()
+        {
+            Target.requiredInfoOpened = HUMEditor.Foldout(Target.requiredInfoOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            {
+                if (RequiresInfo())
+                {
+                    HUMEditor.Image(PathUtil.Load("warning_32", CommunityEditorPath.Code).Single(), 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
+                }
+                else
+                {
+                    HUMEditor.Image(PathUtil.Load("okay_32", CommunityEditorPath.Code).Single(), 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
+                }
+                GUILayout.Label("Required Info");
+            }, () =>
+            {
+                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                {
+                    if (!RequiresInfo())
+                    {
+                        EditorGUILayout.HelpBox("This class does not require anything", MessageType.Info);
+                        return;
+                    }
+
+                    var listOfConstructors = constructors.value as List<TConstructorDeclaration>;
+                    var listOfMethods = methods.value as List<TMethodDeclaration>;
+                    var listOfVariables = variables.value as List<TFieldDeclaration>;
+
+                    var classAsset = Target as ClassAsset;
+                    var inheritedType = classAsset.inherits.type;
+
+                    var abstractMethods = inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                        .Where(m => m.IsAbstract && !m.Name.Contains("get_") && !m.Name.Contains("set_"))
+                        .ToArray();
+
+                    for (int i = 0; i < abstractMethods.Length; i++)
+                    {
+                        var index = i;
+                        HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        {
+                            GUILayout.Label(abstractMethods[index].Name);
+
+                            if (GUILayout.Button("Add", GUILayout.Width(60)))
+                            {
+                                var declaration = CreateInstance<TMethodDeclaration>();
+                                if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
+                                if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                                declaration.modifier = MethodModifier.Override;
+                                declaration.methodName = abstractMethods[i].Name;
+                                declaration.name = declaration.methodName;
+                                declaration.scope = abstractMethods[i].GetScope();
+                                declaration.returnType = abstractMethods[i].ReturnType;
+                                declaration.parameters = abstractMethods[i].GetParameters().Select(param => new TypeParam(param.ParameterType, param.Name)).ToList();
+                                declaration.hideFlags = HideFlags.HideInHierarchy;
+                                AssetDatabase.AddObjectToAsset(declaration, Target);
+                                listOfMethods.Add(declaration);
+                                var functionUnit = new FunctionNode(FunctionType.Method);
+
+                                functionUnit.methodDeclaration = declaration;
+                                declaration.graph.units.Add(functionUnit);
+
+                                AssetDatabase.SaveAssets();
+                                AssetDatabase.Refresh();
+                            }
+
+                            if (methods.Count != methodsCount)
+                            {
+                                if (Target is ClassAsset)
+                                {
+                                    for (int i = 0; i < methods.Count; i++)
+                                    {
+                                        ((TMethodDeclaration)methods[i].value).classAsset = Target as ClassAsset;
+                                    }
+                                }
+                                else
+                                {
+                                    if (Target is StructAsset)
+                                    {
+                                        for (int i = 0; i < methods.Count; i++)
+                                        {
+                                            ((TMethodDeclaration)methods[i].value).structAsset = Target as StructAsset;
+                                        }
+                                    }
+                                }
+
+                                methodsCount = methods.Count;
+                            }
+                        }, true);
+
+                        GUILayout.Space(4);
+                    }
+
+                    var abstractProperties = inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                    .Where(p => p.GetGetMethod(true)?.IsAbstract == true || p.GetSetMethod(true)?.IsAbstract == true)
+                    .ToArray();
+
+                    for (int i = 0; i < abstractProperties.Length; i++)
+                    {
+                        var index = i;
+                        HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        {
+                            GUILayout.Label(abstractProperties[index].Name);
+                            var property = abstractProperties[index];
+                            if (GUILayout.Button("Add", GUILayout.Width(60)))
+                            {
+                                var declaration = CreateInstance<TFieldDeclaration>();
+                                if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
+                                if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                                var getter = CreateInstance<PropertyGetterMacro>();
+                                var setter = CreateInstance<PropertySetterMacro>();
+                                if (typeof(TMemberTypeAsset) == typeof(ClassAsset))
+                                {
+                                    getter.classAsset = Target as ClassAsset;
+                                    setter.classAsset = Target as ClassAsset;
+                                }
+                                else
+                                {
+                                    getter.structAsset = Target as StructAsset;
+                                    setter.structAsset = Target as StructAsset;
+                                }
+                                AssetDatabase.AddObjectToAsset(declaration, Target);
+                                AssetDatabase.AddObjectToAsset(getter, Target);
+                                AssetDatabase.AddObjectToAsset(setter, Target);
+                                declaration.FieldName = property.Name;
+                                declaration.name = property.Name;
+                                declaration.isProperty = true;
+                                listOfVariables.Add(declaration);
+                                var functionGetterUnit = new FunctionNode(FunctionType.Getter);
+                                var functionSetterUnit = new FunctionNode(FunctionType.Setter);
+                                functionGetterUnit.fieldDeclaration = declaration;
+                                functionSetterUnit.fieldDeclaration = declaration;
+                                declaration.getter = getter;
+                                declaration.setter = setter;
+                                declaration.getter.graph.units.Add(functionGetterUnit);
+                                declaration.setter.graph.units.Add(functionSetterUnit);
+                                declaration.hideFlags = HideFlags.HideInHierarchy;
+                                getter.hideFlags = HideFlags.HideInHierarchy;
+                                setter.hideFlags = HideFlags.HideInHierarchy;
+                                declaration.scope = property.GetScope();
+                                declaration.type = property.PropertyType;
+                                declaration.propertyModifier = PropertyModifier.Override;
+                                if (property.CanRead)
+                                {
+                                    declaration.get = property.CanRead;
+                                    declaration.getterScope = property.GetGetMethod(true).GetScope();
+                                }
+
+                                if (property.CanWrite)
+                                {
+                                    declaration.set = property.CanWrite;
+                                    declaration.setterScope = property.GetSetMethod(true).GetScope();
+                                }
+
+                                AssetDatabase.SaveAssets();
+                                AssetDatabase.Refresh();
+                            }
+                        }, true);
+
+                        GUILayout.Space(4);
+                    }
+
+                    //TODO : Add event support
+
+                    // var abstractEvents = inheritedType.GetEvents(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                    // .Where(e => e.GetAddMethod(true)?.IsAbstract == true || e.GetRemoveMethod(true)?.IsAbstract == true)
+                    // .ToArray();
+
+                    // for (int i = 0; i < abstractEvents.Length; i++)
+                    // {
+                    //     var index = i;
+                    //     HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                    //     {
+                    //         GUILayout.Label(abstractEvents[index].Name);
+
+                    //         if (GUILayout.Button("Add", GUILayout.Width(60)))
+                    //         {
+
+                    //         }
+                    //     }, true);
+
+                    //     GUILayout.Space(4);
+                    // }
+
+                    var parameterizedConstructors = inheritedType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                    .Where(constructor => constructor.GetParameters().Length > 0)
+                    .ToArray();
+
+                    for (int i = 0; i < parameterizedConstructors.Length; i++)
+                    {
+                        var index = i;
+                        HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        {
+                            var parameters = parameterizedConstructors[index].GetParameters();
+                            var parameterDescriptions = string.Join(", ", parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"));
+
+                            string typeName = inheritedType.Name;
+                            int backtickIndex = typeName.IndexOf('`');
+                            if (backtickIndex > 0)
+                            {
+                                typeName = typeName[..backtickIndex];
+                            }
+                            GUILayout.Label($"{typeName}({parameterDescriptions})");
+
+                            if (GUILayout.Button("Add", GUILayout.Width(60)))
+                            {
+                                var declaration = CreateInstance<TConstructorDeclaration>();
+                                if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
+                                if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                                declaration.hideFlags = HideFlags.HideInHierarchy;
+                                AssetDatabase.AddObjectToAsset(declaration, Target);
+                                listOfConstructors.Add(declaration);
+                                var functionUnit = new FunctionNode(FunctionType.Constructor);
+                                functionUnit.constructorDeclaration = declaration;
+                                declaration.graph.units.Add(functionUnit);
+                                var listOfVariables = variables.value as List<TFieldDeclaration>;
+                                declaration.scope = parameterizedConstructors[index].GetScope();
+                                declaration.CallType = CallType.Base;
+                                declaration.parameters = parameterizedConstructors[index].GetParameters().Select(param => new TypeParam(param.ParameterType, param.Name) { useInCall = !inheritedType.IsAbstract && inheritedType.IsClass }).ToList();
+                                declaration.modifier = parameterizedConstructors[index].GetModifier();
+                                AssetDatabase.SaveAssets();
+                                AssetDatabase.Refresh();
+
+                                if (methods.Count != methodsCount)
+                                {
+                                    if (Target is ClassAsset)
+                                    {
+                                        for (int i = 0; i < methods.Count; i++)
+                                        {
+                                            ((TMethodDeclaration)methods[i].value).classAsset = Target as ClassAsset;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (Target is StructAsset)
+                                        {
+                                            for (int i = 0; i < methods.Count; i++)
+                                            {
+                                                ((TMethodDeclaration)methods[i].value).structAsset = Target as StructAsset;
+                                            }
+                                        }
+                                    }
+
+                                    methodsCount = methods.Count;
+                                }
+                            }
+                        }, true);
+
+                        GUILayout.Space(4);
+                    }
+                });
+            });
         }
 
         protected virtual Texture2D DefaultIcon() { return PathUtil.Load("object_32", CommunityEditorPath.Code).Single(); }
@@ -145,8 +515,6 @@ namespace Unity.VisualScripting.Community
         {
             HUMEditor.Horizontal(GUIStyle.none, () =>
             {
-                // if (typeof(TMemberTypeAsset) != typeof(UnitAsset))
-                // {
                 HUMEditor.Vertical().Box(
                 HUMEditorColor.DefaultEditorBackground, Color.black,
                 new RectOffset(7, 7, 7, 7),
@@ -161,43 +529,6 @@ namespace Unity.VisualScripting.Community
                     GUILayout.Width(32),
                     GUILayout.Height(32));
                 }, false, false);
-                // }
-                // else
-                // {
-                //     typeIcon.Block(() =>
-                //     {
-                //         float labelHeight = 15f;
-                //         var TypeIconLabel = new GUIContent(" TypeIcon ", "This is the icon of the Unit if you want the default icon use the Type \"Void\"");
-                //         GUILayout.Label(TypeIconLabel, GUILayout.Height(labelHeight));
-                //         var labelPosition = GUILayoutUtility.GetLastRect();
-
-                //         Rect typeFieldPosition = new Rect(
-                //         labelPosition.x + 1,
-                //         labelPosition.y + 20,
-                //         labelPosition.width,
-                //         EditorGUIUtility.singleLineHeight
-                //         );
-
-                //         Type[] types = Codebase.settingsAssemblies
-                //         .SelectMany(a => a.GetTypes().Where(type => !type.IsAbstract && !type.IsGenericTypeDefinition))
-                //         .ToArray();
-
-                //         (typeIcon.value as SystemType).type = LudiqGUI.TypeField(
-                //         typeFieldPosition,
-                //         GUIContent.none,
-                //         (typeIcon.value as SystemType).type,
-                //         () =>
-                //         {
-                //             return new TypeOptionTree(types);
-                //         },
-                //         new GUIContent("null")
-                //         );
-                //     },
-                //     () =>
-                //     {
-                //         shouldUpdate = true;
-                //     }, true);
-                // }
 
                 GUILayout.Space(2);
 
@@ -228,214 +559,7 @@ namespace Unity.VisualScripting.Community
                     new RectOffset(1, 1, 0, 1),
                     () =>
                     {
-                        for (int attrIndex = 0; attrIndex < Target.attributes.Count; attrIndex++)
-                        {
-                            var attributeMeta = attributes[attrIndex]["attributeType"];
-                            var attribute = Target.attributes[attrIndex];
-
-                            attribute.opened = HUMEditor.Foldout(
-                                attribute.opened,
-                                HUMEditorColor.DefaultEditorBackground.Darken(0f),
-                                Color.black,
-                                1,
-                                () =>
-                                {
-                                    attributeMeta.Block(() =>
-                                    {
-                                        if (Target is not StructAsset or InterfaceAsset)
-                                        {
-                                            AttributeTypeField(attribute, AttributeUsageType.Class);
-                                        }
-                                        else if (Target is StructAsset)
-                                        {
-                                            AttributeTypeField(attribute, AttributeUsageType.Struct);
-                                        }
-                                        // else if (Target is InterfaceAsset)
-                                        // {
-                                        //     AttributeTypeField(attribute, AttributeUsageType.Interface);
-                                        // }
-                                    },
-                                    () =>
-                                    {
-                                        attribute.parameters.Clear();
-                                        attribute.constructor = 0;
-                                        shouldUpdate = true;
-                                    },
-                                    true
-                                );
-
-                                    if (GUILayout.Button("...", GUILayout.Width(19)))
-                                    {
-                                        GenericMenu menu = new GenericMenu();
-                                        menu.AddItem(new GUIContent("Delete"), false, (obj) =>
-                                        {
-                                            AttributeDeclaration attrToRemove = obj as AttributeDeclaration;
-                                            Target.attributes.Remove(attrToRemove);
-
-                                            foreach (var Constructor in attrToRemove.GetAttributeType().GetConstructors())
-                                            {
-                                                foreach (var parameter in Constructor.GetParameters())
-                                                {
-                                                    if (parameter.ParameterType == typeof(string))
-                                                    {
-                                                        TypeParam paramToRemove = attrToRemove.parameters.FirstOrDefault(param => param.name == parameter.Name);
-                                                        if (paramToRemove != null)
-                                                        {
-                                                            attribute.constructor = 0;
-                                                            attrToRemove.parameters.Remove(paramToRemove);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }, attribute);
-
-                                        List<AttributeDeclaration> attributeList = Target.attributes;
-
-                                        if (attrIndex > 0)
-                                        {
-                                            menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
-                                            {
-                                                var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
-                                                if (attributeIndex > 0)
-                                                {
-                                                    var temp = attributeList[attributeIndex];
-                                                    attributeList[attributeIndex] = attributeList[attributeIndex - 1];
-                                                    attributeList[attributeIndex - 1] = temp;
-                                                }
-                                            }, attribute);
-                                        }
-
-                                        if (attrIndex < Target.attributes.Count - 1)
-                                        {
-                                            menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
-                                            {
-                                                var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
-                                                if (attributeIndex < attributeList.Count - 1)
-                                                {
-                                                    var temp = attributeList[attributeIndex];
-                                                    attributeList[attributeIndex] = attributeList[attributeIndex + 1];
-                                                    attributeList[attributeIndex + 1] = temp;
-                                                }
-                                            }, attribute);
-                                        }
-                                        menu.ShowAsContext();
-                                    }
-                                },
-                            () =>
-                            {
-                                var attributeParamMeta = attributes[attrIndex]["parameters"];
-
-                                string[] constructorNames = attribute.GetAttributeType().GetConstructors()
-                                .Where(constructor => constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
-                                .Select(constructor =>
-                                {
-                                    string paramInfo = string.Join(
-                                        ", ",
-                                        constructor.GetParameters()
-                                        .Select(param => $"{param.ParameterType.Name} {param.Name}")
-                                    );
-                                    return $"{attribute.GetAttributeType().Name}({paramInfo})";
-                                })
-                                .ToArray();
-
-                                if (attribute.constructor != attribute.selectedconstructor)
-                                {
-                                    attribute.parameters.Clear();
-                                }
-
-                                attribute.selectedconstructor = attribute.constructor;
-
-                                attribute.constructor = EditorGUILayout.Popup(
-                                    "Select Type : ",
-                                    attribute.constructor,
-                                    constructorNames
-                                );
-
-                                var selectedConstructor = attribute.GetAttributeType().GetConstructors()
-                                    .Where(constructor => constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
-                                    .ToList()[attribute.constructor];
-
-                                if (selectedConstructor != null)
-                                {
-                                    var paramIndex = 0;
-
-                                    foreach (var parameter in selectedConstructor.GetParameters())
-                                    {
-                                        TypeParam Param = attribute.parameters.FirstOrDefault(param => param.name == parameter.Name);
-
-                                        if (Param == null)
-                                        {
-                                            attribute.AddParameter(
-                                                parameter.Name,
-                                                parameter.ParameterType,
-                                                GetDefaultParameterValue(parameter.ParameterType)
-                                            );
-                                            Param = attribute.parameters.First(param => param.name == parameter.Name);
-                                        }
-
-                                        if (Param.defaultValue == null)
-                                        {
-                                            var value = Param.GetDefaultValue();
-
-                                            if (value == null)
-                                            {
-                                                Param.defaultValue = GetDefaultParameterValue(parameter.ParameterType);
-                                            }
-                                            else
-                                            {
-                                                Param.defaultValue = value;
-                                            }
-                                        }
-
-                                        var isParamsParameter = parameter.IsDefined(typeof(ParamArrayAttribute));
-
-                                        Param.isParamsParameter = isParamsParameter;
-
-                                        if (!isParamsParameter && Param.defaultValue is not IList)
-                                        {
-                                            Inspector.BeginBlock(
-                                                attributeParamMeta[paramIndex]["defaultValue"],
-                                                new Rect()
-                                            );
-                                            LudiqGUI.InspectorLayout(
-                                                attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType),
-                                                new GUIContent(parameter.Name + ":")
-                                            );
-                                            if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
-                                            {
-                                                shouldUpdate = true;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            Inspector.BeginBlock(
-                                                attributeParamMeta[paramIndex]["defaultValue"],
-                                                new Rect()
-                                            );
-                                            attributeParamMeta[paramIndex]["defaultValue"].value = Param.defaultValue;
-                                            LudiqGUI.InspectorLayout(
-                                                attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType),
-                                                new GUIContent(parameter.Name + ":")
-                                            );
-                                            if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
-                                            {
-                                                shouldUpdate = true;
-                                            }
-                                        }
-                                        paramIndex++;
-                                    }
-
-                                    paramIndex = 0;
-                                }
-                                if (Target.attributes.Count > 0) GUILayout.Space(4);
-                            });
-                        }
-                        if (GUILayout.Button("+ Add Attributes"))
-                        {
-                            var attribute = new AttributeDeclaration();
-                            attribute.SetType(typeof(SerializeField));
-                            Target.attributes.Add(attribute);
-                        }
+                        DrawAttributes(attributes, Target.attributes, Target is ClassAsset ? AttributeUsageType.Class : AttributeUsageType.Struct);
                     });
             });
         }
@@ -479,6 +603,9 @@ namespace Unity.VisualScripting.Community
                 case AttributeUsageType.Method:
                     types = methodAttributeTypes;
                     break;
+                case AttributeUsageType.Parameter:
+                    types = parameterAttributeTypes;
+                    break;
             }
 
             attribute.SetType(LudiqGUI.TypeField(position, GUIContent.none, attribute.GetAttributeType(), () =>
@@ -502,6 +629,7 @@ namespace Unity.VisualScripting.Community
                         typeof(Attribute).IsAssignableFrom(attr) || attr == typeof(DoNotSerializeAttribute));
             }).ToArray(); propertyAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Property || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
             methodAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Method || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
+            parameterAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Parameter || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
         }
 
         private void Constructors()
@@ -522,7 +650,7 @@ namespace Unity.VisualScripting.Community
                         listOfConstructors[index].opened = HUMEditor.Foldout(listOfConstructors[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
                             GUILayout.Label($"Constructor {i}");
-
+                            if (string.IsNullOrEmpty(listOfConstructors[i].name)) listOfConstructors[i].name = $"Constructor {i}";
                             if (GUILayout.Button("Edit", GUILayout.Width(60)))
                             {
                                 GraphWindow.OpenActive(listOfConstructors[index].GetReference() as GraphReference);
@@ -562,6 +690,10 @@ namespace Unity.VisualScripting.Community
                                 //HUMEditor.Image(PathUtil.Load("scope_32", CommunityEditorPath.Code).Single(), 16, 16);
                                 listOfConstructors[index].scope = (AccessModifier)EditorGUILayout.EnumPopup("Scope", listOfConstructors[index].scope);
                                 EditorGUILayout.EndHorizontal();
+                                EditorGUILayout.BeginHorizontal();
+                                //HUMEditor.Image(PathUtil.Load("scope_32", CommunityEditorPath.Code).Single(), 16, 16);
+                                listOfConstructors[index].CallType = (CallType)EditorGUILayout.EnumPopup("CallType", listOfConstructors[index].CallType);
+                                EditorGUILayout.EndHorizontal();
                                 GUILayout.Space(4);
 
                                 listOfConstructors[index].parametersOpened = HUMEditor.Foldout(listOfConstructors[index].parametersOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
@@ -569,16 +701,7 @@ namespace Unity.VisualScripting.Community
                                     GUILayout.Label("Parameters");
                                 }, () =>
                                 {
-                                    var paramMeta = constructors[index]["parameters"];
-                                    Inspector.BeginBlock(paramMeta, new Rect());
-                                    LudiqGUI.InspectorLayout(paramMeta, GUIContent.none);
-                                    if (Inspector.EndBlock(paramMeta))
-                                    {
-                                        shouldUpdate = true;
-                                        var functionUnit = (listOfConstructors[index].graph.units[0] as FunctionNode);
-                                        functionUnit.Define();
-                                        functionUnit.Describe();
-                                    }
+                                    DrawParameters(constructors[index]["parameters"], listOfConstructors[index].graph.units[0] as FunctionNode);
                                 });
 
                             }, true, false);
@@ -629,21 +752,382 @@ namespace Unity.VisualScripting.Community
             });
         }
 
+        private void DrawAttributes(Metadata attributesMeta, List<AttributeDeclaration> attributesList, AttributeUsageType attributeUsageType)
+        {
+            for (int attrIndex = 0; attrIndex < attributesList.Count; attrIndex++)
+            {
+                var attributeMeta = attributesMeta[attrIndex]["attributeType"];
+                var attribute = attributesList[attrIndex];
+
+                attribute.opened = HUMEditor.Foldout(
+                    attribute.opened,
+                    HUMEditorColor.DefaultEditorBackground.Darken(0f),
+                    Color.black,
+                    1,
+                    () =>
+                    {
+                        attributeMeta.Block(() =>
+                        {
+                            AttributeTypeField(attribute, attributeUsageType);
+                        },
+                        () =>
+                        {
+                            attribute.parameters.Clear();
+                            attribute.constructor = 0;
+                            shouldUpdate = true;
+                        },
+                        true
+                    );
+
+                        if (GUILayout.Button("...", GUILayout.Width(19)))
+                        {
+                            GenericMenu menu = new GenericMenu();
+                            menu.AddItem(new GUIContent("Delete"), false, (obj) =>
+                            {
+                                AttributeDeclaration attrToRemove = obj as AttributeDeclaration;
+                                attributesList.Remove(attrToRemove);
+
+                                foreach (var Constructor in attrToRemove.GetAttributeType().GetConstructors())
+                                {
+                                    foreach (var parameter in Constructor.GetParameters())
+                                    {
+                                        if (parameter.ParameterType == typeof(string))
+                                        {
+                                            TypeParam paramToRemove = attrToRemove.parameters.FirstOrDefault(param => param.name == parameter.Name);
+                                            if (paramToRemove != null)
+                                            {
+                                                attribute.constructor = 0;
+                                                attrToRemove.parameters.Remove(paramToRemove);
+                                            }
+                                        }
+                                    }
+                                }
+                            }, attribute);
+
+                            List<AttributeDeclaration> attributeList = Target.attributes;
+
+                            if (attrIndex > 0)
+                            {
+                                menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                                {
+                                    var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
+                                    if (attributeIndex > 0)
+                                    {
+                                        var temp = attributeList[attributeIndex];
+                                        attributeList[attributeIndex] = attributeList[attributeIndex - 1];
+                                        attributeList[attributeIndex - 1] = temp;
+                                    }
+                                }, attribute);
+                            }
+
+                            if (attrIndex < Target.attributes.Count - 1)
+                            {
+                                menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                                {
+                                    var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
+                                    if (attributeIndex < attributeList.Count - 1)
+                                    {
+                                        var temp = attributeList[attributeIndex];
+                                        attributeList[attributeIndex] = attributeList[attributeIndex + 1];
+                                        attributeList[attributeIndex + 1] = temp;
+                                    }
+                                }, attribute);
+                            }
+                            menu.ShowAsContext();
+                        }
+                    },
+                () =>
+                {
+                    var attributeParamMeta = attributesMeta[attrIndex]["parameters"];
+
+                    string[] constructorNames = attribute?.GetAttributeType()?.GetConstructors()
+                    .Where(constructor => constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
+                    .Select(constructor =>
+                    {
+                        string paramInfo = string.Join(
+                            ", ",
+                            constructor.GetParameters()
+                            .Select(param => $"{param.ParameterType.Name} {param.Name}")
+                        );
+                        return $"{attribute.GetAttributeType().Name}({paramInfo})";
+                    })
+                    .ToArray() ?? new string[0];
+
+                    if (attribute.constructor != attribute.selectedconstructor)
+                    {
+                        attribute.parameters.Clear();
+                    }
+
+                    attribute.selectedconstructor = attribute.constructor;
+
+                    attribute.constructor = EditorGUILayout.Popup(
+                        "Select Type : ",
+                        attribute.constructor,
+                        constructorNames
+                    );
+
+                    var selectedConstructor = attribute?.GetAttributeType()?.GetConstructors()
+                        .Where(constructor => constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
+                        .ToList()[attribute.constructor];
+
+                    if (selectedConstructor != null)
+                    {
+                        var paramIndex = 0;
+
+                        foreach (var parameter in selectedConstructor.GetParameters())
+                        {
+                            TypeParam Param = attribute.parameters.FirstOrDefault(param => param.name == parameter.Name);
+                            if (Param == null)
+                            {
+                                attribute.AddParameter(
+                                    parameter.Name,
+                                    parameter.ParameterType,
+                                    GetDefaultParameterValue(parameter.ParameterType)
+                                );
+                                Param = attribute.parameters.First(param => param.name == parameter.Name);
+                            }
+
+                            if (Param.defaultValue == null)
+                            {
+                                var value = Param.GetDefaultValue();
+
+                                if (value == null)
+                                {
+                                    Param.defaultValue = GetDefaultParameterValue(parameter.ParameterType);
+                                }
+                                else
+                                {
+                                    Param.defaultValue = value;
+                                }
+                            }
+
+                            var isParamsParameter = parameter.IsDefined(typeof(ParamArrayAttribute));
+
+                            Param.isParamsParameter = isParamsParameter;
+
+                            Inspector.BeginBlock(
+                                attributeParamMeta[paramIndex]["defaultValue"],
+                                new Rect()
+                            );
+                            if (!isParamsParameter && Param.defaultValue is not IList)
+                            {
+                                if (attributeParamMeta[paramIndex]["defaultValue"].value is Type type)
+                                {
+                                    GUIContent TypebuilderButtonContent = new GUIContent(
+                                    (attributeParamMeta[paramIndex]["defaultValue"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                                    (attributeParamMeta[paramIndex]["defaultValue"].value as Type)?.Icon()?[IconSize.Small]
+                                    );
+
+                                    GUILayout.BeginHorizontal();
+                                    GUILayout.Label(parameter.Name + ":");
+                                    var lastRect = GUILayoutUtility.GetLastRect();
+                                    if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
+                                    {
+                                        TypeBuilderWindow.ShowWindow(lastRect, attributeParamMeta[paramIndex]["defaultValue"]);
+                                    }
+                                    GUILayout.EndHorizontal();
+                                }
+                                else
+                                {
+                                    LudiqGUI.InspectorLayout(
+                                        attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType),
+                                        new GUIContent(parameter.Name + ":")
+                                    );
+                                }
+                            }
+                            else
+                            {
+                                attributeParamMeta[paramIndex]["defaultValue"].value = Param.defaultValue;
+                                LudiqGUI.InspectorLayout(
+                                    attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType),
+                                    new GUIContent(parameter.Name + ":")
+                                );
+                            }
+                            if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
+                            {
+                                shouldUpdate = true;
+                            }
+                            paramIndex++;
+                        }
+
+                        paramIndex = 0;
+                    }
+                    if (attributesList.Count > 0) GUILayout.Space(4);
+                });
+            }
+
+            if (GUILayout.Button("+ Add Attribute"))
+            {
+                var attribute = new AttributeDeclaration();
+                attribute.SetType(GetConstrainedAttributeTypes(attributeUsageType)[0]);
+                attributesList.Add(attribute);
+            }
+        }
+
+        Type[] GetConstrainedAttributeTypes(AttributeUsageType usage)
+        {
+            return usage switch
+            {
+                AttributeUsageType.Class => classAttributeTypes,
+                AttributeUsageType.Struct => structAttributeTypes,
+                AttributeUsageType.Enum => enumAttributeTypes,
+                AttributeUsageType.Interface => interfaceAttributeTypes,
+                AttributeUsageType.Field => fieldAttributeTypes,
+                AttributeUsageType.Property => propertyAttributeTypes,
+                AttributeUsageType.Method => methodAttributeTypes,
+                AttributeUsageType.Parameter => parameterAttributeTypes,
+                _ => new Type[0],
+            };
+        }
+
+        private void DrawParameters(Metadata paramMeta, FunctionNode functionUnit = null)
+        {
+            var parameters = paramMeta.value as List<TypeParam>;
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                parameters[i].opened = HUMEditor.Foldout(parameters[i].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                {
+                    HUMEditor.Changed(() =>
+                    {
+                        parameters[i].name = GUILayout.TextField(parameters[i].name);
+                    }, () =>
+                    {
+                        parameters[i].name = parameters[i].name.LegalMemberName();
+                    });
+
+                    if (GUILayout.Button("...", GUILayout.Width(19)))
+                    {
+                        GenericMenu menu = new GenericMenu();
+                        menu.AddItem(new GUIContent("Delete"), false, (obj) =>
+                        {
+                            TypeParam paramToRemove = obj as TypeParam;
+                            parameters.Remove(paramToRemove);
+                        }, parameters[i]);
+
+                        if (i > 0)
+                        {
+                            menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                            {
+                                var paramIndex = parameters.IndexOf(obj as TypeParam);
+                                if (paramIndex > 0)
+                                {
+                                    var temp = parameters[paramIndex];
+                                    parameters[paramIndex] = parameters[paramIndex - 1];
+                                    parameters[paramIndex - 1] = temp;
+                                }
+                            }, parameters[i]);
+                        }
+
+                        if (i < parameters.Count - 1)
+                        {
+                            menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                            {
+                                var paramIndex = parameters.IndexOf(obj as TypeParam);
+                                if (paramIndex < parameters.Count - 1)
+                                {
+                                    var temp = parameters[paramIndex];
+                                    parameters[paramIndex] = parameters[paramIndex + 1];
+                                    parameters[paramIndex + 1] = temp;
+                                }
+                            }, parameters[i]);
+                        }
+                        menu.ShowAsContext();
+                    }
+                }, () =>
+                {
+                    HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0f), Color.black, 1, () =>
+                    {
+                        Inspector.BeginBlock(paramMeta, new Rect());
+
+                        GUIContent TypebuilderButtonContent = new GUIContent(
+                        (paramMeta[i]["type"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                        (paramMeta[i]["type"].value as Type)?.Icon()?[IconSize.Small]
+                        );
+
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label("Type");
+                        var lastRect = GUILayoutUtility.GetLastRect();
+                        if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
+                        {
+                            TypeBuilderWindow.ShowWindow(lastRect, paramMeta[i]["type"]);
+                        }
+                        GUILayout.EndHorizontal();
+                        LudiqGUI.InspectorLayout(paramMeta[i]["modifier"], new GUIContent("Modifier"));
+                        GUILayout.Space(4);
+                        if (parameters[i].showCall)
+                        {
+                            LudiqGUI.InspectorLayout(paramMeta[i]["useInCall"], new GUIContent("Use In Call"));
+                            GUILayout.Space(4);
+                        }
+
+                        if (parameters[i].showDefault)
+                        {
+                            paramMeta[i]["type"].valueChanged += (type) =>
+                            {
+                                paramMeta[i]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
+                                if (paramMeta[i]["defaultValue"].value?.GetType() == type as Type)
+                                {
+                                    return;
+                                }
+
+                                if (type == null)
+                                {
+                                    paramMeta[i]["defaultValue"].value = null;
+                                }
+                                else if (ConversionUtility.CanConvert(paramMeta[i]["defaultValue"].value, type as Type, true))
+                                {
+                                    paramMeta[i]["defaultValue"].value = ConversionUtility.Convert(paramMeta[i]["defaultValue"].value, type as Type);
+                                }
+                                else
+                                {
+                                    paramMeta[i]["defaultValue"].value = (type as Type).Default();
+                                }
+
+                                paramMeta[i]["defaultValue"].InferOwnerFromParent();
+                            };
+
+                            var inspector = paramMeta[i]["defaultValue"].Inspector();
+                            typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
+                            inspector.DrawLayout(new GUIContent("Value               "));
+                            GUILayout.Space(4);
+                        }
+                        if (parameters[i].attributes == null) parameters[i].attributes = new List<AttributeDeclaration>();
+                        parameters[i].attributesOpened = HUMEditor.Foldout(parameters[i].attributesOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        {
+                            HUMEditor.Image(PathUtil.Load("attributes_16", CommunityEditorPath.Code).Single(), 16, 16);
+                            GUILayout.Label("Attributes");
+                        }, () =>
+                        {
+                            DrawAttributes(paramMeta[i]["attributes"], parameters[i].attributes, AttributeUsageType.Parameter);
+                        });
+                        if (Inspector.EndBlock(paramMeta))
+                        {
+                            shouldUpdate = true;
+                            if (functionUnit != null)
+                            {
+                                functionUnit.Define();
+                                functionUnit.Describe();
+                            }
+                        }
+                    }, true);
+                });
+                GUILayout.Space(4);
+            }
+            if (GUILayout.Button("+ Add Parameter"))
+            {
+                var name = "New Parameter";
+                var index = 0;
+                while (parameters.Any(param => param.name == name + index))
+                {
+                    index++;
+                }
+                name += index;
+                parameters.Add(new TypeParam(typeof(int), name) { defaultValue = "" });
+            }
+        }
         private object GetDefaultParameterValue(Type parameterType)
         {
-            if (parameterType == typeof(string))
-            {
-                return " ";
-            }
-            else if (parameterType == typeof(int))
-            {
-                return 0;
-            }
-            else if (parameterType == typeof(bool))
-            {
-                return false;
-            }
-            else if (parameterType == typeof(Type))
+            if (parameterType == typeof(Type))
             {
                 return typeof(float);
             }
@@ -720,12 +1204,20 @@ namespace Unity.VisualScripting.Community
                                 listOfMethods[index].scope = (AccessModifier)EditorGUILayout.EnumPopup("Scope", listOfMethods[index].scope);
                                 EditorGUILayout.EndHorizontal();
                                 listOfMethods[index].modifier = (MethodModifier)EditorGUILayout.EnumPopup("Modifier", listOfMethods[index].modifier);
-                                Inspector.BeginBlock(methods[index]["returnType"], new Rect());
-                                LudiqGUI.InspectorLayout(methods[index]["returnType"], new GUIContent("Returns"));
-                                if (Inspector.EndBlock(methods[index]["returnType"]))
+
+                                GUIContent TypebuilderButtonContent = new GUIContent(
+                                    (methods[index]["returnType"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                                    (methods[index]["returnType"].value as Type)?.Icon()?[IconSize.Small]
+                                    );
+
+                                GUILayout.BeginHorizontal();
+                                GUILayout.Label("Returns");
+                                var lastRect = GUILayoutUtility.GetLastRect();
+                                if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                                 {
-                                    shouldUpdate = true;
+                                    TypeBuilderWindow.ShowWindow(lastRect, methods[index]["returnType"]);
                                 }
+                                GUILayout.EndHorizontal();
 
                                 GUILayout.Space(4);
 
@@ -735,170 +1227,7 @@ namespace Unity.VisualScripting.Community
                                     GUILayout.Label("Attributes");
                                 }, () =>
                                 {
-                                    for (int attrIndex = 0; attrIndex < listOfMethods[index].attributes.Count; attrIndex++)
-                                    {
-                                        var attributeMeta = methods[index]["attributes"][attrIndex]["attributeType"];
-                                        var attribute = listOfMethods[index].attributes[attrIndex];
-
-                                        attribute.opened = HUMEditor.Foldout(attribute.opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
-                                        {
-                                            attributeMeta.Block(() =>
-                                            {
-                                                AttributeTypeField(attribute, AttributeUsageType.Method);
-                                            }, () =>
-                                            {
-                                                attribute.parameters.Clear();
-                                                attribute.constructor = 0;
-                                                shouldUpdate = true;
-                                            }, true);
-
-                                            if (GUILayout.Button("...", GUILayout.Width(19)))
-                                            {
-                                                GenericMenu menu = new GenericMenu();
-                                                menu.AddItem(new GUIContent("Delete"), false, (obj) =>
-                                                {
-                                                    AttributeDeclaration attrToRemove = obj as AttributeDeclaration;
-                                                    listOfMethods[index].attributes.Remove(attrToRemove);
-
-                                                    foreach (var Constructor in attrToRemove.GetAttributeType().GetConstructors())
-                                                    {
-                                                        foreach (var parameter in Constructor.GetParameters())
-                                                        {
-                                                            if (parameter.ParameterType == typeof(string))
-                                                            {
-                                                                TypeParam paramToRemove = attrToRemove.parameters.FirstOrDefault(param => param.name == parameter.Name);
-                                                                if (paramToRemove != null)
-                                                                {
-                                                                    attribute.constructor = 0;
-                                                                    attrToRemove.parameters.Remove(paramToRemove);
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }, attribute);
-
-                                                List<AttributeDeclaration> attributeList = listOfMethods[index].attributes;
-
-                                                if (attrIndex > 0)
-                                                {
-                                                    menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
-                                                    {
-                                                        var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
-                                                        if (attributeIndex > 0)
-                                                        {
-                                                            var temp = attributeList[attributeIndex];
-                                                            attributeList[attributeIndex] = attributeList[attributeIndex - 1];
-                                                            attributeList[attributeIndex - 1] = temp;
-                                                        }
-                                                    }, attribute);
-                                                }
-
-                                                if (attrIndex < listOfMethods[index].attributes.Count - 1)
-                                                {
-                                                    menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
-                                                    {
-                                                        var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
-                                                        if (attributeIndex < attributeList.Count - 1)
-                                                        {
-                                                            var temp = attributeList[attributeIndex];
-                                                            attributeList[attributeIndex] = attributeList[attributeIndex + 1];
-                                                            attributeList[attributeIndex + 1] = temp;
-                                                        }
-                                                    }, attribute);
-                                                }
-                                                menu.ShowAsContext();
-                                            }
-                                        }, () =>
-                                        {
-                                            var attributeParamMeta = methods[index]["attributes"][attrIndex]["parameters"];
-
-                                            string[] constructorNames = attribute.GetAttributeType().GetConstructors()
-                                                .Select(constructor =>
-                                                {
-                                                    string paramInfo = string.Join(", ", constructor.GetParameters()
-                                                        .Select(param => $"{param.ParameterType.As().CSharpName(false, false, false)}"));
-                                                    return $"{attribute.GetAttributeType().DisplayName()}({paramInfo})".RemoveHighlights().RemoveMarkdown();
-                                                })
-                                                .ToArray();
-
-                                            if (attribute.constructor != attribute.selectedconstructor)
-                                            {
-                                                attribute.parameters.Clear();
-                                            }
-
-                                            attribute.selectedconstructor = attribute.constructor;
-
-                                            attribute.constructor = EditorGUILayout.Popup("Select Type : ", attribute.constructor, constructorNames);
-
-                                            var selectedConstructor = attribute.GetAttributeType().GetConstructors()[attribute.constructor];
-
-                                            if (selectedConstructor != null)
-                                            {
-                                                var paramIndex = 0;
-
-                                                foreach (var parameter in selectedConstructor.GetParameters())
-                                                {
-                                                    TypeParam Param = attribute.parameters.FirstOrDefault(param => param.name == parameter.Name);
-
-                                                    if (Param == null)
-                                                    {
-                                                        attribute.AddParameter(parameter.Name, parameter.ParameterType, GetDefaultParameterValue(parameter.ParameterType));
-                                                        Param = attribute.parameters.First(param => param.name == parameter.Name);
-                                                    }
-
-                                                    if (Param.defaultValue == null)
-                                                    {
-                                                        var value = Param.GetDefaultValue();
-
-                                                        if (value == null)
-                                                        {
-                                                            Param.defaultValue = GetDefaultParameterValue(parameter.ParameterType);
-                                                        }
-                                                        else
-                                                        {
-                                                            Param.defaultValue = value;
-                                                        }
-                                                    }
-
-                                                    var isParamsParameter = parameter.IsDefined(typeof(ParamArrayAttribute));
-
-                                                    Param.isParamsParameter = isParamsParameter;
-
-                                                    if (!isParamsParameter && Param.defaultValue is not IList)
-                                                    {
-                                                        Inspector.BeginBlock(attributeParamMeta[paramIndex]["defaultValue"], new Rect());
-                                                        LudiqGUI.InspectorLayout(attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType), new GUIContent(parameter.Name + ":"));
-                                                        if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
-                                                        {
-                                                            shouldUpdate = true;
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        Inspector.BeginBlock(attributeParamMeta[paramIndex]["defaultValue"], new Rect());
-
-                                                        attributeParamMeta[paramIndex]["defaultValue"].value = Param.defaultValue;
-
-                                                        LudiqGUI.InspectorLayout(attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType), new GUIContent(parameter.Name + ":"));
-                                                        if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
-                                                        {
-                                                            shouldUpdate = true;
-                                                        }
-                                                    }
-                                                    paramIndex++;
-                                                }
-
-                                                paramIndex = 0;
-                                            }
-                                            if (listOfMethods[index].attributes.Count > 0) GUILayout.Space(4);
-                                        });
-                                    }
-                                    if (GUILayout.Button("+ Add Attributes"))
-                                    {
-                                        var attribute = new AttributeDeclaration();
-                                        attribute.SetType(typeof(SerializeField));
-                                        listOfMethods[index].attributes.Add(attribute);
-                                    }
+                                    DrawAttributes(methods[index]["attributes"], listOfMethods[index].attributes, AttributeUsageType.Method);
                                 });
 
                                 GUILayout.Space(4);
@@ -910,29 +1239,8 @@ namespace Unity.VisualScripting.Community
                                 }, () =>
                                 {
                                     var paramMeta = methods[index]["parameters"];
-                                    foreach (var param in paramMeta.value as List<TypeParam>)
-                                    {
-                                        if (param.defaultValue == null)
-                                        {
-                                            var value = param.GetDefaultValue();
-
-                                            if (value != null)
-                                            {
-                                                param.defaultValue = value;
-                                            }
-                                        }
-                                    }
-                                    Inspector.BeginBlock(paramMeta, new Rect());
-                                    LudiqGUI.InspectorLayout(paramMeta, GUIContent.none);
-                                    if (Inspector.EndBlock(paramMeta))
-                                    {
-                                        shouldUpdate = true;
-                                        var funcionUnit = (listOfMethods[index].graph.units[0] as FunctionNode);
-                                        funcionUnit.Define();
-                                        funcionUnit.Describe();
-                                    }
+                                    DrawParameters(paramMeta, listOfMethods[index].graph.units[0] as FunctionNode);
                                 });
-
                             }, true, false);
                         });
 
@@ -1007,8 +1315,8 @@ namespace Unity.VisualScripting.Community
                             }, () =>
                             {
                                 listOfVariables[index].name = listOfVariables[index].name.LegalMemberName();
-                                var getterFunctionUnit = (listOfVariables[index].getter.graph.units[0] as FunctionNode);
-                                var setterFunctionUnit = (listOfVariables[index].setter.graph.units[0] as FunctionNode);
+                                var getterFunctionUnit = listOfVariables[index].getter.graph.units[0] as FunctionNode;
+                                var setterFunctionUnit = listOfVariables[index].setter.graph.units[0] as FunctionNode;
                                 listOfVariables[index].getter.name = listOfVariables[index].name + " Getter";
                                 listOfVariables[index].setter.name = listOfVariables[index].name + " Setter";
                                 getterFunctionUnit.Define();
@@ -1016,6 +1324,18 @@ namespace Unity.VisualScripting.Community
                                 setterFunctionUnit.Define();
                                 setterFunctionUnit.Describe();
                             });
+
+                            if (typeof(TMemberTypeAsset) == typeof(ClassAsset) && (listOfVariables[index].getter.classAsset == null || listOfVariables[index].setter.classAsset == null))
+                            {
+                                Debug.Log("Test");
+                                listOfVariables[index].getter.classAsset = Target as ClassAsset;
+                                listOfVariables[index].setter.classAsset = Target as ClassAsset;
+                            }
+                            else if (typeof(TMemberTypeAsset) == typeof(StructAsset) && (listOfVariables[index].getter.structAsset == null || listOfVariables[index].setter.structAsset == null))
+                            {
+                                listOfVariables[index].getter.structAsset = Target as StructAsset;
+                                listOfVariables[index].setter.structAsset = Target as StructAsset;
+                            }
 
                             if (GUILayout.Button("...", GUILayout.Width(19)))
                             {
@@ -1059,46 +1379,57 @@ namespace Unity.VisualScripting.Community
                                     listOfVariables[index].propertyModifier = (PropertyModifier)EditorGUILayout.EnumPopup("Modifier", listOfVariables[index].propertyModifier);
                                 }
 
-                                Inspector.BeginBlock(variables[index]["type"], new Rect());
-                                LudiqGUI.InspectorLayout(variables[index]["type"], new GUIContent("Type"));
-                                if (Inspector.EndBlock(variables[index]["type"]))
+                                GUIContent TypebuilderButtonContent = new GUIContent(
+                                (variables[index]["type"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                                (variables[index]["type"].value as Type)?.Icon()?[IconSize.Small]
+                                );
+
+                                GUILayout.BeginHorizontal();
+                                GUILayout.Label("Type");
+                                var lastRect = GUILayoutUtility.GetLastRect();
+                                if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                                 {
-                                    shouldUpdate = true;
+                                    TypeBuilderWindow.ShowWindow(lastRect, variables[index]["type"]);
                                 }
+                                GUILayout.EndHorizontal();
 
                                 if (target is ClassAsset)
                                 {
-                                    variables[index]["type"].valueChanged += (type) =>
+                                    if (!listOfVariables[index].isProperty || (listOfVariables[index].get && !(listOfVariables[index].getter.graph.units[0] as FunctionNode).invoke.hasValidConnection) ||
+                                    (listOfVariables[index].set && !(listOfVariables[index].setter.graph.units[0] as FunctionNode).invoke.hasValidConnection))
                                     {
-                                        variables[index]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
-                                        if (variables[index]["defaultValue"].value?.GetType() == type as Type)
+                                        variables[index]["type"].valueChanged += (type) =>
                                         {
-                                            return;
-                                        }
+                                            variables[index]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
+                                            if (variables[index]["defaultValue"].value?.GetType() == type as Type)
+                                            {
+                                                return;
+                                            }
 
-                                        if (type == null)
-                                        {
-                                            variables[index]["defaultValue"].value = null;
-                                        }
-                                        else if (ConversionUtility.CanConvert(variables[index]["defaultValue"].value, type as Type, true))
-                                        {
-                                            variables[index]["defaultValue"].value = ConversionUtility.Convert(variables[index]["defaultValue"].value, type as Type);
-                                        }
-                                        else
-                                        {
-                                            variables[index]["defaultValue"].value = (type as Type).Default();
-                                        }
+                                            if (type == null)
+                                            {
+                                                variables[index]["defaultValue"].value = null;
+                                            }
+                                            else if (ConversionUtility.CanConvert(variables[index]["defaultValue"].value, type as Type, true))
+                                            {
+                                                variables[index]["defaultValue"].value = ConversionUtility.Convert(variables[index]["defaultValue"].value, type as Type);
+                                            }
+                                            else
+                                            {
+                                                variables[index]["defaultValue"].value = (type as Type).Default();
+                                            }
 
-                                        variables[index]["defaultValue"].InferOwnerFromParent();
-                                    };
+                                            variables[index]["defaultValue"].InferOwnerFromParent();
+                                        };
 
-                                    var inspector = variables[index]["defaultValue"].Inspector();
-                                    typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
-                                    Inspector.BeginBlock(variables[index]["defaultValue"], new Rect(10, 10, 10, 10));
-                                    inspector.DrawLayout(new GUIContent("Value               "));
-                                    if (Inspector.EndBlock(variables[index]["defaultValue"]))
-                                    {
-                                        shouldUpdate = true;
+                                        var inspector = variables[index]["defaultValue"].Inspector();
+                                        typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
+                                        Inspector.BeginBlock(variables[index]["defaultValue"], new Rect(10, 10, 10, 10));
+                                        inspector.DrawLayout(new GUIContent("Value               "));
+                                        if (Inspector.EndBlock(variables[index]["defaultValue"]))
+                                        {
+                                            shouldUpdate = true;
+                                        }
                                     }
                                 }
 
@@ -1112,169 +1443,7 @@ namespace Unity.VisualScripting.Community
                                 {
                                     HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                                     {
-                                        for (int attrIndex = 0; attrIndex < listOfVariables[index].attributes.Count; attrIndex++)
-                                        {
-                                            var attributeMeta = variables[index]["attributes"][attrIndex]["attributeType"];
-                                            var attribute = listOfVariables[index].attributes[attrIndex];
-
-                                            attribute.opened = HUMEditor.Foldout(attribute.opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
-                                            {
-                                                attributeMeta.Block(() =>
-                                                {
-                                                    AttributeTypeField(attribute, AttributeUsageType.Field);
-                                                }, () =>
-                                                {
-                                                    attribute.parameters.Clear();
-                                                    attribute.constructor = 0;
-                                                    shouldUpdate = true;
-                                                }, true);
-
-                                                if (GUILayout.Button("...", GUILayout.Width(19)))
-                                                {
-                                                    GenericMenu menu = new GenericMenu();
-                                                    menu.AddItem(new GUIContent("Delete"), false, (obj) =>
-                                                    {
-                                                        AttributeDeclaration attrToRemove = obj as AttributeDeclaration;
-                                                        listOfVariables[index].attributes.Remove(attrToRemove);
-
-                                                        foreach (var Constructor in attrToRemove.GetAttributeType().GetConstructors())
-                                                        {
-                                                            foreach (var parameter in Constructor.GetParameters())
-                                                            {
-                                                                if (parameter.ParameterType == typeof(string))
-                                                                {
-                                                                    TypeParam paramToRemove = attrToRemove.parameters.FirstOrDefault(param => param.name == parameter.Name);
-                                                                    if (paramToRemove != null)
-                                                                    {
-                                                                        attribute.constructor = 0;
-                                                                        attrToRemove.parameters.Remove(paramToRemove);
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }, attribute);
-
-                                                    List<AttributeDeclaration> attributeList = listOfVariables[index].attributes;
-
-                                                    if (attrIndex > 0)
-                                                    {
-                                                        menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
-                                                        {
-                                                            var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
-                                                            if (attributeIndex > 0)
-                                                            {
-                                                                var temp = attributeList[attributeIndex];
-                                                                attributeList[attributeIndex] = attributeList[attributeIndex - 1];
-                                                                attributeList[attributeIndex - 1] = temp;
-                                                            }
-                                                        }, attribute);
-                                                    }
-
-                                                    if (attrIndex < listOfVariables[index].attributes.Count - 1)
-                                                    {
-                                                        menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
-                                                        {
-                                                            var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
-                                                            if (attributeIndex < attributeList.Count - 1)
-                                                            {
-                                                                var temp = attributeList[attributeIndex];
-                                                                attributeList[attributeIndex] = attributeList[attributeIndex + 1];
-                                                                attributeList[attributeIndex + 1] = temp;
-                                                            }
-                                                        }, attribute);
-                                                    }
-                                                    menu.ShowAsContext();
-                                                }
-                                            }, () =>
-                                            {
-                                                var attributeParamMeta = variables[index]["attributes"][attrIndex]["parameters"];
-
-                                                string[] constructorNames = attribute.GetAttributeType().GetConstructors()
-                                                .Where(constructor => constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
-                                                .Select(constructor =>
-                                                {
-                                                    string paramInfo = string.Join(", ", constructor.GetParameters()
-                                                        .Select(param => $"{param.ParameterType.Name} {param.Name}"));
-                                                    return $"{attribute.GetAttributeType().Name}({paramInfo})";
-                                                })
-                                                .ToArray();
-
-                                                if (attribute.constructor != attribute.selectedconstructor)
-                                                {
-                                                    attribute.parameters.Clear();
-                                                }
-
-                                                attribute.selectedconstructor = attribute.constructor;
-
-                                                attribute.constructor = EditorGUILayout.Popup("Select Type : ", attribute.constructor, constructorNames);
-
-                                                var selectedConstructor = attribute.GetAttributeType().GetConstructors().Where(constructor => constructor.GetParameters().All(param => param.ParameterType.HasInspector())).ToList()[attribute.constructor];
-
-                                                if (selectedConstructor != null)
-                                                {
-                                                    var paramIndex = 0;
-
-                                                    foreach (var parameter in selectedConstructor.GetParameters())
-                                                    {
-                                                        TypeParam Param = attribute.parameters.FirstOrDefault(param => param.name == parameter.Name);
-
-                                                        if (Param == null)
-                                                        {
-                                                            attribute.AddParameter(parameter.Name, parameter.ParameterType, GetDefaultParameterValue(parameter.ParameterType));
-                                                            Param = attribute.parameters.First(param => param.name == parameter.Name);
-                                                        }
-
-                                                        if (Param.defaultValue == null)
-                                                        {
-                                                            var value = Param.GetDefaultValue();
-
-                                                            if (value == null)
-                                                            {
-                                                                Param.defaultValue = GetDefaultParameterValue(parameter.ParameterType);
-                                                            }
-                                                            else
-                                                            {
-                                                                Param.defaultValue = value;
-                                                            }
-                                                        }
-
-                                                        var isParamsParameter = parameter.IsDefined(typeof(ParamArrayAttribute));
-
-                                                        Param.isParamsParameter = isParamsParameter;
-
-                                                        if (!isParamsParameter && Param.defaultValue is not IList)
-                                                        {
-                                                            Inspector.BeginBlock(attributeParamMeta[paramIndex]["defaultValue"], new Rect());
-                                                            LudiqGUI.InspectorLayout(attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType), new GUIContent(parameter.Name + ":"));
-                                                            if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
-                                                            {
-                                                                shouldUpdate = true;
-                                                            }
-                                                        }
-                                                        else
-                                                        {
-                                                            Inspector.BeginBlock(attributeParamMeta[paramIndex]["defaultValue"], new Rect());
-                                                            attributeParamMeta[paramIndex]["defaultValue"].value = Param.defaultValue;
-                                                            LudiqGUI.InspectorLayout(attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType), new GUIContent(parameter.Name + ":"));
-                                                            if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
-                                                            {
-                                                                shouldUpdate = true;
-                                                            }
-                                                        }
-                                                        paramIndex++;
-                                                    }
-
-                                                    paramIndex = 0;
-                                                }
-                                                if (listOfVariables[index].attributes.Count > 0) GUILayout.Space(4);
-                                            });
-                                        }
-                                        if (GUILayout.Button("+ Add Attributes"))
-                                        {
-                                            var attribute = new AttributeDeclaration();
-                                            attribute.SetType(typeof(SerializeField));
-                                            listOfVariables[index].attributes.Add(attribute);
-                                        }
+                                        DrawAttributes(variables[index]["attributes"], listOfVariables[index].attributes, listOfVariables[index].isProperty ? AttributeUsageType.Property : AttributeUsageType.Field);
                                     });
                                 });
 
@@ -1309,6 +1478,11 @@ namespace Unity.VisualScripting.Community
                                                         GraphWindow.OpenActive(listOfVariables[index].getter.GetReference() as GraphReference);
                                                     }
                                                 });
+
+                                                HUMEditor.Disabled(!listOfVariables[index].get, () =>
+                                                {
+                                                    variables[index]["getterScope"].value = (AccessModifier)EditorGUILayout.EnumPopup((AccessModifier)variables[index]["getterScope"].value, GUILayout.Width(100));
+                                                });
                                             });
 
                                             HUMEditor.Horizontal(() =>
@@ -1330,9 +1504,15 @@ namespace Unity.VisualScripting.Community
                                                         GraphWindow.OpenActive(listOfVariables[index].setter.GetReference() as GraphReference);
                                                     }
                                                 });
+
+                                                HUMEditor.Disabled(!listOfVariables[index].set, () =>
+                                                {
+                                                    listOfVariables[index].setterScope = (AccessModifier)EditorGUILayout.EnumPopup(listOfVariables[index].setterScope, GUILayout.Width(100));
+                                                });
                                             });
                                         }, true, false);
                                     });
+
                                 });
                             }, true, false);
                         });
@@ -1347,6 +1527,16 @@ namespace Unity.VisualScripting.Community
                         if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
                         var getter = CreateInstance<PropertyGetterMacro>();
                         var setter = CreateInstance<PropertySetterMacro>();
+                        if (typeof(TMemberTypeAsset) == typeof(ClassAsset))
+                        {
+                            getter.classAsset = Target as ClassAsset;
+                            setter.classAsset = Target as ClassAsset;
+                        }
+                        else
+                        {
+                            getter.structAsset = Target as StructAsset;
+                            setter.structAsset = Target as StructAsset;
+                        }
                         AssetDatabase.AddObjectToAsset(declaration, Target);
                         AssetDatabase.AddObjectToAsset(getter, Target);
                         AssetDatabase.AddObjectToAsset(setter, Target);

@@ -8,6 +8,7 @@ namespace Unity.VisualScripting.Community
 {
     [Serializable]
     [Inspectable]
+    [TypeIcon(typeof(Field))]
     [RenamedFrom("Bolt.Addons.Community.Code.ConstructorDeclaration")]
     public abstract class ConstructorDeclaration : Macro<FlowGraph>
     {
@@ -20,7 +21,8 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public StructAsset structAsset;
 
-        [Serialize]
+        public ConstructorCallType CallType = ConstructorCallType.None;
+
         [InspectorWide]
         public List<TypeParam> parameters = new List<TypeParam>();
 
@@ -29,4 +31,9 @@ namespace Unity.VisualScripting.Community
         public bool parametersOpened;
 #endif
     }
+
+    /// <summary>
+    /// This is a empty class used for the typeIcon
+    /// </summary>
+    public class Field { }
 }

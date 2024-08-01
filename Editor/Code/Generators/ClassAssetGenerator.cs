@@ -13,13 +13,14 @@ namespace Unity.VisualScripting.Community
     {
         protected override TypeGenerator OnGenerateType(ref string output, NamespaceGenerator @namespace)
         {
-            var @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, Data.title.LegalMemberName(), Data.scriptableObject ? typeof(ScriptableObject) : typeof(object));
+            if (Data == null) return ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, "", null);
+            var @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, Data.title.LegalMemberName(), Data.scriptableObject ? typeof(ScriptableObject) : Data.inheritsType && Data.inherits.type != null ? Data.GetInheritedType() : typeof(object));
             if (Data.definedEvent) @class.ImplementInterface(typeof(IDefinedEvent));
             if (Data.inspectable) @class.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
             if (Data.serialized) @class.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());
             if (Data.includeInSettings) @class.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
             if (Data.scriptableObject) @class.AddAttribute(AttributeGenerator.Attribute<CreateAssetMenuAttribute>().AddParameter("menuName", Data.menuName).AddParameter("fileName", Data.fileName).AddParameter("order", Data.order));
-
+            if (Data.inheritsType && Data.inherits.type != null) @class.AddUsings(new List<string>() { Data.inherits.type.Namespace });
             var decorators = new Dictionary<Type, List<NodeGenerator>>();
             foreach (var attribute in Data.attributes)
             {
@@ -56,7 +57,11 @@ namespace Unity.VisualScripting.Community
 
             for (int i = 0; i < Data.constructors.Count; i++)
             {
-                var constructor = ConstructorGenerator.Constructor(Data.constructors[i].scope, Data.constructors[i].modifier, Data.title.LegalMemberName());
+                if(@class.constructors.Any(f => f.parameters.Select(param => param.generator.type).SequenceEqual(Data.constructors[i].parameters.Select(param => param.type))))
+                {
+                    continue;
+                }
+                var constructor = ConstructorGenerator.Constructor(Data.constructors[i].scope, Data.constructors[i].modifier, Data.constructors[i].CallType, Data.title.LegalMemberName());
                 if (Data.constructors[i].graph.units.Count > 0)
                 {
                     var usings = new List<string>();
@@ -75,18 +80,21 @@ namespace Unity.VisualScripting.Community
                             usings.Add(generator.NameSpace);
                     }
                     var generationData = new ControlGenerationData();
+                    generationData.NewScope();
                     foreach (var variable in Data.variables)
                     {
                         generationData.AddLocalNameInScope(variable.FieldName);
                     }
 
-                    generationData.returns = Data.variables[i].type;
                     var unit = Data.constructors[i].graph.units[0] as FunctionNode;
                     constructor.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, generationData, 0));
                     generationData.ExitScope();
+
                     for (int pIndex = 0; pIndex < Data.constructors[i].parameters.Count; pIndex++)
                     {
-                        if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(false, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, ParameterModifier.None));
+                        Data.constructors[i].parameters[pIndex].showCall = true;
+
+                        if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(Data.constructors[i].parameters[pIndex].useInCall, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, Data.constructors[i].parameters[pIndex].modifier, Data.constructors[i].parameters[pIndex].attributes));
                     }
                     @class.AddUsings(usings);
                 }
@@ -99,11 +107,14 @@ namespace Unity.VisualScripting.Community
                 if (!string.IsNullOrEmpty(Data.variables[i].name) && Data.variables[i].type != null)
                 {
                     var attributes = Data.variables[i].attributes;
-
+                    if (@class.fields.Any(f => f.name == Data.variables[i].FieldName) || @class.properties.Any(p => p.name == Data.variables[i].FieldName))
+                    {
+                        continue;
+                    }
                     if (Data.variables[i].isProperty)
                     {
-                        var property = PropertyGenerator.Property(Data.variables[i].scope, Data.variables[i].propertyModifier, Data.variables[i].type, Data.variables[i].name, false);
-
+                        var property = PropertyGenerator.Property(Data.variables[i].scope, Data.variables[i].propertyModifier, Data.variables[i].type, Data.variables[i].name, Data.variables[i].defaultValue != null, Data.variables[i].getterScope, Data.variables[i].setterScope);
+                        property.Default(Data.variables[i].defaultValue);
                         for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
                         {
                             AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
@@ -143,7 +154,7 @@ namespace Unity.VisualScripting.Community
                             }
 
                             generationData.returns = Data.variables[i].type;
-                            property.MultiStatementGetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
+                            property.MultiStatementGetter(Data.variables[i].getterScope, NodeGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
                             .GenerateControl(null, generationData, 0));
                             generationData.ExitScope();
                             var usings = new List<string>();
@@ -174,7 +185,7 @@ namespace Unity.VisualScripting.Community
                             }
 
                             generationData.returns = Data.variables[i].type;
-                            property.MultiStatementSetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
+                            property.MultiStatementSetter(Data.variables[i].setterScope, NodeGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
                             .GenerateControl(null, generationData, 0));
                             generationData.ExitScope();
                             var usings = new List<string>();
@@ -240,6 +251,10 @@ namespace Unity.VisualScripting.Community
             {
                 if (!string.IsNullOrEmpty(Data.methods[i].name) && Data.methods[i].returnType != null)
                 {
+                    if (@class.methods.Any(m => m.name == Data.methods[i].name))
+                    {
+                        continue;
+                    }
                     var method = MethodGenerator.Method(Data.methods[i].scope, Data.methods[i].modifier, Data.methods[i].returnType, Data.methods[i].name);
                     var attributes = Data.methods[i].attributes;
                     for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
@@ -296,12 +311,21 @@ namespace Unity.VisualScripting.Community
                         @class.AddUsings(usings);
                         var unit = Data.methods[i].graph.units[0] as FunctionNode;
                         generationData.NewScope();
+                        generationData.mustReturn = method.returnType != typeof(void) && method.returnType != typeof(Libraries.CSharp.Void);
                         method.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, generationData, 0));
                         generationData.ExitScope();
+                        if (!generationData.hasReturned && method.returnType != typeof(void) && method.returnType != typeof(Libraries.CSharp.Void))
+                        {
+                            method.SetWarning("Not all code paths return a value");
+                        }
+                        else
+                        {
+                            method.SetWarning("");
+                        }
 
                         for (int pIndex = 0; pIndex < Data.methods[i].parameters.Count; pIndex++)
                         {
-                            if (!string.IsNullOrEmpty(Data.methods[i].parameters[pIndex].name)) method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, ParameterModifier.None));
+                            if (!string.IsNullOrEmpty(Data.methods[i].parameters[pIndex].name)) method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, Data.methods[i].parameters[pIndex].modifier, Data.methods[i].parameters[pIndex].attributes));
                         }
                     }
 

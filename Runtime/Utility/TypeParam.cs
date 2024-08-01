@@ -1,6 +1,8 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using UnityEngine;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace Unity.VisualScripting.Community.Utility
 {
@@ -9,36 +11,61 @@ namespace Unity.VisualScripting.Community.Utility
     [RenamedFrom("Bolt.Addons.Community.Utility.TypeParam")]
     public sealed class TypeParam : ISerializationCallbackReceiver
     {
-        [Serialize]
+        [SerializeField]
         [Inspectable]
         public Type type = typeof(object);
 
         [SerializeField]
         public SystemType Paramtype = new SystemType();
 
-        [Serialize]
+        [SerializeField]
         [Inspectable]
         public string name;
 
+        [InspectableIf("showDefault")]
         public bool hasDefault;
+
+        [InspectableIf("showCall")]
+        public bool useInCall;
+
 
         [SerializeField]
         public bool isParamsParameter;
 
         [Serialize]
         [SerializeField]
+        [InspectorToggleLeft]
         public object defaultValue;
+        public SerializableType typeHandle;
+        public bool showCall = false;
+        public bool showDefault = false;
 
-        [Serialize]
+#if UNITY_EDITOR
+        public bool attributesOpened;
+        public bool opened;
+#endif
+
         [SerializeField]
         private SerializationData defaultValueSerialized;
+        [SerializeField]
+        private SerializationData attributesSerialized;
 
-
+        [Inspectable]
         public ParameterModifier modifier = ParameterModifier.None;
+
+        [NonSerialized]
+        private List<AttributeDeclaration> _attributes;
+        [Inspectable]
+        public List<AttributeDeclaration> attributes
+        {
+            get => _attributes ??= new List<AttributeDeclaration>();
+            set => _attributes = value;
+        }
+
         public TypeParam()
         {
         }
-        
+
         public TypeParam(Type type, string name)
         {
             this.type = type;
@@ -62,11 +89,20 @@ namespace Unity.VisualScripting.Community.Utility
             {
                 defaultValueSerialized = defaultValue.Serialize();
             }
+
+            if (_attributes != null)
+            {
+                attributesSerialized = _attributes.Serialize();
+            }
         }
 
         public void OnAfterDeserialize()
         {
             defaultValue = GetDefaultValue();
+            if (!string.IsNullOrEmpty(attributesSerialized.json))
+            {
+                _attributes = (List<AttributeDeclaration>)attributesSerialized.Deserialize();
+            }
         }
     }
 }

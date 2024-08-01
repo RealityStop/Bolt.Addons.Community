@@ -1,11 +1,93 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using Unity.VisualScripting.Community.Libraries.Humility;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting.Community.Libraries.CSharp;
+using UnityObject = UnityEngine.Object;
+using System.Reflection;
 
 namespace Unity.VisualScripting.Community
 {
     [CustomEditor(typeof(ClassAsset))]
     public sealed class ClassAssetEditor : MemberTypeAssetEditor<ClassAsset, ClassAssetGenerator, ClassFieldDeclaration, ClassMethodDeclaration, ClassConstructorDeclaration>
     {
+        private Metadata inheritsTypeMeta;
+        private Type[] inheritTypes;
+        private Rect lastRect;
+
+        private Type selectedType;
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            inheritsTypeMeta ??= Metadata.FromProperty(serializedObject.FindProperty("inherits"));
+            inheritTypes = GetAllInheritableTypes();
+        }
+
+        private Type[] GetAllInheritableTypes()
+        {
+            List<Type> inheritableTypes = new List<Type>();
+
+            var types = Codebase.settingsAssembliesTypes.Where(t =>
+                t.Is().Inheritable() &&
+                t != typeof(string) &&
+                t != typeof(GameObject) &&
+                t != typeof(Unity.VisualScripting.Community.Libraries.CSharp.Void) &&
+                t != typeof(void) &&
+                !!TypeHasSpecialName(t)
+            ).ToArray();
+
+            inheritableTypes.AddRange(types);
+
+            inheritableTypes.Add(typeof(MonoBehaviour));
+
+            var editorTypes = Codebase.editorTypes.Where(t =>
+                t.Is().Inheritable() &&
+                !TypeHasSpecialName(t)
+            ).ToArray();
+
+            inheritableTypes.AddRange(editorTypes);
+
+            return inheritableTypes.ToArray();
+        }
+
+        bool TypeHasSpecialName(Type t)
+        {
+            return t.Name.StartsWith('<') || t.Name.StartsWith('$') ||
+                t.DisplayName().StartsWith('<') || t.DisplayName().StartsWith('$');
+        }
+
+        public void RecordEditedObject(string name)
+        {
+            RecordObject(Target, name);
+        }
+
+        private void RecordObject(UnityObject uo, string name)
+        {
+            if (uo == null)
+            {
+                return;
+            }
+
+            Undo.RegisterCompleteObjectUndo(uo, name);
+
+
+            if (!uo.IsSceneBound())
+            {
+                EditorUtility.SetDirty(uo);
+            }
+
+            if (uo.IsPrefabInstance())
+            {
+                EditorApplication.delayCall += () =>
+                {
+                    PrefabUtility.RecordPrefabInstancePropertyModifications(uo);
+                };
+            }
+        }
+
         protected override void OnExtendedOptionsGUI()
         {
             Target.scriptableObject = EditorGUILayout.ToggleLeft("Scriptable Object", Target.scriptableObject);
@@ -17,6 +99,26 @@ namespace Unity.VisualScripting.Community
                 Target.fileName = EditorGUILayout.TextField(Target.fileName);
                 GUILayout.Label("Scriptable Object Menu Order");
                 Target.order = EditorGUILayout.IntField(Target.order);
+            }
+
+            if (Target.scriptableObject)
+                return;
+
+
+            Target.inheritsType = GUILayout.Toggle(Target.inheritsType, "Inherits Type");
+
+            if (Target.inheritsType)
+            {
+                GUIContent InheritButtonContent = new GUIContent(
+                    Target.inherits?.type?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                    Target.inherits?.type?.Icon()?[IconSize.Small]
+                );
+
+                lastRect = GUILayoutUtility.GetLastRect();
+                if (GUILayout.Button(InheritButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
+                {
+                    TypeBuilderWindow.ShowWindow(lastRect, inheritsTypeMeta["type"], false, inheritTypes);
+                }
             }
         }
     }

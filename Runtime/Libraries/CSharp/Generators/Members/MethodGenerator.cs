@@ -14,6 +14,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public List<ParameterGenerator> parameters = new List<ParameterGenerator>();
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
         public string body;
+        public string warning;
 
         private MethodGenerator() { }
 
@@ -34,9 +35,10 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             {
                 attributes += attr.Generate(indent) + "\n";
             }
+            var _warning = !string.IsNullOrEmpty(warning) ? CodeBuilder.Indent(indent) + $"/* {warning} */\n" : string.Empty;
             var modSpace = modifier == MethodModifier.None ? string.Empty : " ";
 
-            return attributes + CodeBuilder.Indent(indent) + scope.AsString().ToLower().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + returnType.As().CSharpName() + " " + name.LegalMemberName() + CodeBuilder.Parameters(this.parameters);
+            return attributes + _warning + CodeBuilder.Indent(indent) + scope.AsString().ToLower().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + returnType.As().CSharpName() + " " + name.LegalMemberName() + CodeBuilder.Parameters(this.parameters);
         }
 
         protected override sealed string GenerateBody(int indent)
@@ -65,6 +67,12 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public MethodGenerator AddParameter(ParameterGenerator parameter)
         {
             parameters.Add(parameter);
+            return this;
+        }
+
+        public MethodGenerator SetWarning(string warning)
+        {
+            this.warning = warning;
             return this;
         }
 
