@@ -3,6 +3,7 @@ using UnityEngine;
 using System;
 using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -23,8 +24,10 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static string SummaryColor = "00CC00";
         public static string VariableColor = "00FFFF";
         public static string RecommendationColor = "FFD700";
+        public static string MethodColor = "EBEB5B";
         #endregion
 
+        public static int currentIndent { get; private set; }
         /// <summary>
         /// Creates the opening of a new body as a string.
         /// </summary>
@@ -89,7 +92,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static string Indent(int amount)
         {
             var output = string.Empty;
-
+            currentIndent = amount;
             for (int i = 0; i < amount; i++)
             {
                 output += "    ";
@@ -105,7 +108,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         {
             var output = string.Empty;
             var space = string.Empty;
-
+            currentIndent = amount;
             for (int i = 0; i < spacing; i++)
             {
                 space += " ";
@@ -115,6 +118,13 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             {
                 output += space;
             }
+
+            return output;
+        }
+
+        public static string GetCurrentIndent()
+        {
+            var output = Indent(currentIndent);
 
             return output;
         }
@@ -199,6 +209,42 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return usings;
         }
 
+        public static bool IsMoreRestrictive(this AccessModifier scope, AccessModifier than)
+        {
+            var accessLevels = new Dictionary<AccessModifier, int>
+            {
+                { AccessModifier.Public, 0 },
+                { AccessModifier.ProtectedInternal, 1 },
+                { AccessModifier.Internal, 2 },
+                { AccessModifier.Protected, 3 },
+                { AccessModifier.PrivateProtected, 4 },
+                { AccessModifier.Private, 5 }
+            };
+
+            return accessLevels[scope] > accessLevels[than];
+        }
+
+        public static AccessModifier GetMoreRestrictive(this AccessModifier scope1, AccessModifier scope2)
+        {
+            if (scope1.IsMoreRestrictive(scope2))
+            {
+                return scope1;
+
+            }
+            else return scope2;
+        }
+
+        public static AccessModifier GetLessRestrictive(this AccessModifier scope1, AccessModifier scope2)
+        {
+            if (!scope1.IsMoreRestrictive(scope2))
+            {
+                return scope1;
+
+            }
+            else return scope2;
+        }
+
+
         public static AccessModifier GetScope(this MethodInfo method)
         {
             if (method.IsPublic) return AccessModifier.Public;
@@ -210,6 +256,47 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return AccessModifier.Public;
         }
 
+        public static ParameterModifier GetModifier(this ParameterInfo parameter)
+        {
+            if (parameter.ParameterType.IsByRef) return ParameterModifier.Ref;
+            if (parameter.IsOut) return ParameterModifier.Out;
+            if (parameter.IsIn) return ParameterModifier.In;
+            return ParameterModifier.None;
+        }
+
+        public static AccessModifier GetScope(this ConstructorInfo constructor)
+        {
+            if (constructor.IsPublic) return AccessModifier.Public;
+            if (constructor.IsPrivate) return AccessModifier.Private;
+            if (constructor.IsPrivate && constructor.IsFamily) return AccessModifier.PrivateProtected;
+            if (constructor.IsFamilyAndAssembly) return AccessModifier.ProtectedInternal;
+            if (constructor.IsFamily) return AccessModifier.Protected;
+            if (constructor.IsAssembly) return AccessModifier.Internal;
+            return AccessModifier.Public;
+        }
+
+        public static AccessModifier GetScope(this PropertyInfo property)
+        {
+            var getMethod = property.GetGetMethod(true);
+            var setMethod = property.GetSetMethod(true);
+
+            if (getMethod != null && setMethod == null)
+            {
+                return getMethod.GetScope();
+            }
+            else if (setMethod != null && getMethod == null)
+            {
+                return setMethod.GetScope();
+            }
+            else
+            {
+                AccessModifier getMethodAccess = getMethod.GetScope();
+                AccessModifier setMethodAccess = setMethod.GetScope();
+
+                return getMethodAccess.GetLessRestrictive(setMethodAccess);
+            }
+        }
+
         public static MethodModifier GetModifier(this MethodInfo method)
         {
             if (method.IsStatic) return MethodModifier.Static;
@@ -217,6 +304,12 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (method.IsAbstract) return MethodModifier.Abstract;
             if (method.IsFinal) return MethodModifier.Sealed;
             return MethodModifier.None;
+        }
+
+        public static ConstructorModifier GetModifier(this ConstructorInfo Constructor)
+        {
+            if (Constructor.IsStatic) return ConstructorModifier.Static;
+            return ConstructorModifier.None;
         }
 
         public static string Parameters(this List<ParameterGenerator> parameters)
@@ -304,6 +397,16 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return $"({type.As().CSharpName()}){value}";
         }
 
+        public static string MethodCall(string name, Type[] generics, params string[] parameters)
+        {
+            return name.MethodHighlight() + $"{(generics.Length > 0 ? $"<{string.Join(", ", generics.Select(t => t.As().CSharpName()))}>" : "")}({string.Join(", ", parameters)})";
+        }
+
+        public static string TargetMethodCall(this string target, string name, Type[] generics = null, params string[] parameters)
+        {
+            return target + "." + name.MethodHighlight() + $"{(generics != null && generics.Length > 0 ? $"<{string.Join(", ", generics.Select(t => t.As().CSharpName()))}>" : "")}({string.Join(", ", parameters)})";
+        }
+
         public static string LegalMemberName(this string memberName)
         {
             if (string.IsNullOrEmpty(memberName)) return string.Empty;
@@ -332,7 +435,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static string Highlight(string code, Color color)
         {
             var output = string.Empty;
-            output += "[BeginUAPreviewHighlight]" + $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>" + "[EndUAPreviewHighlight]";
+            output += "[BeginUAPreviewHighlight]" + $"<color=#{UnityEngine.ColorUtility.ToHtmlStringRGB(color)}>" + "[EndUAPreviewHighlight]";
             output += code;
             output += "[BeginUAPreviewHighlight]" + "</color>" + "[EndUAPreviewHighlight]";
             return output;
@@ -360,6 +463,16 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static string ConstructHighlight(this string code)
         {
             return Highlight(code, ConstructColor);
+        }
+
+        public static string MethodHighlight(this string code)
+        {
+            return Highlight(code, MethodColor);
+        }
+
+        public static string NamespaceHighlight(this string code)
+        {
+            return Highlight(code, new Color(0.50f, 0.50f, 0.50f));
         }
 
         public static string InterfaceHighlight(this string code)

@@ -6,7 +6,7 @@
     [UnitCategory("Community\\Logic")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.Between")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.Between")]
-    [TypeIcon(typeof(Unity.VisualScripting.And))]
+    [TypeIcon(typeof(And))]
     public class Between : Unit
     {
         public Between() : base() { }

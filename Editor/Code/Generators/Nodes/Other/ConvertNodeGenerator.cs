@@ -15,21 +15,21 @@ public class ConvertNodeGenerator : NodeGenerator<ConvertNode>
         NameSpace = "System.Linq";
     }
 
-    public override string GenerateValue(ValueOutput output)
+    public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
         if (Unit.conversion == ConversionType.Any)
         {
-            if(Unit.type == typeof(object)) return GenerateValue(Unit.value);
-            return $"({Unit.type.As().CSharpName(true, true)})" + GenerateValue(Unit.value);
+            if(Unit.type == typeof(object)) return GenerateValue(Unit.value, data);
+            return $"({Unit.type.As().CSharpName(true, true)})" + GenerateValue(Unit.value, data);
         }
         else if (Unit.conversion == ConversionType.ToArrayOfObject)
         {
-            return $"({new ValueCode(GenerateValue(Unit.value), typeof(IEnumerable), ShouldCast(Unit.value, true), true)}).Cast<{"object".ConstructHighlight()}>().ToArray()";
+            return $"({new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, true), true)}).Cast<{"object".ConstructHighlight()}>().ToArray()";
         }
         else if (Unit.conversion == ConversionType.ToListOfObject)
         {
-            return $"({new ValueCode(GenerateValue(Unit.value), typeof(IEnumerable), ShouldCast(Unit.value, true), true)}).Cast<{"object".ConstructHighlight()}>().ToList()";
+            return $"({new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, true), true)}).Cast<{"object".ConstructHighlight()}>().ToList()";
         }
-        return base.GenerateValue(output);
+        return base.GenerateValue(output, data);
     }
 }

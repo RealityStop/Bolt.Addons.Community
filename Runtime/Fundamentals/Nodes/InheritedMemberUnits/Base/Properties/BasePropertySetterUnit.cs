@@ -6,9 +6,6 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    
-    
-    [UnitCategory("CSharp/InheritedMembers/Base/Properties/Set")]
     [UnitSurtitle("Base")]
     public class BasePropertySetterUnit : InheritedMemberUnit
     {

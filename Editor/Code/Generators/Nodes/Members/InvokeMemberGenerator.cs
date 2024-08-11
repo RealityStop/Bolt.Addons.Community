@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Unity.VisualScripting.Community
 {
@@ -29,7 +30,7 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             if (output == Unit.result)
             {
@@ -41,27 +42,27 @@ namespace Unity.VisualScripting.Community
 
                 if (Unit.member.isConstructor)
                 {
-                    _output += new ValueCode($"{"new".ConstructHighlight()} {Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}({GenerateArguments()})");
+                    _output += new ValueCode($"{"new".ConstructHighlight()} {Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}({GenerateArguments(data)})");
                 }
                 else
                 {
                     if (Unit.target == null)
                     {
-                        _output += new ValueCode($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}({GenerateArguments()})");
+                        _output += new ValueCode($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}({GenerateArguments(data)})");
                     }
                     else
                     {
                         if (Unit.target.hasValidConnection && Unit.target.type != Unit.target.connection.source.type && Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            _output += new ValueCode(new ValueCode(GenerateValue(Unit.target) + GetComponent(Unit.target) + "." + Unit.member.name + $"({GenerateArguments()})"));
+                            _output += new ValueCode(new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target) + "." + Unit.member.name + $"({GenerateArguments(data)})"));
                         }
                         else if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            _output += new ValueCode(GenerateValue(Unit.target) + GetComponent(Unit.target) + "." + Unit.member.name + $"({GenerateArguments()})", typeof(GameObject), ShouldCast(Unit.target));
+                            _output += new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target) + "." + Unit.member.name + $"({GenerateArguments(data)})", typeof(GameObject), ShouldCast(Unit.target, false, data));
                         }
                         else
                         {
-                            _output += new ValueCode($"{GenerateValue(Unit.target)}.{Unit.member.name}({GenerateArguments()})");
+                            _output += new ValueCode($"{GenerateValue(Unit.target, data)}.{Unit.member.name}({GenerateArguments(data)})");
                         }
                     }
                 }
@@ -80,22 +81,22 @@ namespace Unity.VisualScripting.Community
             }
             else if (output == Unit.targetOutput)
             {
-                return GenerateValue(Unit.target);
+                return GenerateValue(Unit.target, data);
             }
-            return base.GenerateValue(output);
+            return base.GenerateValue(output, data);
         }
 
         string GetComponent(ValueInput valueInput)
         {
             if (valueInput.hasValidConnection)
             {
-                if (valueInput.type == valueInput.connection.source.type && valueInput.connection.source.unit is MemberUnit or InheritedMemberUnit or AssetFieldUnit or AssetMethodCallUnit)
+                if (valueInput.type == valueInput.connection.source.type && valueInput.connection.source.unit is MemberUnit or CodeAssetUnit)
                 {
                     return "";
                 }
                 else
                 {
-                    return valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent" ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : ".";
+                    return valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent" ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : string.Empty;
                 }
             }
             else
@@ -113,31 +114,31 @@ namespace Unity.VisualScripting.Community
             {
                 if (Unit.member.isConstructor)
                 {
-                    output += new CodeLine($"{"new".ConstructHighlight()} {Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}({GenerateArguments()})", indent).GetCode(Unit.exit.hasValidConnection);
+                    output += new CodeLine($"{"new".ConstructHighlight()} {Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}({GenerateArguments(data)})", indent).GetCode(true);
                 }
                 else
                 {
                     if (Unit.target == null)
                     {
-                        output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}({GenerateArguments()})").GetCode(Unit.exit.hasValidConnection));
+                        output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}({GenerateArguments(data)})").GetCode(true));
                     }
                     else
                     {
                         if (Unit.member.pseudoDeclaringType == typeof(GameObject) && Unit.target.hasValidConnection && Unit.target.connection.source.type.IsSubclassOf(typeof(Component)))
                         {
-                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{GenerateValue(Unit.target)}.gameObject.GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>().{Unit.member.name}({GenerateArguments()})").GetCode(Unit.exit.hasValidConnection));
+                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{GenerateValue(Unit.target, data)}.gameObject.GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>().{Unit.member.name}({GenerateArguments(data)})").GetCode(true));
                         }
                         else if (Unit.target.hasValidConnection && Unit.target.type != Unit.target.connection.source.type && Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine(new ValueCode(GenerateValue(Unit.target) + GetComponent(Unit.target) + "." + Unit.member.name + $"({GenerateArguments()})", typeof(GameObject), ShouldCast(Unit.target))).GetCode(Unit.exit.hasValidConnection));
+                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine(new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target) + "." + Unit.member.name + $"({GenerateArguments(data)})", typeof(GameObject), ShouldCast(Unit.target))).GetCode(true));
                         }
                         else if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{GenerateValue(Unit.target)}{GetComponent(Unit.target)}.{Unit.member.name}({GenerateArguments()})").GetCode(Unit.exit.hasValidConnection));
+                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{GenerateValue(Unit.target, data)}{GetComponent(Unit.target)}.{Unit.member.name}({GenerateArguments(data)})").GetCode(true));
                         }
                         else
                         {
-                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{GenerateValue(Unit.target)}.{Unit.member.name}({GenerateArguments()})").GetCode(Unit.exit.hasValidConnection));
+                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{GenerateValue(Unit.target, data)}.{Unit.member.name}({GenerateArguments(data)})").GetCode(true));
                         }
                     }
                 }
@@ -147,12 +148,12 @@ namespace Unity.VisualScripting.Community
             return GetNextUnit(Unit.exit, data, indent);
         }
 
-        public override string GenerateValue(ValueInput input)
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input.hasValidConnection)
             {
-                if (input.type.IsSubclassOf(typeof(Component))) return new ValueCode(GetNextValueUnit(input), typeof(GameObject), ShouldCast(input)) + new ValueCode($"{(input.connection.source.type == typeof(GameObject) ? $".GetComponent<{input.type.As().CSharpName(false, true)}>()" : string.Empty)}");
-                return new ValueCode(GetNextValueUnit(input), input.type, ShouldCast(input)) + new ValueCode($"{(input.type.IsSubclassOf(typeof(Component)) && input.connection.source.type == typeof(GameObject) ? $".GetComponent<{input.type.As().CSharpName(false, true)}>()" : string.Empty)}");
+                if (input.type.IsSubclassOf(typeof(Component))) return new ValueCode(GetNextValueUnit(input, data), typeof(GameObject), ShouldCast(input, false, data)) + new ValueCode($"{(input.connection.source.type == typeof(GameObject) ? $".GetComponent<{input.type.As().CSharpName(false, true)}>()" : string.Empty)}");
+                return new ValueCode(GetNextValueUnit(input, data), input.type, ShouldCast(input, false, data)) + new ValueCode($"{(input.type.IsSubclassOf(typeof(Component)) && input.connection.source.type == typeof(GameObject) ? $".GetComponent<{input.type.As().CSharpName(false, true)}>()" : string.Empty)}");
             }
             else if (input.hasDefaultValue)
             {
@@ -164,7 +165,7 @@ namespace Unity.VisualScripting.Community
             }
             else
             {
-                if (Unit.member.methodInfo.GetParameters()[Unit.inputParameters.First(parameter => parameter.Value == input).Key].IsDefined(typeof(ParamArrayAttribute), false))
+                if (Unit.member.methodInfo.GetParameters()[Unit.inputParameters.FirstOrDefault(parameter => parameter.Value == input).Key].IsDefined(typeof(ParamArrayAttribute), true))
                 {
                     return "";
                 }
@@ -172,7 +173,7 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private string GenerateArguments()
+        private string GenerateArguments(ControlGenerationData data = null)
         {
             if (controlGenerationData != null && Unit.member.isMethod)
             {
@@ -180,31 +181,36 @@ namespace Unity.VisualScripting.Community
                 var index = 0;
                 foreach (var parameter in Unit.member.methodInfo.GetParameters())
                 {
-                    var name = controlGenerationData.AddLocalNameInScope(parameter.Name).VariableHighlight();
                     if (parameter.HasOutModifier())
                     {
+                        var name = controlGenerationData.AddLocalNameInScope(parameter.Name, parameter.ParameterType).VariableHighlight();
                         output.Add("out var ".ConstructHighlight() + name);
                         if (Unit.outputParameters.Values.Any(output => output.key == "&" + parameter.Name && !outputNames.ContainsKey(Unit.outputParameters[index])))
                             outputNames.Add(Unit.outputParameters[index], "&" + name);
                     }
                     else if (parameter.ParameterType.IsByRef)
                     {
+                        var name = controlGenerationData.AddLocalNameInScope(parameter.Name, parameter.ParameterType).VariableHighlight();
                         var input = Unit.inputParameters[index];
                         if (!input.hasValidConnection || input.hasValidConnection && input.connection.source.unit is not GetVariable)
                         {
                             output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */");
                             continue;
                         }
-                        output.Add("ref ".ConstructHighlight() + GenerateValue(Unit.inputParameters[index]));
+                        output.Add("ref ".ConstructHighlight() + GenerateValue(Unit.inputParameters[index], data));
                         outputNames.Add(Unit.outputParameters[index], "&" + name);
                     }
                     else if (parameter.IsDefined(typeof(ParamArrayAttribute), false) && !Unit.inputParameters[index].hasValidConnection)
                     {
                         continue;
                     }
+                    else if (Unit.member.methodInfo.IsDefined(typeof(ExtensionAttribute), false) && index == 0)
+                    {
+                        output.Add(string.Empty);
+                    }
                     else
                     {
-                        output.Add(GenerateValue(Unit.inputParameters.Values.First(input => input.key == "%" + parameter.Name)));
+                        output.Add(GenerateValue(Unit.inputParameters.Values.First(input => input.key == "%" + parameter.Name), data));
                     }
                     index++;
                 }
@@ -220,17 +226,19 @@ namespace Unity.VisualScripting.Community
                     {
                         continue;
                     }
-                    else
+                    else if (Unit.member.methodInfo.IsDefined(typeof(ExtensionAttribute), false) && index == 0)
                     {
-                        output.Add(GenerateValue(Unit.inputParameters[index]));
+                        output.Add(string.Empty);
                     }
+                    else
+                        output.Add(GenerateValue(Unit.inputParameters[index], data));
                     index++;
                 }
                 return string.Join(", ", output);
             }
             else
             {
-                List<string> output = Unit.valueInputs.Select(input => GenerateValue(input)).ToList();
+                List<string> output = Unit.valueInputs.Select(input => GenerateValue(input, data)).ToList();
                 return string.Join(", ", output);
             }
         }

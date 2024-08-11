@@ -23,12 +23,12 @@ namespace Unity.VisualScripting.Community
         {
             var output = string.Empty;
             controlGenerationData = data;
-            output += CodeUtility.MakeSelectable(Unit, Unit.method.methodName + $"({GenerateArguments(Unit.InputParameters.Values.ToList())});") + (Unit.exit.hasValidConnection ? "\n" : string.Empty);
+            output += CodeUtility.MakeSelectable(Unit, Unit.method.methodName + $"({GenerateArguments(Unit.InputParameters.Values.ToList(), data)});") + (Unit.exit.hasValidConnection ? "\n" : string.Empty);
             output += GetNextUnit(Unit.exit, data, indent);
             return output;
         }
     
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             if (Unit.enter != null && !Unit.enter.hasValidConnection && Unit.OutputParameters.Count > 0)
             {
@@ -43,10 +43,10 @@ namespace Unity.VisualScripting.Community
                 return transformedKey.VariableHighlight();
             }
     
-            return CodeUtility.MakeSelectable(Unit, Unit.method.methodName + $"({GenerateArguments(Unit.InputParameters.Values.ToList())})");
+            return CodeUtility.MakeSelectable(Unit, Unit.method.methodName + $"({GenerateArguments(Unit.InputParameters.Values.ToList(), data)})");
         }
     
-        private string GenerateArguments(List<ValueInput> arguments)
+        private string GenerateArguments(List<ValueInput> arguments, ControlGenerationData data)
         {
             if (controlGenerationData != null)
             {
@@ -69,13 +69,13 @@ namespace Unity.VisualScripting.Community
                             output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */");
                             continue;
                         }
-                        output.Add("ref ".ConstructHighlight() + GenerateValue(input));
+                        output.Add("ref ".ConstructHighlight() + GenerateValue(input, data));
                         if (Unit.OutputParameters.Values.Any(output => output.key == "&" + parameter.name && !outputNames.ContainsKey(Unit.OutputParameters[index])))
                             outputNames.Add(Unit.OutputParameters[index], "&" + name);
                     }
                     else
                     {
-                        output.Add(GenerateValue(Unit.InputParameters[index]));
+                        output.Add(GenerateValue(Unit.InputParameters[index], data));
                     }
                     index++;
                 }
@@ -83,7 +83,7 @@ namespace Unity.VisualScripting.Community
             }
             else
             {
-                List<string> output = arguments.Select(arg => GenerateValue(arg)).ToList();
+                List<string> output = arguments.Select(arg => GenerateValue(arg, data)).ToList();
                 return string.Join(", ", output);
             }
         }

@@ -6,8 +6,7 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    
-    public abstract class InheritedMemberUnit : Unit
+    public abstract class InheritedMemberUnit : CodeAssetUnit
     {
         public Member member;
         public MemberType memberType;

@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community
 {
     [FuzzyOption(typeof(AssetMethodCallUnit))]
-    public class AssetMethodCallUnitOption : UnitOption<AssetMethodCallUnit>
+    internal sealed class AssetMethodCallUnitOption : UnitOption<AssetMethodCallUnit>
     {
         public AssetMethodCallUnitOption(AssetMethodCallUnit unit) : base(unit)
         {

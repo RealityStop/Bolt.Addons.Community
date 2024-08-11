@@ -1,7 +1,9 @@
 using UnityEngine;
 using Unity.VisualScripting;
 
-
+namespace Unity.VisualScripting.Community
+{
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.RetrieveObjectNode")]
     [UnitCategory("Community\\ObjectPooling")]
     [UnitTitle("Retrieve Object")]
     public class RetrieveObjectNode : Unit
@@ -45,4 +47,4 @@ using Unity.VisualScripting;
             return Retrieved;
         }
     }
-
+}

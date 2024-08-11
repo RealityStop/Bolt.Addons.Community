@@ -82,7 +82,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
         public static bool Overridable(this MethodInfo method)
         {
-            if (method.IsVirtual || method.IsAbstract)
+            if ((method.IsVirtual || method.IsAbstract) && !method.IsFinal)
             {
                 if (!method.IsSpecialName)
                 {
@@ -91,6 +91,14 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             }
 
             return false;
+        }
+
+        public static bool Overridable(this PropertyInfo property)
+        {
+            var getter = property.GetGetMethod();
+            var setter = property.GetSetMethod();
+
+            return (getter != null && getter.Overridable()) || (setter != null && setter.Overridable());
         }
 
         public static object Default(this Type type)

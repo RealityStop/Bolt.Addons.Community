@@ -23,8 +23,8 @@ namespace Unity.VisualScripting.Community
                 var isLiteral = Unit.selector.hasValidConnection && Unit.selector.connection.source.unit as Literal != null;
                 var localName = string.Empty;
                 if (isLiteral) localName = data.AddLocalNameInScope("str");
-                var newLiteral = isLiteral ? CodeUtility.MakeSelectable((Unit)Unit.selector.connection.source.unit, CodeBuilder.Indent(indent) + "var ".ConstructHighlight() + $"{localName} = " + ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source) + ";") : string.Empty;
-                var @enum = Unit.selector.hasValidConnection ? CodeUtility.MakeSelectable((Unit)Unit.selector.connection.source.unit, isLiteral ? localName : ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source)) : base.GenerateControl(input, data, indent);
+                var newLiteral = isLiteral ? CodeUtility.MakeSelectable((Unit)Unit.selector.connection.source.unit, CodeBuilder.Indent(indent) + "var ".ConstructHighlight() + $"{localName} = " + ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source, data) + ";") : string.Empty;
+                var @enum = Unit.selector.hasValidConnection ? CodeUtility.MakeSelectable((Unit)Unit.selector.connection.source.unit, isLiteral ? localName : ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source, data)) : base.GenerateControl(input, data, indent);
 
                 if (isLiteral) output += CodeUtility.MakeSelectable(Unit, newLiteral) + "\n";
                 output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "switch".ConstructHighlight() + $" ({@enum})");
@@ -84,14 +84,14 @@ namespace Unity.VisualScripting.Community
             return base.GenerateControl(input, data, indent);
         }
 
-        public override string GenerateValue(ValueInput input)
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input == Unit.selector)
             {
-                return ShouldCast(input) ? $"(({typeof(string).As().CSharpName(false, true)}){GetNextValueUnit(input)})" : GetNextValueUnit(input);
+                return ShouldCast(input) ? $"(({typeof(string).As().CSharpName(false, true)}){GetNextValueUnit(input, data)})" : GetNextValueUnit(input, data);
             }
 
-            return base.GenerateValue(input);
+            return base.GenerateValue(input, data);
         }
 
     }

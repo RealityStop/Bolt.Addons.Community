@@ -10,13 +10,13 @@ namespace Unity.VisualScripting.Community
         {
         }
 
-        public override string GenerateValue(ValueInput input)
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input == Unit.a)
             {
                 if (Unit.a.hasAnyConnection)
                 {
-                    return (Unit.a.connection.source.unit as Unit).GenerateValue(Unit.a.connection.source);
+                    return (Unit.a.connection.source.unit as Unit).GenerateValue(Unit.a.connection.source, data);
                 }
             }
 
@@ -24,25 +24,25 @@ namespace Unity.VisualScripting.Community
             {
                 if (Unit.b.hasAnyConnection)
                 {
-                    return (Unit.b.connection.source.unit as Unit).GenerateValue(Unit.b.connection.source);
+                    return (Unit.b.connection.source.unit as Unit).GenerateValue(Unit.b.connection.source, data);
                 }
                 else
                 {
-                    return Unit.numeric ? Unit.defaultValues["b"].As().Code(true) : base.GenerateValue(input);
+                    return Unit.numeric ? Unit.defaultValues["b"].As().Code(true) : base.GenerateValue(input, data);
                 }
             }
 
-            return base.GenerateValue(input);
+            return base.GenerateValue(input, data);
         }
 
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             if (output == Unit.comparison)
             {
-                return GenerateValue(Unit.a) + " <= " + GenerateValue(Unit.b);
+                return GenerateValue(Unit.a, data) + " <= " + GenerateValue(Unit.b, data);
             }
 
-            return base.GenerateValue(output);
+            return base.GenerateValue(output, data);
         }
     }
 }

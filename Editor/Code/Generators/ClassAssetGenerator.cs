@@ -94,7 +94,7 @@ namespace Unity.VisualScripting.Community
                     {
                         Data.constructors[i].parameters[pIndex].showCall = true;
 
-                        if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(Data.constructors[i].parameters[pIndex].useInCall, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, Data.constructors[i].parameters[pIndex].modifier, Data.constructors[i].parameters[pIndex].attributes));
+                        if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(Data.constructors[i].parameters[pIndex].useInCall, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, Data.constructors[i].parameters[pIndex].modifier, Data.constructors[i].parameters[pIndex].attributes, Data.constructors[i].parameters[pIndex].hasDefault, Data.constructors[i].parameters[pIndex].isParamsParameter, Data.constructors[i].parameters[pIndex].defaultValue));
                     }
                     @class.AddUsings(usings);
                 }
@@ -251,7 +251,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (!string.IsNullOrEmpty(Data.methods[i].name) && Data.methods[i].returnType != null)
                 {
-                    if (@class.methods.Any(m => m.name == Data.methods[i].name))
+                    if (@class.methods.Any(m => m.name == Data.methods[i].name && m.parameters.Select(p => p.type).SequenceEqual(Data.methods[i].parameters.Select(p => p.type))))
                     {
                         continue;
                     }
@@ -325,10 +325,9 @@ namespace Unity.VisualScripting.Community
 
                         for (int pIndex = 0; pIndex < Data.methods[i].parameters.Count; pIndex++)
                         {
-                            if (!string.IsNullOrEmpty(Data.methods[i].parameters[pIndex].name)) method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, Data.methods[i].parameters[pIndex].modifier, Data.methods[i].parameters[pIndex].attributes));
+                            if (!string.IsNullOrEmpty(Data.methods[i].parameters[pIndex].name)) method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, Data.methods[i].parameters[pIndex].modifier, Data.methods[i].parameters[pIndex].attributes, Data.methods[i].parameters[pIndex].hasDefault, Data.methods[i].parameters[pIndex].isParamsParameter, Data.methods[i].parameters[pIndex].defaultValue));
                         }
                     }
-
                     @class.AddMethod(method);
                 }
             }

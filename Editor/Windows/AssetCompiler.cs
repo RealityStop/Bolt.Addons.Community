@@ -5,11 +5,15 @@ using UnityEditor;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Reflection;
+using System;
+using System.IO;
 
 namespace Unity.VisualScripting.Community
 {
     public static class AssetCompiler
     {
+        private static readonly Dictionary<Assembly, bool> _editorAssemblyCache = new Dictionary<Assembly, bool>();
         public static void Compile()
         {
             var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
@@ -85,6 +89,7 @@ namespace Unity.VisualScripting.Community
             AssetDatabase.Refresh();
         }
 
+        [MenuItem("Assets/Compile Selected")]
         public static void CompileSelected()
         {
             var assets = Selection.GetFiltered<CodeAsset>(SelectionMode.Assets).ToList();
@@ -92,6 +97,7 @@ namespace Unity.VisualScripting.Community
             var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
             var oldPath = Application.dataPath + "/Bolt.Addons.Generated/";
             var scriptsPath = path + "Scripts/";
+            var editorPath = path + "Editor/";
             var csharpPath = scriptsPath + "Objects/";
             var delegatesPath = scriptsPath + "Delegates/";
             var enumPath = scriptsPath + "Enums/";
@@ -99,6 +105,7 @@ namespace Unity.VisualScripting.Community
             HUMIO.Ensure(oldPath).Path();
             HUMIO.Ensure(path).Path();
             HUMIO.Ensure(scriptsPath).Path();
+            HUMIO.Ensure(editorPath).Path();
             HUMIO.Ensure(delegatesPath).Path();
             HUMIO.Ensure(csharpPath).Path();
             HUMIO.Ensure(enumPath).Path();
@@ -107,13 +114,22 @@ namespace Unity.VisualScripting.Community
 
             foreach (var asset in assets)
             {
-                if (asset is ClassAsset)
+                if (asset is ClassAsset classAsset)
                 {
-                    var fullPath = csharpPath + asset.title.LegalMemberName() + ".cs";
+                    var fullPath = string.Empty;
+                    if (classAsset.inheritsType && IsEditorAssembly(classAsset.inherits.type.Assembly, new HashSet<string>()))
+                    {
+                        fullPath = editorPath + classAsset.title.LegalMemberName() + ".cs";
+                    }
+                    else
+                    {
+                        fullPath = csharpPath + classAsset.title.LegalMemberName() + ".cs";
+                    }
+
                     HUMIO.Delete(fullPath);
                     HUMIO.Ensure(fullPath).Path();
-                    HUMIO.Save(ClassAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
-                    asset.lastCompiledName = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
+                    HUMIO.Save(ClassAssetGenerator.GetSingleDecorator(classAsset).GenerateClean(0)).Custom(fullPath).Text(false);
+                    classAsset.lastCompiledName = classAsset.category + (string.IsNullOrEmpty(classAsset.category) ? string.Empty : ".") + classAsset.title.LegalMemberName();
                 }
                 else if (asset is StructAsset)
                 {
@@ -146,6 +162,172 @@ namespace Unity.VisualScripting.Community
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
+
+        private static void WaitForDomainReload(string fullPath, ClassAsset classAsset)
+        {
+            if (EditorApplication.isCompiling)
+            {
+                return; // Wait for the compilation to finish
+            }
+
+            // Load the asset at the specified path
+            var scriptAsset = AssetDatabase.LoadAssetAtPath<MonoScript>(fullPath.Replace(Application.dataPath, "Assets"));
+
+            if (scriptAsset != null)
+            {
+                // Retrieve the icon from the class asset
+                Texture2D icon = classAsset.icon;
+                if (icon != null)
+                {
+                    string metaPath = fullPath + ".meta";
+
+                    // Read existing .meta content
+                    string existingMetaContent = File.Exists(metaPath) ? File.ReadAllText(metaPath) : string.Empty;
+
+                    // Generate icon reference
+                    string iconReference = $"icon: {{fileID: 2800000, guid: {AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(icon))}, type: 3}}";
+
+                    // Update .meta content
+                    string metaContent;
+                    if (string.IsNullOrEmpty(existingMetaContent))
+                    {
+                        metaContent = $@"fileFormatVersion: 2
+guid: {AssetDatabase.AssetPathToGUID(fullPath)}
+MonoImporter:
+  externalObjects: {{}}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  {iconReference}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: ";
+                    }
+                    else
+                    {
+                        if (!existingMetaContent.Contains("MonoImporter"))
+                            // Assuming existing .meta content includes MonoImporter block, update it
+                            metaContent = existingMetaContent.Insert(existingMetaContent.LastIndexOf("\n"),
+                                $@"MonoImporter:
+  externalObjects: {{}}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  {iconReference}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: ");
+                        else
+                            metaContent = existingMetaContent.Replace("MonoImporter",
+                                                          $@"MonoImporter:
+  externalObjects: {{}}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  {iconReference}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: ");
+                    }
+
+                    // Write the updated .meta content
+                    File.WriteAllText(metaPath, metaContent);
+
+                    // Refresh the AssetDatabase to apply changes
+                    AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(scriptAsset), ImportAssetOptions.ForceUpdate);
+                }
+            }
+
+            // Unregister the update callback
+            EditorApplication.update -= () => WaitForDomainReload(fullPath, classAsset);
+        }
+
+
+        private static bool IsEditorAssembly(Assembly assembly, HashSet<string> visited)
+        {
+            // assembly.GetName() is surprisingly expensive, keep a cache
+            if (_editorAssemblyCache.TryGetValue(assembly, out var isEditor))
+            {
+                return isEditor;
+            }
+
+            var name = assembly.GetName().Name;
+            if (visited.Contains(name))
+            {
+                return false;
+            }
+
+            visited.Add(name);
+
+            if (IsSpecialCaseRuntimeAssembly(name))
+            {
+                _editorAssemblyCache.Add(assembly, false);
+                return false;
+            }
+
+            if (Attribute.IsDefined(assembly, typeof(AssemblyIsEditorAssembly)))
+            {
+                _editorAssemblyCache.Add(assembly, true);
+                return true;
+            }
+
+            if (IsUserAssembly(name))
+            {
+                _editorAssemblyCache.Add(assembly, false);
+                return false;
+            }
+
+            if (IsUnityEditorAssembly(name))
+            {
+                _editorAssemblyCache.Add(assembly, true);
+                return true;
+            }
+
+            AssemblyName[] listOfAssemblyNames = assembly.GetReferencedAssemblies();
+            foreach (var dependencyName in listOfAssemblyNames)
+            {
+                try
+                {
+                    Assembly dependency = Assembly.Load(dependencyName);
+
+                    if (IsEditorAssembly(dependency, visited))
+                    {
+                        _editorAssemblyCache.Add(assembly, true);
+                        return true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning(e.Message);
+                }
+            }
+
+            _editorAssemblyCache.Add(assembly, false);
+
+            return false;
+        }
+
+        private static bool IsSpecialCaseRuntimeAssembly(string assemblyName)
+        {
+            return assemblyName == "UnityEngine.UI" || // has a reference to UnityEditor.CoreModule
+                assemblyName == "Unity.TextMeshPro"; // has a reference to UnityEditor.TextCoreFontEngineModule
+        }
+
+        private static bool IsUserAssembly(string name)
+        {
+            return
+                name == "Assembly-CSharp" ||
+                name == "Assembly-CSharp-firstpass";
+        }
+
+        private static bool IsUnityEditorAssembly(string name)
+        {
+            return
+                name == "Assembly-CSharp-Editor" ||
+                name == "Assembly-CSharp-Editor-firstpass" ||
+                name == "UnityEditor" ||
+                name == "UnityEditor.CoreModule";
         }
     }
 }

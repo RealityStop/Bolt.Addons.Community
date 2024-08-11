@@ -12,16 +12,9 @@ namespace Unity.VisualScripting.Community
             NameSpace = Unit.value.GetType().Namespace;
         }
 
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            if (!(Unit.type.GenericTypeArguments.Length > 0))
-            {
-                return Unit.value.As().Code(true, true, true, "");
-            }
-            else 
-            {
-                return "new ".ConstructHighlight() + HUMType_Children.GenericDeclaration(Unit.type) + "()";
-            }
+            return Unit.value.As().Code(true, true, true, "");
         }
     }
 }

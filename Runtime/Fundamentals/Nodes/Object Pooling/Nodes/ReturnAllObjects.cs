@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.VisualScripting;
 
+namespace Unity.VisualScripting.Community
+{
     [UnitCategory("Community\\ObjectPooling")]
     [UnitTitle("Return All")]
     public class ReturnAllObjectsToPoolNode : Unit
@@ -44,3 +46,5 @@ using Unity.VisualScripting;
         }
     }
 
+
+}

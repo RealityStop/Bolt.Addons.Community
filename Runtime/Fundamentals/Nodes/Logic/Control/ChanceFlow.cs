@@ -1,12 +1,13 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.RandomOutputNode")]
     [UnitTitle("ChanceFlow")]
     [UnitCategory("Community\\Control")]
     [TypeIcon(typeof(SwitchOnInteger))]
-    public class RandomOutputNode : Unit
+    public class ChanceFlow : Unit
     {
         [DoNotSerialize]
         public ValueInput value;

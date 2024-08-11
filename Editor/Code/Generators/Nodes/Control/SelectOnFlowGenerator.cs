@@ -46,11 +46,11 @@ namespace Unity.VisualScripting.Community
             {
                 _name = "";
             }
-            output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, Name + (Unit.branches[input].hasValidConnection ? "(" + CodeUtility.MakeSelectable(Unit.branches[input].connection.source.unit as Unit, GenerateValue(Unit.branches[input])) + ")" : "(" + GenerateValue(Unit.branches[input])) + ");") + "\n";
+            output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, Name + (Unit.branches[input].hasValidConnection ? "(" + CodeUtility.MakeSelectable(Unit.branches[input].connection.source.unit as Unit, GenerateValue(Unit.branches[input], data)) + ")" : "(" + GenerateValue(Unit.branches[input], data)) + ");") + "\n";
             return output;
         }
 
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             return CodeUtility.MakeSelectable(Unit, "value".VariableHighlight());
         }

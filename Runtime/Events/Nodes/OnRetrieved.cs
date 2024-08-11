@@ -1,7 +1,7 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.ObjectPooling
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Events/Community/ObjectPooling")]
     public class OnRetrieved : EventUnit<PoolData>

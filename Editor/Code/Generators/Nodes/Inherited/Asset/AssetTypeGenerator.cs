@@ -15,7 +15,7 @@ namespace Unity.VisualScripting.Community
         {
         }
     
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             return "typeof".ConstructHighlight() + "(" + Unit.asset.title.TypeHighlight() + ")";
         }

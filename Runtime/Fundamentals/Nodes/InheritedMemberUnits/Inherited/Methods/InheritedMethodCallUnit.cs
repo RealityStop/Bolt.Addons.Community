@@ -6,9 +6,6 @@ using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
-    
-    
-    [UnitCategory("CSharp/InheritedMembers/Methods")]
     [UnitSurtitle("Inherited")]
     public class InheritedMethodCall : InheritedMemberUnit
     {

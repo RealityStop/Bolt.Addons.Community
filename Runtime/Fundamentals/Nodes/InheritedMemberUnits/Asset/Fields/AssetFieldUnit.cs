@@ -7,9 +7,7 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    
-    [UnitCategory("CSharp/Asset/Variables")]
-    public class AssetFieldUnit : Unit
+    public class AssetFieldUnit : AssetMemberUnit
     {
         [Obsolete(Serialization.ConstructorWarning)]
         public AssetFieldUnit() { }
@@ -67,7 +65,6 @@ namespace Unity.VisualScripting.Community
                     });
                     break;
             }
-    
         }
     }
 }

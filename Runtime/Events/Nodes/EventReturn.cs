@@ -9,7 +9,9 @@ namespace Unity.VisualScripting.Community
     /// <summary>
     /// The Unit that returns your flow and value back to the Complete port of the initial trigger unit.
     /// </summary>
-    [UnitCategory("Events/Community/Returns")][UnitShortTitle("Return")][UnitSubtitle("Return Event")]
+    [UnitCategory("Events/Community/Returns")]
+    [UnitShortTitle("Return")]
+    [UnitSubtitle("Return Event")]
     [RenamedFrom("Lasm.BoltExtensions.EventReturn")]
     [RenamedFrom("Lasm.UAlive.EventReturn")]
     [RenamedFrom("Bolt.Addons.Community.ReturnEvents.EventReturn")]

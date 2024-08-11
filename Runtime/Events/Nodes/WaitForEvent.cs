@@ -1,8 +1,9 @@
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.WaitForNode")]
     [UnitCategory("Events\\Community")]
     [UnitTitle("Wait For Task Event")]
     [TypeIcon(typeof(CustomEvent))]

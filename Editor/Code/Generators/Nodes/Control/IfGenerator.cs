@@ -15,36 +15,35 @@ namespace Unity.VisualScripting.Community
 
             var trueData = new ControlGenerationData(data);
             var falseData = new ControlGenerationData(data);
+            trueData.NewScope();
+            var trueCode = GetNextUnit(Unit.ifTrue, trueData, indent + 1);
+            trueData.ExitScope();
 
             if (input == Unit.enter)
             {
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "if".ConstructHighlight() + " (" + GenerateValue(Unit.condition) + ")");
+                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "if".ConstructHighlight() + " (" + GenerateValue(Unit.condition, data) + ")");
                 output += "\n";
                 output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
                 output += "\n";
-                trueData.NewScope();
-                output += Unit.ifTrue.hasAnyConnection ? (Unit.ifTrue.connection.destination.unit as Unit).GenerateControl(Unit.ifTrue.connection.destination, trueData, indent + 1) : string.Empty;
-                trueData.ExitScope();
+                output += trueCode;
                 output += "\n";
                 output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
                 output += "\n";
 
                 if (Unit.ifFalse.hasAnyConnection)
                 {
-                    output += "\n";
-                    output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "else".ConstructHighlight()) + (!Unit.ifTrue.hasValidConnection ? CodeBuilder.MakeRecommendation("You should use the negate node and connect the true input instead") : string.Empty);
+                    output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "else".ConstructHighlight()) + (!Unit.ifTrue.hasValidConnection || string.IsNullOrEmpty(trueCode) ? CodeBuilder.MakeRecommendation("You should use the negate node and connect the true input instead") : string.Empty);
                     output += "\n";
                     output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
                     output += "\n";
                     falseData.NewScope();
-                    output += Unit.ifFalse.hasAnyConnection ? (Unit.ifFalse.connection.destination.unit as Unit).GenerateControl(Unit.ifFalse.connection.destination, falseData, indent + 1) : string.Empty;
+                    output += GetNextUnit(Unit.ifFalse, falseData, indent + 1);
                     falseData.ExitScope();
                     output += "\n";
                     output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
                     output += "\n";
                 }
             }
-
 
             if (data.mustBreak)
             {
@@ -61,17 +60,17 @@ namespace Unity.VisualScripting.Community
             return output;
         }
 
-        public override string GenerateValue(ValueInput input)
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input == Unit.condition)
             {
                 if (Unit.condition.hasAnyConnection)
                 {
-                    return CodeUtility.MakeSelectable(input.connection.source.unit as Unit , (Unit.condition.connection.source.unit as Unit).GenerateValue(Unit.condition.connection.source));
+                    return GetNextValueUnit(Unit.condition, data, true);
                 }
             }
 
-            return base.GenerateValue(input);
+            return base.GenerateValue(input, data);
         }
     }
 }

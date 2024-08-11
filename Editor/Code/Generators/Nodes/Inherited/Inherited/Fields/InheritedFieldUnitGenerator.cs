@@ -18,19 +18,19 @@ namespace Unity.VisualScripting.Community
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             var output = string.Empty;
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + CodeBuilder.Assign("this".ConstructHighlight() + "." + Unit.member.name.VariableHighlight(), GenerateValue(Unit.value)));
+            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + CodeBuilder.Assign("this".ConstructHighlight() + "." + Unit.member.name.VariableHighlight(), GenerateValue(Unit.value, data)));
             output += "\n" + GetNextUnit(Unit.exit, data, indent);
             return output;
         }
     
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             if(Unit.actionDirection == ActionDirection.Get)
             {
                 return "this".ConstructHighlight() + "." + Unit.member.name.VariableHighlight();
             }
     
-            return base.GenerateValue(output);
+            return base.GenerateValue(output, data);
         }
     }
     

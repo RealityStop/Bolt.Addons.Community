@@ -1,8 +1,9 @@
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.OnKeysPressed")]
     [UnitCategory("Events\\Community\\Input")]
     [UnitTitle("OnKeys")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.OnDualKeyInput")]

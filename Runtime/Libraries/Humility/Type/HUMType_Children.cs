@@ -2,9 +2,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using Unity.VisualScripting;
 using System.Reflection;
 using UnityEngine;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.Libraries.Humility
 {
@@ -31,7 +32,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (highlight) return @as.HighlightCSharpName(hideSystemObject, fullName);
             if (@as.type == null) return "null";
             if (@as.type == typeof(CSharp.Void)) return "void";
-            if (@as.type.IsConstructedGenericType || @as.type.IsGenericType) return GenericDeclaration(@as.type);
+            if (@as.type.IsConstructedGenericType || @as.type.IsGenericType) return GenericDeclaration(@as.type, fullName, highlight);
             if (@as.type == typeof(int)) return "int";
             if (@as.type == typeof(string)) return "string";
             if (@as.type == typeof(float)) return "float";
@@ -42,15 +43,29 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (@as.type == typeof(void)) return "void";
             if (@as.type == typeof(object) && @as.type.BaseType == null) return hideSystemObject ? string.Empty : "object";
             if (@as.type == typeof(object[])) return "object[]";
+            if (@as.type.Name.Contains("Attribute")) return fullName ? @as.type.CSharpFullName().Replace("Attribute", "") : @as.type.CSharpName().Replace("Attribute", "");
+            if (@as.type.IsArray)
+            {
+                var tempType = @as.type.GetElementType();
+                var arrayString = "[]";
+                while (tempType.IsArray)
+                {
+                    tempType = tempType.GetElementType();
+                    arrayString += "[]";
+                }
 
-            return fullName ? @as.type.FullName : @as.type.Name;
+                var tempTypeName = tempType.CSharpName();
+                return tempTypeName + arrayString;
+            }
+
+            return fullName ? @as.type.CSharpFullName() : @as.type.CSharpName();
         }
 
         private static string HighlightCSharpName(this HUMType.Data.As @as, bool hideSystemObject = false, bool fullName = false)
         {
             if (@as.type == null) return "null".ConstructHighlight();
             if (@as.type == typeof(CSharp.Void)) return "void".ConstructHighlight();
-            if (@as.type.IsConstructedGenericType || @as.type.IsGenericType) return GenericDeclaration(@as.type);
+            if (@as.type.IsConstructedGenericType || @as.type.IsGenericType) return GenericDeclaration(@as.type, fullName, true);
             if (@as.type == typeof(int)) return "int".ConstructHighlight();
             if (@as.type == typeof(string)) return "string".ConstructHighlight();
             if (@as.type == typeof(float)) return "float".ConstructHighlight();
@@ -63,8 +78,22 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (@as.type.IsInterface) return @as.type.Name.InterfaceHighlight();
             if (@as.type == typeof(System.Object) && @as.type.BaseType == null) return hideSystemObject ? string.Empty : "object".ConstructHighlight();
             if (@as.type == typeof(object[])) return "object".ConstructHighlight() + "[]";
+            if (@as.type.Name.Contains("Attribute")) return fullName ? @as.type.CSharpFullName().Replace(@as.type.Name, @as.type.Name.TypeHighlight()).Replace(@as.type.Namespace, @as.type.Namespace.NamespaceHighlight()).Replace("Attribute", "") : @as.type.CSharpName().TypeHighlight().Replace("Attribute", "");
+            if (@as.type.IsArray)
+            {
+                var tempType = @as.type.GetElementType();
+                var arrayString = "[]";
+                while (tempType.IsArray)
+                {
+                    tempType = tempType.GetElementType();
+                    arrayString += "[]";
+                }
 
-            return fullName ? @as.type.FullName.Replace(@as.type.Name, @as.type.Name.TypeHighlight()) : @as.type.Name.TypeHighlight();
+                var tempTypeName = tempType.As().CSharpName();
+                return tempTypeName + arrayString;
+            }
+
+            return fullName ? @as.type.CSharpFullName().Replace(@as.type.Name, @as.type.Name.TypeHighlight()).Replace(@as.type.Namespace, @as.type.Namespace.NamespaceHighlight()) : @as.type.CSharpName().TypeHighlight();
         }
 
         /// <summary>
@@ -146,6 +175,39 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         {
             return isData.type == typeof(void) || isData.type == null;
         }
+
+        /// <summary>
+        /// Returns true if the type is Inheritable.
+        /// </summary>
+        public static bool Inheritable(this HUMType.Data.Is isData)
+        {
+            var t = isData.type;
+
+            if (t == typeof(CSharp.Void) || t == typeof(void))
+            {
+                return false;
+            }
+
+            if (t.IsSealed) return false;
+
+            if (t.IsSpecialName || t.IsCOMObject)
+            {
+                return false;
+            }
+
+            if (t.IsNested)
+            {
+                return t.IsNestedPublic && (t.IsClass || (t.IsAbstract && !t.IsSealed));
+            }
+
+            if (typeof(Delegate).IsAssignableFrom(t))
+            {
+                return false;
+            }
+
+            return (t.IsClass || (t.IsAbstract && !t.IsSealed)) && t.IsPublic;
+        }
+
 
         /// <summary>
         /// Returns true if the type is a enumerator collection type.
@@ -236,7 +298,35 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         /// <summary>
         /// Finds all types with this attribute.
         /// </summary>
-        public static Type[] Attribute<TAttribute>(this HUMType.Data.With with) where TAttribute : Attribute
+        public static Type[] Attribute<TAttribute>(this HUMType.Data.With with, Assembly _assembly = null) where TAttribute : Attribute
+        {
+            List<Type> result = new List<Type>();
+            Assembly[] assemblies = _assembly == null ? AppDomain.CurrentDomain.GetAssemblies() : new Assembly[] { _assembly };
+
+            for (int assembly = 0; assembly < assemblies.Length; assembly++)
+            {
+                Type[] types = assemblies[assembly].GetTypes();
+
+                for (int type = 0; type < types.Length; type++)
+                {
+                    if (with.types.get.type.IsAssignableFrom(types[type]))
+                    {
+                        if (types[type].IsAbstract) continue;
+                        var attribs = types[type].GetCustomAttributes(typeof(TAttribute), false);
+                        if (attribs == null || attribs.Length == 0) continue;
+                        TAttribute attrib = attribs[0] as TAttribute;
+                        attrib.Is().NotNull(() => { result.Add(types[type]); });
+                    }
+                }
+            }
+
+            return result.ToArray();
+        }
+
+        /// <summary>
+        /// Finds all types with this attribute.
+        /// </summary>
+        public static Type[] Attribute<TAttribute>(this HUMType.Data.With with, Func<TAttribute, bool> predicate) where TAttribute : Attribute
         {
             List<Type> result = new List<Type>();
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -253,7 +343,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                         var attribs = types[type].GetCustomAttributes(typeof(TAttribute), false);
                         if (attribs == null || attribs.Length == 0) continue;
                         TAttribute attrib = attribs[0] as TAttribute;
-                        attrib.Is().NotNull(() => { result.Add(types[type]); });
+                        attrib.Is().NotNull(() =>
+                        {
+                            if (predicate(attrib))
+                                result.Add(types[type]);
+                        });
                     }
                 }
             }
@@ -337,7 +431,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         }
 
         /// <summary>
-        /// Converts a value into code form. Example: a float value of '10' would be '10f'. A string would add qoutes, ect.
+        /// Converts a value into code form. Example: a float value of '10' would be '10f'. A string would add quotes, ect.
         /// </summary>
         public static string Code(this HUMValue.Data.As @as, bool isNew, bool isLiteral = false, bool highlight = true, string parameters = "", bool newLineLiteral = false)
         {
@@ -349,6 +443,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(bool)) return @as.value.ToString().ToLower();
             if (type == typeof(float)) return @as.value.ToString().Replace(",", ".") + "f";
             if (type == typeof(string)) return @"""" + @as.value.ToString() + @"""";
+            if (type == typeof(char)) return string.IsNullOrEmpty(@as.value.ToString()) ? "new Char()".StringHighlight() : $"'{@as.value}'".StringHighlight();
             if (type == typeof(UnityEngine.GameObject)) return "null";
             if (type == typeof(int) || type == typeof(uint) || type == typeof(byte) || type == typeof(long) || type == typeof(short) || type == typeof(double)) return @as.value.ToString();
             if (type.IsEnum) return type.Name + "." + @as.value.ToString();
@@ -379,6 +474,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(bool)) return @as.value.ToString().ToLower().ConstructHighlight();
             if (type == typeof(float)) return (@as.value.ToString().Replace(",", ".") + "f").NumericHighlight();
             if (type == typeof(string)) return (@"""" + @as.value.ToString() + @"""").StringHighlight();
+            if (type == typeof(char)) return (char)@as.value == char.MinValue ? "/* Cannot have a empty character */" : $"'{@as.value}'".StringHighlight();
             if (type == typeof(UnityEngine.GameObject)) return "null".ConstructHighlight();
             if (type == typeof(int) || type == typeof(uint) || type == typeof(byte) || type == typeof(long) || type == typeof(short) || type == typeof(double)) return @as.value.ToString().NumericHighlight();
             if (type.IsEnum) return type.Name.EnumHighlight() + "." + @as.value.ToString();
@@ -405,12 +501,12 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             var output = string.Empty;
             var usableFields = new List<FieldInfo>();
             var isMultiLine = fields.Length > 2;
-            if (value is IDictionary Dictionary && Dictionary.Count > 0)
+
+            // Check if the value is a dictionary and if it has more than 0 elements
+            if (value is IDictionary dictionary && dictionary.Count > 0)
             {
                 isMultiLine = true;
             }
-
-            output += (newLine ? "\n" : string.Empty) + "new ".ConstructHighlight() + (!value.GetType().IsGenericType ? value.GetType().Name.TypeHighlight() : GenericDeclaration(value.GetType())) + "()" + (isMultiLine ? "\n" + "{" + "\n" : " { ");
 
             for (int i = 0; i < fields.Length; i++)
             {
@@ -420,93 +516,118 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 }
             }
 
-            if (value.GetType().IsGenericType)
+            output += (newLine ? "\n" : string.Empty) + "new ".ConstructHighlight() + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName() : GenericDeclaration(value.GetType())) + (value.GetType().IsArray ? "" : "()");
+
+            if (isMultiLine)
             {
-                if (value is IList list)
+                output += "\n" + CodeBuilder.GetCurrentIndent() + ((value is ICollection collection && collection.Count > 0) || usableFields.Count > 0 ? "{" : string.Empty) + "\n";
+            }
+            else
+            {
+                output += (value is ICollection collection && collection.Count > 0) || usableFields.Count > 0 ? $"\n{CodeBuilder.GetCurrentIndent()}{{" : string.Empty;
+            }
+
+            if (value is IDictionary or IList)
+                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
+
+            var indent = CodeBuilder.GetCurrentIndent();
+
+            if (value is IList list)
+            {
+                int index = 0;
+                foreach (var item in list)
                 {
-                    int index = 0;
-                    foreach (var item in list)
+                    if (list.Count > 2)
                     {
-                        output += item.As().Code(true, true);
-                        if (++index != list.Count)
-                        {
-                            output += ", ";
-                        }
+                        output += "\n";
+                        output += indent + item.As().Code(true, true);
                     }
-                }
-                else if (value is IDictionary dictionary)
-                {
-                    int index = 0;
-                    foreach (DictionaryEntry entry in dictionary)
+                    else
                     {
-                        output += CodeBuilder.Indent(1) + "{ ";
-                        output += entry.Key.As().Code(true, true);
+                        output += (index == 0 ? " " : "") + item.As().Code(true, true);
+                    }
+
+                    if (++index != list.Count)
+                    {
                         output += ", ";
-                        output += entry.Value.As().Code(true, true);
-                        output += "}";
-                        if (++index != dictionary.Count)
-                        {
-                            output += ", \n";
-                        }
                     }
                 }
             }
-            else if (value is AotList || value is AotDictionary)
+            else if (value is IDictionary _dictionary)
             {
-                if (value is AotList list)
+                int index = 0;
+                foreach (DictionaryEntry entry in _dictionary)
                 {
-                    int index = 0;
-                    foreach (var item in list)
+                    string newLinestr = _dictionary.Count > 2 ? "\n" : "";
+                    output += indent + "{ ";
+                    output += entry.Key.As().Code(true, true);
+                    output += ", ";
+                    output += entry.Value.As().Code(true, true);
+                    output += " }";
+                    if (++index != _dictionary.Count)
                     {
-                        output += item.As().Code(true, true);
-                        if (++index != list.Count)
-                        {
-                            output += ", ";
-                        }
+                        output += $", {newLinestr}";
                     }
                 }
-                else if (value is AotDictionary dictionary)
+            }
+            else if (value is Array array)
+            {
+                int index = 0;
+                foreach (var item in array)
                 {
-                    int index = 0;
-                    foreach (DictionaryEntry entry in dictionary)
+                    if (array.Length > 2)
                     {
-                        output += CodeBuilder.Indent(1) + "{ ";
-                        output += entry.Key.As().Code(true, true);
+                        output += "\n";
+                        output += indent + item.As().Code(true, true);
+                    }
+                    else
+                    {
+                        output += (index == 0 ? " " : "") + item.As().Code(true, true);
+                    }
+
+                    if (++index != array.Length)
+                    {
                         output += ", ";
-                        output += entry.Value.As().Code(true, true);
-                        output += "}";
-                        if (++index != dictionary.Count)
-                        {
-                            output += ", \n";
-                        }
                     }
                 }
             }
 
+            if (isMultiLine)
+                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
             for (int i = 0; i < usableFields.Count; i++)
             {
-                output += (isMultiLine ? CodeBuilder.Indent(1) : string.Empty) + usableFields[i].Name + " = " + usableFields[i].GetValue(value).As().Code(true);
+                output += (isMultiLine ? CodeBuilder.GetCurrentIndent() : string.Empty) + usableFields[i].Name + " = " + usableFields[i].GetValue(value).As().Code(true);
                 output += i < usableFields.Count - 1 ? ", " + (isMultiLine ? "\n" : string.Empty) : string.Empty;
             }
+            if (isMultiLine)
+                CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
 
-            output += isMultiLine ? "\n" + "}" : " } ";
+            output += isMultiLine ? "\n" + (value is ICollection ? CodeBuilder.Indent(CodeBuilder.currentIndent - 1) : CodeBuilder.Indent(CodeBuilder.currentIndent)) + "}" : (value is ICollection collectionWithItems && collectionWithItems.Count > 0) || usableFields.Count > 0 ? $"\n{CodeBuilder.Indent(CodeBuilder.currentIndent - 1)}}}" : string.Empty;
 
             return output;
         }
 
-        public static string GenericDeclaration(Type type)
+
+        public static string GenericDeclaration(Type type, bool fullName = true, bool highlight = true)
         {
             var output = string.Empty;
 
             if (!type.IsConstructedGenericType && !type.IsGenericType) throw new Exception("Type is not a generic type but you are trying to declare a generic.");
-            output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight();
+            if (highlight)
+            {
+                output += (fullName ? type.Namespace.NamespaceHighlight() + "." : "") + (type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight());
+            }
+            else
+            {
+                output += (fullName ? type.Namespace + "." : "") + (type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")) : type.Name);
+            }
             output += "<";
 
             var args = type.GetGenericArguments();
 
             for (int i = 0; i < args.Length; i++)
             {
-                output += args[i].As().CSharpName();
+                output += args[i].As().CSharpName(false, false, highlight);
                 if (i < args.Length - 1) output += ", ";
             }
 
@@ -515,19 +636,26 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return output;
         }
 
-        public static string GenericDeclaration(Type type, List<Type> parameters)
+        public static string GenericDeclaration(Type type, List<Type> parameters, bool fullName = true, bool highlight = true)
         {
             var output = string.Empty;
 
-            if (!type.IsConstructedGenericType && !type.IsGenericType) return type.As().CSharpName();
-            output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight();
+            if (!type.IsConstructedGenericType && !type.IsGenericType) return type.As().CSharpName(false, false, highlight);
+            if (highlight)
+            {
+                output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight();
+            }
+            else
+            {
+                output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")) : type.Name;
+            }
 
             if (parameters.Count > 0)
             {
                 output += "<";
                 for (int i = 0; i < parameters.Count; i++)
                 {
-                    output += parameters[i].As().CSharpName();
+                    output += parameters[i].As().CSharpName(false, false, highlight);
                     if (i < parameters.Count - 1) output += ", ";
                 }
                 output += ">";
@@ -540,7 +668,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
                 for (int i = 0; i < args.Length; i++)
                 {
-                    output += args[i].As().CSharpName();
+                    output += args[i].As().CSharpName(false, false, highlight);
                     if (i < args.Length - 1) output += ", ";
                 }
 
@@ -550,19 +678,26 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return output;
         }
 
-        public static string GenericDeclaration(Type type, params Type[] parameters)
+        public static string GenericDeclaration(Type type, bool fullName = true, bool highlight = true, params Type[] parameters)
         {
             var output = string.Empty;
 
             if (!type.IsConstructedGenericType && !type.IsGenericType) return type.As().CSharpName();
-            output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight();
+            if (highlight)
+            {
+                output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight();
+            }
+            else
+            {
+                output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")) : type.Name;
+            }
 
             if (parameters.Length > 0)
             {
                 output += "<";
                 for (int i = 0; i < parameters.Length; i++)
                 {
-                    output += parameters[i].As().CSharpName();
+                    output += parameters[i].As().CSharpName(false, false, highlight);
                     if (i < parameters.Length - 1) output += ", ";
                 }
                 output += ">";
@@ -575,7 +710,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
                 for (int i = 0; i < args.Length; i++)
                 {
-                    output += args[i].As().CSharpName();
+                    output += args[i].As().CSharpName(false, false, highlight);
                     if (i < args.Length - 1) output += ", ";
                 }
 
@@ -585,5 +720,207 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return output;
         }
 
+    }
+}
+namespace Unity.VisualScripting.Community
+{
+    public static class CSharpNameUtility
+    {
+        private static readonly Dictionary<Type, string> primitives = new Dictionary<Type, string>
+        {
+            { typeof(byte), "byte" },
+            { typeof(sbyte), "sbyte" },
+            { typeof(short), "short" },
+            { typeof(ushort), "ushort" },
+            { typeof(int), "int" },
+            { typeof(uint), "uint" },
+            { typeof(long), "long" },
+            { typeof(ulong), "ulong" },
+            { typeof(float), "float" },
+            { typeof(double), "double" },
+            { typeof(decimal), "decimal" },
+            { typeof(string), "string" },
+            { typeof(char), "char" },
+            { typeof(bool), "bool" },
+            { typeof(void), "void" },
+            { typeof(object), "object" },
+        };
+
+        public static readonly Dictionary<string, string> operators = new Dictionary<string, string>
+        {
+            { "op_Addition", "+" },
+            { "op_Subtraction", "-" },
+            { "op_Multiply", "*" },
+            { "op_Division", "/" },
+            { "op_Modulus", "%" },
+            { "op_ExclusiveOr", "^" },
+            { "op_BitwiseAnd", "&" },
+            { "op_BitwiseOr", "|" },
+            { "op_LogicalAnd", "&&" },
+            { "op_LogicalOr", "||" },
+            { "op_Assign", "=" },
+            { "op_LeftShift", "<<" },
+            { "op_RightShift", ">>" },
+            { "op_Equality", "==" },
+            { "op_GreaterThan", ">" },
+            { "op_LessThan", "<" },
+            { "op_Inequality", "!=" },
+            { "op_GreaterThanOrEqual", ">=" },
+            { "op_LessThanOrEqual", "<=" },
+            { "op_MultiplicationAssignment", "*=" },
+            { "op_SubtractionAssignment", "-=" },
+            { "op_ExclusiveOrAssignment", "^=" },
+            { "op_LeftShiftAssignment", "<<=" },
+            { "op_ModulusAssignment", "%=" },
+            { "op_AdditionAssignment", "+=" },
+            { "op_BitwiseAndAssignment", "&=" },
+            { "op_BitwiseOrAssignment", "|=" },
+            { "op_Comma", "," },
+            { "op_DivisionAssignment", "/=" },
+            { "op_Decrement", "--" },
+            { "op_Increment", "++" },
+            { "op_UnaryNegation", "-" },
+            { "op_UnaryPlus", "+" },
+            { "op_OnesComplement", "~" },
+        };
+
+        private static readonly HashSet<char> illegalTypeFileNameCharacters = new HashSet<char>()
+        {
+            '<',
+            '>',
+            '?',
+            ' ',
+            ',',
+            ':',
+        };
+
+        public static string CSharpName(this MemberInfo member, ActionDirection direction)
+        {
+            if (member is MethodInfo && ((MethodInfo)member).IsOperator())
+            {
+                return operators[member.Name] + " operator";
+            }
+
+            if (member is ConstructorInfo)
+            {
+                return "new " + member.DeclaringType.CSharpName();
+            }
+
+            if ((member is FieldInfo || member is PropertyInfo) && direction != ActionDirection.Any)
+            {
+                return $"{member.Name} ({direction.ToString().ToLower()})";
+            }
+
+            return member.Name;
+        }
+
+        public static string CSharpName(this Type type, bool includeGenericParameters = true)
+        {
+            return type.CSharpName(TypeQualifier.Name, includeGenericParameters);
+        }
+
+        public static string CSharpFullName(this Type type, bool includeGenericParameters = true)
+        {
+            return type.CSharpName(TypeQualifier.Namespace, includeGenericParameters);
+        }
+
+        public static string CSharpUniqueName(this Type type, bool includeGenericParameters = true)
+        {
+            return type.CSharpName(TypeQualifier.GlobalNamespace, includeGenericParameters);
+        }
+
+        public static string CSharpFileName(this Type type, bool includeNamespace, bool includeGenericParameters = false)
+        {
+            var fileName = type.CSharpName(includeNamespace ? TypeQualifier.Namespace : TypeQualifier.Name, includeGenericParameters);
+
+            if (!includeGenericParameters && type.IsGenericType && fileName.Contains('<'))
+            {
+                fileName = fileName.Substring(0, fileName.IndexOf('<'));
+            }
+
+            fileName = fileName.ReplaceMultiple(illegalTypeFileNameCharacters, '_')
+                .Trim('_')
+                .RemoveConsecutiveCharacters('_');
+
+            return fileName;
+        }
+
+        private static string CSharpName(this Type type, TypeQualifier qualifier, bool includeGenericParameters = true)
+        {
+            if (type == null) return "";
+
+            if (primitives.ContainsKey(type))
+            {
+                return primitives[type];
+            }
+            else if (type.IsGenericParameter)
+            {
+                return includeGenericParameters ? type.Name : "";
+            }
+            else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                var nonNullable = Nullable.GetUnderlyingType(type);
+
+                var underlyingName = nonNullable.CSharpName(qualifier, includeGenericParameters);
+
+                return underlyingName + "?";
+            }
+            else if (type.IsArray)
+            {
+                var tempType = type.GetElementType();
+                var arrayString = "[]";
+                while (tempType.IsArray)
+                {
+                    tempType = tempType.GetElementType();
+                    arrayString += "[]";
+                }
+
+                var tempTypeName = tempType.CSharpName(TypeQualifier.Name);
+                return tempTypeName + arrayString;
+            }
+            else
+            {
+                var name = type.Name;
+
+                if (type.IsGenericType && name.Contains('`'))
+                {
+                    name = name.Substring(0, name.IndexOf('`'));
+                }
+
+                var genericArguments = (IEnumerable<Type>)type.GetGenericArguments();
+
+                if (type.IsNested)
+                {
+                    name = type.DeclaringType.CSharpName(qualifier, includeGenericParameters) + "." + name;
+
+                    if (type.DeclaringType.IsGenericType)
+                    {
+                        genericArguments = genericArguments.Skip(type.DeclaringType.GetGenericArguments().Length);
+                    }
+                }
+
+                if (!type.IsNested)
+                {
+                    if ((qualifier == TypeQualifier.Namespace || qualifier == TypeQualifier.GlobalNamespace) && type.Namespace != null)
+                    {
+                        name = type.Namespace + "." + name;
+                    }
+
+                    if (qualifier == TypeQualifier.GlobalNamespace)
+                    {
+                        name = "global::" + name;
+                    }
+                }
+
+                if (genericArguments.Any())
+                {
+                    name += "<";
+                    name += string.Join(includeGenericParameters ? ", " : ",", genericArguments.Select(t => t.CSharpName(qualifier, includeGenericParameters)).ToArray());
+                    name += ">";
+                }
+
+                return name;
+            }
+        }
     }
 }

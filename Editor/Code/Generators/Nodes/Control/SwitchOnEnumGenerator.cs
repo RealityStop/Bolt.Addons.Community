@@ -22,8 +22,8 @@ namespace Unity.VisualScripting.Community
                 var isLiteral = Unit.@enum.hasValidConnection && Unit.@enum.connection.source.unit is Literal literal;
                 var localName = string.Empty;
                 if (isLiteral) localName = data.AddLocalNameInScope("@enum");
-                var newLiteral = isLiteral ? CodeUtility.MakeSelectable(((Unit)Unit.@enum.connection.source.unit), CodeBuilder.Indent(indent) + "var ".ConstructHighlight() + localName + " = " + ((Unit)Unit.@enum.connection.source.unit).GenerateValue(Unit.@enum.connection.source)) : string.Empty;
-                var @enum = Unit.@enum.hasValidConnection ? CodeUtility.MakeSelectable(((Unit)Unit.@enum.connection.source.unit), isLiteral ? localName : ((Unit)Unit.@enum.connection.source.unit).GenerateValue(Unit.@enum.connection.source)) : base.GenerateControl(input, data, indent);
+                var newLiteral = isLiteral ? CodeUtility.MakeSelectable(((Unit)Unit.@enum.connection.source.unit), CodeBuilder.Indent(indent) + "var ".ConstructHighlight() + localName + " = " + ((Unit)Unit.@enum.connection.source.unit).GenerateValue(Unit.@enum.connection.source, data)) : string.Empty;
+                var @enum = Unit.@enum.hasValidConnection ? CodeUtility.MakeSelectable(((Unit)Unit.@enum.connection.source.unit), isLiteral ? localName : ((Unit)Unit.@enum.connection.source.unit).GenerateValue(Unit.@enum.connection.source, data)) : base.GenerateControl(input, data, indent);
 
                 if (isLiteral) output += CodeUtility.MakeSelectable(Unit, newLiteral) + "\n";
                 output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "switch".ConstructHighlight() + " (" + @enum + ")");
@@ -61,17 +61,17 @@ namespace Unity.VisualScripting.Community
         }
 
 
-        public override string GenerateValue(ValueInput input)
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input == Unit.@enum)
             {
                 if (Unit.@enum.hasAnyConnection)
                 {
-                    return (Unit.@enum.connection.source.unit as Unit).GenerateValue(Unit.@enum.connection.source);
+                    return (Unit.@enum.connection.source.unit as Unit).GenerateValue(Unit.@enum.connection.source, data);
                 }
             }
 
-            return base.GenerateValue(input);
+            return base.GenerateValue(input, data);
         }
     }
 }

@@ -20,7 +20,8 @@ namespace Unity.VisualScripting.Community
         public Color EnumColor = new Color(255, 255, 187, 255);
 
         public Color InterfaceColor = new Color(221, 255, 187, 255);
-
+        [HideInInspector]
+        public bool isInitalized = false;
         public bool ShowSubgraphComment = true;
 
         public void Initalize()
@@ -38,6 +39,7 @@ namespace Unity.VisualScripting.Community
             EnumColor = new Color(255, 255, 187, 255);
 
             InterfaceColor = new Color(221, 255, 187, 255);
+            isInitalized = true;
         }
     }
 }

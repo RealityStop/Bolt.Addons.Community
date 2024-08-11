@@ -22,7 +22,7 @@ namespace Unity.VisualScripting.Community
             return base.GenerateControl(input, data, indent);
         }
     
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             if (Unit.target != null)
             {
@@ -47,18 +47,18 @@ namespace Unity.VisualScripting.Community
     
                     if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                     {
-                        outputCode = new ValueCode($"{GenerateValue(Unit.target)}{GetComponent(Unit.target)}.{type}");
+                        outputCode = new ValueCode($"{GenerateValue(Unit.target, data)}{GetComponent(Unit.target)}.{type}");
                     }
                     else
                     {
-                        outputCode = new ValueCode($"{GenerateValue(Unit.target)}.{type}");
+                        outputCode = new ValueCode($"{GenerateValue(Unit.target, data)}.{type}");
                     }
     
                     return outputCode;
                 }
                 else
                 {
-                    return $"{GenerateValue(Unit.target)}.{Unit.member.name}";
+                    return $"{GenerateValue(Unit.target, data)}.{Unit.member.name}";
                 }
             }
             else
@@ -68,7 +68,7 @@ namespace Unity.VisualScripting.Community
         }
     
     
-        public override string GenerateValue(ValueInput input)
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (Unit.target != null)
             {
@@ -78,9 +78,9 @@ namespace Unity.VisualScripting.Community
                     {
                         if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), typeof(GameObject), ShouldCast(input));
+                            return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source, data), typeof(GameObject), ShouldCast(input));
                         }
-                        return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), input.type, ShouldCast(input));
+                        return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source, data), input.type, ShouldCast(input));
                     }
                     else if (Unit.target.hasDefaultValue)
                     {
@@ -103,7 +103,7 @@ namespace Unity.VisualScripting.Community
                 }
             }
     
-            return base.GenerateValue(input);
+            return base.GenerateValue(input, data);
         }
     
         string GetComponent(ValueInput valueInput)
@@ -116,7 +116,7 @@ namespace Unity.VisualScripting.Community
                 }
                 else
                 {
-                    return valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent" ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : ".";
+                    return valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent" ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : string.Empty;
                 }
             }
             else

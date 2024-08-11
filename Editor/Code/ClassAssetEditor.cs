@@ -7,6 +7,7 @@ using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityObject = UnityEngine.Object;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Unity.VisualScripting.Community
 {
@@ -16,8 +17,6 @@ namespace Unity.VisualScripting.Community
         private Metadata inheritsTypeMeta;
         private Type[] inheritTypes;
         private Rect lastRect;
-
-        private Type selectedType;
 
         protected override void OnEnable()
         {
@@ -53,39 +52,9 @@ namespace Unity.VisualScripting.Community
             return inheritableTypes.ToArray();
         }
 
-        bool TypeHasSpecialName(Type t)
+        private bool TypeHasSpecialName(Type t)
         {
-            return t.Name.StartsWith('<') || t.Name.StartsWith('$') ||
-                t.DisplayName().StartsWith('<') || t.DisplayName().StartsWith('$');
-        }
-
-        public void RecordEditedObject(string name)
-        {
-            RecordObject(Target, name);
-        }
-
-        private void RecordObject(UnityObject uo, string name)
-        {
-            if (uo == null)
-            {
-                return;
-            }
-
-            Undo.RegisterCompleteObjectUndo(uo, name);
-
-
-            if (!uo.IsSceneBound())
-            {
-                EditorUtility.SetDirty(uo);
-            }
-
-            if (uo.IsPrefabInstance())
-            {
-                EditorApplication.delayCall += () =>
-                {
-                    PrefabUtility.RecordPrefabInstancePropertyModifications(uo);
-                };
-            }
+            return t.IsSpecialName || t.IsDefined(typeof(CompilerGeneratedAttribute));
         }
 
         protected override void OnExtendedOptionsGUI()

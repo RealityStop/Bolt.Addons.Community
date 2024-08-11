@@ -1,7 +1,8 @@
 using UnityEngine;
 using Unity.VisualScripting;
 
-
+namespace Unity.VisualScripting.Community
+{
     [UnitCategory("Community\\ObjectPooling")]
     [UnitTitle("Return Object")]
     public class ReturnObjectNode : Unit
@@ -44,4 +45,4 @@ using Unity.VisualScripting;
             return Exit;
         }
     }
-
+}

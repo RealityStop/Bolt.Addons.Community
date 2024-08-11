@@ -90,16 +90,7 @@ namespace Unity.VisualScripting.Community
 
         public void DrawLayout()
         {
-            var path = "Assets/Unity.VisualScripting.Community.Generated/";
-            HUMIO.Ensure(path).Path();
-            CSharpPreviewSettings Settings = AssetDatabase.LoadAssetAtPath<CSharpPreviewSettings>(path + "CSharpPreviewSettings.asset");
-            CodeBuilder.VariableColor = Settings.VariableColor.ToHexString();
-            CodeBuilder.TypeColor = Settings.TypeColor.ToHexString();
-            CodeBuilder.ConstructColor = Settings.ConstructColor.ToHexString();
-            CodeBuilder.EnumColor = Settings.EnumColor.ToHexString();
-            CodeBuilder.InterfaceColor = Settings.InterfaceColor.ToHexString();
-            CodeBuilder.StringColor = Settings.StringColor.ToHexString();
-            CodeBuilder.NumericColor = Settings.NumericColor.ToHexString();
+            LoadSettings();
             if (ShowCodeWindow)
                 HandleZoomEvents();
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
@@ -403,15 +394,7 @@ namespace Unity.VisualScripting.Community
             Settings.InterfaceColor = InterfaceColor;
             Settings.TypeColor = TypeColor;
             Settings.ShowSubgraphComment = ShowSubgraphComment;
-            EditorPrefs.SetString("VariableColor", VariableColor.ToHexString());
-            EditorPrefs.SetString("StringColor", StringColor.ToHexString());
-            EditorPrefs.SetString("NumericColor", NumericColor.ToHexString());
-            EditorPrefs.SetString("ConstructColor", ConstructColor.ToHexString());
-            EditorPrefs.SetString("TypeColor", TypeColor.ToHexString());
-            EditorPrefs.SetString("EnumColor", EnumColor.ToHexString());
-            EditorPrefs.SetString("InterfaceColor", InterfaceColor.ToHexString());
-            EditorPrefs.SetBool("ShowSubgraphComments", ShowSubgraphComment);
-            AssetDatabase.SaveAssets();
+            Settings.SaveAndDirty();
         }
 
         public void LoadSettings()
@@ -419,14 +402,14 @@ namespace Unity.VisualScripting.Community
             var path = "Assets/Unity.VisualScripting.Community.Generated/";
             HUMIO.Ensure(path).Path();
             CSharpPreviewSettings Settings = AssetDatabase.LoadAssetAtPath<CSharpPreviewSettings>(path + "CSharpPreviewSettings.asset");
-            if (EditorPrefs.HasKey("VariableColor")) UnityEngine.ColorUtility.TryParseHtmlString("#" + EditorPrefs.GetString("VariableColor"), out Settings.VariableColor);
-            if (EditorPrefs.HasKey("StringColor")) UnityEngine.ColorUtility.TryParseHtmlString("#" + EditorPrefs.GetString("StringColor"), out Settings.StringColor);
-            if (EditorPrefs.HasKey("NumericColor")) UnityEngine.ColorUtility.TryParseHtmlString("#" + EditorPrefs.GetString("NumericColor"), out Settings.NumericColor);
-            if (EditorPrefs.HasKey("ConstructColor")) UnityEngine.ColorUtility.TryParseHtmlString("#" + EditorPrefs.GetString("ConstructColor"), out Settings.ConstructColor);
-            if (EditorPrefs.HasKey("TypeColor")) UnityEngine.ColorUtility.TryParseHtmlString("#" + EditorPrefs.GetString("TypeColor"), out Settings.TypeColor);
-            if (EditorPrefs.HasKey("EnumColor")) UnityEngine.ColorUtility.TryParseHtmlString("#" + EditorPrefs.GetString("EnumColor"), out Settings.EnumColor);
-            if (EditorPrefs.HasKey("InterfaceColor")) UnityEngine.ColorUtility.TryParseHtmlString("#" + EditorPrefs.GetString("InterfaceColor"), out Settings.InterfaceColor);
-            ShowSubgraphComment = EditorPrefs.GetBool("ShowSubgraphComments", true);
+            CodeBuilder.VariableColor = Settings.VariableColor.ToHexString();
+            CodeBuilder.StringColor = Settings.StringColor.ToHexString();
+            CodeBuilder.NumericColor = Settings.NumericColor.ToHexString();
+            CodeBuilder.ConstructColor = Settings.ConstructColor.ToHexString();
+            CodeBuilder.TypeColor = Settings.TypeColor.ToHexString();
+            CodeBuilder.EnumColor = Settings.EnumColor.ToHexString();
+            CodeBuilder.InterfaceColor = Settings.InterfaceColor.ToHexString();
+            ShowSubgraphComment = Settings.ShowSubgraphComment;
         }
     }
 }

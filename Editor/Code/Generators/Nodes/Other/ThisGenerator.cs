@@ -18,7 +18,7 @@ public sealed class ThisGenerator : NodeGenerator<This>
         return base.GenerateControl(input, data, indent);
     }
 
-    public override string GenerateValue(ValueOutput output)
+    public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
         return "gameObject".VariableHighlight();
     }

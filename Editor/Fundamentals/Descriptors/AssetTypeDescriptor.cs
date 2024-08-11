@@ -1,11 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
-
 namespace Unity.VisualScripting.Community
 {
-    
     [Descriptor(typeof(AssetType))]
     public class AssetTypeDescriptor : UnitDescriptor<AssetType>
     {
@@ -15,6 +9,10 @@ namespace Unity.VisualScripting.Community
     
         protected override string DefinedSubtitle()
         {
+            if(target.asset == null)
+            {
+                return "Type";
+            }
             return target.asset.title;
         }
     }

@@ -1,4 +1,3 @@
-using Bolt.Addons.Community.Fundamentals;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using UnityEditor;

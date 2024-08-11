@@ -19,6 +19,10 @@ namespace Unity.VisualScripting.Community
                 AssetDatabase.CreateAsset(settings, path + "CSharpPreviewSettings.asset");
                 settings.Initalize();
             }
+            else if (!settings.isInitalized)
+            {
+                settings.Initalize();
+            }
 
             CSharpPreview.NumericColor = settings.NumericColor;
             CSharpPreview.EnumColor = settings.EnumColor;

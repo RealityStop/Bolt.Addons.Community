@@ -9,9 +9,7 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    
-    [FuzzyOption(typeof(BaseMethodCall))]
-    public class BaseMethodUnitOption : UnitOption<BaseMethodCall>
+    internal sealed class BaseMethodUnitOption : UnitOption<BaseMethodCall>
     {
         public BaseMethodUnitOption() : base() { }
     
@@ -72,7 +70,7 @@ namespace Unity.VisualScripting.Community
     
             base.FillFromUnit();
         }
-    
+
         public override void Deserialize(UnitOptionRow row)
         {
             base.Deserialize(row);
@@ -120,5 +118,4 @@ namespace Unity.VisualScripting.Community
             return "base." + unit.member.info.CSharpName(direction) + parameters + (unit.methodType == MethodType.Invoke ? " (Invoke) " : " (Return) ");
         }
     }
-    
 }

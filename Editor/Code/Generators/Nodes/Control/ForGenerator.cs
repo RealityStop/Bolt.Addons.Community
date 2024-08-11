@@ -7,9 +7,8 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 [NodeGenerator(typeof(Unity.VisualScripting.For))]
-public sealed class ForGenerator : NodeGenerator<Unity.VisualScripting.For>
+public sealed class ForGenerator : LocalVariableGenerator<Unity.VisualScripting.For>
 {
-    private string variable = "i";
     public ForGenerator(Unity.VisualScripting.For unit) : base(unit)
     {
     }
@@ -20,13 +19,14 @@ public sealed class ForGenerator : NodeGenerator<Unity.VisualScripting.For>
 
         if (input == Unit.enter)
         {
-            var initialization = GenerateValue(Unit.firstIndex);
-            var condition = GenerateValue(Unit.lastIndex);
-            var iterator = GenerateValue(Unit.step);
+            var initialization = GenerateValue(Unit.firstIndex, data);
+            var condition = GenerateValue(Unit.lastIndex, data);
+            var iterator = GenerateValue(Unit.step, data);
 
-            variable = data.AddLocalNameInScope("i");
+            variableName = data.AddLocalNameInScope("i", typeof(int));
+            variableType = typeof(int);
             
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"for".ControlHighlight() + "(int".ConstructHighlight() + $" {variable} ".VariableHighlight() + $"= {initialization}; " + variable.VariableHighlight() + $" < {condition}; " + variable.VariableHighlight() + $" += {iterator})");
+            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"for".ControlHighlight() + "(int".ConstructHighlight() + $" {variableName} ".VariableHighlight() + $"= {initialization}; " + variableName.VariableHighlight() + $" < {condition}; " + variableName.VariableHighlight() + $" += {iterator})");
             output += "\n";
             output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
             output += "\n";
@@ -38,6 +38,7 @@ public sealed class ForGenerator : NodeGenerator<Unity.VisualScripting.For>
                 data.ExitScope();
             }
 
+            output += "\n";
             output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
         }
 
@@ -51,20 +52,20 @@ public sealed class ForGenerator : NodeGenerator<Unity.VisualScripting.For>
         return output;
     }
 
-    public override string GenerateValue(ValueOutput output)
+    public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
-        return variable.VariableHighlight();
+        return variableName.VariableHighlight();
     }
 
-    public override string GenerateValue(ValueInput input)
+    public override string GenerateValue(ValueInput input, ControlGenerationData data)
     {
         if (input.hasValidConnection)
         {
-            return CodeUtility.MakeSelectable(input.connection.source.unit as Unit, new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), input.type, ShouldCast(input)));
+            return new ValueCode(GetNextValueUnit(input, data, true), input.type, ShouldCast(input, false, data));
         }
         else
         {
-            return Unit.defaultValues[input.key].ToString();
+            return Unit.defaultValues[input.key].As().Code(false);
         }
     }
 }

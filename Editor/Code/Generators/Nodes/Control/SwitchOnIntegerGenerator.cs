@@ -22,8 +22,8 @@ namespace Unity.VisualScripting.Community
                 var isLiteral = Unit.selector.hasValidConnection && Unit.selector.connection.source.unit as Literal != null;
                 var localName = string.Empty;
                 if (isLiteral) localName = data.AddLocalNameInScope("@int");
-                var newLiteral = isLiteral ? CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit.selector.connection.source.unit as Unit, "var ".ConstructHighlight() + $"{localName} = " + ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source) + ";")) : string.Empty;
-                var value = Unit.selector.hasValidConnection ? (isLiteral ? localName : ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source)) : base.GenerateControl(input, data, indent);
+                var newLiteral = isLiteral ? CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit.selector.connection.source.unit as Unit, "var ".ConstructHighlight() + $"{localName} = " + ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source, data) + ";")) : string.Empty;
+                var value = Unit.selector.hasValidConnection ? (isLiteral ? localName : ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source, data)) : base.GenerateControl(input, data, indent);
 
                 if (isLiteral) output += newLiteral + "\n";
                 output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "switch".ConstructHighlight() + $" ({CodeUtility.MakeSelectable(Unit.selector.connection.source.unit as Unit, value)})");
@@ -83,17 +83,17 @@ namespace Unity.VisualScripting.Community
             return base.GenerateControl(input, data, indent);
         }
 
-        public override string GenerateValue(ValueInput input)
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input == Unit.selector)
             {
                 if (Unit.selector.hasAnyConnection)
                 {
-                    return (Unit.selector.connection.source.unit as Unit).GenerateValue(Unit.selector.connection.source);
+                    return (Unit.selector.connection.source.unit as Unit).GenerateValue(Unit.selector.connection.source, data);
                 }
             }
 
-            return base.GenerateValue(input);
+            return base.GenerateValue(input, data);
         }
     }
 }

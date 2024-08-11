@@ -13,8 +13,8 @@ public class AsUnitGenerator : NodeGenerator<AsUnit>
     {
     }
 
-    public override string GenerateValue(ValueOutput output)
+    public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
-        return "(" + GenerateValue(Unit.Value) + " as ".ConstructHighlight() + Unit.AsType.As().CSharpName(false, true, true) + ")";
+        return "(" + GenerateValue(Unit.Value, data) + " as ".ConstructHighlight() + Unit.AsType.As().CSharpName(false, true, true) + ")";
     }
 }

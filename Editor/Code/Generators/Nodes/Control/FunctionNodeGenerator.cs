@@ -15,7 +15,7 @@ namespace Unity.VisualScripting.Community
             return CodeUtility.MakeSelectable(Unit, NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit).GenerateControl(destination, data, indent));
         }
 
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             return output.key.LegalMemberName().VariableHighlight();
         }

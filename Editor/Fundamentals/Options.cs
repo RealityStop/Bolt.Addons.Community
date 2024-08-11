@@ -2,6 +2,8 @@
 using System.Linq;
 using System;
 using UnityEditor;
+using System.Reflection;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community.Variables.Editor
 {
@@ -96,7 +98,7 @@ namespace Unity.VisualScripting.Community.Variables.Editor
         {
             var classAsset = GetClassAsset(reference.macro);
             var inheritedType = classAsset.GetInheritedType();
-            if (classAsset != null)
+            if (classAsset != null && inheritedType != null)
             {
                 yield return new AssetTypeOption(new AssetType(classAsset));
                 foreach (var method in classAsset.methods)
@@ -164,7 +166,6 @@ namespace Unity.VisualScripting.Community.Variables.Editor
                 }
             }
         }
-
 
         private static ClassAsset GetClassAsset(IMacro macro)
         {

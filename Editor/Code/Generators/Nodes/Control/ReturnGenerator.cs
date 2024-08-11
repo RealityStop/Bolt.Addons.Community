@@ -18,7 +18,7 @@ public class ReturnGenerator : NodeGenerator<EventReturn>
         if(input == Unit.enter)
         {
             data.hasReturned = true;
-            output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, CodeBuilder.Return(GenerateValue(Unit.value)));
+            output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, CodeBuilder.Return(GenerateValue(Unit.value, data)));
             return output;
         }
         return base.GenerateControl(input, data, indent);

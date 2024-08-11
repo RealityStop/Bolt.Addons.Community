@@ -21,13 +21,13 @@ public sealed class BetterIfGenerator : NodeGenerator<Unity.VisualScripting.Comm
         if (input == Unit.In)
         {
 
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "if".ConstructHighlight() + " (" + GenerateValue(Unit.Condition) + ")");
+            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "if".ConstructHighlight() + " (" + GenerateValue(Unit.Condition, data) + ")");
             output += "\n";
             output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
             output += "\n";
             output += Unit.True.hasAnyConnection ? (Unit.True.connection.destination.unit as Unit).GenerateControl(Unit.True.connection.destination, data, indent + 1) : string.Empty;
+            output += "\n";
             output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
-
             if (Unit.False.hasAnyConnection)
             {
                 output += "\n";
@@ -36,7 +36,7 @@ public sealed class BetterIfGenerator : NodeGenerator<Unity.VisualScripting.Comm
                 output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
                 output += "\n";
                 output += Unit.False.hasAnyConnection ? (Unit.False.connection.destination.unit as Unit).GenerateControl(Unit.False.connection.destination, data, indent + 1) : string.Empty;
-
+                output += "\n";
                 output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
             }
 
@@ -50,15 +50,15 @@ public sealed class BetterIfGenerator : NodeGenerator<Unity.VisualScripting.Comm
         return output;
     }
 
-    public override string GenerateValue(ValueInput input)
+    public override string GenerateValue(ValueInput input, ControlGenerationData data)
     {
         if (input == Unit.Condition)
         {
             if (Unit.Condition.hasAnyConnection)
             {
-                return CodeUtility.MakeSelectable(input.connection.source.unit as Unit , new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), input.type, ShouldCast(input)));
+                return CodeUtility.MakeSelectable(input.connection.source.unit as Unit , new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source, data), input.type, ShouldCast(input)));
             }
         }
-        return base.GenerateValue(input);
+        return base.GenerateValue(input, data);
     }
 }

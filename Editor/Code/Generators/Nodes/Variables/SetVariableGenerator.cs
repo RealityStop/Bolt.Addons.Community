@@ -40,7 +40,7 @@ namespace Unity.VisualScripting.Community
                     case VariableKind.Graph:
                         return "/* Graph Variables do not support connected names */";
                     case VariableKind.Object:
-                        kind = $".Object({GenerateValue(Unit.@object)})";
+                        kind = $".Object({GenerateValue(Unit.@object, data)}, data)";
                         break;
                     case VariableKind.Scene:
                         kind = $".Scene({"SceneManager".TypeHighlight()}.GetActiveScene())";
@@ -52,7 +52,7 @@ namespace Unity.VisualScripting.Community
                         kind = ".Saved";
                         break;
                 }
-                output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, $"{variables}{kind}.Set({GenerateValue(Unit.name)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input) : "null".ConstructHighlight())});") + (Unit.assigned.hasValidConnection ? "\n" : string.Empty);
+                output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, $"{variables}{kind}.Set({GenerateValue(Unit.name, data)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())});") + "\n";
                 output += GetNextUnit(Unit.assigned, data, indent);
                 return output;
             }
@@ -62,17 +62,18 @@ namespace Unity.VisualScripting.Community
                 switch (Unit.kind)
                 {
                     case VariableKind.Scene:
-                    return CodeUtility.MakeSelectable(Unit, $"{variables}.Scene({"SceneManager".TypeHighlight()}.GetActiveScene()).Set({GenerateValue(Unit.name)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input) : "null".ConstructHighlight())});") + (Unit.assigned.hasValidConnection ? "\n" : string.Empty);
+                    return CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"{variables}.Scene({"SceneManager".TypeHighlight()}.GetActiveScene()).Set({GenerateValue(Unit.name, data)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())});") + "\n";
                     case VariableKind.Application:
-                        return CodeUtility.MakeSelectable(Unit, $"{variables}.Application.Set({GenerateValue(Unit.name)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input) : "null".ConstructHighlight())});") + (Unit.assigned.hasValidConnection ? "\n" : string.Empty);
+                        return CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"{variables}.Application.Set({GenerateValue(Unit.name, data)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())});") + "\n";
                     case VariableKind.Saved:
-                        return CodeUtility.MakeSelectable(Unit, $"{variables}.Saved.Set({GenerateValue(Unit.name)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input) : "null".ConstructHighlight())});") + (Unit.assigned.hasValidConnection ? "\n" : string.Empty);
+                        return CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"{variables}.Saved.Set({GenerateValue(Unit.name, data)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())});") + "\n";
                 }
-                var name = Unit.defaultValues[Unit.name.key] as string;
-                if (data.ContainsNameInAnyScope(name))
+                var name = data.GetVariableName(Unit.defaultValues[Unit.name.key] as string);
+                if (data.ContainsNameInAnyScope(name) || data.ContainsNameInAnyScope(Unit.defaultValues[Unit.name.key] as string))
                 {
                     variableName = name;
-                    output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, $"{name.VariableHighlight()} = {GenerateValue(Unit.input)};") + (Unit.assigned.hasValidConnection ? "\n" : string.Empty);
+                    data.expectedType = data.GetVariableType(name);
+                    output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, $"{name.VariableHighlight()} = {GenerateValue(Unit.input, data)};") + "\n";
                     output += GetNextUnit(Unit.assigned, data, indent);
                     return output;
                 }
@@ -80,18 +81,19 @@ namespace Unity.VisualScripting.Community
                 {
                     var inputType = Unit.input.hasValidConnection ? Unit.input.connection.source.type.As().CSharpName(false, true, true) : typeof(object).As().CSharpName(false, true);
                     variableType = Unit.input.hasValidConnection ? Unit.input.connection.source.type : typeof(object);
-                    var newName = data.AddLocalNameInScope(name);
+                    var newName = data.AddLocalNameInScope(name, variableType);
                     variableName = newName;
-                    output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, $"{inputType} {newName.VariableHighlight()} = {(Unit.input.hasValidConnection ? GenerateValue(Unit.input) : "null".ConstructHighlight())};") + (Unit.assigned.hasValidConnection ? "\n" : string.Empty);
+                    data.expectedType = variableType;
+                    output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, $"{inputType} {newName.VariableHighlight()} = {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())};") + "\n";
                     output += GetNextUnit(Unit.assigned, data, indent);
                     return output;
                 }
             }
         }
     
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            if(!Unit.assign.hasValidConnection) return $"/* ControlInput {Unit.assign.key} requires connection on {Unit.GetType()} with variable name ({GenerateValue(Unit.name)}) */";
+            if(!Unit.assign.hasValidConnection) return $"/* ControlInput {Unit.assign.key} requires connection on {Unit.GetType()} with variable name ({GenerateValue(Unit.name, data)}) */";
             if(!Unit.name.hasValidConnection)
             {
                 return variableName.VariableHighlight();
@@ -99,26 +101,13 @@ namespace Unity.VisualScripting.Community
             else return "";
         }
     
-        public override string GenerateValue(ValueInput input)
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input == Unit.@object && !input.hasValidConnection)
             {
                 return "gameObject".VariableHighlight();
             }
-    
-            if (input.hasValidConnection)
-            {
-                return GetNextValueUnit(input);
-            }
-            else if (input.hasDefaultValue)
-            {
-                return unit.defaultValues[input.key].As().Code(true, true, true, "", false);
-            }
-            else
-            {
-                return $"/* \"{input.key} Requires Input\" */";
-            }
+            return base.GenerateValue(input, data);
         }
     }
-    
 }

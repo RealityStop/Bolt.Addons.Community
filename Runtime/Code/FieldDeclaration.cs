@@ -29,7 +29,9 @@ namespace Unity.VisualScripting.Community
 
         public bool isProperty;
         public bool get = true;
+        public AccessModifier getterScope;
         public bool set = true;
+        public AccessModifier setterScope;
 
         public List<AttributeDeclaration> attributes = new List<AttributeDeclaration>();
 

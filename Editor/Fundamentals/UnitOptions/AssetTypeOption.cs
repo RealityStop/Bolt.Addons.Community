@@ -1,18 +1,14 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
-
 namespace Unity.VisualScripting.Community
 {
-    
     [FuzzyOption(typeof(AssetType))]
-    public class AssetTypeOption : UnitOption<AssetType>
+    internal sealed class AssetTypeOption : UnitOption<AssetType>
     {
+        public ClassAsset classAsset;
         public AssetTypeOption(AssetType unit) : base(unit)
         {
+            classAsset = unit.asset;
         }
-    
+
         public override IUnit InstantiateUnit()
         {
             return new AssetType(unit.asset);

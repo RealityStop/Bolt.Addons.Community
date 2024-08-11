@@ -2,8 +2,9 @@ using System;
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.TriggerChannelEvent")]
     [UnitCategory("Events\\Community")]
     [UnitTitle("TriggerChannelEvent")]
     [TypeIcon(typeof(CustomEvent))]

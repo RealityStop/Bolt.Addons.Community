@@ -9,27 +9,27 @@ namespace Unity.VisualScripting.Community
         {
         }
 
-        public override string GenerateValue(ValueInput input)
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input == Unit.input)
             {
                 if (Unit.input.hasAnyConnection)
                 {
-                    return (Unit.input.connection.source.unit as Unit).GenerateValue(Unit.input.connection.source);
+                    return (Unit.input.connection.source.unit as Unit).GenerateValue(Unit.input.connection.source, data);
                 }
             }
 
-            return base.GenerateValue(input);
+            return base.GenerateValue(input, data);
         }
 
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             if (output == Unit.output)
             {
-                return "!(" + GenerateValue(Unit.input) + ")";
+                return "!(" + GenerateValue(Unit.input, data) + ")";
             }
 
-            return base.GenerateValue(output);
+            return base.GenerateValue(output, data);
         }
     }
 }

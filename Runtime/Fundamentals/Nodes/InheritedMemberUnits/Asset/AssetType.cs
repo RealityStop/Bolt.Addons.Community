@@ -1,17 +1,9 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
-using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    
-    [UnitCategory("CSharp")]
     [TypeIcon(typeof(Type))]
-    public class AssetType : Unit
+    public class AssetType : AssetMemberUnit
     {
         [Obsolete(Serialization.ConstructorWarning)]
         public AssetType(){}

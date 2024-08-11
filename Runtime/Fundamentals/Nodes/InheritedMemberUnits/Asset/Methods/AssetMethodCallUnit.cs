@@ -7,8 +7,7 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    [UnitCategory("CSharp/Asset/Methods")]
-    public class AssetMethodCallUnit : Unit
+    public class AssetMethodCallUnit : AssetMemberUnit
     {
         public string name;
         public MethodDeclaration method;

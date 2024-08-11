@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    [UnitCategory("CSharp/InheritedMembers/Base/Properties/Get")]
     [UnitSurtitle("Base")]
     public class BasePropertyGetterUnit : InheritedMemberUnit
     {

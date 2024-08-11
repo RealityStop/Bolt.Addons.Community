@@ -5,7 +5,7 @@ namespace Unity.VisualScripting.Community
     [UnitShortTitle("Branch")]
     [UnitTitle("Branch (Params)")]
     [UnitCategory("Community\\Control")]
-    [TypeIcon(typeof(Unity.VisualScripting.If))]
+    [TypeIcon(typeof(VisualScripting.If))]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchAnd")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.BranchParams")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.BranchParams")]

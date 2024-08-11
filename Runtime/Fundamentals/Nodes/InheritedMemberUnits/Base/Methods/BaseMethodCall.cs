@@ -2,14 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Mathematics;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    [UnitCategory("CSharp/InheritedMembers/Base/Methods")]
     [UnitSurtitle("Base")]
     public class BaseMethodCall : InheritedMemberUnit
     {

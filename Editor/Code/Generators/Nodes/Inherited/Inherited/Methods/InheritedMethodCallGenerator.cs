@@ -25,12 +25,12 @@ namespace Unity.VisualScripting.Community
             var output = string.Empty;
             controlGenerationData = data;
             var thisKeyword = Unit.showThisKeyword ? "this".ConstructHighlight() + "." : string.Empty;
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + thisKeyword + Unit.member.name + $"({GenerateArguments()});") + (Unit.exit.hasValidConnection ? "\n" : string.Empty);
+            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + thisKeyword + Unit.member.name + $"({GenerateArguments(data)});") + (Unit.exit.hasValidConnection ? "\n" : string.Empty);
             output += GetNextUnit(Unit.exit, data, indent);
             return output;
         }
     
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             if (Unit.enter != null && !Unit.enter.hasValidConnection && Unit.OutputParameters.Count > 0)
             {
@@ -44,11 +44,11 @@ namespace Unity.VisualScripting.Community
                 return transformedKey.VariableHighlight();
             }
             var thisKeyword = Unit.showThisKeyword ? "this".ConstructHighlight() + "." : string.Empty;
-            return CodeUtility.MakeSelectable(Unit, thisKeyword + Unit.member.name + $"({GenerateArguments()})");
+            return CodeUtility.MakeSelectable(Unit, thisKeyword + Unit.member.name + $"({GenerateArguments(data)})");
         }
     
     
-        private string GenerateArguments()
+        private string GenerateArguments(ControlGenerationData data)
         {
             if (controlGenerationData != null && Unit.member.isMethod)
             {
@@ -71,7 +71,7 @@ namespace Unity.VisualScripting.Community
                             output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */");
                             continue;
                         }
-                        output.Add("ref ".ConstructHighlight() + GenerateValue(Unit.InputParameters[index]));
+                        output.Add("ref ".ConstructHighlight() + GenerateValue(Unit.InputParameters[index], data));
                         outputNames.Add(Unit.OutputParameters[index], "&" + name);
                     }
                     else if (parameter.IsDefined(typeof(ParamArrayAttribute), false) && !Unit.InputParameters[index].hasValidConnection)
@@ -80,7 +80,7 @@ namespace Unity.VisualScripting.Community
                     }
                     else
                     {
-                        output.Add(GenerateValue(Unit.InputParameters.Values.First(input => input.key == "%" + parameter.Name)));
+                        output.Add(GenerateValue(Unit.InputParameters.Values.First(input => input.key == "%" + parameter.Name), data));
                     }
                     index++;
                 }
@@ -98,7 +98,7 @@ namespace Unity.VisualScripting.Community
                     }
                     else
                     {
-                        output.Add(GenerateValue(Unit.InputParameters[index]));
+                        output.Add(GenerateValue(Unit.InputParameters[index], data));
                     }
                     index++;
                 }
@@ -106,7 +106,7 @@ namespace Unity.VisualScripting.Community
             }
             else
             {
-                List<string> output = Unit.valueInputs.Select(input => GenerateValue(input)).ToList();
+                List<string> output = Unit.valueInputs.Select(input => GenerateValue(input, data)).ToList();
                 return string.Join(", ", output);
             }
         }

@@ -2,8 +2,9 @@ using UnityEngine;
 using Unity.VisualScripting;
 using System.Collections.Generic;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.TriggerXTimes")]
     [UnitTitle("LimitedTrigger")]
     [UnitCategory("Community\\Control")]
     [TypeIcon(typeof(Once))]

@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community
         {
         }
     
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             return "null".ConstructHighlight();
         }

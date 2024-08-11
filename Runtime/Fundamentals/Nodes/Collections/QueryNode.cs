@@ -22,52 +22,31 @@ namespace Unity.VisualScripting.Community
         [Serialize]
         public QueryOperation operation;
 
-        /// <summary>
-        /// The Control Input entered when we want to begin the query
-        /// </summary>
         [DoNotSerialize]
         [PortLabelHidden]
         public ControlInput enter;
 
-        /// <summary>
-        /// An optional control flow for helping to determine the condition of the current loops item in relation to the results.
-        /// </summary>
         [DoNotSerialize]
         public ControlOutput body;
 
-        /// <summary>
-        /// The Control Output for when the query is complete.
-        /// </summary>
         [DoNotSerialize]
         public ControlOutput exit;
 
-        /// <summary>
-        /// The ValueInput for the collection/list we will be querying through.
-        /// </summary>
         [DoNotSerialize]
         public ValueInput collection;
 
-        /// <summary>
-        /// The ValueInput for the condition to check for each item in the query.
-        /// </summary>
         [DoNotSerialize]
         public ValueInput condition;
 
-        /// <summary>
-        /// The ValueInput for the condition to check for each item in the query.
-        /// </summary>
         [DoNotSerialize]
         public ValueInput key;
 
-        /// <summary>
-        /// The ValueOutput for the current item of the query.
-        /// </summary>
+        [DoNotSerialize]
+        public ValueInput value;
+
         [DoNotSerialize]
         public ValueOutput item;
 
-        /// <summary>
-        /// The ValueOutput of the resulting collection after querying.
-        /// </summary>
         [DoNotSerialize]
         public ValueOutput result;
 
@@ -77,7 +56,7 @@ namespace Unity.VisualScripting.Community
         private bool outCondition;
         [Obsolete]
         private string serializedOperation;
-         
+
         protected override void Definition()
         {
             enter = ControlInput("enter", (flow) =>
@@ -86,37 +65,38 @@ namespace Unity.VisualScripting.Community
                 return exit;
             });
 
-            collection = ValueInput<IEnumerable<object>>("collection");
 
             var showItem = true;
             var showBody = true;
 
+            collection = ValueInput(operation == QueryOperation.Sum ? typeof(IEnumerable<float>) : typeof(IEnumerable<object>), "collection");
             switch (operation)
             {
                 case QueryOperation.Any:
+                case QueryOperation.Count:
+                case QueryOperation.Sum:
                     showItem = false;
                     showBody = false;
                     break;
                 case QueryOperation.AnyWithCondition:
-                    condition = ValueInput<bool>("condition");
-                    break;
                 case QueryOperation.First:
-                    condition = ValueInput<bool>("condition");
-                    break;
                 case QueryOperation.FirstOrDefault:
+                case QueryOperation.Single:
+                case QueryOperation.Last:
+                case QueryOperation.LastOrDefault:
+                case QueryOperation.Where:
                     condition = ValueInput<bool>("condition");
                     break;
                 case QueryOperation.OrderBy:
-                    key = ValueInput<object>("key");
-                    break;
                 case QueryOperation.OrderByDescending:
                     key = ValueInput<object>("key");
                     break;
-                case QueryOperation.Single:
-                    condition = ValueInput<bool>("condition");
+                case QueryOperation.Select:
+                    value = ValueInput<object>("value");
                     break;
-                case QueryOperation.Where:
-                    condition = ValueInput<bool>("condition");
+                case QueryOperation.Skip:
+                case QueryOperation.Take:
+                    value = ValueInput<int>("value");
                     break;
             }
 
@@ -127,34 +107,33 @@ namespace Unity.VisualScripting.Community
             switch (operation)
             {
                 case QueryOperation.Any:
-                    result = ValueOutput<bool>("result", (flow) => { return outCondition; });
-                    break;
                 case QueryOperation.AnyWithCondition:
+                case QueryOperation.Count:
                     result = ValueOutput<bool>("result", (flow) => { return outCondition; });
                     break;
                 case QueryOperation.First:
-                    result = ValueOutput<object>("result", (flow) => { return single; });
-                    break;
                 case QueryOperation.FirstOrDefault:
+                case QueryOperation.Single:
+                case QueryOperation.Last:
+                case QueryOperation.LastOrDefault:
                     result = ValueOutput<object>("result", (flow) => { return single; });
                     break;
                 case QueryOperation.OrderBy:
-                    result = ValueOutput("result", (flow) => { return output; });
-                    break;
                 case QueryOperation.OrderByDescending:
-                    result = ValueOutput("result", (flow) => { return output; });
-                    break;
-                case QueryOperation.Single:
-                    result = ValueOutput<object>("result", (flow) => { return single; });
-                    break;
                 case QueryOperation.Where:
+                case QueryOperation.Select:
+                case QueryOperation.Skip:
+                case QueryOperation.Take:
                     result = ValueOutput("result", (flow) => { return output; });
+                    break;
+                case QueryOperation.Sum:
+                    result = ValueOutput("result", (flow) => { return output.Cast<float>().Sum(); });
                     break;
             }
 
             Succession(enter, exit);
 
-            if(showBody) Succession(enter, body);
+            if (showBody) Succession(enter, body);
 
             if (showItem) Assignment(enter, item);
 
@@ -163,27 +142,27 @@ namespace Unity.VisualScripting.Community
             switch (operation)
             {
                 case QueryOperation.Any:
+                case QueryOperation.Count:
                     break;
                 case QueryOperation.AnyWithCondition:
-                    Requirement(condition, enter);
-                    break;
                 case QueryOperation.First:
-                    Requirement(condition, enter);
-                    break;
                 case QueryOperation.FirstOrDefault:
+                case QueryOperation.Single:
+                case QueryOperation.Last:
+                case QueryOperation.LastOrDefault:
+                case QueryOperation.Where:
                     Requirement(condition, enter);
                     break;
                 case QueryOperation.OrderBy:
-                    Requirement(key, enter);
-                    break;
                 case QueryOperation.OrderByDescending:
                     Requirement(key, enter);
                     break;
-                case QueryOperation.Single:
-                    Requirement(condition, enter);
+                case QueryOperation.Select:
+                    Requirement(value, enter);
                     break;
-                case QueryOperation.Where:
-                    Requirement(condition, enter);
+                case QueryOperation.Skip:
+                case QueryOperation.Take:
+                    Requirement(value, enter);
                     break;
             }
         }
@@ -265,6 +244,52 @@ namespace Unity.VisualScripting.Community
                         _flow.Invoke(body);
                         return _flow.GetValue<bool>(condition);
                     });
+                    break;
+
+                case QueryOperation.Last:
+                    single = flow.GetValue<IEnumerable>(collection).Cast<object>().Last<object>((item) =>
+                    {
+                        current = item;
+                        _flow = Flow.New(flow.stack.AsReference());
+                        _flow.Invoke(body);
+                        return _flow.GetValue<bool>(condition);
+                    });
+                    break;
+
+                case QueryOperation.LastOrDefault:
+                    single = flow.GetValue<IEnumerable>(collection).Cast<object>().LastOrDefault<object>((item) =>
+                    {
+                        current = item;
+                        _flow = Flow.New(flow.stack.AsReference());
+                        _flow.Invoke(body);
+                        return _flow.GetValue<bool>(condition);
+                    });
+                    break;
+
+                case QueryOperation.Select:
+                    output = flow.GetValue<IEnumerable>(collection).Cast<object>().Select((item) =>
+                    {
+                        current = item;
+                        _flow = Flow.New(flow.stack.AsReference());
+                        _flow.Invoke(body);
+                        return _flow.GetValue<object>(value);
+                    });
+                    break;
+
+                case QueryOperation.Skip:
+                    output = flow.GetValue<IEnumerable>(collection).Cast<object>().Skip(flow.GetValue<int>(value));
+                    break;
+
+                case QueryOperation.Take:
+                    output = flow.GetValue<IEnumerable>(collection).Cast<object>().Take(flow.GetValue<int>(value));
+                    break;
+
+                case QueryOperation.Count:
+                    outCondition = flow.GetValue<IEnumerable>(collection).Cast<object>().Count() > 0;
+                    break;
+
+                case QueryOperation.Sum:
+                    output = flow.GetValue<IEnumerable>(collection).Cast<object>();
                     break;
             }
         }

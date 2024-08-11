@@ -3,6 +3,10 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Unity.VisualScripting;
+using System.Reflection;
+using System;
+using UnityEngine;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -16,19 +20,26 @@ namespace Unity.VisualScripting.Community
         public string NameSpace = "";
 
         public string UniqueID = "";
+        public string variableName = "";
 
         #region Subgraphs
         public List<ControlOutput> connectedGraphOutputs = new List<ControlOutput>();
         public List<ValueInput> connectedValueInputs = new List<ValueInput>();
         #endregion
 
-        public NodeGenerator(Unit unit) { this.unit = unit; }
+        public Recursion recursion;
 
-        public virtual string GenerateValue(ValueInput input)
+        public NodeGenerator(Unit unit)
+        {
+            this.unit = unit;
+            recursion = Recursion.New(10);
+        }
+
+        public virtual string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input.hasValidConnection)
             {
-                return GetNextValueUnit(input);
+                return GetNextValueUnit(input, data);
             }
             else if (input.hasDefaultValue)
             {
@@ -40,37 +51,139 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        public virtual string GenerateValue(ValueOutput output) { return $"/* Port '{output.key}' of '{output.unit.GetType().Name}' Missing Generator. */"; }
+        public virtual string GenerateValue(ValueOutput output, ControlGenerationData data) { return $"/* Port '{output.key}' of '{output.unit.GetType().Name}' Missing Generator. */"; }
 
         public virtual string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             return CodeUtility.MakeSelectable(unit, CodeBuilder.Indent(indent) + $"/* Port '{input.key}' of '{input.unit.GetType().Name}' Missing Generator. */");
         }
 
-        public bool ShouldCast(ValueInput input, bool ignoreInputType = false)
-        {
-            if (input.hasValidConnection)
-            {
-                if(!ignoreInputType)
-                {
-                    return input.connection.source.type != input.type && input.connection.source.type == typeof(object) && input.type != typeof(object);
-                }
-                else
-                {
-                    return input.connection.source.type == typeof(object);
-                }
-            }
-
-            return false;
-        }
 
         public string GetNextUnit(ControlOutput controlOutput, ControlGenerationData data, int indent)
         {
             return controlOutput.hasValidConnection ? (controlOutput.connection.destination.unit as Unit).GenerateControl(controlOutput.connection.destination, data, indent) : string.Empty;
         }
-        public string GetNextValueUnit(ValueInput valueInput, bool MakeSelectable = true)
+        public string GetNextValueUnit(ValueInput valueInput, ControlGenerationData data, bool MakeSelectable = true)
         {
-            return valueInput.hasValidConnection ? MakeSelectable ? CodeUtility.MakeSelectable(valueInput.connection.source.unit as Unit, (valueInput.connection.source.unit as Unit).GenerateValue(valueInput.connection.source)) : (valueInput.connection.source.unit as Unit).GenerateValue(valueInput.connection.source) : string.Empty;
+            return valueInput.hasValidConnection ? MakeSelectable ? CodeUtility.MakeSelectable(valueInput.connection.source.unit as Unit, (valueInput.connection.source.unit as Unit).GenerateValue(valueInput.connection.source, data)) : (valueInput.connection.source.unit as Unit).GenerateValue(valueInput.connection.source, data) : string.Empty;
+        }
+
+        public bool ShouldCast(ValueInput input, bool ignoreInputType = false, ControlGenerationData data = null)
+        {
+            if (input.hasValidConnection)
+            {
+                Type sourceType = GetSourceType(input, data);
+                Type targetType = input.type;
+
+                if (sourceType == null || targetType == null)
+                {
+                    return false;
+                }
+
+                if (!IsCastingRequired(sourceType, targetType, ignoreInputType))
+                {
+                    return false;
+                }
+
+                // Check if casting is possible
+                return IsCastingPossible(sourceType, targetType);
+            }
+
+            return false;
+        }
+
+        public Type GetSourceType(ValueInput valueInput, ControlGenerationData data)
+        {
+            if(data != null && valueInput.hasValidConnection && data.TryGetVariableType(GetSingleDecorator(valueInput.connection.source.unit as Unit, valueInput.connection.source.unit as Unit).variableName, out Type type))
+            {
+                return type;
+            }
+
+            if(valueInput.hasValidConnection)
+            {
+                return valueInput.connection.source.type;
+            }
+            return null;
+        }
+
+        private bool IsCastingRequired(Type sourceType, Type targetType, bool ignoreInputType)
+        {
+            if (!ignoreInputType && targetType == typeof(object))
+            {
+                return false;
+            }
+
+            if (sourceType == targetType)
+            {
+                return false;
+            }
+
+            if (targetType.IsAssignableFrom(sourceType))
+            {
+                return false;
+            }
+
+            if(targetType == typeof(Transform) && sourceType == typeof(GameObject))
+            {
+                return true;
+            }
+
+            return true;
+        }
+
+        private bool IsCastingPossible(Type sourceType, Type targetType)
+        {
+            if (targetType.IsAssignableFrom(sourceType))
+            {
+                return true;
+            }
+
+            if (targetType.IsInterface && targetType.IsAssignableFrom(sourceType))
+            {
+                return true;
+            }
+
+            if (IsNumericConversionCompatible(targetType, sourceType))
+            {
+                return true;
+            }
+
+            if (IsNullableConversionCompatible(sourceType, targetType))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool IsNumericConversionCompatible(Type targetType, Type sourceType)
+        {
+            Type[] numericTypes = { typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal) };
+
+            if (Array.Exists(numericTypes, t => t == targetType) &&
+                Array.Exists(numericTypes, t => t == sourceType))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool IsNullableConversionCompatible(Type sourceType, Type targetType)
+        {
+            if (Nullable.GetUnderlyingType(targetType) != null)
+            {
+                Type underlyingTargetType = Nullable.GetUnderlyingType(targetType);
+                return underlyingTargetType.IsAssignableFrom(sourceType);
+            }
+
+            if (Nullable.GetUnderlyingType(sourceType) != null)
+            {
+                Type underlyingSourceType = Nullable.GetUnderlyingType(sourceType);
+                return targetType.IsAssignableFrom(underlyingSourceType);
+            }
+
+            return false;
         }
     }
 

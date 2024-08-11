@@ -1,8 +1,9 @@
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.CopyToClipboardUnit")]
     [UnitCategory("Community\\Utility")]
     [UnitTitle("Copy To Clipboard")]
     [TypeIcon(typeof(GUIUtility))]

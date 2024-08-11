@@ -7,7 +7,7 @@ namespace Unity.VisualScripting.Community
 {
     [UnitTitle("If")]
     [UnitCategory("Community/Control")]
-    [TypeIcon(typeof(Unity.VisualScripting.If))]
+    [TypeIcon(typeof(VisualScripting.If))]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.If")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.BetterIf")]
     public class BetterIf : Unit

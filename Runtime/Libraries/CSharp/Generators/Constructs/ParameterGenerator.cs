@@ -17,6 +17,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public bool isParameters;
         public bool isLiteral;
         public ParameterModifier modifier;
+        public object defaultValue;
 
         public List<AttributeDeclaration> attributes;
 
@@ -26,7 +27,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             var _attributes = attributes != null && attributes.Count > 0 ? string.Join(" ", attributes.Select(attr => $"[{attr.GetAttributeType().As().CSharpName()}]")) + " " : string.Empty;
             var param = isParameters ? "params ".ConstructHighlight() : string.Empty;
             var _modifier = modifier != ParameterModifier.None ? modifier.AsString().ConstructHighlight() + " " : string.Empty;
-            var parameter = _attributes + (useAssemblyQualifiedType ? param + _modifier + assemblyQualifiedType + " " + name.VariableHighlight() : param + _modifier + type.As().CSharpName() + " " + name.LegalMemberName().VariableHighlight());
+            var _default = isLiteral ? " = " + defaultValue.As().Code(true, true) : "";
+            var parameter = _attributes + (useAssemblyQualifiedType ? param + _modifier + assemblyQualifiedType + " " + name.VariableHighlight() : param + _modifier + type.As().CSharpName() + " " + name.LegalMemberName().VariableHighlight()) + _default;
             return parameter;
         }
 
@@ -35,26 +37,28 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         }
 
-        public static ParameterGenerator Parameter(string name, Type type, ParameterModifier modifier, bool isLiteral = false, bool isParameters = false)
+        public static ParameterGenerator Parameter(string name, Type type, ParameterModifier modifier, bool isLiteral = false, bool isParameters = false, object defaultValue = null)
         {
             var parameter = new ParameterGenerator();
             parameter.name = name;
             parameter.type = type;
             parameter.modifier = modifier;
             parameter.isLiteral = isLiteral;
+            parameter.defaultValue = defaultValue;
             if (modifier == ParameterModifier.None)
                 parameter.isParameters = isParameters;
             parameter.useAssemblyQualifiedType = false;
             return parameter;
         }
 
-        public static ParameterGenerator Parameter(string name, Type type, ParameterModifier modifier, List<AttributeDeclaration> attributes, bool isLiteral = false, bool isParameters = false)
+        public static ParameterGenerator Parameter(string name, Type type, ParameterModifier modifier, List<AttributeDeclaration> attributes, bool isLiteral = false, bool isParameters = false, object defaultValue = null)
         {
             var parameter = new ParameterGenerator();
             parameter.name = name;
             parameter.type = type;
             parameter.modifier = modifier;
             parameter.isLiteral = isLiteral;
+            parameter.defaultValue = defaultValue;
             if (modifier == ParameterModifier.None)
                 parameter.isParameters = isParameters;
             parameter.useAssemblyQualifiedType = false;
@@ -62,7 +66,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return parameter;
         }
 
-        public static ParameterGenerator Parameter(string name, string assemblyQualifiedType, ParameterModifier modifier, bool isLiteral = false, bool isParameters = false)
+        public static ParameterGenerator Parameter(string name, string assemblyQualifiedType, ParameterModifier modifier, bool isLiteral = false, bool isParameters = false, object defaultValue = null)
         {
             var parameter = new ParameterGenerator();
             parameter.name = name;
@@ -70,6 +74,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             parameter.useAssemblyQualifiedType = true;
             parameter.modifier = modifier;
             parameter.isLiteral = isLiteral;
+            parameter.defaultValue = defaultValue;
             if (modifier == ParameterModifier.None)
                 parameter.isParameters = isParameters;
             return parameter;

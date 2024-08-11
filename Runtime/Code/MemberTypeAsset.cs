@@ -47,6 +47,7 @@ namespace Unity.VisualScripting.Community
         public bool methodsOpened;
         public bool attributesOpened;
         public bool requiredInfoOpened;
+        public bool overridableMembersInfoOpened;
 #endif
     }
 }

@@ -2,7 +2,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals.ObjectPooling
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Events/Community/ObjectPooling")]
     [UnitTitle("OnReturned")]

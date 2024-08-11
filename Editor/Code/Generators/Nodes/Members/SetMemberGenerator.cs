@@ -23,38 +23,38 @@ namespace Unity.VisualScripting.Community
             {
                 var output = string.Empty;
                 var memberName = Unit.member.name;
-                var inputValue = GenerateValue(Unit.input);
+                var inputValue = GenerateValue(Unit.input, data);
     
                 if (Unit.target != null)
                 {
-                    var targetValue = GenerateValue(Unit.target);
+                    var targetValue = GenerateValue(Unit.target, data);
     
-                    output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, $"{targetValue}.{memberName} = {inputValue};");
+                    output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, $"{targetValue}.{memberName} = {inputValue};\n");
                 }
                 else
                 {
-                    output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + $".{memberName} = {inputValue};");
+                    output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + $".{memberName} = {inputValue};\n");
                 }
                 output += GetNextUnit(Unit.assigned, data, indent);
     
                 return output;
             }
     
-            return null;
+            return base.GenerateControl(input, data, indent);
         }
     
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return new ValueCode($"{GenerateValue(Unit.target)}", Unit.target.type, ShouldCast(Unit.target)) + new ValueCode($".{Unit.member.name}");
+            return new ValueCode($"{GenerateValue(Unit.target, data)}", Unit.target.type, ShouldCast(Unit.target)) + new ValueCode($".{Unit.member.name}");
         }
     
-        public override string GenerateValue(ValueInput input)
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input != Unit.target)
             {
                 if (input.hasValidConnection)
                 {
-                    return GetNextValueUnit(input);
+                    return GetNextValueUnit(input, data);
                 }
                 else if (input.hasDefaultValue)
                 {
@@ -71,9 +71,9 @@ namespace Unity.VisualScripting.Community
                 {
                     if (input.type.IsSubclassOf(typeof(Component)) || input.type == typeof(GameObject))
                     {
-                        return new ValueCode(GetNextValueUnit(input), typeof(GameObject), ShouldCast(input)) + new ValueCode($"{GetComponent(Unit.target)}");
+                        return new ValueCode(GetNextValueUnit(input, data), typeof(GameObject), ShouldCast(input)) + new ValueCode($"{GetComponent(Unit.target)}");
                     }
-                    return GetNextValueUnit(input);
+                    return GetNextValueUnit(input, data);
                 }
                 else
                 {
@@ -100,13 +100,13 @@ namespace Unity.VisualScripting.Community
         {
             if (valueInput.hasValidConnection)
             {
-                if (valueInput.type == valueInput.connection.source.type && valueInput.connection.source.unit is MemberUnit or InheritedMemberUnit or AssetFieldUnit or AssetMethodCallUnit)
+                if (valueInput.type == valueInput.connection.source.type && valueInput.connection.source.unit is MemberUnit or CodeAssetUnit)
                 {
                     return "";
                 }
                 else
                 {
-                    return valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent" ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : ".";
+                    return valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent" ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : string.Empty;
                 }
             }
             else

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
 [NodeGenerator(typeof(Sequence))]
@@ -18,7 +19,7 @@ public class SequenceGenerator : NodeGenerator<Sequence>
         {
             if(controlOutput.hasValidConnection)
             {
-                output += CodeUtility.MakeSelectable(Unit, GetNextUnit(controlOutput, data, indent)) + "\n";
+                output += CodeUtility.MakeSelectable(Unit, data.hasBroke || data.hasReturned ? GetNextUnit(controlOutput, data, indent).RemoveHighlights().RemoveMarkdown().NamespaceHighlight() : GetNextUnit(controlOutput, data, indent));
             }
         }
         return output;
