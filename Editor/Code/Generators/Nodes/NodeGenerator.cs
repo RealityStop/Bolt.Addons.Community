@@ -85,7 +85,6 @@ namespace Unity.VisualScripting.Community
                     return false;
                 }
 
-                // Check if casting is possible
                 return IsCastingPossible(sourceType, targetType);
             }
 
@@ -94,12 +93,17 @@ namespace Unity.VisualScripting.Community
 
         public Type GetSourceType(ValueInput valueInput, ControlGenerationData data)
         {
-            if(data != null && valueInput.hasValidConnection && data.TryGetVariableType(GetSingleDecorator(valueInput.connection.source.unit as Unit, valueInput.connection.source.unit as Unit).variableName, out Type type))
+            if (data != null && valueInput.hasValidConnection && data.TryGetVariableType(GetSingleDecorator(valueInput.connection.source.unit as Unit, valueInput.connection.source.unit as Unit).variableName, out Type type))
             {
                 return type;
             }
 
-            if(valueInput.hasValidConnection)
+            if (GetSingleDecorator(valueInput.connection.source.unit as Unit, valueInput.connection.source.unit as Unit) is LocalVariableGenerator<GetVariable> getVariable && getVariable.variableType != null)
+            {
+                return getVariable.variableType;
+            }
+
+            if (valueInput.hasValidConnection)
             {
                 return valueInput.connection.source.type;
             }
@@ -108,27 +112,28 @@ namespace Unity.VisualScripting.Community
 
         private bool IsCastingRequired(Type sourceType, Type targetType, bool ignoreInputType)
         {
+            bool isRequired = true;
             if (!ignoreInputType && targetType == typeof(object))
             {
-                return false;
+                isRequired = false;
             }
 
             if (sourceType == targetType)
             {
-                return false;
+                isRequired = false;
             }
 
             if (targetType.IsAssignableFrom(sourceType))
             {
-                return false;
+                isRequired = false;
             }
 
-            if(targetType == typeof(Transform) && sourceType == typeof(GameObject))
+            if (sourceType == typeof(object) && targetType != typeof(object))
             {
-                return true;
+                isRequired = true;
             }
 
-            return true;
+            return isRequired;
         }
 
         private bool IsCastingPossible(Type sourceType, Type targetType)
@@ -199,14 +204,25 @@ public static class CodeUtility
 {
     private const string UniqueFormat = "[CommunityAddonsCodeSelectable({0})]{1}[CommunityAddonsCodeSelectableEnd({0})]";
 
+    // Cached regex patterns for performance
+    private static readonly Dictionary<string, Regex> HighlightCodeRegexCache = new();
+    private static readonly Regex RemoveAllTagsRegex = new(@"\[CommunityAddonsCodeSelectable([^\]]*)\](.*?)(\[CommunityAddonsCodeSelectableEnd\([^\]]*\)\])", RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly Regex RemoveStartTagsRegex = new(@"\[CommunityAddonsCodeSelectable([^\]]*)\](.*?)", RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly Regex RemoveHighlightsRegex = new(@"<b class='highlight'>(.*?)<\/b>", RegexOptions.Compiled | RegexOptions.Singleline);
+
     public static string HighlightCode(string code, string unitId)
     {
-        var pattern = $@"\[CommunityAddonsCodeSelectable\({unitId}\)\](.*?)(\[CommunityAddonsCodeSelectableEnd\({unitId}\)\])";
+        if (!HighlightCodeRegexCache.TryGetValue(unitId, out var regex))
+        {
+            var pattern = $@"\[CommunityAddonsCodeSelectable\({unitId}\)\](.*?)(\[CommunityAddonsCodeSelectableEnd\({unitId}\)\])";
+            regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.Singleline);
+            HighlightCodeRegexCache[unitId] = regex;
+        }
 
-        var highlightedCode = Regex.Replace(code, pattern, "<b class='highlight'>$1</b>", RegexOptions.Singleline);
+        var highlightedCode = regex.Replace(code, "<b class='highlight'>$1</b>");
 
         // Removing the end tag after highlighting
-        highlightedCode = Regex.Replace(highlightedCode, @"\[CommunityAddonsCodeSelectableEnd\(" + Regex.Escape(unitId) + @"\)\]", "");
+        highlightedCode = Regex.Replace(highlightedCode, @"\[CommunityAddonsCodeSelectableEnd\(" + Regex.Escape(unitId) + @"\)\]", "", RegexOptions.Compiled);
 
         return highlightedCode;
     }
@@ -218,10 +234,8 @@ public static class CodeUtility
 
     public static string RemoveAllSelectableTags(string multilineCode)
     {
-        var pattern = @"\[CommunityAddonsCodeSelectable([^\]]*)\](.*?)(\[CommunityAddonsCodeSelectableEnd\([^\]]*\)\])";
-        var pattern2 = @"\[CommunityAddonsCodeSelectable([^\]]*)\](.*?)";
-        var strippedCode = Regex.Replace(multilineCode, pattern, "$2", RegexOptions.Singleline);
-        strippedCode = Regex.Replace(strippedCode, pattern2, "");
+        var strippedCode = RemoveAllTagsRegex.Replace(multilineCode, "$2");
+        strippedCode = RemoveStartTagsRegex.Replace(strippedCode, "");
         return strippedCode;
     }
 
@@ -233,8 +247,7 @@ public static class CodeUtility
 
     public static string RemoveCustomHighlights(string highlightedCode)
     {
-        var pattern = @"<b class='highlight'>(.*?)<\/b>";
-        var cleanedCode = Regex.Replace(highlightedCode, pattern, "$1", RegexOptions.Singleline);
+        var cleanedCode = RemoveHighlightsRegex.Replace(highlightedCode, "$1");
         return cleanedCode;
     }
 }

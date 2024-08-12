@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community
             }
             else if (input.hasDefaultValue)
             {
-                if (data.expectedType == typeof(int))
+                if (data.GetExpectedType() == typeof(int))
                 {
                     return int.Parse(unit.defaultValues[input.key].ToString()).As().Code(true, true, true, "", false);
                 }

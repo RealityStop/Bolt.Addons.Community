@@ -16,9 +16,9 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            if (data.expectedType != null && GetExpectedType(data.expectedType) != null)
+            if (data.GetExpectedType() != null && GetExpectedType(data.GetExpectedType()) != null)
             {
-                return "CSharpUtility".TypeHighlight() + $".MergeLists<{GetExpectedType(data.expectedType).As().CSharpName(false, true)}>({string.Join(", ", Unit.multiInputs.Select(input => GenerateValue(input, data)))})";
+                return "CSharpUtility".TypeHighlight() + $".MergeLists<{GetExpectedType(data.GetExpectedType()).As().CSharpName(false, true)}>({string.Join(", ", Unit.multiInputs.Select(input => GenerateValue(input, data)))})";
             }
             else
                 return "CSharpUtility".TypeHighlight() + $".MergeLists({string.Join(", ", Unit.multiInputs.Select(input => GenerateValue(input, data)))})";

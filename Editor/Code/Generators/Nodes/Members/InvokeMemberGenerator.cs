@@ -54,11 +54,11 @@ namespace Unity.VisualScripting.Community
                     {
                         if (Unit.target.hasValidConnection && Unit.target.type != Unit.target.connection.source.type && Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            _output += new ValueCode(new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target) + "." + Unit.member.name + $"({GenerateArguments(data)})"));
+                            _output += new ValueCode(new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target, data) + "." + Unit.member.name + $"({GenerateArguments(data)})"));
                         }
                         else if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            _output += new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target) + "." + Unit.member.name + $"({GenerateArguments(data)})", typeof(GameObject), ShouldCast(Unit.target, false, data));
+                            _output += new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target, data) + "." + Unit.member.name + $"({GenerateArguments(data)})", typeof(GameObject), ShouldCast(Unit.target, false, data));
                         }
                         else
                         {
@@ -86,7 +86,7 @@ namespace Unity.VisualScripting.Community
             return base.GenerateValue(output, data);
         }
 
-        string GetComponent(ValueInput valueInput)
+        string GetComponent(ValueInput valueInput, ControlGenerationData data)
         {
             if (valueInput.hasValidConnection)
             {
@@ -96,7 +96,7 @@ namespace Unity.VisualScripting.Community
                 }
                 else
                 {
-                    return valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent" ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : string.Empty;
+                    return (valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent") || GetSourceType(valueInput, data) == typeof(GameObject) ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : string.Empty;
                 }
             }
             else
@@ -130,11 +130,11 @@ namespace Unity.VisualScripting.Community
                         }
                         else if (Unit.target.hasValidConnection && Unit.target.type != Unit.target.connection.source.type && Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine(new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target) + "." + Unit.member.name + $"({GenerateArguments(data)})", typeof(GameObject), ShouldCast(Unit.target))).GetCode(true));
+                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine(new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target, data) + "." + Unit.member.name + $"({GenerateArguments(data)})", typeof(GameObject), ShouldCast(Unit.target))).GetCode(true));
                         }
                         else if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{GenerateValue(Unit.target, data)}{GetComponent(Unit.target)}.{Unit.member.name}({GenerateArguments(data)})").GetCode(true));
+                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{GenerateValue(Unit.target, data)}{GetComponent(Unit.target, data)}.{Unit.member.name}({GenerateArguments(data)})").GetCode(true));
                         }
                         else
                         {

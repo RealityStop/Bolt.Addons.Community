@@ -10,70 +10,97 @@ namespace Unity.VisualScripting.Community
     [NodeGenerator(typeof(GetVariable))]
     public class GetVariableGenerator : LocalVariableGenerator<GetVariable>
     {
-        public GetVariableGenerator(Unit unit) : base(unit)
-        {
-        }
+        public GetVariableGenerator(Unit unit) : base(unit) { }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            if (Unit.kind == VariableKind.Scene)
-            {
-                NameSpace = "UnityEngine.SceneManagement";
-            }
-            else
-            {
-                NameSpace = string.Empty;
-            }
+            SetNamespaceBasedOnVariableKind();
 
             if (Unit.name.hasValidConnection || (Unit.@object != null && Unit.@object.hasValidConnection))
             {
-                var variables = typeof(VisualScripting.Variables).As().CSharpName(true, true);
-                var kind = string.Empty;
-                var type = string.Empty;
-                switch (Unit.kind)
-                {
-                    case VariableKind.Flow:
-                        return "/* Flow Variables are not supported */";
-                    case VariableKind.Graph:
-                        return "/* Graph Variables do not support connected names */";
-                    case VariableKind.Object:
-                        kind = $".Object({GenerateValue(Unit.@object, data)})";
-                        break;
-                    case VariableKind.Scene:
-                        kind = $".Scene({"SceneManager".TypeHighlight()}.GetActiveScene())";
-                        break;
-                    case VariableKind.Application:
-                        kind = "." + "Application".VariableHighlight();
-                        break;
-                    case VariableKind.Saved:
-                        kind = "." + "Saved".VariableHighlight();
-                        break;
-                }
-
-                return $"{variables}{kind}.Get({GenerateValue(Unit.name, data)})";
+                return GenerateConnectedVariableCode(data);
             }
             else
             {
-                var name = Unit.defaultValues[Unit.name.key] as string;
-
-                var variables = typeof(VisualScripting.Variables).As().CSharpName(true, true);
-                switch (Unit.kind)
-                {
-                    case VariableKind.Scene:
-                        var type = VisualScripting.Variables.Scene(SceneManager.GetActiveScene()).IsDefined(name) && VisualScripting.Variables.Scene(SceneManager.GetActiveScene()).Get(name) != null ? "<" + Type.GetType(VisualScripting.Variables.Scene(SceneManager.GetActiveScene()).GetDeclaration(name).typeHandle.Identification).As().CSharpName(false, true) + ">" : string.Empty;
-                        return $"{variables}.Scene({"SceneManager".TypeHighlight()}.GetActiveScene()).Get{type}({GenerateValue(Unit.name, data)})";
-                    case VariableKind.Application:
-                        var _type = VisualScripting.Variables.Application.IsDefined(name) && VisualScripting.Variables.Application.Get(name) != null ? "<" + Type.GetType(VisualScripting.Variables.Application.GetDeclaration(name).typeHandle.Identification).As().CSharpName(false, true) + ">" : string.Empty;
-                        return $"{variables}.Application.Get{_type}({GenerateValue(Unit.name, data)})";
-                    case VariableKind.Saved:
-                        var __type = VisualScripting.Variables.Saved.IsDefined(name) && VisualScripting.Variables.Saved.Get(name) != null ? "<" + Type.GetType(VisualScripting.Variables.Saved.GetDeclaration(name).typeHandle.Identification).As().CSharpName(false, true) + ">" : string.Empty;
-                        return $"{variables}.Saved.Get{__type}({GenerateValue(Unit.name, data)})";
-                }
-                return data.GetVariableName(name).VariableHighlight();
-
+                return GenerateDisconnectedVariableCode(data);
             }
         }
 
+        private void SetNamespaceBasedOnVariableKind()
+        {
+            NameSpace = Unit.kind == VariableKind.Scene ? "UnityEngine.SceneManagement" : string.Empty;
+        }
+
+        private string GenerateConnectedVariableCode(ControlGenerationData data)
+        {
+            var variables = typeof(VisualScripting.Variables).As().CSharpName(true, true);
+            var kindSuffix = GetKindSuffix(data);
+
+            return $"{variables}{kindSuffix}.Get({GenerateValue(Unit.name, data)})";
+        }
+
+        private string GetKindSuffix(ControlGenerationData data)
+        {
+            return Unit.kind switch
+            {
+                VariableKind.Object => $".Object({GenerateValue(Unit.@object, data)})",
+                VariableKind.Scene => $".Scene({"SceneManager".TypeHighlight()}.GetActiveScene())",
+                VariableKind.Application => ".Application".VariableHighlight(),
+                VariableKind.Saved => ".Saved".VariableHighlight(),
+                _ => string.Empty,
+            };
+        }
+
+        private string GenerateDisconnectedVariableCode(ControlGenerationData data)
+        {
+            var name = Unit.defaultValues[Unit.name.key] as string;
+            var variables = typeof(VisualScripting.Variables).As().CSharpName(true, true);
+            var variableType = GetVariableTypeForDisconnected(name, data);
+
+            if (Unit.kind == VariableKind.Scene || Unit.kind == VariableKind.Application || Unit.kind == VariableKind.Saved)
+            {
+                var typeString = variableType != null ? $"<{variableType.As().CSharpName(false, true)}>" : string.Empty;
+                var code = $"{variables}{GetKindSuffix(data)}.Get{typeString}({GenerateValue(Unit.name, data)})";
+                return new ValueCode(code, data.GetExpectedType(), data.GetExpectedType() != null && !IsVariableDefined(name) && !data.TryGetVariableType(data.GetVariableName(name), out Type targetType));
+            }
+            else
+            {
+                return data.GetVariableName(name).VariableHighlight();
+            }
+        }
+
+        private Type GetVariableTypeForDisconnected(string name, ControlGenerationData data)
+        {
+            var isDefined = IsVariableDefined(name);
+            if (isDefined)
+            {
+                var declaration = GetVariableDeclaration(name);
+                return declaration.typeHandle != null ? Type.GetType(declaration.typeHandle.Identification) : null;
+            }
+            return data.TryGetVariableType(data.GetVariableName(name), out Type targetType) ? targetType : data.GetExpectedType() ?? typeof(object);
+        }
+
+        private bool IsVariableDefined(string name)
+        {
+            return Unit.kind switch
+            {
+                VariableKind.Scene => VisualScripting.Variables.Scene(SceneManager.GetActiveScene()).IsDefined(name),
+                VariableKind.Application => VisualScripting.Variables.Application.IsDefined(name),
+                VariableKind.Saved => VisualScripting.Variables.Saved.IsDefined(name),
+                _ => false,
+            };
+        }
+
+        private VariableDeclaration GetVariableDeclaration(string name)
+        {
+            return Unit.kind switch
+            {
+                VariableKind.Scene => VisualScripting.Variables.Scene(SceneManager.GetActiveScene()).GetDeclaration(name),
+                VariableKind.Application => VisualScripting.Variables.Application.GetDeclaration(name),
+                VariableKind.Saved => VisualScripting.Variables.Saved.GetDeclaration(name),
+                _ => null,
+            };
+        }
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
@@ -81,20 +108,7 @@ namespace Unity.VisualScripting.Community
             {
                 return "gameObject".VariableHighlight();
             }
-
-            if (input.hasValidConnection)
-            {
-                return GetNextValueUnit(input, data);
-            }
-            else if (input.hasDefaultValue)
-            {
-                return unit.defaultValues[input.key].As().Code(true, true, true, "", false);
-            }
-            else
-            {
-                return $"/* \"{input.key} Requires Input\" */";
-            }
+            return base.GenerateValue(input, data);
         }
     }
-
 }

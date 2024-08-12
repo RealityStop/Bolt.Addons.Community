@@ -13,6 +13,6 @@ public class GetListItemGenerator : NodeGenerator<GetListItem>
 
     public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
-        return GenerateValue(Unit.list, data) + $"[{GenerateValue(Unit.index, data)}]";
+        return new ValueCode(GenerateValue(Unit.list, data) + $"[{GenerateValue(Unit.index, data)}]", data.GetExpectedType(), data.GetExpectedType() != null);
     }
 }

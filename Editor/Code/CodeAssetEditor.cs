@@ -14,8 +14,20 @@ namespace Unity.VisualScripting.Community
         protected TAssetGenerator generator;
 
         private Type lastType;
+        private bool _shouldUpdate = true;
+        protected bool shouldUpdate
+        {
+            get
+            {
+                return _shouldUpdate;
+            }
 
-        protected bool shouldUpdate = true;
+            set
+            {
+                Target.shouldRefresh = value;
+                _shouldUpdate = value;
+            }
+        }
 
         public override bool UseDefaultMargins()
         {

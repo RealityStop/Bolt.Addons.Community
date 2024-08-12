@@ -19,6 +19,10 @@ namespace Unity.VisualScripting.Community
         public bool preview;
         public string lastCompiledName;
 
+        #if UNITY_EDITOR
+        public bool shouldRefresh;
+        #endif
+
         public string GetFullTypeName()
         {
             return category + (string.IsNullOrEmpty(category) ? string.Empty : ".") + title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName();

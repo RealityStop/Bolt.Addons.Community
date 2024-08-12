@@ -18,14 +18,16 @@ public class TriggerCustomEventGenerator : NodeGenerator<TriggerCustomEvent>
     {
         var output = string.Empty;
         var customEvent = typeof(CustomEvent).As().CSharpName(false, true);
-        output += CodeBuilder.Indent(indent) +  CodeUtility.MakeSelectable(Unit, customEvent + ".Trigger(" + GenerateValue(Unit.target, data) + $", {GenerateValue(Unit.name, data)}{(Unit.argumentCount > 0 ? ", " : "")}{string.Join(", ", Unit.arguments.Select(arg => GenerateValue(arg, data)))}" + ");\n");
+        data.SetExpectedType(typeof(GameObject));
+        output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, customEvent + ".Trigger(" + GenerateValue(Unit.target, data) + $", {GenerateValue(Unit.name, data)}{(Unit.argumentCount > 0 ? ", " : "")}{string.Join(", ", Unit.arguments.Select(arg => GenerateValue(arg, data)))}" + ");") + "\n";
+        data.SetExpectedType(null);
         output += GetNextUnit(Unit.exit, data, indent);
         return output;
     }
 
     public override string GenerateValue(ValueInput input, ControlGenerationData data)
     {
-        if(input == Unit.target && !Unit.target.hasValidConnection)
+        if (input == Unit.target && !Unit.target.hasValidConnection)
         {
             return "gameObject".VariableHighlight();
         }

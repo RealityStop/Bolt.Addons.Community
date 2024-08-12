@@ -236,55 +236,18 @@ namespace Unity.VisualScripting.Community
             GUILayout.Label(lineNumbers, lineNumberStyle);
             GUILayout.EndVertical();
 
-            if (isSelectable)
+            if (GraphWindow.activeContext != null)
             {
-                if (GraphWindow.activeContext != null)
+                foreach (var item in GraphWindow.active.context.canvas.selection)
                 {
-                    var selection = GraphWindow.active.context.canvas.selection;
-                    var code = selection
-                        .Where(selected => selected is Unit)
-                        .Cast<Unit>()
-                        .SelectMany(unit =>
-                        {
-                            if (unit.controlInputs.Any(input => input.hasValidConnection))
-                            {
-                                return unit.controlInputs
-                                    .Where(input => input.hasValidConnection)
-                                    .Select(input => unit.GenerateControl(input, new ControlGenerationData(), 0).RemoveMarkdown());
-                            }
-                            else
-                            {
-                                if (unit.controlOutputs.Any(output => output.hasValidConnection))
-                                {
-                                    return new List<string>
-                                    {
-                                    unit.GenerateControl(null, new ControlGenerationData(), 0).RemoveMarkdown()
-                                    };
-                                }
-                                else return Enumerable.Empty<string>();
-                            }
-                        })
-                        .ToList();
-
-                    var codeString = string.Join("\n", code);
-
-                    var codeLinesToHighlight = codeString.Split('\n').ToList();
-
-                    foreach (var item in GraphWindow.active.context.canvas.selection)
-                    {
-                        output = CodeUtility.HighlightCode(output, item.ToString());
-                    }
-
-                    GUILayout.TextArea(CodeUtility.RemoveAllSelectableTags(output), readOnlyTextStyle, GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
+                    output = CodeUtility.HighlightCode(output, item.ToString());
                 }
-                else
-                {
-                    GUILayout.TextArea(CodeUtility.RemoveAllSelectableTags(output), readOnlyTextStyle, GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
-                }
+
+                GUILayout.TextArea(CodeUtility.RemoveAllSelectableTags(output), readOnlyTextStyle, GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
             }
             else
             {
-                GUILayout.Label(output, readOnlyTextStyle);
+                GUILayout.TextArea(CodeUtility.RemoveAllSelectableTags(output), readOnlyTextStyle, GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
             }
 
             GUILayout.EndHorizontal();

@@ -17,7 +17,7 @@ namespace Unity.VisualScripting.Community
         public List<string> localNames = new List<string>();
         public Stack<GeneratorScope> scopes = new Stack<GeneratorScope>();
         public Stack<GeneratorScope> preservedScopes = new Stack<GeneratorScope>();
-        public Type expectedType;
+        private Type expectedType;
         private int scopeIdCounter = 0;
 
         public void NewScope()
@@ -33,6 +33,16 @@ namespace Unity.VisualScripting.Community
             var exitingScope = scopes.Pop();
             preservedScopes.Push(exitingScope);
             return exitingScope;
+        }
+
+        public Type GetExpectedType()
+        {
+            return expectedType;
+        }
+
+        public void SetExpectedType(Type type)
+        {
+            expectedType = type;
         }
 
         public GeneratorScope PeekScope()
