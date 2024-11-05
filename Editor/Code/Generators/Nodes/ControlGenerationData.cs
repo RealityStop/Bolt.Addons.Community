@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 using Void = Unity.VisualScripting.Community.Libraries.CSharp.Void;
 
@@ -16,9 +15,14 @@ namespace Unity.VisualScripting.Community
         public bool hasReturned;
         public List<string> localNames = new List<string>();
         public Stack<GeneratorScope> scopes = new Stack<GeneratorScope>();
-        public Stack<GeneratorScope> preservedScopes = new Stack<GeneratorScope>();
-        private Type expectedType;
+        private Stack<GeneratorScope> preservedScopes = new Stack<GeneratorScope>();
         private int scopeIdCounter = 0;
+
+        private Stack<(Type type, bool isMet)> expectedTypes = new Stack<(Type type, bool isMet)>();
+
+        private Dictionary<Unit, UnitSymbol> UnitSymbols = new Dictionary<Unit, UnitSymbol>();
+
+        public Type ScriptType = typeof(object);
 
         public void NewScope()
         {
@@ -26,7 +30,6 @@ namespace Unity.VisualScripting.Community
             string uniqueId = $"scope_{scopeIdCounter}";
             scopes.Push(new GeneratorScope(uniqueId, new Dictionary<string, Type>(), new Dictionary<string, string>(), PeekScope()));
         }
-
 
         public GeneratorScope ExitScope()
         {
@@ -37,12 +40,57 @@ namespace Unity.VisualScripting.Community
 
         public Type GetExpectedType()
         {
-            return expectedType;
+            if (expectedTypes.Count > 0)
+            {
+                return expectedTypes.Peek().type;
+            }
+            else return null;
+        }
+
+        public bool IsCurrentExpectedTypeMet()
+        {
+            if (expectedTypes.Count > 0)
+            {
+                return expectedTypes.Peek().isMet;
+            }
+            else return false;
+        }
+
+        public bool SetCurrentExpectedTypeMet(bool isMet, Type metAs)
+        {
+            if (expectedTypes.Count > 0)
+            {
+                var type = metAs ?? expectedTypes.Peek().type;
+                var currentExpectedType = expectedTypes.Pop();
+                currentExpectedType.isMet = isMet;
+                currentExpectedType.type = type;
+                expectedTypes.Push(currentExpectedType);
+                return isMet;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public void SetExpectedType(Type type)
         {
-            expectedType = type;
+            if (type != null)
+            {
+                expectedTypes.Push((type, false));
+            }
+            else
+            {
+                if (expectedTypes.Count > 0)
+                    expectedTypes.Pop();
+            }
+        }
+
+        public (Type type, bool isMet) RemoveExpectedType()
+        {
+            if (expectedTypes.Count > 0)
+                return expectedTypes.Pop();
+            return (typeof(object), false);
         }
 
         public GeneratorScope PeekScope()
@@ -62,17 +110,15 @@ namespace Unity.VisualScripting.Community
 
                 var scope = PeekScope();
 
-                while (ContainsNameInAnyScope(name + count))
+                while (ContainsNameInAnyScope(newName))
                 {
                     count++;
+                    newName = name + count;
                 }
-                newName += count;
 
                 scope.scopeNames.Add(newName, type);
-                if (!scope.nameMapping.TryAdd(name, newName))
-                {
-                    scope.nameMapping[name] = newName;
-                }
+                scope.nameMapping[name] = newName;
+
                 return newName;
             }
             else
@@ -84,7 +130,15 @@ namespace Unity.VisualScripting.Community
 
         public bool ContainsNameInAnyScope(string name)
         {
-            return scopes.Any(scope => scope.scopeNames.ContainsKey(name)) || preservedScopes.Any(scope => scope.scopeNames.ContainsKey(name));
+            foreach (var scope in scopes)
+            {
+                if (scope.scopeNames.ContainsKey(name)) return true;
+            }
+            foreach (var preservedScope in preservedScopes)
+            {
+                if (preservedScope.scopeNames.ContainsKey(name)) return true;
+            }
+            return false;
         }
 
         public string GetVariableName(string name)
@@ -133,64 +187,27 @@ namespace Unity.VisualScripting.Community
             return true;
         }
 
-        public void SetVariableType(string name, Type type)
+        public void CreateSymbol(Unit unit, Type Type, string CodeRepresentation, Dictionary<string, object> Metadata = null)
         {
-            foreach (var scope in scopes)
+            if (!UnitSymbols.ContainsKey(unit))
             {
-                if (scope.scopeNames.ContainsKey(name))
-                {
-                    scope.scopeNames[name] = type;
-                    return;
-                }
+                UnitSymbols.Add(unit, new UnitSymbol(unit, Type, CodeRepresentation, Metadata));
             }
         }
 
-        public void RenameVariable(string oldName, string newName)
+        public bool TryGetSymbol(Unit unit, out UnitSymbol symbol)
         {
-            var scope = PeekScope();
-            if (scope.scopeNames.ContainsKey(oldName))
+            return UnitSymbols.TryGetValue(unit, out symbol);
+        }
+
+        public void SetSymbolType(Unit unit, Type type)
+        {
+            if (UnitSymbols.TryGetValue(unit, out var symbol))
             {
-                var type = scope.scopeNames[oldName];
-                scope.scopeNames.Remove(oldName);
-                scope.scopeNames[newName] = type;
-
-                if (scope.nameMapping.ContainsKey(oldName))
-                {
-                    scope.nameMapping.Remove(oldName);
-                    scope.nameMapping.Add(newName, newName);
-                }
+                symbol.Type = type;
             }
-        }
-
-        public void Reset()
-        {
-            returns = typeof(Void);
-            mustBreak = false;
-            hasBroke = false;
-            mustReturn = false;
-            hasReturned = false;
-            localNames.Clear();
-            scopes.Clear();
-            preservedScopes.Clear();
-        }
-
-        public void RemoveVariable(string name)
-        {
-            foreach (var _scope in scopes)
-            {
-                if (_scope.scopeNames.ContainsKey(name))
-                    _scope.scopeNames.Remove(name);
-                if (_scope.nameMapping.ContainsKey(name))
-                    _scope.nameMapping.Remove(name);
-            }
-        }
-
-        public GeneratorScope CloneCurrentScope()
-        {
-            var currentScope = PeekScope();
-            return new GeneratorScope(currentScope.id,
-                new Dictionary<string, Type>(currentScope.scopeNames),
-                new Dictionary<string, string>(currentScope.nameMapping), currentScope.ParentScope);
+            else
+                throw new MissingReferenceException($"No symbol found for {unit}");
         }
 
         public ControlGenerationData() { }
@@ -204,10 +221,13 @@ namespace Unity.VisualScripting.Community
             hasReturned = data.hasReturned;
             localNames = new List<string>(data.localNames);
             scopes = new Stack<GeneratorScope>(data.scopes.Select(scope => new GeneratorScope(scope.id, new Dictionary<string, Type>(scope.scopeNames), new Dictionary<string, string>(scope.nameMapping), PeekScope()?.ParentScope)));
+            expectedTypes = data.expectedTypes;
+            ScriptType = data.ScriptType;
         }
 
         public class GeneratorScope
         {
+            //Unused
             public string id { get; private set; } = "";
             public Dictionary<string, Type> scopeNames { get; private set; }
             public Dictionary<string, string> nameMapping { get; private set; }

@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-[System.Serializable]
-[TypeIcon(typeof(Color))]
-[IncludeInSettings(true)]
-[Inspectable]
-public struct HDRColor
+namespace Unity.VisualScripting.Community 
 {
+    [System.Serializable]
+    [TypeIcon(typeof(Color))]
+    [IncludeInSettings(true)]
     [Inspectable]
-    [ColorUsage(true, true)]
-    public Color color;
+    [RenamedFrom("HDRColor")]
+    public struct HDRColor
+    {
+        [Inspectable]
+        [ColorUsage(true, true)]
+        public Color color;
+    } 
 }

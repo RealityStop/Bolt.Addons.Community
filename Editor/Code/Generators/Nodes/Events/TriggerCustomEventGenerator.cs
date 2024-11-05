@@ -18,9 +18,8 @@ public class TriggerCustomEventGenerator : NodeGenerator<TriggerCustomEvent>
     {
         var output = string.Empty;
         var customEvent = typeof(CustomEvent).As().CSharpName(false, true);
-        data.SetExpectedType(typeof(GameObject));
-        output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, customEvent + ".Trigger(" + GenerateValue(Unit.target, data) + $", {GenerateValue(Unit.name, data)}{(Unit.argumentCount > 0 ? ", " : "")}{string.Join(", ", Unit.arguments.Select(arg => GenerateValue(arg, data)))}" + ");") + "\n";
-        data.SetExpectedType(null);
+        
+        output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(customEvent + ".Trigger(") + GenerateValue(Unit.target, data) + MakeSelectableForThisUnit(", ") + $"{GenerateValue(Unit.name, data)}{(Unit.argumentCount > 0 ? MakeSelectableForThisUnit(", ") : "")}{string.Join(MakeSelectableForThisUnit(", "), Unit.arguments.Select(arg => GenerateValue(arg, data)))}" + MakeSelectableForThisUnit(");") + "\n";
         output += GetNextUnit(Unit.exit, data, indent);
         return output;
     }
@@ -29,7 +28,22 @@ public class TriggerCustomEventGenerator : NodeGenerator<TriggerCustomEvent>
     {
         if (input == Unit.target && !Unit.target.hasValidConnection)
         {
-            return "gameObject".VariableHighlight();
+            return MakeSelectableForThisUnit("gameObject".VariableHighlight());
+        }
+
+        if(input == Unit.target)
+        {
+            data.SetExpectedType(typeof(GameObject));
+            var code = base.GenerateValue(Unit.target, data);
+            data.RemoveExpectedType();
+            return code;
+        }
+        else if (Unit.arguments.Contains(input))
+        {
+            data.SetExpectedType(typeof(object));
+            var code = base.GenerateValue(input, data);
+            data.RemoveExpectedType();
+            return code;
         }
         return base.GenerateValue(input, data);
     }

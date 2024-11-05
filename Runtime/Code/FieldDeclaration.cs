@@ -45,6 +45,7 @@ namespace Unity.VisualScripting.Community
         [HideInInspector]
         private string qualifiedName;
 
+        public Action OnSerialized;
 #if UNITY_EDITOR
         public bool opened;
         public bool propertyOpened;

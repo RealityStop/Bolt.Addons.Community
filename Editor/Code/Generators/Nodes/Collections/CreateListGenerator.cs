@@ -3,6 +3,7 @@ using System.Collections;
 using Unity.VisualScripting;
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community
 {
@@ -11,6 +12,7 @@ namespace Unity.VisualScripting.Community
     {
         public CreateListGenerator(Unit unit) : base(unit)
         {
+            NameSpace = "Unity.VisualScripting";
         }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
@@ -20,7 +22,12 @@ namespace Unity.VisualScripting.Community
             {
                 result.Add(base.GenerateValue(item, data));
             }
-            return "new".ConstructHighlight() + " AotList".TypeHighlight() + "() { " + string.Join(", ", result) + " }";
+            var Type = typeof(AotList);
+            if(data.GetExpectedType() != null)
+            {
+                Type = data.GetExpectedType();
+            }
+            return MakeSelectableForThisUnit("new ".ConstructHighlight() + Type.As().CSharpName(false, true) + (!Type.IsArray ? "()" : string.Empty) + " { ") + string.Join(MakeSelectableForThisUnit(", "), result) + MakeSelectableForThisUnit(" }");
         }
     }
 }

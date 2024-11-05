@@ -28,6 +28,9 @@ namespace Unity.VisualScripting.Community.Utility
         [InspectableIf("showCall")]
         public bool useInCall;
 
+        public bool usesGeneric { get; }
+
+        public int generic;
 
         [SerializeField]
         public bool isParamsParameter;
@@ -71,6 +74,15 @@ namespace Unity.VisualScripting.Community.Utility
             this.type = type;
             this.name = name;
             Paramtype = new SystemType(type);
+        }
+
+        public TypeParam(int generic, string name)
+        {
+            this.generic = generic;
+            this.name = name;
+            usesGeneric = true;
+            Paramtype = new SystemType(typeof(object));
+            type = typeof(object);
         }
 
         public object GetDefaultValue()

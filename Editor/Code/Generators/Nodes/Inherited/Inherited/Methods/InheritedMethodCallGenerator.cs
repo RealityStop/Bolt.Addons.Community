@@ -9,45 +9,45 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    
+
     [NodeGenerator(typeof(InheritedMethodCall))]
     public class InheritedMethodCallGenerator : NodeGenerator<InheritedMethodCall>
     {
         private ControlGenerationData controlGenerationData;
-    
+
         private Dictionary<ValueOutput, string> outputNames;
         public InheritedMethodCallGenerator(Unit unit) : base(unit)
         {
         }
-    
+
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             var output = string.Empty;
             controlGenerationData = data;
             var thisKeyword = Unit.showThisKeyword ? "this".ConstructHighlight() + "." : string.Empty;
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + thisKeyword + Unit.member.name + $"({GenerateArguments(data)});") + (Unit.exit.hasValidConnection ? "\n" : string.Empty);
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(thisKeyword + Unit.member.name + "(") + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(");")}" + "\n";
             output += GetNextUnit(Unit.exit, data, indent);
             return output;
         }
-    
+
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             if (Unit.enter != null && !Unit.enter.hasValidConnection && Unit.OutputParameters.Count > 0)
             {
                 return $"/* Control Port Enter requires a connection */";
             }
-    
+
             if (Unit.OutputParameters.ContainsValue(output))
             {
                 var transformedKey = outputNames[output].Replace("&", "").Replace("%", "");
-    
-                return transformedKey.VariableHighlight();
+
+                return MakeSelectableForThisUnit(transformedKey.VariableHighlight());
             }
             var thisKeyword = Unit.showThisKeyword ? "this".ConstructHighlight() + "." : string.Empty;
-            return CodeUtility.MakeSelectable(Unit, thisKeyword + Unit.member.name + $"({GenerateArguments(data)})");
+            return MakeSelectableForThisUnit(thisKeyword + Unit.member.name + "(") + GenerateArguments(data) + MakeSelectableForThisUnit(")");
         }
-    
-    
+
+
         private string GenerateArguments(ControlGenerationData data)
         {
             if (controlGenerationData != null && Unit.member.isMethod)
@@ -56,9 +56,9 @@ namespace Unity.VisualScripting.Community
                 var index = 0;
                 foreach (var parameter in Unit.member.methodInfo.GetParameters())
                 {
-                    var name = controlGenerationData.AddLocalNameInScope(parameter.Name).VariableHighlight();
                     if (parameter.HasOutModifier())
                     {
+                        var name = controlGenerationData.AddLocalNameInScope(parameter.Name).VariableHighlight();
                         output.Add("out var ".ConstructHighlight() + name);
                         if (Unit.OutputParameters.Values.Any(output => output.key == "&" + parameter.Name && !outputNames.ContainsKey(Unit.OutputParameters[index])))
                             outputNames.Add(Unit.OutputParameters[index], "&" + name);
@@ -72,7 +72,7 @@ namespace Unity.VisualScripting.Community
                             continue;
                         }
                         output.Add("ref ".ConstructHighlight() + GenerateValue(Unit.InputParameters[index], data));
-                        outputNames.Add(Unit.OutputParameters[index], "&" + name);
+                        outputNames.Add(Unit.OutputParameters[index], "&" + parameter.Name);
                     }
                     else if (parameter.IsDefined(typeof(ParamArrayAttribute), false) && !Unit.InputParameters[index].hasValidConnection)
                     {
@@ -84,7 +84,7 @@ namespace Unity.VisualScripting.Community
                     }
                     index++;
                 }
-                return string.Join(", ", output);
+                return string.Join(MakeSelectableForThisUnit(", "), output);
             }
             else if (Unit.member.isMethod)
             {
@@ -102,12 +102,12 @@ namespace Unity.VisualScripting.Community
                     }
                     index++;
                 }
-                return string.Join(", ", output);
+                return string.Join(MakeSelectableForThisUnit(", "), output);
             }
             else
             {
                 List<string> output = Unit.valueInputs.Select(input => GenerateValue(input, data)).ToList();
-                return string.Join(", ", output);
+                return string.Join(MakeSelectableForThisUnit(", "), output);
             }
         }
     }

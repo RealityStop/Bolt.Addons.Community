@@ -157,7 +157,7 @@ namespace Unity.VisualScripting.Community
         public override EventHook GetHook(GraphReference reference)
         {
             var refData = reference.GetElementData<Data>(this);
-            return ConstructHook(refData.target, _eventType);
+            return ConstructHook(refData.target, New_eventType.type);
         }
 
         private static EventHook ConstructHook(GameObject target, Type eventType)

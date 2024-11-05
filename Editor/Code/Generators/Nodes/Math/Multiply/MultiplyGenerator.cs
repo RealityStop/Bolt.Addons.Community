@@ -10,9 +10,10 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+
             var a = GenerateValue(Unit.a, data);
             var b = GenerateValue(Unit.b, data);
-            return CodeUtility.MakeSelectable(Unit, $"{a} * {b}");
+            return a + MakeSelectableForThisUnit(" * ") + b;
         }
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
@@ -25,9 +26,9 @@ namespace Unity.VisualScripting.Community
             {
                 if (data.GetExpectedType() == typeof(int))
                 {
-                    return int.Parse(unit.defaultValues[input.key].ToString()).As().Code(true, true, true, "", false);
+                    return int.Parse(unit.defaultValues[input.key].ToString()).As().Code(true, Unit, true, true, "", false);
                 }
-                return unit.defaultValues[input.key].As().Code(true, true, true, "", false);
+                return unit.defaultValues[input.key].As().Code(true, Unit, true, true, "", false);
             }
             else
             {

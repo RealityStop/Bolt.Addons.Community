@@ -28,18 +28,19 @@ namespace Unity.VisualScripting.Community
                 }
                 else
                 {
-                    return Unit.numeric ? Unit.defaultValues["b"].As().Code(true) : base.GenerateValue(input, data);
+                    return Unit.numeric ? Unit.defaultValues["b"].As().Code(true, Unit) : base.GenerateValue(input, data);
                 }
             }
 
             return base.GenerateValue(input, data);
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+                public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+            
             if (output == Unit.comparison)
             {
-                return GenerateValue(Unit.a, data) + " <= " + GenerateValue(Unit.b, data);
+                return GenerateValue(Unit.a, data) + MakeSelectableForThisUnit(" <= ") + GenerateValue(Unit.b, data);
             }
 
             return base.GenerateValue(output, data);

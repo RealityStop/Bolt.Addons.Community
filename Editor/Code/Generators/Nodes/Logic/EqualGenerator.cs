@@ -16,7 +16,16 @@ namespace Unity.VisualScripting.Community
             {
                 if (Unit.a.hasAnyConnection)
                 {
-                    return (Unit.a.connection.source.unit as Unit).GenerateValue(Unit.a.connection.source, data);
+                    if (Unit.b.hasValidConnection && Unit.b.GetPsudoSource()?.unit is Literal literal)
+                    {
+                        data.SetExpectedType(literal.type);
+                    }
+                    var code = base.GenerateValue(Unit.a, data);
+                    if (Unit.b.hasValidConnection && Unit.b.GetPsudoSource()?.unit is Literal)
+                    {
+                        data.RemoveExpectedType();
+                    }
+                    return code;
                 }
             }
 
@@ -24,11 +33,20 @@ namespace Unity.VisualScripting.Community
             {
                 if (Unit.b.hasAnyConnection)
                 {
-                    return (Unit.b.connection.source.unit as Unit).GenerateValue(Unit.b.connection.source, data);
+                    if (Unit.a.hasValidConnection && Unit.a.GetPsudoSource()?.unit is Literal literal)
+                    {
+                        data.SetExpectedType(literal.type);
+                    }
+                    var code = base.GenerateValue(Unit.b, data);
+                    if (Unit.a.hasValidConnection && Unit.a.GetPsudoSource()?.unit is Literal)
+                    {
+                        data.RemoveExpectedType();
+                    }
+                    return code;
                 }
                 else
                 {
-                    return Unit.numeric ? Unit.defaultValues["b"].As().Code(true) : base.GenerateValue(input, data);
+                    return Unit.numeric ? Unit.defaultValues["b"].As().Code(true, unit) : base.GenerateValue(input, data);
                 }
             }
 
@@ -37,9 +55,10 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+
             if (output == Unit.comparison)
             {
-                return GenerateValue(Unit.a, data) + " == " + GenerateValue(Unit.b, data);
+                return GenerateValue(Unit.a, data) + MakeSelectableForThisUnit(" == ") + GenerateValue(Unit.b, data);
             }
 
             return base.GenerateValue(output, data);

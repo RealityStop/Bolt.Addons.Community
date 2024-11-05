@@ -10,13 +10,46 @@ namespace Unity.VisualScripting.Community.Variables.Editor
     [InitializeAfterPlugins]
     public static class Options
     {
+        public static Dictionary<Type, FuzzyLiteralOption> dynamicLiteralOptions = new Dictionary<Type, FuzzyLiteralOption>();
+        public static FuzzyExpressionOption fuzzyExpressionOption;
+
+        private static List<Type> dynamicOptionsOrder = new List<Type>
+        {
+            typeof(string),
+            typeof(int),
+            typeof(float),
+            typeof(long),
+            typeof(double),
+            typeof(ulong),
+            typeof(short),
+            typeof(ushort),
+            typeof(bool),
+            typeof(byte),
+            typeof(decimal),
+            typeof(DateTime),
+            typeof(TimeSpan)
+        };
         static Options()
         {
+            InitializeFuzzyLiteralOptions();
+            fuzzyExpressionOption = new FuzzyExpressionOption(new FuzzyExpression());
             UnitBase.staticUnitsExtensions.Add(GetStaticOptions);
             UnitBase.staticUnitsExtensions.Add(StaticEditorOptions);
             UnitBase.dynamicUnitsExtensions.Add(DynamicEditorOptions);
             UnitBase.dynamicUnitsExtensions.Add(MachineVariableOptions);
             UnitBase.contextualUnitsExtensions.Add(InheritedMembersOptions);
+            UnitBase.dynamicUnitsExtensions.Add(GetDynamicOptions);
+        }
+
+        private static void InitializeFuzzyLiteralOptions()
+        {
+            foreach (var optionType in dynamicOptionsOrder)
+            {
+                if (!dynamicLiteralOptions.ContainsKey(optionType))
+                {
+                    dynamicLiteralOptions[optionType] = new FuzzyLiteralOption(new FuzzyLiteral(optionType, optionType.PseudoDefault()));
+                }
+            }
         }
 
         private static IEnumerable<IUnitOption> GetStaticOptions()
@@ -94,77 +127,108 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             }
         }
 
+        private static IEnumerable<IUnitOption> GetDynamicOptions()
+        {
+            InitializeFuzzyLiteralOptions();
+
+            yield return fuzzyExpressionOption;
+
+            foreach (var optionType in dynamicOptionsOrder)
+            {
+                if (dynamicLiteralOptions.ContainsKey(optionType))
+                {
+                    yield return dynamicLiteralOptions[optionType];
+                }
+            }
+        }
+
+
         private static IEnumerable<IUnitOption> InheritedMembersOptions(GraphReference reference)
         {
-            var classAsset = GetClassAsset(reference.macro);
-            var inheritedType = classAsset.GetInheritedType();
-            if (classAsset != null && inheritedType != null)
+            if (IsClassAsset(reference.macro))
             {
-                yield return new AssetTypeOption(new AssetType(classAsset));
-                foreach (var method in classAsset.methods)
+                var classAsset = GetClassAsset(reference.macro);
+                var inheritedType = classAsset.GetInheritedType();
+                if (classAsset != null && inheritedType != null)
                 {
-                    yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.Invoke));
-                    if (method.returnType != typeof(void) && method.returnType != typeof(Libraries.CSharp.Void))
-                        yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.ReturnValue));
-                }
-
-                foreach (var field in classAsset.variables)
-                {
-                    yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Get));
-                    yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Set));
-                }
-
-                foreach (var method in inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
-                {
-                    if (method.IsPrivate || method.IsProperty() || method.IsEvent()) continue;
-
-                    if (method.IsAbstract || method.IsVirtual)
+                    yield return new AssetTypeOption(new AssetType(classAsset));
+                    foreach (var method in classAsset.methods)
                     {
-                        yield return new BaseMethodUnitOption(new BaseMethodCall(new Member(inheritedType, method), MethodType.Invoke));
-                        if (method.ReturnType != typeof(void) && method.GetParameters().All(param => !param.HasOutModifier() && !param.ParameterType.IsByRef))
-                            yield return new BaseMethodUnitOption(new BaseMethodCall(new Member(inheritedType, method), MethodType.ReturnValue));
-                    }
-                    else
-                    {
-                        yield return new InheritedMethodUnitOption(new InheritedMethodCall(new Member(inheritedType, method), MethodType.Invoke));
-                        if (method.ReturnType != typeof(void))
-                            yield return new InheritedMethodUnitOption(new InheritedMethodCall(new Member(inheritedType, method), MethodType.ReturnValue));
-                    }
-                }
-
-                foreach (var property in inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Where(property => property.GetMethod?.IsAbstract == true || property.SetMethod?.IsAbstract == true))
-                {
-                    if (property.GetMethod != null && !property.GetMethod.IsPrivate)
-                    {
-                        yield return new BasePropertyGetterUnitOption(new BasePropertyGetterUnit(new Member(inheritedType, property)));
+                        yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.Invoke));
+                        if (method.returnType != typeof(void) && method.returnType != typeof(Libraries.CSharp.Void))
+                        {
+                            yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.ReturnValue));
+                            yield return new AssetFuncUnitOption(new AssetFuncUnit(method));
+                        }
                     }
 
-                    if (property.SetMethod != null && !property.SetMethod.IsPrivate)
+                    foreach (var field in classAsset.variables)
                     {
-                        yield return new BasePropertySetterUnitOption(new BasePropertySetterUnit(new Member(inheritedType, property)));
-                    }
-                }
-
-                foreach (var field in inheritedType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
-                {
-                    if (field.IsPrivate) continue;
-                    yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Get));
-                    yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Set));
-                }
-
-                foreach (var property in inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
-                {
-                    if (property.GetMethod != null && !property.GetMethod.IsPrivate)
-                    {
-                        yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, property), ActionDirection.Get));
+                        yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Get));
+                        yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Set));
                     }
 
-                    if (property.SetMethod != null && !property.SetMethod.IsPrivate)
+                    foreach (var method in inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
                     {
-                        yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, property), ActionDirection.Set));
+                        if (method.IsPrivate || method.IsProperty() || method.IsEvent()) continue;
+
+                        if (method.IsAbstract || method.IsVirtual)
+                        {
+                            yield return new BaseMethodUnitOption(new BaseMethodCall(new Member(inheritedType, method), MethodType.Invoke));
+                            if (method.ReturnType != typeof(void) && method.GetParameters().All(param => !param.HasOutModifier() && !param.ParameterType.IsByRef))
+                                yield return new BaseMethodUnitOption(new BaseMethodCall(new Member(inheritedType, method), MethodType.ReturnValue));
+                        }
+                        else
+                        {
+                            yield return new InheritedMethodUnitOption(new InheritedMethodCall(new Member(inheritedType, method), MethodType.Invoke));
+                            if (method.ReturnType != typeof(void))
+                                yield return new InheritedMethodUnitOption(new InheritedMethodCall(new Member(inheritedType, method), MethodType.ReturnValue));
+                        }
+                    }
+
+                    foreach (var property in inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Where(property => property.GetMethod?.IsAbstract == true || property.SetMethod?.IsAbstract == true))
+                    {
+                        if (property.GetMethod != null && !property.GetMethod.IsPrivate)
+                        {
+                            yield return new BasePropertyGetterUnitOption(new BasePropertyGetterUnit(new Member(inheritedType, property)));
+                        }
+
+                        if (property.SetMethod != null && !property.SetMethod.IsPrivate)
+                        {
+                            yield return new BasePropertySetterUnitOption(new BasePropertySetterUnit(new Member(inheritedType, property)));
+                        }
+                    }
+
+                    foreach (var field in inheritedType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                    {
+                        if (field.IsPrivate) continue;
+                        yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Get));
+                        yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Set));
+                    }
+
+                    foreach (var property in inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                    {
+                        if (property.GetMethod != null && !property.GetMethod.IsPrivate)
+                        {
+                            yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, property), ActionDirection.Get));
+                        }
+
+                        if (property.SetMethod != null && !property.SetMethod.IsPrivate)
+                        {
+                            yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, property), ActionDirection.Set));
+                        }
                     }
                 }
             }
+        }
+
+        private static bool IsClassAsset(IMacro macro)
+        {
+            if (macro is ConstructorDeclaration or PropertyGetterMacro or PropertySetterMacro or MethodDeclaration)
+            {
+                return GetClassAsset(macro) != null;
+            }
+            return false;
         }
 
         private static ClassAsset GetClassAsset(IMacro macro)

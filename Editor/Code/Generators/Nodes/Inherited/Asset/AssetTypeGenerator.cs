@@ -7,18 +7,19 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    
+
     [NodeGenerator(typeof(AssetType))]
     public class AssetTypeGenerator : NodeGenerator<AssetType>
     {
         public AssetTypeGenerator(Unit unit) : base(unit)
         {
         }
-    
+
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return "typeof".ConstructHighlight() + "(" + Unit.asset.title.TypeHighlight() + ")";
+
+            return MakeSelectableForThisUnit("typeof".ConstructHighlight() + "(" + Unit.asset.title.TypeHighlight() + ")");
         }
     }
-    
+
 }

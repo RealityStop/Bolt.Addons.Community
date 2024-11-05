@@ -1,9 +1,10 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.VisualScripting
+namespace Unity.VisualScripting.Community
 {
-    [Inspector(typeof(HDRColor))] // Update this to use HDRColor instead of Color
+    [Inspector(typeof(HDRColor))]
+    [RenamedFrom("Unity.VisualScripting.HDRColorInspector")]
     public class HDRColorInspector : Inspector
     {
         public HDRColorInspector(Metadata metadata) : base(metadata) { }

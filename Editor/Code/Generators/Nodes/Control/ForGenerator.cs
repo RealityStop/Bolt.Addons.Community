@@ -25,10 +25,12 @@ public sealed class ForGenerator : LocalVariableGenerator<Unity.VisualScripting.
 
             variableName = data.AddLocalNameInScope("i", typeof(int));
             variableType = typeof(int);
-            
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"for".ControlHighlight() + "(int".ConstructHighlight() + $" {variableName} ".VariableHighlight() + $"= {initialization}; " + variableName.VariableHighlight() + $" < {condition}; " + variableName.VariableHighlight() + $" += {iterator})");
+
+            string varName = MakeSelectableForThisUnit(variableName.VariableHighlight());
+
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"for".ControlHighlight() + "(int ".ConstructHighlight()) + $"{varName}".VariableHighlight() + MakeSelectableForThisUnit(" = ") + initialization + MakeSelectableForThisUnit("; ") + varName.VariableHighlight() + $"{MakeSelectableForThisUnit(" < ")}{condition}{MakeSelectableForThisUnit("; ")}" + varName.VariableHighlight() + $"{MakeSelectableForThisUnit(" += ")}{iterator}{MakeSelectableForThisUnit(")")}";
             output += "\n";
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{");
             output += "\n";
 
             if (Unit.body.hasAnyConnection)
@@ -39,13 +41,14 @@ public sealed class ForGenerator : LocalVariableGenerator<Unity.VisualScripting.
             }
 
             output += "\n";
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}");
+            output += "\n";
         }
 
         if (Unit.exit.hasAnyConnection)
         {
-            output += "\n";
             output += GetNextUnit(Unit.exit, data, indent);
+            output += "\n";
         }
 
 
@@ -54,18 +57,21 @@ public sealed class ForGenerator : LocalVariableGenerator<Unity.VisualScripting.
 
     public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
-        return variableName.VariableHighlight();
+        return MakeSelectableForThisUnit(variableName.VariableHighlight());
     }
 
     public override string GenerateValue(ValueInput input, ControlGenerationData data)
     {
         if (input.hasValidConnection)
         {
-            return new ValueCode(GetNextValueUnit(input, data, true), input.type, ShouldCast(input, false, data));
+            data.SetExpectedType(input.type);
+            var connectedCode = GetNextValueUnit(input, data);
+            data.RemoveExpectedType();
+            return new ValueCode(connectedCode, input.type, ShouldCast(input, data, false));
         }
         else
         {
-            return Unit.defaultValues[input.key].As().Code(false);
+            return Unit.defaultValues[input.key].As().Code(false, unit);
         }
     }
 }

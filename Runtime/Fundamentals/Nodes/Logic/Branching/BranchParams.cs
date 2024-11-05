@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
@@ -37,7 +39,7 @@ namespace Unity.VisualScripting.Community
 
         protected override void Definition()
         {
-            enter = ControlInput(nameof(enter), Branch);
+            enter = ControlInputCoroutine(nameof(enter), Branch, BranchCoroutine);
             exitTrue = ControlOutput(nameof(exitTrue));
             exitFalse = ControlOutput(nameof(exitFalse));
             if (showNext)
@@ -136,5 +138,21 @@ namespace Unity.VisualScripting.Community
             else
                 return GetValue(flow) ? exitTrue : exitFalse;
         }
+
+        private IEnumerator BranchCoroutine(Flow flow)
+        {
+            if (showNext)
+            {
+                if (GetValue(flow))
+                    yield return exitTrue;
+                else
+                    yield return exitFalse;
+
+                yield return exitNext;
+            }
+            else
+                yield return GetValue(flow) ? exitTrue : exitFalse;
+        }
+
     }
 }

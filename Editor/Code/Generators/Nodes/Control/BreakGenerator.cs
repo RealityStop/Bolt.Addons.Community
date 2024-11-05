@@ -16,7 +16,7 @@ namespace Unity.VisualScripting.Community
 
             if (input == Unit.enter)
             {
-                return CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "break".ControlHighlight() + ";");
+                return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("break".ControlHighlight() + ";") + "\n";
             }
 
             return base.GenerateControl(input, data, indent);

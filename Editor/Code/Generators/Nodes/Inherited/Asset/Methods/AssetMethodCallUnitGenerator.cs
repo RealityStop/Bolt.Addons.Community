@@ -8,44 +8,45 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    
+
     [NodeGenerator(typeof(AssetMethodCallUnit))]
     public class AssetMethodCallUnitGenerator : NodeGenerator<AssetMethodCallUnit>
     {
         private ControlGenerationData controlGenerationData;
-    
+
         private Dictionary<ValueOutput, string> outputNames;
         public AssetMethodCallUnitGenerator(Unit unit) : base(unit)
         {
         }
-    
+
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             var output = string.Empty;
             controlGenerationData = data;
-            output += CodeUtility.MakeSelectable(Unit, Unit.method.methodName + $"({GenerateArguments(Unit.InputParameters.Values.ToList(), data)});") + (Unit.exit.hasValidConnection ? "\n" : string.Empty);
-            output += GetNextUnit(Unit.exit, data, indent);
+            output += MakeSelectableForThisUnit(Unit.method.methodName + "(") + GenerateArguments(Unit.InputParameters.Values.ToList(), data) + MakeSelectableForThisUnit(";");
+            output += "\n" + GetNextUnit(Unit.exit, data, indent);
             return output;
         }
-    
+
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+
             if (Unit.enter != null && !Unit.enter.hasValidConnection && Unit.OutputParameters.Count > 0)
             {
                 return $"/* Control Port Enter requires a connection */";
             }
-    
+
             if (Unit.OutputParameters.ContainsValue(output))
             {
-    
+
                 var transformedKey = outputNames[output].Replace("&", "").Replace("%", "");
-    
-                return transformedKey.VariableHighlight();
+
+                return MakeSelectableForThisUnit(transformedKey.VariableHighlight());
             }
-    
-            return CodeUtility.MakeSelectable(Unit, Unit.method.methodName + $"({GenerateArguments(Unit.InputParameters.Values.ToList(), data)})");
+
+            return MakeSelectableForThisUnit(Unit.method.methodName + "(") + GenerateArguments(Unit.InputParameters.Values.ToList(), data) + MakeSelectableForThisUnit(")");
         }
-    
+
         private string GenerateArguments(List<ValueInput> arguments, ControlGenerationData data)
         {
             if (controlGenerationData != null)
@@ -79,12 +80,12 @@ namespace Unity.VisualScripting.Community
                     }
                     index++;
                 }
-                return string.Join(", ", output);
+                return string.Join(MakeSelectableForThisUnit(", "), output);
             }
             else
             {
                 List<string> output = arguments.Select(arg => GenerateValue(arg, data)).ToList();
-                return string.Join(", ", output);
+                return string.Join(MakeSelectableForThisUnit(", "), output);
             }
         }
     }

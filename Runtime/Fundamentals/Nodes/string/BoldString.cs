@@ -2,13 +2,12 @@ using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community
 {
-[RenamedFrom("BoldString")]    
+    [RenamedFrom("BoldString")]
     [UnitTitle("Bold")]//Unit title
     [UnitCategory("Community\\Utility\\string")]
     [TypeIcon(typeof(string))]//Unit icon
     public class BoldString : Unit
     {
-        
         [DoNotSerialize]
         [PortLabelHidden]
         public ValueInput Value;
@@ -20,15 +19,15 @@ namespace Unity.VisualScripting.Community
             Value = ValueInput<string>(nameof(Value), default);
             Result = ValueOutput<string>(nameof(Result), Enter_);
         }
-    
-        public string Enter_(Flow flow) 
+
+        public string Enter_(Flow flow)
         {
             var value = flow.GetValue(Value);
-            
+
             var NewValue = "<b>" + value + "</b>";
-    
+
             return NewValue;
         }
     }
-    
+
 }

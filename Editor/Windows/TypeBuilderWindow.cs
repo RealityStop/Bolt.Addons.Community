@@ -119,9 +119,6 @@ namespace Unity.VisualScripting.Community
 
                 if (constraints.Length > 0)
                 {
-                    // var attributes = param.type.type.GenericParameterAttributes;
-                    // var constrainedTypes = GetConstraintAttributeTypes(attributes, !param.HasParent && customTypeLookup != null ? customTypeLookup : baseTypeLookup);
-
                     var constrainedTypes = allPossibleTypeLookup.Where(t =>
                     {
                         foreach (var constraint in constraints)
@@ -812,6 +809,11 @@ namespace Unity.VisualScripting.Community
 
         public static string HumanName(this Type type, bool includeGenericParameters = true)
         {
+            if(type == null)
+            {
+                return "";
+            }
+
             if (type == typeof(UnityObject))
             {
                 return "Unity Object";
@@ -845,6 +847,19 @@ namespace Unity.VisualScripting.Community
                 var underlyingName = nonNullable.HumanName(includeGenericParameters);
 
                 return "Nullable " + underlyingName;
+            }
+            else if (type.IsArray)
+            {
+                var tempType = type.GetElementType();
+                var arrayString = "[]";
+                while (tempType.IsArray)
+                {
+                    tempType = tempType.GetElementType();
+                    arrayString += "[]";
+                }
+
+                var tempTypeName = tempType.HumanName(includeGenericParameters);
+                return tempTypeName + arrayString;
             }
             else
             {

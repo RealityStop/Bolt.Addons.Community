@@ -28,11 +28,13 @@ namespace Unity.VisualScripting.Community
             get => string.IsNullOrEmpty(_name) ? $"SelectOnFlow{count}" : _name;
         }
 
-        public override Type Type => typeof(void);
+        public override Type ReturnType => typeof(void);
 
-        public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(object), "value") };
+        public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(0, "value") };
 
         public override string MethodBody => GetNextUnit(Unit.exit, Data, 0);
+
+        public override int GenericCount => 1;
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
@@ -46,13 +48,13 @@ namespace Unity.VisualScripting.Community
             {
                 _name = "";
             }
-            output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, Name + (Unit.branches[input].hasValidConnection ? "(" + CodeUtility.MakeSelectable(Unit.branches[input].connection.source.unit as Unit, GenerateValue(Unit.branches[input], data)) + ")" : "(" + GenerateValue(Unit.branches[input], data)) + ");") + "\n";
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(Name + "(") + GenerateValue(Unit.branches[input], data) + MakeSelectableForThisUnit(");") + "\n";
             return output;
         }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return CodeUtility.MakeSelectable(Unit, "value".VariableHighlight());
+            return MakeSelectableForThisUnit("value".VariableHighlight());
         }
     }
 }

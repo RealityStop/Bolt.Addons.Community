@@ -9,12 +9,13 @@ namespace Unity.VisualScripting.Community
     {
         public LiteralGenerator(Literal unit) : base(unit)
         {
-            NameSpace = Unit.value.GetType().Namespace;
+            if (Unit.value != null)
+                NameSpace = Unit.value.GetType().Namespace;
         }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return Unit.value.As().Code(true, true, true, "");
+            return Unit.value.As().Code(true, Unit, true, true, "");
         }
     }
 }

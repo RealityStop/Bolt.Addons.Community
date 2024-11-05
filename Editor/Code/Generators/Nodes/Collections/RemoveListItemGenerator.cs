@@ -15,8 +15,11 @@ public class RemoveListItemGenerator : NodeGenerator<RemoveListItem>
     public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
     {
         var output = string.Empty;
-        output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, GenerateValue(Unit.listInput, data) + $".Remove({GenerateValue(Unit.item, data)});") + "\n";
-        output += GetNextUnit(Unit.exit, data, indent); 
+        data.SetExpectedType(Unit.listInput.type);
+        var listCode = GenerateValue(Unit.listInput, data);
+        data.RemoveExpectedType();
+        output += CodeBuilder.Indent(indent) + listCode + MakeSelectableForThisUnit($".Remove(") + GenerateValue(Unit.item, data) + MakeSelectableForThisUnit(");") + "\n";
+        output += GetNextUnit(Unit.exit, data, indent);
         return output;
     }
 }

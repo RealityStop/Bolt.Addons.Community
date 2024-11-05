@@ -40,11 +40,6 @@ namespace Unity.VisualScripting.Community
 
         public Type targetType { get; private set; }
 
-        protected override GUIStyle Style()
-        {
-            return base.Style();
-        }
-
         protected override string Label(bool human)
         {
             return "this." + unit.member.info.CSharpName(direction);

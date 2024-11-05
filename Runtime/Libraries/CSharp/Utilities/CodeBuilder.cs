@@ -86,29 +86,38 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return output;
         }
 
+        private static Dictionary<int, string> indentCache = new Dictionary<int, string>();
         /// <summary>
         /// Creates an indentation. The spacing is equal to 4 whitespaces.
         /// </summary>
         public static string Indent(int amount)
         {
-            var output = string.Empty;
             currentIndent = amount;
+            if (indentCache.TryGetValue(amount, out var indent))
+                return indent;
+
+            var output = string.Empty;
             for (int i = 0; i < amount; i++)
             {
                 output += "    ";
             }
 
+            indentCache[amount] = output;
+
             return output;
         }
 
+        private static Dictionary<(int, int), string> customIndentCache = new Dictionary<(int, int), string>();
         /// <summary>
         /// Creates an indentation with a custom amount of whitespaces per indent.
         /// </summary>
         public static string Indent(int amount, int spacing)
         {
+            currentIndent = amount;
+            if (customIndentCache.TryGetValue((amount, spacing), out var indent))
+                return indent;
             var output = string.Empty;
             var space = string.Empty;
-            currentIndent = amount;
             for (int i = 0; i < spacing; i++)
             {
                 space += " ";
@@ -119,9 +128,14 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 output += space;
             }
 
+            customIndentCache[(amount, spacing)] = output;
+
             return output;
         }
 
+        /// <summary>
+        /// Creates an indentation with the current indent amount.
+        /// </summary>
         public static string GetCurrentIndent()
         {
             var output = Indent(currentIndent);
@@ -399,12 +413,12 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string MethodCall(string name, Type[] generics, params string[] parameters)
         {
-            return name.MethodHighlight() + $"{(generics.Length > 0 ? $"<{string.Join(", ", generics.Select(t => t.As().CSharpName()))}>" : "")}({string.Join(", ", parameters)})";
+            return name.MethodHighlight() + $"{(generics.Length > 0 ? $"<{string.Join(", ", generics.Select(t => t.As().CSharpName(false, true)))}>" : "")}({string.Join(", ", parameters)})";
         }
 
         public static string TargetMethodCall(this string target, string name, Type[] generics = null, params string[] parameters)
         {
-            return target + "." + name.MethodHighlight() + $"{(generics != null && generics.Length > 0 ? $"<{string.Join(", ", generics.Select(t => t.As().CSharpName()))}>" : "")}({string.Join(", ", parameters)})";
+            return target + "." + name.MethodHighlight() + $"{(generics != null && generics.Length > 0 ? $"<{string.Join(", ", generics.Select(t => t.As().CSharpName(false, true)))}>" : "")}({string.Join(", ", parameters)})";
         }
 
         public static string LegalMemberName(this string memberName)
@@ -526,12 +540,15 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return Highlight(code, RecommendationColor);
         }
 
-
+        private static Dictionary<string, string> RemoveHighlightsCache = new Dictionary<string, string>();
         public static string RemoveHighlights(this string code)
         {
-            return code.RemoveBetween("[BeginUAPreviewHighlight]", "[EndUAPreviewHighlight]");
+            if (RemoveHighlightsCache.TryGetValue(code, out var result))
+                return result;
+            var _code = code.RemoveBetween("[BeginUAPreviewHighlight]", "[EndUAPreviewHighlight]");
+            RemoveHighlightsCache[code] = _code;
+            return _code;
         }
-
 
         public static string RemoveMarkdown(this string code)
         {

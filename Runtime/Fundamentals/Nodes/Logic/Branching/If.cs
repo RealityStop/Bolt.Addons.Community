@@ -5,7 +5,7 @@ using System;
 
 namespace Unity.VisualScripting.Community
 {
-    [UnitTitle("If")]
+    [UnitTitle("If (Next)")]
     [UnitCategory("Community/Control")]
     [TypeIcon(typeof(VisualScripting.If))]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.If")]

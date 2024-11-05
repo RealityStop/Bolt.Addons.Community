@@ -58,6 +58,12 @@ namespace Unity.VisualScripting.Community
         {
             var _data = flow.GetValue<ReturnEventData>(data);
             var val = flow.GetValue(value);
+
+            if(flow.currentLoop != -1)
+            {
+                flow.BreakLoop();
+            }
+
             if (_data.args.trigger != null) _data.args.trigger.storingValue = val;
             if (_data.args.isCallback)
             {
@@ -67,6 +73,7 @@ namespace Unity.VisualScripting.Community
             {
                 TriggerReturnEvent.Trigger(_data.args);
             }
+
             return null;
         }
     }

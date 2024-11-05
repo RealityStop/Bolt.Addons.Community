@@ -12,12 +12,12 @@ namespace Unity.VisualScripting.Community
         {
             var destination = Unit.invoke.connection?.destination;
             if (!Unit.invoke.hasAnyConnection) return "\n";
-            return CodeUtility.MakeSelectable(Unit, NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit).GenerateControl(destination, data, indent));
+            return NodeGenerator.GetSingleDecorator(destination.unit as Unit, destination.unit as Unit).GenerateControl(destination, data, indent);
         }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return output.key.LegalMemberName().VariableHighlight();
+            return MakeSelectableForThisUnit(output.key.LegalMemberName().VariableHighlight());
         }
     }
 }

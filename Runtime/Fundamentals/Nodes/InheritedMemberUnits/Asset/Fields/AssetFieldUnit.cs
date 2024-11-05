@@ -10,38 +10,47 @@ namespace Unity.VisualScripting.Community
     public class AssetFieldUnit : AssetMemberUnit
     {
         [Obsolete(Serialization.ConstructorWarning)]
-        public AssetFieldUnit() { }
-    
+        public AssetFieldUnit()
+        {
+        }
+
         public AssetFieldUnit(string _name, FieldDeclaration _field, ActionDirection actionDirection)
         {
             name = _name;
             this.actionDirection = actionDirection;
             field = _field;
+            fieldType = field.type;
         }
-    
+
         public string name;
         public FieldDeclaration field;
         [DoNotSerialize]
         [PortLabelHidden]
         public ControlInput enter;
-    
+
         [DoNotSerialize]
         [PortLabelHidden]
         public ControlOutput exit;
-    
+
         public ActionDirection actionDirection;
-    
+
         [DoNotSerialize]
         [PortLabelHidden]
         public ValueOutput get;
-    
+
         [DoNotSerialize]
         [PortLabelHidden]
         public ValueInput value;
-    
+
+        [Serialize]
+        public Type fieldType;
+
         protected override void Definition()
         {
-            var fieldType = field.type;
+            // Insures that the type is correct if the Field Type is changed
+            if (field != null)
+                field.OnSerialized += UpdateFieldType;
+            if (fieldType == null) UpdateFieldType();
             switch (actionDirection)
             {
                 case ActionDirection.Set:
@@ -65,6 +74,11 @@ namespace Unity.VisualScripting.Community
                     });
                     break;
             }
+        }
+
+        private void UpdateFieldType()
+        {
+            fieldType = field.type;
         }
     }
 }

@@ -17,6 +17,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+
             if (Unit.kind == VariableKind.Scene)
             {
                 NameSpace = "UnityEngine.SceneManagement";
@@ -26,30 +27,29 @@ namespace Unity.VisualScripting.Community
                 NameSpace = string.Empty;
             }
 
-            var variables = typeof(VisualScripting.Variables).As().CSharpName(true, true);
+            var variables = MakeSelectableForThisUnit(typeof(VisualScripting.Variables).As().CSharpName(true, true));
             var kind = string.Empty;
-            var type = string.Empty;
             switch (Unit.kind)
             {
                 case VariableKind.Flow:
-                    return "/* Flow Variables are not supported */";
+                    return MakeSelectableForThisUnit("/* Flow Variables are not supported */");
                 case VariableKind.Graph:
-                    return "/* Graph Variables do not support connected names */";
+                    return MakeSelectableForThisUnit("/* Graph Variables do not support connected names */");
                 case VariableKind.Object:
-                    kind = $".Object({GenerateValue(Unit.@object, data)})";
+                    kind = MakeSelectableForThisUnit($".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeSelectableForThisUnit(")")}";
                     break;
                 case VariableKind.Scene:
-                    kind = $".Scene({"SceneManager".TypeHighlight()}.GetActiveScene())";
+                    kind = MakeSelectableForThisUnit($".Scene({"SceneManager".TypeHighlight()}.GetActiveScene())");
                     break;
                 case VariableKind.Application:
-                    kind = "." + "Application".VariableHighlight();
+                    kind = MakeSelectableForThisUnit("." + "Application".VariableHighlight());
                     break;
                 case VariableKind.Saved:
-                    kind = "." + "Saved".VariableHighlight();
+                    kind = MakeSelectableForThisUnit("." + "Saved".VariableHighlight());
                     break;
             }
 
-            return $"{variables}{kind}.IsDefined({GenerateValue(Unit.name, data)})";
+            return $"{variables}{kind}{MakeSelectableForThisUnit(".IsDefined(")}{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(")")}";
         }
 
 
@@ -57,7 +57,7 @@ namespace Unity.VisualScripting.Community
         {
             if (input == Unit.@object && !input.hasValidConnection)
             {
-                return "gameObject".VariableHighlight();
+                return MakeSelectableForThisUnit("gameObject".VariableHighlight());
             }
             return base.GenerateValue(input, data);
         }

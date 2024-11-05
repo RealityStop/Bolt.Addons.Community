@@ -10,11 +10,12 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+
             var minuend = GenerateValue(Unit.minuend, data);
             var subtrahend = GenerateValue(Unit.subtrahend, data);
-            return CodeUtility.MakeSelectable(Unit, $"{minuend} - {subtrahend}");
+            return $"{minuend}{MakeSelectableForThisUnit(" - ")}{subtrahend}";
         }
-
+        
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input.hasValidConnection)
@@ -23,11 +24,11 @@ namespace Unity.VisualScripting.Community
             }
             else if (input.hasDefaultValue)
             {
-                if(data.GetExpectedType() == typeof(int))
+                if (data.GetExpectedType() == typeof(int))
                 {
-                    return int.Parse(unit.defaultValues[input.key].ToString()).As().Code(true, true, true, "", false);
+                    return int.Parse(unit.defaultValues[input.key].ToString()).As().Code(true, Unit, true, true, "", false);
                 }
-                return unit.defaultValues[input.key].As().Code(true, true, true, "", false);
+                return unit.defaultValues[input.key].As().Code(true, Unit, true, true, "", false);
             }
             else
             {

@@ -9,44 +9,45 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    
+
     [NodeGenerator(typeof(BaseMethodCall))]
     public class BaseMethodCallGenerator : NodeGenerator<BaseMethodCall>
     {
         private ControlGenerationData controlGenerationData;
-    
+
         private Dictionary<ValueOutput, string> outputNames;
         public BaseMethodCallGenerator(Unit unit) : base(unit)
         {
         }
-    
+
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             var output = string.Empty;
             controlGenerationData = data;
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "base".ConstructHighlight() + "." + Unit.member.name + $"({GenerateArguments(data)});") + (Unit.exit.hasValidConnection ? "\n" : string.Empty);
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("base".ConstructHighlight() + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeSelectableForThisUnit(");") + (Unit.exit.hasValidConnection ? "\n" : string.Empty);
             output += GetNextUnit(Unit.exit, data, indent);
             return output;
         }
-    
+
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+
             if (Unit.enter != null && !Unit.enter.hasValidConnection && Unit.OutputParameters.Count > 0)
             {
-                return $"/* Control Port Enter requires a connection */";
+                return MakeSelectableForThisUnit($"/* Control Port Enter requires a connection */");
             }
-    
+
             if (Unit.OutputParameters.ContainsValue(output))
             {
                 var transformedKey = outputNames[output].Replace("&", "").Replace("%", "");
-    
-                return transformedKey.VariableHighlight();
+
+                return MakeSelectableForThisUnit(transformedKey.VariableHighlight());
             }
-    
-            return CodeUtility.MakeSelectable(Unit, "base".ConstructHighlight() + "." + Unit.member.name + $"({GenerateArguments(data)})");
+
+            return MakeSelectableForThisUnit("base".ConstructHighlight() + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeSelectableForThisUnit(")");
         }
-    
-    
+
+
         private string GenerateArguments(ControlGenerationData data)
         {
             if (controlGenerationData != null && Unit.member.isMethod)
@@ -83,7 +84,7 @@ namespace Unity.VisualScripting.Community
                     }
                     index++;
                 }
-                return string.Join(", ", output);
+                return string.Join(MakeSelectableForThisUnit(", "), output);
             }
             else if (Unit.member.isMethod)
             {
@@ -101,12 +102,12 @@ namespace Unity.VisualScripting.Community
                     }
                     index++;
                 }
-                return string.Join(", ", output);
+                return string.Join(MakeSelectableForThisUnit(", "), output);
             }
             else
             {
                 List<string> output = Unit.valueInputs.Select(input => GenerateValue(input, data)).ToList();
-                return string.Join(", ", output);
+                return string.Join(MakeSelectableForThisUnit(", "), output);
             }
         }
     }

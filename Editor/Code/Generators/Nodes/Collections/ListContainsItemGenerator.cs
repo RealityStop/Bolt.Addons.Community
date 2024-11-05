@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return base.GenerateValue(this.Unit.list, data) + string.Format(".Contains({0})", base.GenerateValue(this.Unit.item, data));
+            return base.GenerateValue(this.Unit.list, data) + MakeSelectableForThisUnit(".Contains(") + base.GenerateValue(this.Unit.item, data) + MakeSelectableForThisUnit(")");
         }
     }
 }

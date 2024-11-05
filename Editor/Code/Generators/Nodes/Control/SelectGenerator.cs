@@ -11,6 +11,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+
             if (output == Unit.selection)
             {
                 var str = string.Empty;
@@ -33,7 +34,7 @@ namespace Unity.VisualScripting.Community
                     @false = GenerateValue(Unit.ifFalse, data);
                 }
 
-                str = "(" + condition + " ? " + @true + " : " + @false + ")";
+                str = MakeSelectableForThisUnit("(") + condition + MakeSelectableForThisUnit(" ? ") + @true + MakeSelectableForThisUnit(" : ") + @false + MakeSelectableForThisUnit(")");
                 return str;
             }
 

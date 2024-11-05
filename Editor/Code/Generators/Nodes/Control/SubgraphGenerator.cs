@@ -54,11 +54,13 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
                 }
             }
 
+            output += "\n";
+
             foreach (var variable in Unit.nest.graph.variables)
             {
-                var type = Type.GetType(variable.typeHandle.Identification) != null ? Type.GetType(variable.typeHandle.Identification) : typeof(object);
+                var type = Type.GetType(variable.typeHandle.Identification) ?? typeof(object);
                 var name = data.AddLocalNameInScope(variable.name, type);
-                output += $"{CodeBuilder.Indent(indent)}{type.As().CSharpName(false, true)} {name.VariableHighlight()} = {variable.value.As().Code(true, true)};\n";
+                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{type.As().CSharpName(false, true)} {name.VariableHighlight()} = {variable.value.As().Code(true, true, true, "", false, true)};") + "\n";
             }
 
             if (input.hasValidConnection)

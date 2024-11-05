@@ -15,7 +15,8 @@ public class WaitForSecondsUnitGenerator : NodeGenerator<WaitForSecondsUnit>
     public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
     {
         var output = string.Empty;
-        output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, "yield return".ControlHighlight() + " new ".ConstructHighlight() + "WaitForSeconds".TypeHighlight() + $"({GenerateValue(Unit.seconds, data)});") + "\n";
+        data.hasReturned = true;
+        output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("yield return".ControlHighlight() + " new ".ConstructHighlight() + "WaitForSeconds".TypeHighlight() + "(") + $"{GenerateValue(Unit.seconds, data)}" + MakeSelectableForThisUnit(");") + "\n";
         output += GetNextUnit(Unit.exit, data, indent);
         return output;
     }

@@ -28,31 +28,34 @@ namespace Unity.VisualScripting.Community
             {
                 NameSpace = string.Empty;
             }
-            if (Unit.name.hasValidConnection)
+            if (Unit.name.hasValidConnection ||(Unit.@object != null && Unit.@object.hasValidConnection))
             {
                 var variables = typeof(Unity.VisualScripting.Variables).As().CSharpName(true, true);
                 var kind = string.Empty;
-
+                data.SetExpectedType(variableType);
+                data.CreateSymbol(Unit, variableType, $"{variables}{kind}.Set({GenerateValue(Unit.name, data)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())});");
                 switch (Unit.kind)
                 {
                     case VariableKind.Flow:
-                        return "/* Flow Variables are not supported connected names */";
+                        return MakeSelectableForThisUnit("/* Flow Variables are not supported connected names */");
                     case VariableKind.Graph:
-                        return "/* Graph Variables do not support connected names */";
+                        return MakeSelectableForThisUnit("/* Graph Variables do not support connected names */");
                     case VariableKind.Object:
-                        kind = $".Object({GenerateValue(Unit.@object, data)}, data)";
+                        kind = MakeSelectableForThisUnit(variables + $".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeSelectableForThisUnit(")")}";
                         break;
                     case VariableKind.Scene:
-                        kind = $".Scene({"SceneManager".TypeHighlight()}.GetActiveScene())";
+                        kind = MakeSelectableForThisUnit(variables + $".Scene({"SceneManager".TypeHighlight()}.GetActiveScene())");
                         break;
                     case VariableKind.Application:
-                        kind = ".Application";
+                        kind = MakeSelectableForThisUnit(variables + "." + "Application".VariableHighlight());
                         break;
                     case VariableKind.Saved:
-                        kind = ".Saved";
+                        kind = MakeSelectableForThisUnit(variables + "." + "Saved".VariableHighlight());
                         break;
                 }
-                output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, $"{variables}{kind}.Set({GenerateValue(Unit.name, data)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())});") + "\n";
+                var nameCode = GenerateValue(Unit.name, data);
+                output += CodeBuilder.Indent(indent) + kind + MakeSelectableForThisUnit(".Set(") + nameCode + MakeSelectableForThisUnit(", ") + $"{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n";
+                data.RemoveExpectedType();
                 output += GetNextUnit(Unit.assigned, data, indent);
                 return output;
             }
@@ -62,30 +65,36 @@ namespace Unity.VisualScripting.Community
                 switch (Unit.kind)
                 {
                     case VariableKind.Scene:
-                        return CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"{variables}.Scene({"SceneManager".TypeHighlight()}.GetActiveScene()).Set({GenerateValue(Unit.name, data)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())});") + "\n";
+                        return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}.Scene({"SceneManager".TypeHighlight()}.GetActiveScene()).Set(") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
                     case VariableKind.Application:
-                        return CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"{variables}.Application.Set({GenerateValue(Unit.name, data)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())});") + "\n";
+                        return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}{".Application.Set("}") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
                     case VariableKind.Saved:
-                        return CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"{variables}.Saved.Set({GenerateValue(Unit.name, data)}, {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())});") + "\n";
+                        return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}{".Saved.Set("}") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
                 }
                 var name = data.GetVariableName(Unit.defaultValues[Unit.name.key] as string);
-                if (data.ContainsNameInAnyScope(name) || data.ContainsNameInAnyScope(Unit.defaultValues[Unit.name.key] as string))
+                if (data.ContainsNameInAnyScope(name))
                 {
                     variableName = name;
                     variableType = data.GetVariableType(name);
-                    output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, $"{name.VariableHighlight()} = {GenerateValue(Unit.input, data)};") + "\n";
-                    data.SetExpectedType(null);
+                    data.SetExpectedType(variableType);
+                    var code = MakeSelectableForThisUnit($"{name.VariableHighlight()} = ") + GenerateValue(Unit.input, data) + MakeSelectableForThisUnit(";");
+                    data.RemoveExpectedType();
+                    data.CreateSymbol(Unit, variableType, code);
+                    output += CodeBuilder.Indent(indent) + code + "\n";
                     output += GetNextUnit(Unit.assigned, data, indent);
                     return output;
                 }
                 else
                 {
-                    var inputType = Unit.input.hasValidConnection ? Unit.input.connection.source.type.As().CSharpName(false, true, true) : typeof(object).As().CSharpName(false, true);
+                    var type = GetSourceType(Unit.input, data) ?? data.GetExpectedType() ?? typeof(object);
+                    var inputType = type.As().CSharpName(false, true);
                     variableType = Unit.input.hasValidConnection ? Unit.input.connection.source.type : typeof(object);
                     var newName = data.AddLocalNameInScope(name, variableType);
+                    data.SetExpectedType(variableType);
+                    data.CreateSymbol(Unit, variableType, $"{inputType} {newName.VariableHighlight()} = {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())};");
                     variableName = newName;
-                    output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, $"{inputType} {newName.VariableHighlight()} = {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())};") + "\n";
-                    data.SetExpectedType(null);
+                    output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{inputType} {newName.VariableHighlight()} = ") + (Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight())) + MakeSelectableForThisUnit(";") + "\n";
+                    data.RemoveExpectedType();
                     output += GetNextUnit(Unit.assigned, data, indent);
                     return output;
                 }
@@ -97,7 +106,7 @@ namespace Unity.VisualScripting.Community
             if (!Unit.assign.hasValidConnection) return $"/* ControlInput {Unit.assign.key} requires connection on {Unit.GetType()} with variable name ({GenerateValue(Unit.name, data)}) */";
             if (!Unit.name.hasValidConnection)
             {
-                return variableName.VariableHighlight();
+                return MakeSelectableForThisUnit(variableName.VariableHighlight());
             }
             else return "";
         }
@@ -106,15 +115,21 @@ namespace Unity.VisualScripting.Community
         {
             if (input == Unit.@object && !input.hasValidConnection)
             {
-                return "gameObject".VariableHighlight();
+                return MakeSelectableForThisUnit("gameObject".VariableHighlight());
             }
-            if(input == Unit.input)
+            if (input == Unit.input)
             {
                 data.SetExpectedType(variableType);
+                var code = base.GenerateValue(input, data);
+                data.RemoveExpectedType();
+                return code;
             }
             else if (input == Unit.@object)
             {
                 data.SetExpectedType(typeof(GameObject));
+                var code = base.GenerateValue(input, data);
+                data.RemoveExpectedType();
+                return code;
             }
             return base.GenerateValue(input, data);
         }

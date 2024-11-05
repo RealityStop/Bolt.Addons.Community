@@ -77,6 +77,11 @@ namespace Unity.VisualScripting.Community
 
         private void MethodDefinition()
         {
+            if (methodDeclaration != null)
+            {
+                methodDeclaration.OnSerialized += Define;
+            }
+
             for (int i = 0; i < methodDeclaration?.parameters.Count; i++)
             {
                 if (methodDeclaration.parameters[i].type != null && !string.IsNullOrEmpty(methodDeclaration.parameters[i].name)) parameterPorts.Add(ValueOutput(methodDeclaration.parameters[i].type, methodDeclaration.parameters[i].name));

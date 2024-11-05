@@ -90,7 +90,7 @@ namespace Unity.VisualScripting.Community
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            CSharpPreviewWindow.instance?.preview.Refresh();
+            // CSharpPreviewWindow.instance?.preview.Refresh();
             HUMEditor.Vertical(() =>
             {
                 HUMEditor.Changed(() =>
@@ -149,8 +149,8 @@ namespace Unity.VisualScripting.Community
             {
                 if (shouldUpdate)
                 {
-                    CSharpPreviewWindow.instance.preview.code = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
-                    CSharpPreviewWindow.instance.preview.Refresh();
+                    // CSharpPreviewWindow.instance.preview.code = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
+                    // CSharpPreviewWindow.instance.preview.Refresh();
                 }
             }
 

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
+using JetBrains.Annotations;
 using NUnit.Framework.Internal;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
@@ -407,6 +408,7 @@ namespace Unity.VisualScripting.Community
                                 declaration.hideFlags = HideFlags.HideInHierarchy;
                                 AssetDatabase.AddObjectToAsset(declaration, Target);
                                 listOfConstructors.Add(declaration);
+                                declaration.name = $"Constructor {listOfConstructors.IndexOf(declaration)}";
                                 var functionUnit = new FunctionNode(FunctionType.Constructor);
                                 functionUnit.constructorDeclaration = declaration;
                                 declaration.graph.units.Add(functionUnit);
@@ -842,18 +844,51 @@ namespace Unity.VisualScripting.Community
 
         private void CacheConstrainedAttributes()
         {
-            attributeTypes = typeof(Attribute).Get().Derived();
-            classAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Class || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
-            structAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Struct || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
-            enumAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Enum || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
-            interfaceAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Interface || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
-            fieldAttributeTypes = attributeTypes.Where((attr) =>
-            {
-                var attributeUsage = attr.GetAttribute<AttributeUsageAttribute>();
-                return attributeUsage != null && (attributeUsage.ValidOn == AttributeTargets.Field || attributeUsage.ValidOn == AttributeTargets.Property);
-            }).ToArray(); propertyAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Property || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
-            methodAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Method || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
-            parameterAttributeTypes = attributeTypes.Where((attr) => { return attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.Parameter || attr.GetAttribute<AttributeUsageAttribute>().ValidOn == AttributeTargets.All; }).ToArray();
+            var allAttributeTypes = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(assembly => assembly.GetTypes())
+                .Where(t => t.IsSubclassOf(typeof(Attribute)) || t == typeof(Attribute))
+                .ToArray();
+
+            // Filter attributes based on valid targets
+            classAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Class) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            structAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Struct) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            enumAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Enum) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            interfaceAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Interface) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            fieldAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Field) || GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.All))
+                .ToArray();
+
+            propertyAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Property) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            methodAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Method) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            parameterAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Parameter) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+        }
+
+        // Helper method to get AttributeUsageAttribute from a type
+        private AttributeUsageAttribute GetAttributeUsage(Type attrType)
+        {
+            return attrType.GetCustomAttributes(typeof(AttributeUsageAttribute), false)
+                .Cast<AttributeUsageAttribute>()
+                .FirstOrDefault() ?? new AttributeUsageAttribute(AttributeTargets.All);
         }
 
         private void Constructors()
@@ -1558,7 +1593,6 @@ namespace Unity.VisualScripting.Community
 
                             if (typeof(TMemberTypeAsset) == typeof(ClassAsset) && (listOfVariables[index].getter.classAsset == null || listOfVariables[index].setter.classAsset == null))
                             {
-                                Debug.Log("Test");
                                 listOfVariables[index].getter.classAsset = Target as ClassAsset;
                                 listOfVariables[index].setter.classAsset = Target as ClassAsset;
                             }
@@ -1636,7 +1670,7 @@ namespace Unity.VisualScripting.Community
                                             {
                                                 return;
                                             }
-
+                                            
                                             if (type == null)
                                             {
                                                 variables[index]["defaultValue"].value = null;

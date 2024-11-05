@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 using System;
-using System.Runtime.CompilerServices;
 
 namespace Unity.VisualScripting.Community
 {
@@ -42,27 +41,27 @@ namespace Unity.VisualScripting.Community
 
                 if (Unit.member.isConstructor)
                 {
-                    _output += new ValueCode($"{"new".ConstructHighlight()} {Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}({GenerateArguments(data)})");
+                    _output += new ValueCode(MakeSelectableForThisUnit($"{"new".ConstructHighlight()} {Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}(") + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(")")}");
                 }
                 else
                 {
                     if (Unit.target == null)
                     {
-                        _output += new ValueCode($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}({GenerateArguments(data)})");
+                        _output += new ValueCode(MakeSelectableForThisUnit($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}(") + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(")")}");
                     }
                     else
                     {
                         if (Unit.target.hasValidConnection && Unit.target.type != Unit.target.connection.source.type && Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            _output += new ValueCode(new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target, data) + "." + Unit.member.name + $"({GenerateArguments(data)})"));
+                            _output += new ValueCode(GenerateValue(Unit.target, data) + MakeSelectableForThisUnit(GetComponent(Unit.target, data) + "." + Unit.member.name + $"(") + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(")")}");
                         }
                         else if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            _output += new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target, data) + "." + Unit.member.name + $"({GenerateArguments(data)})", typeof(GameObject), ShouldCast(Unit.target, false, data));
+                            _output += new ValueCode(GenerateValue(Unit.target, data) + MakeSelectableForThisUnit(GetComponent(Unit.target, data) + "." + Unit.member.name + $"(") + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(")")}", typeof(GameObject), ShouldCast(Unit.target, data, false));
                         }
                         else
                         {
-                            _output += new ValueCode($"{GenerateValue(Unit.target, data)}.{Unit.member.name}({GenerateArguments(data)})");
+                            _output += new ValueCode($"{GenerateValue(Unit.target, data)}" + MakeSelectableForThisUnit($".{Unit.member.name}(") + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(")")}");
                         }
                     }
                 }
@@ -77,7 +76,7 @@ namespace Unity.VisualScripting.Community
 
                 var transformedKey = outputNames[output].Replace("&", "").Replace("%", "");
 
-                return transformedKey.VariableHighlight();
+                return MakeSelectableForThisUnit(transformedKey.VariableHighlight());
             }
             else if (output == Unit.targetOutput)
             {
@@ -92,11 +91,11 @@ namespace Unity.VisualScripting.Community
             {
                 if (valueInput.type == valueInput.connection.source.type && valueInput.connection.source.unit is MemberUnit or CodeAssetUnit)
                 {
-                    return "";
+                    return string.Empty;
                 }
                 else
                 {
-                    return (valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent") || GetSourceType(valueInput, data) == typeof(GameObject) ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : string.Empty;
+                    return ((valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent") || GetSourceType(valueInput, data) == typeof(GameObject)) && Unit.member.pseudoDeclaringType != typeof(GameObject) ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : string.Empty;
                 }
             }
             else
@@ -114,31 +113,33 @@ namespace Unity.VisualScripting.Community
             {
                 if (Unit.member.isConstructor)
                 {
-                    output += new CodeLine($"{"new".ConstructHighlight()} {Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}({GenerateArguments(data)})", indent).GetCode(true);
+                    output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{"new".ConstructHighlight()} {Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}(") + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(");")}" + "\n";
                 }
                 else
                 {
                     if (Unit.target == null)
                     {
-                        output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}({GenerateArguments(data)})").GetCode(true));
+                        output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}(") + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(");")}" + "\n";
                     }
                     else
                     {
+
+                        var target = GenerateValue(Unit.target, data);
                         if (Unit.member.pseudoDeclaringType == typeof(GameObject) && Unit.target.hasValidConnection && Unit.target.connection.source.type.IsSubclassOf(typeof(Component)))
                         {
-                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{GenerateValue(Unit.target, data)}.gameObject.GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>().{Unit.member.name}({GenerateArguments(data)})").GetCode(true));
+                            output += CodeBuilder.Indent(indent) + target + MakeSelectableForThisUnit($".gameObject.GetComponent<{Unit.target.connection.source.type.As().CSharpName(false, true)}>().{Unit.member.name}(") + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(");")}" + "\n";
                         }
                         else if (Unit.target.hasValidConnection && Unit.target.type != Unit.target.connection.source.type && Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine(new ValueCode(GenerateValue(Unit.target, data) + GetComponent(Unit.target, data) + "." + Unit.member.name + $"({GenerateArguments(data)})", typeof(GameObject), ShouldCast(Unit.target))).GetCode(true));
+                            output += CodeBuilder.Indent(indent) + target + MakeSelectableForThisUnit($"{GetComponent(Unit.target, data)}.{Unit.member.name}(") + GenerateArguments(data) + MakeSelectableForThisUnit(");") + "\n";
                         }
                         else if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{GenerateValue(Unit.target, data)}{GetComponent(Unit.target, data)}.{Unit.member.name}({GenerateArguments(data)})").GetCode(true));
+                            output += CodeBuilder.Indent(indent) + target + MakeSelectableForThisUnit($"{GetComponent(Unit.target, data)}.{Unit.member.name}(") + GenerateArguments(data) + MakeSelectableForThisUnit(");") + "\n";
                         }
                         else
                         {
-                            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + new CodeLine($"{GenerateValue(Unit.target, data)}.{Unit.member.name}({GenerateArguments(data)})").GetCode(true));
+                            output += CodeBuilder.Indent(indent) + target + MakeSelectableForThisUnit($".{Unit.member.name}(") + GenerateArguments(data) + MakeSelectableForThisUnit(");") + "\n";
                         }
                     }
                 }
@@ -152,24 +153,45 @@ namespace Unity.VisualScripting.Community
         {
             if (input.hasValidConnection)
             {
-                if (input.type.IsSubclassOf(typeof(Component))) return new ValueCode(GetNextValueUnit(input, data), typeof(GameObject), ShouldCast(input, false, data)) + new ValueCode($"{(input.connection.source.type == typeof(GameObject) ? $".GetComponent<{input.type.As().CSharpName(false, true)}>()" : string.Empty)}");
-                return new ValueCode(GetNextValueUnit(input, data), input.type, ShouldCast(input, false, data)) + new ValueCode($"{(input.type.IsSubclassOf(typeof(Component)) && input.connection.source.type == typeof(GameObject) ? $".GetComponent<{input.type.As().CSharpName(false, true)}>()" : string.Empty)}");
+                data.SetExpectedType(input.type);
+                var connectedCode = GetNextValueUnit(input, data);
+                data.RemoveExpectedType();
+                if (input.type.IsSubclassOf(typeof(Component))) return new ValueCode(GetNextValueUnit(input, data), typeof(GameObject), ShouldCast(input, data, false));
+                return new ValueCode(connectedCode, input.type, ShouldCast(input, data, false));
             }
             else if (input.hasDefaultValue)
             {
                 if (input.type == typeof(GameObject) || input.type.IsSubclassOf(typeof(Component)) || input.type == typeof(Component) && input == Unit.target)
                 {
-                    return "gameObject".VariableHighlight();
+                    return MakeSelectableForThisUnit("gameObject".VariableHighlight());
                 }
-                return Unit.defaultValues[input.key].As().Code(true, true, true, "", false);
+                return Unit.defaultValues[input.key].As().Code(true, Unit, true, true, "", false, true);
             }
             else
             {
-                if (Unit.member.methodInfo.GetParameters()[Unit.inputParameters.FirstOrDefault(parameter => parameter.Value == input).Key].IsDefined(typeof(ParamArrayAttribute), true))
+                if (Unit.member.isMethod)
                 {
-                    return "";
+                    if (Unit.member.methodInfo.GetParameters()[Unit.inputParameters.FirstOrDefault(parameter => parameter.Value == input).Key].IsDefined(typeof(ParamArrayAttribute), true))
+                    {
+                        return string.Empty;
+                    }
+                    else if (Unit.member.methodInfo.GetParameters()[Unit.inputParameters.FirstOrDefault(parameter => parameter.Value == input).Key].IsOptional)
+                    {
+                        return string.Empty;
+                    }
                 }
-                return $"/* \"{input.key} Requires Input\" */";
+                else if (Unit.member.isConstructor)
+                {
+                    if (Unit.member.constructorInfo.GetParameters()[Unit.inputParameters.FirstOrDefault(parameter => parameter.Value == input).Key].IsDefined(typeof(ParamArrayAttribute), true))
+                    {
+                        return string.Empty;
+                    }
+                    else if (Unit.member.constructorInfo.GetParameters()[Unit.inputParameters.FirstOrDefault(parameter => parameter.Value == input).Key].IsOptional)
+                    {
+                        return string.Empty;
+                    }
+                }
+                return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */");
             }
         }
 
@@ -192,7 +214,7 @@ namespace Unity.VisualScripting.Community
                     {
                         var name = controlGenerationData.AddLocalNameInScope(parameter.Name, parameter.ParameterType).VariableHighlight();
                         var input = Unit.inputParameters[index];
-                        if (!input.hasValidConnection || input.hasValidConnection && input.connection.source.unit is not GetVariable)
+                        if (!input.hasValidConnection || (input.hasValidConnection && input.connection.source.unit is not GetVariable or AssetFieldUnit or InheritedFieldUnit or GetMember))
                         {
                             output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */");
                             continue;
@@ -204,9 +226,9 @@ namespace Unity.VisualScripting.Community
                     {
                         continue;
                     }
-                    else if (Unit.member.methodInfo.IsDefined(typeof(ExtensionAttribute), false) && index == 0)
+                    else if (parameter.IsOptional && !Unit.inputParameters[index].hasValidConnection)
                     {
-                        output.Add(string.Empty);
+                        continue;
                     }
                     else
                     {
@@ -214,7 +236,7 @@ namespace Unity.VisualScripting.Community
                     }
                     index++;
                 }
-                return string.Join(", ", output);
+                return string.Join(MakeSelectableForThisUnit(", "), output);
             }
             else if (Unit.member.isMethod)
             {
@@ -226,20 +248,20 @@ namespace Unity.VisualScripting.Community
                     {
                         continue;
                     }
-                    else if (Unit.member.methodInfo.IsDefined(typeof(ExtensionAttribute), false) && index == 0)
+                    else if (parameter.IsOptional && !Unit.inputParameters[index].hasValidConnection)
                     {
-                        output.Add(string.Empty);
+                        continue;
                     }
-                    else
+                    else if (Unit.inputParameters.ContainsKey(index))
                         output.Add(GenerateValue(Unit.inputParameters[index], data));
                     index++;
                 }
-                return string.Join(", ", output);
+                return string.Join(MakeSelectableForThisUnit(", "), output);
             }
             else
             {
                 List<string> output = Unit.valueInputs.Select(input => GenerateValue(input, data)).ToList();
-                return string.Join(", ", output);
+                return string.Join(MakeSelectableForThisUnit(", "), output);
             }
         }
     }

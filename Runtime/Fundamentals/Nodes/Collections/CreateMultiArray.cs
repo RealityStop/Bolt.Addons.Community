@@ -52,11 +52,11 @@ namespace Unity.VisualScripting.Community
 
             for (int i = 0; i < dimensions; i++)
             {
-                var dimension = ValueInput<int>(i.ToString() + " Length", 0);
+                var dimension = ValueInput(i.ToString() + " Length", 0);
                 indexes.Add(dimension);
             }
 
-            result = ValueOutput<Array>("array", Create);
+            result = ValueOutput("array", Create);
         }
 
         private Array Create(Flow flow)

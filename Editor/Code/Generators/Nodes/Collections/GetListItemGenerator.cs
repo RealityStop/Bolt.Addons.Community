@@ -13,6 +13,16 @@ public class GetListItemGenerator : NodeGenerator<GetListItem>
 
     public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
-        return new ValueCode(GenerateValue(Unit.list, data) + $"[{GenerateValue(Unit.index, data)}]", data.GetExpectedType(), data.GetExpectedType() != null);
+        var code = MakeSelectableForThisUnit($"[") + GenerateValue(Unit.index, data) + MakeSelectableForThisUnit("]");
+        data.CreateSymbol(Unit, typeof(object), code);
+        data.SetExpectedType(Unit.list.type);
+        var listCode = GenerateValue(Unit.list, data);
+        var result = data.RemoveExpectedType();
+        if (result.isMet)
+        {
+            if (result.type.IsGenericType && typeof(IList).IsAssignableFrom(result.type))
+                data.SetSymbolType(Unit, result.type.GetGenericArguments()[0]);
+        }
+        return new ValueCode(listCode + code, data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !(data.TryGetSymbol(Unit, out var symbol) && data.GetExpectedType().IsAssignableFrom(symbol.Type)));
     }
 }

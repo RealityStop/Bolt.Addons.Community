@@ -9,31 +9,21 @@ namespace Unity.VisualScripting.Community
     [RenamedFrom("Bolt.Addons.Community.Code.ClassFieldDeclaration")]
     public sealed class ClassFieldDeclaration : FieldDeclaration, ISerializationCallbackReceiver
     {
-        /// <summary>
-        /// This is only so that its possible to override the SystemObjectInspector
-        /// To draw the inspector for the value without the Type
-        /// </summary>
+        [Serialize]
         public SerializableType typeHandle;
 
         [InspectorToggleLeft]
+        [Serialize]
         public object defaultValue = 0;
 
         [Serialize]
-        private object serlizer;
-
-        [SerializeField]
-        [HideInInspector]
         private SerializationData serializedValue;
-
-        [SerializeField]
-        [HideInInspector]
-        private SerializationData serializedValueType;
 
         public void OnAfterDeserialize()
         {
-            type = (Type)serializedValueType.Deserialize();
-            serlizer = serializedValue.Deserialize();
-            defaultValue = serlizer;
+            type = Type.GetType(typeHandle.Identification);
+            defaultValue = serializedValue.Deserialize();
+            OnSerialized?.Invoke();
         }
 
         public void OnBeforeSerialize()
@@ -46,17 +36,16 @@ namespace Unity.VisualScripting.Community
             else
             {
                 serializedValue = defaultValue.Serialize();
-                serlizer = defaultValue.Serialize();
             }
 
             if (type == null)
             {
-                serializedValueType = new SerializationData();
+                typeHandle = new SerializableType();
                 return;
             }
             else
             {
-                serializedValueType = type.Serialize();
+                typeHandle.Identification = type.AssemblyQualifiedName;
             }
         }
     }

@@ -1,26 +1,37 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using UnityEngine;
 
-[NodeGenerator(typeof(EventReturn))]
-public class ReturnGenerator : NodeGenerator<EventReturn>
+namespace Unity.VisualScripting.Community
 {
-    public ReturnGenerator(Unit unit) : base(unit)
+    [NodeGenerator(typeof(EventReturn))]
+    public class ReturnGenerator : NodeGenerator<EventReturn>
     {
-    }
-
-    public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-    {
-        string output = string.Empty;
-        if(input == Unit.enter)
+        public ReturnGenerator(Unit unit) : base(unit)
         {
-            data.hasReturned = true;
-            output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, CodeBuilder.Return(GenerateValue(Unit.value, data)));
-            return output;
         }
-        return base.GenerateControl(input, data, indent);
+
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            string output = string.Empty;
+            if (input == Unit.enter)
+            {
+                data.hasReturned = true;
+                var yield = SupportsYieldReturn(data.returns) ? "yield ".ControlHighlight() : "";
+                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(yield + "return".ControlHighlight()) + (data.returns != typeof(void) && data.returns != typeof(Libraries.CSharp.Void) ? " " + GenerateValue(Unit.value, data) : "") + MakeSelectableForThisUnit(";");
+                return output;
+            }
+            return base.GenerateControl(input, data, indent);
+        }
+
+        /// <summary>
+        /// Checks if a type can be used with `yield return`.
+        /// </summary>
+        private bool SupportsYieldReturn(Type type)
+        {
+            // Only check if the type is exactly IEnumerable or IEnumerable<T> (not concrete implementations)
+            return type != null && (type == typeof(IEnumerable) || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>)) || type == typeof(IEnumerator) || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerator<>)));
+        }
     }
 }

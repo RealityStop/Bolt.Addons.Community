@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
+    [SpecialUnit]
     public abstract class AssetMemberUnit : CodeAssetUnit
     {
     }

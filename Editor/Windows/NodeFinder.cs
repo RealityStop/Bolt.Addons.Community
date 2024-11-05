@@ -27,6 +27,8 @@ namespace Unity.VisualScripting.Community
             public ScriptMachine ScriptMachine;
             public StateMachine StateMachine;
             public StateGraphAsset StateGraphAsset;
+            public ClassAsset ClassAsset;
+            public StructAsset StructAsset;
             public GraphReference Reference;
             public string FullTypeName;
             public IUnit Unit;
@@ -40,15 +42,21 @@ namespace Unity.VisualScripting.Community
         private bool _checkStateGraphAssets = true;
         private bool _checkScriptMachines = true;
         private bool _checkStateMachines = true;
+        private bool _checkClassAssets = true;
+        private bool _checkStructAssets = true;
         private List<MatchObject> _matchObjects = new();
         private Dictionary<ScriptGraphAsset, List<MatchObject>> _matchScriptGraphMap = new();
         private Dictionary<ScriptMachine, List<MatchObject>> _matchScriptMachineMap = new();
         private Dictionary<StateMachine, List<MatchObject>> _matchStateMachineMap = new();
+        private Dictionary<StateGraphAsset, List<MatchObject>> _matchStateGraphMap = new();
+        private Dictionary<ClassAsset, List<MatchObject>> _matchClassAssetMap = new();
+        private Dictionary<StructAsset, List<MatchObject>> _matchStructAssetMap = new();
         private List<ScriptGraphAsset> _sortedScriptGraphKey = new();
         private List<ScriptMachine> _sortedScriptMachineKey = new();
         private List<StateMachine> _sortedStateMachineKey = new();
-        private Dictionary<StateGraphAsset, List<MatchObject>> _matchStateGraphMap = new();
         private List<StateGraphAsset> _sortedStateGraphKey = new();
+        private List<ClassAsset> _sortedClassAssetKey = new();
+        private List<StructAsset> _sortedStructAssetKey = new();
         private float errorCheckInterval = 1.0f;
         private float lastErrorCheckTime;
 
@@ -73,10 +81,14 @@ namespace Unity.VisualScripting.Community
             _sortedScriptGraphKey.Clear();
             _matchScriptMachineMap.Clear();
             _matchStateMachineMap.Clear();
+            _matchClassAssetMap.Clear();
+            _matchStructAssetMap.Clear();
             _sortedScriptMachineKey.Clear();
             _sortedStateMachineKey.Clear();
             _matchStateGraphMap.Clear();
             _sortedStateGraphKey.Clear();
+            _sortedClassAssetKey.Clear();
+            _sortedStructAssetKey.Clear();
         }
 
         private void OnEnable()
@@ -148,33 +160,53 @@ namespace Unity.VisualScripting.Community
                                              bool prevCheckStateGraphAssets = _checkStateGraphAssets;
                                              bool prevCheckScriptMachines = _checkScriptMachines;
                                              bool prevCheckStateMachines = _checkStateMachines;
+                                             bool prevCheckClassAssets = _checkClassAssets;
+                                             bool prevCheckStructAssets = _checkStructAssets;
                                              bool prevMatchError = _matchError;
 
                                              _checkScriptGraphAssets = GUILayout.Toggle(_checkScriptGraphAssets, "ScriptGraphAssets", EditorStyles.toolbarButton);
                                              _checkStateGraphAssets = GUILayout.Toggle(_checkStateGraphAssets, "StateGraphAssets", EditorStyles.toolbarButton);
                                              _checkScriptMachines = GUILayout.Toggle(_checkScriptMachines, "ScriptMachines", EditorStyles.toolbarButton);
                                              _checkStateMachines = GUILayout.Toggle(_checkStateMachines, "StateMachines", EditorStyles.toolbarButton);
+                                             _checkClassAssets = GUILayout.Toggle(_checkClassAssets, "ClassAssets", EditorStyles.toolbarButton);
+                                             _checkStructAssets = GUILayout.Toggle(_checkStructAssets, "StructAssets", EditorStyles.toolbarButton);
                                              _matchError = GUILayout.Toggle(_matchError, "Errors", EditorStyles.toolbarButton);
 
 
                                              if (_checkScriptGraphAssets != prevCheckScriptGraphAssets)
                                              {
-                                                 Search();
+                                                 if (_checkScriptGraphAssets)
+                                                     Search();
                                              }
 
                                              if (_checkStateGraphAssets != prevCheckStateGraphAssets)
                                              {
-                                                 Search();
+                                                 if (_checkStateGraphAssets)
+                                                     Search();
                                              }
 
                                              if (_checkScriptMachines != prevCheckScriptMachines)
                                              {
-                                                 Search();
+                                                 if (_checkScriptMachines)
+                                                     Search();
                                              }
 
                                              if (_checkStateMachines != prevCheckStateMachines)
                                              {
-                                                 Search();
+                                                 if (_checkStateMachines)
+                                                     Search();
+                                             }
+
+                                             if (_checkClassAssets != prevCheckClassAssets)
+                                             {
+                                                 if (_checkClassAssets)
+                                                     Search();
+                                             }
+
+                                             if (_checkStructAssets != prevCheckStructAssets)
+                                             {
+                                                 if (_checkStructAssets)
+                                                     Search();
                                              }
 
                                              if (_matchError != prevMatchError)
@@ -419,6 +451,112 @@ namespace Unity.VisualScripting.Community
                             }
                         }
                     }
+
+                    if (_checkClassAssets)
+                    {
+                        // Display Class Asset results
+                        foreach (var key in _sortedClassAssetKey)
+                        {
+                            var list = _matchClassAssetMap[key];
+                            if (!ShouldShowItem(list)) continue;
+                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
+                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                            {
+                                fontStyle = FontStyle.Bold,
+                                fontSize = 14,
+                                alignment = TextAnchor.MiddleLeft,
+                                richText = true
+                            };
+                            GUILayout.Label(new GUIContent(key.name, key.icon), headerStyle);
+
+                            foreach (var match in list)
+                            {
+                                var pathNames = GetUnitPath(match.Reference);
+                                if (match.Matches.Contains(MatchType.Error))
+                                {
+                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+
+                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                    {
+                                        alignment = TextAnchor.MiddleLeft,
+                                        richText = true
+                                    };
+
+                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                    {
+                                        FocusMatchObject(match);
+                                    }
+                                }
+                                else
+                                {
+                                    var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
+                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                    {
+                                        alignment = TextAnchor.MiddleLeft,
+                                        richText = true
+                                    };
+
+                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                    {
+                                        FocusMatchObject(match);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (_checkStructAssets)
+                    {
+                        // Display Struct Asset results
+                        foreach (var key in _sortedStructAssetKey)
+                        {
+                            var list = _matchStructAssetMap[key];
+                            if (!ShouldShowItem(list)) continue;
+                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
+                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                            {
+                                fontStyle = FontStyle.Bold,
+                                fontSize = 14,
+                                alignment = TextAnchor.MiddleLeft,
+                                richText = true
+                            };
+                            GUILayout.Label(new GUIContent(key.name, key.icon), headerStyle);
+
+                            foreach (var match in list)
+                            {
+                                var pathNames = GetUnitPath(match.Reference);
+                                if (match.Matches.Contains(MatchType.Error))
+                                {
+                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+
+                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                    {
+                                        alignment = TextAnchor.MiddleLeft,
+                                        richText = true
+                                    };
+
+                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                    {
+                                        FocusMatchObject(match);
+                                    }
+                                }
+                                else
+                                {
+                                    var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
+                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                    {
+                                        alignment = TextAnchor.MiddleLeft,
+                                        richText = true
+                                    };
+
+                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                    {
+                                        FocusMatchObject(match);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 else
                 {
@@ -511,7 +649,7 @@ namespace Unity.VisualScripting.Community
 
                     if (_checkStateMachines)
                     {
-                        // Display ScriptMachine Graph Results
+                        // Display StateMachine Graph Results
                         foreach (var key in _sortedStateMachineKey)
                         {
                             var list = _matchStateMachineMap[key];
@@ -571,6 +709,88 @@ namespace Unity.VisualScripting.Community
                                 richText = true
                             };
                             GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
+
+                            foreach (var match in list)
+                            {
+                                if (match.Matches.Contains(MatchType.Error))
+                                {
+                                    var pathNames = GetUnitPath(match.Reference);
+
+                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+
+                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                    {
+                                        alignment = TextAnchor.MiddleLeft,
+                                        richText = true
+                                    };
+
+                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                    {
+                                        FocusMatchObject(match);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (_checkClassAssets)
+                    {
+                        // Display Class Assets results
+                        foreach (var key in _sortedClassAssetKey)
+                        {
+                            var list = _matchClassAssetMap[key];
+                            if (!IsError(list)) continue;
+                            isShowingErrors = true;
+                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
+                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                            {
+                                fontStyle = FontStyle.Bold,
+                                fontSize = 14,
+                                alignment = TextAnchor.MiddleLeft,
+                                richText = true
+                            };
+                            GUILayout.Label(new GUIContent(key.name, key.icon), headerStyle);
+
+                            foreach (var match in list)
+                            {
+                                if (match.Matches.Contains(MatchType.Error))
+                                {
+                                    var pathNames = GetUnitPath(match.Reference);
+
+                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
+
+                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+                                    {
+                                        alignment = TextAnchor.MiddleLeft,
+                                        richText = true
+                                    };
+
+                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
+                                    {
+                                        FocusMatchObject(match);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (_checkStructAssets)
+                    {
+                        // Display Struct Assets results
+                        foreach (var key in _sortedStructAssetKey)
+                        {
+                            var list = _matchStructAssetMap[key];
+                            if (!IsError(list)) continue;
+                            isShowingErrors = true;
+                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
+                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                            {
+                                fontStyle = FontStyle.Bold,
+                                fontSize = 14,
+                                alignment = TextAnchor.MiddleLeft,
+                                richText = true
+                            };
+                            GUILayout.Label(new GUIContent(key.name, key.icon), headerStyle);
 
                             foreach (var match in list)
                             {
@@ -654,7 +874,23 @@ namespace Unity.VisualScripting.Community
                 {
                     if (string.IsNullOrEmpty(nodePath.graph.title))
                     {
-                        prefix = nodePath.graph.GetType().ToString().Split(".").Last();
+                        if (!nodePath.isRoot)
+                        {
+                            prefix = nodePath.graph.GetType().ToString().Split(".").Last();
+                        }
+                        else
+                        {
+                            if (reference.root is MethodDeclaration methodDeclaration)
+                                prefix = methodDeclaration.methodName;
+                            else if (reference.root is ConstructorDeclaration constructorDeclaration)
+                                prefix = constructorDeclaration.name;
+                            else if (reference.root is PropertyGetterMacro propertyGetterMacro)
+                                prefix = propertyGetterMacro.name;
+                            else if (reference.root is PropertySetterMacro propertySetterMacro)
+                                prefix = propertySetterMacro.name;
+                            else
+                                prefix = nodePath.graph.GetType().ToString().Split(".").Last();
+                        }
                     }
                     else
                     {
@@ -826,6 +1062,90 @@ namespace Unity.VisualScripting.Community
                 _sortedStateGraphKey = _matchStateGraphMap.Keys.ToList();
                 _sortedStateGraphKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
             }
+
+            if (_checkClassAssets)
+            {
+                var guids = AssetDatabase.FindAssets("t:ClassAsset", null);
+                foreach (var guid in guids)
+                {
+                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                    var asset = AssetDatabase.LoadAssetAtPath<ClassAsset>(assetPath);
+
+                    var references = GetReferences(asset);
+                    foreach (var reference in references)
+                    {
+                        foreach (var element in TraverseFlowGraph(reference))
+                        {
+                            var targetReference = element.Item1;
+                            var unit = element.Item2;
+                            var newMatch = MatchUnit(unit, targetReference);
+                            if (newMatch == null) continue;
+                            newMatch.ClassAsset = asset;
+                            newMatch.Reference = targetReference;
+                            if (_matchClassAssetMap.TryGetValue(newMatch.ClassAsset, out var list))
+                            {
+                                if (!list.Any(match => match.Unit == newMatch.Unit))
+                                {
+                                    list.Add(newMatch);
+                                }
+                                else
+                                {
+                                    list[list.IndexOf(list.First(match => match.Unit == newMatch.Unit))] = newMatch;
+                                }
+                            }
+                            else
+                            {
+                                _matchClassAssetMap[newMatch.ClassAsset] = new List<MatchObject>() { newMatch };
+                            }
+                        }
+                    }
+                }
+
+                _sortedClassAssetKey = _matchClassAssetMap.Keys.ToList();
+                _sortedClassAssetKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
+            }
+
+            if (_checkStructAssets)
+            {
+                var guids = AssetDatabase.FindAssets("t:StructAsset", null);
+                foreach (var guid in guids)
+                {
+                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                    var asset = AssetDatabase.LoadAssetAtPath<StructAsset>(assetPath);
+
+                    var references = GetReferences(asset);
+                    foreach (var reference in references)
+                    {
+                        foreach (var element in TraverseFlowGraph(reference))
+                        {
+                            var targetReference = element.Item1;
+                            var unit = element.Item2;
+                            var newMatch = MatchUnit(unit, targetReference);
+                            if (newMatch == null) continue;
+                            newMatch.StructAsset = asset;
+                            newMatch.Reference = targetReference;
+                            if (_matchStructAssetMap.TryGetValue(newMatch.StructAsset, out var list))
+                            {
+                                if (!list.Any(match => match.Unit == newMatch.Unit))
+                                {
+                                    list.Add(newMatch);
+                                }
+                                else
+                                {
+                                    list[list.IndexOf(list.First(match => match.Unit == newMatch.Unit))] = newMatch;
+                                }
+                            }
+                            else
+                            {
+                                _matchStructAssetMap[newMatch.StructAsset] = new List<MatchObject>() { newMatch };
+                            }
+                        }
+                    }
+                }
+
+                _sortedStructAssetKey = _matchStructAssetMap.Keys.ToList();
+                _sortedStructAssetKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
+            }
         }
 
         private void Search()
@@ -839,6 +1159,10 @@ namespace Unity.VisualScripting.Community
             _sortedScriptMachineKey.Clear();
             _matchStateMachineMap.Clear();
             _sortedStateMachineKey.Clear();
+            _matchClassAssetMap.Clear();
+            _sortedClassAssetKey.Clear();
+            _matchStructAssetMap.Clear();
+            _sortedStructAssetKey.Clear();
 
             var matchWord = new Regex(_pattern, RegexOptions.IgnoreCase);
             // for script graphs.
@@ -972,6 +1296,126 @@ namespace Unity.VisualScripting.Community
 
                 _sortedStateGraphKey = _matchStateGraphMap.Keys.ToList();
                 _sortedStateGraphKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
+            }
+
+            if (_checkClassAssets)
+            {
+                var guids = AssetDatabase.FindAssets("t:ClassAsset", null);
+                foreach (var guid in guids)
+                {
+                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                    var asset = AssetDatabase.LoadAssetAtPath<ClassAsset>(assetPath);
+                    var references = GetReferences(asset);
+                    foreach (var reference in references)
+                    {
+                        foreach (var element in TraverseFlowGraph(reference))
+                        {
+                            var targetReference = element.Item1;
+                            var unit = element.Item2;
+                            var newMatch = MatchUnit(matchWord, unit);
+                            if (newMatch == null) continue;
+                            newMatch.ClassAsset = asset;
+                            newMatch.Reference = targetReference;
+                            _matchObjects.Add(newMatch);
+                            if (_matchClassAssetMap.TryGetValue(newMatch.ClassAsset, out var list))
+                            {
+                                if (!list.Any(match => match.Unit == newMatch.Unit))
+                                {
+                                    list.Add(newMatch);
+                                }
+                            }
+                            else
+                            {
+                                _matchClassAssetMap[newMatch.ClassAsset] = new List<MatchObject>() { newMatch };
+                            }
+                        }
+                    }
+                }
+
+                _sortedClassAssetKey = _matchClassAssetMap.Keys.ToList();
+                _sortedClassAssetKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
+            }
+
+            if (_checkStructAssets)
+            {
+                var guids = AssetDatabase.FindAssets("t:StructAsset", null);
+                foreach (var guid in guids)
+                {
+                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                    var asset = AssetDatabase.LoadAssetAtPath<StructAsset>(assetPath);
+                    var references = GetReferences(asset);
+                    foreach (var reference in references)
+                    {
+                        foreach (var element in TraverseFlowGraph(reference))
+                        {
+                            var targetReference = element.Item1;
+                            var unit = element.Item2;
+                            var newMatch = MatchUnit(matchWord, unit);
+                            if (newMatch == null) continue;
+                            newMatch.StructAsset = asset;
+                            newMatch.Reference = targetReference;
+                            _matchObjects.Add(newMatch);
+                            if (_matchStructAssetMap.TryGetValue(newMatch.StructAsset, out var list))
+                            {
+                                if (!list.Any(match => match.Unit == newMatch.Unit))
+                                {
+                                    list.Add(newMatch);
+                                }
+                            }
+                            else
+                            {
+                                _matchStructAssetMap[newMatch.StructAsset] = new List<MatchObject>() { newMatch };
+                            }
+                        }
+                    }
+                }
+
+                _sortedStructAssetKey = _matchStructAssetMap.Keys.ToList();
+                _sortedStructAssetKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
+            }
+        }
+
+        private IEnumerable<GraphReference> GetReferences(ClassAsset asset)
+        {
+            foreach (var constructor in asset.constructors)
+            {
+                yield return constructor.GetReference().AsReference();
+            }
+            foreach (var variable in asset.variables)
+            {
+                if (variable.isProperty)
+                {
+                    if (variable.get)
+                        yield return variable.getter.GetReference().AsReference();
+                    if (variable.set)
+                        yield return variable.setter.GetReference().AsReference();
+                }
+            }
+            foreach (var method in asset.methods)
+            {
+                yield return method.GetReference().AsReference();
+            }
+        }
+
+        private IEnumerable<GraphReference> GetReferences(StructAsset asset)
+        {
+            foreach (var constructor in asset.constructors)
+            {
+                yield return constructor.GetReference().AsReference();
+            }
+            foreach (var variable in asset.variables)
+            {
+                if (variable.isProperty)
+                {
+                    if (variable.get)
+                        yield return variable.getter.GetReference().AsReference();
+                    if (variable.set)
+                        yield return variable.setter.GetReference().AsReference();
+                }
+            }
+            foreach (var method in asset.methods)
+            {
+                yield return method.GetReference().AsReference();
             }
         }
 
@@ -1159,7 +1603,6 @@ namespace Unity.VisualScripting.Community
             CheckLiteralUnit(unit, matchRecord);
             CheckFields(matchWord, unit, matchRecord);
             CheckDefaultValues(matchWord, unit, matchRecord);
-            CheckAssetReferences(matchWord, unit, matchRecord);
 
             if (HandleSearch(unit, out string name))
             {
@@ -1255,22 +1698,7 @@ namespace Unity.VisualScripting.Community
                 if (matchWord.IsMatch(value.ToString()))
                 {
                     matchRecord.Matches.Add(MatchType.Unit);
-                    matchRecord.FullTypeName += $" ({kvp.Key.LegalMemberName().Prettify()} : {(value is Type type ? type.HumanName() : value)})";
-                    break;
-                }
-            }
-        }
-
-        private void CheckAssetReferences(Regex matchWord, Unit unit, MatchObject matchRecord)
-        {
-            foreach (var kvp in unit.defaultValues)
-            {
-                if (kvp.Value is not Object obj) continue;
-                if (!AssetDatabase.Contains(obj)) continue;
-                if (matchWord.IsMatch(AssetDatabase.GetAssetPath(obj)))
-                {
-                    matchRecord.Matches.Add(MatchType.Unit);
-                    matchRecord.FullTypeName += $" ({kvp.Key.LegalMemberName().Prettify()} : {kvp.Value})";
+                    matchRecord.FullTypeName += $" ({kvp.Key.LegalMemberName().Prettify()} : {(value is Type type ? type.HumanName() : value is Object @object ? @object.name : value)})";
                     break;
                 }
             }
@@ -1295,15 +1723,14 @@ namespace Unity.VisualScripting.Community
 
         private string GetUnitName(Unit unit)
         {
-            return BoltFlowNameUtility.UnitTitle(unit.GetType(), false, false);
+            return BoltFlowNameUtility.UnitTitle(unit.GetType(), true, false);
         }
 
         private string GetValue(ValueInput valueInput)
         {
             if (valueInput.hasDefaultValue)
             {
-
-                return $"{valueInput.key.LegalMemberName().Prettify()} : " + (!valueInput.nullMeansSelf ? valueInput.unit.defaultValues[valueInput.key] is Type type ? type.HumanName() : valueInput.unit.defaultValues[valueInput.key]?.ToString() ?? "null" : "This");
+                return $"{valueInput.key.LegalMemberName().Prettify()} : " + (!valueInput.nullMeansSelf ? valueInput.unit.defaultValues[valueInput.key] is Type type ? type.HumanName() : (valueInput.unit.defaultValues[valueInput.key] is Object obj ? obj.name : valueInput.unit.defaultValues[valueInput.key]?.ToString()) ?? "null" : "This");
             }
             else if (valueInput.hasAnyConnection)
             {
@@ -1376,15 +1803,45 @@ namespace Unity.VisualScripting.Community
             }
 
             // open
-            GraphReference reference = match.Reference;
-            GraphWindow.OpenActive(reference);
-
+            var target = OpenReferencePath(match.Reference);
+            GraphWindow.OpenActive(target);
             // focus
-            var context = reference.Context();
+            var context = target.Context();
             if (context == null)
                 return;
             context.BeginEdit();
             context.canvas?.ViewElements(((IGraphElement)match.Unit).Yield());
+            context.EndEdit();
+        }
+
+        List<(GraphReference, SubgraphUnit)> GetUnitPathReference(GraphReference reference)
+        {
+            List<(GraphReference, SubgraphUnit)> nodePath = new List<(GraphReference, SubgraphUnit)>() { (reference, !reference.isRoot ? reference.GetParent<SubgraphUnit>() : null) };
+            while (reference.ParentReference(false) != null)
+            {
+                reference = reference.ParentReference(false);
+                nodePath.Add((reference, !reference.isRoot ? reference.GetParent<SubgraphUnit>() : null));
+            }
+            nodePath.Reverse();
+            return nodePath;
+        }
+
+        GraphReference OpenReferencePath(GraphReference graphReference)
+        {
+            var path = GetUnitPathReference(graphReference);
+            GraphReference targetReference = graphReference.root.GetReference().AsReference();
+            foreach (var item in path)
+            {
+                if (item.Item2 != null)
+                {
+                    targetReference = targetReference.ChildReference(item.Item2, false);
+                }
+                else if (item.Item1.isRoot)
+                {
+                    targetReference = item.Item1;
+                }
+            }
+            return targetReference;
         }
     }
 }

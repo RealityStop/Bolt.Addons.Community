@@ -41,6 +41,8 @@ namespace Unity.VisualScripting.Community
 
             elapsedSeconds = ValueOutput(nameof(elapsedSeconds), GetElapsedSeconds);
             isRunning = ValueOutput(nameof(isRunning), IsRunning);
+            Succession(start, started);
+            Succession(stop, stopped);
         }
 
         private ControlOutput StartStopwatch(Flow flow)

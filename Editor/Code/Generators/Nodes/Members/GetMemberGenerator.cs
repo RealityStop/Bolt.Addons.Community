@@ -16,12 +16,7 @@ namespace Unity.VisualScripting.Community
         {
             NameSpace = Unit.member.declaringType.Namespace;
         }
-    
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
-        }
-    
+
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             if (Unit.target != null)
@@ -29,7 +24,7 @@ namespace Unity.VisualScripting.Community
                 if (Unit.target.hasValidConnection)
                 {
                     string type;
-    
+
                     if (Unit.member.isField)
                     {
                         type = Unit.member.fieldInfo.Name;
@@ -42,32 +37,32 @@ namespace Unity.VisualScripting.Community
                     {
                         type = Unit.member.ToPseudoDeclarer().ToString();
                     }
-    
+
                     string outputCode;
-    
+
                     if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                     {
-                        outputCode = new ValueCode($"{GenerateValue(Unit.target, data)}{GetComponent(Unit.target)}.{type}");
+                        outputCode = new ValueCode($"{GenerateValue(Unit.target, data)}{MakeSelectableForThisUnit($"{GetComponent(Unit.target, data)}.{type}")}");
                     }
                     else
                     {
-                        outputCode = new ValueCode($"{GenerateValue(Unit.target, data)}.{type}");
+                        outputCode = new ValueCode(GenerateValue(Unit.target, data) + MakeSelectableForThisUnit($".{type}"));
                     }
-    
+
                     return outputCode;
                 }
                 else
                 {
-                    return $"{GenerateValue(Unit.target, data)}.{Unit.member.name}";
+                    return $"{GenerateValue(Unit.target, data)}{MakeSelectableForThisUnit($".{Unit.member.name}")}";
                 }
             }
             else
             {
-                return Unit.member.ToString();
+                return MakeSelectableForThisUnit($"{Unit.member.targetType.As().CSharpName(false, true)}.{Unit.member.name.VariableHighlight()}");
             }
         }
-    
-    
+
+
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (Unit.target != null)
@@ -76,37 +71,40 @@ namespace Unity.VisualScripting.Community
                 {
                     if (Unit.target.hasValidConnection)
                     {
+                        data.SetExpectedType(Unit.member.pseudoDeclaringType);
+                        var connectedCode = GetNextValueUnit(input, data);
+                        data.RemoveExpectedType();
                         if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source, data), typeof(GameObject), ShouldCast(input));
+                            return new ValueCode(connectedCode, typeof(GameObject), ShouldCast(input, data));
                         }
-                        return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source, data), input.type, ShouldCast(input));
+                        return new ValueCode(connectedCode, input.type, ShouldCast(input, data));
                     }
                     else if (Unit.target.hasDefaultValue)
                     {
                         var defaultValue = Unit.defaultValues[input.key];
-    
+
                         if (Unit.target.type == typeof(GameObject) || input.type.IsSubclassOf(typeof(Component)))
                         {
-                            return "gameObject".VariableHighlight() + new ValueCode($"{GetComponent(Unit.target)}");
+                            return MakeSelectableForThisUnit("gameObject".VariableHighlight() + new ValueCode($"{GetComponent(Unit.target, data)}"));
                         }
                         else
                         {
-                            return defaultValue.As().Code(false, true, true);
+                            return MakeSelectableForThisUnit(defaultValue.As().Code(false, true, true));
                         }
-    
+
                     }
                     else
                     {
-                        return "/* Target Requires Input */";
+                        return MakeSelectableForThisUnit("/* Target Requires Input */");
                     }
                 }
             }
-    
+
             return base.GenerateValue(input, data);
         }
-    
-        string GetComponent(ValueInput valueInput)
+
+        string GetComponent(ValueInput valueInput, ControlGenerationData data)
         {
             if (valueInput.hasValidConnection)
             {
@@ -116,14 +114,17 @@ namespace Unity.VisualScripting.Community
                 }
                 else
                 {
-                    return valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent" ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : string.Empty;
+                    return ((valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent") || GetSourceType(valueInput, data) == typeof(GameObject)) && Unit.member.pseudoDeclaringType != typeof(GameObject) ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : string.Empty;
                 }
             }
             else
             {
-                return $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()";
+                if (Unit.member.pseudoDeclaringType != typeof(GameObject))
+                    return $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()";
+                else
+                    return "";
             }
         }
-    
+
     }
 }

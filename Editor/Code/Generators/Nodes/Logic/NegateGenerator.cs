@@ -24,9 +24,10 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+
             if (output == Unit.output)
             {
-                return "!(" + GenerateValue(Unit.input, data) + ")";
+                return MakeSelectableForThisUnit("!(") + GenerateValue(Unit.input, data) + MakeSelectableForThisUnit(")");
             }
 
             return base.GenerateValue(output, data);

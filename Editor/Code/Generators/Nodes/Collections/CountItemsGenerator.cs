@@ -1,6 +1,7 @@
 using Unity.VisualScripting;
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using System.Collections;
 
 namespace Unity.VisualScripting.Community
 {
@@ -14,11 +15,16 @@ namespace Unity.VisualScripting.Community
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             var type = GetSourceType(Unit.collection, data);
-            if(type != null && type.IsArray)
+            data.SetExpectedType(typeof(ICollection));
+            if (type != null && type.IsArray)
             {
-                return GenerateValue(Unit.collection, data) + ".Length";
+                var code = GenerateValue(Unit.collection, data) + MakeSelectableForThisUnit("." + "Length".VariableHighlight());
+                data.RemoveExpectedType();
+                return code;
             }
-            return GenerateValue(Unit.collection, data) + ".Count";
+            var _code = GenerateValue(Unit.collection, data) + MakeSelectableForThisUnit("." + "Count".VariableHighlight());
+            data.RemoveExpectedType();
+            return _code;
         }
     }
 }

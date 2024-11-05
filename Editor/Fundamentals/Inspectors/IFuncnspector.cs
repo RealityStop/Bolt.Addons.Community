@@ -26,8 +26,8 @@ public class IFuncInspector : Inspector
         {
             var unit = metadata["Unit"].value as DelegateNode;
             CSharpPreviewWindow.Open();
-            CSharpPreviewWindow.instance.preview.code = null;
-            CSharpPreviewWindow.instance.preview.output = DelegateNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0).RemoveMarkdown();
+            // CSharpPreviewWindow.instance.preview.code = null;
+            // CSharpPreviewWindow.instance.preview.output = DelegateNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0).RemoveMarkdown();
         }
     }
 }

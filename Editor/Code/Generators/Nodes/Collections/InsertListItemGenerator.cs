@@ -16,7 +16,7 @@ public class InsertListItemGenerator : NodeGenerator<InsertListItem>
     {
         var output = string.Empty;
         List<string> t = new List<string>();
-        output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, GenerateValue(Unit.listInput, data) + $".Insert({GenerateValue(Unit.index, data)}, {GenerateValue(Unit.item, data)});") + "\n";
+        output += CodeBuilder.Indent(indent) + GenerateValue(Unit.listInput, data) + MakeSelectableForThisUnit($".Insert(") + GenerateValue(Unit.index, data) + MakeSelectableForThisUnit(", ") + GenerateValue(Unit.item, data) + MakeSelectableForThisUnit(");") + "\n";
         output += GetNextUnit(Unit.exit, data, indent);
         return output;
     }

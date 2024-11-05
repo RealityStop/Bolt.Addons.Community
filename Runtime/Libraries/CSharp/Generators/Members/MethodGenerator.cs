@@ -1,6 +1,7 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -13,7 +14,9 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public Type returnType;
         public List<ParameterGenerator> parameters = new List<ParameterGenerator>();
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
+        public List<string> generics = new List<string>();
         public string body;
+        public string beforeBody;
         public string warning;
 
         private MethodGenerator() { }
@@ -31,25 +34,25 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         protected override sealed string GenerateBefore(int indent)
         {
             var attributes = string.Empty;
-            foreach(AttributeGenerator attr in this.attributes)
+            foreach (AttributeGenerator attr in this.attributes)
             {
                 attributes += attr.Generate(indent) + "\n";
             }
             var _warning = !string.IsNullOrEmpty(warning) ? CodeBuilder.Indent(indent) + $"/* {warning} */\n" : string.Empty;
             var modSpace = modifier == MethodModifier.None ? string.Empty : " ";
-
-            return attributes + _warning + CodeBuilder.Indent(indent) + scope.AsString().ToLower().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + returnType.As().CSharpName() + " " + name.LegalMemberName() + CodeBuilder.Parameters(this.parameters);
+            var genericTypes = generics.Count > 0 ? $"<{string.Join(", ", generics)}>" : string.Empty;
+            return attributes + _warning + CodeBuilder.Indent(indent) + scope.AsString().ToLower().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + returnType.As().CSharpName() + " " + name.LegalMemberName() + genericTypes + CodeBuilder.Parameters(this.parameters);
         }
 
         protected override sealed string GenerateBody(int indent)
         {
             if (string.IsNullOrEmpty(name)) { return string.Empty; }
-            return string.IsNullOrEmpty(body) ? string.Empty : body.Contains("\n") ? body.Replace("\n", "\n" + CodeBuilder.Indent(indent)).Insert(0, CodeBuilder.Indent(indent)) : CodeBuilder.Indent(indent) + body;
+            return string.IsNullOrEmpty(body) ? string.Empty : body.Contains("\n") ? beforeBody + body.Replace("\n", "\n" + CodeBuilder.Indent(indent)).Insert(0, CodeBuilder.Indent(indent)) : CodeBuilder.Indent(indent) + beforeBody + "\n" + CodeBuilder.Indent(indent) + body;
         }
 
         protected override sealed string GenerateAfter(int indent)
         {
-            return string.Empty; 
+            return string.Empty;
         }
 
         public MethodGenerator AddAttribute(AttributeGenerator generator)
@@ -61,6 +64,25 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public MethodGenerator Body(string body)
         {
             this.body = body;
+            return this;
+        }
+
+        public MethodGenerator AddGeneric()
+        {
+            var count = generics.Count == 1 ? "" : (generics.Count - 1).ToString();
+            generics.Add("T" + count);
+            return this;
+        }
+
+        public MethodGenerator AddGenerics(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (i == 0)
+                    generics.Add("T".TypeHighlight());
+                else
+                    generics.Add(("T" + i).TypeHighlight());
+            }
             return this;
         }
 

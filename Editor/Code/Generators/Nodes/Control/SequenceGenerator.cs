@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
@@ -8,20 +8,26 @@ using UnityEngine;
 [NodeGenerator(typeof(Sequence))]
 public class SequenceGenerator : NodeGenerator<Sequence>
 {
-    public SequenceGenerator(Unit unit) : base(unit)
-    {
-    }
+    public SequenceGenerator(Unit unit) : base(unit) { }
 
     public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
     {
-        var output = string.Empty;
-        foreach (var controlOutput in Unit.multiOutputs)
+        // Use StringBuilder to avoid repeated string concatenation
+        var outputBuilder = new StringBuilder();
+
+        // Cache multiOutputs to avoid repeated access
+        var outputs = Unit.multiOutputs;
+
+        // Iterate only over connected outputs
+        foreach (var controlOutput in outputs)
         {
-            if(controlOutput.hasValidConnection)
+            if (controlOutput.hasValidConnection)
             {
-                output += CodeUtility.MakeSelectable(Unit, data.hasBroke || data.hasReturned ? GetNextUnit(controlOutput, data, indent).RemoveHighlights().RemoveMarkdown().NamespaceHighlight() : GetNextUnit(controlOutput, data, indent));
+                outputBuilder.Append(GetNextUnit(controlOutput, data, indent));
             }
         }
-        return output;
+
+        // Return the final generated string
+        return outputBuilder.ToString();
     }
 }

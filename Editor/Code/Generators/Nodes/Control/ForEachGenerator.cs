@@ -27,7 +27,7 @@ public sealed class ForEachGenerator : LocalVariableGenerator<Unity.VisualScript
             Type type;
             if (Unit.collection.hasValidConnection)
             {
-                var connectedVariable = data.GetVariableType(GetSingleDecorator(Unit.collection.connection.source.unit as Unit, Unit.collection.connection.source.unit as Unit).variableName);
+                var connectedVariable = GetSourceType(Unit.collection, data);
                 type = connectedVariable != null ? GetElementType(connectedVariable, typeof(object)) : GetElementType(Unit.collection.connection.source.type, typeof(object));
                 variableName = data.AddLocalNameInScope("item", type);
             }
@@ -42,15 +42,15 @@ public sealed class ForEachGenerator : LocalVariableGenerator<Unity.VisualScript
             if (usesIndex)
             {
                 currentIndex = data.AddLocalNameInScope("currentIndex", typeof(int));
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + typeof(int).As().CSharpName() + " " + currentIndex.VariableHighlight() + " = -1;\n");
+                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(typeof(int).As().CSharpName() + " " + currentIndex.VariableHighlight() + " = -1;") + "\n";
             }
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"foreach".ControlHighlight() + " (" + (fallback && type == typeof(object) ? "var" : $"{type.As().CSharpName()}") + $" {variableName}".VariableHighlight() + " in ".ConstructHighlight() + $"{collection})");
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"foreach".ControlHighlight() + " (" + (fallback && type == typeof(object) ? "var".ConstructHighlight() : $"{type.As().CSharpName()}") + $" {variableName}".VariableHighlight() + " in ".ConstructHighlight()) + $"{collection}" + MakeSelectableForThisUnit(")");
             output += "\n";
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{");
             output += "\n";
             if (usesIndex)
             {
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent + 1) + currentIndex.VariableHighlight() + "++;\n");
+                output += CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit(currentIndex.VariableHighlight() + "++;") + "\n";
             }
             if (Unit.body.hasAnyConnection)
             {
@@ -59,8 +59,9 @@ public sealed class ForEachGenerator : LocalVariableGenerator<Unity.VisualScript
                 data.ExitScope();
                 output += "\n";
             }
-            
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
+
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}");
+            output += "\n";
         }
 
         if (Unit.exit.hasAnyConnection)
@@ -103,17 +104,17 @@ public sealed class ForEachGenerator : LocalVariableGenerator<Unity.VisualScript
         {
             if (Unit.dictionary)
             {
-                return variableName.VariableHighlight() + ".Value";
+                return MakeSelectableForThisUnit(variableName.VariableHighlight() + ".Value");
             }
-            return variableName.VariableHighlight();
+            return MakeSelectableForThisUnit(variableName.VariableHighlight());
         }
         else if (output == Unit.currentKey)
         {
-            return variableName.VariableHighlight() + ".Key";
+            return MakeSelectableForThisUnit(variableName.VariableHighlight() + ".Key");
         }
         else
         {
-            return currentIndex.VariableHighlight();
+            return MakeSelectableForThisUnit(currentIndex.VariableHighlight());
         }
     }
 
@@ -123,7 +124,10 @@ public sealed class ForEachGenerator : LocalVariableGenerator<Unity.VisualScript
         {
             if (input.hasValidConnection)
             {
-                return CodeUtility.MakeSelectable(input.connection.source.unit as Unit, new ValueCode(GetNextValueUnit(input, data), Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable), ShouldCast(input, false, data)));
+                data.SetExpectedType(Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable));
+                var connectedCode = GetNextValueUnit(input, data);
+                data.RemoveExpectedType();
+                return new ValueCode(connectedCode, Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable), ShouldCast(input, data, false));
             }
         }
 

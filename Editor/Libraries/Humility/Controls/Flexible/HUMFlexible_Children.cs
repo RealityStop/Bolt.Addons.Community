@@ -24,9 +24,9 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             style.stretchWidth = stretchHorizontal;
             style.stretchHeight = stretchVertical;
             style.margin = new RectOffset();
-            EditorGUILayout.BeginVertical(style, options);
+            GUILayout.BeginVertical(style, options);
             action?.Invoke();
-            EditorGUILayout.EndVertical();
+            GUILayout.EndVertical();
         }
 
         public static Vector2 ScrollView(this HUMEditor.Data.Flexible flexible, Vector2 scrollPosition, GUIStyle backgroundStyle, Action contents, params GUILayoutOption[] options)

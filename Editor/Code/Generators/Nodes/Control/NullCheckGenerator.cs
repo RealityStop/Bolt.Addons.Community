@@ -17,33 +17,33 @@ namespace Unity.VisualScripting.Community
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             var output = string.Empty;
-            var _input = Unit.input.hasValidConnection ? CodeUtility.MakeSelectable(Unit.input.connection.source.unit as Unit, GenerateValue(Unit.input, data)) : GenerateValue(Unit.input, data);
+            var _input = GenerateValue(Unit.input, data);
             if (Unit.ifNotNull.hasValidConnection)
             {
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"{"if".ConstructHighlight()}({_input} != {"null".ConstructHighlight()})") + "\n";
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent)) + "\n";
+                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("if".ConstructHighlight() + "(") + $"{_input}" + MakeSelectableForThisUnit($" != {"null".ConstructHighlight()})") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
                 data.NewScope();
                 output += GetNextUnit(Unit.ifNotNull, data, indent + 1);
                 data.ExitScope();
-                output += "\n" + CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent)) + "\n";
+                output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
                 if (Unit.ifNull.hasValidConnection)
                 {
-                    output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"else".ConstructHighlight()) + "\n";
-                    output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent)) + "\n";
+                    output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"else".ConstructHighlight()) + "\n";
+                    output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
                     data.NewScope();
                     output += GetNextUnit(Unit.ifNull, data, indent + 1);
                     data.ExitScope();
-                    output += "\n" + CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent)) + "\n";
+                    output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
                 }
             }
             else if (Unit.ifNull.hasValidConnection)
             {
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"if({_input} == {"null".ConstructHighlight()})") + "\n";
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent)) + "\n";
+                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("if".ConstructHighlight() + "(") + $"{_input}" + MakeSelectableForThisUnit($" == {"null".ConstructHighlight()})") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
                 data.NewScope();
                 output += GetNextUnit(Unit.ifNull, data, indent + 1);
                 data.ExitScope();
-                output += "\n" + CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent)) + "\n";
+                output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
             }
 
             return output;

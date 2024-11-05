@@ -17,18 +17,22 @@ public class ConvertNodeGenerator : NodeGenerator<ConvertNode>
 
     public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
+        if (data.GetExpectedType() != null && data.GetExpectedType() == Unit.type)
+        {
+            data.SetCurrentExpectedTypeMet(true, Unit.type);
+        }
         if (Unit.conversion == ConversionType.Any)
         {
-            if(Unit.type == typeof(object)) return GenerateValue(Unit.value, data);
-            return $"({Unit.type.As().CSharpName(true, true)})" + GenerateValue(Unit.value, data);
+            if (Unit.type == typeof(object)) return GenerateValue(Unit.value, data);
+            return MakeSelectableForThisUnit($"({Unit.type.As().CSharpName(true, true)})") + GenerateValue(Unit.value, data);
         }
         else if (Unit.conversion == ConversionType.ToArrayOfObject)
         {
-            return $"({new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, true), true)}).Cast<{"object".ConstructHighlight()}>().ToArray()";
+            return MakeSelectableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeSelectableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToArray()");
         }
         else if (Unit.conversion == ConversionType.ToListOfObject)
         {
-            return $"({new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, true), true)}).Cast<{"object".ConstructHighlight()}>().ToList()";
+            return MakeSelectableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeSelectableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToList()");
         }
         return base.GenerateValue(output, data);
     }

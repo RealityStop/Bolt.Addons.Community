@@ -3,21 +3,21 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-[RenamedFrom("ChannelEvent")]    
+    [RenamedFrom("ChannelEvent")]
     [UnitTitle("ChannelEvent")]
     [UnitCategory("Events\\Community")]
     public class ChannelEvent : EventUnit<EmptyEventArgs>
     {
         [UnitHeaderInspectable("Channel")]
         public Channel Channel { get; set; }
-    
+
         protected override bool register => true;
-    
+
         public override EventHook GetHook(GraphReference reference)
         {
             return new EventHook(GetChannelEventName(Channel));
         }
-    
+
         private string GetChannelEventName(Channel channel)
         {
             switch (channel)
@@ -47,11 +47,11 @@ namespace Unity.VisualScripting.Community
                     return null;
             }
         }
-    
+
         protected override void Definition()
         {
             base.Definition();
         }
     }
-    
+
 }

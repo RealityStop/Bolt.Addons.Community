@@ -10,7 +10,7 @@ namespace Unity.VisualScripting.Community.Deprecated
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.DoOnceV2")]
     [UnitTitle("Do Once")]
     [TypeIcon(typeof(ISelectUnit))]
-    [Obsolete("Use the build in Once Unit!")]
+    [Obsolete("Use the built in Once Unit!")]
     public sealed class DoOnceV2 : Unit
     {
         public DoOnceV2() : base() { }

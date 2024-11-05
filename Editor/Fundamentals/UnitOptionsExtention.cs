@@ -30,11 +30,14 @@ namespace Unity.VisualScripting.Community
 
         #region Asset
         private FuzzyGroup assetMembersGroup = new FuzzyGroup("Asset", typeof(ClassAsset).Icon());
+        private FuzzyGroup assetFuncsGroup = new FuzzyGroup("Funcs", typeof(Method).Icon());
         private FuzzyGroup assetVariableMembersGroup = new FuzzyGroup("Variables", typeof(Field).Icon());
         private FuzzyGroup assetMethodMembersGroup = new FuzzyGroup("Methods", typeof(Method).Icon());
         private FuzzyGroup assetVariableGetGroup = new FuzzyGroup("Get", PathUtil.Load("return", CommunityEditorPath.Events));
         private FuzzyGroup assetVariableSetGroup = new FuzzyGroup("Set", typeof(ActionNode).Icon());
         #endregion
+        private FuzzyGroup dynmaicInputMembersGroup = new FuzzyGroup("Input", typeof(Type).Icon());
+        private FuzzyGroup dynmaicOutputMembersGroup = new FuzzyGroup("Output", typeof(Type).Icon());
 
         public UnitOptionsExtension(UnitOptionTree unitOptionTree) : base(new GUIContent(""))
         {
@@ -46,8 +49,28 @@ namespace Unity.VisualScripting.Community
             var optionsField = typeof(UnitOptionTree).GetField("options", BindingFlags.NonPublic | BindingFlags.Instance);
             var optionsValue = optionsField.GetValue(unitOptionTree);
             options = (HashSet<IUnitOption>)optionsValue;
+            if (options == null)
+                yield break;
+
+            // Check to see if current graph is part of a Class Asset only Class Assets have the AssetType unit
             if (options.Any(option => option is AssetTypeOption assetTypeOption && assetTypeOption.classAsset != null && assetTypeOption.unit.asset != null))
                 yield return csharpGroup;
+
+            if (unitOptionTree.filter.CompatibleInputType != null && !Codebase.settingsTypes.Contains(unitOptionTree.filter.CompatibleInputType))
+            {
+                dynmaicInputMembersGroup.data = unitOptionTree.filter.CompatibleInputType;
+                UnityAPI.Async(() => dynmaicInputMembersGroup.icon = unitOptionTree.filter.CompatibleInputType.Icon());
+                dynmaicInputMembersGroup.label = unitOptionTree.filter.CompatibleInputType.DisplayName();
+                yield return dynmaicInputMembersGroup;
+            }
+
+            if (unitOptionTree.filter.CompatibleOutputType != null && !Codebase.settingsTypes.Contains(unitOptionTree.filter.CompatibleOutputType))
+            {
+                dynmaicOutputMembersGroup.data = unitOptionTree.filter.CompatibleOutputType;
+                UnityAPI.Async(() => dynmaicOutputMembersGroup.icon = unitOptionTree.filter.CompatibleOutputType.Icon());
+                dynmaicOutputMembersGroup.label = unitOptionTree.filter.CompatibleOutputType.DisplayName();
+                yield return dynmaicOutputMembersGroup;
+            }
         }
 
         // This was the only way I could figure out how to add these options correctly since the units have to have [SpecialUnit]
@@ -91,6 +114,13 @@ namespace Unity.VisualScripting.Community
 
                 if (HasOptionsOfType<AssetMethodCallUnit, AssetMethodCallUnitOption>(o => o.unit.method != null))
                     yield return assetMethodMembersGroup;
+                if (HasOptionsOfType<AssetFuncUnit, AssetFuncUnitOption>(o => o.unit.method != null))
+                    yield return assetFuncsGroup;
+            }
+            else if (parent == assetFuncsGroup)
+            {
+                foreach (var option in GetOptionsOfType<AssetFuncUnit, AssetFuncUnitOption>(o => o.unit.method != null))
+                    yield return option;
             }
             else if (parent == assetVariableMembersGroup)
             {
@@ -157,6 +187,71 @@ namespace Unity.VisualScripting.Community
                 foreach (var option in GetOptionsOfType<InheritedMethodCall, InheritedMethodUnitOption>(o => o.unit.member != null))
                     yield return option;
             }
+            else if (parent == dynmaicOutputMembersGroup)
+            {
+                if (dynmaicOutputMembersGroup.data is Type type)
+                {
+                    foreach (var member in type.GetMembers().Where(member => member is FieldInfo or PropertyInfo or MethodInfo or ConstructorInfo).Select(m => m.ToManipulator(type)))
+                    {
+                        foreach (var constructedMember in ConstructMemberUnit(member))
+                        {
+                            if (unitOptionTree.filter.ValidateOption(constructedMember))
+                                yield return constructedMember;
+                        }
+                    }
+                }
+            }
+            else if (parent == dynmaicInputMembersGroup)
+            {
+                if (dynmaicInputMembersGroup.data is Type type)
+                {
+                    foreach (var member in type.GetMembers().Where(member => member is FieldInfo or PropertyInfo or MethodInfo or ConstructorInfo).Select(m => m.ToManipulator(type)))
+                    {
+                        foreach (var constructedMember in ConstructMemberUnit(member))
+                        {
+                            if (unitOptionTree.filter.ValidateOption(constructedMember))
+                                yield return constructedMember;
+                        }
+                    }
+                }
+            }
+        }
+
+        public IEnumerable<IUnitOption> ConstructMemberUnit(Member member)
+        {
+            if (member.info is FieldInfo fieldInfo)
+            {
+                if (fieldInfo.IsPublic)
+                    yield return new GetMemberOption(new GetMember(member));
+                if (fieldInfo.CanWrite())
+                    yield return new SetMemberOption(new SetMember(member));
+            }
+            else if (member.info is PropertyInfo propertyInfo)
+            {
+                if (propertyInfo.CanRead)
+                    yield return new GetMemberOption(new GetMember(member));
+                if (propertyInfo.CanWrite)
+                    yield return new SetMemberOption(new SetMember(member));
+            }
+            else if (member.info is MethodInfo methodInfo)
+            {
+                if (!IsProperty(methodInfo) && !IsEvent(methodInfo))
+                    yield return new InvokeMemberOption(new InvokeMember(member));
+            }
+            else if (member.info is ConstructorInfo)
+            {
+                yield return new InvokeMemberOption(new InvokeMember(member));
+            }
+        }
+
+        private bool IsEvent(MethodInfo methodInfo)
+        {
+            return methodInfo.Name.Contains("add_") || methodInfo.Name.Contains("remove_");
+        }
+
+        private bool IsProperty(MethodInfo methodInfo)
+        {
+            return methodInfo.Name.Contains("get_") || methodInfo.Name.Contains("set_");
         }
 
         private bool HasOptionsOfType<TUnit, TOption>(Func<TOption, bool> predicate)

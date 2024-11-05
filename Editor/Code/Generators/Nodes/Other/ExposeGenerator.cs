@@ -24,8 +24,7 @@ namespace Unity.VisualScripting.Community
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             var _output = string.Empty;
-
-            _output += GenerateValue(Unit.target, data) + "." + output.key;
+            _output += GenerateValue(Unit.target, data) + MakeSelectableForThisUnit("." + output.key);
             return _output;
         }
 
@@ -34,15 +33,15 @@ namespace Unity.VisualScripting.Community
         {
             if (input.hasValidConnection)
             {
-                return input.connection.source.type == typeof(object) ? $"(({input.type.DisplayName().TypeHighlight()})" + (input.connection.source.unit as Unit).GenerateValue(input.connection.source) + ")" : string.Empty + (input.connection.source.unit as Unit).GenerateValue(input.connection.source, data);
+                return input.connection.source.type == typeof(object) ? MakeSelectableForThisUnit($"(({input.type.DisplayName().TypeHighlight()})") + (input.connection.source.unit as Unit).GenerateValue(input.connection.source) + ")" : string.Empty + (input.connection.source.unit as Unit).GenerateValue(input.connection.source, data);
             }
             else if (input.hasDefaultValue)
             {
-                return unit.defaultValues[input.key].As().Code(false, true, true);
+                return unit.defaultValues[input.key].As().Code(false, Unit, true, true);
             }
             else
             {
-                return $"/* {input.key} Requires Input ";
+                return MakeSelectableForThisUnit($"/* {input.key} Requires Input ");
             }
         }
     }

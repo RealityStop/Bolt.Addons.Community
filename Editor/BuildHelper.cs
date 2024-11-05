@@ -1,10 +1,12 @@
 namespace RealityStop.LinkMerge
 {
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
     using System.Xml.Linq;
+    using UnityEditor;
     using UnityEditor.Build;
     using UnityEditor.Build.Reporting;
     using UnityEditor.PackageManager;
@@ -24,6 +26,7 @@ namespace RealityStop.LinkMerge
 
         public async void OnPreprocessBuild(BuildReport report)
         {
+            BuildPlayerWindow.RegisterBuildPlayerHandler(HandleBuildPlayer);
             // NOTE: We merge a potentially existing previous link.xml file instead of skipping preprocess step 
             // if (!File.Exists(LinkFilePath))
             await CreateMergedLinkFromPackages();
@@ -31,11 +34,15 @@ namespace RealityStop.LinkMerge
 
         public void OnPostprocessBuild(BuildReport report)
         {
-            if(File.Exists(LinkFilePath))
+            Cleanup();
+        }
+
+        private void Cleanup()
+        {
+            if (File.Exists(LinkFilePath))
                 File.Delete(LinkFilePath);
             if (Directory.Exists(TemporaryFolder))
                 Directory.Delete(TemporaryFolder, true);
-            
             if (File.Exists(TemporaryFolderMeta))
                 File.Delete(TemporaryFolderMeta);
         }
@@ -49,9 +56,9 @@ namespace RealityStop.LinkMerge
             if (request.Status == StatusCode.Success)
             {
                 List<string> xmlPathList = new List<string>();
-                foreach (PackageInfo package in request.Result)
+                foreach (UnityEditor.PackageManager.PackageInfo package in request.Result)
                 {
-                    string path = package.resolvedPath;			
+                    string path = package.resolvedPath;
                     xmlPathList.AddRange(Directory.EnumerateFiles(path, "linkmerge.xml", SearchOption.AllDirectories).ToList());
                 }
 
@@ -59,7 +66,7 @@ namespace RealityStop.LinkMerge
                     return;
 
                 XDocument[] xmlList = xmlPathList.Select(XDocument.Load).ToArray();
-                
+
                 XDocument combinedXml = xmlList.First();
                 foreach (XDocument xDocument in xmlList.Where(xml => xml != combinedXml))
                 {
@@ -70,17 +77,35 @@ namespace RealityStop.LinkMerge
                 {
                     Directory.CreateDirectory(TemporaryFolder);
                 }
-                else if(File.Exists(LinkFilePath))
+                else if (File.Exists(LinkFilePath))
                 {
                     XDocument previousLinksXML = XDocument.Load(LinkFilePath);
                     combinedXml.Root.Add(previousLinksXML.Root.Elements());
                 }
-                    
+
                 combinedXml.Save(LinkFilePath);
             }
             else if (request.Status >= StatusCode.Failure)
             {
                 Debug.LogError(request.Error.message);
+            }
+        }
+
+        private void HandleBuildPlayer(BuildPlayerOptions buildOptions)
+        {
+            try
+            {
+                BuildPlayerWindow.DefaultBuildMethods.BuildPlayer(buildOptions);
+            }
+            catch (Exception ex)
+            {
+                Exception log = ex.InnerException ?? ex;
+                Debug.LogException(log);
+                Debug.LogErrorFormat("{0} in BuildHandler: '{1}'", log.GetType().Name, ex.Message);
+            }
+            finally
+            {
+                Cleanup();
             }
         }
     }

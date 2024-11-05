@@ -23,11 +23,11 @@ public static class CSharpUtility
         return mergedList;
     }
 
-    public static List<T> MergeLists<T>(params IList[] lists)
+    public static List<T> MergeLists<T>(params IEnumerable<object>[] lists)
     {
-        List<T> mergedList = new List<T>();
+        var mergedList = new List<T>();
 
-        foreach (System.Collections.IList list in lists)
+        foreach (var list in lists)
         {
             foreach (var item in list)
             {
@@ -37,12 +37,18 @@ public static class CSharpUtility
                 }
                 else
                 {
-                    Debug.LogWarning($"{item} is not {typeof(T).As().CSharpName(false, false, false).RemoveHighlights().RemoveMarkdown()} skipping");
+                    Debug.LogWarning($"{item} is not {typeof(T).Name}, skipping.");
                 }
             }
         }
 
         return mergedList;
+    }
+
+    public static bool Chance(float probability)
+    {
+        probability = Mathf.Clamp01(probability / 100f);
+        return Random.value <= probability;
     }
 
     public static AotDictionary MergeDictionaries(params IDictionary[] dictionaries)
@@ -59,7 +65,7 @@ public static class CSharpUtility
                 }
                 else
                 {
-                    Debug.LogError($"Could not add {key} to merged dictionary the key already exists");
+                    Debug.LogError($"Skipping {key} could not add to merged dictionary the key already exists");
                 }
             }
         }

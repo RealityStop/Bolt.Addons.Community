@@ -25,7 +25,6 @@ namespace Unity.VisualScripting.Community
                 selection.Clear();
                 selection.Add(unit);
                 Delete();
-                Debug.Log(reference.macro.GetType());
                 if (reference.macro != null && reference.macro.GetType().Inherits<MethodDeclaration>())
                 {
                     Debug.LogWarning("You cannot have more then one EntryUnit in a Method. Auto deleting.");

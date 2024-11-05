@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Utility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using System.Reflection;
 
 namespace Unity.VisualScripting.Community
 {
@@ -25,6 +26,11 @@ namespace Unity.VisualScripting.Community
         [SerializeField]
         [HideInInspector]
         private string qualifiedReturnTypeName;
+
+        public int genericParameterCount = 0;
+
+        public ValueTuple<int, List<Type>> genericParameterConstraints = new ValueTuple<int, List<Type>>();
+        public ValueTuple<int, List<GenericParameterAttributes>> genericParameterAttributes = new ValueTuple<int, List<GenericParameterAttributes>>();
 
         /// <summary>
         /// Left this to not overwrite current methodParameters
@@ -55,6 +61,7 @@ namespace Unity.VisualScripting.Community
 
         public MethodModifier modifier = MethodModifier.None;
 
+        public Action OnSerialized;
 #if UNITY_EDITOR
         public bool opened;
         public bool parametersOpened;
@@ -79,15 +86,8 @@ namespace Unity.VisualScripting.Community
             {
                 param.OnAfterDeserialize();
             }
-            // if (!string.IsNullOrEmpty(serializedParams))
-            // {
-            //     parameters = (List<TypeParam>)new SerializationData(serializedParams).Deserialize();
-            //     serializedParams = null;
-            // }
-            // else if (!string.IsNullOrEmpty(serialization.json))
-            // {
-            //     parameters = (List<TypeParam>)serialization.Deserialize();
-            // }
+
+            OnSerialized?.Invoke();
         }
 
         protected override void OnBeforeSerialize()

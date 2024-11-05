@@ -1,4 +1,5 @@
-﻿using Unity.VisualScripting.Community.Libraries.CSharp;
+﻿using System.Text;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community
 {
@@ -11,53 +12,120 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            var output = string.Empty;
+            var output = new StringBuilder();
+            string cachedIndent = CodeBuilder.Indent(indent);
+            string cachedIndentPlusOne = CodeBuilder.Indent(indent + 1);
 
             var trueData = new ControlGenerationData(data);
             var falseData = new ControlGenerationData(data);
-            trueData.NewScope();
-            var trueCode = GetNextUnit(Unit.ifTrue, trueData, indent + 1);
-            trueData.ExitScope();
+            string trueCode = "";
 
             if (input == Unit.enter)
             {
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "if".ConstructHighlight() + " (" + GenerateValue(Unit.condition, data) + ")");
-                output += "\n";
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
-                output += "\n";
-                output += trueCode;
-                output += "\n";
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
-                output += "\n";
+                // Constructing the "if" statement
+                output.Append(cachedIndent)
+                      .Append(MakeSelectableForThisUnit("if".ConstructHighlight() + " ("))
+                      .Append(GenerateValue(Unit.condition, data))
+                      .Append(MakeSelectableForThisUnit(")"))
+                      .AppendLine()
+                      .Append(cachedIndent)
+                      .AppendLine(MakeSelectableForThisUnit("{"));
 
-                if (Unit.ifFalse.hasAnyConnection)
+                // Handling the true branch
+                if (!ShouldSkipTrueBranch())
                 {
-                    output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "else".ConstructHighlight()) + (!Unit.ifTrue.hasValidConnection || string.IsNullOrEmpty(trueCode) ? CodeBuilder.MakeRecommendation("You should use the negate node and connect the true input instead") : string.Empty);
-                    output += "\n";
-                    output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
-                    output += "\n";
-                    falseData.NewScope();
-                    output += GetNextUnit(Unit.ifFalse, falseData, indent + 1);
-                    falseData.ExitScope();
-                    output += "\n";
-                    output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
-                    output += "\n";
-                }
-            }
-
-            if (data.mustBreak)
-            {
-                if (!trueData.hasBroke || !falseData.hasBroke)
-                {
-                    data.hasBroke = false;
+                    trueData.NewScope();
+                    trueCode = GetNextUnit(Unit.ifTrue, trueData, indent + 1);
+                    trueData.ExitScope();
+                    output.Append(trueCode);
                 }
                 else
                 {
-                    data.hasBroke = true;
+                    output.Append(cachedIndentPlusOne)
+                          .AppendLine(MakeSelectableForThisUnit("/* Unreachable code skipping for performance */"));
+                }
+
+                output.AppendLine()
+                      .Append(cachedIndent)
+                      .AppendLine(MakeSelectableForThisUnit("}"));
+
+                if (!Unit.ifFalse.hasAnyConnection)
+                {
+                    output.Append("\n");
+                }
+
+                if (Unit.ifFalse.hasAnyConnection)
+                {
+                    output.Append(cachedIndent)
+                          .Append(MakeSelectableForThisUnit("else".ConstructHighlight()));
+
+                    if (!Unit.ifTrue.hasValidConnection || string.IsNullOrEmpty(trueCode))
+                    {
+                        output.Append(CodeBuilder.MakeRecommendation(
+                            "You should use the negate node and connect the true input instead"));
+                    }
+
+                    output.AppendLine()
+                          .Append(cachedIndent)
+                          .AppendLine(MakeSelectableForThisUnit("{"));
+
+                    if (!ShouldSkipFalseBranch())
+                    {
+                        falseData.NewScope();
+                        output.Append(GetNextUnit(Unit.ifFalse, falseData, indent + 1));
+                        falseData.ExitScope();
+                    }
+                    else
+                    {
+                        output.Append(cachedIndentPlusOne)
+                              .AppendLine(MakeSelectableForThisUnit("/* Unreachable code skipping for performance */"));
+                    }
+
+                    output.AppendLine()
+                          .Append(cachedIndent)
+                          .AppendLine(MakeSelectableForThisUnit("}") + "\n");
                 }
             }
 
-            return output;
+            // Updating the must-break status
+            data.hasBroke = trueData.hasBroke && falseData.hasBroke;
+
+            return output.ToString();
+        }
+
+        private bool ShouldSkipTrueBranch()
+        {
+            if (!Unit.condition.hasValidConnection) return false;
+
+            if (Unit.condition.connection.source.unit is Literal literal && (bool)literal.value == false)
+                return true;
+
+            if (Unit.condition.GetPsudoSource() is ValueInput valueInput &&
+                valueInput.hasDefaultValue &&
+                valueInput.unit.defaultValues[valueInput.key] is bool condition &&
+                condition == false)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool ShouldSkipFalseBranch()
+        {
+            if (!Unit.condition.hasValidConnection) return false;
+
+            if (Unit.condition.connection.source.unit is Literal literal && (bool)literal.value == true)
+                return true;
+
+            if (Unit.condition.GetPsudoSource() is ValueInput valueInput &&
+                valueInput.hasDefaultValue &&
+                valueInput.unit.defaultValues[valueInput.key] is bool condition &&
+                condition == true)
+            {
+                return true;
+            }
+            return false;
         }
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
@@ -66,7 +134,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (Unit.condition.hasAnyConnection)
                 {
-                    return GetNextValueUnit(Unit.condition, data, true);
+                    return GetNextValueUnit(Unit.condition, data);
                 }
             }
 

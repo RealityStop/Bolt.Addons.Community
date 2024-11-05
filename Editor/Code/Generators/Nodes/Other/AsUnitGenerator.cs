@@ -15,6 +15,10 @@ public class AsUnitGenerator : NodeGenerator<AsUnit>
 
     public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
-        return "(" + GenerateValue(Unit.Value, data) + " as ".ConstructHighlight() + Unit.AsType.As().CSharpName(false, true, true) + ")";
+        if (data.GetExpectedType() != null && data.GetExpectedType() == Unit.AsType)
+        {
+            data.SetCurrentExpectedTypeMet(true, Unit.AsType);
+        }
+        return MakeSelectableForThisUnit("(") + GenerateValue(Unit.Value, data) + MakeSelectableForThisUnit(" as ".ConstructHighlight() + Unit.AsType.As().CSharpName(false, true, true) + ")");
     }
 }

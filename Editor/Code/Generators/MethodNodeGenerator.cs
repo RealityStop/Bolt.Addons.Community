@@ -18,7 +18,8 @@ namespace Unity.VisualScripting.Community
         public abstract AccessModifier AccessModifier { get; }
         public abstract MethodModifier MethodModifier { get; }
         public abstract string Name { get; }
-        public abstract Type Type { get; }
+        public abstract Type ReturnType { get; }
+        public virtual int GenericCount { get => 0; }
         public abstract List<TypeParam> Parameters { get; }
         public virtual string MethodBody { get; }
         public ControlGenerationData Data;

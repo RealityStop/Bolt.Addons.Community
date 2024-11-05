@@ -11,11 +11,12 @@ namespace Unity.VisualScripting.Community
         public NullGenerator(Unit unit) : base(unit)
         {
         }
-    
+
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return "null".ConstructHighlight();
+
+            return MakeSelectableForThisUnit("null".ConstructHighlight());
         }
     }
-    
+
 }

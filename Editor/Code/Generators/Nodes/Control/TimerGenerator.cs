@@ -1,40 +1,101 @@
+using System;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
+using UnityEngine;
 
 [NodeGenerator(typeof(Timer))]
-public class TimerGenerator : NodeGenerator<Timer>
+public class TimerGenerator : VariableNodeGenerator<Timer>
 {
-    public TimerGenerator(Unit unit) : base(unit)
+    public TimerGenerator(Timer unit) : base(unit)
     {
     }
 
+    public override AccessModifier AccessModifier => AccessModifier.Private;
+
+    public override FieldModifier FieldModifier => FieldModifier.None;
+
+    public override string Name => "timer" + count;
+
+    public override Type Type => typeof(TimerLogic);
+    private bool _generatedOnTick = false;
+    private bool _generatedOnCompleted = false;
+
     public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
     {
-        // I cannot think of a way to implement this.
-        var output = CodeBuilder.Indent(indent) + "/* Timer unit not supported */\n";
-        if (Unit.started.hasValidConnection)
+        variableName = Name;
+        if (data.ScriptType != typeof(MonoBehaviour))
         {
-            output += CodeBuilder.Indent(indent) + "//Connected To Timer Started".CommentHighlight() + "\n";
-            output += GetNextUnit(Unit.started, data, indent);
+            return "/* Timers only work with Monobehaviours(ScriptGraphAssets or ClassAsset that inherits MonoBehaviour) */";
         }
 
-        if (Unit.tick.hasValidConnection)
+        var output = string.Empty;
+
+        if (input == Unit.start)
         {
-            output += CodeBuilder.Indent(indent) + "//Connected To Timer Tick".CommentHighlight() + "\n";
-            output += GetNextUnit(Unit.tick, data, indent);
+            var action = GetAction(Unit.started, indent, data);
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + ".StartTimer(") + GenerateValue(Unit.duration, data) + MakeSelectableForThisUnit(", ") + GenerateValue(Unit.unscaledTime, data) + (!string.IsNullOrEmpty(action) ? MakeSelectableForThisUnit(", ") + action : "") + MakeSelectableForThisUnit(");") + "\n";
+        }
+        else if (input == Unit.pause)
+        {
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + ".PauseTimer();") + "\n";
+        }
+        else if (input == Unit.resume)
+        {
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + ".ResumeTimer();") + "\n";
+        }
+        else if (input == Unit.toggle)
+        {
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + ".ToggleTimer();") + "\n";
         }
 
-        if (Unit.completed.hasValidConnection)
+        if (Unit.tick.hasValidConnection && !_generatedOnTick)
         {
-            output += CodeBuilder.Indent(indent) + "//Connected To Timer Completed".CommentHighlight() + "\n";
-            output += GetNextUnit(Unit.completed, data, indent);
+            _generatedOnTick = true;
+            output += MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnTick".VariableHighlight() + " += ") + GetAction(Unit.tick, indent, data) + MakeSelectableForThisUnit(";") + "\n";
         }
+
+        if (Unit.completed.hasValidConnection && !_generatedOnCompleted)
+        {
+            _generatedOnCompleted = true;
+            output += MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnCompleted".VariableHighlight() + " += ") + GetAction(Unit.completed, indent, data) + MakeSelectableForThisUnit(";") + "\n";
+        }
+
+        return output;
+    }
+
+    public string GetAction(ControlOutput controlOutput, int indent, ControlGenerationData data)
+    {
+        if (!controlOutput.hasValidConnection)
+            return "";
+        var output = "";
+        var _data = new ControlGenerationData(data);
+        output += MakeSelectableForThisUnit("() =>") + "\n";
+        output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
+        output += GetNextUnit(controlOutput, _data, indent + 1);
+        output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}");
         return output;
     }
 
     public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
-        return "/* Timer unit not supported */";
+        if (output == Unit.elapsedSeconds)
+        {
+            return MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "Elapsed".VariableHighlight());
+        }
+        else if (output == Unit.elapsedRatio)
+        {
+            return MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "ElapsedPercentage".VariableHighlight());
+        }
+        else if (output == Unit.remainingSeconds)
+        {
+            return MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "Remaining".VariableHighlight());
+        }
+        else if (output == Unit.remainingRatio)
+        {
+            return MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "RemainingPercentage".VariableHighlight());
+        }
+        return base.GenerateValue(output, data);
     }
 }
