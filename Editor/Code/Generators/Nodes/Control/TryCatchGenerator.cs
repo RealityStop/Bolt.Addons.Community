@@ -27,7 +27,7 @@ public class TryCatchGenerator : LocalVariableGenerator<TryCatch>
 
             if (!Unit.@catch.hasValidConnection && !Unit.@finally.hasValidConnection)
             {
-                return output + "/* Catch or Finally requires connection */";
+                return output + "/* Catch or Finally requires connection */".WarningHighlight();
             }
 
             if (Unit.@catch.hasValidConnection)
@@ -59,6 +59,6 @@ public class TryCatchGenerator : LocalVariableGenerator<TryCatch>
         if (data.ContainsNameInAnyScope(data.GetVariableName(variableName)))
             return MakeSelectableForThisUnit(variableName.VariableHighlight());
         else
-            return MakeSelectableForThisUnit($"/* {variableName} is only accessible from a catch scope */");
+            return MakeSelectableForThisUnit($"/* {variableName} is only accessible from a catch scope */".WarningHighlight());
     }
 }

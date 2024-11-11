@@ -4,6 +4,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
+using System.Collections;
 
 namespace Unity.VisualScripting.Community
 {
@@ -21,13 +22,41 @@ namespace Unity.VisualScripting.Community
             { "OnLateUpdate", "LateUpdate" },
         };
 
+        List<Type> UnityMethodTypes = new List<Type>
+        {
+            typeof(OnCollisionEnter),
+            typeof(OnCollisionExit),
+            typeof(OnCollisionStay),
+            typeof(OnJointBreak),
+            typeof(OnCollisionEnter2D),
+            typeof(OnCollisionExit2D),
+            typeof(OnCollisionStay2D),
+            typeof(OnJointBreak2D),
+            typeof(OnTriggerEnter),
+            typeof(OnTriggerEnter2D),
+            typeof(OnTriggerExit),
+            typeof(OnTriggerStay),
+            typeof(OnTriggerExit2D),
+            typeof(OnTriggerStay2D),
+            typeof(OnControllerColliderHit),
+            typeof(OnApplicationFocus),
+            typeof(OnApplicationPause),
+            typeof(Start),
+            typeof(Update),
+            typeof(FixedUpdate),
+            typeof(LateUpdate)
+        };
+
         private Dictionary<string, GraphMethodDecleration> methods;
 
         private Dictionary<CustomEvent, int> customEventIds;
 
+        public List<Timer> timers = new List<Timer>();
+
         public override string Generate(int indent)
         {
             var script = string.Empty;
+            timers = new List<Timer>();
 
             if (Data?.graph == null)
             {
@@ -35,14 +64,21 @@ namespace Unity.VisualScripting.Community
             }
 
             var Units = Data.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth));
+            var EventUnits = Units.Where(unit => unit is IEventUnit).Cast<IEventUnit>();
 
             methods = new();
 
             var usings = new List<string> { "Unity", "UnityEngine", "Unity.VisualScripting" };
-
+            var count = 0;
             foreach (Unit unit in Units)
             {
                 var generator = NodeGenerator.GetSingleDecorator(unit, unit);
+                if (unit is Timer timer)
+                {
+                    timers.Add(timer);
+                    (generator as TimerGenerator).count = count;
+                    count++;
+                }
                 if (!string.IsNullOrEmpty(generator.NameSpace))
                 {
                     foreach (var ns in generator.NameSpace.Split(","))
@@ -93,8 +129,7 @@ namespace Unity.VisualScripting.Community
                     script +=
                         "\n    " + "private ".ConstructHighlight()
                         + "bool ".ConstructHighlight()
-                        + "Once_".VariableHighlight()
-                        + NodeGenerator.GetSingleDecorator(unit, unit).UniqueID.VariableHighlight()
+                        + (NodeGenerator.GetSingleDecorator(unit, unit) as OnceGenerator).Name.VariableHighlight()
                         + ";\n";
                 }
                 else if (unit is ToggleFlow)
@@ -104,6 +139,14 @@ namespace Unity.VisualScripting.Community
                         + "ToggleFlowLogic ".TypeHighlight()
                         + "Toggle_".VariableHighlight()
                         + NodeGenerator.GetSingleDecorator(unit, unit).UniqueID.VariableHighlight()
+                        + ";\n";
+                }
+                else if (unit is Timer timer)
+                {
+                    script +=
+                        "\n    " + "private ".ConstructHighlight()
+                        + "TimerLogic ".TypeHighlight()
+                        + (NodeGenerator.GetSingleDecorator(unit, unit) as TimerGenerator).Name.VariableHighlight()
                         + ";\n";
                 }
             }
@@ -117,6 +160,8 @@ namespace Unity.VisualScripting.Community
                 foreach (CustomEvent eventUnit in customEvents)
                 {
                     var data = new ControlGenerationData();
+                    data.ScriptType = typeof(MonoBehaviour);
+                    data.returns = eventUnit.coroutine ? typeof(IEnumerator) : typeof(void);
                     data.AddLocalNameInScope("args");
                     foreach (VariableDeclaration variable in Data.graph.variables)
                     {
@@ -134,59 +179,96 @@ namespace Unity.VisualScripting.Community
                 }
                 script += "\n    }\n";
             }
-
-            foreach (IEventUnit unit in Units.Where(unit => unit is IEventUnit && (unit as IEventUnit).coroutine))
+            bool addedTimerCode = false;
+            foreach (IEventUnit unit in EventUnits)
             {
-                if (!methods.ContainsKey(GetMethodName(unit)))
+                var timerCode = "";
+                if (unit.coroutine)
                 {
-                    var data = new ControlGenerationData();
+                    if (!methods.ContainsKey(GetMethodName(unit)))
+                    {
+                        var data = new ControlGenerationData();
+                        data.ScriptType = typeof(MonoBehaviour);
+                        data.returns = typeof(IEnumerator);
+                        foreach (VariableDeclaration variable in Data.graph.variables)
+                        {
+                            data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
+                        }
 
-                    foreach (VariableDeclaration variable in Data.graph.variables)
-                    {
-                        data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
-                    }
+                        var parameters = GetMethodParameters(unit);
+                        data.AddLocalNameInScope(parameters.parameterName);
 
-                    var parameters = GetMethodParameters(unit);
-                    data.AddLocalNameInScope(parameters.parameterName);
-                    if (unit.controlOutputs.Any(output => output.key == "trigger"))
-                    {
-                        if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                        if (unit.controlOutputs.Any(output => output.key == "trigger"))
+                        {
+                            if (unit is Update && !addedTimerCode)
+                            {
+                                addedTimerCode = true;
+                                timerCode = string.Join("\n", timers.Select(t => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(t, (NodeGenerator.GetSingleDecorator(t, t) as TimerGenerator).Name.VariableHighlight() + ".Update();")));
+                                timerCode += "\n";
+                            }
+
+                            if (UnityMethodTypes.Contains(unit.GetType()))
+                            {
+                                if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection)
+                                {
+                                    AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit, false), timerCode + CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit as Unit, $"StartCoroutine(") + GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine());"), parameters.parameterSignature, data);
+                                    AddNewMethod(unit as Unit, GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine"), GetMethodSignature(unit, GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine")), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                                }
+                            }
+                            else if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection)
+                            {
+                                AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                            }
+                        }
                     }
-                    else
+                    else if (methods.TryGetValue(GetMethodName(unit), out var method))
                     {
-                        if (unit.controlOutputs.First().hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                        method.methodBody = method.methodBody + "\n" + GetMethodBody(unit, method.generationData);
                     }
                 }
-                else if (methods.TryGetValue(GetMethodName(unit), out var method))
+                else
                 {
-                    method.methodBody = method.methodBody + "\n" + GetMethodBody(unit, method.generationData);
+                    if (!methods.ContainsKey(GetMethodName(unit)))
+                    {
+                        var data = new ControlGenerationData();
+                        data.ScriptType = typeof(MonoBehaviour);
+                        data.returns = typeof(void);
+                        foreach (VariableDeclaration variable in Data.graph.variables)
+                        {
+                            data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
+                        };
+                        var parameters = GetMethodParameters(unit);
+                        data.AddLocalNameInScope(parameters.parameterName);
+                        if (unit is Update update && !addedTimerCode)
+                        {
+                            addedTimerCode = true;
+                            timerCode = string.Join("\n", timers.Select(t => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(t, (NodeGenerator.GetSingleDecorator(t, t) as TimerGenerator).Name.VariableHighlight() + ".Update();")));
+                            timerCode += "\n";
+                        }
+
+                        if (unit.controlOutputs.Any(output => output.key == "trigger"))
+                        {
+                            if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), timerCode + GetMethodBody(unit, data), parameters.parameterSignature, data);
+                        }
+                        else
+                        {
+                            if (unit.controlOutputs.First().hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                        }
+                    }
+                    else if (methods.TryGetValue(GetMethodName(unit), out var method))
+                    {
+                        method.methodBody = GetMethodBody(unit, method.generationData) + "\n" + method.methodBody;
+                    }
                 }
             }
 
-            foreach (IEventUnit unit in Units.Where(unit => unit is IEventUnit && !(unit as IEventUnit).coroutine))
+            if (!EventUnits.Any(e => e is Update) && !addedTimerCode && timers.Count > 0)
             {
-                if (!methods.ContainsKey(GetMethodName(unit)))
-                {
-                    var data = new ControlGenerationData();
-                    foreach (VariableDeclaration variable in Data.graph.variables)
-                    {
-                        data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
-                    };
-                    var parameters = GetMethodParameters(unit);
-                    data.AddLocalNameInScope(parameters.parameterName);
-                    if (unit.controlOutputs.Any(output => output.key == "trigger"))
-                    {
-                        if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
-                    }
-                    else
-                    {
-                        if (unit.controlOutputs.First().hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
-                    }
-                }
-                else if (methods.TryGetValue(GetMethodName(unit), out var method))
-                {
-                    method.methodBody = GetMethodBody(unit, method.generationData) + "\n" + method.methodBody;
-                }
+                var unit = new Update();
+                var data = new ControlGenerationData();
+                data.ScriptType = typeof(MonoBehaviour);
+                var timerCode = string.Join("\n", timers.Select(t => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(t, (NodeGenerator.GetSingleDecorator(t, t) as TimerGenerator).Name.VariableHighlight() + ".Update();")));
+                AddNewMethod(unit, GetMethodName(unit), GetMethodSignature(unit), timerCode, "", data);
             }
 
             foreach (var method in methods.Values)
@@ -255,9 +337,14 @@ namespace Unity.VisualScripting.Community
             return methodBody;
         }
 
-        private string GetMethodSignature(IEventUnit eventUnit)
+        private string GetMethodSignature(IEventUnit eventUnit, string methodName = null)
         {
-            return GetMethodSignature(eventUnit as Unit, eventUnit.coroutine, GetMethodName(eventUnit));
+            return GetMethodSignature(eventUnit as Unit, eventUnit.coroutine, methodName == null ? GetMethodName(eventUnit) : methodName);
+        }
+
+        private string GetMethodSignature(IEventUnit eventUnit, bool isCoroutine)
+        {
+            return GetMethodSignature(eventUnit as Unit, isCoroutine, GetMethodName(eventUnit));
         }
 
         private string GetMethodSignature(Unit unit, bool isCoroutine, string _methodName, AccessModifier accessModifier = AccessModifier.Public)

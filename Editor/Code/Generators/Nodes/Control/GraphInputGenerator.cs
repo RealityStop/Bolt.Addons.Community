@@ -24,7 +24,13 @@ public sealed class GraphInputGenerator : NodeGenerator<Unity.VisualScripting.Gr
         }
         else
         {
-            _output += $"/* Missing Value Input: {output.key} */";
+            var defaultValue = output.type.PseudoDefault();
+            if (defaultValue == null)
+                _output += MakeSelectableForThisUnit($"/* Missing Value Input: {output.key} */".WarningHighlight());
+            else
+            {
+                _output += defaultValue.As().Code(true, unit, true, true, "", false, true);
+            }
         }
 
         return _output;

@@ -32,9 +32,9 @@ namespace Unity.VisualScripting.Community
             switch (Unit.kind)
             {
                 case VariableKind.Flow:
-                    return MakeSelectableForThisUnit("/* Flow Variables are not supported */");
+                    return MakeSelectableForThisUnit("/* Flow Variables are not supported */".WarningHighlight());
                 case VariableKind.Graph:
-                    return MakeSelectableForThisUnit("/* Graph Variables do not support connected names */");
+                    return MakeSelectableForThisUnit("/* Graph Variables do not support connected names */".WarningHighlight());
                 case VariableKind.Object:
                     kind = MakeSelectableForThisUnit($".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeSelectableForThisUnit(")")}";
                     break;

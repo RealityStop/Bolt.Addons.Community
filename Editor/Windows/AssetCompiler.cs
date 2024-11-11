@@ -187,7 +187,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (asset is ClassAsset classAsset)
                 {
-                    var fullPath = string.Empty;
+                    string fullPath;
                     if (classAsset.inheritsType && IsEditorAssembly(classAsset.GetInheritedType().Assembly, new HashSet<string>()))
                     {
                         fullPath = editorPath + classAsset.title.LegalMemberName() + ".cs";
@@ -230,8 +230,30 @@ namespace Unity.VisualScripting.Community
                     asset.lastCompiledName = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName();
                 }
             }
+            else if (targetasset is ScriptGraphAsset scriptGraphAsset)
+            {
+                string fullPath = csharpPath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
+                HUMIO.Delete(fullPath);
+                HUMIO.Ensure(fullPath).Path();
+                var code = ScriptGraphAssetGenerator.GetSingleDecorator(scriptGraphAsset).GenerateClean(0);
+                HUMIO.Save(code).Custom(fullPath).Text(false);
+            }
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
+
+        private static string GetGraphName(ScriptGraphAsset graphAsset)
+        {
+            if(!string.IsNullOrEmpty(graphAsset.graph.title))
+            {
+                return graphAsset.graph.title;
+            }
+            else if (!string.IsNullOrEmpty(graphAsset.name))
+            {
+                return graphAsset.name;
+            }
+            else
+                return "Unnamed Graph";
         }
 
         private static bool IsEditorAssembly(Assembly assembly, HashSet<string> visited)

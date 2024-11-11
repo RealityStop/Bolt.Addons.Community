@@ -96,7 +96,7 @@ namespace Unity.VisualScripting.Community
                     }
                     else
                     {
-                        return MakeSelectableForThisUnit("/* Target Requires Input */");
+                        return MakeSelectableForThisUnit("/* Target Requires Input */".WarningHighlight());
                     }
                 }
             }

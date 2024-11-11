@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
 [NodeGenerator(typeof(CustomEvent))]
@@ -28,7 +29,10 @@ public class CustomEventGenerator : NodeGenerator<CustomEvent>
     {
         if (Unit.argumentPorts.Contains(output))
         {
-            return MakeSelectableForThisUnit("args".VariableHighlight() + "." + "arguments".VariableHighlight() + $"[{Unit.argumentPorts.IndexOf(output)}]");
+            var cast = data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() ? $"({data.GetExpectedType().As().CSharpName(false, true)})" : "";
+            var code = MakeSelectableForThisUnit(cast + "args".VariableHighlight() + "." + "arguments".VariableHighlight() + $"[{Unit.argumentPorts.IndexOf(output)}]");
+            data.CreateSymbol(Unit, typeof(object), code);
+            return code;
         }
         return base.GenerateValue(output, data);
     }

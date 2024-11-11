@@ -31,24 +31,14 @@ public sealed class BetterIfGenerator : NodeGenerator<BetterIf>
                   .Append(MakeSelectableForThisUnit(CodeBuilder.OpenBody(indent)))
                   .AppendLine();
 
-            // Handle the true branch
-            if (!ShouldSkipTrueBranch())
-            {
-                trueData.NewScope();
-                trueCode = (Unit.True.connection.destination.unit as Unit)
-                    .GenerateControl(Unit.True.connection.destination, trueData, indent + 1);
-                trueData.ExitScope();
+            trueData.NewScope();
+            trueCode = (Unit.True.connection.destination.unit as Unit)
+                .GenerateControl(Unit.True.connection.destination, trueData, indent + 1);
+            trueData.ExitScope();
 
-                output.Append(trueCode).AppendLine();
-            }
-            else
-            {
-                output.Append(cachedIndentPlusOne)
-                      .AppendLine(MakeSelectableForThisUnit(
-                          "/* Unreachable code skipping for performance */"));
-            }
+            output.Append(trueCode).AppendLine();
 
-            output.Append(MakeSelectableForThisUnit( CodeBuilder.CloseBody(indent)));
+            output.Append(MakeSelectableForThisUnit(CodeBuilder.CloseBody(indent)));
 
             // Handle the "else" branch if present
             if (Unit.False.hasAnyConnection)
@@ -59,28 +49,19 @@ public sealed class BetterIfGenerator : NodeGenerator<BetterIf>
 
                 if (!Unit.True.hasValidConnection || string.IsNullOrEmpty(trueCode))
                 {
-                    output.Append(CodeBuilder.MakeRecommendation(
-                        "You should use the negate node and connect the true input instead"));
+                    output.Append(MakeSelectableForThisUnit(CodeBuilder.MakeRecommendation(
+                        "You should use the negate node and connect the true input instead")));
                 }
 
                 output.AppendLine()
                       .Append(MakeSelectableForThisUnit(CodeBuilder.OpenBody(indent)))
                       .AppendLine();
 
-                if (!ShouldSkipFalseBranch())
-                {
-                    falseData.NewScope();
-                    output.Append((Unit.False.connection.destination.unit as Unit)
-                        .GenerateControl(Unit.False.connection.destination, falseData, indent + 1))
-                          .AppendLine();
-                    falseData.ExitScope();
-                }
-                else
-                {
-                    output.Append(cachedIndentPlusOne)
-                          .AppendLine(MakeSelectableForThisUnit(
-                              "/* Unreachable code skipping for performance */"));
-                }
+                falseData.NewScope();
+                output.Append((Unit.False.connection.destination.unit as Unit)
+                    .GenerateControl(Unit.False.connection.destination, falseData, indent + 1))
+                      .AppendLine();
+                falseData.ExitScope();
 
                 output.Append(MakeSelectableForThisUnit(CodeBuilder.CloseBody(indent)));
             }

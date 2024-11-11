@@ -33,7 +33,7 @@ namespace Unity.VisualScripting.Community
 
             if (Unit.enter != null && !Unit.enter.hasValidConnection && Unit.OutputParameters.Count > 0)
             {
-                return $"/* Control Port Enter requires a connection */";
+                return $"/* Control Port Enter requires a connection */".WarningHighlight();
             }
 
             if (Unit.OutputParameters.ContainsValue(output))
@@ -67,7 +67,7 @@ namespace Unity.VisualScripting.Community
                         var input = Unit.InputParameters.Values.First(value => value.key == "%" + parameter.name);
                         if (!input.hasValidConnection || input.hasValidConnection && input.connection.source.unit is not GetVariable)
                         {
-                            output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */");
+                            output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */".WarningHighlight());
                             continue;
                         }
                         output.Add("ref ".ConstructHighlight() + GenerateValue(input, data));

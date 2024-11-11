@@ -27,8 +27,8 @@ public sealed class ForGenerator : LocalVariableGenerator<Unity.VisualScripting.
             variableType = typeof(int);
 
             string varName = MakeSelectableForThisUnit(variableName.VariableHighlight());
-
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"for".ControlHighlight() + "(int ".ConstructHighlight()) + $"{varName}".VariableHighlight() + MakeSelectableForThisUnit(" = ") + initialization + MakeSelectableForThisUnit("; ") + varName.VariableHighlight() + $"{MakeSelectableForThisUnit(" < ")}{condition}{MakeSelectableForThisUnit("; ")}" + varName.VariableHighlight() + $"{MakeSelectableForThisUnit(" += ")}{iterator}{MakeSelectableForThisUnit(")")}";
+            string iteratorCode = !Unit.step.hasValidConnection && (int)Unit.defaultValues[Unit.step.key] == 1 ? varName.VariableHighlight() + MakeSelectableForThisUnit("++") : varName.VariableHighlight() + MakeSelectableForThisUnit(" += ") + iterator;
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"for".ControlHighlight() + "(int ".ConstructHighlight()) + $"{varName}".VariableHighlight() + MakeSelectableForThisUnit(" = ") + initialization + MakeSelectableForThisUnit("; ") + varName.VariableHighlight() + $"{MakeSelectableForThisUnit(" < ")}{condition}{MakeSelectableForThisUnit("; ")}" + $"{iteratorCode}{MakeSelectableForThisUnit(")")}";
             output += "\n";
             output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{");
             output += "\n";

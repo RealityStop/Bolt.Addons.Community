@@ -16,10 +16,8 @@ namespace Unity.VisualScripting.Community
     public sealed class CSharpPreviewWindow : EditorWindow
     {
         public static CSharpPreviewWindow instance;
-        private Slider zoomSlider;
         private float zoomFactor = 1.0f;
         private bool showCodeWindow = true;
-        private Label zoomLabel;
         private List<Label> labels = new List<Label>();
 
         public static Object asset;
@@ -37,6 +35,12 @@ namespace Unity.VisualScripting.Community
             Selection.selectionChanged += ChangeSelection;
             var toolbar = new Toolbar();
 
+            // Scroll view for code display
+            var scrollView = new ScrollView
+            {
+                horizontalScrollerVisibility = ScrollerVisibility.Auto,
+                style = { flexGrow = 1, paddingLeft = 10, paddingTop = 10, backgroundColor = new Color(0.15f, 0.15f, 0.15f) }
+            };
             // Create the Zoom section
             var zoomContainer = new VisualElement
             {
@@ -60,10 +64,7 @@ namespace Unity.VisualScripting.Community
             {
                 zoomFactor = evt.newValue; // Update the zoom factor
                 zoomLabel.text = $"{zoomFactor:0.#}x"; // Update the zoom label to reflect the new value
-                foreach (var label in labels)
-                {
-                    label.style.fontSize = Mathf.RoundToInt(14 * zoomFactor);
-                }
+                scrollView.style.fontSize = Mathf.RoundToInt(14 * zoomFactor);
             });
 
             zoomContainer.Add(zoomTextLabel);
@@ -90,12 +91,6 @@ namespace Unity.VisualScripting.Community
 
             rootVisualElement.Add(toolbar);
 
-            // Scroll view for code display
-            var scrollView = new ScrollView
-            {
-                horizontalScrollerVisibility = ScrollerVisibility.Auto,
-                style = { flexGrow = 1, paddingLeft = 10, paddingTop = 10, backgroundColor = new Color(0.15f, 0.15f, 0.15f) }
-            };
             rootVisualElement.Add(scrollView);
             ChangeSelection();
         }
@@ -205,17 +200,6 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private string ProcessOutput(string output)
-        {
-            if (output.Length > 0)
-            {
-                output = output.RemoveMarkdown();
-                output = Regex.Replace(output, @"/\*(?!.*\(Recommendation\))", "<color=#CC3333>/*", RegexOptions.Compiled);
-                output = output.Replace("*/", "*/</color>");
-            }
-            return output;
-        }
-
         private void DisplayCode(ScrollView scrollView, string code)
         {
             scrollView.Clear();
@@ -226,22 +210,18 @@ namespace Unity.VisualScripting.Community
                 .GroupBy(region => region.startLine)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            var lines = CodeUtility.RemoveAllSelectableTags(ProcessOutput(code)).Split('\n');
+            var lines = CodeUtility.RemoveAllSelectableTags(code).Split('\n');
 
             for (int i = 0; i < lines.Length; i++)
             {
-                // Line container with fixed flex layout
                 var lineContainer = new VisualElement { style = { flexDirection = FlexDirection.Row } };
 
-                // Line number label container
-                // Line number label container
                 var lineNumberContainer = new Label($"{i + 1}");
-                lineNumberContainer.style.fontSize = Mathf.RoundToInt(14 * zoomFactor);
-                lineNumberContainer.style.width = 25; // Adjust width if necessary
+                lineNumberContainer.style.width = 25;
                 lineNumberContainer.style.unityTextAlign = TextAnchor.MiddleLeft;
                 lineNumberContainer.style.color = Color.gray;
-                lineNumberContainer.style.marginLeft = 0; // Remove any left margin
-                lineNumberContainer.style.paddingLeft = 0; // Remove any left padding
+                lineNumberContainer.style.marginLeft = 0;
+                lineNumberContainer.style.paddingLeft = 0;
                 lineContainer.Add(lineNumberContainer);
                 labels.Add(lineNumberContainer);
 
@@ -301,7 +281,7 @@ namespace Unity.VisualScripting.Community
         {
             var label = new Label(text);
             label.style.unityFontStyleAndWeight = FontStyle.Normal;
-            label.style.fontSize = Mathf.RoundToInt(14 * zoomFactor);
+            label.enableRichText = true;
             label.style.color = Color.white;
             label.style.backgroundColor = new Color(1, 1, 1, 0);
             RemovePaddingAndMargin(label);
@@ -312,10 +292,15 @@ namespace Unity.VisualScripting.Community
         // Create a clickable code label
         private Label CreateCodeLabel(ClickableRegion region, int currentLine)
         {
-            var label = new Label(CodeUtility.RemoveAllSelectableTags(region.code));
-            label.style.fontSize = Mathf.RoundToInt(14 * zoomFactor);
+            string tooltip;
+            var codeWithoutTooltip = CodeUtility.ExtractTooltip(region.code, out tooltip);
+            var label = new Label(CodeUtility.RemoveAllSelectableTags(codeWithoutTooltip))
+            {
+                tooltip = tooltip
+            };
             label.style.unityFontStyleAndWeight = FontStyle.Normal;
             label.style.color = Color.white;
+            label.enableRichText = true;
             label.style.backgroundColor = new Color(1, 1, 1, 0);
             RemovePaddingAndMargin(label);
 
@@ -327,7 +312,6 @@ namespace Unity.VisualScripting.Community
 
             return label;
         }
-
         private void RemovePaddingAndMargin(Label label)
         {
             label.style.paddingLeft = 0;

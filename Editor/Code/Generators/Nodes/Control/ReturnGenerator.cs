@@ -19,7 +19,7 @@ namespace Unity.VisualScripting.Community
             {
                 data.hasReturned = true;
                 var yield = SupportsYieldReturn(data.returns) ? "yield ".ControlHighlight() : "";
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(yield + "return".ControlHighlight()) + (data.returns != typeof(void) && data.returns != typeof(Libraries.CSharp.Void) ? " " + GenerateValue(Unit.value, data) : "") + MakeSelectableForThisUnit(";");
+                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(yield + "return".ControlHighlight()) + (data.returns != typeof(void) && data.returns != typeof(Libraries.CSharp.Void) ? MakeSelectableForThisUnit(" ") + GenerateValue(Unit.value, data) : "") + MakeSelectableForThisUnit(";");
                 return output;
             }
             return base.GenerateControl(input, data, indent);
@@ -30,7 +30,6 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         private bool SupportsYieldReturn(Type type)
         {
-            // Only check if the type is exactly IEnumerable or IEnumerable<T> (not concrete implementations)
             return type != null && (type == typeof(IEnumerable) || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>)) || type == typeof(IEnumerator) || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerator<>)));
         }
     }

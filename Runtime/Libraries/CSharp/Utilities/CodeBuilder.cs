@@ -476,6 +476,12 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string ConstructHighlight(this string code)
         {
+            //I did this to avoid having to change the scripts that already used Construct Higlights for if
+            //I will probably change this in the future though
+            if(code == "if".Replace(" ", "") || code == "else".Replace(" ", ""))
+            {
+                return code.ControlHighlight();
+            }
             return Highlight(code, ConstructColor);
         }
 

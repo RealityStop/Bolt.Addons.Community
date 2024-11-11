@@ -65,7 +65,7 @@ namespace Unity.VisualScripting.Community
                 }
                 else
                 {
-                    return MakeSelectableForThisUnit($"/* {input.key} requires input */");
+                    return MakeSelectableForThisUnit($"/* {input.key} requires input */".WarningHighlight());
                 }
             }
             else

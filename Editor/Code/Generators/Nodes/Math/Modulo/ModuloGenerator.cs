@@ -1,4 +1,5 @@
 using Unity.VisualScripting;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
@@ -32,7 +33,7 @@ namespace Unity.VisualScripting.Community
             }
             else
             {
-                return $"/* \"{input.key} Requires Input\" */";
+                return $"/* \"{input.key} Requires Input\" */".WarningHighlight();
             }
         }
     }

@@ -159,25 +159,25 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             {
                 if (getterScope != scope && setterScope != scope)
                 {
-                    output += "\n" + CodeBuilder.Indent(indent) + " /* Cannot specify accessibility modifiers for both getter and setter */";
+                    output += "\n" + CodeBuilder.Indent(indent) + " /* Cannot specify accessibility modifiers for both getter and setter */".WarningHighlight();
                 }
             }
 
             if (hasGetter && !hasSetter && getterScope != scope)
             {
-                output += "\n" + CodeBuilder.Indent(indent) + " /* Accessibility modifier on getter may only be used if the property has both a get and a set */";
+                output += "\n" + CodeBuilder.Indent(indent) + " /* Accessibility modifier on getter may only be used if the property has both a get and a set */".WarningHighlight();
             }
 
             if (!hasGetter && hasSetter && setterScope != scope)
             {
-                output += "\n" + CodeBuilder.Indent(indent) + " /* Accessibility modifier on setter may only be used if the property has both a get and a set */";
+                output += "\n" + CodeBuilder.Indent(indent) + " /* Accessibility modifier on setter may only be used if the property has both a get and a set */".WarningHighlight();
             }
 
             if (hasGetter)
             {
                 if (modifier == PropertyModifier.Abstract && getterScope == AccessModifier.Private)
                 {
-                    output += "\n" + CodeBuilder.Indent(indent) + " /* Abstract Properties cannot have a private getter */";
+                    output += "\n" + CodeBuilder.Indent(indent) + " /* Abstract Properties cannot have a private getter */".WarningHighlight();
                 }
             }
 
@@ -185,7 +185,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             {
                 if (modifier == PropertyModifier.Abstract && setterScope == AccessModifier.Private)
                 {
-                    output += "\n" + CodeBuilder.Indent(indent) + " /* Abstract Properties cannot have a private setter */";
+                    output += "\n" + CodeBuilder.Indent(indent) + " /* Abstract Properties cannot have a private setter */".WarningHighlight();
                 }
             }
 

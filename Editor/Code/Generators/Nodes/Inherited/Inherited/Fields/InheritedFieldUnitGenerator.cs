@@ -45,7 +45,7 @@ namespace Unity.VisualScripting.Community
             }
             else
             {
-                return $"/* \"{input.key} Requires Input\" */";
+                return $"/* \"{input.key} Requires Input\" */".WarningHighlight();
             }
         }
     }

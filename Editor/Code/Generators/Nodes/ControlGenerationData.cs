@@ -8,7 +8,7 @@ namespace Unity.VisualScripting.Community
 {
     public sealed class ControlGenerationData
     {
-        public Type returns;
+        public Type returns = typeof(void);
         public bool mustBreak;
         public bool hasBroke;
         public bool mustReturn;

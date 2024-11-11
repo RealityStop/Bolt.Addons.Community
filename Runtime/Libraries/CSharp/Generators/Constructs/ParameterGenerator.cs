@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public override string Generate(int indent)
         {
-            if (!useAssemblyQualifiedType && type == null) return "/* Parameter type is null */".WarningHighlight();
+            if (!useAssemblyQualifiedType && type == null) return "/* Parameter type is null */".WarningHighlight().WarningHighlight();
             var _attributes = attributes != null && attributes.Count > 0 ? string.Join(" ", attributes.Select(attr => $"[{attr.GetAttributeType().As().CSharpName()}]")) + " " : string.Empty;
             var param = isParameters ? "params ".ConstructHighlight() : string.Empty;
             var _modifier = modifier != ParameterModifier.None ? modifier.AsString().ConstructHighlight() + " " : string.Empty;

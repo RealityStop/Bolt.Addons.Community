@@ -75,6 +75,27 @@ namespace Unity.VisualScripting.Community
             return $"[CommunityAddonsCodeSelectable({unit})]{code}[CommunityAddonsCodeSelectableEnd({unit})]";
         }
 
+        public static string ToolTip(string ToolTip, string code)
+        {
+            return $"[CommunityAddonsCodeToolTip({ToolTip})]{code}[CommunityAddonsCodeToolTipEnd]";
+        }
+
+        private static readonly Regex ToolTipRegex = new(@"\[CommunityAddonsCodeToolTip\((.*?)\)\](.*?)\[CommunityAddonsCodeToolTipEnd\]", RegexOptions.Compiled);
+
+        public static string ExtractTooltip(string code, out string tooltip)
+        {
+            var match = ToolTipRegex.Match(code);
+            if (match.Success)
+            {
+                tooltip = match.Groups[1].Value;
+                // Remove only the tooltip tags but keep the inner code content
+                return ToolTipRegex.Replace(code, "$2");
+            }
+            tooltip = string.Empty;
+            return code;
+        }
+
+
         public static string RemoveCustomHighlights(string highlightedCode)
         {
             return RemoveHighlightsRegex.Replace(highlightedCode, "$1");
@@ -97,22 +118,39 @@ namespace Unity.VisualScripting.Community
 
             foreach (Match match in SelectableRegex.Matches(code))
             {
-                if (match.Groups[1].Success)
+                if (match.Groups[1].Success) // Start tag
                 {
                     string unitId = match.Groups[1].Value;
                     stack.Push((match.Index + match.Length, unitId));
                 }
-                else if (match.Groups[2].Success && stack.Count > 0)
+                else if (match.Groups[2].Success && stack.Count > 0) // End tag
                 {
                     var (startIndex, unitId) = stack.Pop();
                     int length = match.Index - startIndex;
-
                     var codePart = code.AsSpan(startIndex, length);
 
                     int startLine = GetLineNumber(lineBreaks, startIndex);
                     int endLine = GetLineNumber(lineBreaks, match.Index);
 
-                    clickableRegions.Add(new ClickableRegion(unitId, codePart.ToString(), startLine, endLine));
+                    var newRegion = new ClickableRegion(unitId, codePart.ToString(), startLine, endLine);
+
+                    // Check if the last region can be merged with the new one
+                    if (clickableRegions.Count > 0 && clickableRegions[^1].unitId == unitId)
+                    {
+                        var lastRegion = clickableRegions[^1];
+
+                        // Check if they are adjacent or overlap
+                        if (lastRegion.endLine == newRegion.endLine)
+                        {
+                            // Merge by extending the last region's code and end line
+                            lastRegion.code += codePart.ToString();
+                            lastRegion.endLine = newRegion.endLine;
+
+                            continue; // Skip adding newRegion as it's merged
+                        }
+                    }
+
+                    clickableRegions.Add(newRegion);
                 }
             }
 

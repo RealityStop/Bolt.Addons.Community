@@ -32,18 +32,18 @@ namespace Unity.VisualScripting.Community
                       .AppendLine(MakeSelectableForThisUnit("{"));
 
                 // Handling the true branch
-                if (!ShouldSkipTrueBranch())
-                {
+                // if (!ShouldSkipTrueBranch())
+                // {
                     trueData.NewScope();
                     trueCode = GetNextUnit(Unit.ifTrue, trueData, indent + 1);
                     trueData.ExitScope();
                     output.Append(trueCode);
-                }
-                else
-                {
-                    output.Append(cachedIndentPlusOne)
-                          .AppendLine(MakeSelectableForThisUnit("/* Unreachable code skipping for performance */"));
-                }
+                // }
+                // else
+                // {
+                //     output.Append(cachedIndentPlusOne)
+                //           .AppendLine(MakeSelectableForThisUnit("/* Unreachable code skipping for performance */".WarningHighlight()));
+                // }
 
                 output.AppendLine()
                       .Append(cachedIndent)
@@ -61,25 +61,25 @@ namespace Unity.VisualScripting.Community
 
                     if (!Unit.ifTrue.hasValidConnection || string.IsNullOrEmpty(trueCode))
                     {
-                        output.Append(CodeBuilder.MakeRecommendation(
-                            "You should use the negate node and connect the true input instead"));
+                        output.Append(MakeSelectableForThisUnit(CodeBuilder.MakeRecommendation(
+                            "You should use the negate node and connect the true input instead")));
                     }
 
                     output.AppendLine()
                           .Append(cachedIndent)
                           .AppendLine(MakeSelectableForThisUnit("{"));
 
-                    if (!ShouldSkipFalseBranch())
-                    {
+                    // if (!ShouldSkipFalseBranch())
+                    // {
                         falseData.NewScope();
                         output.Append(GetNextUnit(Unit.ifFalse, falseData, indent + 1));
                         falseData.ExitScope();
-                    }
-                    else
-                    {
-                        output.Append(cachedIndentPlusOne)
-                              .AppendLine(MakeSelectableForThisUnit("/* Unreachable code skipping for performance */"));
-                    }
+                    // }
+                    // else
+                    // {
+                    //     output.Append(cachedIndentPlusOne)
+                    //           .AppendLine(MakeSelectableForThisUnit("/* Unreachable code skipping for performance */".WarningHighlight()));
+                    // }
 
                     output.AppendLine()
                           .Append(cachedIndent)

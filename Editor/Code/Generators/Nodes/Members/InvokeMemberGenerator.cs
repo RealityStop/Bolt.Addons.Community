@@ -35,7 +35,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (!Unit.enter.hasValidConnection && Unit.outputParameters.Count > 0)
                 {
-                    return $"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */";
+                    return $"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */".WarningHighlight().WarningHighlight();
                 }
                 var _output = string.Empty;
 
@@ -71,7 +71,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (!Unit.enter.hasValidConnection && Unit.outputParameters.Count > 0)
                 {
-                    return $"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */";
+                    return $"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */".WarningHighlight().WarningHighlight();
                 }
 
                 var transformedKey = outputNames[output].Replace("&", "").Replace("%", "");
@@ -191,7 +191,7 @@ namespace Unity.VisualScripting.Community
                         return string.Empty;
                     }
                 }
-                return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */");
+                return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight().WarningHighlight());
             }
         }
 
@@ -216,7 +216,7 @@ namespace Unity.VisualScripting.Community
                         var input = Unit.inputParameters[index];
                         if (!input.hasValidConnection || (input.hasValidConnection && input.connection.source.unit is not GetVariable or AssetFieldUnit or InheritedFieldUnit or GetMember))
                         {
-                            output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */");
+                            output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */".WarningHighlight().WarningHighlight());
                             continue;
                         }
                         output.Add("ref ".ConstructHighlight() + GenerateValue(Unit.inputParameters[index], data));

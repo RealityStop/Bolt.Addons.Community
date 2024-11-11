@@ -42,19 +42,19 @@ namespace Unity.VisualScripting.Community
             }
             else if (input.hasDefaultValue)
             {
-                return input.unit.defaultValues[input.key].As().Code(true, unit, true, true, "", false, true); ;
+                return input.unit.defaultValues[input.key].As().Code(true, unit, true, true, "", false, true);
             }
             else
             {
-                return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */");
+                return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
             }
         }
 
-        public virtual string GenerateValue(ValueOutput output, ControlGenerationData data) { return $"/* Port '{output.key}' of '{output.unit.GetType().Name}' Missing Generator. */"; }
+        public virtual string GenerateValue(ValueOutput output, ControlGenerationData data) { return $"/* Port '{output.key}' of '{output.unit.GetType().Name}' Missing Generator. */".WarningHighlight(); }
 
         public virtual string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(unit, $"/*{(input != null ? " Port '" + input.key + "' of " : "")}'{unit.GetType().Name}' Missing Generator. */");
+            return CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(unit, $"/*{(input != null ? " Port '" + input.key + "' of " : "")}'{unit.GetType().Name}' Missing Generator. */".WarningHighlight());
         }
 
 

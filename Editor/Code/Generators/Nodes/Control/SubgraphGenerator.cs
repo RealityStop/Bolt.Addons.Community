@@ -50,7 +50,7 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
                 }
                 else
                 {
-                    output += "\n" + CodeBuilder.Indent(indent) + $"/* Subgraph \"{subgraphName}\" is empty */ \n";
+                    output += "\n" + CodeBuilder.Indent(indent) + $"/* Subgraph \"{subgraphName}\" is empty */ \n".WarningHighlight();
                 }
             }
 
@@ -83,6 +83,6 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
         if (Unit.nest.graph.units.FirstOrDefault(unit => unit is GraphOutput) is Unit graphOutput)
             return GetSingleDecorator(graphOutput, graphOutput).GenerateValue(output, data);
         else
-            return "/* Subgraph missing GraphOutput unit */";
+            return "/* Subgraph missing GraphOutput unit */".WarningHighlight();
     }
 }

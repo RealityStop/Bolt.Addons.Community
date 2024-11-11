@@ -75,7 +75,7 @@ namespace Unity.VisualScripting.Community
                     return $"({GenerateValue(Unit.collection, data)}.Cast<object>().Take({GenerateValue(Unit.value, data)}))";
 
                 default:
-                    return "/* Unsupported operation */";
+                    return "/* Unsupported operation */".WarningHighlight();
             }
         }
 
@@ -91,12 +91,12 @@ namespace Unity.VisualScripting.Community
 
         private string GenerateKeySelector(ControlGenerationData data)
         {
-            return $"item => {{ /* Lambda for key: {GenerateValue(Unit.key, data)} */ }}";
+            return $"item => {{ /* Lambda for key: {GenerateValue(Unit.key, data)} */ }}".WarningHighlight();
         }
 
         private string GenerateSelector(ControlGenerationData data)
         {
-            return $"item => {{ /* Lambda for select: {GenerateValue(Unit.value, data)} */ }}";
+            return $"item => {{ /* Lambda for select: {GenerateValue(Unit.value, data)} */ }}".WarningHighlight();
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)

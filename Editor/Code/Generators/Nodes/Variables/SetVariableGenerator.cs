@@ -37,9 +37,9 @@ namespace Unity.VisualScripting.Community
                 switch (Unit.kind)
                 {
                     case VariableKind.Flow:
-                        return MakeSelectableForThisUnit("/* Flow Variables are not supported connected names */");
+                        return MakeSelectableForThisUnit("/* Flow Variables are not supported connected names */".WarningHighlight());
                     case VariableKind.Graph:
-                        return MakeSelectableForThisUnit("/* Graph Variables do not support connected names */");
+                        return MakeSelectableForThisUnit("/* Graph Variables do not support connected names */".WarningHighlight());
                     case VariableKind.Object:
                         kind = MakeSelectableForThisUnit(variables + $".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeSelectableForThisUnit(")")}";
                         break;
@@ -103,7 +103,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            if (!Unit.assign.hasValidConnection) return $"/* ControlInput {Unit.assign.key} requires connection on {Unit.GetType()} with variable name ({GenerateValue(Unit.name, data)}) */";
+            if (!Unit.assign.hasValidConnection) return $"/* ControlInput {Unit.assign.key} requires connection on {Unit.GetType()} with variable name ({GenerateValue(Unit.name, data)}) */".WarningHighlight();
             if (!Unit.name.hasValidConnection)
             {
                 return MakeSelectableForThisUnit(variableName.VariableHighlight());

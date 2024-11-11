@@ -10,6 +10,7 @@ public class TimerGenerator : VariableNodeGenerator<Timer>
 {
     public TimerGenerator(Timer unit) : base(unit)
     {
+        NameSpace = "Unity.VisualScripting.Community";
     }
 
     public override AccessModifier AccessModifier => AccessModifier.Private;
@@ -27,7 +28,7 @@ public class TimerGenerator : VariableNodeGenerator<Timer>
         variableName = Name;
         if (data.ScriptType != typeof(MonoBehaviour))
         {
-            return "/* Timers only work with Monobehaviours(ScriptGraphAssets or ClassAsset that inherits MonoBehaviour) */";
+            return "/* Timers only work with Monobehaviours(ScriptGraphAssets or ClassAsset that inherits MonoBehaviour) */".WarningHighlight().WarningHighlight();
         }
 
         var output = string.Empty;
@@ -53,13 +54,13 @@ public class TimerGenerator : VariableNodeGenerator<Timer>
         if (Unit.tick.hasValidConnection && !_generatedOnTick)
         {
             _generatedOnTick = true;
-            output += MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnTick".VariableHighlight() + " += ") + GetAction(Unit.tick, indent, data) + MakeSelectableForThisUnit(";") + "\n";
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnTick".VariableHighlight() + " += ") + GetAction(Unit.tick, indent, data) + MakeSelectableForThisUnit(";") + "\n";
         }
 
         if (Unit.completed.hasValidConnection && !_generatedOnCompleted)
         {
             _generatedOnCompleted = true;
-            output += MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnCompleted".VariableHighlight() + " += ") + GetAction(Unit.completed, indent, data) + MakeSelectableForThisUnit(";") + "\n";
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnCompleted".VariableHighlight() + " += ") + GetAction(Unit.completed, indent, data) + MakeSelectableForThisUnit(";") + "\n";
         }
 
         return output;

@@ -520,7 +520,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(float)) return (@as.value.ToString().Replace(",", ".") + "f").NumericHighlight();
             if (type == typeof(double) || type == typeof(decimal)) return @as.value.ToString().Replace(",", ".").NumericHighlight();
             if (type == typeof(string)) return (@"""" + @as.value.ToString() + @"""").StringHighlight();
-            if (type == typeof(char)) return (char)@as.value == char.MinValue ? "/* Cannot have a empty character */" : $"'{@as.value}'".StringHighlight();
+            if (type == typeof(char)) return (char)@as.value == char.MinValue ? "/* Cannot have a empty character */".WarningHighlight() : $"'{@as.value}'".StringHighlight();
             if (type == typeof(UnityEngine.GameObject)) return "null".ConstructHighlight();
             if (type.IsNumeric()) return @as.value.ToString().NumericHighlight();
             if (type.IsEnum) return type.Name.EnumHighlight() + "." + @as.value.ToString();
@@ -551,8 +551,8 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(float)) return CodeUtility.MakeSelectable(unit, (@as.value.ToString().Replace(",", ".") + "f").NumericHighlight());
             if (type == typeof(double) || type == typeof(decimal)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().Replace(",", ".").NumericHighlight());
             if (type == typeof(string)) return CodeUtility.MakeSelectable(unit, (@"""" + @as.value.ToString() + @"""").StringHighlight());
-            if (type == typeof(char)) return (char)@as.value == char.MinValue ? CodeUtility.MakeSelectable(unit, "/* Cannot have an empty character */") : CodeUtility.MakeSelectable(unit, $"'{@as.value}'".StringHighlight());
-            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, "null".ConstructHighlight());
+            if (type == typeof(char)) return (char)@as.value == char.MinValue ? CodeUtility.MakeSelectable(unit, "/* Cannot have an empty character */".WarningHighlight()) : CodeUtility.MakeSelectable(unit, $"'{@as.value}'".StringHighlight());
+            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable and connect it to this input the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"/* Cannot generate {(@as.value as GameObject).name} (Hover for more info) */ ".WarningHighlight().WarningHighlight() + "null".ConstructHighlight()));
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString().NumericHighlight());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name.EnumHighlight() + "." + @as.value.ToString());
             if (isNew)
@@ -816,7 +816,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
             for (int i = 0; i < args.Length; i++)
             {
-                output += args[i].As().CSharpName(false, false, highlight);
+                output += args[i].As().CSharpName(false, fullName, highlight);
                 if (i < args.Length - 1) output += ", ";
             }
 
@@ -829,7 +829,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         {
             var output = string.Empty;
 
-            if (!type.IsConstructedGenericType && !type.IsGenericType) return type.As().CSharpName(false, false, highlight);
+            if (!type.IsConstructedGenericType && !type.IsGenericType) return type.As().CSharpName(false, fullName, highlight);
             if (highlight)
             {
                 output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight();
@@ -844,7 +844,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 output += "<";
                 for (int i = 0; i < parameters.Count; i++)
                 {
-                    output += parameters[i].As().CSharpName(false, false, highlight);
+                    output += parameters[i].As().CSharpName(false, fullName, highlight);
                     if (i < parameters.Count - 1) output += ", ";
                 }
                 output += ">";
@@ -857,7 +857,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
                 for (int i = 0; i < args.Length; i++)
                 {
-                    output += args[i].As().CSharpName(false, false, highlight);
+                    output += args[i].As().CSharpName(false, fullName, highlight);
                     if (i < args.Length - 1) output += ", ";
                 }
 
@@ -886,7 +886,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 output += "<";
                 for (int i = 0; i < parameters.Length; i++)
                 {
-                    output += parameters[i].As().CSharpName(false, false, highlight);
+                    output += parameters[i].As().CSharpName(false, fullName, highlight);
                     if (i < parameters.Length - 1) output += ", ";
                 }
                 output += ">";
@@ -899,7 +899,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
                 for (int i = 0; i < args.Length; i++)
                 {
-                    output += args[i].As().CSharpName(false, false, highlight);
+                    output += args[i].As().CSharpName(false, fullName, highlight);
                     if (i < args.Length - 1) output += ", ";
                 }
 
@@ -911,8 +911,12 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
     }
 }
+
 namespace Unity.VisualScripting.Community
 {
+    /// <summary>
+    /// Copied from visual scripting
+    /// </summary>
     public static class CSharpNameUtility
     {
         private static readonly Dictionary<Type, string> primitives = new Dictionary<Type, string>
