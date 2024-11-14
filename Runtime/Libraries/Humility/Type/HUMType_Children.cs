@@ -54,7 +54,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                     arrayString += "[]";
                 }
 
-                var tempTypeName = tempType.As().CSharpName(false, fullName, false);
+                var tempTypeName = tempType.As().CSharpName(hideSystemObject, fullName, highlight);
                 return tempTypeName + arrayString;
             }
 
@@ -89,28 +89,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                     arrayString += "[]";
                 }
 
-                var tempTypeName = tempType.As().CSharpName(false, fullName);
+                var tempTypeName = tempType.As().CSharpName(hideSystemObject, fullName, true);
                 return tempTypeName + arrayString;
             }
 
             return fullName ? @as.type.CSharpFullName().Replace(@as.type.Name, @as.type.Name.TypeHighlight()).Replace(@as.type.Namespace, @as.type.Namespace.NamespaceHighlight()) : @as.type.CSharpName().TypeHighlight();
-        }
-
-        /// <summary>
-        /// Converts a string that was retrieved via type.Name to its actual declared csharp name. Custom types return the type name. Example 'Int32' becomes 'int'.
-        /// </summary>
-        public static string CSharpName(this HUMString.Data.As asData, bool hideSystemObject = false, HighlightType highlightType = HighlightType.None)
-        {
-            if (string.IsNullOrEmpty(asData.text) || string.IsNullOrWhiteSpace(asData.text)) return "null";
-            if (asData.text == "Int32") return "int";
-            if (asData.text == "String") return "string";
-            if (asData.text == "Float") return "float";
-            if (asData.text == "Void") return "void";
-            if (asData.text == "Double") return "double";
-            if (asData.text == "Bool" || asData.text == "Boolean") return "bool";
-            if (asData.text == "Byte") return "byte";
-            if (asData.text == "Object") return hideSystemObject ? string.Empty : "object";
-            return asData.text.WithHighlight(highlightType);
         }
 
         public enum HighlightType
@@ -1299,7 +1282,7 @@ namespace Unity.VisualScripting.Community
                     arrayString += "[]";
                 }
 
-                var tempTypeName = tempType.CSharpName(TypeQualifier.Name);
+                var tempTypeName = tempType.CSharpName(qualifier, includeGenericParameters);
                 return tempTypeName + arrayString;
             }
             else

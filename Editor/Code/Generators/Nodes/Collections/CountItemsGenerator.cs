@@ -10,6 +10,7 @@ namespace Unity.VisualScripting.Community
     {
         public CountItemsGenerator(Unit unit) : base(unit)
         {
+            NameSpace = "System.Collections";
         }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)

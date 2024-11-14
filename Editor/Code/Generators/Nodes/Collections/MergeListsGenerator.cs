@@ -4,6 +4,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Unity.VisualScripting.Community
 {
@@ -22,12 +23,12 @@ namespace Unity.VisualScripting.Community
                 return MakeSelectableForThisUnit("CSharpUtility".TypeHighlight() + $".MergeLists<{GetExpectedType(data.GetExpectedType()).As().CSharpName(false, true)}>(") + $"{string.Join(MakeSelectableForThisUnit(", "), Unit.multiInputs.Select(input => GenerateValue(input, data)))}{MakeSelectableForThisUnit(")")}";
             }
             else
-                return  MakeSelectableForThisUnit("CSharpUtility".TypeHighlight() + $".MergeLists(") + $"{string.Join(MakeSelectableForThisUnit(", "), Unit.multiInputs.Select(input => GenerateValue(input, data)))}{MakeSelectableForThisUnit(")")}";
+                return MakeSelectableForThisUnit("CSharpUtility".TypeHighlight() + $".MergeLists(") + $"{string.Join(MakeSelectableForThisUnit(", "), Unit.multiInputs.Select(input => GenerateValue(input, data)))}{MakeSelectableForThisUnit(")")}";
         }
 
         private Type GetExpectedType(Type type)
         {
-            if (typeof(IList).IsAssignableFrom(type))
+            if (typeof(IList).IsAssignableFrom(type) || typeof(IList<>).IsAssignableFrom(type))
             {
                 if (type.IsGenericType)
                 {
@@ -38,6 +39,7 @@ namespace Unity.VisualScripting.Community
                 {
                     return typeof(object);
                 }
+                NameSpace = type.Namespace;
             }
             return null;
         }
