@@ -60,7 +60,7 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
             {
                 var type = Type.GetType(variable.typeHandle.Identification) ?? typeof(object);
                 var name = data.AddLocalNameInScope(variable.name, type);
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{type.As().CSharpName(false, true)} {name.VariableHighlight()} = {variable.value.As().Code(true, true, true, "", false, true)};") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{type.As().CSharpName(false, true)} {name.VariableHighlight()} = ") + variable.value.As().Code(true, Unit, true, true, "", false, true) + MakeSelectableForThisUnit(";") + "\n";
             }
 
             if (input.hasValidConnection)

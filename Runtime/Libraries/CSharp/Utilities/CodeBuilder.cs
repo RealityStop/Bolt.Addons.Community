@@ -27,6 +27,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static string MethodColor = "EBEB5B";
         #endregion
 
+        public static bool ShowRecommendations = true;
+
         public static int currentIndent { get; private set; }
         /// <summary>
         /// Creates the opening of a new body as a string.
@@ -466,7 +468,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string MakeRecommendation(string Message)
         {
-            return $"/*(Recommendation) {Message}*/".RecommendationHighlight();
+            if(ShowRecommendations) return $"/*(Recommendation) {Message}*/".RecommendationHighlight();
+            else return "";
         }
 
         public static string WarningHighlight(this string code)

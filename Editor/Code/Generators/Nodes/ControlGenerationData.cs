@@ -17,7 +17,6 @@ namespace Unity.VisualScripting.Community
         public Stack<GeneratorScope> scopes = new Stack<GeneratorScope>();
         private Stack<GeneratorScope> preservedScopes = new Stack<GeneratorScope>();
         private int scopeIdCounter = 0;
-
         private Stack<(Type type, bool isMet)> expectedTypes = new Stack<(Type type, bool isMet)>();
 
         private Dictionary<Unit, UnitSymbol> UnitSymbols = new Dictionary<Unit, UnitSymbol>();

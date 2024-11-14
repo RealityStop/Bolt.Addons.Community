@@ -41,8 +41,10 @@ namespace Unity.VisualScripting.Community
                 // }
                 // else
                 // {
-                //     output.Append(cachedIndentPlusOne)
-                //           .AppendLine(MakeSelectableForThisUnit("/* Unreachable code skipping for performance */".WarningHighlight()));
+                //     trueData.NewScope();
+                //     trueCode = CodeUtility.ToolTip("Unreachable Code", GetNextUnit(Unit.ifTrue, trueData, indent + 1).NamespaceHighlight());
+                //     trueData.ExitScope();
+                //     output.Append(trueCode);
                 // }
 
                 output.AppendLine()

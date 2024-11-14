@@ -448,14 +448,14 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         {
             if (highlight) return HighlightedCode(@as, isNew, isLiteral, parameters, newLineLiteral, fullName);
             Type type = @as.value?.GetType();
-            if (@as.value is Type) return "typeof(" + ((Type)@as.value).As().CSharpName() + ")";
+            if (@as.value is Type) return "typeof(" + ((Type)@as.value).As().CSharpName(false, fullName, false) + ")";
             if (type == null) return "null";
             if (type == typeof(void)) return "void";
             if (type == typeof(bool)) return @as.value.ToString().ToLower();
             if (type == typeof(float)) return @as.value.ToString().Replace(",", ".") + "f";
             if (type == typeof(double) || type == typeof(decimal)) return @as.value.ToString().Replace(",", ".");
             if (type == typeof(string)) return @"""" + @as.value.ToString() + @"""";
-            if (type == typeof(char)) return string.IsNullOrEmpty(@as.value.ToString()) ? "new Char()".StringHighlight() : $"'{@as.value}'".StringHighlight();
+            if (type == typeof(char)) return string.IsNullOrEmpty(@as.value.ToString()) ? "new Char()" : $"'{@as.value}'";
             if (type == typeof(UnityEngine.GameObject)) return "null";
             if (type.IsNumeric()) return @as.value.ToString();
             if (type.IsEnum) return type.Name + "." + @as.value.ToString();
@@ -464,13 +464,13 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)
                 {
-                    if (type.IsGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName) : "new ".ConstructHighlight() + GenericDeclaration(type, fullName) + "()";
-                    if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName) : "new " + GenericDeclaration(type, fullName) + "(" + parameters + ")";
-                    return isLiteral ? Literal(@as.value, newLineLiteral, fullName) : "new " + (fullName ? type.FullName : type.Name) + "(" + parameters + ")";
+                    if (type.IsGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false) : "new " + GenericDeclaration(type, fullName, false) + "()";
+                    if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false) : "new " + GenericDeclaration(type, fullName, false) + "(" + parameters + ")";
+                    return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false) : "new " + (fullName ? type.FullName : type.Name) + "(" + parameters + ")";
                 }
                 else
                 {
-                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, newLineLiteral, fullName) : "new " + (fullName ? type.FullName : type.Name) + "(" + parameters + ")";
+                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false) : "new " + (fullName ? type.FullName : type.Name) + "(" + parameters + ")";
                 }
             }
 
@@ -481,15 +481,15 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         {
             if (highlight) return HighlightedCode(@as, isNew, unit, isLiteral, parameters, newLineLiteral, fullName);
             Type type = @as.value?.GetType();
-            if (@as.value is Type) return CodeUtility.MakeSelectable(unit, "typeof(" + ((Type)@as.value).As().CSharpName() + ")");
+            if (@as.value is Type) return CodeUtility.MakeSelectable(unit, "typeof(" + ((Type)@as.value).As().CSharpName(false, fullName, false) + ")");
             if (type == null) return CodeUtility.MakeSelectable(unit, "null");
             if (type == typeof(void)) return CodeUtility.MakeSelectable(unit, "void");
             if (type == typeof(bool)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().ToLower());
             if (type == typeof(float)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().Replace(",", ".") + "f");
             if (type == typeof(double) || type == typeof(decimal)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().Replace(",", "."));
             if (type == typeof(string)) return CodeUtility.MakeSelectable(unit, @"""" + @as.value.ToString() + @"""");
-            if (type == typeof(char)) return CodeUtility.MakeSelectable(unit, string.IsNullOrEmpty(@as.value.ToString()) ? "new Char()".StringHighlight() : $"'{@as.value}'".StringHighlight());
-            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, "null");
+            if (type == typeof(char)) return CodeUtility.MakeSelectable(unit, string.IsNullOrEmpty(@as.value.ToString()) ? "new Char()" : $"'{@as.value}'");
+            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"/* Cannot generate {(@as.value as GameObject).name} (Hover for more info) */ " + "null"));
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name + "." + @as.value.ToString());
 
@@ -497,13 +497,13 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)
                 {
-                    if (type.IsGenericType) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName) : CodeUtility.MakeSelectable(unit, "new ".ConstructHighlight() + GenericDeclaration(type, fullName) + "()");
-                    if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName) : CodeUtility.MakeSelectable(unit, "new " + GenericDeclaration(type, fullName) + "(" + parameters + ")");
-                    return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName) : CodeUtility.MakeSelectable(unit, "new " + (fullName ? type.FullName : type.Name) + "(" + parameters + ")");
+                    if (type.IsGenericType) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, false) : CodeUtility.MakeSelectable(unit, "new ".ConstructHighlight() + GenericDeclaration(type, fullName, false) + "()");
+                    if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, false) : CodeUtility.MakeSelectable(unit, "new " + GenericDeclaration(type, fullName, false) + "(" + parameters + ")");
+                    return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, false) : CodeUtility.MakeSelectable(unit, "new " + (fullName ? type.FullName : type.Name) + "(" + parameters + ")");
                 }
                 else
                 {
-                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName) : CodeUtility.MakeSelectable(unit, "new " + (fullName ? type.FullName : type.Name) + "(" + parameters + ")");
+                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, false) : CodeUtility.MakeSelectable(unit, "new " + (fullName ? type.FullName : type.Name) + "(" + parameters + ")");
                 }
             }
 
@@ -552,7 +552,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(double) || type == typeof(decimal)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().Replace(",", ".").NumericHighlight());
             if (type == typeof(string)) return CodeUtility.MakeSelectable(unit, (@"""" + @as.value.ToString() + @"""").StringHighlight());
             if (type == typeof(char)) return (char)@as.value == char.MinValue ? CodeUtility.MakeSelectable(unit, "/* Cannot have an empty character */".WarningHighlight()) : CodeUtility.MakeSelectable(unit, $"'{@as.value}'".StringHighlight());
-            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable and connect it to this input the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"/* Cannot generate {(@as.value as GameObject).name} (Hover for more info) */ ".WarningHighlight().WarningHighlight() + "null".ConstructHighlight()));
+            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"/* Cannot generate {(@as.value as GameObject).name} (Hover for more info) */ ".WarningHighlight() + "null".ConstructHighlight()));
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString().NumericHighlight());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name.EnumHighlight() + "." + @as.value.ToString());
             if (isNew)
@@ -572,7 +572,123 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return CodeUtility.MakeSelectable(unit, @as.value.ToString());
         }
 
-        private static string Literal(object value, bool newLine = false, bool fullName = false)
+        private static string Literal(object value, bool newLine = false, bool fullName = false, bool highlight = true)
+        {
+            if (highlight)
+            {
+                return HightlightedLiteral(value, newLine, fullName);
+            }
+            var fields = value?.GetType().GetFields();
+            var output = string.Empty;
+            var usableFields = new List<FieldInfo>();
+            var isMultiLine = fields.Length > 2;
+
+            // Check if the value is a dictionary and if it has more than 0 elements
+            if (value is IDictionary dictionary && dictionary.Count > 0)
+            {
+                isMultiLine = true;
+            }
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                if (fields[i].IsPublic && !fields[i].IsStatic && !fields[i].IsInitOnly)
+                {
+                    usableFields.Add(fields[i]);
+                }
+            }
+
+            output += (newLine ? "\n" : string.Empty) + "new " + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName, false) : GenericDeclaration(value.GetType(), fullName), false) + (value.GetType().IsArray ? "" : "()");
+
+            if (isMultiLine)
+            {
+                output += "\n" + CodeBuilder.GetCurrentIndent() + ((value is ICollection collection && collection.Count > 0) || usableFields.Count > 0 ? "{" : string.Empty) + "\n";
+            }
+            else
+            {
+                output += (value is ICollection collection && collection.Count > 0) || usableFields.Count > 0 ? $"\n{CodeBuilder.GetCurrentIndent()}{{" : string.Empty;
+            }
+
+            if (value is IDictionary or IList)
+                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
+
+            var indent = CodeBuilder.GetCurrentIndent();
+
+            if (value is IList list)
+            {
+                int index = 0;
+                foreach (var item in list)
+                {
+                    if (list.Count > 2)
+                    {
+                        output += "\n";
+                        output += indent + item.As().Code(true, true, false, "", false, fullName);
+                    }
+                    else
+                    {
+                        output += (index == 0 ? " " : "") + item.As().Code(true, true, false, "", false, fullName);
+                    }
+
+                    if (++index != list.Count)
+                    {
+                        output += ", ";
+                    }
+                }
+            }
+            else if (value is IDictionary _dictionary)
+            {
+                int index = 0;
+                foreach (DictionaryEntry entry in _dictionary)
+                {
+                    string newLinestr = _dictionary.Count > 2 ? "\n" : "";
+                    output += indent + "{ ";
+                    output += entry.Key.As().Code(true, true, false, "", false, fullName);
+                    output += ", ";
+                    output += entry.Value.As().Code(true, true, false, "", false, fullName);
+                    output += " }";
+                    if (++index != _dictionary.Count)
+                    {
+                        output += $", {newLinestr}";
+                    }
+                }
+            }
+            else if (value is Array array)
+            {
+                int index = 0;
+                foreach (var item in array)
+                {
+                    if (array.Length > 2)
+                    {
+                        output += "\n";
+                        output += indent + item.As().Code(true, true, false, "", false, fullName);
+                    }
+                    else
+                    {
+                        output += (index == 0 ? " " : "") + item.As().Code(true, true, false, "", false, fullName);
+                    }
+
+                    if (++index != array.Length)
+                    {
+                        output += ", ";
+                    }
+                }
+            }
+
+            if (isMultiLine)
+                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
+            for (int i = 0; i < usableFields.Count; i++)
+            {
+                output += (isMultiLine ? CodeBuilder.GetCurrentIndent() : string.Empty) + usableFields[i].Name + " = " + usableFields[i].GetValue(value).As().Code(true, true, false, "", false, fullName);
+                output += i < usableFields.Count - 1 ? ", " + (isMultiLine ? "\n" : string.Empty) : string.Empty;
+            }
+            if (isMultiLine)
+                CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
+
+            output += isMultiLine ? "\n" + (value is ICollection ? CodeBuilder.Indent(CodeBuilder.currentIndent - 1) : CodeBuilder.Indent(CodeBuilder.currentIndent)) + "}" : (value is ICollection collectionWithItems && collectionWithItems.Count > 0) || usableFields.Count > 0 ? $"\n{CodeBuilder.Indent(CodeBuilder.currentIndent - 1)}}}" : string.Empty;
+
+            return output;
+        }
+
+        private static string HightlightedLiteral(object value, bool newLine = false, bool fullName = false)
         {
             var fields = value?.GetType().GetFields();
             var output = string.Empty;
@@ -684,7 +800,123 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return output;
         }
 
-        private static string Literal(object value, Unit unit, bool newLine = false, bool fullName = false)
+        private static string Literal(object value, Unit unit, bool newLine = false, bool fullName = false, bool highlight = true)
+        {
+            if (highlight)
+            {
+                return HighlightedLiteral(value, unit, newLine, fullName);
+            }
+            var fields = value?.GetType().GetFields();
+            var output = string.Empty;
+            var usableFields = new List<FieldInfo>();
+            var isMultiLine = fields.Length > 2;
+
+            // Check if the value is a dictionary and if it has more than 0 elements
+            if (value is IDictionary dictionary && dictionary.Count > 0)
+            {
+                isMultiLine = true;
+            }
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                if (fields[i].IsPublic && !fields[i].IsStatic && !fields[i].IsInitOnly)
+                {
+                    usableFields.Add(fields[i]);
+                }
+            }
+
+            output += (newLine ? "\n" : string.Empty) + CodeUtility.MakeSelectable(unit, "new " + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName, false) : GenericDeclaration(value.GetType(), fullName), false) + (value.GetType().IsArray ? "" : "()"));
+
+            if (isMultiLine)
+            {
+                output += "\n" + CodeBuilder.GetCurrentIndent() + CodeUtility.MakeSelectable(unit, (value is ICollection collection && collection.Count > 0) || usableFields.Count > 0 ? "{" : string.Empty) + "\n";
+            }
+            else
+            {
+                output += (value is ICollection collection && collection.Count > 0) || usableFields.Count > 0 ? $"\n{CodeBuilder.GetCurrentIndent()}{CodeUtility.MakeSelectable(unit, "{")}" : string.Empty;
+            }
+
+            if (value is IDictionary or IList)
+                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
+
+            var indent = CodeBuilder.GetCurrentIndent();
+
+            if (value is IList list)
+            {
+                int index = 0;
+                foreach (var item in list)
+                {
+                    if (list.Count > 2)
+                    {
+                        output += "\n";
+                        output += indent + CodeUtility.MakeSelectable(unit, item.As().Code(true, true, false, "", false, fullName));
+                    }
+                    else
+                    {
+                        output += (index == 0 ? " " : "") + CodeUtility.MakeSelectable(unit, item.As().Code(true, true, false, "", false, fullName));
+                    }
+
+                    if (++index != list.Count)
+                    {
+                        output += CodeUtility.MakeSelectable(unit, ", ");
+                    }
+                }
+            }
+            else if (value is IDictionary _dictionary)
+            {
+                int index = 0;
+                foreach (DictionaryEntry entry in _dictionary)
+                {
+                    string newLinestr = _dictionary.Count > 2 ? "\n" : "";
+                    output += indent + CodeUtility.MakeSelectable(unit, "{ ");
+                    output += CodeUtility.MakeSelectable(unit, entry.Key.As().Code(true, true, false, "", false, fullName));
+                    output += CodeUtility.MakeSelectable(unit, ", ");
+                    output += CodeUtility.MakeSelectable(unit, entry.Value.As().Code(true, true, false, "", false, fullName));
+                    output += CodeUtility.MakeSelectable(unit, " }");
+                    if (++index != _dictionary.Count)
+                    {
+                        output += CodeUtility.MakeSelectable(unit, ",") + $" {newLinestr}";
+                    }
+                }
+            }
+            else if (value is Array array)
+            {
+                int index = 0;
+                foreach (var item in array)
+                {
+                    if (array.Length > 2)
+                    {
+                        output += "\n";
+                        output += indent + CodeUtility.MakeSelectable(unit, item.As().Code(true, true, false, "", false, fullName));
+                    }
+                    else
+                    {
+                        output += (index == 0 ? " " : "") + CodeUtility.MakeSelectable(unit, item.As().Code(true, true, false, "", false, fullName));
+                    }
+
+                    if (++index != array.Length)
+                    {
+                        output += CodeUtility.MakeSelectable(unit, ", ");
+                    }
+                }
+            }
+
+            if (isMultiLine)
+                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
+            for (int i = 0; i < usableFields.Count; i++)
+            {
+                output += (isMultiLine ? CodeBuilder.GetCurrentIndent() : string.Empty) + CodeUtility.MakeSelectable(unit, usableFields[i].Name + " = " + usableFields[i].GetValue(value).As().Code(true, true, false, "", false, fullName));
+                output += i < usableFields.Count - 1 ? CodeUtility.MakeSelectable(unit, ", ") + (isMultiLine ? "\n" : string.Empty) : string.Empty;
+            }
+            if (isMultiLine)
+                CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
+
+            output += isMultiLine ? "\n" + (value is ICollection ? CodeBuilder.Indent(CodeBuilder.currentIndent - 1) : CodeBuilder.Indent(CodeBuilder.currentIndent)) + CodeUtility.MakeSelectable(unit, "}") : (value is ICollection collectionWithItems && collectionWithItems.Count > 0) || usableFields.Count > 0 ? $"\n{CodeBuilder.Indent(CodeBuilder.currentIndent - 1)}" + CodeUtility.MakeSelectable(unit, "}") : string.Empty;
+
+            return output;
+        }
+
+        private static string HighlightedLiteral(object value, Unit unit, bool newLine = false, bool fullName = false)
         {
             var fields = value?.GetType().GetFields();
             var output = string.Empty;
@@ -795,7 +1027,6 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
             return output;
         }
-
 
         public static string GenericDeclaration(Type type, bool fullName = true, bool highlight = true)
         {

@@ -1,3 +1,4 @@
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
 using UnityEngine;
@@ -23,7 +24,7 @@ namespace Unity.VisualScripting.Community
             {
                 settings.Initalize();
             }
-
+            CodeBuilder.ShowRecommendations = settings.ShowRecommendations;
             CSharpPreview.NumericColor = settings.NumericColor;
             CSharpPreview.EnumColor = settings.EnumColor;
             CSharpPreview.ConstructColor = settings.ConstructColor;

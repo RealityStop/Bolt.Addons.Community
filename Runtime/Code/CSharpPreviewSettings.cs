@@ -19,6 +19,7 @@ namespace Unity.VisualScripting.Community
         [HideInInspector]
         public bool isInitalized = false;
         public bool ShowSubgraphComment = true;
+        public bool ShowRecommendations = true;
 
         public void Initalize()
         {

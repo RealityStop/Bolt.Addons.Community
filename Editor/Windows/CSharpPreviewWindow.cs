@@ -34,13 +34,21 @@ namespace Unity.VisualScripting.Community
         {
             Selection.selectionChanged += ChangeSelection;
             var toolbar = new Toolbar();
+            toolbar.name = "Toolbar";
 
-            // Scroll view for code display
-            var scrollView = new ScrollView
+            var codeContainer = new ScrollView
             {
-                horizontalScrollerVisibility = ScrollerVisibility.Auto,
-                style = { flexGrow = 1, paddingLeft = 10, paddingTop = 10, backgroundColor = new Color(0.15f, 0.15f, 0.15f) }
+                name = "codeContainer",
+                style = { backgroundColor = new Color(0.15f, 0.15f, 0.15f), flexGrow = 1 }
             };
+
+            var settingsContainer = new ScrollView
+            {
+                name = "settingsContainer",
+                style = { backgroundColor = new Color(0.18f, 0.18f, 0.18f), flexGrow = 1 }
+            };
+            CreateSettingsUI(settingsContainer);
+
             // Create the Zoom section
             var zoomContainer = new VisualElement
             {
@@ -62,9 +70,9 @@ namespace Unity.VisualScripting.Community
             // Register a callback for when the slider value changes
             zoomSlider.RegisterValueChangedCallback(evt =>
             {
-                zoomFactor = evt.newValue; // Update the zoom factor
-                zoomLabel.text = $"{zoomFactor:0.#}x"; // Update the zoom label to reflect the new value
-                scrollView.style.fontSize = Mathf.RoundToInt(14 * zoomFactor);
+                zoomFactor = evt.newValue;
+                zoomLabel.text = $"{zoomFactor:0.#}x";
+                codeContainer.style.fontSize = Mathf.RoundToInt(14 * zoomFactor);
             });
 
             zoomContainer.Add(zoomTextLabel);
@@ -87,12 +95,288 @@ namespace Unity.VisualScripting.Community
             toolbar.Add(refreshButton);
 
             var toggleButton = CreateToolbarButton(showCodeWindow ? "Settings" : "Preview", ToggleWindowMode);
+            toggleButton.name = "toggleButton";
             toolbar.Add(toggleButton);
 
             rootVisualElement.Add(toolbar);
-
-            rootVisualElement.Add(scrollView);
+            rootVisualElement.Add(codeContainer);
+            rootVisualElement.Add(settingsContainer);
             ChangeSelection();
+
+            codeContainer.style.display = showCodeWindow ? DisplayStyle.Flex : DisplayStyle.None;
+            settingsContainer.style.display = showCodeWindow ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+        private void CreateSettingsUI(ScrollView settingsContainer)
+        {
+            var path = "Assets/Unity.VisualScripting.Community.Generated/";
+            HUMIO.Ensure(path).Path();
+            CSharpPreviewSettings settings = AssetDatabase.LoadAssetAtPath<CSharpPreviewSettings>(path + "CSharpPreviewSettings.asset");
+
+            if (settings == null)
+            {
+                settings = ScriptableObject.CreateInstance<CSharpPreviewSettings>();
+                settings.name = "CSharpPreviewSettings";
+                AssetDatabase.CreateAsset(settings, path + "CSharpPreviewSettings.asset");
+                settings.Initalize();
+            }
+            else if (!settings.isInitalized)
+            {
+                settings.Initalize();
+            }
+            CodeBuilder.ShowRecommendations = settings.ShowRecommendations;
+
+            var settingsLabel = new Label("C# Preview Settings")
+            {
+                style =
+        {
+            unityFontStyleAndWeight = FontStyle.Bold,
+            fontSize = 18,
+            alignSelf = Align.Center,
+            marginTop = 10
+        }
+            };
+            settingsContainer.Add(settingsLabel);
+
+
+            #region Generation Settings
+            var generationSettingsSection = new VisualElement
+            {
+                style = { marginLeft = 10, marginTop = 10 }
+            };
+            var generationSettingsLabel = new Label("Generation Settings")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Bold, fontSize = 14, marginTop = 10 }
+            };
+            generationSettingsSection.Add(generationSettingsLabel);
+
+            float labelWidth = 200;
+
+            var subgraphToggleContainer = new VisualElement
+            {
+                style = { marginTop = 10, flexDirection = FlexDirection.Row }
+            };
+
+            var showSubgraphLabel = new Label("Show Subgraph Comment :")
+            {
+                tooltip = "Generate a comment where the Subgraph and Port are being generated.",
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginRight = 10, width = labelWidth }
+            };
+
+            var showSubgraphCommentToggle = new Toggle
+            {
+                style = { marginLeft = 10 }
+            };
+            showSubgraphCommentToggle.value = settings.ShowSubgraphComment;
+            CSharpPreview.ShowSubgraphComment = settings.ShowSubgraphComment;
+
+            showSubgraphCommentToggle.RegisterValueChangedCallback(evt =>
+            {
+                settings.ShowSubgraphComment = evt.newValue;
+                CSharpPreview.ShowSubgraphComment = evt.newValue;
+                settings.SaveAndDirty();
+            });
+
+            subgraphToggleContainer.Add(showSubgraphLabel);
+            subgraphToggleContainer.Add(showSubgraphCommentToggle);
+            generationSettingsSection.Add(subgraphToggleContainer);
+
+            var recommendationToggleContainer = new VisualElement
+            {
+                style = { marginTop = 5, flexDirection = FlexDirection.Row }
+            };
+
+            var showRecommendationLabel = new Label("Show Recommendations :")
+            {
+                tooltip = "Show recommendations if there is a better way of generating the code.",
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginRight = 10, width = labelWidth }
+            };
+
+            var showRecommendationToggle = new Toggle
+            {
+                style = { marginLeft = 10 }
+            };
+
+            showRecommendationToggle.value = settings.ShowRecommendations;
+            CodeBuilder.ShowRecommendations = settings.ShowRecommendations;
+            showRecommendationToggle.RegisterValueChangedCallback(evt =>
+            {
+                settings.ShowRecommendations = evt.newValue;
+                CodeBuilder.ShowRecommendations = evt.newValue;
+                settings.SaveAndDirty();
+            });
+
+            recommendationToggleContainer.Add(showRecommendationLabel);
+            recommendationToggleContainer.Add(showRecommendationToggle);
+            generationSettingsSection.Add(recommendationToggleContainer);
+
+            settingsContainer.Add(generationSettingsSection);
+            #endregion
+
+            #region Syntax Highlights
+            var syntaxHighlightsSection = new VisualElement
+            {
+                style = { marginLeft = 10, marginTop = 10 }
+            };
+
+            var syntaxHighlightsLabel = new Label("Syntax Highlights")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Bold, fontSize = 14, marginTop = 10 }
+            };
+            syntaxHighlightsSection.Add(syntaxHighlightsLabel);
+
+            float labelsWidth = 200; // Fixed width for label alignment
+
+            void AddColorField(Action initialize, VisualElement container, string labelText, string tooltip, Color initialColor, Action<Color> onColorChanged, Action<ColorField> resetToDefault)
+            {
+                initialize();
+
+                var colorContainer = new VisualElement
+                {
+                    style = { marginTop = 10, flexDirection = FlexDirection.Row }
+                };
+
+                var colorLabel = new Label(labelText)
+                {
+                    tooltip = tooltip,
+                    style = { unityFontStyleAndWeight = FontStyle.Bold, marginRight = 10, width = labelsWidth }
+                };
+
+                var colorField = new ColorField
+                {
+                    style = { marginLeft = 10, width = 400 },
+                    value = initialColor
+                };
+
+                colorField.RegisterValueChangedCallback(evt =>
+                {
+                    onColorChanged(evt.newValue);
+                    settings.SaveAndDirty();
+                });
+
+                var defaultButton = new Button(() =>
+                {
+                    resetToDefault(colorField);
+                    settings.SaveAndDirty();
+                })
+                {
+                    text = "Default",
+                    style = { marginLeft = 10 }
+                };
+
+                colorContainer.Add(colorLabel);
+                colorContainer.Add(colorField);
+                colorContainer.Add(defaultButton);
+
+                container.Add(colorContainer);
+            }
+
+            AddColorField(() => CodeBuilder.VariableColor = settings.VariableColor.ToHexString(), syntaxHighlightsSection, "Variable Color :", "The variable color.", settings.VariableColor, color =>
+            {
+                settings.VariableColor = color;
+                CodeBuilder.VariableColor = color.ToHexString();
+                settings.SaveAndDirty();
+            }, (field) =>
+            {
+                if (UnityEngine.ColorUtility.TryParseHtmlString("#00FFFF", out var value))
+                {
+                    settings.VariableColor = value;
+                    field.value = value;
+                }
+                CodeBuilder.VariableColor = "00FFFF";
+            });
+
+            AddColorField(() => CodeBuilder.StringColor = settings.StringColor.ToHexString(), syntaxHighlightsSection, "String Color :", "The color for strings.", settings.StringColor, color =>
+            {
+                settings.StringColor = color;
+                CodeBuilder.StringColor = color.ToHexString();
+                settings.SaveAndDirty();
+            }, (field) =>
+            {
+                if (UnityEngine.ColorUtility.TryParseHtmlString("#CC8833", out var value))
+                {
+                    settings.StringColor = value;
+                    field.value = value;
+                }
+                CodeBuilder.StringColor = "CC8833";
+            });
+
+            AddColorField(() => CodeBuilder.NumericColor = settings.NumericColor.ToHexString(), syntaxHighlightsSection, "Numeric Color :", "The color for numeric values.", settings.NumericColor, color =>
+            {
+                settings.NumericColor = color;
+                CodeBuilder.NumericColor = color.ToHexString();
+                settings.SaveAndDirty();
+            }, (field) =>
+            {
+                if (UnityEngine.ColorUtility.TryParseHtmlString("#DDFFBB", out var value))
+                {
+                    settings.NumericColor = value;
+                    field.value = value;
+                }
+                CodeBuilder.NumericColor = "DDFFBB";
+            });
+
+            AddColorField(() => CodeBuilder.ConstructColor = settings.ConstructColor.ToHexString(), syntaxHighlightsSection, "Construct Color :", "The color for constructs (e.g., loops, conditionals).", settings.ConstructColor, color =>
+            {
+                settings.ConstructColor = color;
+                CodeBuilder.ConstructColor = color.ToHexString();
+                settings.SaveAndDirty();
+            }, (field) =>
+            {
+                if (UnityEngine.ColorUtility.TryParseHtmlString("#4488FF", out var value))
+                {
+                    settings.ConstructColor = value;
+                    field.value = value;
+                }
+                CodeBuilder.ConstructColor = "4488FF";
+            });
+
+            AddColorField(() => CodeBuilder.TypeColor = settings.TypeColor.ToHexString(), syntaxHighlightsSection, "Type Color :", "The color for data types.", settings.TypeColor, color =>
+            {
+                settings.TypeColor = color;
+                CodeBuilder.TypeColor = color.ToHexString();
+                settings.SaveAndDirty();
+            }, (field) =>
+            {
+                if (UnityEngine.ColorUtility.TryParseHtmlString("#33EEAA", out var value))
+                {
+                    settings.TypeColor = value;
+                    field.value = value;
+                }
+                CodeBuilder.TypeColor = "33EEAA";
+            });
+
+            AddColorField(() => CodeBuilder.EnumColor = settings.EnumColor.ToHexString(), syntaxHighlightsSection, "Enum Color :", "The color for enums.", settings.EnumColor, color =>
+            {
+                settings.EnumColor = color;
+                CodeBuilder.EnumColor = color.ToHexString();
+                settings.SaveAndDirty();
+            }, (field) =>
+            {
+                if (UnityEngine.ColorUtility.TryParseHtmlString("#FFFFBB", out var value))
+                {
+                    settings.EnumColor = value;
+                    field.value = value;
+                }
+                CodeBuilder.EnumColor = "FFFFBB";
+            });
+
+            AddColorField(() => CodeBuilder.InterfaceColor = settings.InterfaceColor.ToHexString(), syntaxHighlightsSection, "Interface Color :", "The color for interfaces.", settings.InterfaceColor, color =>
+            {
+                settings.InterfaceColor = color;
+                CodeBuilder.InterfaceColor = color.ToHexString();
+                settings.SaveAndDirty();
+            }, (field) =>
+            {
+                if (UnityEngine.ColorUtility.TryParseHtmlString("#DDFFBB", out var value))
+                {
+                    settings.InterfaceColor = value;
+                    field.value = value;
+                }
+                CodeBuilder.InterfaceColor = "DDFFBB";
+            });
+
+            settingsContainer.Add(syntaxHighlightsSection);
+            #endregion
         }
 
         private Button CreateToolbarButton(string text, Action onClick)
@@ -173,7 +457,20 @@ namespace Unity.VisualScripting.Community
         private void ToggleWindowMode()
         {
             showCodeWindow = !showCodeWindow;
-            UpdateCodeDisplay();
+
+            // Update button label
+            var toggleButton = rootVisualElement.Q<Toolbar>("Toolbar").Q<Button>("toggleButton");
+            toggleButton.text = showCodeWindow ? "Settings" : "Code View";
+
+            // Toggle visibility of settings and code containers
+            var codeContainer = rootVisualElement.Q<ScrollView>("codeContainer");
+            var settingsContainer = rootVisualElement.Q<ScrollView>("settingsContainer");
+
+            codeContainer.style.display = showCodeWindow ? DisplayStyle.Flex : DisplayStyle.None;
+            settingsContainer.style.display = showCodeWindow ? DisplayStyle.None : DisplayStyle.Flex;
+
+            // Optional: Refresh the code display when toggling back to code view
+            if (showCodeWindow) UpdateCodeDisplay();
         }
 
         private void ChangeSelection()
