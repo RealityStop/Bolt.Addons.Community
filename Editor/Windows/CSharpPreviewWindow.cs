@@ -35,7 +35,7 @@ namespace Unity.VisualScripting.Community
             Selection.selectionChanged += ChangeSelection;
             var toolbar = new Toolbar();
             toolbar.name = "Toolbar";
-
+            var codeView = new VisualElement() { style = { flexDirection = FlexDirection.Row }, name = "codeView" };
             var codeContainer = new ScrollView
             {
                 name = "codeContainer",
@@ -47,17 +47,34 @@ namespace Unity.VisualScripting.Community
                 name = "settingsContainer",
                 style = { backgroundColor = new Color(0.18f, 0.18f, 0.18f), flexGrow = 1 }
             };
+            var lineNumbersContainer = new ScrollView()
+            {
+                name = "lineNumbersContainer",
+                verticalScrollerVisibility = ScrollerVisibility.Hidden,
+                horizontalScrollerVisibility = ScrollerVisibility.Hidden,
+                style = { backgroundColor = new Color(0.15f, 0.15f, 0.15f), flexGrow = 1, flexDirection = FlexDirection.Column }
+            };
+            codeContainer.verticalScroller.valueChanged += (newValue) =>
+            {
+                lineNumbersContainer.verticalScroller.value = newValue;
+            };
+            lineNumbersContainer.verticalScroller.valueChanged += (newValue) =>
+            {
+                codeContainer.verticalScroller.value = newValue;
+            };
+            codeView.Add(lineNumbersContainer);
+            codeView.Add(codeContainer);
             CreateSettingsUI(settingsContainer);
 
             // Create the Zoom section
             var zoomContainer = new VisualElement
             {
                 style =
-        {
-            flexDirection = FlexDirection.Row,
-            alignItems = Align.Center,
-            paddingLeft = 10
-        }
+                {
+                    flexDirection = FlexDirection.Row,
+                    alignItems = Align.Center,
+                    paddingLeft = 10
+                }
             };
             var zoomTextLabel = new Label("Zoom:") { style = { unityFontStyleAndWeight = FontStyle.Bold, marginRight = 5 } };
             var zoomSlider = new Slider(0.5f, 2.0f)
@@ -73,6 +90,7 @@ namespace Unity.VisualScripting.Community
                 zoomFactor = evt.newValue;
                 zoomLabel.text = $"{zoomFactor:0.#}x";
                 codeContainer.style.fontSize = Mathf.RoundToInt(14 * zoomFactor);
+                lineNumbersContainer.style.fontSize = Mathf.RoundToInt(14 * zoomFactor);
             });
 
             zoomContainer.Add(zoomTextLabel);
@@ -99,11 +117,11 @@ namespace Unity.VisualScripting.Community
             toolbar.Add(toggleButton);
 
             rootVisualElement.Add(toolbar);
-            rootVisualElement.Add(codeContainer);
+            rootVisualElement.Add(codeView);
             rootVisualElement.Add(settingsContainer);
             ChangeSelection();
 
-            codeContainer.style.display = showCodeWindow ? DisplayStyle.Flex : DisplayStyle.None;
+            codeView.style.display = showCodeWindow ? DisplayStyle.Flex : DisplayStyle.None;
             settingsContainer.style.display = showCodeWindow ? DisplayStyle.None : DisplayStyle.Flex;
         }
         private void CreateSettingsUI(ScrollView settingsContainer)
@@ -426,19 +444,16 @@ namespace Unity.VisualScripting.Community
                 AssetCompiler.CompileAsset(asset);
         }
 
-        // Copy selected text to clipboard
         private void CopyToClipboard()
         {
             string outputToCopy;
             if (selectedLabels.Count > 0)
             {
-                // Join text from selected labels
                 outputToCopy = string.Join("\n", selectedLabels.Select(label => CodeUtility.RemoveAllSelectableTags(CodeUtility.RemoveCustomHighlights(RemoveColorTags(label.text)))));
             }
             else
             {
-                // No selection: copy the entire code
-                outputToCopy = CodeUtility.RemoveAllSelectableTags(CodeUtility.RemoveCustomHighlights(RemoveColorTags(LoadYourCode())));
+                outputToCopy = CodeUtility.RemoveAllSelectableTags(CodeUtility.RemoveCustomHighlights(RemoveColorTags(LoadCode())));
             }
             EditorGUIUtility.systemCopyBuffer = outputToCopy;
         }
@@ -457,19 +472,15 @@ namespace Unity.VisualScripting.Community
         private void ToggleWindowMode()
         {
             showCodeWindow = !showCodeWindow;
-
-            // Update button label
             var toggleButton = rootVisualElement.Q<Toolbar>("Toolbar").Q<Button>("toggleButton");
-            toggleButton.text = showCodeWindow ? "Settings" : "Code View";
+            toggleButton.text = showCodeWindow ? "Settings" : "Preview";
 
-            // Toggle visibility of settings and code containers
-            var codeContainer = rootVisualElement.Q<ScrollView>("codeContainer");
+            var codeView = rootVisualElement.Q<VisualElement>("codeView");
             var settingsContainer = rootVisualElement.Q<ScrollView>("settingsContainer");
 
-            codeContainer.style.display = showCodeWindow ? DisplayStyle.Flex : DisplayStyle.None;
+            codeView.style.display = showCodeWindow ? DisplayStyle.Flex : DisplayStyle.None;
             settingsContainer.style.display = showCodeWindow ? DisplayStyle.None : DisplayStyle.Flex;
 
-            // Optional: Refresh the code display when toggling back to code view
             if (showCodeWindow) UpdateCodeDisplay();
         }
 
@@ -491,13 +502,15 @@ namespace Unity.VisualScripting.Community
         {
             if (asset != null)
             {
-                var code = LoadYourCode(); // Load your code based on the selected asset
-                var scrollView = rootVisualElement.Q<ScrollView>(); // Get the existing scroll view
-                DisplayCode(scrollView, code); // Update the displayed code
+                var code = "#pragma warning disable\n";
+                code += LoadCode();
+                var scrollView = rootVisualElement.Q<VisualElement>("codeView").Q<ScrollView>("codeContainer");
+                var lineNumbersScrollView = rootVisualElement.Q<VisualElement>("codeView").Q<ScrollView>("lineNumbersContainer");
+                DisplayCode(lineNumbersScrollView, scrollView, code);
             }
         }
 
-        private void DisplayCode(ScrollView scrollView, string code)
+        private void DisplayCode(ScrollView lineNumbersScrolView, ScrollView scrollView, string code)
         {
             scrollView.Clear();
             labels.Clear();
@@ -511,22 +524,18 @@ namespace Unity.VisualScripting.Community
 
             for (int i = 0; i < lines.Length; i++)
             {
-                var lineContainer = new VisualElement { style = { flexDirection = FlexDirection.Row } };
-
                 var lineNumberContainer = new Label($"{i + 1}");
-                lineNumberContainer.style.width = 25;
+                lineNumberContainer.style.flexGrow = 1;
                 lineNumberContainer.style.unityTextAlign = TextAnchor.MiddleLeft;
                 lineNumberContainer.style.color = Color.gray;
-                lineNumberContainer.style.marginLeft = 0;
+                lineNumberContainer.style.marginLeft = 5;
+                lineNumberContainer.style.marginRight = 5;
+                lineNumberContainer.style.paddingRight = 0;
                 lineNumberContainer.style.paddingLeft = 0;
-                lineContainer.Add(lineNumberContainer);
-                labels.Add(lineNumberContainer);
+                lineNumbersScrolView.Add(lineNumberContainer);
 
-
-                // Code container for the actual code
                 var codeContainer = new VisualElement { style = { flexDirection = FlexDirection.Row, flexGrow = 1, marginLeft = 10 } };
 
-                // Check for clickable regions on the line
                 if (regionsByLine.TryGetValue(i, out var regions))
                 {
                     AdjustLeadingWhitespacesForFirstRegion(lines[i], regions[0]);
@@ -543,10 +552,7 @@ namespace Unity.VisualScripting.Community
                     labels.Add(label);
                     codeContainer.Add(label);
                 }
-
-                // Add the code container to the line container and then to ScrollView
-                lineContainer.Add(codeContainer);
-                scrollView.Add(lineContainer);
+                scrollView.Add(codeContainer);
             }
         }
 
@@ -573,7 +579,6 @@ namespace Unity.VisualScripting.Community
         private List<Label> selectedLabels = new List<Label>();
         private Label lastSelectedLabel = null;
 
-        // Create a non-clickable label
         private Label CreateNonClickableLabel(string text)
         {
             var label = new Label(text);
@@ -586,7 +591,6 @@ namespace Unity.VisualScripting.Community
             return label;
         }
 
-        // Create a clickable code label
         private Label CreateCodeLabel(ClickableRegion region, int currentLine)
         {
             string tooltip;
@@ -699,7 +703,7 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private string LoadYourCode()
+        private string LoadCode()
         {
             return CodeGenerator.GetSingleDecorator(asset).Generate(0).RemoveMarkdown();
         }

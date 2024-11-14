@@ -80,7 +80,21 @@ namespace Unity.VisualScripting.Community
             return $"[CommunityAddonsCodeToolTip({ToolTip})]{code}[CommunityAddonsCodeToolTipEnd]";
         }
 
-        private static readonly Regex ToolTipRegex = new(@"\[CommunityAddonsCodeToolTip\((.*?)\)\](.*?)\[CommunityAddonsCodeToolTipEnd\]", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.Singleline);
+        private static readonly Dictionary<string, string> ToolTipCache = new();
+        private static readonly Regex ToolTipRegex = new(@"\[CommunityAddonsCodeToolTip\((.*?)\)\](.*?)\[CommunityAddonsCodeToolTipEnd\]", RegexOptions.Compiled);
+
+        public static string RemoveAllToolTipTags(string code)
+        {
+            if (ToolTipCache.TryGetValue(code, out string result))
+            {
+                return result;
+            }
+
+            result = ToolTipRegex.Replace(code, "$2");
+            ToolTipCache[code] = result;
+            return result;
+        }
+
 
         public static string ExtractTooltip(string code, out string tooltip)
         {
@@ -88,7 +102,6 @@ namespace Unity.VisualScripting.Community
             if (match.Success)
             {
                 tooltip = match.Groups[1].Value;
-                // Remove only the tooltip tags but keep the inner code content
                 return ToolTipRegex.Replace(code, "$2");
             }
             tooltip = string.Empty;

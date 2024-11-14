@@ -24,7 +24,9 @@ namespace Unity.VisualScripting.Community
 
         public string GenerateClean(int indent)
         {
-            return CodeUtility.RemoveAllSelectableTags(CodeUtility.RemoveCustomHighlights(Generate(indent).RemoveHighlights().RemoveMarkdown()));
+            var code = "#pragma warning disable\n";
+            code += CodeUtility.RemoveAllToolTipTags(CodeUtility.RemoveAllSelectableTags(CodeUtility.RemoveCustomHighlights(Generate(indent).RemoveHighlights().RemoveMarkdown())));
+            return code;
         }
     }
 
