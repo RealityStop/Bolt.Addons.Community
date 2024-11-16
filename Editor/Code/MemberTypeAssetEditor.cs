@@ -504,13 +504,11 @@ namespace Unity.VisualScripting.Community
                         var index = i;
                         HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
-                            // Define a GUIStyle with word wrapping enabled
                             var labelStyle = new GUIStyle(GUI.skin.label)
                             {
                                 wordWrap = true
                             };
 
-                            // Use GUILayout.ExpandWidth to let the label take up available space
                             GUILayout.Label(
                                 nonFinalMethods[index].Name + $" ({string.Join(", ", nonFinalMethods[index].GetParameters().Select(param => param.ParameterType.As().CSharpName(false, false, false)))})",
                                 labelStyle,

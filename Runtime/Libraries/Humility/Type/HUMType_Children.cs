@@ -74,8 +74,8 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (@as.type == typeof(bool)) return "bool".ConstructHighlight();
             if (@as.type == typeof(byte)) return "byte".ConstructHighlight();
             if (@as.type == typeof(void)) return "void".ConstructHighlight();
-            if (@as.type.IsEnum) return @as.type.Name.EnumHighlight();
-            if (@as.type.IsInterface) return @as.type.Name.InterfaceHighlight();
+            if (@as.type.IsEnum) return (!string.IsNullOrEmpty(@as.type.Namespace) && fullName ? @as.type.Namespace.NamespaceHighlight() + "." : "") + @as.type.Name.EnumHighlight();
+            if (@as.type.IsInterface) return (!string.IsNullOrEmpty(@as.type.Namespace) && fullName ? @as.type.Namespace.NamespaceHighlight() + "." : "") + @as.type.Name.InterfaceHighlight();
             if (@as.type == typeof(System.Object) && @as.type.BaseType == null) return hideSystemObject ? string.Empty : "object".ConstructHighlight();
             if (@as.type == typeof(object[])) return "object".ConstructHighlight() + "[]";
             if (@as.type.Name.Contains("Attribute")) return fullName ? @as.type.CSharpFullName().Replace(@as.type.Name, @as.type.Name.TypeHighlight()).Replace(@as.type.Namespace, @as.type.Namespace.NamespaceHighlight()).Replace("Attribute", "") : @as.type.CSharpName().TypeHighlight().Replace("Attribute", "");
@@ -527,7 +527,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         private static string HighlightedCode(this HUMValue.Data.As @as, bool isNew, Unit unit, bool isLiteral = false, string parameters = "", bool newLineLiteral = false, bool fullName = false)
         {
             Type type = @as.value?.GetType();
-            if (@as.value is Type) return CodeUtility.MakeSelectable(unit, "typeof".ConstructHighlight() + "(" + ((Type)@as.value).As().CSharpName(false, fullName) + ")");
+            if (@as.value is Type) return CodeUtility.MakeSelectable(unit, "typeof".ConstructHighlight() + "(" + ((Type)@as.value).As().CSharpName(false, true) + ")");
             if (type == null) return CodeUtility.MakeSelectable(unit, "null".ConstructHighlight());
             if (type == typeof(void)) return CodeUtility.MakeSelectable(unit, "void".ConstructHighlight());
             if (type == typeof(bool)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().ToLower().ConstructHighlight());

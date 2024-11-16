@@ -8,27 +8,6 @@ using UnityEngine;
 
 public static class CSharpUtility
 {
-    static Dictionary<string, Object> objectReferences = new Dictionary<string, Object>();
-    
-    public static Object ResolveObject(string key)
-    {
-        if (objectReferences.TryGetValue(key, out var resolvedObject))
-            return resolvedObject;
-        return null;
-    }
-
-    public static T ResolveObject<T>(string key) where T : Object
-    {
-        if (objectReferences.TryGetValue(key, out var resolvedObject))
-            return (T)resolvedObject;
-        return null;
-    }
-
-    public static void StoreObjectReference(string key, Object value)
-    {
-        objectReferences.Add(key, value);
-    }
-
     public static IList MergeLists(params IList[] lists)
     {
         List<object> mergedList = new();
@@ -64,6 +43,11 @@ public static class CSharpUtility
         }
 
         return mergedList;
+    }
+
+    public static object CreateWaitForSeconds(float time, bool unscaled)
+    {
+        return unscaled ? new WaitForSecondsRealtime(time) : new WaitForSeconds(time);
     }
 
     public static bool Chance(float probability)

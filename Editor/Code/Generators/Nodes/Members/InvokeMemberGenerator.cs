@@ -191,7 +191,7 @@ namespace Unity.VisualScripting.Community
                         return string.Empty;
                     }
                 }
-                return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight().WarningHighlight());
+                return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
             }
         }
 
@@ -216,7 +216,7 @@ namespace Unity.VisualScripting.Community
                         var input = Unit.inputParameters[index];
                         if (!input.hasValidConnection || (input.hasValidConnection && input.connection.source.unit is not GetVariable or AssetFieldUnit or InheritedFieldUnit or GetMember))
                         {
-                            output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */".WarningHighlight().WarningHighlight());
+                            output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */".WarningHighlight());
                             continue;
                         }
                         output.Add("ref ".ConstructHighlight() + GenerateValue(Unit.inputParameters[index], data));

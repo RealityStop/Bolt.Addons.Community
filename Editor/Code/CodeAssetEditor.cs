@@ -147,10 +147,9 @@ namespace Unity.VisualScripting.Community
 
             if (CSharpPreviewWindow.instance != null)
             {
-                if (shouldUpdate)
+                if (shouldUpdate && CSharpPreviewWindow.instance.showCodeWindow)
                 {
-                    // CSharpPreviewWindow.instance.preview.code = CodeGenerator.GetSingleDecorator<TAssetGenerator>(Target);
-                    // CSharpPreviewWindow.instance.preview.Refresh();
+                    CSharpPreviewWindow.instance.UpdateCodeDisplay();
                 }
             }
 

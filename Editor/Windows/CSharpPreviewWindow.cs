@@ -17,7 +17,7 @@ namespace Unity.VisualScripting.Community
     {
         public static CSharpPreviewWindow instance;
         private float zoomFactor = 1.0f;
-        private bool showCodeWindow = true;
+        public bool showCodeWindow = true;
         private List<Label> labels = new List<Label>();
 
         public static Object asset;
@@ -35,7 +35,7 @@ namespace Unity.VisualScripting.Community
             Selection.selectionChanged += ChangeSelection;
             var toolbar = new Toolbar();
             toolbar.name = "Toolbar";
-            var codeView = new VisualElement() { style = { flexDirection = FlexDirection.Row }, name = "codeView" };
+            var codeView = new VisualElement() { style = { flexDirection = FlexDirection.Row, flexGrow = 1 }, name = "codeView" };
             var codeContainer = new ScrollView
             {
                 name = "codeContainer",
@@ -52,7 +52,7 @@ namespace Unity.VisualScripting.Community
                 name = "lineNumbersContainer",
                 verticalScrollerVisibility = ScrollerVisibility.Hidden,
                 horizontalScrollerVisibility = ScrollerVisibility.Hidden,
-                style = { backgroundColor = new Color(0.15f, 0.15f, 0.15f), flexGrow = 1, flexDirection = FlexDirection.Column }
+                style = { backgroundColor = new Color(0.15f, 0.15f, 0.15f), flexDirection = FlexDirection.Column }
             };
             codeContainer.verticalScroller.valueChanged += (newValue) =>
             {
@@ -502,8 +502,13 @@ namespace Unity.VisualScripting.Community
         {
             if (asset != null)
             {
-                var code = "#pragma warning disable\n";
-                code += LoadCode();
+                var loadedCode = LoadCode();
+                var code = "";
+                if(loadedCode.Length > 0)
+                {
+                    code = "#pragma warning disable\n";
+                }
+                code += loadedCode;
                 var scrollView = rootVisualElement.Q<VisualElement>("codeView").Q<ScrollView>("codeContainer");
                 var lineNumbersScrollView = rootVisualElement.Q<VisualElement>("codeView").Q<ScrollView>("lineNumbersContainer");
                 DisplayCode(lineNumbersScrollView, scrollView, code);
@@ -513,6 +518,7 @@ namespace Unity.VisualScripting.Community
         private void DisplayCode(ScrollView lineNumbersScrolView, ScrollView scrollView, string code)
         {
             scrollView.Clear();
+            lineNumbersScrolView.Clear();
             labels.Clear();
 
             var clickableRegions = CodeUtility.ExtractClickableRegions(code);
@@ -521,11 +527,12 @@ namespace Unity.VisualScripting.Community
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             var lines = CodeUtility.RemoveAllSelectableTags(code).Split('\n');
-
+            var width = 20f;
             for (int i = 0; i < lines.Length; i++)
             {
                 var lineNumberContainer = new Label($"{i + 1}");
-                lineNumberContainer.style.flexGrow = 1;
+                width = Mathf.Max(width, lineNumberContainer.MeasureTextSize($"{i + 1}", lineNumberContainer.style.width.value.value, VisualElement.MeasureMode.Exactly, lineNumberContainer.style.height.value.value, VisualElement.MeasureMode.Exactly).x);
+                lineNumberContainer.style.width = width;
                 lineNumberContainer.style.unityTextAlign = TextAnchor.MiddleLeft;
                 lineNumberContainer.style.color = Color.gray;
                 lineNumberContainer.style.marginLeft = 5;
@@ -534,7 +541,7 @@ namespace Unity.VisualScripting.Community
                 lineNumberContainer.style.paddingLeft = 0;
                 lineNumbersScrolView.Add(lineNumberContainer);
 
-                var codeContainer = new VisualElement { style = { flexDirection = FlexDirection.Row, flexGrow = 1, marginLeft = 10 } };
+                var codeContainer = new VisualElement { style = { flexDirection = FlexDirection.Row, marginLeft = 10 } };
 
                 if (regionsByLine.TryGetValue(i, out var regions))
                 {

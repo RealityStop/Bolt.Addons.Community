@@ -12,7 +12,6 @@ public class ConvertNodeGenerator : NodeGenerator<ConvertNode>
 {
     public ConvertNodeGenerator(Unit unit) : base(unit)
     {
-        NameSpace = "System.Linq";
     }
 
     public override string GenerateValue(ValueOutput output, ControlGenerationData data)

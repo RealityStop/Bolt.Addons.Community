@@ -1,6 +1,7 @@
 ﻿using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
@@ -9,13 +10,14 @@ namespace Unity.VisualScripting.Community
     {
         public LiteralGenerator(Literal unit) : base(unit)
         {
-            if (Unit.value != null)
-                NameSpace = Unit.value.GetType().Namespace;
+
         }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return Unit.value.As().Code(true, Unit, true, true, "");
+            if (Unit.value != null)
+                NameSpace = Unit.value.GetType().Namespace;
+            return Unit.value.As().Code(true, Unit, true, true, "", false, true);
         }
     }
 }
