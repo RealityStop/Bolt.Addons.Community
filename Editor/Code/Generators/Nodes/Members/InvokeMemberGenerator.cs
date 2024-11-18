@@ -35,7 +35,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (!Unit.enter.hasValidConnection && Unit.outputParameters.Count > 0)
                 {
-                    return $"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */".WarningHighlight().WarningHighlight();
+                    return $"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */".WarningHighlight();
                 }
                 var _output = string.Empty;
 
@@ -71,7 +71,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (!Unit.enter.hasValidConnection && Unit.outputParameters.Count > 0)
                 {
-                    return $"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */".WarningHighlight().WarningHighlight();
+                    return $"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */".WarningHighlight();
                 }
 
                 var transformedKey = outputNames[output].Replace("&", "").Replace("%", "");

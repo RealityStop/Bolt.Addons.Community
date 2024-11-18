@@ -105,18 +105,11 @@ namespace Unity.VisualScripting.Community
             {
                 param.OnBeforeSerialize();
             }
-            // if (parameters == null)
-            // {
-            //     serializedParams = null;
-            //     serialization = new SerializationData();
-            //     return;
-            // }
-
-            // serialization = parameters.Serialize();
         }
     }
     /// <summary>
     /// This is a empty class used for the typeIcon
+    /// it does not have any functionality
     /// </summary>
     public class Method
     {

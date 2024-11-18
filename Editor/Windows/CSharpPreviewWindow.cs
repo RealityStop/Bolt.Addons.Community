@@ -100,7 +100,7 @@ namespace Unity.VisualScripting.Community
             toolbar.Add(zoomContainer);
 
             // Toolbar Buttons with toolbar-like styling
-            var compileButton = CreateToolbarButton("Compile", () => CompileCode());
+            var compileButton = CreateToolbarButton("Compile", CompileCode);
             toolbar.Add(compileButton);
 
             var copyButton = CreateToolbarButton("Copy to Clipboard", CopyToClipboard);
@@ -109,7 +109,7 @@ namespace Unity.VisualScripting.Community
             var utilityButton = CreateToolbarButton("Utility Window", OpenUtilityWindow);
             toolbar.Add(utilityButton);
 
-            var refreshButton = CreateToolbarButton("Refresh", () => UpdateCodeDisplay());
+            var refreshButton = CreateToolbarButton("Refresh", UpdateCodeDisplay);
             toolbar.Add(refreshButton);
 
             var toggleButton = CreateToolbarButton(showCodeWindow ? "Settings" : "Preview", ToggleWindowMode);
@@ -146,12 +146,12 @@ namespace Unity.VisualScripting.Community
             var settingsLabel = new Label("C# Preview Settings")
             {
                 style =
-        {
-            unityFontStyleAndWeight = FontStyle.Bold,
-            fontSize = 18,
-            alignSelf = Align.Center,
-            marginTop = 10
-        }
+                {
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    fontSize = 18,
+                    alignSelf = Align.Center,
+                    marginTop = 10
+                }
             };
             settingsContainer.Add(settingsLabel);
 
@@ -406,7 +406,7 @@ namespace Unity.VisualScripting.Community
             button.style.marginRight = 0;
             button.style.paddingTop = 4;
             button.style.paddingBottom = 4;
-            button.style.backgroundColor = new Color(0, 0, 0, 0); // Default background color
+            button.style.backgroundColor = new Color(0, 0, 0, 0);
             button.style.borderTopColor = new Color(0, 0, 0, 0);
             button.style.borderBottomColor = new Color(0, 0, 0, 0);
             button.style.borderLeftColor = new Color(0.1f, 0.1f, 0.1f);
@@ -486,10 +486,13 @@ namespace Unity.VisualScripting.Community
 
         private void ChangeSelection()
         {
+            var firstReference = GetFirstReference();
             if (Selection.activeObject is CodeAsset _asset)
             {
                 asset = _asset;
                 UpdateCodeDisplay();
+                if (firstReference != null)
+                    GraphWindow.activeReference = firstReference;
             }
             else if (Selection.activeObject is ScriptGraphAsset _graphAsset)
             {
@@ -504,7 +507,7 @@ namespace Unity.VisualScripting.Community
             {
                 var loadedCode = LoadCode();
                 var code = "";
-                if(loadedCode.Length > 0)
+                if (loadedCode.Length > 0)
                 {
                     code = "#pragma warning disable\n";
                 }
@@ -588,7 +591,12 @@ namespace Unity.VisualScripting.Community
 
         private Label CreateNonClickableLabel(string text)
         {
-            var label = new Label(text);
+            string tooltip;
+            var codeWithoutTooltip = CodeUtility.ExtractTooltip(text, out tooltip);
+            var label = new Label(CodeUtility.RemoveAllSelectableTags(codeWithoutTooltip))
+            {
+                tooltip = tooltip
+            };
             label.style.unityFontStyleAndWeight = FontStyle.Normal;
             label.enableRichText = true;
             label.style.color = Color.white;
@@ -687,9 +695,9 @@ namespace Unity.VisualScripting.Community
             selectedLabels.Clear();
         }
 
-        // Select a range between lastSelectedLabel and current label
         private void SelectRange(Label label)
         {
+            if (lastSelectedLabel == null) return;
             int startIndex = labels.IndexOf(lastSelectedLabel);
             int endIndex = labels.IndexOf(label);
 
@@ -1029,23 +1037,23 @@ namespace Unity.VisualScripting.Community
             if (asset is ClassAsset classAsset)
             {
                 var variables = classAsset.variables.Where(variable => variable.isProperty);
-                if (classAsset.constructors.Count > 0)
+                if (classAsset.constructors.Count > 0 && ((classAsset.constructors[0].GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
                 {
                     return classAsset.constructors[0].GetReference() as GraphReference;
                 }
                 else if (variables.Count() > 0)
                 {
                     var first = variables.First();
-                    if (first.get)
+                    if (first.get && ((first.getter.GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
                     {
                         return first.getter.GetReference() as GraphReference;
                     }
-                    else if (first.set)
+                    else if (first.set && ((first.setter.GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
                     {
                         return first.setter.GetReference() as GraphReference;
                     }
                 }
-                else if (classAsset.methods.Count > 0)
+                else if (classAsset.methods.Count > 0 && ((classAsset.methods[0].GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
                 {
                     return classAsset.methods[0].GetReference() as GraphReference;
                 }

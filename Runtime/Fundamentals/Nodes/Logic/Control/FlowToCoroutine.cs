@@ -39,6 +39,10 @@ namespace Unity.VisualScripting.Community
             else 
             {
                 var Convertedflow = Flow.New(GraphRef);
+                foreach (var variable in flow.variables)
+                {
+                    Convertedflow.variables.Set(variable.name, variable.value);
+                }
                 Convertedflow.StartCoroutine(Converted);
                 return _flow;
             }

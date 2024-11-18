@@ -171,13 +171,15 @@ namespace Unity.VisualScripting.Community
         private static List<int> PrecomputeLineBreaks(string code)
         {
             var lineBreaks = new List<int> { 0 };
-            for (int i = 0; i < code.Length; i++)
+            var span = code.AsSpan();
+            int start = 0;
+            int index;
+            while ((index = span[start..].IndexOf('\n')) != -1)
             {
-                if (code[i] == '\n')
-                {
-                    lineBreaks.Add(i + 1);
-                }
+                start += index + 1;
+                lineBreaks.Add(start);
             }
+
             return lineBreaks;
         }
 
