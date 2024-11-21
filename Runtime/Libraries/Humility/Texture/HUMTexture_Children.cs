@@ -20,7 +20,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         /// </summary>
         public static Texture2D Tint(this HUMTexture.Data.Create texture, Color color, float amount)
         {
-            return Tint(texture, color, amount);
+            return HUMTexture.Tint(texture.texture, color, amount);
         }
     }
 }

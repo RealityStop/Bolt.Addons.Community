@@ -10,21 +10,23 @@ public class AssetFuncUnitDescriptor : UnitDescriptor<AssetFuncUnit>
     {
     }
 
+    protected override string DefinedSurtitle()
+    {
+        return target.method.classAsset.title;
+    }
+
     protected override EditorTexture DefinedIcon()
     {
         return target.method.returnType.Icon();
     }
 
+    protected override string DefinedTitle()
+    {
+        return target.method.classAsset.title + "." + target.method.methodName;
+    }
+
     protected override string DefinedShortTitle()
     {
-        if (target.method.classAsset != null)
-        {
-            return target.method.classAsset.name + "." + target.method.methodName;
-        }
-        else if (target.method.structAsset != null)
-        {
-            return target.method.structAsset.name + "." + target.method.methodName;
-        }
-        return "Asset Func Unit";
+        return target.method.methodName;
     }
 }

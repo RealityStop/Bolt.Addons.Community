@@ -33,6 +33,8 @@ public class TriggerCustomEventGenerator : NodeGenerator<TriggerCustomEvent>
 
         if(input == Unit.target)
         {
+            var sourceType = GetSourceType(Unit.target, data);
+            var sourceIsComponent= typeof(Component).IsAssignableFrom(sourceType);
             data.SetExpectedType(typeof(GameObject));
             var code = base.GenerateValue(Unit.target, data);
             data.RemoveExpectedType();

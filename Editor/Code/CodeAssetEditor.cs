@@ -69,11 +69,13 @@ namespace Unity.VisualScripting.Community
         {
             if (showTitle)
             {
+                GraphWindow.active?.context?.BeginEdit();
                 HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
                 {
                     EditorGUILayout.LabelField("Title", GUILayout.Width(80));
                     Target.title = EditorGUILayout.TextField(Target.title);
                 });
+                GraphWindow.active?.context?.EndEdit();
             }
 
 

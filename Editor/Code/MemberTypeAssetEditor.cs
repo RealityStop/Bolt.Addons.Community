@@ -72,6 +72,7 @@ namespace Unity.VisualScripting.Community
 
         protected override void BeforePreview()
         {
+            GraphWindow.active?.context?.BeginEdit();
             Constructors();
             GUILayout.Space(4);
             Variables();
@@ -86,6 +87,7 @@ namespace Unity.VisualScripting.Community
                 GUILayout.Space(4);
                 OverridableMembersInfo();
             }
+            GraphWindow.active?.context?.EndEdit();
         }
 
         private bool RequiresInfo()
@@ -1204,6 +1206,7 @@ namespace Unity.VisualScripting.Community
                                 }
                                 if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
                                 {
+                                    attributeParamMeta[paramIndex]["defaultValue"].RecordUndo();
                                     shouldUpdate = true;
                                 }
                                 paramIndex++;
@@ -1249,6 +1252,7 @@ namespace Unity.VisualScripting.Community
                 {
                     parameters[i].opened = HUMEditor.Foldout(parameters[i].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                     {
+                        GraphWindow.active?.context?.BeginEdit();
                         HUMEditor.Changed(() =>
                         {
                             parameters[i].name = GUILayout.TextField(parameters[i].name);
@@ -1256,6 +1260,7 @@ namespace Unity.VisualScripting.Community
                         {
                             parameters[i].name = parameters[i].name.LegalMemberName();
                         });
+                        GraphWindow.active?.context?.EndEdit();
 
                         if (GUILayout.Button("...", GUILayout.Width(19)))
                         {
@@ -1313,6 +1318,7 @@ namespace Unity.VisualScripting.Community
                             {
                                 TypeBuilderWindow.ShowWindow(lastRect, paramMeta[i]["type"]);
                             }
+                            GraphWindow.active?.context?.BeginEdit();
                             GUILayout.EndHorizontal();
                             LudiqGUI.InspectorLayout(paramMeta[i]["modifier"], new GUIContent("Modifier"));
                             GUILayout.Space(4);
@@ -1322,11 +1328,13 @@ namespace Unity.VisualScripting.Community
                                 GUILayout.Space(4);
                             }
                             LudiqGUI.InspectorLayout(paramMeta[i]["hasDefault"], new GUIContent("Has Default Value"));
+                            GraphWindow.active?.context?.BeginEdit();
                             GUILayout.Space(4);
                             if (parameters[i].hasDefault)
                             {
                                 paramMeta[i]["type"].valueChanged += (type) =>
                                 {
+                                    GraphWindow.active?.context?.DescribeAndAnalyze();
                                     paramMeta[i]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
                                     if (paramMeta[i]["defaultValue"].value?.GetType() == type as Type)
                                     {
@@ -1365,6 +1373,8 @@ namespace Unity.VisualScripting.Community
                             });
                             if (Inspector.EndBlock(paramMeta))
                             {
+                                paramMeta.RecordUndo();
+                                GraphWindow.active?.context?.DescribeAndAnalyze();
                                 shouldUpdate = true;
                                 if (functionUnit != null)
                                 {
@@ -1416,6 +1426,7 @@ namespace Unity.VisualScripting.Community
 
                         listOfMethods[index].opened = HUMEditor.Foldout(listOfMethods[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
+                            GraphWindow.active?.context?.BeginEdit();
                             HUMEditor.Changed(() =>
                             {
                                 listOfMethods[index].methodName = GUILayout.TextField(listOfMethods[index].methodName);
@@ -1426,7 +1437,7 @@ namespace Unity.VisualScripting.Community
                                 funcionUnit.Define();
                                 funcionUnit.Describe();
                             });
-
+                            GraphWindow.active?.context?.EndEdit();
                             if (GUILayout.Button("Edit", GUILayout.Width(60)))
                             {
                                 GraphWindow.OpenActive(listOfMethods[index].GetReference() as GraphReference);
@@ -1480,6 +1491,7 @@ namespace Unity.VisualScripting.Community
                                 if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                                 {
                                     TypeBuilderWindow.ShowWindow(lastRect, methods[index]["returnType"]);
+                                    methods[index]["returnType"].valueChanged += (val) => GraphWindow.active?.context?.DescribeAndAnalyze();
                                 }
                                 GUILayout.EndHorizontal();
 
@@ -1571,7 +1583,7 @@ namespace Unity.VisualScripting.Community
                         var index = i;
                         listOfVariables[index].opened = HUMEditor.Foldout(listOfVariables[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
-
+                            GraphWindow.active?.context?.BeginEdit();
                             HUMEditor.Changed(() =>
                             {
                                 listOfVariables[index].FieldName = GUILayout.TextField(listOfVariables[index].name);
@@ -1588,6 +1600,7 @@ namespace Unity.VisualScripting.Community
                                 setterFunctionUnit.Define();
                                 setterFunctionUnit.Describe();
                             });
+                            GraphWindow.active?.context?.EndEdit();
 
                             if (typeof(TMemberTypeAsset) == typeof(ClassAsset) && (listOfVariables[index].getter.classAsset == null || listOfVariables[index].setter.classAsset == null))
                             {
@@ -1663,12 +1676,13 @@ namespace Unity.VisualScripting.Community
                                     {
                                         variables[index]["type"].valueChanged += (type) =>
                                         {
+                                            GraphWindow.active?.context?.DescribeAndAnalyze();
                                             variables[index]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
                                             if (variables[index]["defaultValue"].value?.GetType() == type as Type)
                                             {
                                                 return;
                                             }
-                                            
+
                                             if (type == null)
                                             {
                                                 variables[index]["defaultValue"].value = null;
@@ -1691,6 +1705,7 @@ namespace Unity.VisualScripting.Community
                                         inspector.DrawLayout(new GUIContent("Value               "));
                                         if (Inspector.EndBlock(variables[index]["defaultValue"]))
                                         {
+                                            variables[index]["defaultValue"].RecordUndo();
                                             shouldUpdate = true;
                                         }
                                     }

@@ -114,9 +114,13 @@ namespace Unity.VisualScripting.Community
 
             if (valueInput.hasValidConnection && valueInput.GetPsudoSource() != null && valueInput.GetPsudoSource()?.type != typeof(object))
             {
-                return valueInput.connection.source.type;
+                return valueInput.GetPsudoSource().type;
             }
 
+            if(valueInput.hasValidConnection)
+            {
+                return valueInput.connection.source.type;
+            }
 
             return null;
         }

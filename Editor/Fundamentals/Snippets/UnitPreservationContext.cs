@@ -4,27 +4,27 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community
 {
     public class UnitPreservationContext
     {
         private Unit unitToPreserveFrom;
         public Unit unitToRestoreTo { get; private set; }
         private FlowGraph graph;
-    
+
         private static HashSet<Unit> processedUnits = new HashSet<Unit>();
-    
+
         private List<UnitPreservationContext> connectedPreservation = new();
         private Dictionary<string, object> defaultValues = new();
-    
+
         public IUnitPort sourcePort;
         public string initialPortKey = "";
-    
+
         // Enum for port types
         private enum PortType { ControlOutput, ValueInput }
-    
+
         List<((Unit unit, string key, PortType portType) target, (UnitPreservationContext unit, string key) result)> connectedPorts = new();
-    
+
         // Constructor
         public UnitPreservationContext(Unit unitToPreserveFrom, FlowGraph graph, SnippetType snippetType)
         {
@@ -32,13 +32,13 @@ namespace Unity.VisualScripting.Community
             unitToRestoreTo = unitToPreserveFrom.CloneViaFakeSerialization();
             unitToRestoreTo.Define();
             this.graph = graph;
-    
+
             InitializeInitialPortKey(snippetType);
             StoreDefaultValues();
             ProcessValueInputs(snippetType);
             ProcessControlOutputs(snippetType);
         }
-    
+
         // Initialize the port key based on snippet type
         private void InitializeInitialPortKey(SnippetType snippetType)
         {
@@ -55,7 +55,7 @@ namespace Unity.VisualScripting.Community
                     ?.key ?? "";
             }
         }
-    
+
         // Store default values from the unit
         private void StoreDefaultValues()
         {
@@ -64,7 +64,7 @@ namespace Unity.VisualScripting.Community
                 defaultValues[defaultValue.Key] = defaultValue.Value;
             }
         }
-    
+
         // Process value inputs and connect them to preserved units
         private void ProcessValueInputs(SnippetType snippetType)
         {
@@ -72,12 +72,12 @@ namespace Unity.VisualScripting.Community
             {
                 var connectedUnit = input.connection.source.unit as Unit;
                 var preservation = new UnitPreservationContext(connectedUnit, graph, snippetType);
-    
+
                 connectedPreservation.Add(preservation);
                 connectedPorts.Add(((unitToRestoreTo, input.key, PortType.ValueInput), (preservation, input.connection.source.key)));
             }
         }
-    
+
         // Process control outputs and connect them to preserved units
         private void ProcessControlOutputs(SnippetType snippetType)
         {
@@ -85,19 +85,19 @@ namespace Unity.VisualScripting.Community
             {
                 var connectedUnit = controlOutput.connection.destination.unit as Unit;
                 if (processedUnits.Contains(connectedUnit)) return;
-    
+
                 processedUnits.Add(connectedUnit);
                 var preservation = new UnitPreservationContext(connectedUnit, graph, snippetType);
-    
+
                 connectedPreservation.Add(preservation);
                 connectedPorts.Add(((unitToRestoreTo, controlOutput.key, PortType.ControlOutput), (preservation, controlOutput.connection.destination.key)));
             }
         }
-    
+
         /// <summary>
         /// Add the preserved units to the graph
         /// </summary>
-        public void AddToGraph()
+        public void AddToGraph(Vector2 offsetPosition)
         {
             if (!graph.units.Any(u => u.guid == unitToRestoreTo.guid))
             {
@@ -108,18 +108,23 @@ namespace Unity.VisualScripting.Community
             {
                 unitToRestoreTo = (Unit)graph.units.First(u => u.guid == unitToRestoreTo.guid);
             }
-    
+
+            if (unitToRestoreTo.position != null)
+            {
+                unitToRestoreTo.position += offsetPosition;
+            }
+
             foreach (var kvp in defaultValues)
             {
                 unitToRestoreTo.defaultValues[kvp.Key] = kvp.Value;
             }
-    
+
             foreach (var preservation in connectedPreservation)
             {
-                preservation.AddToGraph();
+                preservation.AddToGraph(offsetPosition);
             }
         }
-    
+
         /// <summary>
         /// Connect units and their ports
         /// </summary>
@@ -135,7 +140,7 @@ namespace Unity.VisualScripting.Community
                 preservation.Connect();
             }
         }
-    
+
         // Connect the initial port based on source type
         private void ConnectInitialPort()
         {
@@ -150,12 +155,12 @@ namespace Unity.VisualScripting.Community
                 unitToRestoreTo.valueOutputs[initialPortKey].ConnectToValid(valueInput);
             }
         }
-    
+
         // Handle connecting ports between units
         private void ConnectPort((Unit unit, string key, PortType portType) target, (UnitPreservationContext unit, string key) result)
         {
             var targetUnit = graph.units.FirstOrDefault(u => u.guid == target.unit.guid) ?? target.unit;
-    
+
             switch (target.portType)
             {
                 case PortType.ValueInput:
@@ -166,7 +171,7 @@ namespace Unity.VisualScripting.Community
                     break;
             }
         }
-    
+
         /// <summary>
         /// Reset the GUIDs to allow re-adding to the graph
         /// </summary>
@@ -174,11 +179,11 @@ namespace Unity.VisualScripting.Community
         {
             unitToPreserveFrom.guid = Guid.NewGuid();
             unitToRestoreTo.guid = Guid.NewGuid();
-    
+
             foreach (var preservation in connectedPreservation)
             {
                 preservation.Reset();
             }
         }
-    } 
+    }
 }

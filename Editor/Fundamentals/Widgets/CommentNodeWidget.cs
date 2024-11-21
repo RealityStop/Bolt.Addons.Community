@@ -1,5 +1,8 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEditor;
+using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Collections.Generic;
+using System;
 
 namespace Unity.VisualScripting.Community
 {
@@ -90,30 +93,122 @@ namespace Unity.VisualScripting.Community
                 GUI.DrawTexture(wholeRect, Texture2D.whiteTexture, ScaleMode.ScaleAndCrop, true, 0, unit.color * new Color(0.5f, 0.5f, 0.5f, 0.5f), 0, borderOutside);
             }
 
+            // Draw connections to other units
+            foreach (var connectedUnit in unit.connectedUnits)
+            {
+                if(connectedUnit == null || !(graph as FlowGraph).units.Contains(connectedUnit)) continue;
+                var unitWidget = canvas.Widget(connectedUnit);
+                var lineColor = unit.color;
+                if (unit.Bezier)
+                {
+                    Vector3 start = new Vector3(unit.position.x + wholeRect.width / 2, unit.position.y + wholeRect.height / 2, 0);
+                    Vector3 end = new Vector3(connectedUnit.position.x + unitWidget.position.width / 2, connectedUnit.position.y + unitWidget.position.height / 2, 0);
+
+                    Vector3 controlPoint1 = start + new Vector3(0, (end.y - start.y) / 3f, 0);
+                    Vector3 controlPoint2 = end + new Vector3(0, -(end.y - start.y) / 3f, 0);
+
+                    Handles.DrawBezier(start, end, controlPoint1, controlPoint2, lineColor, null, 2f);
+                }
+                else
+                {
+                    Vector3 start = new Vector3(unit.position.x + wholeRect.width / 2, unit.position.y + wholeRect.height / 2, 0);
+                    Vector3 end = new Vector3(connectedUnit.position.x + unitWidget.position.width / 2, connectedUnit.position.y + unitWidget.position.height / 2, 0);
+                    Handles.color = lineColor;
+                    Handles.DrawLine(start, end);
+                    Handles.color = Color.white;
+                }
+            }
+
             // Get inner area rect
             borderRect = wholeRect.Offset(xy: borderOutside, centre: true);
 
             // Draw border
             GUI.DrawTexture(borderRect, Texture2D.whiteTexture, ScaleMode.ScaleAndCrop, true, 0, unit.color, 0, 7);
             GUI.DrawTexture(borderRect, Texture2D.whiteTexture, ScaleMode.ScaleAndCrop, true, 0, unit.color * (2f - unit.color.grayscale), borderInside, 7);
+        }
 
+        public override void HandleInput()
+        {
+            base.HandleInput();
+            if (e.keyCode == KeyCode.C)
+            {
+                metadata["connectedUnits"].RecordUndo();
+                foreach (var item in canvas.selection)
+                {
+                    if (item is Unit unit && !this.unit.connectedUnits.Contains(unit) && item != this.unit)
+                    {
+                        this.unit.connectedUnits.Add(unit);
+                    }
+                }
+                EditorUtility.SetDirty(LudiqEditorUtility.editedObject);
+            }
+            else if (e.keyCode == KeyCode.X)
+            {
+                metadata["connectedUnits"].RecordUndo();
+                foreach (var item in canvas.selection)
+                {
+                    if (item is Unit unit && this.unit.connectedUnits.Contains(unit))
+                    {
+                        this.unit.connectedUnits.Remove(unit);
+                    }
+                }
+                EditorUtility.SetDirty(LudiqEditorUtility.editedObject);
+            }
+        }
+
+        protected override IEnumerable<DropdownOption> contextOptions
+        {
+            get
+            {
+                foreach (var option in base.contextOptions)
+                {
+                    yield return option;
+                }
+                foreach (var connectedUnit in unit.connectedUnits)
+                {
+                    Action action = () => { metadata["connectedUnits"].RecordUndo(); unit.connectedUnits.Remove(connectedUnit); };
+                    yield return new DropdownOption(action, "Disconnect " + connectedUnit);
+                }
+            }
+        }
+
+        public void AddConnection(Unit otherUnit)
+        {
+            if (!unit.connectedUnits.Contains(otherUnit))
+            {
+                unit.connectedUnits.Add(otherUnit);
+            }
         }
 
         public override void DrawForeground()
         {
+            Reposition();
             // Get text area rect
             textRect = borderRect.Offset(xy: borderText, centre: true);
-
             // If mouse hovering over unit
             if (textRect.Contains(e.mousePosition))
             {
                 GUI.SetNextControlName("commentField" + hash.ToString());
+                EditorGUI.BeginChangeCheck();
                 unit.comment = EditorGUI.TextArea(textRect, unit.comment, textGUI);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    metadata["comment"].RecordUndo();
+                    metadata["comment"].value = unit.comment;
+                    EditorUtility.SetDirty(LudiqEditorUtility.editedObject);
+                }
             }
             // If unit text selected
             else if (GUI.GetNameOfFocusedControl() == "commentField" + hash.ToString())
             {
+                EditorGUI.BeginChangeCheck();
                 unit.comment = EditorGUI.TextArea(textRect, unit.comment, textGUI);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    metadata["comment"].RecordUndo();
+                    metadata["comment"].value = unit.comment;
+                    EditorUtility.SetDirty(LudiqEditorUtility.editedObject);
+                }
                 return;
             }
 

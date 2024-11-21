@@ -78,11 +78,6 @@ namespace Unity.VisualScripting.Community
             {
                 expectedTypes.Push((type, false));
             }
-            else
-            {
-                if (expectedTypes.Count > 0)
-                    expectedTypes.Pop();
-            }
         }
 
         public (Type type, bool isMet) RemoveExpectedType()
@@ -115,7 +110,7 @@ namespace Unity.VisualScripting.Community
                     newName = name + count;
                 }
 
-                scope.scopeNames.Add(newName, type);
+                scope.scopeVariables.Add(newName, type);
                 scope.nameMapping[name] = newName;
 
                 return newName;
@@ -131,11 +126,11 @@ namespace Unity.VisualScripting.Community
         {
             foreach (var scope in scopes)
             {
-                if (scope.scopeNames.ContainsKey(name)) return true;
+                if (scope.scopeVariables.ContainsKey(name)) return true;
             }
             foreach (var preservedScope in preservedScopes)
             {
-                if (preservedScope.scopeNames.ContainsKey(name)) return true;
+                if (preservedScope.scopeVariables.ContainsKey(name)) return true;
             }
             return false;
         }
@@ -166,7 +161,7 @@ namespace Unity.VisualScripting.Community
         {
             foreach (var scope in scopes)
             {
-                if (scope.scopeNames.TryGetValue(name, out var type))
+                if (scope.scopeVariables.TryGetValue(name, out var type))
                 {
                     return type;
                 }
@@ -219,23 +214,22 @@ namespace Unity.VisualScripting.Community
             mustReturn = data.mustReturn;
             hasReturned = data.hasReturned;
             localNames = new List<string>(data.localNames);
-            scopes = new Stack<GeneratorScope>(data.scopes.Select(scope => new GeneratorScope(scope.id, new Dictionary<string, Type>(scope.scopeNames), new Dictionary<string, string>(scope.nameMapping), PeekScope()?.ParentScope)));
+            scopes = new Stack<GeneratorScope>(data.scopes.Select(scope => new GeneratorScope(scope.id, new Dictionary<string, Type>(scope.scopeVariables), new Dictionary<string, string>(scope.nameMapping), PeekScope()?.ParentScope)));
             expectedTypes = data.expectedTypes;
             ScriptType = data.ScriptType;
         }
 
         public class GeneratorScope
         {
-            //Unused
             public string id { get; private set; } = "";
-            public Dictionary<string, Type> scopeNames { get; private set; }
+            public Dictionary<string, Type> scopeVariables { get; private set; }
             public Dictionary<string, string> nameMapping { get; private set; }
             public GeneratorScope ParentScope { get; private set; }
 
-            public GeneratorScope(string id, Dictionary<string, Type> scopeNames, Dictionary<string, string> nameMapping, GeneratorScope ParentScope)
+            public GeneratorScope(string id, Dictionary<string, Type> scopeVariables, Dictionary<string, string> nameMapping, GeneratorScope ParentScope)
             {
                 this.id = id;
-                this.scopeNames = scopeNames;
+                this.scopeVariables = scopeVariables;
                 this.nameMapping = nameMapping;
                 this.ParentScope = ParentScope;
             }

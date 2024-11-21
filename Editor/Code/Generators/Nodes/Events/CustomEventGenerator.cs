@@ -29,10 +29,9 @@ public class CustomEventGenerator : NodeGenerator<CustomEvent>
     {
         if (Unit.argumentPorts.Contains(output))
         {
-            var cast = data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() ? $"({data.GetExpectedType().As().CSharpName(false, true)})" : "";
-            var code = MakeSelectableForThisUnit(cast + "args".VariableHighlight() + "." + "arguments".VariableHighlight() + $"[{Unit.argumentPorts.IndexOf(output)}]");
+            var code = new ValueCode("args".VariableHighlight() + "." + "arguments".VariableHighlight() + $"[{Unit.argumentPorts.IndexOf(output)}]", data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != typeof(object));
             data.CreateSymbol(Unit, typeof(object), code);
-            return code;
+            return MakeSelectableForThisUnit(code);
         }
         return base.GenerateValue(output, data);
     }

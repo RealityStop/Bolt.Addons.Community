@@ -44,7 +44,7 @@ public class GraphSnippetProcess : GraphProcess<FlowGraph, FlowCanvas>
                     var snippet = orderedSnippets.FirstOrDefault(s => s.result != null);
                     if (snippet.result != null)
                     {
-                        var sourceUnit = snippet.result.graph.units.First(unit => unit is SnippetControlSourceUnit) as SnippetControlSourceUnit;
+                        var sourceUnit = snippet.result.graph.units.First(unit => unit is SnippetValueSourceUnit) as SnippetValueSourceUnit;
                         if (!sourceUnit.source.hasValidConnection)
                         {
                             Debug.Log("No unit is connected to source unit in : " + snippet.result.name);

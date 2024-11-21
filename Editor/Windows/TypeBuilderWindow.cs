@@ -433,10 +433,11 @@ namespace Unity.VisualScripting.Community
 
         public static void ConstructType(Metadata metadata)
         {
-            if (_genericParameters == null) _genericParameters = new GenericParameter(typeof(object), typeof(object).DisplayName());
+            _genericParameters ??= new GenericParameter(typeof(object), typeof(object).DisplayName());
             if (_genericParameters.type.type.IsGenericType && _genericParameters.type.type.IsConstructedGenericType)
             {
                 var newConstructedType = new GenericParameter(_genericParameters, true);
+                metadata.RecordUndo();
                 metadata.value = newConstructedType.ConstructType();
             }
             else if (_genericParameters.type.type.IsArray)
@@ -450,15 +451,18 @@ namespace Unity.VisualScripting.Community
                 if (tempType.IsGenericType && tempType.IsConstructedGenericType)
                 {
                     var newConstructedType = new GenericParameter(_genericParameters, true);
+                    metadata.RecordUndo();
                     metadata.value = newConstructedType.ConstructType();
                 }
                 else
                 {
+                    metadata.RecordUndo();
                     metadata.value = _genericParameters.ConstructType();
                 }
             }
             else
             {
+                metadata.RecordUndo();
                 metadata.value = _genericParameters.ConstructType();
             }
         }
@@ -809,7 +813,7 @@ namespace Unity.VisualScripting.Community
 
         public static string HumanName(this Type type, bool includeGenericParameters = true)
         {
-            if(type == null)
+            if (type == null)
             {
                 return "";
             }

@@ -45,6 +45,20 @@ public static class CSharpUtility
         return mergedList;
     }
 
+    private static readonly HashSet<(GameObject, EventHook, System.Action<CustomEventArgs>)> registeredEvents = new HashSet<(GameObject, EventHook, System.Action<CustomEventArgs>)>();
+
+    public static void RegisterCustomEvent(GameObject target, System.Action<CustomEventArgs> action)
+    {
+        var hook = new EventHook(EventHooks.Custom, target);
+        var eventKey = (target, hook, action);
+
+        if (!registeredEvents.Contains(eventKey))
+        {
+            registeredEvents.Add(eventKey);
+            EventBus.Register(hook, action);
+        }
+    }
+
     public static object CreateWaitForSeconds(float time, bool unscaled)
     {
         return unscaled ? new WaitForSecondsRealtime(time) : new WaitForSeconds(time);

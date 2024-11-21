@@ -90,6 +90,11 @@ namespace Unity.VisualScripting.Community
         // Update the palette colours on change
         public static void UpdatePalette()
         {
+            if (style == null)
+            {
+                new CommentPaletteRoutine().Run();
+            }
+
             for (int i = 0; i < columns; i++)
             {
                 baseColors[i].r = 1f - Mathf.Clamp(Mathf.Abs(((i * steps + style.colorOffset - offset[0]) % 1f) - 0.5f) * style.colorSpread, 0f, 1f);
@@ -355,6 +360,9 @@ namespace Unity.VisualScripting.Community
             GUI.Label(GUIRect(x: xIndentB, down: 22, w: xWidth, h: 18), "Comment", inspectorGUI);
             unit.comment = GUI.TextArea(GUIRect(x: xIndentC, w: xWidth - xIndentC + 10, h: textHeight + 2), unit.comment, commentGUI);
 
+            // Comment Connection Type
+            GUI.Label(GUIRect(x: xIndentB, down: 22, w: xWidth), "Bezier Line", inspectorGUI);
+            unit.Bezier = GUI.Toggle(GUIRect(x: xIndentC, w: 20, h: 18), unit.Bezier, "");
 
             ///////////////////////////   Section - Copy   /////////////////////////////////////////////
 

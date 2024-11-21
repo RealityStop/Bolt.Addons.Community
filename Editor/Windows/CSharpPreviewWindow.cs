@@ -781,6 +781,7 @@ namespace Unity.VisualScripting.Community
                     {
                         var canvas = GraphWindow.active.context.canvas as FlowCanvas;
                         GraphWindow.active.context.BeginEdit();
+                        GraphWindow.active.context.canvas.UpdateViewport();
                         canvas.ViewElements(new List<Unit>() { ordered.First().result.Item2 });
                         GraphWindow.active.context.EndEdit();
                     }

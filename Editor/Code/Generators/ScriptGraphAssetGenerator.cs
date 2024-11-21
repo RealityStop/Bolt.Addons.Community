@@ -151,9 +151,9 @@ namespace Unity.VisualScripting.Community
                 }
             }
             customEventIds = new Dictionary<CustomEvent, int>();
-            if (Units.Any(unit => unit is CustomEvent))
+            if (Data.graph.units.Any(unit => unit is CustomEvent))
             {
-                var customEvents = Units.Where(unit => unit is CustomEvent);
+                var customEvents = Data.graph.units.Where(unit => unit is CustomEvent);
                 script += $"\n    " + "private void".ConstructHighlight() + " Awake()";
                 script += "\n    {\n";
                 int id = 0;
@@ -169,19 +169,20 @@ namespace Unity.VisualScripting.Community
                     };
                     customEventIds.Add(eventUnit, id);
                     id++;
-                    script += CodeUtility.MakeSelectable(eventUnit, $"        {"EventBus".TypeHighlight()}.Register<{"CustomEventArgs".TypeHighlight()}>({"new".ConstructHighlight()} {"EventHook".TypeHighlight()}({"EventHooks".TypeHighlight()}.{"Custom".VariableHighlight()}, ") + eventUnit.GenerateValue(eventUnit.target) + CodeUtility.MakeSelectable(eventUnit, $"), ") + GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, "Runner);");
+                    script += CodeUtility.MakeSelectable(eventUnit, $"        {"CSharpUtility".TypeHighlight()}.RegisterCustomEvent(") + eventUnit.GenerateValue(eventUnit.target) + CodeUtility.MakeSelectable(eventUnit, $", ") + GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, "Runner);");
 
                     script += "\n";
 
                     var eventName = GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, "Runner");
-
-                    AddNewMethod(eventUnit, eventName, GetMethodSignature(eventUnit, false, eventName, AccessModifier.Private), CodeBuilder.Indent(2) + (eventUnit.coroutine ? CodeUtility.MakeSelectable(eventUnit, $"StartCoroutine(") + GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, $"({"args".VariableHighlight()}));") : GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, $"({"args".VariableHighlight()});")), "CustomEventArgs ".TypeHighlight() + "args".VariableHighlight(), data);
+                    string runnerCode = GetCustomEventRunnerCode(eventUnit, data);
+                    AddNewMethod(eventUnit, eventName, GetMethodSignature(eventUnit, false, eventName, AccessModifier.Private), runnerCode, "CustomEventArgs ".TypeHighlight() + "args".VariableHighlight(), data);
                 }
                 script += "\n    }\n";
             }
             bool addedTimerCode = false;
             foreach (IEventUnit unit in EventUnits)
             {
+                if (unit is CustomEvent && unit.graph != Data.graph) continue;
                 var timerCode = "";
                 if (unit.coroutine)
                 {
@@ -281,6 +282,17 @@ namespace Unity.VisualScripting.Community
             return script;
         }
 
+        private string GetCustomEventRunnerCode(CustomEvent eventUnit, ControlGenerationData data)
+        {
+            var output = "";
+            var generator = NodeGenerator.GetSingleDecorator(eventUnit, eventUnit);
+            output += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(eventUnit, "if ".ControlHighlight() + $"({"args".VariableHighlight()}.name == ") + generator.GenerateValue(eventUnit.name, data) + CodeUtility.MakeSelectable(eventUnit, ")") + "\n";
+            output += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(eventUnit, "{") + "\n";
+            output += CodeBuilder.Indent(3) + (eventUnit.coroutine ? CodeUtility.MakeSelectable(eventUnit, $"StartCoroutine(") + GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, $"({"args".VariableHighlight()}));") : GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, $"({"args".VariableHighlight()});"));
+            output += "\n" + CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(eventUnit, "}") + "\n";
+            return output;
+        }
+
         private string AddNewMethod(Unit unit, string name, string methodSignture, string methodBody, string parameters, ControlGenerationData generationData)
         {
             var method = new GraphMethodDecleration(unit, name, methodSignture, methodBody, parameters, generationData);
@@ -332,6 +344,7 @@ namespace Unity.VisualScripting.Community
                     data.AddLocalNameInScope(variable.name, Type.GetType(variable.typeHandle.Identification) ?? typeof(object));
                 }
             }
+
             var methodBody = variablesCode + NodeGenerator.GetSingleDecorator(eventUnit as Unit, eventUnit as Unit).GenerateControl(null, data, 2);
 
             return methodBody;
@@ -414,38 +427,6 @@ namespace Unity.VisualScripting.Community
                 method += $"\n{CodeBuilder.Indent(1)}{{\n{methodBody}\n";
                 method += CodeBuilder.Indent(1) + "}";
                 return method;
-            }
-        }
-    }
-
-    public static class GraphAssetGeneratorUtilites
-    {
-        public static IEnumerable<IUnit> GetUnits(this FlowGraph flowGraph, Recursion recursion)
-        {
-            Ensure.That(nameof(flowGraph)).IsNotNull(flowGraph);
-            if (!recursion?.TryEnter(flowGraph) ?? false)
-            {
-                yield break;
-            }
-
-            var stack = new Stack<FlowGraph>();
-            stack.Push(flowGraph);
-
-            while (stack.Count > 0)
-            {
-                var currentGraph = stack.Pop();
-
-                foreach (var unit in currentGraph.units)
-                {
-                    yield return unit;
-
-                    if (unit is SubgraphUnit subgraphUnit && subgraphUnit?.nest?.graph != null)
-                    {
-                        stack.Push(subgraphUnit.nest.graph);
-                    }
-                }
-
-                recursion?.Exit(currentGraph);
             }
         }
     }

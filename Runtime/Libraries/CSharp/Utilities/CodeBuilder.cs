@@ -448,6 +448,18 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return output;
         }
 
+        /// <summary>
+        /// Generate code for calling a method in the CSharpUtilityClass
+        /// </summary>
+        /// <param name="unit">Unit to make the code selectable for</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>Th method call</returns>
+        public static string CallCSharpUtilityMethod(Unit unit, string methodName, params string[] parameters)
+        {
+            return CodeUtility.MakeSelectable(unit, $"{"CSharpUtility".TypeHighlight()}.") + methodName + CodeUtility.MakeSelectable(unit, "(") + string.Join(CodeUtility.MakeSelectable(unit, ", "), parameters) + CodeUtility.MakeSelectable(unit, ");") + "\n";
+        }
+
         public static string Highlight(string code, Color color)
         {
             var output = string.Empty;
@@ -468,7 +480,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string MakeRecommendation(string Message)
         {
-            if(ShowRecommendations) return $"/*(Recommendation) {Message}*/".RecommendationHighlight();
+            if (ShowRecommendations) return $"/*(Recommendation) {Message}*/".RecommendationHighlight();
             else return "";
         }
 
@@ -481,7 +493,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         {
             //I did this to avoid having to change the scripts that already used Construct Higlights for if
             //I will probably change this in the future though
-            if(code == "if".Replace(" ", "") || code == "else".Replace(" ", ""))
+            if (code == "if".Replace(" ", "") || code == "else".Replace(" ", ""))
             {
                 return code.ControlHighlight();
             }

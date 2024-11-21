@@ -15,9 +15,12 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
     {
     }
 
+    private Dictionary<CustomEvent, int> customEventIds = new Dictionary<CustomEvent, int>();
+
     public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
     {
         var Units = Unit.nest.graph.units;
+        var customEvents = Units.Where(unit => unit is CustomEvent);
         var _graphinput = Units.FirstOrDefault(unit => unit is GraphInput) as Unit;
         var _graphOutput = Units.FirstOrDefault(unit => unit is GraphOutput) as Unit;
         if (Unit.nest != null && Unit.nest.graph != null)
@@ -72,10 +75,47 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
                 }
             }
 
+            var index = 0;
+            foreach (CustomEvent customEvent in customEvents)
+            {
+                index++;
+                customEventIds[customEvent] = index;
+                if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
+                    return "/* Custom Event units only work on monobehaviours */".WarningHighlight();
+                var generator = GetSingleDecorator(customEvent, customEvent);
+                var action = CodeUtility.MakeSelectable(customEvent, customEvent.coroutine ? $"({"args".VariableHighlight()}) => StartCoroutine({GetMethodName(customEvent)}({"args".VariableHighlight()}))" : GetMethodName(customEvent));
+                output += CodeBuilder.Indent(indent) + CodeBuilder.CallCSharpUtilityMethod(customEvent, CodeUtility.MakeSelectable(customEvent, nameof(CSharpUtility.RegisterCustomEvent)), generator.GenerateValue(customEvent.target, data), action);
+                var returnType = customEvent.coroutine ? typeof(IEnumerator) : typeof(void);
+                output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(customEvent, returnType.As().CSharpName(false, true) + " " + GetMethodName(customEvent) + "(" + "CustomEventArgs ".TypeHighlight() + "args".VariableHighlight() + ")") + "\n";
+                output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(customEvent, "{") + "\n";
+                output += CodeBuilder.Indent(indent + 1) + CodeUtility.MakeSelectable(customEvent, "if".ControlHighlight() + $" ({"args".VariableHighlight()}.name == ") + generator.GenerateValue(customEvent.name, data) + CodeUtility.MakeSelectable(customEvent, ")") + "\n";
+                output += CodeBuilder.Indent(indent + 1) + CodeUtility.MakeSelectable(customEvent, "{") + "\n";
+                var customEventData = new ControlGenerationData(data)
+                {
+                    returns = returnType
+                };
+                output += GetNextUnit(customEvent.trigger, customEventData, indent + 2);
+                output += "\n" + CodeBuilder.Indent(indent + 1) + CodeUtility.MakeSelectable(customEvent, "}") + "\n";
+                output += "\n" + CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(customEvent, "}") + "\n";
+            }
+
+
             return output;
         }
         else
             return base.GenerateControl(input, data, indent);
+    }
+
+    private string GetMethodName(CustomEvent customEvent)
+    {
+        if (!customEvent.name.hasValidConnection)
+        {
+            return (string)customEvent.defaultValues[customEvent.name.key];
+        }
+        else
+        {
+            return "CustomEvent" + customEventIds[customEvent];
+        }
     }
 
     public override string GenerateValue(ValueOutput output, ControlGenerationData data)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
@@ -20,12 +21,16 @@ namespace Unity.VisualScripting.Community
         public bool
             refresh = true;     // Unused - for optimisation
 
-        [Inspectable][Serialize]
+        public List<Unit> connectedUnits = new List<Unit>();
+
+        [Inspectable]
+        [Serialize]
         public (int palette, int row, int col)
             paletteSelection = (0, 0, 0);
 
         [Inspectable]
         public bool
+            Bezier,
             customPalette = false,
             fontColorize = false,
             lockedToPalette = false,
