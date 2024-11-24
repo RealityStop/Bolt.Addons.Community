@@ -11,8 +11,11 @@ namespace Unity.VisualScripting.Community
     [NodeGenerator(typeof(GetVariable))]
     public class GetVariableGenerator : LocalVariableGenerator<GetVariable>
     {
-        public GetVariableGenerator(Unit unit) : base(unit) { }
-
+        public GetVariableGenerator(Unit unit) : base(unit)
+        {
+            SetNamespaceBasedOnVariableKind();
+        }
+        
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             SetNamespaceBasedOnVariableKind();

@@ -24,14 +24,14 @@ public class CustomEventGenerator : NodeGenerator<CustomEvent>
             return MakeSelectableForThisUnit("gameObject".VariableHighlight());
         return base.GenerateValue(input, data);
     }
-
     public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
         if (Unit.argumentPorts.Contains(output))
         {
-            var code = new ValueCode("args".VariableHighlight() + "." + "arguments".VariableHighlight() + $"[{Unit.argumentPorts.IndexOf(output)}]", data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != typeof(object));
+            var callCode = CodeBuilder.CallCSharpUtilityExtensitionMethod(Unit, MakeSelectableForThisUnit("args".VariableHighlight()), MakeSelectableForThisUnit(nameof(CSharpUtility.GetArgument)), MakeSelectableForThisUnit(Unit.argumentPorts.IndexOf(output).ToString()), MakeSelectableForThisUnit(((object)(data.GetExpectedType() ?? typeof(object))).As().Code(false, false, true, "", false, true)));
+            var code = new ValueCode(callCode, data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != typeof(object));
             data.CreateSymbol(Unit, typeof(object), code);
-            return MakeSelectableForThisUnit(code);
+            return code;
         }
         return base.GenerateValue(output, data);
     }

@@ -49,12 +49,12 @@ namespace Unity.VisualScripting.Community
                 return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
             }
         }
-
-        public virtual string GenerateValue(ValueOutput output, ControlGenerationData data) { return $"/* Port '{output.key}' of '{output.unit.GetType().Name}' Missing Generator. */".WarningHighlight(); }
+        
+        public virtual string GenerateValue(ValueOutput output, ControlGenerationData data) { return MakeSelectableForThisUnit($"/* Port '{output.key}' of '{output.unit.GetType().Name}' Missing Generator. */".WarningHighlight()); }
 
         public virtual string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(unit, $"/*{(input != null ? " Port '" + input.key + "' of " : "")}'{unit.GetType().Name}' Missing Generator. */".WarningHighlight());
+            return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"/*{(input != null ? " Port '" + input.key + "' of " : "")}'{unit.GetType().Name}' Missing Generator. */".WarningHighlight());
         }
 
 

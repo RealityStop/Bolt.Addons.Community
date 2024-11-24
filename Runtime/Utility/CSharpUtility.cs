@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,6 +60,14 @@ public static class CSharpUtility
         }
     }
 
+    public static object GetArgument(this CustomEventArgs args, int index, Type targetType)
+    {
+        if (args.arguments[index].IsConvertibleTo(targetType, true))
+            return args.arguments[index].ConvertTo(targetType);
+        else
+            return args.arguments[index];
+    }
+
     public static object CreateWaitForSeconds(float time, bool unscaled)
     {
         return unscaled ? new WaitForSecondsRealtime(time) : new WaitForSeconds(time);
@@ -67,7 +76,7 @@ public static class CSharpUtility
     public static bool Chance(float probability)
     {
         probability = Mathf.Clamp01(probability / 100f);
-        return Random.value <= probability;
+        return UnityEngine.Random.value <= probability;
     }
 
     public static AotDictionary MergeDictionaries(params IDictionary[] dictionaries)

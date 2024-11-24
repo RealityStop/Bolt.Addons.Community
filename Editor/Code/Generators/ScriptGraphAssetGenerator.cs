@@ -68,7 +68,7 @@ namespace Unity.VisualScripting.Community
 
             methods = new();
 
-            var usings = new List<string> { "Unity", "UnityEngine", "Unity.VisualScripting" };
+            var usings = new List<(string, Unit)> { ("Unity", null), ("UnityEngine", null), ("Unity.VisualScripting", null) };
             var count = 0;
             foreach (Unit unit in Units)
             {
@@ -79,23 +79,29 @@ namespace Unity.VisualScripting.Community
                     (generator as TimerGenerator).count = count;
                     count++;
                 }
+
                 if (!string.IsNullOrEmpty(generator.NameSpace))
                 {
                     foreach (var ns in generator.NameSpace.Split(","))
                     {
-                        if (!usings.Contains(ns))
+                        if (!usings.Any(@using => @using.Item1 == ns))
                         {
-                            usings.Add(ns);
+                            usings.Add((ns, unit));
                         }
                     }
                 }
             }
 
-            foreach (var ns in usings)
+            foreach (var @using in usings)
             {
-                if (!string.IsNullOrWhiteSpace(ns))
+                if (!string.IsNullOrWhiteSpace(@using.Item1))
                 {
-                    script += $"using".ConstructHighlight() + $" {ns};\n";
+                    if (@using.Item2 != null)
+                    {
+                        script += CodeUtility.MakeSelectable(@using.Item2, $"using".ConstructHighlight() + $" {@using.Item1};") + "\n";
+                    }
+                    else
+                        script += $"using".ConstructHighlight() + $" {@using.Item1};\n";
                 }
             }
 
@@ -210,7 +216,7 @@ namespace Unity.VisualScripting.Community
 
                             if (UnityMethodTypes.Contains(unit.GetType()))
                             {
-                                if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection)
+                                if (unit.controlOutputs["trigger"].hasValidConnection)
                                 {
                                     AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit, false), timerCode + CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit as Unit, $"StartCoroutine(") + GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine());"), parameters.parameterSignature, data);
                                     AddNewMethod(unit as Unit, GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine"), GetMethodSignature(unit, GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine")), GetMethodBody(unit, data), parameters.parameterSignature, data);

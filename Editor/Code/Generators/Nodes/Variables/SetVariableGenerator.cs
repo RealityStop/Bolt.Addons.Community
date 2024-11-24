@@ -15,6 +15,14 @@ namespace Unity.VisualScripting.Community
     {
         public SetVariableGenerator(Unit unit) : base(unit)
         {
+            if (Unit.kind == VariableKind.Scene)
+            {
+                NameSpace = "UnityEngine.SceneManagement";
+            }
+            else
+            {
+                NameSpace = string.Empty;
+            }
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -28,7 +36,7 @@ namespace Unity.VisualScripting.Community
             {
                 NameSpace = string.Empty;
             }
-            if (Unit.name.hasValidConnection ||(Unit.@object != null && Unit.@object.hasValidConnection))
+            if (Unit.name.hasValidConnection || (Unit.@object != null && Unit.@object.hasValidConnection))
             {
                 var variables = typeof(Unity.VisualScripting.Variables).As().CSharpName(true, true);
                 var kind = string.Empty;

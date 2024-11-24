@@ -457,7 +457,20 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         /// <returns>Th method call</returns>
         public static string CallCSharpUtilityMethod(Unit unit, string methodName, params string[] parameters)
         {
-            return CodeUtility.MakeSelectable(unit, $"{"CSharpUtility".TypeHighlight()}.") + methodName + CodeUtility.MakeSelectable(unit, "(") + string.Join(CodeUtility.MakeSelectable(unit, ", "), parameters) + CodeUtility.MakeSelectable(unit, ");") + "\n";
+            return CodeUtility.MakeSelectable(unit, $"{"CSharpUtility".TypeHighlight()}.") + methodName + CodeUtility.MakeSelectable(unit, "(") + string.Join(CodeUtility.MakeSelectable(unit, ", "), parameters) + CodeUtility.MakeSelectable(unit, ")");
+        }
+
+        /// <summary>
+        /// Generate code for calling a extensition method in the CSharpUtilityClass
+        /// </summary>
+        /// <param name="unit">Unit to make the code selectable for</param>
+        /// <param name="target">Target for the methodm This is not made selectable</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>Th method call</returns>
+        public static string CallCSharpUtilityExtensitionMethod(Unit unit, string target, string methodName, params string[] parameters)
+        {
+            return target + CodeUtility.MakeSelectable(unit, ".") + methodName + CodeUtility.MakeSelectable(unit, "(") + string.Join(CodeUtility.MakeSelectable(unit, ", "), parameters) + CodeUtility.MakeSelectable(unit, ")");
         }
 
         public static string Highlight(string code, Color color)

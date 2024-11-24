@@ -78,7 +78,7 @@ namespace Unity.VisualScripting.Community
 
         [DoNotSerialize]
         private ReflectedInfo Info;
-
+        public override bool canDefine => NeweventType != null && NeweventType.type != null;
         protected override bool register => true;
 
         protected override bool ShouldTrigger(Flow flow, DefinedEventArgs args)
@@ -107,7 +107,7 @@ namespace Unity.VisualScripting.Community
                 NewrestrictedEventType = new IDefinedEventType();
             }
 
-            BuildFromInfo();          
+            BuildFromInfo();
         }
 
 
@@ -118,6 +118,9 @@ namespace Unity.VisualScripting.Community
                 return;
 
             Info = ReflectedInfo.For(NeweventType.type);
+            if (Info == null)
+                return;
+
             foreach (var field in Info.reflectedFields)
             {
                 outputPorts.Add(ValueOutput(field.Value.FieldType, field.Value.Name));
@@ -169,7 +172,8 @@ namespace Unity.VisualScripting.Community
         public static IDisposable RegisterListener<T>(Action<T> onEvent)
         {
             var eventHook = ConstructHook(typeof(T));
-            Action<DefinedEventArgs> action = (x) => {
+            Action<DefinedEventArgs> action = (x) =>
+            {
                 if (x.eventData.GetType() == typeof(T))
                     onEvent((T)x.eventData);
             };

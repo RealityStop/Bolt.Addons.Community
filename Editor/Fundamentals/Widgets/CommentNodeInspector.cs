@@ -350,19 +350,22 @@ namespace Unity.VisualScripting.Community
             if (GUI.Button(GUIRect(x: xIndentC + 50, w: 40), "Auto", buttonGUI)) unit.autoWidth = !unit.autoWidth;
             ResetGUI();
 
+            // Bezier Toggle (above Title and Comment text fields)
+            var EnableBeszierWidth = inspectorGUI.CalcSize(new GUIContent("Bezier")).x;
+            GUI.Label(GUIRect(x: xIndentB, down: 33, w: EnableBeszierWidth), "Bezier", inspectorGUI); // Add label for toggle
+            unit.Bezier = GUI.Toggle(GUIRect(x: xIndentC, w: 20), unit.Bezier, ""); // Toggle field
+
             // Comment Title
-            GUI.Label(GUIRect(x: xIndentB, down: 33), "Title", inspectorGUI);
+            var Titlewidth = inspectorGUI.CalcSize(new GUIContent("Title")).x;
+            GUI.Label(GUIRect(x: xIndentB, down: 22, w: Titlewidth), "Title", inspectorGUI);
             unit.hasTitle = GUI.Toggle(GUIRect(x: xIndentC, w: 20), unit.hasTitle, "");
-            if (unit.hasTitle) unit.title = GUI.TextField(GUIRect(x: xIndentC + 20, w: xWidth - xIndentC - 10, h: 16), unit.title, titleGUI);
+            if (unit.hasTitle)
+                unit.title = GUI.TextField(GUIRect(x: xIndentC + 20, w: xWidth - xIndentC - 10, h: 16), unit.title, 50, titleGUI);
 
             // Comment Contents
             var textHeight = commentGUI.CalcHeight(new GUIContent(unit.comment), xWidth - xIndentC + 10);
             GUI.Label(GUIRect(x: xIndentB, down: 22, w: xWidth, h: 18), "Comment", inspectorGUI);
             unit.comment = GUI.TextArea(GUIRect(x: xIndentC, w: xWidth - xIndentC + 10, h: textHeight + 2), unit.comment, commentGUI);
-
-            // Comment Connection Type
-            GUI.Label(GUIRect(x: xIndentB, down: 22, w: xWidth), "Bezier Line", inspectorGUI);
-            unit.Bezier = GUI.Toggle(GUIRect(x: xIndentC, w: 20, h: 18), unit.Bezier, "");
 
             ///////////////////////////   Section - Copy   /////////////////////////////////////////////
 

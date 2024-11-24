@@ -66,15 +66,6 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
                 output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{type.As().CSharpName(false, true)} {name.VariableHighlight()} = ") + variable.value.As().Code(true, Unit, true, true, "", false, true) + MakeSelectableForThisUnit(";") + "\n";
             }
 
-            if (input.hasValidConnection)
-            {
-                if (_graphinput != null)
-                {
-                    var _output = _graphinput.controlOutputs.FirstOrDefault(output => output.key.Equals(input.key, StringComparison.OrdinalIgnoreCase));
-                    output += GetNextUnit(_output, data, indent);
-                }
-            }
-
             var index = 0;
             foreach (CustomEvent customEvent in customEvents)
             {
@@ -84,7 +75,7 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
                     return "/* Custom Event units only work on monobehaviours */".WarningHighlight();
                 var generator = GetSingleDecorator(customEvent, customEvent);
                 var action = CodeUtility.MakeSelectable(customEvent, customEvent.coroutine ? $"({"args".VariableHighlight()}) => StartCoroutine({GetMethodName(customEvent)}({"args".VariableHighlight()}))" : GetMethodName(customEvent));
-                output += CodeBuilder.Indent(indent) + CodeBuilder.CallCSharpUtilityMethod(customEvent, CodeUtility.MakeSelectable(customEvent, nameof(CSharpUtility.RegisterCustomEvent)), generator.GenerateValue(customEvent.target, data), action);
+                output += CodeBuilder.Indent(indent) + CodeBuilder.CallCSharpUtilityMethod(customEvent, CodeUtility.MakeSelectable(customEvent, nameof(CSharpUtility.RegisterCustomEvent)), generator.GenerateValue(customEvent.target, data), action) +  CodeUtility.MakeSelectable(customEvent, ";") + "\n";
                 var returnType = customEvent.coroutine ? typeof(IEnumerator) : typeof(void);
                 output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(customEvent, returnType.As().CSharpName(false, true) + " " + GetMethodName(customEvent) + "(" + "CustomEventArgs ".TypeHighlight() + "args".VariableHighlight() + ")") + "\n";
                 output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(customEvent, "{") + "\n";
@@ -99,6 +90,14 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
                 output += "\n" + CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(customEvent, "}") + "\n";
             }
 
+            if (input.hasValidConnection)
+            {
+                if (_graphinput != null)
+                {
+                    var _output = _graphinput.controlOutputs.FirstOrDefault(output => output.key.Equals(input.key, StringComparison.OrdinalIgnoreCase));
+                    output += GetNextUnit(_output, data, indent);
+                }
+            }
 
             return output;
         }

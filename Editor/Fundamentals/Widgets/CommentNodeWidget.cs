@@ -73,17 +73,7 @@ namespace Unity.VisualScripting.Community
             textAreaSize.y = textGUI.CalcHeight(new GUIContent(unit.comment), unit.maxWidth - borderTotal);
 
             // Set whole area rect
-            wholeRect = new Rect(
-                unit.position.x,
-                unit.position.y,
-                Mathf.Clamp(
-                    (textAreaSize.x + borderTotal),
-                    (unit.autoWidth ? borderTotal : unit.maxWidth),
-                    unit.maxWidth),
-                Mathf.Clamp(
-                    textAreaSize.y + borderTotal,
-                    borderTotal,
-                    1000));
+            wholeRect = new Rect(unit.position.x, unit.position.y, Mathf.Max(titleGUI.CalcSize(new GUIContent(unit.title)).x + borderTotal, Mathf.Clamp(textAreaSize.x + borderTotal, unit.autoWidth ? borderTotal : unit.maxWidth, unit.maxWidth)), Mathf.Clamp(textAreaSize.y + borderTotal, borderTotal, 1000));
 
             // Resource - https://unitylist.com/p/5c3/Unity-editor-icons
 
@@ -96,7 +86,7 @@ namespace Unity.VisualScripting.Community
             // Draw connections to other units
             foreach (var connectedUnit in unit.connectedUnits)
             {
-                if(connectedUnit == null || !(graph as FlowGraph).units.Contains(connectedUnit)) continue;
+                if (connectedUnit == null || !(graph as FlowGraph).units.Contains(connectedUnit)) continue;
                 var unitWidget = canvas.Widget(connectedUnit);
                 var lineColor = unit.color;
                 if (unit.Bezier)
@@ -107,14 +97,15 @@ namespace Unity.VisualScripting.Community
                     Vector3 controlPoint1 = start + new Vector3(0, (end.y - start.y) / 3f, 0);
                     Vector3 controlPoint2 = end + new Vector3(0, -(end.y - start.y) / 3f, 0);
 
-                    Handles.DrawBezier(start, end, controlPoint1, controlPoint2, lineColor, null, 2f);
+                    Handles.DrawBezier(start, end, controlPoint1, controlPoint2, lineColor, null, 5f);
                 }
                 else
                 {
                     Vector3 start = new Vector3(unit.position.x + wholeRect.width / 2, unit.position.y + wholeRect.height / 2, 0);
                     Vector3 end = new Vector3(connectedUnit.position.x + unitWidget.position.width / 2, connectedUnit.position.y + unitWidget.position.height / 2, 0);
+                    Vector3[] points = { start, end };
                     Handles.color = lineColor;
-                    Handles.DrawLine(start, end);
+                    Handles.DrawAAPolyLine(5f, points);
                     Handles.color = Color.white;
                 }
             }
@@ -130,29 +121,32 @@ namespace Unity.VisualScripting.Community
         public override void HandleInput()
         {
             base.HandleInput();
-            if (e.keyCode == KeyCode.C)
+            if (canvas.selection.Contains(unit))
             {
-                metadata["connectedUnits"].RecordUndo();
-                foreach (var item in canvas.selection)
+                if (e.keyCode == KeyCode.C)
                 {
-                    if (item is Unit unit && !this.unit.connectedUnits.Contains(unit) && item != this.unit)
+                    metadata["connectedUnits"].RecordUndo();
+                    foreach (var item in canvas.selection)
                     {
-                        this.unit.connectedUnits.Add(unit);
+                        if (item is Unit unit && !this.unit.connectedUnits.Contains(unit) && item != this.unit)
+                        {
+                            this.unit.connectedUnits.Add(unit);
+                        }
                     }
+                    EditorUtility.SetDirty(LudiqEditorUtility.editedObject);
                 }
-                EditorUtility.SetDirty(LudiqEditorUtility.editedObject);
-            }
-            else if (e.keyCode == KeyCode.X)
-            {
-                metadata["connectedUnits"].RecordUndo();
-                foreach (var item in canvas.selection)
+                else if (e.keyCode == KeyCode.X)
                 {
-                    if (item is Unit unit && this.unit.connectedUnits.Contains(unit))
+                    metadata["connectedUnits"].RecordUndo();
+                    foreach (var item in canvas.selection)
                     {
-                        this.unit.connectedUnits.Remove(unit);
+                        if (item is Unit unit && this.unit.connectedUnits.Contains(unit))
+                        {
+                            this.unit.connectedUnits.Remove(unit);
+                        }
                     }
+                    EditorUtility.SetDirty(LudiqEditorUtility.editedObject);
                 }
-                EditorUtility.SetDirty(LudiqEditorUtility.editedObject);
             }
         }
 
@@ -172,17 +166,8 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        public void AddConnection(Unit otherUnit)
-        {
-            if (!unit.connectedUnits.Contains(otherUnit))
-            {
-                unit.connectedUnits.Add(otherUnit);
-            }
-        }
-
         public override void DrawForeground()
         {
-            Reposition();
             // Get text area rect
             textRect = borderRect.Offset(xy: borderText, centre: true);
             // If mouse hovering over unit
@@ -231,7 +216,7 @@ namespace Unity.VisualScripting.Community
             // Draw title
             GUI.contentColor = Color.white;
             if (unit.hasTitle)
-                EditorGUI.LabelField(new Rect(unit.position.x + borderOutside + 7f, unit.position.y, borderRect.width, borderOutside), unit.title, titleGUI);
+                EditorGUI.LabelField(new Rect(unit.position.x + borderOutside + 7f, unit.position.y, wholeRect.width, borderOutside), unit.title, titleGUI);
 
             unit.position = wholeRect.position;
         }
