@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
         public static CSharpPreviewWindow instance;
         private float zoomFactor = 1.0f;
         public bool showCodeWindow = true;
-        private List<Label> labels = new List<Label>();
+        private List<(Label, int)> labels = new List<(Label, int)>();
 
         public static Object asset;
 
@@ -32,6 +32,11 @@ namespace Unity.VisualScripting.Community
 
         public void CreateGUI()
         {
+            if(instance == null)
+            {
+                CSharpPreviewWindow window = GetWindow<CSharpPreviewWindow>();
+                instance = window;
+            }
             Selection.selectionChanged += ChangeSelection;
             var toolbar = new Toolbar();
             toolbar.name = "Toolbar";
@@ -169,6 +174,7 @@ namespace Unity.VisualScripting.Community
 
             float labelWidth = 200;
 
+            // --- Subgraph Comment ---
             var subgraphToggleContainer = new VisualElement
             {
                 style = { marginTop = 10, flexDirection = FlexDirection.Row }
@@ -198,6 +204,7 @@ namespace Unity.VisualScripting.Community
             subgraphToggleContainer.Add(showSubgraphCommentToggle);
             generationSettingsSection.Add(subgraphToggleContainer);
 
+            // --- Recommendations ---
             var recommendationToggleContainer = new VisualElement
             {
                 style = { marginTop = 5, flexDirection = FlexDirection.Row }
@@ -227,6 +234,37 @@ namespace Unity.VisualScripting.Community
             recommendationToggleContainer.Add(showRecommendationToggle);
             generationSettingsSection.Add(recommendationToggleContainer);
 
+            // --- Tooltips ---
+            var tooltipToggleContainer = new VisualElement
+            {
+                style = { marginTop = 5, flexDirection = FlexDirection.Row }
+            };
+
+            var showTooltipLabel = new Label("Show Tooltips :")
+            {
+                tooltip = "Show tooltips in places where there is a problem.",
+                style = { unityFontStyleAndWeight = FontStyle.Bold, marginRight = 10, width = labelWidth }
+            };
+
+            var showTooltipToggle = new Toggle
+            {
+                style = { marginLeft = 10 }
+            };
+
+            showTooltipToggle.value = settings.ShowTooltips;
+            CodeUtility.GenerateTooltips = settings.ShowTooltips;
+            showTooltipToggle.RegisterValueChangedCallback(evt =>
+            {
+                settings.ShowTooltips = evt.newValue;
+                CodeUtility.GenerateTooltips = evt.newValue;
+                settings.SaveAndDirty();
+            });
+
+            tooltipToggleContainer.Add(showTooltipLabel);
+            tooltipToggleContainer.Add(showTooltipToggle);
+            generationSettingsSection.Add(tooltipToggleContainer);
+
+            // --- Add generations settings ---
             settingsContainer.Add(generationSettingsSection);
             #endregion
 
@@ -446,18 +484,36 @@ namespace Unity.VisualScripting.Community
 
         private void CopyToClipboard()
         {
-            string outputToCopy;
+            string outputToCopy = string.Empty;
+
             if (selectedLabels.Count > 0)
             {
-                outputToCopy = string.Join("\n", selectedLabels.Select(label => CodeUtility.RemoveAllSelectableTags(CodeUtility.RemoveCustomHighlights(RemoveColorTags(label.text)))));
+                // Sort selected labels by line in ascending order
+                var sortedLabels = selectedLabels.OrderBy(value => value.Item2).ToList();
+
+                int? previousLine = null;
+                foreach (var (label, line) in sortedLabels)
+                {
+                    // Add new line if this label is on a new line compared to the previous
+                    if (previousLine != null && line != previousLine)
+                    {
+                        outputToCopy += "\n";
+                    }
+
+                    // Add the cleaned-up label text
+                    outputToCopy += CodeUtility.CleanCode(RemoveColorTags(label.text));
+                    previousLine = line;
+                }
             }
             else
             {
-                outputToCopy = CodeUtility.RemoveAllSelectableTags(CodeUtility.RemoveCustomHighlights(RemoveColorTags(LoadCode())));
+                // Default behavior when no labels are selected
+                outputToCopy = CodeUtility.CleanCode(RemoveColorTags(LoadCode()));
             }
+
+            // Copy the result to the clipboard
             EditorGUIUtility.systemCopyBuffer = outputToCopy;
         }
-
 
         private string RemoveColorTags(string input)
         {
@@ -509,7 +565,7 @@ namespace Unity.VisualScripting.Community
                 var code = "";
                 if (loadedCode.Length > 0)
                 {
-                    code = "#pragma warning disable\n";
+                    code = "#pragma warning disable\n".ConstructHighlight().RemoveMarkdown();
                 }
                 code += loadedCode;
                 var scrollView = rootVisualElement.Q<VisualElement>("codeView").Q<ScrollView>("codeContainer");
@@ -517,12 +573,13 @@ namespace Unity.VisualScripting.Community
                 DisplayCode(lineNumbersScrollView, scrollView, code);
             }
         }
-
+        Dictionary<string, List<(Label, int)>> unitIDRegions = new Dictionary<string, List<(Label, int)>>();
         private void DisplayCode(ScrollView lineNumbersScrolView, ScrollView scrollView, string code)
         {
             scrollView.Clear();
             lineNumbersScrolView.Clear();
             labels.Clear();
+            SetupScrollbarMarkers(scrollView);
 
             var clickableRegions = CodeUtility.ExtractClickableRegions(code);
             var regionsByLine = clickableRegions
@@ -552,17 +609,106 @@ namespace Unity.VisualScripting.Community
                     foreach (var region in regions)
                     {
                         var label = CreateCodeLabel(region, i);
-                        labels.Add(label);
+                        labels.Add((label, i));
                         codeContainer.Add(label);
+                        if (!unitIDRegions.ContainsKey(region.unitId))
+                        {
+                            unitIDRegions[region.unitId] = new List<(Label, int)>() { (label, i) };
+                        }
+                        else
+                        {
+                            unitIDRegions[region.unitId].Add((label, i));
+                        }
                     }
                 }
                 else
                 {
-                    var label = CreateNonClickableLabel(lines[i]);
-                    labels.Add(label);
+                    var label = CreateNonClickableLabel(lines[i], i);
+                    labels.Add((label, i));
                     codeContainer.Add(label);
                 }
                 scrollView.Add(codeContainer);
+            }
+        }
+
+        private VisualElement markerContainer;
+
+        private void SetupScrollbarMarkers(ScrollView scrollView)
+        {
+            // Create a container for the markers
+            markerContainer = new VisualElement
+            {
+                style =
+        {
+            position = Position.Absolute,
+            width = 4,
+            backgroundColor = Color.gray,
+            right = 0, // Align to the right side
+        }
+            };
+            scrollView.hierarchy.Add(markerContainer);
+
+            // Ensure markers update when the scroll view changes
+            scrollView.RegisterCallback<GeometryChangedEvent>(evt => UpdateScrollBarMarkers(scrollView, selectedLabels));
+            scrollView.verticalScroller.valueChanged += _ => UpdateScrollBarMarkers(scrollView, selectedLabels);
+        }
+
+        private void UpdateScrollBarMarkers(ScrollView scrollView, List<(Label, int)> selectedLines)
+        {
+            var verticalScrollBar = scrollView.verticalScroller;
+            if (verticalScrollBar == null)
+                return;
+
+            foreach (VisualElement child in verticalScrollBar.Children().ToList())
+            {
+                if (child.name != null && child.name.StartsWith("marker"))
+                    verticalScrollBar.Remove(child);
+            }
+
+            float totalContentHeight = scrollView.contentContainer.resolvedStyle.height;
+            float visibleHeight = scrollView.resolvedStyle.height;
+            float scrollbarHeight = verticalScrollBar.resolvedStyle.height;
+
+            if (totalContentHeight <= 0 || visibleHeight <= 0 || scrollbarHeight <= 0)
+                return;
+
+            float lowButtonHeight = verticalScrollBar.lowButton.resolvedStyle.height;
+            float highButtonHeight = verticalScrollBar.highButton.resolvedStyle.height;
+
+            float usableScrollbarHeight = scrollbarHeight - lowButtonHeight - highButtonHeight;
+
+            float lineHeight = totalContentHeight / scrollView.contentContainer.childCount;
+
+            foreach (var (label, line) in selectedLines)
+            {
+                float linePosition = line * lineHeight;
+
+                float markerY = linePosition * (usableScrollbarHeight / totalContentHeight);
+
+                markerY += lowButtonHeight;
+
+                if (markerY + 5 > usableScrollbarHeight + lowButtonHeight)
+                {
+                    markerY = usableScrollbarHeight + lowButtonHeight - 5;
+                }
+
+                // Create a new marker
+                var marker = new VisualElement
+                {
+                    style =
+                    {
+                        position = Position.Absolute,
+                        top = markerY,
+                        height = 5,
+                        width = verticalScrollBar.resolvedStyle.width / 1.5f,
+                        alignSelf = Align.Center,
+                        backgroundColor = new Color(0.5f, 0.5f, 0.5f, 0.3f),
+                    },
+                    focusable = false,
+                    name = "marker" + line,
+                };
+                marker.pickingMode = PickingMode.Ignore;
+                verticalScrollBar.Add(marker);
             }
         }
 
@@ -586,10 +732,11 @@ namespace Unity.VisualScripting.Community
             HandleClickableRegionClick(region.unitId, currentLine);
         }
 
-        private List<Label> selectedLabels = new List<Label>();
+        private List<(Label, int)> selectedLabels = new List<(Label, int)>();
+        private List<Label> relatedLabels = new List<Label>();
         private Label lastSelectedLabel = null;
 
-        private Label CreateNonClickableLabel(string text)
+        private Label CreateNonClickableLabel(string text, int currentLine)
         {
             string tooltip;
             var codeWithoutTooltip = CodeUtility.ExtractTooltip(text, out tooltip);
@@ -602,7 +749,7 @@ namespace Unity.VisualScripting.Community
             label.style.color = Color.white;
             label.style.backgroundColor = new Color(1, 1, 1, 0);
             RemovePaddingAndMargin(label);
-            label.RegisterCallback<ClickEvent>(evt => SelectLabel(label, evt));
+            label.RegisterCallback<ClickEvent>(evt => SelectLabel(label, evt, "", currentLine));
             return label;
         }
 
@@ -622,7 +769,7 @@ namespace Unity.VisualScripting.Community
 
             label.RegisterCallback<ClickEvent>(evt =>
             {
-                SelectLabel(label, evt);
+                SelectLabel(label, evt, region.unitId, currentLine);
                 OnCodeRegionClicked(region, currentLine);
             });
 
@@ -640,49 +787,150 @@ namespace Unity.VisualScripting.Community
             label.style.marginBottom = 0;
         }
 
-        // Handle label selection with Ctrl and Shift keys
-        private void SelectLabel(Label label, ClickEvent evt)
+        private double lastClickTime = 0f;
+        private const float doubleClickThreshold = 0.3f;
+
+        private void SelectLabel(Label label, ClickEvent evt, string unitId, int currentLine)
         {
-            if (evt.ctrlKey)
+            double currentTime = EditorApplication.timeSinceStartup;
+            double timeSinceLastClick = currentTime - lastClickTime;
+            if (timeSinceLastClick <= doubleClickThreshold)
             {
-                // Ctrl + Click: Add/remove label from selection
-                if (selectedLabels.Contains(label))
-                {
-                    DeselectLabel(label);
-                }
-                else
-                {
-                    AddLabelToSelection(label);
-                }
-            }
-            else if (evt.shiftKey && lastSelectedLabel != null)
-            {
-                // Shift + Click: Select a range
-                SelectRange(label);
+                ClearSelection();
+                HandleDoubleClick(label, unitId, currentLine);
+                lastSelectedLabel = label;
             }
             else
             {
-                // No modifier: clear selection and select only the clicked label
-                ClearSelection();
-                AddLabelToSelection(label);
+                if (evt.ctrlKey)
+                {
+                    if (selectedLabels.Contains((label, currentLine)))
+                    {
+                        DeselectLabel(label, unitId, currentLine);
+                    }
+                    else
+                    {
+                        AddLabelToSelection(label, unitId, currentLine);
+                    }
+                }
+                else if (evt.shiftKey && lastSelectedLabel != null)
+                {
+                    SelectRange(label, unitId, currentLine);
+                }
+                else
+                {
+                    ClearSelection();
+                    AddLabelToSelection(label, unitId, currentLine);
+                }
+
+                lastSelectedLabel = label;
             }
 
-            lastSelectedLabel = label;
+            lastClickTime = currentTime;
         }
 
-        // Add label to the selection
-        private void AddLabelToSelection(Label label)
+        private void HandleDoubleClick(Label label, string unitId, int currentLine)
         {
-            label.style.backgroundColor = new Color(0.25f, 0.5f, 0.8f, 0.3f); // Highlight color
-
-            selectedLabels.Add(label);
+            if (selectedLabels.Contains((label, currentLine)))
+            {
+                DeselectAllLabels(label, unitId, currentLine);
+            }
+            else
+            {
+                AddAllLabelsToSelection(label, unitId, currentLine);
+            }
         }
 
-        // Deselect a label
-        private void DeselectLabel(Label label)
+
+        private void AddAllLabelsToSelection(Label label, string unitId, int currentLine)
         {
-            label.style.backgroundColor = new Color(1, 1, 1, 0); // Default background
-            selectedLabels.Remove(label);
+            if (unitIDRegions.ContainsKey(unitId))
+            {
+                selectedLabels.Add((label, currentLine));
+                label.style.backgroundColor = new Color(0.25f, 0.5f, 0.8f, 0.3f); // Highlight color
+                foreach (var (targetLabel, line) in unitIDRegions[unitId])
+                {
+                    if (targetLabel != label && !selectedLabels.Contains((targetLabel, line)))
+                    {
+                        targetLabel.style.backgroundColor = new Color(0.25f, 0.5f, 0.8f, 0.3f); // Highlight color
+                        selectedLabels.Add((targetLabel, line));
+                    }
+                }
+            }
+            else
+            {
+                label.style.backgroundColor = new Color(0.25f, 0.5f, 0.8f, 0.3f); // Highlight color
+                selectedLabels.Add((label, currentLine));
+            }
+        }
+
+        private void DeselectAllLabels(Label label, string unitId, int currentLine)
+        {
+            if (unitIDRegions.ContainsKey(unitId))
+            {
+                selectedLabels.Remove((label, currentLine));
+                label.style.backgroundColor = new Color(1, 1, 1, 0); // Default background
+                foreach (var (targetLabel, line) in unitIDRegions[unitId])
+                {
+                    if (targetLabel != label && selectedLabels.Contains((targetLabel, line)))
+                    {
+                        targetLabel.style.backgroundColor = new Color(1, 1, 1, 0); // Default background
+                        selectedLabels.Remove((targetLabel, line));
+                    }
+                }
+            }
+            else
+            {
+                label.style.backgroundColor = new Color(1, 1, 1, 0); // Default background
+                selectedLabels.Remove((label, currentLine));
+            }
+        }
+
+        private void AddLabelToSelection(Label label, string unitId, int currentLine)
+        {
+            if (unitIDRegions.ContainsKey(unitId))
+            {
+                selectedLabels.Add((label, currentLine));
+                label.style.backgroundColor = new Color(0.25f, 0.5f, 0.8f, 0.3f); // Highlight color
+                foreach (var (targetLabel, line) in unitIDRegions[unitId])
+                {
+                    if (targetLabel != label && !selectedLabels.Contains((targetLabel, line)))
+                    {
+                        targetLabel.style.backgroundColor = new Color(0.25f, 0.25f, 0.25f, 0.4f); // Highlight color
+                        relatedLabels.Add(targetLabel);
+                    }
+                }
+            }
+            else
+            {
+                label.style.backgroundColor = new Color(0.25f, 0.5f, 0.8f, 0.3f); // Highlight color
+                selectedLabels.Add((label, currentLine));
+            }
+        }
+
+        private void DeselectLabel(Label label, string unitId, int currentLine)
+        {
+            if (unitIDRegions.ContainsKey(unitId))
+            {
+                selectedLabels.Remove((label, currentLine));
+                if (unitIDRegions[unitId].Contains((label, currentLine)))
+                    label.style.backgroundColor = new Color(0.25f, 0.25f, 0.25f, 0.4f); // Default background
+                else
+                    label.style.backgroundColor = new Color(1, 1, 1, 0); // Default background
+                foreach (var (targetLabel, line) in unitIDRegions[unitId])
+                {
+                    if (targetLabel != label && !selectedLabels.Contains((targetLabel, line)) && !selectedLabels.Any(_label => unitIDRegions[unitId].Contains(_label)))
+                    {
+                        targetLabel.style.backgroundColor = new Color(1, 1, 1, 0); // Default background
+                        relatedLabels.Remove(targetLabel);
+                    }
+                }
+            }
+            else
+            {
+                label.style.backgroundColor = new Color(1, 1, 1, 0); // Default background
+                selectedLabels.Remove((label, currentLine));
+            }
         }
 
         // Clear all selected labels
@@ -690,32 +938,39 @@ namespace Unity.VisualScripting.Community
         {
             foreach (var selectedLabel in selectedLabels)
             {
+                selectedLabel.Item1.style.backgroundColor = new Color(1, 1, 1, 0);
+            }
+            foreach (var selectedLabel in relatedLabels)
+            {
                 selectedLabel.style.backgroundColor = new Color(1, 1, 1, 0);
             }
             selectedLabels.Clear();
+            relatedLabels.Clear();
         }
 
-        private void SelectRange(Label label)
+        private void SelectRange(Label label, string unitID, int currentLine)
         {
             if (lastSelectedLabel == null) return;
-            int startIndex = labels.IndexOf(lastSelectedLabel);
-            int endIndex = labels.IndexOf(label);
+
+            int startIndex = labels.FindIndex(val => val.Item1 == lastSelectedLabel);
+            int endIndex = labels.IndexOf((label, currentLine));
+
+            if (startIndex == -1 || endIndex == -1) return;
 
             if (startIndex > endIndex)
             {
-                int temp = startIndex;
-                startIndex = endIndex;
-                endIndex = temp;
+                (startIndex, endIndex) = (endIndex, startIndex);
             }
 
             for (int i = startIndex; i <= endIndex; i++)
             {
-                var labelInRange = labels[i];
-                if (!selectedLabels.Contains(labelInRange))
+                var (labelInRange, labelLine) = labels[i];
+                if (!selectedLabels.Contains((labelInRange, labelLine)))
                 {
-                    AddLabelToSelection(labelInRange);
+                    AddLabelToSelection(labelInRange, unitID, labelLine);
                 }
             }
+
         }
 
         private string LoadCode()

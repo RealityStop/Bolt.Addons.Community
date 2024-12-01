@@ -70,9 +70,9 @@ namespace Unity.VisualScripting.Community
                     data.NewScope();
                     for (int item = 0; item < Data.variables.Count; item++)
                     {
-                        data.AddLocalNameInScope(Data.variables[item].name);
+                        data.AddLocalNameInScope(Data.variables[item].name, Data.variables[item].type);
                     }
-                    constructor.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, data, 0));
+                    constructor.Body(unit.GenerateControl(null, data, 0));
                     data.ExitScope();
                     for (int pIndex = 0; pIndex < Data.constructors[i].parameters.Count; pIndex++)
                     {
@@ -137,9 +137,9 @@ namespace Unity.VisualScripting.Community
                             data.NewScope();
                             foreach (var variable in Data.variables.Where(variable => variable.FieldName != Data.variables[i].FieldName))
                             {
-                                data.AddLocalNameInScope(variable.FieldName);
+                                data.AddLocalNameInScope(variable.FieldName, variable.type);
                             }
-                            property.MultiStatementGetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
+                            property.MultiStatementGetter(AccessModifier.Public, (Data.variables[i].getter.graph.units[0] as Unit)
                             .GenerateControl(null, new ControlGenerationData() { returns = Data.variables[i].type }, 0));
                             data.ExitScope();
                         }
@@ -158,9 +158,9 @@ namespace Unity.VisualScripting.Community
                             data.NewScope();
                             foreach (var variable in Data.variables.Where(variable => variable.FieldName != Data.variables[i].FieldName))
                             {
-                                data.AddLocalNameInScope(variable.FieldName);
+                                data.AddLocalNameInScope(variable.FieldName, variable.type);
                             }
-                            property.MultiStatementSetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
+                            property.MultiStatementSetter(AccessModifier.Public, (Data.variables[i].setter.graph.units[0] as Unit)
                             .GenerateControl(null, data, 0));
                             data.ExitScope();
                         }
@@ -263,9 +263,9 @@ namespace Unity.VisualScripting.Community
                         data.NewScope();
                         for (int item = 0; item < Data.variables.Count; item++)
                         {
-                            data.AddLocalNameInScope(Data.variables[item].name);
+                            data.AddLocalNameInScope(Data.variables[item].name, Data.variables[item].type);
                         }
-                        method.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, data, 0));
+                        method.Body(unit.GenerateControl(null, data, 0));
                         data.ExitScope();
                         for (int pIndex = 0; pIndex < Data.methods[i].parameters.Count; pIndex++)
                         {

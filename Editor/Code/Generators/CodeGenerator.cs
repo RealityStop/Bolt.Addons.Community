@@ -24,7 +24,7 @@ namespace Unity.VisualScripting.Community
 
         public string GenerateClean(int indent)
         {
-            var generatedCode = CodeUtility.RemoveAllToolTipTags(CodeUtility.RemoveAllSelectableTags(CodeUtility.RemoveCustomHighlights(Generate(indent).RemoveHighlights().RemoveMarkdown())));
+            var generatedCode = CodeUtility.CleanCode(Generate(indent).RemoveHighlights().RemoveMarkdown());
             var code = "";
             if(generatedCode.Length > 0)
             {

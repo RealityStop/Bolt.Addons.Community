@@ -47,7 +47,8 @@ namespace Unity.VisualScripting.Community
 
         private void OpenCSharpPreview(Vector2 pos)
         {
-            UtilityWindow.Open();
+            var window = UtilityWindow.Open();
+            window.graphContext = context;
         }
     }
 }

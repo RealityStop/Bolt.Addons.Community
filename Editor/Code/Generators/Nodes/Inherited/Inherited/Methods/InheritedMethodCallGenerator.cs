@@ -58,7 +58,7 @@ namespace Unity.VisualScripting.Community
                 {
                     if (parameter.HasOutModifier())
                     {
-                        var name = controlGenerationData.AddLocalNameInScope(parameter.Name).VariableHighlight();
+                        var name = controlGenerationData.AddLocalNameInScope(parameter.Name, parameter.ParameterType).VariableHighlight();
                         output.Add("out var ".ConstructHighlight() + name);
                         if (Unit.OutputParameters.Values.Any(output => output.key == "&" + parameter.Name && !outputNames.ContainsKey(Unit.OutputParameters[index])))
                             outputNames.Add(Unit.OutputParameters[index], "&" + name);

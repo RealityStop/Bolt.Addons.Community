@@ -12,6 +12,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Utility;
 using Unity.VisualScripting.ReorderableList;
 using UnityEditor;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
@@ -243,23 +244,40 @@ namespace Unity.VisualScripting.Community
 
                             if (GUILayout.Button("Add", GUILayout.Width(60)))
                             {
+                                int undoGroup = Undo.GetCurrentGroup();
+                                Undo.SetCurrentGroupName("Added Required Method");
+
+                                Undo.RegisterCompleteObjectUndo(Target, "Added Required Method");
+
                                 var declaration = CreateInstance<TMethodDeclaration>();
-                                if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
-                                if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                                Undo.RegisterCreatedObjectUndo(declaration, "Created Method Declaration");
+
+                                if (Target is ClassAsset classAsset)
+                                    declaration.classAsset = classAsset;
+                                else if (Target is StructAsset structAsset)
+                                    declaration.structAsset = structAsset;
+
                                 declaration.modifier = MethodModifier.Override;
                                 declaration.methodName = abstractMethods[i].Name;
                                 declaration.name = declaration.methodName;
                                 declaration.scope = abstractMethods[i].GetScope();
                                 declaration.returnType = abstractMethods[i].ReturnType;
-                                declaration.parameters = abstractMethods[i].GetParameters().Select(param => new TypeParam(param.ParameterType, param.Name)).ToList();
+                                declaration.parameters = abstractMethods[i]
+                                    .GetParameters()
+                                    .Select(param => new TypeParam(param.ParameterType, param.Name))
+                                    .ToList();
+
                                 declaration.hideFlags = HideFlags.HideInHierarchy;
                                 AssetDatabase.AddObjectToAsset(declaration, Target);
                                 listOfMethods.Add(declaration);
-                                var functionUnit = new FunctionNode(FunctionType.Method);
-
-                                functionUnit.methodDeclaration = declaration;
+                                var functionUnit = new FunctionNode(FunctionType.Method)
+                                {
+                                    methodDeclaration = declaration
+                                };
                                 declaration.graph.units.Add(functionUnit);
 
+                                Undo.CollapseUndoOperations(undoGroup);
+                                shouldUpdate = true;
                                 AssetDatabase.SaveAssets();
                                 AssetDatabase.Refresh();
                             }
@@ -304,11 +322,24 @@ namespace Unity.VisualScripting.Community
                             var property = abstractProperties[index];
                             if (GUILayout.Button("Add", GUILayout.Width(60)))
                             {
+                                int undoGroup = Undo.GetCurrentGroup();
+                                Undo.SetCurrentGroupName("Added Required Property");
+
+                                Undo.RegisterCompleteObjectUndo(Target, "Added Required Property");
+
                                 var declaration = CreateInstance<TFieldDeclaration>();
-                                if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
-                                if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                                Undo.RegisterCreatedObjectUndo(declaration, "Created Field Declaration");
+
+                                if (Target is ClassAsset classAsset)
+                                    declaration.classAsset = classAsset;
+                                else if (Target is StructAsset structAsset)
+                                    declaration.structAsset = structAsset;
+
                                 var getter = CreateInstance<PropertyGetterMacro>();
                                 var setter = CreateInstance<PropertySetterMacro>();
+                                Undo.RegisterCreatedObjectUndo(getter, "Created Property Getter Macro");
+                                Undo.RegisterCreatedObjectUndo(setter, "Created Property Setter Macro");
+
                                 if (typeof(TMemberTypeAsset) == typeof(ClassAsset))
                                 {
                                     getter.classAsset = Target as ClassAsset;
@@ -319,42 +350,58 @@ namespace Unity.VisualScripting.Community
                                     getter.structAsset = Target as StructAsset;
                                     setter.structAsset = Target as StructAsset;
                                 }
+
                                 AssetDatabase.AddObjectToAsset(declaration, Target);
                                 AssetDatabase.AddObjectToAsset(getter, Target);
                                 AssetDatabase.AddObjectToAsset(setter, Target);
+
                                 declaration.FieldName = property.Name;
                                 declaration.name = property.Name;
                                 declaration.isProperty = true;
+
                                 listOfVariables.Add(declaration);
-                                var functionGetterUnit = new FunctionNode(FunctionType.Getter);
-                                var functionSetterUnit = new FunctionNode(FunctionType.Setter);
-                                functionGetterUnit.fieldDeclaration = declaration;
-                                functionSetterUnit.fieldDeclaration = declaration;
+
+                                var functionGetterUnit = new FunctionNode(FunctionType.Getter)
+                                {
+                                    fieldDeclaration = declaration
+                                };
+
+                                var functionSetterUnit = new FunctionNode(FunctionType.Setter)
+                                {
+                                    fieldDeclaration = declaration
+                                };
+
                                 declaration.getter = getter;
                                 declaration.setter = setter;
                                 declaration.getter.graph.units.Add(functionGetterUnit);
                                 declaration.setter.graph.units.Add(functionSetterUnit);
+
                                 declaration.hideFlags = HideFlags.HideInHierarchy;
                                 getter.hideFlags = HideFlags.HideInHierarchy;
                                 setter.hideFlags = HideFlags.HideInHierarchy;
+
                                 declaration.scope = property.GetScope();
                                 declaration.type = property.PropertyType;
                                 declaration.propertyModifier = PropertyModifier.Override;
+
                                 if (property.CanRead)
                                 {
-                                    declaration.get = property.CanRead;
+                                    declaration.get = true;
                                     declaration.getterScope = property.GetGetMethod(true).GetScope();
                                 }
 
                                 if (property.CanWrite)
                                 {
-                                    declaration.set = property.CanWrite;
+                                    declaration.set = true;
                                     declaration.setterScope = property.GetSetMethod(true).GetScope();
                                 }
 
+                                shouldUpdate = true;
+                                Undo.CollapseUndoOperations(undoGroup);
                                 AssetDatabase.SaveAssets();
                                 AssetDatabase.Refresh();
                             }
+
                         }, true);
 
                         GUILayout.Space(4);
@@ -404,21 +451,46 @@ namespace Unity.VisualScripting.Community
 
                             if (GUILayout.Button("Add", GUILayout.Width(60)))
                             {
+                                int undoGroup = Undo.GetCurrentGroup();
+                                Undo.SetCurrentGroupName("Added Required Constructor");
+
+                                Undo.RegisterCompleteObjectUndo(Target, "Added Required Constructor");
+
                                 var declaration = CreateInstance<TConstructorDeclaration>();
-                                if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
-                                if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                                Undo.RegisterCreatedObjectUndo(declaration, "Created Constructor Declaration");
+
+                                if (Target is ClassAsset classAsset)
+                                    declaration.classAsset = classAsset;
+                                else if (Target is StructAsset structAsset)
+                                    declaration.structAsset = structAsset;
+
                                 declaration.hideFlags = HideFlags.HideInHierarchy;
                                 AssetDatabase.AddObjectToAsset(declaration, Target);
+
                                 listOfConstructors.Add(declaration);
                                 declaration.name = $"Constructor {listOfConstructors.IndexOf(declaration)}";
-                                var functionUnit = new FunctionNode(FunctionType.Constructor);
-                                functionUnit.constructorDeclaration = declaration;
+
+                                var functionUnit = new FunctionNode(FunctionType.Constructor)
+                                {
+                                    constructorDeclaration = declaration
+                                };
+
                                 declaration.graph.units.Add(functionUnit);
+
                                 var listOfVariables = variables.value as List<TFieldDeclaration>;
                                 declaration.scope = parameterizedConstructors[index].GetScope();
                                 declaration.CallType = ConstructorCallType.Base;
-                                declaration.parameters = parameterizedConstructors[index].GetParameters().Select(param => new TypeParam(param.ParameterType, param.Name) { useInCall = !inheritedType.IsAbstract && inheritedType.IsClass }).ToList();
+                                declaration.parameters = parameterizedConstructors[index]
+                                    .GetParameters()
+                                    .Select(param => new TypeParam(param.ParameterType, param.Name)
+                                    {
+                                        useInCall = !inheritedType.IsAbstract && inheritedType.IsClass
+                                    })
+                                    .ToList();
                                 declaration.modifier = parameterizedConstructors[index].GetModifier();
+
+                                shouldUpdate = true;
+                                Undo.CollapseUndoOperations(undoGroup);
                                 AssetDatabase.SaveAssets();
                                 AssetDatabase.Refresh();
 
@@ -519,40 +591,70 @@ namespace Unity.VisualScripting.Community
 
                             if (GUILayout.Button("Add", GUILayout.Width(60)))
                             {
+                                int undoGroup = Undo.GetCurrentGroup();
+                                Undo.SetCurrentGroupName("Added Overridable Method");
+
+                                Undo.RegisterCompleteObjectUndo(Target, "Added Overridable Method");
+
                                 var declaration = CreateInstance<TMethodDeclaration>();
-                                if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
-                                if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                                Undo.RegisterCreatedObjectUndo(declaration, "Created Overridable Method");
+
+                                if (Target is ClassAsset classAsset)
+                                    declaration.classAsset = classAsset;
+                                else if (Target is StructAsset structAsset)
+                                    declaration.structAsset = structAsset;
+
                                 declaration.modifier = MethodModifier.Override;
                                 declaration.methodName = nonFinalMethods[i].Name;
                                 declaration.name = declaration.methodName;
                                 declaration.scope = nonFinalMethods[i].GetScope();
                                 declaration.returnType = nonFinalMethods[i].ReturnType;
-                                declaration.parameters = nonFinalMethods[i].GetParameters().Select(param => new TypeParam(param.ParameterType, param.Name)).ToList();
+                                declaration.parameters = nonFinalMethods[i].GetParameters()
+                                    .Select(param => new TypeParam(param.ParameterType, param.Name))
+                                    .ToList();
+
                                 declaration.hideFlags = HideFlags.HideInHierarchy;
                                 AssetDatabase.AddObjectToAsset(declaration, Target);
                                 listOfMethods.Add(declaration);
-                                var functionUnit = new FunctionNode(FunctionType.Method);
-                                functionUnit.methodDeclaration = declaration;
+
+                                var functionUnit = new FunctionNode(FunctionType.Method)
+                                {
+                                    methodDeclaration = declaration
+                                };
                                 declaration.graph.units.Add(functionUnit);
+
                                 if (!nonFinalMethods[i].ReturnType.Is().NullOrVoid())
                                 {
                                     var baseUnit = new BaseMethodCall(new Member(inheritedType, nonFinalMethods[i]), MethodType.ReturnValue);
                                     var returnUnit = new EventReturn();
+
                                     declaration.graph.units.Add(baseUnit);
                                     declaration.graph.units.Add(returnUnit);
+
                                     functionUnit.invoke.ConnectToValid(returnUnit.enter);
                                     returnUnit.value.ConnectToValid(baseUnit.result);
+
                                     returnUnit.position = new Vector2(functionUnit.position.x + 400, functionUnit.position.y);
                                     baseUnit.position = new Vector2(functionUnit.position.x + 200, functionUnit.position.y + 150);
+
                                     foreach (var output in functionUnit.parameterPorts)
                                     {
-                                        output.ConnectToValid(baseUnit.InputParameters.Values.First(input => input.key.Replace("%", "").Replace("&", "").Equals(output.key, StringComparison.OrdinalIgnoreCase)));
+                                        output.ConnectToValid(
+                                            baseUnit.InputParameters.Values.First(input =>
+                                                input.key.Replace("%", "").Replace("&", "").Equals(output.key, StringComparison.OrdinalIgnoreCase)
+                                            )
+                                        );
                                     }
+
                                 }
+
+                                shouldUpdate = true;
+                                Undo.CollapseUndoOperations(undoGroup);
 
                                 AssetDatabase.SaveAssets();
                                 AssetDatabase.Refresh();
                             }
+
 
                             if (methods.Count != methodsCount)
                             {
@@ -594,12 +696,26 @@ namespace Unity.VisualScripting.Community
                             var property = nonFinalProperties[index];
                             if (GUILayout.Button("Add", GUILayout.Width(60)))
                             {
+                                int undoGroup = Undo.GetCurrentGroup();
+                                Undo.SetCurrentGroupName("Added Overridable Property");
+
+                                Undo.RegisterCompleteObjectUndo(Target, "Added Overridable Property");
+
                                 var declaration = CreateInstance<TFieldDeclaration>();
-                                if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
-                                if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                                Undo.RegisterCreatedObjectUndo(declaration, "Created Overridable Property");
+
+                                if (Target is ClassAsset classAsset)
+                                    declaration.classAsset = classAsset;
+                                else if (Target is StructAsset structAsset)
+                                    declaration.structAsset = structAsset;
+
                                 var getter = CreateInstance<PropertyGetterMacro>();
+                                Undo.RegisterCreatedObjectUndo(getter, "Created Getter Macro");
+
                                 var setter = CreateInstance<PropertySetterMacro>();
-                                if (typeof(TMemberTypeAsset) == typeof(ClassAsset))
+                                Undo.RegisterCreatedObjectUndo(setter, "Created Setter Macro");
+
+                                if (Target is ClassAsset)
                                 {
                                     getter.classAsset = Target as ClassAsset;
                                     setter.classAsset = Target as ClassAsset;
@@ -609,42 +725,59 @@ namespace Unity.VisualScripting.Community
                                     getter.structAsset = Target as StructAsset;
                                     setter.structAsset = Target as StructAsset;
                                 }
+
                                 AssetDatabase.AddObjectToAsset(declaration, Target);
                                 AssetDatabase.AddObjectToAsset(getter, Target);
                                 AssetDatabase.AddObjectToAsset(setter, Target);
+
                                 declaration.FieldName = property.Name;
                                 declaration.name = property.Name;
                                 declaration.isProperty = true;
+
                                 listOfVariables.Add(declaration);
-                                var functionGetterUnit = new FunctionNode(FunctionType.Getter);
-                                var functionSetterUnit = new FunctionNode(FunctionType.Setter);
-                                functionGetterUnit.fieldDeclaration = declaration;
-                                functionSetterUnit.fieldDeclaration = declaration;
+
+                                var functionGetterUnit = new FunctionNode(FunctionType.Getter)
+                                {
+                                    fieldDeclaration = declaration
+                                };
+
+                                var functionSetterUnit = new FunctionNode(FunctionType.Setter)
+                                {
+                                    fieldDeclaration = declaration
+                                };
+
                                 declaration.getter = getter;
                                 declaration.setter = setter;
                                 declaration.getter.graph.units.Add(functionGetterUnit);
                                 declaration.setter.graph.units.Add(functionSetterUnit);
+
                                 declaration.hideFlags = HideFlags.HideInHierarchy;
                                 getter.hideFlags = HideFlags.HideInHierarchy;
                                 setter.hideFlags = HideFlags.HideInHierarchy;
+
                                 declaration.scope = property.GetScope();
                                 declaration.type = property.PropertyType;
                                 declaration.propertyModifier = PropertyModifier.Override;
+
                                 if (property.CanRead)
                                 {
-                                    declaration.get = property.CanRead;
+                                    declaration.get = true;
                                     declaration.getterScope = property.GetGetMethod(true).GetScope();
                                 }
 
                                 if (property.CanWrite)
                                 {
-                                    declaration.set = property.CanWrite;
+                                    declaration.set = true;
                                     declaration.setterScope = property.GetSetMethod(true).GetScope();
                                 }
+
+                                shouldUpdate = true;
+                                Undo.CollapseUndoOperations(undoGroup);
 
                                 AssetDatabase.SaveAssets();
                                 AssetDatabase.Refresh();
                             }
+
                         }, true);
 
                         GUILayout.Space(4);
@@ -749,13 +882,22 @@ namespace Unity.VisualScripting.Community
                 new RectOffset(1, 1, 1, 1),
                 () =>
                 {
-                    Target.icon = (Texture2D)EditorGUILayout.ObjectField(
+                    EditorGUI.BeginChangeCheck();
+                    var icon = (Texture2D)EditorGUILayout.ObjectField(
                     GUIContent.none,
                     Target.icon,
                     typeof(Texture2D),
                     false,
                     GUILayout.Width(32),
                     GUILayout.Height(32));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RegisterCompleteObjectUndo(Target, "Changed Asset Icon");
+                        Target.icon = icon;
+                        EditorUtility.SetDirty(Target);
+                        shouldUpdate = true;
+                    }
+
                 }, false, false);
 
                 GUILayout.Space(2);
@@ -787,21 +929,53 @@ namespace Unity.VisualScripting.Community
                     new RectOffset(1, 1, 0, 1),
                     () =>
                     {
-                        DrawAttributes(attributes, Target.attributes, Target is ClassAsset ? AttributeUsageType.Class : AttributeUsageType.Struct);
+                        DrawAttributes(attributes, Target.attributes, Target is ClassAsset ? AttributeUsageType.Class : AttributeUsageType.Struct, Target, "Changed Asset Attribute Type");
                     });
             });
         }
 
         protected override void OptionsGUI()
         {
-            Target.serialized = EditorGUILayout.ToggleLeft("Serialized", Target.serialized);
-            Target.inspectable = EditorGUILayout.ToggleLeft("Inspectable", Target.inspectable);
-            Target.includeInSettings = EditorGUILayout.ToggleLeft("Include In Settings", Target.includeInSettings);
-            Target.definedEvent = EditorGUILayout.ToggleLeft("Flag for Defined Event Filtering", Target.definedEvent);
+            EditorGUI.BeginChangeCheck();
+            var serialized = EditorGUILayout.ToggleLeft("Serialized", Target.serialized);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RegisterCompleteObjectUndo(Target, "Toggled Asset Option 'Serialized'");
+                Target.serialized = serialized;
+                EditorUtility.SetDirty(Target);
+                shouldUpdate = true;
+            }
+            EditorGUI.BeginChangeCheck();
+            var inspectable = EditorGUILayout.ToggleLeft("Inspectable", Target.inspectable);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RegisterCompleteObjectUndo(Target, "Toggled Asset Option 'Inspectable'");
+                Target.inspectable = inspectable;
+                EditorUtility.SetDirty(Target);
+                shouldUpdate = true;
+            }
+            EditorGUI.BeginChangeCheck();
+            var includeInSettings = EditorGUILayout.ToggleLeft("Include In Settings", Target.includeInSettings);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RegisterCompleteObjectUndo(Target, "Toggled Asset Option 'IncludeInSettings'");
+                Target.includeInSettings = includeInSettings;
+                EditorUtility.SetDirty(Target);
+                shouldUpdate = true;
+            }
+            EditorGUI.BeginChangeCheck();
+            var definedEvent = EditorGUILayout.ToggleLeft("Flag for Defined Event Filtering", Target.definedEvent);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RegisterCompleteObjectUndo(Target, "Toggled Asset Option 'DefinedEvent'");
+                Target.definedEvent = definedEvent;
+                EditorUtility.SetDirty(Target);
+                shouldUpdate = true;
+            }
             OnExtendedOptionsGUI();
         }
 
-        private void AttributeTypeField(AttributeDeclaration attribute, AttributeUsageType usage)
+        private Type AttributeTypeField(AttributeDeclaration attribute, AttributeUsageType usage)
         {
             GUILayout.Label(" ", GUILayout.Height(20));
             var position = GUILayoutUtility.GetLastRect();
@@ -836,10 +1010,10 @@ namespace Unity.VisualScripting.Community
                     break;
             }
 
-            attribute.SetType(LudiqGUI.TypeField(position, GUIContent.none, attribute.GetAttributeType(), () =>
+            return LudiqGUI.TypeField(position, GUIContent.none, attribute.GetAttributeType(), () =>
             {
                 return new TypeOptionTree(types);
-            }));
+            });
         }
 
         private void CacheConstrainedAttributes()
@@ -920,6 +1094,8 @@ namespace Unity.VisualScripting.Community
                                 GenericMenu menu = new GenericMenu();
                                 menu.AddItem(new GUIContent("Delete"), false, (obj) =>
                                 {
+                                    Undo.RegisterCompleteObjectUndo(listOfConstructors[index], "Deleted Constructor");
+                                    shouldUpdate = true;
                                     constructors.Remove(obj as TConstructorDeclaration);
                                     AssetDatabase.RemoveObjectFromAsset(obj as TConstructorDeclaration);
                                 }, listOfConstructors[index]);
@@ -928,6 +1104,8 @@ namespace Unity.VisualScripting.Community
                                 {
                                     menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
                                     {
+                                        Undo.RegisterCompleteObjectUndo(listOfConstructors[index], "Moved Constructor up");
+                                        shouldUpdate = true;
                                         MoveItemUp(listOfConstructors, index);
                                     }, listOfConstructors[index]);
                                 }
@@ -936,6 +1114,8 @@ namespace Unity.VisualScripting.Community
                                 {
                                     menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
                                     {
+                                        Undo.RegisterCompleteObjectUndo(listOfConstructors[index], "Moved Constructor down");
+                                        shouldUpdate = true;
                                         MoveItemDown(listOfConstructors, index);
                                     }, listOfConstructors[index]);
                                 }
@@ -946,12 +1126,26 @@ namespace Unity.VisualScripting.Community
                             HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, new RectOffset(6, 6, 6, 6), new RectOffset(1, 1, 0, 1), () =>
                             {
                                 EditorGUILayout.BeginHorizontal();
+                                EditorGUI.BeginChangeCheck();
                                 //HUMEditor.Image(PathUtil.Load("scope_32", CommunityEditorPath.Code).Single(), 16, 16);
-                                listOfConstructors[index].scope = (AccessModifier)EditorGUILayout.EnumPopup("Scope", listOfConstructors[index].scope);
+                                var scope = (AccessModifier)EditorGUILayout.EnumPopup("Scope", listOfConstructors[index].scope);
+                                if (EditorGUI.EndChangeCheck())
+                                {
+                                    Undo.RegisterCompleteObjectUndo(listOfConstructors[index], "Changed Constructor Scope");
+                                    shouldUpdate = true;
+                                    listOfConstructors[index].scope = scope;
+                                }
                                 EditorGUILayout.EndHorizontal();
                                 EditorGUILayout.BeginHorizontal();
                                 //HUMEditor.Image(PathUtil.Load("scope_32", CommunityEditorPath.Code).Single(), 16, 16);
-                                listOfConstructors[index].CallType = (ConstructorCallType)EditorGUILayout.EnumPopup("CallType", listOfConstructors[index].CallType);
+                                EditorGUI.BeginChangeCheck();
+                                var CallType = (ConstructorCallType)EditorGUILayout.EnumPopup("CallType", listOfConstructors[index].CallType);
+                                if (EditorGUI.EndChangeCheck())
+                                {
+                                    Undo.RegisterCompleteObjectUndo(listOfConstructors[index], "Changed Constructor CallType");
+                                    shouldUpdate = true;
+                                    listOfConstructors[index].CallType = CallType;
+                                }
                                 EditorGUILayout.EndHorizontal();
                                 GUILayout.Space(4);
 
@@ -960,7 +1154,7 @@ namespace Unity.VisualScripting.Community
                                     GUILayout.Label("Parameters");
                                 }, () =>
                                 {
-                                    DrawParameters(constructors[index]["parameters"], listOfConstructors[index].graph.units[0] as FunctionNode);
+                                    DrawParameters(constructors[index]["parameters"], listOfConstructors[index], listOfConstructors[index].graph.units[0] as FunctionNode);
                                 });
 
                             }, true, false);
@@ -968,22 +1162,43 @@ namespace Unity.VisualScripting.Community
 
                         GUILayout.Space(4);
                     }
-
                     if (GUILayout.Button("+ Add Constructor"))
                     {
+                        int undoGroup = Undo.GetCurrentGroup();
+                        Undo.SetCurrentGroupName("Added Constructor");
+
+                        Undo.RegisterCompleteObjectUndo(Target, "Added Constructor");
+
                         var declaration = CreateInstance<TConstructorDeclaration>();
-                        if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
-                        if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                        Undo.RegisterCreatedObjectUndo(declaration, "Created Constructor");
+
+                        if (Target is ClassAsset classAsset)
+                            declaration.classAsset = classAsset;
+                        else if (Target is StructAsset structAsset)
+                            declaration.structAsset = structAsset;
+
                         declaration.hideFlags = HideFlags.HideInHierarchy;
                         AssetDatabase.AddObjectToAsset(declaration, Target);
+
                         listOfConstructors.Add(declaration);
-                        var functionUnit = new FunctionNode(FunctionType.Constructor);
-                        functionUnit.constructorDeclaration = declaration;
+
+                        var functionUnit = new FunctionNode(FunctionType.Constructor)
+                        {
+                            constructorDeclaration = declaration
+                        };
+
                         declaration.graph.units.Add(functionUnit);
+
                         var listOfVariables = variables.value as List<TFieldDeclaration>;
+
+                        shouldUpdate = true;
+
+                        Undo.CollapseUndoOperations(undoGroup);
+
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();
                     }
+
 
                     if (methods.Count != methodsCount)
                     {
@@ -1011,14 +1226,14 @@ namespace Unity.VisualScripting.Community
             });
         }
 
-        private void DrawAttributes(Metadata attributesMeta, List<AttributeDeclaration> attributesList, AttributeUsageType attributeUsageType)
+        private void DrawAttributes(Metadata attributesMeta, List<AttributeDeclaration> attributeList, AttributeUsageType attributeUsageType, UnityEngine.Object target, string undoName)
         {
             HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
             {
-                for (int attrIndex = 0; attrIndex < attributesList.Count; attrIndex++)
+                for (int attrIndex = 0; attrIndex < attributeList.Count; attrIndex++)
                 {
                     var attributeMeta = attributesMeta[attrIndex]["attributeType"];
-                    var attribute = attributesList[attrIndex];
+                    var attribute = attributeList[attrIndex];
 
                     attribute.opened = HUMEditor.Foldout(
                         attribute.opened,
@@ -1027,17 +1242,19 @@ namespace Unity.VisualScripting.Community
                         1,
                         () =>
                         {
+                            Type type = null;
                             attributeMeta.Block(() =>
                             {
-                                AttributeTypeField(attribute, attributeUsageType);
+                                type = AttributeTypeField(attribute, attributeUsageType);
                             },
                             () =>
                             {
                                 attribute.parameters.Clear();
                                 attribute.constructor = 0;
-                                shouldUpdate = true;
+                                Undo.RegisterCompleteObjectUndo(target, undoName);
+                                attribute.SetType(type);
                             },
-                            true
+                            false
                         );
 
                             if (GUILayout.Button("...", GUILayout.Width(19)))
@@ -1045,9 +1262,10 @@ namespace Unity.VisualScripting.Community
                                 GenericMenu menu = new GenericMenu();
                                 menu.AddItem(new GUIContent("Delete"), false, (obj) =>
                                 {
+                                    Undo.RegisterCompleteObjectUndo(target, "Removed Atribute");
                                     AttributeDeclaration attrToRemove = obj as AttributeDeclaration;
-                                    attributesList.Remove(attrToRemove);
-
+                                    attributeList.Remove(attrToRemove);
+                                    shouldUpdate = true;
                                     foreach (var Constructor in attrToRemove.GetAttributeType().GetConstructors())
                                     {
                                         foreach (var parameter in Constructor.GetParameters())
@@ -1065,8 +1283,6 @@ namespace Unity.VisualScripting.Community
                                     }
                                 }, attribute);
 
-                                List<AttributeDeclaration> attributeList = Target.attributes;
-
                                 if (attrIndex > 0)
                                 {
                                     menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
@@ -1074,23 +1290,27 @@ namespace Unity.VisualScripting.Community
                                         var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
                                         if (attributeIndex > 0)
                                         {
+                                            Undo.RegisterCompleteObjectUndo(target, "Moved Atribute Up");
                                             var temp = attributeList[attributeIndex];
                                             attributeList[attributeIndex] = attributeList[attributeIndex - 1];
                                             attributeList[attributeIndex - 1] = temp;
+                                            shouldUpdate = true;
                                         }
                                     }, attribute);
                                 }
 
-                                if (attrIndex < Target.attributes.Count - 1)
+                                if (attrIndex < attributeList.Count - 1)
                                 {
                                     menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
                                     {
                                         var attributeIndex = attributeList.IndexOf(obj as AttributeDeclaration);
                                         if (attributeIndex < attributeList.Count - 1)
                                         {
+                                            Undo.RegisterCompleteObjectUndo(target, "Moved Atribute Down");
                                             var temp = attributeList[attributeIndex];
                                             attributeList[attributeIndex] = attributeList[attributeIndex + 1];
                                             attributeList[attributeIndex + 1] = temp;
+                                            shouldUpdate = true;
                                         }
                                     }, attribute);
                                 }
@@ -1120,12 +1340,13 @@ namespace Unity.VisualScripting.Community
                         }
 
                         attribute.selectedconstructor = attribute.constructor;
-
+                        EditorGUI.BeginChangeCheck();
                         attribute.constructor = EditorGUILayout.Popup(
                             "Select Type : ",
                             attribute.constructor,
                             constructorNames
                         );
+                        shouldUpdate = EditorGUI.EndChangeCheck();
 
                         var selectedConstructor = attribute?.GetAttributeType()?.GetConstructors()
                             .Where(constructor => constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
@@ -1184,7 +1405,7 @@ namespace Unity.VisualScripting.Community
                                         var lastRect = GUILayoutUtility.GetLastRect();
                                         if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                                         {
-                                            TypeBuilderWindow.ShowWindow(lastRect, attributeParamMeta[paramIndex]["defaultValue"]);
+                                            TypeBuilderWindow.ShowWindow(lastRect, attributeParamMeta[paramIndex]["defaultValue"], true, null, () => shouldUpdate = true);
                                         }
                                         GUILayout.EndHorizontal();
                                     }
@@ -1214,7 +1435,7 @@ namespace Unity.VisualScripting.Community
 
                             paramIndex = 0;
                         }
-                        if (attributesList.Count > 0) GUILayout.Space(4);
+                        if (attributeList.Count > 0) GUILayout.Space(4);
                     });
                 }
 
@@ -1222,7 +1443,9 @@ namespace Unity.VisualScripting.Community
                 {
                     var attribute = new AttributeDeclaration();
                     attribute.SetType(GetConstrainedAttributeTypes(attributeUsageType)[0]);
-                    attributesList.Add(attribute);
+                    Undo.RegisterCompleteObjectUndo(target, "Added Attribute");
+                    attributeList.Add(attribute);
+                    shouldUpdate = true;
                 }
             });
         }
@@ -1242,8 +1465,8 @@ namespace Unity.VisualScripting.Community
                 _ => new Type[0],
             };
         }
-
-        private void DrawParameters(Metadata paramMeta, FunctionNode functionUnit = null)
+        Dictionary<Metadata, HashSet<int>> subscribedEvents = new Dictionary<Metadata, HashSet<int>>();
+        private void DrawParameters(Metadata paramMeta, UnityEngine.Object target, FunctionNode functionUnit = null)
         {
             var parameters = paramMeta.value as List<TypeParam>;
             HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
@@ -1253,13 +1476,13 @@ namespace Unity.VisualScripting.Community
                     parameters[i].opened = HUMEditor.Foldout(parameters[i].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                     {
                         GraphWindow.active?.context?.BeginEdit();
-                        HUMEditor.Changed(() =>
+                        EditorGUI.BeginChangeCheck();
+                        var paramName = GUILayout.TextField(parameters[i].name);
+                        if (EditorGUI.EndChangeCheck())
                         {
-                            parameters[i].name = GUILayout.TextField(parameters[i].name);
-                        }, () =>
-                        {
-                            parameters[i].name = parameters[i].name.LegalMemberName();
-                        });
+                            Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Name");
+                            parameters[i].name = paramName.LegalMemberName();
+                        }
                         GraphWindow.active?.context?.EndEdit();
 
                         if (GUILayout.Button("...", GUILayout.Width(19)))
@@ -1268,7 +1491,9 @@ namespace Unity.VisualScripting.Community
                             menu.AddItem(new GUIContent("Delete"), false, (obj) =>
                             {
                                 TypeParam paramToRemove = obj as TypeParam;
+                                Undo.RegisterCompleteObjectUndo(target, $"Deleted {parameters[i].name} parameter");
                                 parameters.Remove(paramToRemove);
+                                shouldUpdate = true;
                             }, parameters[i]);
 
                             if (i > 0)
@@ -1278,9 +1503,11 @@ namespace Unity.VisualScripting.Community
                                     var paramIndex = parameters.IndexOf(obj as TypeParam);
                                     if (paramIndex > 0)
                                     {
+                                        Undo.RegisterCompleteObjectUndo(target, $"Moved {parameters[i].name} parameter up");
                                         var temp = parameters[paramIndex];
                                         parameters[paramIndex] = parameters[paramIndex - 1];
                                         parameters[paramIndex - 1] = temp;
+                                        shouldUpdate = true;
                                     }
                                 }, parameters[i]);
                             }
@@ -1292,9 +1519,11 @@ namespace Unity.VisualScripting.Community
                                     var paramIndex = parameters.IndexOf(obj as TypeParam);
                                     if (paramIndex < parameters.Count - 1)
                                     {
+                                        Undo.RegisterCompleteObjectUndo(target, $"Moved {parameters[i].name} parameter down");
                                         var temp = parameters[paramIndex];
                                         parameters[paramIndex] = parameters[paramIndex + 1];
                                         parameters[paramIndex + 1] = temp;
+                                        shouldUpdate = true;
                                     }
                                 }, parameters[i]);
                             }
@@ -1316,52 +1545,91 @@ namespace Unity.VisualScripting.Community
                             var lastRect = GUILayoutUtility.GetLastRect();
                             if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                             {
-                                TypeBuilderWindow.ShowWindow(lastRect, paramMeta[i]["type"]);
+                                TypeBuilderWindow.ShowWindow(lastRect, paramMeta[i]["type"], true, null, () =>
+                                {
+                                    Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Type");
+                                    shouldUpdate = true;
+                                });
                             }
                             GraphWindow.active?.context?.BeginEdit();
                             GUILayout.EndHorizontal();
+                            Inspector.BeginBlock(paramMeta[i]["modifier"], new Rect());
                             LudiqGUI.InspectorLayout(paramMeta[i]["modifier"], new GUIContent("Modifier"));
+                            if (Inspector.EndBlock(paramMeta[i]["modifier"]))
+                            {
+                                Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                shouldUpdate = true;
+                            }
                             GUILayout.Space(4);
                             if (parameters[i].showCall)
                             {
+                                Inspector.BeginBlock(paramMeta[i]["useInCall"], new Rect());
                                 LudiqGUI.InspectorLayout(paramMeta[i]["useInCall"], new GUIContent("Use In Call"));
+                                if (Inspector.EndBlock(paramMeta[i]["useInCall"]))
+                                {
+                                    Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                    shouldUpdate = true;
+                                }
                                 GUILayout.Space(4);
                             }
+                            Inspector.BeginBlock(paramMeta[i]["hasDefault"], new Rect());
                             LudiqGUI.InspectorLayout(paramMeta[i]["hasDefault"], new GUIContent("Has Default Value"));
+                            if (Inspector.EndBlock(paramMeta[i]["hasDefault"]))
+                            {
+                                Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                shouldUpdate = true;
+                            }
                             GraphWindow.active?.context?.BeginEdit();
                             GUILayout.Space(4);
-                            if (parameters[i].hasDefault)
+
+                            if (i >= 0 && i < paramMeta.Count)
                             {
-                                paramMeta[i]["type"].valueChanged += (type) =>
+                                if (parameters[i].hasDefault)
                                 {
-                                    GraphWindow.active?.context?.DescribeAndAnalyze();
-                                    paramMeta[i]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
-                                    if (paramMeta[i]["defaultValue"].value?.GetType() == type as Type)
+                                    if (!subscribedEvents.ContainsKey(paramMeta))
                                     {
-                                        return;
+                                        subscribedEvents[paramMeta] = new HashSet<int>();
                                     }
 
-                                    if (type == null)
+                                    if (!subscribedEvents[paramMeta].Contains(i))
                                     {
-                                        paramMeta[i]["defaultValue"].value = null;
-                                    }
-                                    else if (ConversionUtility.CanConvert(paramMeta[i]["defaultValue"].value, type as Type, true))
-                                    {
-                                        paramMeta[i]["defaultValue"].value = ConversionUtility.Convert(paramMeta[i]["defaultValue"].value, type as Type);
-                                    }
-                                    else
-                                    {
-                                        paramMeta[i]["defaultValue"].value = (type as Type).Default();
+                                        paramMeta[i]["type"].valueChanged += (type) =>
+                                        {
+                                            GraphWindow.active?.context?.DescribeAndAnalyze();
+                                            paramMeta[i]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
+
+                                            if (paramMeta[i]["defaultValue"].value?.GetType() == type as Type)
+                                            {
+                                                return;
+                                            }
+
+                                            if (type == null)
+                                            {
+                                                paramMeta[i]["defaultValue"].value = null;
+                                            }
+                                            else if (ConversionUtility.CanConvert(paramMeta[i]["defaultValue"].value, type as Type, true))
+                                            {
+                                                paramMeta[i]["defaultValue"].value = ConversionUtility.Convert(paramMeta[i]["defaultValue"].value, type as Type);
+                                            }
+                                            else
+                                            {
+                                                paramMeta[i]["defaultValue"].value = (type as Type).Default();
+                                            }
+
+                                            paramMeta[i]["defaultValue"].InferOwnerFromParent();
+                                            shouldUpdate = true;
+                                        };
+
+                                        subscribedEvents[paramMeta].Add(i);
                                     }
 
-                                    paramMeta[i]["defaultValue"].InferOwnerFromParent();
-                                };
-
-                                var inspector = paramMeta[i]["defaultValue"].Inspector();
-                                typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
-                                inspector.DrawLayout(new GUIContent("Value               "));
-                                GUILayout.Space(4);
+                                    var inspector = paramMeta[i]["defaultValue"].Inspector();
+                                    typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
+                                    inspector.DrawLayout(new GUIContent("Value               "));
+                                    GUILayout.Space(4);
+                                }
                             }
+
                             if (parameters[i].attributes == null) parameters[i].attributes = new List<AttributeDeclaration>();
                             parameters[i].attributesOpened = HUMEditor.Foldout(parameters[i].attributesOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                             {
@@ -1369,11 +1637,11 @@ namespace Unity.VisualScripting.Community
                                 GUILayout.Label("Attributes");
                             }, () =>
                             {
-                                DrawAttributes(paramMeta[i]["attributes"], parameters[i].attributes, AttributeUsageType.Parameter);
+                                DrawAttributes(paramMeta[i]["attributes"], parameters[i].attributes, AttributeUsageType.Parameter, target, "Changed Parameter attribute");
                             });
                             if (Inspector.EndBlock(paramMeta))
                             {
-                                paramMeta.RecordUndo();
+                                Undo.RegisterCompleteObjectUndo(target, "Changed Parameter");
                                 GraphWindow.active?.context?.DescribeAndAnalyze();
                                 shouldUpdate = true;
                                 if (functionUnit != null)
@@ -1395,6 +1663,7 @@ namespace Unity.VisualScripting.Community
                         index++;
                     }
                     name += index;
+                    Undo.RegisterCompleteObjectUndo(target, "Added Parameter");
                     parameters.Add(new TypeParam(typeof(int), name) { defaultValue = "" });
                 }
             });
@@ -1436,6 +1705,7 @@ namespace Unity.VisualScripting.Community
                                 var funcionUnit = (listOfMethods[index].graph.units[0] as FunctionNode);
                                 funcionUnit.Define();
                                 funcionUnit.Describe();
+                                shouldUpdate = true;
                             });
                             GraphWindow.active?.context?.EndEdit();
                             if (GUILayout.Button("Edit", GUILayout.Width(60)))
@@ -1449,15 +1719,19 @@ namespace Unity.VisualScripting.Community
                                 GenericMenu menu = new GenericMenu();
                                 menu.AddItem(new GUIContent("Delete"), false, (obj) =>
                                 {
+                                    Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Delete Method");
                                     methods.Remove(obj as TMethodDeclaration);
                                     AssetDatabase.RemoveObjectFromAsset(obj as TMethodDeclaration);
+                                    shouldUpdate = true;
                                 }, listOfMethods[index]);
 
                                 if (index > 0)
                                 {
                                     menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
                                     {
+                                        Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Move method Up");
                                         MoveItemUp(listOfMethods, index);
+                                        shouldUpdate = true;
                                     }, listOfMethods[index]);
                                 }
 
@@ -1465,7 +1739,9 @@ namespace Unity.VisualScripting.Community
                                 {
                                     menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
                                     {
+                                        Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Move method Down");
                                         MoveItemDown(listOfMethods, index);
+                                        shouldUpdate = true;
                                     }, listOfMethods[index]);
                                 }
                                 menu.ShowAsContext();
@@ -1476,9 +1752,13 @@ namespace Unity.VisualScripting.Community
                             {
                                 EditorGUILayout.BeginHorizontal();
                                 //HUMEditor.Image(PathUtil.Load("scope_32", CommunityEditorPath.Code).Single(), 16, 16);
+                                EditorGUI.BeginChangeCheck();
                                 listOfMethods[index].scope = (AccessModifier)EditorGUILayout.EnumPopup("Scope", listOfMethods[index].scope);
+                                shouldUpdate = EditorGUI.EndChangeCheck();
                                 EditorGUILayout.EndHorizontal();
+                                EditorGUI.BeginChangeCheck();
                                 listOfMethods[index].modifier = (MethodModifier)EditorGUILayout.EnumPopup("Modifier", listOfMethods[index].modifier);
+                                shouldUpdate = EditorGUI.EndChangeCheck();
 
                                 GUIContent TypebuilderButtonContent = new GUIContent(
                                     (methods[index]["returnType"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
@@ -1490,8 +1770,21 @@ namespace Unity.VisualScripting.Community
                                 var lastRect = GUILayoutUtility.GetLastRect();
                                 if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                                 {
-                                    TypeBuilderWindow.ShowWindow(lastRect, methods[index]["returnType"]);
-                                    methods[index]["returnType"].valueChanged += (val) => GraphWindow.active?.context?.DescribeAndAnalyze();
+                                    TypeBuilderWindow.ShowWindow(lastRect, methods[index]["returnType"], true, null, () =>
+                                    {
+                                        Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Changed Method Return Type");
+                                        shouldUpdate = true;
+                                    });
+                                    if (!subscribedEvents.ContainsKey(methods[index]["returnType"]))
+                                    {
+                                        subscribedEvents[methods[index]["returnType"]] = new HashSet<int>();
+                                    }
+
+                                    if (!subscribedEvents[methods[index]["returnType"]].Contains(0))
+                                    {
+                                        methods[index]["returnType"].valueChanged += (val) => GraphWindow.active?.context?.DescribeAndAnalyze();
+                                        subscribedEvents[methods[index]["returnType"]].Add(0);
+                                    }
                                 }
                                 GUILayout.EndHorizontal();
 
@@ -1503,7 +1796,7 @@ namespace Unity.VisualScripting.Community
                                     GUILayout.Label("Attributes");
                                 }, () =>
                                 {
-                                    DrawAttributes(methods[index]["attributes"], listOfMethods[index].attributes, AttributeUsageType.Method);
+                                    DrawAttributes(methods[index]["attributes"], listOfMethods[index].attributes, AttributeUsageType.Method, listOfMethods[index], "Changed Method Attribute Type");
                                 });
 
                                 GUILayout.Space(4);
@@ -1515,7 +1808,7 @@ namespace Unity.VisualScripting.Community
                                 }, () =>
                                 {
                                     var paramMeta = methods[index]["parameters"];
-                                    DrawParameters(paramMeta, listOfMethods[index].graph.units[0] as FunctionNode);
+                                    DrawParameters(paramMeta, listOfMethods[index], listOfMethods[index].graph.units[0] as FunctionNode);
                                 });
                             }, true, false);
                         });
@@ -1525,14 +1818,25 @@ namespace Unity.VisualScripting.Community
 
                     if (GUILayout.Button("+ Add Method"))
                     {
-                        var declaration = CreateInstance<TMethodDeclaration>();
-                        if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
-                        if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
-                        declaration.hideFlags = HideFlags.HideInHierarchy;
-                        AssetDatabase.AddObjectToAsset(declaration, Target);
-                        listOfMethods.Add(declaration);
-                        var functionUnit = new FunctionNode(FunctionType.Method);
+                        // Register undo for the parent object (Target)
+                        Undo.RegisterCompleteObjectUndo(Target, "Added Method");
 
+                        var declaration = CreateInstance<TMethodDeclaration>();
+
+                        if (Target.GetType() == typeof(ClassAsset))
+                            declaration.classAsset = Target as ClassAsset;
+                        if (Target.GetType() == typeof(StructAsset))
+                            declaration.structAsset = Target as StructAsset;
+
+                        declaration.hideFlags = HideFlags.HideInHierarchy;
+
+                        AssetDatabase.AddObjectToAsset(declaration, Target);
+                        Undo.RegisterCreatedObjectUndo(declaration, "Created Method");
+
+                        listOfMethods.Add(declaration);
+
+                        var functionUnit = new FunctionNode(FunctionType.Method);
+                        shouldUpdate = true;
                         functionUnit.methodDeclaration = declaration;
                         declaration.graph.units.Add(functionUnit);
 
@@ -1584,22 +1888,31 @@ namespace Unity.VisualScripting.Community
                         listOfVariables[index].opened = HUMEditor.Foldout(listOfVariables[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
                             GraphWindow.active?.context?.BeginEdit();
-                            HUMEditor.Changed(() =>
+
+                            EditorGUI.BeginChangeCheck();
+                            var fieldName = GUILayout.TextField(listOfVariables[index].name);
+                            if (EditorGUI.EndChangeCheck())
                             {
-                                listOfVariables[index].FieldName = GUILayout.TextField(listOfVariables[index].name);
+                                int undoGroup = Undo.GetCurrentGroup();
+                                Undo.SetCurrentGroupName("Changed Variable Name");
+
+                                Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Name");
+                                listOfVariables[index].FieldName = fieldName.LegalMemberName();
                                 listOfVariables[index].name = listOfVariables[index].FieldName;
-                            }, () =>
-                            {
-                                listOfVariables[index].name = listOfVariables[index].name.LegalMemberName();
+                                Undo.RegisterCompleteObjectUndo(listOfVariables[index].getter, "Changed Variable Name");
+                                listOfVariables[index].getter.name = listOfVariables[index].name + " Getter";
+                                Undo.RegisterCompleteObjectUndo(listOfVariables[index].setter, "Changed Variable Name");
+                                listOfVariables[index].setter.name = listOfVariables[index].name + " Setter";
+                                Undo.CollapseUndoOperations(undoGroup);
                                 var getterFunctionUnit = listOfVariables[index].getter.graph.units[0] as FunctionNode;
                                 var setterFunctionUnit = listOfVariables[index].setter.graph.units[0] as FunctionNode;
-                                listOfVariables[index].getter.name = listOfVariables[index].name + " Getter";
-                                listOfVariables[index].setter.name = listOfVariables[index].name + " Setter";
                                 getterFunctionUnit.Define();
                                 getterFunctionUnit.Describe();
                                 setterFunctionUnit.Define();
                                 setterFunctionUnit.Describe();
-                            });
+                                shouldUpdate = true;
+                            }
+
                             GraphWindow.active?.context?.EndEdit();
 
                             if (typeof(TMemberTypeAsset) == typeof(ClassAsset) && (listOfVariables[index].getter.classAsset == null || listOfVariables[index].setter.classAsset == null))
@@ -1618,14 +1931,18 @@ namespace Unity.VisualScripting.Community
                                 GenericMenu menu = new GenericMenu();
                                 menu.AddItem(new GUIContent("Delete"), false, (obj) =>
                                 {
+                                    Undo.RegisterCompleteObjectUndo(Target, "Deleted variable");
                                     variables.Remove(obj as TFieldDeclaration);
+                                    shouldUpdate = true;
                                 }, listOfVariables[index]);
 
                                 if (index > 0)
                                 {
                                     menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
                                     {
+                                        Undo.RegisterCompleteObjectUndo(Target, "Moved Variable Up");
                                         MoveItemUp(listOfVariables, index);
+                                        shouldUpdate = true;
                                     }, listOfVariables[index]);
                                 }
 
@@ -1633,7 +1950,9 @@ namespace Unity.VisualScripting.Community
                                 {
                                     menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
                                     {
+                                        Undo.RegisterCompleteObjectUndo(Target, "Moved Variable Down");
                                         MoveItemDown(listOfVariables, index);
+                                        shouldUpdate = true;
                                     }, listOfVariables[index]);
                                 }
                                 menu.ShowAsContext();
@@ -1644,15 +1963,36 @@ namespace Unity.VisualScripting.Community
                             {
                                 EditorGUILayout.BeginHorizontal();
                                 //HUMEditor.Image(PathUtil.Load("scope_32", CommunityEditorPath.Code).Single(), 16, 16);
-                                listOfVariables[index].scope = (AccessModifier)EditorGUILayout.EnumPopup("Scope", listOfVariables[index].scope);
+                                EditorGUI.BeginChangeCheck();
+                                var scope = (AccessModifier)EditorGUILayout.EnumPopup("Scope", listOfVariables[index].scope);
+                                if (EditorGUI.EndChangeCheck())
+                                {
+                                    Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Scope");
+                                    shouldUpdate = true;
+                                    listOfVariables[index].scope = scope;
+                                }
                                 EditorGUILayout.EndHorizontal();
                                 if (!listOfVariables[index].isProperty)
                                 {
-                                    listOfVariables[index].fieldModifier = (FieldModifier)EditorGUILayout.EnumPopup("Modifier", listOfVariables[index].fieldModifier);
+                                    EditorGUI.BeginChangeCheck();
+                                    var fieldModifier = (FieldModifier)EditorGUILayout.EnumPopup("Modifier", listOfVariables[index].fieldModifier);
+                                    if (EditorGUI.EndChangeCheck())
+                                    {
+                                        Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Modifier");
+                                        shouldUpdate = true;
+                                        listOfVariables[index].fieldModifier = fieldModifier;
+                                    }
                                 }
                                 else
                                 {
-                                    listOfVariables[index].propertyModifier = (PropertyModifier)EditorGUILayout.EnumPopup("Modifier", listOfVariables[index].propertyModifier);
+                                    EditorGUI.BeginChangeCheck();
+                                    var propertyModifier = (PropertyModifier)EditorGUILayout.EnumPopup("Modifier", listOfVariables[index].propertyModifier);
+                                    if (EditorGUI.EndChangeCheck())
+                                    {
+                                        Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Modifier");
+                                        shouldUpdate = true;
+                                        listOfVariables[index].propertyModifier = propertyModifier;
+                                    }
                                 }
 
                                 GUIContent TypebuilderButtonContent = new GUIContent(
@@ -1665,7 +2005,11 @@ namespace Unity.VisualScripting.Community
                                 var lastRect = GUILayoutUtility.GetLastRect();
                                 if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                                 {
-                                    TypeBuilderWindow.ShowWindow(lastRect, variables[index]["type"]);
+                                    TypeBuilderWindow.ShowWindow(lastRect, variables[index]["type"], true, null, () =>
+                                    {
+                                        Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Type");
+                                        shouldUpdate = true;
+                                    });
                                 }
                                 GUILayout.EndHorizontal();
 
@@ -1674,38 +2018,47 @@ namespace Unity.VisualScripting.Community
                                     if (!listOfVariables[index].isProperty || (listOfVariables[index].get && !(listOfVariables[index].getter.graph.units[0] as FunctionNode).invoke.hasValidConnection) ||
                                     (listOfVariables[index].set && !(listOfVariables[index].setter.graph.units[0] as FunctionNode).invoke.hasValidConnection))
                                     {
-                                        variables[index]["type"].valueChanged += (type) =>
+                                        if (!subscribedEvents.ContainsKey(variables[index]["type"]))
                                         {
-                                            GraphWindow.active?.context?.DescribeAndAnalyze();
-                                            variables[index]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
-                                            if (variables[index]["defaultValue"].value?.GetType() == type as Type)
-                                            {
-                                                return;
-                                            }
+                                            subscribedEvents[variables[index]["type"]] = new HashSet<int>();
+                                        }
 
-                                            if (type == null)
+                                        if (!subscribedEvents[variables[index]["type"]].Contains(i))
+                                        {
+                                            variables[index]["type"].valueChanged += (type) =>
                                             {
-                                                variables[index]["defaultValue"].value = null;
-                                            }
-                                            else if (ConversionUtility.CanConvert(variables[index]["defaultValue"].value, type as Type, true))
-                                            {
-                                                variables[index]["defaultValue"].value = ConversionUtility.Convert(variables[index]["defaultValue"].value, type as Type);
-                                            }
-                                            else
-                                            {
-                                                variables[index]["defaultValue"].value = (type as Type).Default();
-                                            }
+                                                GraphWindow.active?.context?.DescribeAndAnalyze();
+                                                variables[index]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
+                                                if (variables[index]["defaultValue"].value?.GetType() == type as Type)
+                                                {
+                                                    return;
+                                                }
 
-                                            variables[index]["defaultValue"].InferOwnerFromParent();
-                                        };
+                                                if (type == null)
+                                                {
+                                                    variables[index]["defaultValue"].value = null;
+                                                }
+                                                else if (ConversionUtility.CanConvert(variables[index]["defaultValue"].value, type as Type, true))
+                                                {
+                                                    variables[index]["defaultValue"].value = ConversionUtility.Convert(variables[index]["defaultValue"].value, type as Type);
+                                                }
+                                                else
+                                                {
+                                                    variables[index]["defaultValue"].value = (type as Type).Default();
+                                                }
 
+                                                variables[index]["defaultValue"].InferOwnerFromParent();
+                                                shouldUpdate = true;
+                                            };
+                                            subscribedEvents[variables[index]["type"]].Add(i);
+                                        }
                                         var inspector = variables[index]["defaultValue"].Inspector();
                                         typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
                                         Inspector.BeginBlock(variables[index]["defaultValue"], new Rect(10, 10, 10, 10));
                                         inspector.DrawLayout(new GUIContent("Value               "));
                                         if (Inspector.EndBlock(variables[index]["defaultValue"]))
                                         {
-                                            variables[index]["defaultValue"].RecordUndo();
+                                            Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Default Value");
                                             shouldUpdate = true;
                                         }
                                     }
@@ -1719,7 +2072,7 @@ namespace Unity.VisualScripting.Community
                                     GUILayout.Label("Attributes");
                                 }, () =>
                                 {
-                                    DrawAttributes(variables[index]["attributes"], listOfVariables[index].attributes, listOfVariables[index].isProperty ? AttributeUsageType.Property : AttributeUsageType.Field);
+                                    DrawAttributes(variables[index]["attributes"], listOfVariables[index].attributes, listOfVariables[index].isProperty ? AttributeUsageType.Property : AttributeUsageType.Field, listOfVariables[index], "Changed Variable Attribute Type");
                                 });
 
                                 GUILayout.Space(4);
@@ -1727,7 +2080,13 @@ namespace Unity.VisualScripting.Community
                                 listOfVariables[index].propertyOpened = HUMEditor.Foldout(listOfVariables[index].propertyOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                                 {
                                     HUMEditor.Image(PathUtil.Load("property_16", CommunityEditorPath.Code).Single(), 16, 16);
-                                    listOfVariables[index].isProperty = EditorGUILayout.ToggleLeft("Property", listOfVariables[index].isProperty);
+                                    EditorGUI.BeginChangeCheck();
+                                    var isProperty = EditorGUILayout.ToggleLeft("Property", listOfVariables[index].isProperty);
+                                    if (EditorGUI.EndChangeCheck())
+                                    {
+                                        Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Toggle variable property");
+                                        listOfVariables[index].isProperty = isProperty;
+                                    }
                                 }, () =>
                                 {
                                     HUMEditor.Disabled(!listOfVariables[index].isProperty, () =>
@@ -1739,11 +2098,18 @@ namespace Unity.VisualScripting.Community
                                                 HUMEditor.Changed(() =>
                                                 {
                                                     HUMEditor.Image(PathUtil.Load("getter_32", CommunityEditorPath.Code).Single(), 16, 16);
-                                                    listOfVariables[index].get = EditorGUILayout.ToggleLeft("Get", listOfVariables[index].get);
+                                                    EditorGUI.BeginChangeCheck();
+                                                    var get = EditorGUILayout.ToggleLeft("Get", listOfVariables[index].get);
+                                                    if (EditorGUI.EndChangeCheck())
+                                                    {
+                                                        Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Toggled Variable Get");
+                                                        listOfVariables[index].get = get;
+                                                    }
                                                 },
                                                 () =>
                                                 {
                                                     if (!listOfVariables[index].set) listOfVariables[index].get = true;
+                                                    shouldUpdate = true;
                                                 });
 
                                                 HUMEditor.Disabled(!listOfVariables[index].get, () =>
@@ -1756,7 +2122,13 @@ namespace Unity.VisualScripting.Community
 
                                                 HUMEditor.Disabled(!listOfVariables[index].get, () =>
                                                 {
-                                                    variables[index]["getterScope"].value = (AccessModifier)EditorGUILayout.EnumPopup((AccessModifier)variables[index]["getterScope"].value, GUILayout.Width(100));
+                                                    EditorGUI.BeginChangeCheck();
+                                                    var value = (AccessModifier)EditorGUILayout.EnumPopup((AccessModifier)variables[index]["getterScope"].value, GUILayout.Width(100));
+                                                    if (EditorGUI.EndChangeCheck())
+                                                    {
+                                                        Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Get Scope");
+                                                        variables[index]["getterScope"].value = value;
+                                                    }
                                                 });
                                             });
 
@@ -1765,11 +2137,18 @@ namespace Unity.VisualScripting.Community
                                                 HUMEditor.Changed(() =>
                                                 {
                                                     HUMEditor.Image(PathUtil.Load("setter_32", CommunityEditorPath.Code).Single(), 16, 16);
-                                                    listOfVariables[index].set = EditorGUILayout.ToggleLeft("Set", listOfVariables[index].set);
+                                                    EditorGUI.BeginChangeCheck();
+                                                    var set = EditorGUILayout.ToggleLeft("Set", listOfVariables[index].set);
+                                                    if (EditorGUI.EndChangeCheck())
+                                                    {
+                                                        Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Toggled Variable Set");
+                                                        listOfVariables[index].set = set;
+                                                    }
                                                 },
                                                 () =>
                                                 {
                                                     if (!listOfVariables[index].set) listOfVariables[index].get = true;
+                                                    shouldUpdate = true;
                                                 });
 
                                                 HUMEditor.Disabled(!listOfVariables[index].set, () =>
@@ -1782,7 +2161,13 @@ namespace Unity.VisualScripting.Community
 
                                                 HUMEditor.Disabled(!listOfVariables[index].set, () =>
                                                 {
-                                                    listOfVariables[index].setterScope = (AccessModifier)EditorGUILayout.EnumPopup(listOfVariables[index].setterScope, GUILayout.Width(100));
+                                                    EditorGUI.BeginChangeCheck();
+                                                    var setterScope = (AccessModifier)EditorGUILayout.EnumPopup(listOfVariables[index].setterScope, GUILayout.Width(100));
+                                                    if (EditorGUI.EndChangeCheck())
+                                                    {
+                                                        Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Set Scope");
+                                                        listOfVariables[index].setterScope = setterScope;
+                                                    }
                                                 });
                                             });
                                         }, true, false);
@@ -1797,12 +2182,25 @@ namespace Unity.VisualScripting.Community
 
                     if (GUILayout.Button("+ Add Variable"))
                     {
+                        int undoGroup = Undo.GetCurrentGroup();
+                        Undo.SetCurrentGroupName("Added Variable");
+
+                        Undo.RegisterCompleteObjectUndo(Target, "Added Variable");
+
                         var declaration = CreateInstance<TFieldDeclaration>();
-                        if (Target.GetType() == typeof(ClassAsset)) declaration.classAsset = Target as ClassAsset;
-                        if (Target.GetType() == typeof(StructAsset)) declaration.structAsset = Target as StructAsset;
+                        Undo.RegisterCreatedObjectUndo(declaration, "Created Variable");
+
+                        if (Target is ClassAsset classAsset)
+                            declaration.classAsset = classAsset;
+                        else if (Target is StructAsset structAsset)
+                            declaration.structAsset = structAsset;
+
                         var getter = CreateInstance<PropertyGetterMacro>();
+                        Undo.RegisterCreatedObjectUndo(getter, "Created Getter");
                         var setter = CreateInstance<PropertySetterMacro>();
-                        if (typeof(TMemberTypeAsset) == typeof(ClassAsset))
+                        Undo.RegisterCreatedObjectUndo(setter, "Created Setter");
+
+                        if (Target is ClassAsset)
                         {
                             getter.classAsset = Target as ClassAsset;
                             setter.classAsset = Target as ClassAsset;
@@ -1812,21 +2210,28 @@ namespace Unity.VisualScripting.Community
                             getter.structAsset = Target as StructAsset;
                             setter.structAsset = Target as StructAsset;
                         }
+
                         AssetDatabase.AddObjectToAsset(declaration, Target);
                         AssetDatabase.AddObjectToAsset(getter, Target);
                         AssetDatabase.AddObjectToAsset(setter, Target);
+
                         listOfVariables.Add(declaration);
-                        var functionGetterUnit = new FunctionNode(FunctionType.Getter);
-                        var functionSetterUnit = new FunctionNode(FunctionType.Setter);
-                        functionGetterUnit.fieldDeclaration = declaration;
-                        functionSetterUnit.fieldDeclaration = declaration;
+
+                        var functionGetterUnit = new FunctionNode(FunctionType.Getter) { fieldDeclaration = declaration };
+                        var functionSetterUnit = new FunctionNode(FunctionType.Setter) { fieldDeclaration = declaration };
+
                         declaration.getter = getter;
                         declaration.setter = setter;
                         declaration.getter.graph.units.Add(functionGetterUnit);
                         declaration.setter.graph.units.Add(functionSetterUnit);
+
                         declaration.hideFlags = HideFlags.HideInHierarchy;
                         getter.hideFlags = HideFlags.HideInHierarchy;
                         setter.hideFlags = HideFlags.HideInHierarchy;
+
+                        Undo.CollapseUndoOperations(undoGroup);
+
+                        shouldUpdate = true;
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();
                     }

@@ -4,7 +4,8 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community
 {
     [Widget(typeof(Arrow))]
-    public class ArrowNode : UnitWidget<Arrow>
+    [RenamedFrom("Unity.VisualScripting.Community.ArrowNode")]
+    public class ArrowWidget : UnitWidget<Arrow>
     {
         private const float arrowWidth = 10f;
         private const float arrowHeight = 10f;
@@ -12,7 +13,7 @@ namespace Unity.VisualScripting.Community
         private const float DottedLineWidths = 4f;
         private const float unitSquareSize = 4f; // Adjust this value to control the size of the unit square
 
-        public ArrowNode(FlowCanvas canvas, Arrow unit) : base(canvas, unit)
+        public ArrowWidget(FlowCanvas canvas, Arrow unit) : base(canvas, unit)
         {
         }
 

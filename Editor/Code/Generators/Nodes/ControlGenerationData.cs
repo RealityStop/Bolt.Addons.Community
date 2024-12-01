@@ -124,6 +124,7 @@ namespace Unity.VisualScripting.Community
 
         public bool ContainsNameInAnyScope(string name)
         {
+            if (string.IsNullOrEmpty(name)) return false;
             foreach (var scope in scopes)
             {
                 if (scope.scopeVariables.ContainsKey(name)) return true;

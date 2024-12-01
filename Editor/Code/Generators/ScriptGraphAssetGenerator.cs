@@ -168,7 +168,7 @@ namespace Unity.VisualScripting.Community
                     var data = new ControlGenerationData();
                     data.ScriptType = typeof(MonoBehaviour);
                     data.returns = eventUnit.coroutine ? typeof(IEnumerator) : typeof(void);
-                    data.AddLocalNameInScope("args");
+                    data.AddLocalNameInScope("args", typeof(CustomEventArgs));
                     foreach (VariableDeclaration variable in Data.graph.variables)
                     {
                         data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
@@ -203,7 +203,7 @@ namespace Unity.VisualScripting.Community
                         }
 
                         var parameters = GetMethodParameters(unit);
-                        data.AddLocalNameInScope(parameters.parameterName);
+                        data.AddLocalNameInScope(parameters.paramInfo.parameterName, parameters.paramInfo.parameterType);
 
                         if (unit.controlOutputs.Any(output => output.key == "trigger"))
                         {
@@ -245,7 +245,7 @@ namespace Unity.VisualScripting.Community
                             data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
                         };
                         var parameters = GetMethodParameters(unit);
-                        data.AddLocalNameInScope(parameters.parameterName);
+                        data.AddLocalNameInScope(parameters.paramInfo.parameterName, parameters.paramInfo.parameterType);
                         if (unit is Update update && !addedTimerCode)
                         {
                             addedTimerCode = true;
@@ -259,7 +259,7 @@ namespace Unity.VisualScripting.Community
                         }
                         else
                         {
-                            if (unit.controlOutputs.First().hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                            if (unit.controlOutputs.Count > 0 && unit.controlOutputs.First().hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
                         }
                     }
                     else if (methods.TryGetValue(GetMethodName(unit), out var method))
@@ -291,8 +291,7 @@ namespace Unity.VisualScripting.Community
         private string GetCustomEventRunnerCode(CustomEvent eventUnit, ControlGenerationData data)
         {
             var output = "";
-            var generator = NodeGenerator.GetSingleDecorator(eventUnit, eventUnit);
-            output += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(eventUnit, "if ".ControlHighlight() + $"({"args".VariableHighlight()}.name == ") + generator.GenerateValue(eventUnit.name, data) + CodeUtility.MakeSelectable(eventUnit, ")") + "\n";
+            output += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(eventUnit, "if ".ControlHighlight() + $"({"args".VariableHighlight()}.name == ") + eventUnit.GenerateValue(eventUnit.name, data) + CodeUtility.MakeSelectable(eventUnit, ")") + "\n";
             output += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(eventUnit, "{") + "\n";
             output += CodeBuilder.Indent(3) + (eventUnit.coroutine ? CodeUtility.MakeSelectable(eventUnit, $"StartCoroutine(") + GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, $"({"args".VariableHighlight()}));") : GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, $"({"args".VariableHighlight()});"));
             output += "\n" + CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(eventUnit, "}") + "\n";
@@ -351,7 +350,7 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            var methodBody = variablesCode + NodeGenerator.GetSingleDecorator(eventUnit as Unit, eventUnit as Unit).GenerateControl(null, data, 2);
+            var methodBody = variablesCode + (eventUnit as Unit).GenerateControl(null, data, 2);
 
             return methodBody;
         }
@@ -374,36 +373,37 @@ namespace Unity.VisualScripting.Community
             return $"\n" + CodeBuilder.Indent(1) + CodeUtility.MakeSelectable(unit, accessModifier.AsString().ConstructHighlight() + $" {returnType} ") + $"{methodName.Replace(" ", "")}";
         }
 
-        private (string parameterSignature, string parameterName) GetMethodParameters(IEventUnit eventUnit)
+        private (string parameterSignature, (Type parameterType, string parameterName) paramInfo) GetMethodParameters(IEventUnit eventUnit)
         {
-            Dictionary<Type, (string parameterSignature, string parameterName)> parameterMappings = new Dictionary<Type, (string, string)>
+            Dictionary<Type, (string parameterSignature, (Type parameterType, string parameterName))> parameterMappings = new Dictionary<Type, (string, (Type parameterType, string parameterName))>
             {
-                { typeof(OnCollisionEnter), ("Collision ".TypeHighlight() + "collision".VariableHighlight(), "collision") },
-                { typeof(OnCollisionExit), ("Collision ".TypeHighlight() + "collision".VariableHighlight(), "collision") },
-                { typeof(OnCollisionStay), ("Collision ".TypeHighlight() + "collision".VariableHighlight(), "collision") },
-                { typeof(OnJointBreak), ("float ".ConstructHighlight() + "breakForce".VariableHighlight(), "breakForce") },
-                { typeof(OnCollisionEnter2D), ("Collision2D ".TypeHighlight() + "collision".VariableHighlight(), "collision") },
-                { typeof(OnCollisionExit2D), ("Collision2D ".TypeHighlight() + "collision".VariableHighlight(), "collision") },
-                { typeof(OnCollisionStay2D), ("Collision2D ".TypeHighlight() + "collision".VariableHighlight(), "collision") },
-                { typeof(OnJointBreak2D), ("Joint2D ".TypeHighlight() + "brokenJoint".VariableHighlight(), "brokenJoint") },
-                { typeof(OnTriggerEnter), ("Collider ".TypeHighlight() + "other".VariableHighlight(), "other") },
-                { typeof(OnTriggerEnter2D), ("Collider2D ".TypeHighlight() + "other".VariableHighlight(), "other") },
-                { typeof(OnTriggerExit), ("Collider ".TypeHighlight() + "other".VariableHighlight(), "other") },
-                { typeof(OnTriggerStay), ("Collider ".TypeHighlight() + "other".VariableHighlight(), "other") },
-                { typeof(OnTriggerExit2D), ("Collider2D ".TypeHighlight() + "other".VariableHighlight(), "other") },
-                { typeof(OnTriggerStay2D), ("Collider2D ".TypeHighlight() + "other".VariableHighlight(), "other") },
-                { typeof(OnControllerColliderHit), ("ControllerColliderHit ".TypeHighlight() + "hitData".VariableHighlight(), "hitData") },
-                { typeof(OnApplicationFocus), ("bool ".ConstructHighlight() + "focusStatus".VariableHighlight(), "focusStatus") },
-                { typeof(OnApplicationPause), ("bool ".ConstructHighlight() + "pauseStatus".VariableHighlight(), "pauseStatus") },
-                { typeof(CustomEvent), ("CustomEventArgs ".TypeHighlight() + "args".VariableHighlight(), "args") }
+                { typeof(OnCollisionEnter), ("Collision ".TypeHighlight() + "collision".VariableHighlight(), (typeof(Collision), "collision")) },
+                { typeof(OnCollisionExit), ("Collision ".TypeHighlight() + "collision".VariableHighlight(), (typeof(Collision), "collision")) },
+                { typeof(OnCollisionStay), ("Collision ".TypeHighlight() + "collision".VariableHighlight(), (typeof(Collision), "collision")) },
+                { typeof(OnJointBreak), ("float ".ConstructHighlight() + "breakForce".VariableHighlight(), (typeof(float), "breakForce")) },
+                { typeof(OnCollisionEnter2D), ("Collision2D ".TypeHighlight() + "collision".VariableHighlight(), (typeof(Collision2D), "collision")) },
+                { typeof(OnCollisionExit2D), ("Collision2D ".TypeHighlight() + "collision".VariableHighlight(), (typeof(Collision2D), "collision")) },
+                { typeof(OnCollisionStay2D), ("Collision2D ".TypeHighlight() + "collision".VariableHighlight(), (typeof(Collision2D), "collision")) },
+                { typeof(OnJointBreak2D), ("Joint2D ".TypeHighlight() + "brokenJoint".VariableHighlight(), (typeof(Joint2D), "brokenJoint")) },
+                { typeof(OnTriggerEnter), ("Collider ".TypeHighlight() + "other".VariableHighlight(), (typeof(Collider), "other")) },
+                { typeof(OnTriggerEnter2D), ("Collider2D ".TypeHighlight() + "other".VariableHighlight(), (typeof(Collider2D), "other")) },
+                { typeof(OnTriggerExit), ("Collider ".TypeHighlight() + "other".VariableHighlight(), (typeof(Collider), "other")) },
+                { typeof(OnTriggerStay), ("Collider ".TypeHighlight() + "other".VariableHighlight(), (typeof(Collider), "other")) },
+                { typeof(OnTriggerExit2D), ("Collider2D ".TypeHighlight() + "other".VariableHighlight(), (typeof(Collider2D), "other")) },
+                { typeof(OnTriggerStay2D), ("Collider2D ".TypeHighlight() + "other".VariableHighlight(), (typeof(Collider2D), "other")) },
+                { typeof(OnControllerColliderHit), ("ControllerColliderHit ".TypeHighlight() + "hitData".VariableHighlight(), (typeof(ControllerColliderHit), "hitData")) },
+                { typeof(OnApplicationFocus), ("bool ".ConstructHighlight() + "focusStatus".VariableHighlight(), (typeof(bool), "focusStatus")) },
+                { typeof(OnApplicationPause), ("bool ".ConstructHighlight() + "pauseStatus".VariableHighlight(), (typeof(bool), "pauseStatus")) },
+                { typeof(CustomEvent), ("CustomEventArgs ".TypeHighlight() + "args".VariableHighlight(), (typeof(CustomEventArgs), "args")) }
             };
+
 
             if (parameterMappings.TryGetValue(eventUnit.GetType(), out var parameterInfo))
             {
                 return parameterInfo;
             }
 
-            return (string.Empty, string.Empty);
+            return (string.Empty, (null, string.Empty));
         }
 
         private class GraphMethodDecleration

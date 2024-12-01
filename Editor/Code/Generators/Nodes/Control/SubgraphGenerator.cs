@@ -14,7 +14,7 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
     public SubgraphGenerator(Unity.VisualScripting.SubgraphUnit unit) : base(unit)
     {
     }
-
+    
     private Dictionary<CustomEvent, int> customEventIds = new Dictionary<CustomEvent, int>();
 
     public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -75,7 +75,7 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
                     return "/* Custom Event units only work on monobehaviours */".WarningHighlight();
                 var generator = GetSingleDecorator(customEvent, customEvent);
                 var action = CodeUtility.MakeSelectable(customEvent, customEvent.coroutine ? $"({"args".VariableHighlight()}) => StartCoroutine({GetMethodName(customEvent)}({"args".VariableHighlight()}))" : GetMethodName(customEvent));
-                output += CodeBuilder.Indent(indent) + CodeBuilder.CallCSharpUtilityMethod(customEvent, CodeUtility.MakeSelectable(customEvent, nameof(CSharpUtility.RegisterCustomEvent)), generator.GenerateValue(customEvent.target, data), action) +  CodeUtility.MakeSelectable(customEvent, ";") + "\n";
+                output += CodeBuilder.Indent(indent) + CodeBuilder.CallCSharpUtilityMethod(customEvent, CodeUtility.MakeSelectable(customEvent, nameof(CSharpUtility.RegisterCustomEvent)), generator.GenerateValue(customEvent.target, data), action) + CodeUtility.MakeSelectable(customEvent, ";") + "\n";
                 var returnType = customEvent.coroutine ? typeof(IEnumerator) : typeof(void);
                 output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(customEvent, returnType.As().CSharpName(false, true) + " " + GetMethodName(customEvent) + "(" + "CustomEventArgs ".TypeHighlight() + "args".VariableHighlight() + ")") + "\n";
                 output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(customEvent, "{") + "\n";

@@ -9,11 +9,12 @@ namespace RealityStop.LinkMerge
     using UnityEditor;
     using UnityEditor.Build;
     using UnityEditor.Build.Reporting;
+    using UnityEditor.Callbacks;
     using UnityEditor.PackageManager;
     using UnityEditor.PackageManager.Requests;
     using UnityEngine;
 
-    public class PackagesLinkXmlExtractor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
+    public class PackagesLinkXmlExtractor : IPreprocessBuildWithReport
     {
         public string TemporaryFolder => $"{Application.dataPath}/Temporary-Build/";
 
@@ -32,11 +33,7 @@ namespace RealityStop.LinkMerge
             await CreateMergedLinkFromPackages();
         }
 
-        public void OnPostprocessBuild(BuildReport report)
-        {
-            Cleanup();
-        }
-
+        [PostProcessBuild]
         private void Cleanup()
         {
             if (File.Exists(LinkFilePath))

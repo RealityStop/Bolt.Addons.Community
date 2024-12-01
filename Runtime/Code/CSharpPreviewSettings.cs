@@ -20,6 +20,7 @@ namespace Unity.VisualScripting.Community
         public bool isInitalized = false;
         public bool ShowSubgraphComment = true;
         public bool ShowRecommendations = true;
+        public bool ShowTooltips = true;
 
         public void Initalize()
         {

@@ -28,7 +28,7 @@ public class TimerGenerator : VariableNodeGenerator<Timer>
         variableName = Name;
         if (data.ScriptType != typeof(MonoBehaviour))
         {
-            return MakeSelectableForThisUnit(CodeUtility.ToolTip("Timers only work with ScriptGraphAssets or a ClassAsset that inherits MonoBehaviour", "/* Could not generate Timer (Hover for more info) */".WarningHighlight()));
+            return CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit(CodeUtility.ToolTip("Timers only work with ScriptGraphAssets or a ClassAsset that inherits MonoBehaviour",  "Could not generate Timer", ""));
         }
 
         var output = string.Empty;

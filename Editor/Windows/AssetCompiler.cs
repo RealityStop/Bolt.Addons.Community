@@ -14,6 +14,8 @@ namespace Unity.VisualScripting.Community
     public static class AssetCompiler
     {
         private static readonly Dictionary<Assembly, bool> _editorAssemblyCache = new Dictionary<Assembly, bool>();
+
+        [MenuItem("Addons/Compile All")]
         public static void Compile()
         {
             var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
@@ -89,6 +91,7 @@ namespace Unity.VisualScripting.Community
             AssetDatabase.Refresh();
         }
 
+        [MenuItem("Addons/Compile Selected")]
         public static void CompileSelected()
         {
             var assets = Selection.GetFiltered<CodeAsset>(SelectionMode.Assets).ToList();

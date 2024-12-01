@@ -55,8 +55,24 @@ namespace Unity.VisualScripting.Community
             {
                 warningPresent = EditorPrefs.GetBool("Bolt.Addons.Community.Code.Warning_Present");
             }
-
+            Undo.undoRedoPerformed += RefreshPreview;
             shouldUpdate = true;
+        }
+
+        void RefreshPreview()
+        {
+            if (CSharpPreviewWindow.instance != null)
+            {
+                if (CSharpPreviewWindow.instance.showCodeWindow)
+                {
+                    CSharpPreviewWindow.instance.UpdateCodeDisplay();
+                }
+            }
+        }
+
+        void OnDisable()
+        {
+            Undo.undoRedoPerformed -= RefreshPreview;
         }
 
         protected virtual void AfterCategoryGUI() { }
@@ -73,18 +89,35 @@ namespace Unity.VisualScripting.Community
                 HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
                 {
                     EditorGUILayout.LabelField("Title", GUILayout.Width(80));
-                    Target.title = EditorGUILayout.TextField(Target.title);
+
+                    EditorGUI.BeginChangeCheck();
+                    string newTitle = EditorGUILayout.TextField(Target.title);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RegisterCompleteObjectUndo(Target, "Change Asset Title");
+                        Target.title = newTitle;
+                        EditorUtility.SetDirty(Target);
+                        shouldUpdate = true;
+                    }
                 });
                 GraphWindow.active?.context?.EndEdit();
             }
-
 
             if (showCategory)
             {
                 HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
                 {
                     EditorGUILayout.LabelField("Category", GUILayout.Width(80));
-                    Target.category = EditorGUILayout.TextField(Target.category);
+
+                    EditorGUI.BeginChangeCheck();
+                    string newCategory = EditorGUILayout.TextField(Target.category);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RegisterCompleteObjectUndo(Target, "Change Asset Category");
+                        Target.category = newCategory;
+                        EditorUtility.SetDirty(Target);
+                        shouldUpdate = true;
+                    }
                 });
             }
         }
@@ -156,8 +189,6 @@ namespace Unity.VisualScripting.Community
             }
 
             shouldUpdate = false;
-
-            EditorUtility.SetDirty(Target);
             serializedObject.ApplyModifiedProperties();
         }
     }

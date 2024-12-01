@@ -98,7 +98,7 @@ namespace Unity.VisualScripting.Community
                 {
                     @class.AddUsings(ProcessGraphUnits(constructorData.graph, @class));
                     var generationData = CreateGenerationData(typeof(void));
-                    constructor.Body(FunctionNodeGenerator.GetSingleDecorator(constructorData.graph.units[0] as Unit, constructorData.graph.units[0] as Unit).GenerateControl(null, generationData, 0));
+                    constructor.Body((constructorData.graph.units[0] as Unit).GenerateControl(null, generationData, 0));
 
                     foreach (var param in parameters)
                     {
@@ -154,7 +154,7 @@ namespace Unity.VisualScripting.Community
                         }
                         @class.AddUsings(ProcessGraphUnits(methodData.graph, @class));
                         var unit = methodData.graph.units[0] as FunctionNode;
-                        method.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, generationData, 0));
+                        method.Body(unit.GenerateControl(null, generationData, 0));
 
                         foreach (var param in methodData.parameters)
                         {
@@ -222,7 +222,7 @@ namespace Unity.VisualScripting.Community
             {
                 var generationData = CreateGenerationData(variableData.type);
                 @class.AddUsings(ProcessGraphUnits(variableData.getter.graph, @class));
-                property.MultiStatementGetter(variableData.getterScope, NodeGenerator.GetSingleDecorator(variableData.getter.graph.units[0] as Unit, variableData.getter.graph.units[0] as Unit).GenerateControl(null, generationData, 0));
+                property.MultiStatementGetter(variableData.getterScope, (variableData.getter.graph.units[0] as Unit).GenerateControl(null, generationData, 0));
             }
 
             // Handle setter
@@ -230,7 +230,7 @@ namespace Unity.VisualScripting.Community
             {
                 @class.AddUsings(ProcessGraphUnits(variableData.setter.graph, @class));
                 var generationData = CreateGenerationData(typeof(void));
-                property.MultiStatementSetter(variableData.setterScope, NodeGenerator.GetSingleDecorator(variableData.setter.graph.units[0] as Unit, variableData.setter.graph.units[0] as Unit).GenerateControl(null, generationData, 0));
+                property.MultiStatementSetter(variableData.setterScope, (variableData.setter.graph.units[0] as Unit).GenerateControl(null, generationData, 0));
             }
 
             @class.AddProperty(property);
@@ -311,7 +311,7 @@ namespace Unity.VisualScripting.Community
             generationData.returns = returnType;
             foreach (var variable in Data.variables)
             {
-                generationData.AddLocalNameInScope(variable.FieldName);
+                generationData.AddLocalNameInScope(variable.FieldName, variable.type);
             }
             return generationData;
         }
@@ -397,7 +397,7 @@ namespace Unity.VisualScripting.Community
 
                 foreach (var variable in Data.variables)
                 {
-                    methodGenerator.Data.AddLocalNameInScope(variable.FieldName);
+                    methodGenerator.Data.AddLocalNameInScope(variable.FieldName, variable.type);
                 }
 
                 method.Body(methodGenerator.MethodBody);

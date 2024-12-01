@@ -19,10 +19,9 @@ namespace Unity.VisualScripting
 
         private IFuzzyOptionTree GetOptions()
         {
-            var alltypes = Codebase.settingsAssemblies
-                .SelectMany(a => a.GetTypes()
+            var alltypes = Codebase.settingsAssembliesTypes
                     .Where(type => typeof(IDefinedEvent).IsAssignableFrom(type) && type != typeof(IDefinedEvent))
-                    .ToArray());
+                    .ToArray();
             return new TypeOptionTree(alltypes);
         }
 
@@ -57,12 +56,12 @@ namespace Unity.VisualScripting
                 EditorGUIUtility.singleLineHeight
                 );
 
-            var newType = LudiqGUI.TypeField(fieldPosition, GUIContent.none, definedEventType.type, GetOptions);
+            var newType = LudiqGUI.TypeField(fieldPosition, GUIContent.none, definedEventType.type, GetOptions, new GUIContent("(No Type)"));
 
             if (EndBlock(metadata))
             {
                 metadata.RecordUndo();
-                definedEventType.type = newType;
+                metadata.value = new IDefinedEventType(newType);
             }
         }
     }

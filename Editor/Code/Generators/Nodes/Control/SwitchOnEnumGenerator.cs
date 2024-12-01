@@ -19,9 +19,9 @@ namespace Unity.VisualScripting.Community
             {
                 var values = Unit.enumType.GetEnumValues();
                 var outputs = Unit.outputs.ToArray();
-                var isLiteral = Unit.@enum.hasValidConnection && Unit.@enum.connection.source.unit is Literal literal;
+                var isLiteral = Unit.@enum.hasValidConnection && Unit.@enum.connection.source.unit is Literal;
                 var localName = string.Empty;
-                if (isLiteral) localName = data.AddLocalNameInScope("@enum");
+                if (isLiteral) localName = data.AddLocalNameInScope("@enum", (Unit.@enum.connection.source.unit as Literal).type);
                 var newLiteral = isLiteral ? CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("var ".ConstructHighlight() + localName + " = ") + ((Unit)Unit.@enum.connection.source.unit).GenerateValue(Unit.@enum.connection.source, data) + MakeSelectableForThisUnit(";") : string.Empty;
                 var @enum = Unit.@enum.hasValidConnection ? isLiteral ? MakeSelectableForThisUnit(localName) : ((Unit)Unit.@enum.connection.source.unit).GenerateValue(Unit.@enum.connection.source, data) : base.GenerateControl(input, data, indent);
 

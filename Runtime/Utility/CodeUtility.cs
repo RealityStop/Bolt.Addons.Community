@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
@@ -15,6 +16,8 @@ namespace Unity.VisualScripting.Community
         private static readonly ConcurrentDictionary<string, string> RemoveAllCache = new();
 
         private static readonly Dictionary<string, Regex> HighlightCodeRegexCache = new();
+
+        public static bool GenerateTooltips = true;
 
         public static string HighlightCode(string code, string unitId)
         {
@@ -75,12 +78,13 @@ namespace Unity.VisualScripting.Community
             return $"[CommunityAddonsCodeSelectable({unit})]{code}[CommunityAddonsCodeSelectableEnd({unit})]";
         }
 
-        public static string ToolTip(string ToolTip, string code)
+        public static string ToolTip(string ToolTip, string notifyString, string code, bool highlight = true)
         {
-            return $"[CommunityAddonsCodeToolTip({ToolTip})]{code}[CommunityAddonsCodeToolTipEnd]";
+            return GenerateTooltips ? $"[CommunityAddonsCodeToolTip({ToolTip})]{(highlight ? $"/* {notifyString} (Hover for more info) */".WarningHighlight() : $"/* {notifyString} (Hover for more info) */")}[CommunityAddonsCodeToolTipEnd] {code}" : code;
         }
 
         private static readonly Dictionary<string, string> ToolTipCache = new();
+        private static readonly Dictionary<string, string> AllToolTipCache = new();
         private static readonly Regex ToolTipRegex = new(@"\[CommunityAddonsCodeToolTip\((.*?)\)\](.*?)\[CommunityAddonsCodeToolTipEnd\]", RegexOptions.Compiled);
 
         public static string RemoveAllToolTipTags(string code)
@@ -95,6 +99,17 @@ namespace Unity.VisualScripting.Community
             return result;
         }
 
+        public static string RemoveAllToolTipTagsEntirely(string code)
+        {
+            if (AllToolTipCache.TryGetValue(code, out string result))
+            {
+                return result;
+            }
+
+            result = ToolTipRegex.Replace(code, string.Empty);
+            AllToolTipCache[code] = result;
+            return result;
+        }
 
         public static string ExtractTooltip(string code, out string tooltip)
         {
@@ -108,10 +123,21 @@ namespace Unity.VisualScripting.Community
             return code;
         }
 
+        private static readonly Regex RecommendationRegex = new(@"/\*\(Recommendation\) .*?\*/", RegexOptions.Compiled);
+
+        public static string RemoveRecommendations(string code)
+        {
+            return RecommendationRegex.Replace(code, string.Empty);
+        }
 
         public static string RemoveCustomHighlights(string highlightedCode)
         {
             return RemoveHighlightsRegex.Replace(highlightedCode, "$1");
+        }
+
+        public static string CleanCode(string code)
+        {
+            return RemoveAllSelectableTags(RemoveAllToolTipTagsEntirely(RemoveRecommendations(RemoveCustomHighlights(code))));
         }
 
         private static readonly Regex SelectableRegex = new Regex(@"\[CommunityAddonsCodeSelectable\((.*?)\)\]|\[CommunityAddonsCodeSelectableEnd\((.*?)\)\]", RegexOptions.Compiled);

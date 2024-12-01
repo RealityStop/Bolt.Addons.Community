@@ -59,22 +59,60 @@ namespace Unity.VisualScripting.Community
 
         protected override void OnExtendedOptionsGUI()
         {
-            Target.scriptableObject = EditorGUILayout.ToggleLeft("Scriptable Object", Target.scriptableObject);
+            EditorGUI.BeginChangeCheck();
+            var scriptableObject = EditorGUILayout.ToggleLeft("Scriptable Object", Target.scriptableObject);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RegisterCompleteObjectUndo(Target, "Toggled Asset Option 'ScriptableObject'");
+                Target.scriptableObject = scriptableObject;
+                EditorUtility.SetDirty(Target);
+                shouldUpdate = true;
+            }
             if (Target.scriptableObject)
             {
                 GUILayout.Label("Scriptable Object Menu Name");
-                Target.menuName = EditorGUILayout.TextField(Target.menuName);
+                EditorGUI.BeginChangeCheck();
+                var menuName = EditorGUILayout.TextField(Target.menuName);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RegisterCompleteObjectUndo(Target, "Edited Asset Option 'ScriptableObject' value 'Menu Name'");
+                    Target.menuName = menuName;
+                    EditorUtility.SetDirty(Target);
+                    shouldUpdate = true;
+                }
                 GUILayout.Label("Scriptable Object File Name");
-                Target.fileName = EditorGUILayout.TextField(Target.fileName);
+                EditorGUI.BeginChangeCheck();
+                var fileName = EditorGUILayout.TextField(Target.fileName);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RegisterCompleteObjectUndo(Target, "Edited Asset Option 'ScriptableObject' value 'File Name'");
+                    Target.fileName = fileName;
+                    EditorUtility.SetDirty(Target);
+                    shouldUpdate = true;
+                }
                 GUILayout.Label("Scriptable Object Menu Order");
-                Target.order = EditorGUILayout.IntField(Target.order);
+                EditorGUI.BeginChangeCheck();
+                var order = EditorGUILayout.IntField(Target.order);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RegisterCompleteObjectUndo(Target, "Edited Asset Option 'ScriptableObject' value 'Order'");
+                    Target.order = order;
+                    EditorUtility.SetDirty(Target);
+                    shouldUpdate = true;
+                }
             }
-
             if (Target.scriptableObject)
                 return;
 
-
-            Target.inheritsType = GUILayout.Toggle(Target.inheritsType, "Inherits Type");
+            EditorGUI.BeginChangeCheck();
+            var inheritsType = GUILayout.Toggle(Target.inheritsType, "Inherits Type");
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RegisterCompleteObjectUndo(Target, "Toggled Asset Option 'inheritsType'");
+                Target.inheritsType = inheritsType;
+                EditorUtility.SetDirty(Target);
+                shouldUpdate = true;
+            }
 
             if (Target.inheritsType)
             {
@@ -86,7 +124,17 @@ namespace Unity.VisualScripting.Community
                 lastRect = GUILayoutUtility.GetLastRect();
                 if (GUILayout.Button(InheritButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                 {
-                    TypeBuilderWindow.ShowWindow(lastRect, inheritsTypeMeta["type"], false, inheritTypes);
+                    TypeBuilderWindow.ShowWindow(lastRect, inheritsTypeMeta["type"], false, inheritTypes, () =>
+                    {
+                        Undo.RegisterCompleteObjectUndo(Target, "Changed Asset Inherited Type");
+                        if (CSharpPreviewWindow.instance != null)
+                        {
+                            if (CSharpPreviewWindow.instance.showCodeWindow)
+                            {
+                                CSharpPreviewWindow.instance.UpdateCodeDisplay();
+                            }
+                        }
+                    });
                 }
             }
         }

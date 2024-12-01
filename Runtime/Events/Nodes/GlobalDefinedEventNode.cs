@@ -43,7 +43,7 @@ namespace Unity.VisualScripting.Community
         #region New Event Type Handling
 
         [SerializeAs(nameof(NeweventType))]
-        private IDefinedEventType New_eventType;
+        private IDefinedEventType New_eventType = new IDefinedEventType(typeof(object));
 
         [DoNotSerialize]
         public IDefinedEventType NeweventType
@@ -78,7 +78,7 @@ namespace Unity.VisualScripting.Community
 
         [DoNotSerialize]
         private ReflectedInfo Info;
-        public override bool canDefine => NeweventType != null && NeweventType.type != null;
+        
         protected override bool register => true;
 
         protected override bool ShouldTrigger(Flow flow, DefinedEventArgs args)
@@ -104,7 +104,7 @@ namespace Unity.VisualScripting.Community
 
             if (NewrestrictedEventType == null)
             {
-                NewrestrictedEventType = new IDefinedEventType();
+                NewrestrictedEventType = new IDefinedEventType(typeof(object));
             }
 
             BuildFromInfo();

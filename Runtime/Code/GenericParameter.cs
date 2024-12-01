@@ -57,11 +57,6 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private bool TypeHasSpecialName(Type t)
-        {
-            return t.IsSpecialName || t.IsDefined(typeof(CompilerGeneratedAttribute));
-        }
-
         public void SetToTypeDefinition()
         {
             if (type.type.IsGenericType)

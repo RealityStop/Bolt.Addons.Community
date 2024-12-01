@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Utility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Reflection;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -67,7 +68,29 @@ namespace Unity.VisualScripting.Community
         public bool parametersOpened;
         public bool attributesOpened;
 #endif
+        private FunctionNode _functionNode;
+        public FunctionNode functionNode
+        {
+            get
+            {
+                var expectedUnit = graph.units[0];
+                if (expectedUnit is FunctionNode functionNode)
+                {
+                    _functionNode ??= functionNode;
+                    return _functionNode;
+                }
+                else
+                {
+                    if (!graph.units.Any(unit => unit is FunctionNode))
+                    {
+                        throw new Exception(methodName + " on " + classAsset.name + " does not contain a function unit in the main graph!");
+                    }
 
+                    _functionNode ??= graph.units.First(unit => unit is FunctionNode) as FunctionNode;
+                    return _functionNode;
+                }
+            }
+        }
         public override FlowGraph DefaultGraph()
         {
             return new FlowGraph();

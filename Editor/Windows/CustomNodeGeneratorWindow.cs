@@ -17,11 +17,10 @@ namespace Unity.VisualScripting.Community
         private List<ValueInputData> valueInputs = new List<ValueInputData>();
         private List<ValueOutputData> valueOutputs = new List<ValueOutputData>();
         private string fileName = "MyCustomNode";
-        private bool useUnit;
-        private bool useMachineEventUnit;
-        private bool useEventUnit;
+
         private bool openFileAfterGeneration = true;
         private Type[] alltypes;
+        private Type[] unitTypes;
 
         private Vector2 scrollPosition;
         private string filePath = "";
@@ -33,9 +32,9 @@ namespace Unity.VisualScripting.Community
 
         private void OnEnable()
         {
-            alltypes = Codebase.settingsAssemblies
-            .SelectMany(a => a.GetTypes().Where(type => !type.IsGenericTypeDefinition))
-            .ToArray();
+            alltypes = Codebase.settingsAssembliesTypes.Where(type => !type.IsGenericTypeDefinition).ToArray();
+
+            unitTypes = Codebase.settingsAssembliesTypes.Where(type => typeof(Unit).IsAssignableFrom(type)).ToArray();
         }
 
         [MenuItem("Window/Community Addons/Custom Node Generator")]
@@ -45,8 +44,7 @@ namespace Unity.VisualScripting.Community
             window.minSize = new Vector2(1000, 400);
         }
 
-        private int selectedOption = 0;
-        private string[] options = { "Unit", "MachineEventUnit", "EventUnit" };
+        private Type selectedOption = typeof(Unit);
 
         private void OnGUI()
         {
@@ -65,15 +63,12 @@ namespace Unity.VisualScripting.Community
 
                 scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 
-                EditorGUI.BeginChangeCheck();
+                var buttonContent = new GUIContent(selectedOption.CSharpName(false).RemoveHighlights().RemoveMarkdown(), selectedOption.Icon()?[IconSize.Small]);
 
-                selectedOption = EditorGUILayout.Popup("Select Option", selectedOption, options);
-
-                if (EditorGUI.EndChangeCheck())
+                if (GUILayout.Button(buttonContent))
                 {
-                    useUnit = selectedOption == 0;
-                    useMachineEventUnit = selectedOption == 1;
-                    useEventUnit = selectedOption == 2;
+                    var lastRect = GUILayoutUtility.GetLastRect();
+                    TypeBuilderWindow.ShowWindow(lastRect, (type) => selectedOption = type, selectedOption, false, unitTypes);
                 }
 
                 GUILayout.Space(10);
@@ -322,7 +317,6 @@ namespace Unity.VisualScripting.Community
             GUIContent buttonContent = new GUIContent();
 
             var lastRect = GUILayoutUtility.GetLastRect();
-
             if (Input is ValueOutputData)
             {
                 outputData = (ValueOutputData)Input;
@@ -401,12 +395,7 @@ namespace Unity.VisualScripting.Community
 
         private string GetSelectedUnitType()
         {
-            if (useMachineEventUnit)
-                return "MachineEventUnit<EmptyEventArgs>";
-            else if (useEventUnit)
-                return "EventUnit<EmptyEventArgs>";
-            else
-                return "Unit";
+            return selectedOption.As().CSharpName(false, true, false);
         }
 
         private string catagory = "Community/YourCatagory";
@@ -414,27 +403,27 @@ namespace Unity.VisualScripting.Community
         private string GenerateCustomNodeTemplate(string fileName, string unitType)
         {
             string template = $@"using System.Collections;
-    using System.Collections.Generic;
-    using Unity.VisualScripting;
-    using UnityEngine;
-    
-    ";
+using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEngine;
+
+";
             if (!string.IsNullOrEmpty(catagory))
             {
                 template += $@"[UnitCategory(""{catagory}"")]";
             }
 
             template += $@"
-    [UnitTitle(""{fileName}"")]//Unit title
-    [TypeIcon(typeof(object))]//Unit icon
-    public class {fileName.Replace(" ", "")} : {unitType}
-    {{
-        ";
+[UnitTitle(""{fileName}"")]//Unit title
+[TypeIcon(typeof(object))]//Unit icon
+public class {fileName.Replace(" ", "")} : {unitType}
+{{
+";
 
-            if (useEventUnit)
+            if (selectedOption.IsGenericType && selectedOption.GetGenericTypeDefinition() == typeof(EventUnit<>))
             {
                 template += @"
-        protected override bool register => throw new System.NotImplementedException();
+    protected override bool register => throw new System.NotImplementedException();
     ";
             }
 
@@ -443,14 +432,14 @@ namespace Unity.VisualScripting.Community
             {
                 string inputName = string.IsNullOrEmpty(controlInputs[i].name) ? $"ControlInput{i}" : controlInputs[i].name;
                 template += $@"
-        [DoNotSerialize]";
+    [DoNotSerialize]";
                 if (controlInputs[i].HideLabel)
                 {
                     template += $@"
-        [PortLabelHidden]";
+    [PortLabelHidden]";
                 }
                 template += $@"
-        public ControlInput {inputName.Replace(" ", "")};";
+    public ControlInput {inputName.Replace(" ", "")};";
             }
 
             // Setup variables for ControlOutputs
@@ -458,14 +447,14 @@ namespace Unity.VisualScripting.Community
             {
                 string outputName = string.IsNullOrEmpty(controlOutputs[i].name) ? $"ControlOutput{i}" : controlOutputs[i].name;
                 template += $@"
-        [DoNotSerialize]";
+    [DoNotSerialize]";
                 if (controlOutputs[i].HideLabel)
                 {
                     template += $@"
-        [PortLabelHidden]";
+    [PortLabelHidden]";
                 }
                 template += $@"
-        public ControlOutput {outputName.Replace(" ", "")};";
+    public ControlOutput {outputName.Replace(" ", "")};";
             }
 
             // Setup variables for ValueInputs
@@ -475,28 +464,28 @@ namespace Unity.VisualScripting.Community
                 {
                     string inputName = string.IsNullOrEmpty(valueInputs[i].name) ? $"ValueInput{i}" : valueInputs[i].name;
                     template += $@"
-        [NullMeansSelf]";
+    [NullMeansSelf]";
                     if (valueInputs[i].HideLabel)
                     {
                         template += $@"
-        [PortLabelHidden]";
+    [PortLabelHidden]";
                     }
                     template += $@"
-        [DoNotSerialize]
-        public ValueInput {inputName.Replace(" ", "")};";
+    [DoNotSerialize]
+    public ValueInput {inputName.Replace(" ", "")};";
                 }
                 else
                 {
                     string inputName = string.IsNullOrEmpty(valueInputs[i].name) ? $"ValueInput{i}" : valueInputs[i].name;
                     template += $@"
-        [DoNotSerialize]";
+    [DoNotSerialize]";
                     if (valueInputs[i].HideLabel)
                     {
                         template += $@"
-        [PortLabelHidden]";
+    [PortLabelHidden]";
                     }
                     template += $@"
-        public ValueInput {inputName.Replace(" ", "")};";
+    public ValueInput {inputName.Replace(" ", "")};";
                 }
             }
 
@@ -505,24 +494,30 @@ namespace Unity.VisualScripting.Community
             {
                 string outputName = string.IsNullOrEmpty(valueOutputs[i].name) ? $"ValueOutput{i}" : valueOutputs[i].name;
                 template += $@"
-        [DoNotSerialize]";
+    [DoNotSerialize]";
                 if (valueOutputs[i].HideLabel)
                 {
                     template += $@"
-        [PortLabelHidden]";
+    [PortLabelHidden]";
                 }
                 template += $@"
-        public ValueOutput {outputName.Replace(" ", "")};";
+    public ValueOutput {outputName.Replace(" ", "")};";
             }
 
             // Definition method
             template += @"
-        protected override void Definition()
-        {";
-            if (useEventUnit || useMachineEventUnit)
+    protected override void Definition()
+    {";
+            if (typeof(Unit).IsAssignableFrom(selectedOption) && selectedOption != typeof(Unit))
             {
-                template += @"
-            base.Definition();";
+                var definitionMethod = selectedOption.BaseType?.GetMethod("Definition",
+                                System.Reflection.BindingFlags.Instance |
+                                System.Reflection.BindingFlags.NonPublic);
+                if (definitionMethod != null)
+                {
+                    template += @"
+        base.Definition();";
+                }
             }
 
             // ControlInputs
@@ -530,7 +525,7 @@ namespace Unity.VisualScripting.Community
             {
                 string inputName = string.IsNullOrEmpty(input.name) ? $"ControlInput{controlInputs.IndexOf(input)}" : input.name;
                 template += $@"
-            {inputName.Replace(" ", "")} = ControlInput(nameof({inputName.Replace(" ", "")}), {input.methodName});";
+        {inputName.Replace(" ", "")} = ControlInput(nameof({inputName.Replace(" ", "")}), {input.methodName});";
             }
 
             // ControlOutputs
@@ -538,7 +533,7 @@ namespace Unity.VisualScripting.Community
             {
                 string outputName = string.IsNullOrEmpty(output.name) ? $"ControlOutput{controlOutputs.IndexOf(output)}" : output.name;
                 template += $@"
-            {outputName.Replace(" ", "")} = ControlOutput(nameof({outputName.Replace(" ", "")}));";
+        {outputName.Replace(" ", "")} = ControlOutput(nameof({outputName.Replace(" ", "")}));";
             }
 
             // ValueInputs
@@ -549,12 +544,12 @@ namespace Unity.VisualScripting.Community
                 if (valueInput.nullMeansSelf)
                 {
                     template += $@"
-            {valueInputName.Replace(" ", "")} = ValueInput<{valueInput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueInputName.Replace(" ", "")}), default).NullMeansSelf();";
+        {valueInputName.Replace(" ", "")} = ValueInput<{valueInput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueInputName.Replace(" ", "")}), default).NullMeansSelf();";
                 }
                 else
                 {
                     template += $@"
-            {valueInputName.Replace(" ", "")} = ValueInput<{valueInput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueInputName.Replace(" ", "")}), default);";
+        {valueInputName.Replace(" ", "")} = ValueInput<{valueInput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueInputName.Replace(" ", "")}), default);";
                 }
             }
 
@@ -563,7 +558,7 @@ namespace Unity.VisualScripting.Community
             {
                 string valueOutputName = string.IsNullOrEmpty(valueOutput.name) ? $"ValueOutput{valueOutputs.IndexOf(valueOutput)}" : valueOutput.name;
                 template += $@"
-            {valueOutputName.Replace(" ", "")} = ValueOutput<{valueOutput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueOutputName.Replace(" ", "")}){(valueOutput.triggersMethod ? $", {valueOutput.methodName}" : string.Empty)});";
+        {valueOutputName.Replace(" ", "")} = ValueOutput<{valueOutput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueOutputName.Replace(" ", "")}){(valueOutput.triggersMethod ? $", {valueOutput.methodName}" : string.Empty)});";
             }
 
             foreach (InputData input in controlInputs)
@@ -572,46 +567,44 @@ namespace Unity.VisualScripting.Community
                 {
                     string outputName = string.IsNullOrEmpty(outputData.name) ? $"ControlOutput{controlOutputs.IndexOf(outputData)}" : outputData.name;
                     template += $@"
-            Succession({input.name.Replace(" ", "")}, {outputName.Replace(" ", "")});";
+        Succession({input.name.Replace(" ", "")}, {outputName.Replace(" ", "")});";
                 }
             }
 
             template += @"
-        }";
+    }";
 
             foreach (InputData input in controlInputs)
             {
                 template += $@"
-        public ControlOutput {input.methodName}(Flow flow) 
-        {{
-            // Enter your logic here for when {input.name} is triggered.
+    public ControlOutput {input.methodName}(Flow flow) 
+    {{
+        // Enter your logic here for when {input.name} is triggered.
     
-            // Put the name of the output you want to trigger when the node is entered.
-            return null;
-        }}";
+        // Put the name of the output you want to trigger when the node is entered.
+        return null;
+    }}";
             }
             foreach (ValueOutputData valueOutput in valueOutputs)
             {
                 if (valueOutput.triggersMethod)
                 {
                     template += @$"
-        public {valueOutput.type.DisplayName()} {valueOutput.methodName}(Flow flow)
-        {{
-    
-            // Enter your logic here for when {valueOutput.name} is triggered.
-
-            return null;
-        }}
+    public {valueOutput.type.DisplayName()} {valueOutput.methodName}(Flow flow)
+    {{
+        // Enter your logic here for when {valueOutput.name} is triggered.
+        return null;
+    }}
     ";
                 }
             }
             template += @"
-    }";
+}";
             return template;
         }
 
         [Serializable]
-        public class InputData : ISerializationCallbackReceiver
+        private class InputData : ISerializationCallbackReceiver
         {
             public string name;
             public bool HideLabel;
@@ -632,7 +625,7 @@ namespace Unity.VisualScripting.Community
         }
 
         [Serializable]
-        public class ValueInputData : ISerializationCallbackReceiver
+        private class ValueInputData : ISerializationCallbackReceiver
         {
             public string name;
             public Type type;
@@ -653,9 +646,9 @@ namespace Unity.VisualScripting.Community
                 previousType = type.AssemblyQualifiedName;
             }
         }
-        //
+        
         [Serializable]
-        public class ValueOutputData : ISerializationCallbackReceiver
+        private class ValueOutputData : ISerializationCallbackReceiver
         {
             public string name;
             public bool HideLabel;

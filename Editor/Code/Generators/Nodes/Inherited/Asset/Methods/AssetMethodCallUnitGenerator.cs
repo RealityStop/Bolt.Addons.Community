@@ -55,7 +55,7 @@ namespace Unity.VisualScripting.Community
                 var index = 0;
                 foreach (var parameter in Unit.method.parameters)
                 {
-                    var name = controlGenerationData.AddLocalNameInScope(parameter.name).VariableHighlight();
+                    var name = controlGenerationData.AddLocalNameInScope(parameter.name, parameter.type).VariableHighlight();
                     if (parameter.modifier == ParameterModifier.Out)
                     {
                         output.Add("out var ".ConstructHighlight() + name);

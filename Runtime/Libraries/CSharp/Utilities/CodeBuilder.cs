@@ -146,6 +146,16 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         }
 
         /// <summary>
+        /// Creates an indentation with the current indent + addAmount.
+        /// </summary>
+        public static string GetCurrentIndent(int addAmount)
+        {
+            var output = Indent(currentIndent + addAmount);
+
+            return output;
+        }
+
+        /// <summary>
         /// Creates a series of using statements for namespace access.
         /// </summary>
         public static string Using(string[] namespaces)
@@ -210,16 +220,38 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             for (int i = 0; i < generator.fields.Count; i++)
             {
                 usings.MergeUnique(generator.fields[i].Usings());
+                for (int attrIndex = 0; attrIndex < generator.fields[i].attributes.Count; attrIndex++)
+                {
+                    usings.MergeUnique(generator.fields[i].attributes[attrIndex].Usings());
+                }
             }
 
             for (int i = 0; i < generator.properties.Count; i++)
             {
                 usings.MergeUnique(generator.properties[i].Usings());
+                for (int attrIndex = 0; attrIndex < generator.properties[i].attributes.Count; attrIndex++)
+                {
+                    usings.MergeUnique(generator.properties[i].attributes[attrIndex].Usings());
+                }
             }
 
             for (int i = 0; i < generator.methods.Count; i++)
             {
                 usings.MergeUnique(generator.methods[i].Usings());
+                for (int attrIndex = 0; attrIndex < generator.methods[i].attributes.Count; attrIndex++)
+                {
+                    usings.MergeUnique(generator.methods[i].attributes[attrIndex].Usings());
+                }
+                for (int paramIndex = 0; paramIndex < generator.methods[i].parameters.Count; paramIndex++)
+                {
+                    usings.MergeUnique(generator.methods[i].parameters[paramIndex].Usings());
+                    List<string> parameterAttributeNamespaces = new List<string>();
+                    foreach (var attribute in generator.methods[i].parameters[paramIndex].attributes)
+                    {
+                        parameterAttributeNamespaces.Add(attribute.GetAttributeType().Namespace);
+                    }
+                    usings.MergeUnique(parameterAttributeNamespaces);
+                }
             }
 
             return usings;
@@ -388,9 +420,17 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static string MultiLineLambda(string parameters, string body, int Indent)
         {
             return $"({parameters}) =>" + "\n" +
-                   "{" + "\n" +
-                    CodeBuilder.Indent(Indent) + body + "\n" +
-                   "}";
+                    CodeBuilder.Indent(Indent) + "{" + "\n" +
+                    body + "\n" +
+                   CodeBuilder.Indent(Indent) + "}";
+        }
+
+        public static string MultiLineLambda(Unit unit, string parameters, string body, int Indent)
+        {
+            return CodeUtility.MakeSelectable(unit, "(") + parameters + CodeUtility.MakeSelectable(unit, ") =>") + "\n" +
+                   CodeBuilder.Indent(Indent) + CodeUtility.MakeSelectable(unit, "{") + "\n" +
+                    body + "\n" +
+                   CodeBuilder.Indent(Indent) + CodeUtility.MakeSelectable(unit, "}");
         }
 
         public static string Assign(string member, string value, Type castedType)

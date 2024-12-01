@@ -13,14 +13,26 @@ namespace Unity.VisualScripting.Community
         private BorderedRectangle container;
 
         public static Event e;
+        public FlowGraphContext graphContext;
 
-        [MenuItem("Window/Community Addons/Utilities")]
-        public static void Open()
+        public static UtilityWindow Open()
         {
-            var window = GetWindow<UtilityWindow>();
+            var window = CreateInstance<UtilityWindow>();
             window.titleContent = new GUIContent("UVS Community Utilities");
-        }
 
+            // Set the popup position and size
+            var mousePosition = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
+            window.position = new Rect(mousePosition.x, mousePosition.y, 250, 300);
+
+            // Show as popup
+            window.ShowPopup();
+            return window;
+        }
+        private void OnLostFocus()
+        {
+            // Close the window when it loses focus
+            Close();
+        }
         private void OnGUI()
         {
             e = Event.current;
@@ -29,7 +41,7 @@ namespace Unity.VisualScripting.Community
         private void OnEnable()
         {
             var root = rootVisualElement;
-
+            root.Clear();
             container = new BorderedRectangle(HUMEditorColor.DefaultEditorBackground, Color.black, 2);
             container.style.flexDirection = FlexDirection.Column;
             container.style.flexGrow = 1;
@@ -122,7 +134,49 @@ namespace Unity.VisualScripting.Community
             buttonContainer.style.flexDirection = FlexDirection.Row;
             buttonContainer.style.height = 24;
 
-            var compileSelectedButton = new Button(() => { AssetCompiler.CompileSelected(); }) { text = "Compile Selected" };
+            var compileSelectedButton = new Button(() =>
+            {
+                var root = graphContext.reference.macro as Object;
+                if (root != null)
+                {
+                    if (root is MethodDeclaration methodDeclaration)
+                    {
+                        if (methodDeclaration.classAsset != null)
+                        {
+                            root = methodDeclaration.classAsset;
+                        }
+                        else
+                        {
+                            root = methodDeclaration.structAsset;
+                        }
+                    }
+                    else if (root is ConstructorDeclaration constructorDeclaration)
+                    {
+                        if (constructorDeclaration.classAsset != null)
+                        {
+                            root = constructorDeclaration.classAsset;
+                        }
+                        else
+                        {
+                            root = constructorDeclaration.structAsset;
+                        }
+                    }
+                    else if (root is FieldDeclaration fieldDeclaration)
+                    {
+                        if (fieldDeclaration.classAsset != null)
+                        {
+                            root = fieldDeclaration.classAsset;
+                        }
+                        else
+                        {
+                            root = fieldDeclaration.structAsset;
+                        }
+                    }
+                    if (root != null)
+                        AssetCompiler.CompileAsset(root);
+                }
+            })
+            { text = "Compile Asset" };
             compileSelectedButton.style.maxWidth = buttonContainer.contentRect.width;
             compileSelectedButton.style.flexGrow = 1;
 

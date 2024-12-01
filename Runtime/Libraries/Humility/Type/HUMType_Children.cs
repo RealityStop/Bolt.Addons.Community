@@ -472,7 +472,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(double) || type == typeof(decimal)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().Replace(",", "."));
             if (type == typeof(string)) return CodeUtility.MakeSelectable(unit, @"""" + @as.value.ToString() + @"""");
             if (type == typeof(char)) return CodeUtility.MakeSelectable(unit, string.IsNullOrEmpty(@as.value.ToString()) ? "new Char()" : $"'{@as.value}'");
-            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"/* Cannot generate {(@as.value as GameObject).name} (Hover for more info) */ " + "null"));
+            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"Cannot generate {(@as.value as GameObject).name}", "null", false));
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name + "." + @as.value.ToString());
 
@@ -535,7 +535,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(double) || type == typeof(decimal)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().Replace(",", ".").NumericHighlight());
             if (type == typeof(string)) return CodeUtility.MakeSelectable(unit, (@"""" + @as.value.ToString() + @"""").StringHighlight());
             if (type == typeof(char)) return (char)@as.value == char.MinValue ? CodeUtility.MakeSelectable(unit, "/* Cannot have an empty character */".WarningHighlight()) : CodeUtility.MakeSelectable(unit, $"'{@as.value}'".StringHighlight());
-            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"/* Cannot generate {(@as.value as GameObject).name} (Hover for more info) */ ".WarningHighlight() + "null".ConstructHighlight()));
+            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"Cannot generate {(@as.value as GameObject).name}", "null".ConstructHighlight()));
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString().NumericHighlight());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name.EnumHighlight() + "." + @as.value.ToString());
             if (isNew)

@@ -32,8 +32,11 @@ public sealed class BetterIfGenerator : NodeGenerator<BetterIf>
                   .AppendLine();
 
             trueData.NewScope();
-            trueCode = (Unit.True.connection.destination.unit as Unit)
-                .GenerateControl(Unit.True.connection.destination, trueData, indent + 1);
+            if (TrueIsUnreachable())
+            {
+                output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit(CodeUtility.ToolTip($"The code in the 'True' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.Condition, data))}). Don't worry this does not break your code.", $"Unreachable Code in 'True' Branch: {Unit.True.key}", "")));
+            }
+            trueCode = GetNextUnit(Unit.True, trueData, indent + 1);
             trueData.ExitScope();
 
             output.Append(trueCode).AppendLine();
@@ -58,8 +61,11 @@ public sealed class BetterIfGenerator : NodeGenerator<BetterIf>
                       .AppendLine();
 
                 falseData.NewScope();
-                output.Append((Unit.False.connection.destination.unit as Unit)
-                    .GenerateControl(Unit.False.connection.destination, falseData, indent + 1))
+                if (FalseIsUnreachable())
+                {
+                    output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit(CodeUtility.ToolTip($"The code in the 'False' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.Condition, data))}). Don't worry this does not break your code.", $"Unreachable Code in 'False' Branch: {Unit.False.key}", "")));
+                }
+                output.Append(GetNextUnit(Unit.False, falseData, indent + 1))
                       .AppendLine();
                 falseData.ExitScope();
 
@@ -81,7 +87,7 @@ public sealed class BetterIfGenerator : NodeGenerator<BetterIf>
         return output.ToString();
     }
 
-    private bool ShouldSkipTrueBranch()
+    private bool TrueIsUnreachable()
     {
         if (!Unit.Condition.hasValidConnection) return false;
 
@@ -99,7 +105,7 @@ public sealed class BetterIfGenerator : NodeGenerator<BetterIf>
         return false;
     }
 
-    private bool ShouldSkipFalseBranch()
+    private bool FalseIsUnreachable()
     {
         if (!Unit.Condition.hasValidConnection) return false;
 

@@ -300,7 +300,7 @@ namespace Unity.VisualScripting.Community
 
             // Color Spread
             tempFloat = style.colorSpread;
-            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 10, w: xIndentC, h: 18), "Color Spread", inspectorGUI);
+            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 10, w: xIndentC, h: 18), new GUIContent("Color Spread", "Adjust the spread of colors within the palette."), inspectorGUI);
             style.colorSpread = Mathf.Clamp(EditorGUI.FloatField(GUIRect(x: xIndentC + xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", style.colorSpread * 10f, titleGUI) / 10f, 0f, 3f);
             if (style.colorSpread != tempFloat) UpdatePalette();
 
@@ -316,13 +316,13 @@ namespace Unity.VisualScripting.Community
 
             // Color Contrast
             tempFloat = style.colorHeight;
-            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 22, w: xIndentC), "Color Offset", inspectorGUI);
+            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 22, w: xIndentC), new GUIContent("Color Offset", "Set the contrast of colors in the palette."), inspectorGUI);
             style.colorHeight = Mathf.Clamp(EditorGUI.FloatField(GUIRect(x: xIndentC + xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", style.colorHeight * 10f, titleGUI) / 10f, 0.6f, 9.8f);
             if (style.colorHeight != tempFloat) UpdatePalette();
 
             // Color Offset
             tempFloat = style.colorOffset;
-            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 22, w: xIndentC), "Color Height", inspectorGUI);
+            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 22, w: xIndentC), new GUIContent("Color Height", "Modify the offset for the height of colors in the palette."), inspectorGUI);
             style.colorOffset = Mathf.Clamp(EditorGUI.FloatField(GUIRect(x: xIndentC + xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", style.colorOffset * 10f, titleGUI) / 10f, 0f, 1.5f);
             if (style.colorOffset != tempFloat) UpdatePalette();
 
@@ -350,17 +350,19 @@ namespace Unity.VisualScripting.Community
             if (GUI.Button(GUIRect(x: xIndentC + 50, w: 40), "Auto", buttonGUI)) unit.autoWidth = !unit.autoWidth;
             ResetGUI();
 
-            // Bezier Toggle (above Title and Comment text fields)
-            var EnableBeszierWidth = inspectorGUI.CalcSize(new GUIContent("Bezier")).x;
-            GUI.Label(GUIRect(x: xIndentB, down: 33, w: EnableBeszierWidth), "Bezier", inspectorGUI); // Add label for toggle
-            unit.Bezier = GUI.Toggle(GUIRect(x: xIndentC, w: 20), unit.Bezier, ""); // Toggle field
+            var EnablecurveLineWidth = inspectorGUI.CalcSize(new GUIContent("Curved Line")).x;
+            GUI.Label(GUIRect(x: xIndentB, down: 33, w: EnablecurveLineWidth), "Curved Line", inspectorGUI);
+            unit.curvedLine = GUI.Toggle(GUIRect(x: xIndentC, w: 20), unit.curvedLine, "");
 
-            // Comment Title
-            var Titlewidth = inspectorGUI.CalcSize(new GUIContent("Title")).x;
-            GUI.Label(GUIRect(x: xIndentB, down: 22, w: Titlewidth), "Title", inspectorGUI);
+            float titleWidth = inspectorGUI.CalcSize(new GUIContent("Title")).x;
+            GUI.Label(GUIRect(x: xIndentB, down: 22, w: titleWidth), "Title", inspectorGUI);
+
             unit.hasTitle = GUI.Toggle(GUIRect(x: xIndentC, w: 20), unit.hasTitle, "");
+
             if (unit.hasTitle)
-                unit.title = GUI.TextField(GUIRect(x: xIndentC + 20, w: xWidth - xIndentC - 10, h: 16), unit.title, 50, titleGUI);
+            {
+                unit.title = GUI.TextField(GUIRect(x: xIndentC + 20, w: xWidth - xIndentC - 10, h: 16), unit.title ?? string.Empty, 50, titleGUI);
+            }
 
             // Comment Contents
             var textHeight = commentGUI.CalcHeight(new GUIContent(unit.comment), xWidth - xIndentC + 10);

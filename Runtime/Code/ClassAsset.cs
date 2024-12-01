@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
 {
     [CreateAssetMenu(menuName = "Visual Scripting/Community/Code/Class")]
     [RenamedFrom("Bolt.Addons.Community.Code.ClassAsset")]
-    public class ClassAsset : MemberTypeAsset<ClassFieldDeclaration, ClassMethodDeclaration, ClassConstructorDeclaration>, ISerializationCallbackReceiver
+    public class ClassAsset : MemberTypeAsset<ClassFieldDeclaration, ClassMethodDeclaration, ClassConstructorDeclaration>
     {
         [Inspectable]
         public bool scriptableObject;
@@ -21,11 +21,11 @@ namespace Unity.VisualScripting.Community
 
         public SystemType inherits = new SystemType(null);
 
+        [DoNotSerialize]
         public Action<Type> onValueChanged;
 
         [InspectorWide]
         [SerializeField]
-        [SerializeAs("typeParameters", Converter = typeof(List<GenericParameter>))]
         public List<GenericParameter> typeParameters = new List<GenericParameter>();
 
         [SerializeField]

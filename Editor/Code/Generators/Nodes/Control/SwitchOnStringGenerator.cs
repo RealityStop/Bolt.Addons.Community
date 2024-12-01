@@ -20,9 +20,9 @@ namespace Unity.VisualScripting.Community
             {
                 var values = Unit.branches;
                 var outputs = Unit.outputs.ToArray();
-                var isLiteral = Unit.selector.hasValidConnection && Unit.selector.connection.source.unit as Literal != null;
+                var isLiteral = Unit.selector.hasValidConnection && Unit.selector.connection.source.unit is Literal;
                 var localName = string.Empty;
-                if (isLiteral) localName = data.AddLocalNameInScope("str");
+                if (isLiteral) localName = data.AddLocalNameInScope("str", typeof(string));
                 var newLiteral = isLiteral ? CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("var ".ConstructHighlight() + $"{localName} = ") + ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source, data) + MakeSelectableForThisUnit(";") : string.Empty;
                 var @enum = Unit.selector.hasValidConnection ? isLiteral ? MakeSelectableForThisUnit(localName) : ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source, data) : base.GenerateControl(input, data, indent);
 

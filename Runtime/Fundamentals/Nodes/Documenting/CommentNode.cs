@@ -23,6 +23,11 @@ namespace Unity.VisualScripting.Community
 
         public List<Unit> connectedUnits = new List<Unit>();
 
+        public Rect
+    wholeRect,
+    borderRect,
+    textRect;
+
         [Inspectable]
         [Serialize]
         public (int palette, int row, int col)
@@ -30,7 +35,7 @@ namespace Unity.VisualScripting.Community
 
         [Inspectable]
         public bool
-            Bezier,
+            curvedLine,
             customPalette = false,
             fontColorize = false,
             lockedToPalette = false,
