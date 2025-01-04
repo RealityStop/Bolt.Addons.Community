@@ -41,11 +41,11 @@ namespace Unity.VisualScripting.Community
             }
             else if (input.hasDefaultValue)
             {
-                return MakeSelectableForThisUnit(input.unit.defaultValues[input.key].As().Code(true, true, true, "", false));
+                return input.unit.defaultValues[input.key].As().Code(true, Unit, true, true, "", false);
             }
             else
             {
-                return $"/* \"{input.key} Requires Input\" */".WarningHighlight();
+                return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
             }
         }
     }

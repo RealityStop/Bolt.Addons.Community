@@ -427,9 +427,9 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         /// <summary>
         /// Converts a value into code form. Example: a float value of '10' would be '10f'. A string would add quotes, etc.
         /// </summary>
-        public static string Code(this HUMValue.Data.As @as, bool isNew, bool isLiteral = false, bool highlight = true, string parameters = "", bool newLineLiteral = false, bool fullName = false)
+        public static string Code(this HUMValue.Data.As @as, bool isNew, bool isLiteral = false, bool highlight = true, string parameters = "", bool newLineLiteral = false, bool fullName = false, ValueInput valueInput = null)
         {
-            if (highlight) return HighlightedCode(@as, isNew, isLiteral, parameters, newLineLiteral, fullName);
+            if (highlight) return HighlightedCode(@as, isNew, isLiteral, parameters, newLineLiteral, fullName, valueInput);
             Type type = @as.value?.GetType();
             if (@as.value is Type) return "typeof(" + ((Type)@as.value).As().CSharpName(false, fullName, false) + ")";
             if (type == null) return "null";
@@ -439,7 +439,12 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(double) || type == typeof(decimal)) return @as.value.ToString().Replace(",", ".");
             if (type == typeof(string)) return @"""" + @as.value.ToString() + @"""";
             if (type == typeof(char)) return string.IsNullOrEmpty(@as.value.ToString()) ? "new Char()" : $"'{@as.value}'";
-            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return "null";
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type))
+            {
+                var variable = valueInput != null ? (valueInput.unit as Unit).ToString().LegalMemberName() + "_" + valueInput.key : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
+                CodeGeneratorValueUtility.AddValue(valueInput, variable, (UnityEngine.Object)@as.value);
+                return variable;
+            }
             if (type.IsNumeric()) return @as.value.ToString();
             if (type.IsEnum) return type.Name + "." + @as.value.ToString();
 
@@ -460,9 +465,9 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return @as.value.ToString();
         }
 
-        public static string Code(this HUMValue.Data.As @as, bool isNew, Unit unit, bool isLiteral = false, bool highlight = true, string parameters = "", bool newLineLiteral = false, bool fullName = false)
+        public static string Code(this HUMValue.Data.As @as, bool isNew, Unit unit, bool isLiteral = false, bool highlight = true, string parameters = "", bool newLineLiteral = false, bool fullName = false, ValueInput valueInput = null)
         {
-            if (highlight) return HighlightedCode(@as, isNew, unit, isLiteral, parameters, newLineLiteral, fullName);
+            if (highlight) return HighlightedCode(@as, isNew, unit, isLiteral, parameters, newLineLiteral, fullName, valueInput);
             Type type = @as.value?.GetType();
             if (@as.value is Type) return CodeUtility.MakeSelectable(unit, "typeof(" + ((Type)@as.value).As().CSharpName(false, fullName, false) + ")");
             if (type == null) return CodeUtility.MakeSelectable(unit, "null");
@@ -472,7 +477,12 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(double) || type == typeof(decimal)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().Replace(",", "."));
             if (type == typeof(string)) return CodeUtility.MakeSelectable(unit, @"""" + @as.value.ToString() + @"""");
             if (type == typeof(char)) return CodeUtility.MakeSelectable(unit, string.IsNullOrEmpty(@as.value.ToString()) ? "new Char()" : $"'{@as.value}'");
-            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"Cannot generate {(@as.value as UnityEngine.Object).name}", "null", false));
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type))
+            {
+                var variable = valueInput != null ? (valueInput.unit as Unit).ToString().LegalMemberName() + "_" + valueInput.key : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
+                CodeGeneratorValueUtility.AddValue(valueInput, variable, (UnityEngine.Object)@as.value);
+                return CodeUtility.MakeSelectable(unit, variable);
+            }
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name + "." + @as.value.ToString());
 
@@ -493,7 +503,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return CodeUtility.MakeSelectable(unit, @as.value.ToString());
         }
 
-        private static string HighlightedCode(this HUMValue.Data.As @as, bool isNew, bool isLiteral = false, string parameters = "", bool newLineLiteral = false, bool fullName = false)
+        private static string HighlightedCode(this HUMValue.Data.As @as, bool isNew, bool isLiteral = false, string parameters = "", bool newLineLiteral = false, bool fullName = false, ValueInput valueInput = null)
         {
             Type type = @as.value?.GetType();
             if (@as.value is Type) return "typeof".ConstructHighlight() + "(" + ((Type)@as.value).As().CSharpName(false, fullName) + ")";
@@ -504,7 +514,12 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(double) || type == typeof(decimal)) return @as.value.ToString().Replace(",", ".").NumericHighlight();
             if (type == typeof(string)) return (@"""" + @as.value.ToString() + @"""").StringHighlight();
             if (type == typeof(char)) return (char)@as.value == char.MinValue ? "/* Cannot have a empty character */".WarningHighlight() : $"'{@as.value}'".StringHighlight();
-            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return "null".ConstructHighlight();
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type))
+            {
+                var variable = valueInput != null ? (valueInput.unit as Unit).ToString().LegalMemberName() + "_" + valueInput.key : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
+                CodeGeneratorValueUtility.AddValue(valueInput, variable, (UnityEngine.Object)@as.value);
+                return variable.VariableHighlight();
+            }
             if (type.IsNumeric()) return @as.value.ToString().NumericHighlight();
             if (type.IsEnum) return type.Name.EnumHighlight() + "." + @as.value.ToString();
             if (isNew)
@@ -524,7 +539,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return @as.value.ToString();
         }
 
-        private static string HighlightedCode(this HUMValue.Data.As @as, bool isNew, Unit unit, bool isLiteral = false, string parameters = "", bool newLineLiteral = false, bool fullName = false)
+        private static string HighlightedCode(this HUMValue.Data.As @as, bool isNew, Unit unit, bool isLiteral = false, string parameters = "", bool newLineLiteral = false, bool fullName = false, ValueInput valueInput = null)
         {
             Type type = @as.value?.GetType();
             if (@as.value is Type) return CodeUtility.MakeSelectable(unit, "typeof".ConstructHighlight() + "(" + ((Type)@as.value).As().CSharpName(false, true) + ")");
@@ -535,7 +550,12 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(double) || type == typeof(decimal)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().Replace(",", ".").NumericHighlight());
             if (type == typeof(string)) return CodeUtility.MakeSelectable(unit, (@"""" + @as.value.ToString() + @"""").StringHighlight());
             if (type == typeof(char)) return (char)@as.value == char.MinValue ? CodeUtility.MakeSelectable(unit, "/* Cannot have an empty character */".WarningHighlight()) : CodeUtility.MakeSelectable(unit, $"'{@as.value}'".StringHighlight());
-            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"Cannot generate {(@as.value as UnityEngine.Object).name}", "null".ConstructHighlight()));
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type))
+            {
+                var variable = valueInput != null ? (valueInput.unit as Unit).ToString().LegalMemberName() + "_" + valueInput.key : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
+                CodeGeneratorValueUtility.AddValue(valueInput, variable, (UnityEngine.Object)@as.value);
+                return CodeUtility.MakeSelectable(unit, variable.VariableHighlight());
+            }
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString().NumericHighlight());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name.EnumHighlight() + "." + @as.value.ToString());
             if (isNew)

@@ -858,14 +858,14 @@ namespace Unity.VisualScripting.Community
                 return SearchUtility.Matches(SearchUtility.Relevance(_pattern, _name));
             }
         }
-
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
         private bool HandleStickyNoteSearch(StickyNote note, out string name)
         {
             var _name = StickyNoteFullName(note);
             name = _name;
             return SearchUtility.Matches(SearchUtility.Relevance(_pattern, _name));
         }
-
+#endif
         private bool HandleGraphGroupSearch(GraphGroup group, out string name)
         {
             var _name = GroupFullName(group);
