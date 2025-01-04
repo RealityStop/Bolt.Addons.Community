@@ -14,55 +14,126 @@ namespace Unity.VisualScripting.Community
 {
     public class NodeFinderWindow : EditorWindow
     {
-        enum MatchType
+        // Interfaces for extensibility
+        public interface IGraphProvider
         {
-            Unit,
-            Error
+            string Name { get; }
+            bool IsEnabled { get; }
+            IEnumerable<(GraphReference, IGraphElement)> GetElements();
+            void HandleMatch(MatchObject match);
+            Object GetAssetForElement(GraphReference reference);
         }
 
-        class MatchObject
+        public interface IMatchHandler
         {
-            public List<MatchType> Matches;
-            public ScriptGraphAsset ScriptGraphAsset;
-            public ScriptMachine ScriptMachine;
-            public StateMachine StateMachine;
-            public StateGraphAsset StateGraphAsset;
-            public ClassAsset ClassAsset;
-            public StructAsset StructAsset;
-            public GraphReference Reference;
-            public string FullTypeName;
-            public IUnit Unit;
+            bool CanHandle(IGraphElement element);
+            MatchObject HandleMatch(IGraphElement element, string pattern);
         }
 
+        // Base classes for graph providers
+        public abstract class BaseGraphProvider : IGraphProvider
+        {
+            protected readonly NodeFinderWindow _window;
+            public abstract string Name { get; }
+            private bool _isEnabled = true;
+            public virtual bool IsEnabled => _isEnabled;
+
+            protected BaseGraphProvider(NodeFinderWindow window)
+            {
+                _window = window;
+            }
+
+            public abstract IEnumerable<(GraphReference, IGraphElement)> GetElements();
+            public abstract void HandleMatch(MatchObject match);
+
+            public virtual void SetEnabled(bool enabled)
+            {
+                _isEnabled = enabled;
+            }
+
+            // Add these methods to handle results
+            protected Dictionary<Object, List<MatchObject>> MatchMap { get; } = new();
+            protected List<Object> SortedKeys { get; private set; } = new();
+
+            public virtual void ClearResults()
+            {
+                MatchMap.Clear();
+                SortedKeys.Clear();
+            }
+
+            public virtual void AddMatch(MatchObject match, Object key)
+            {
+                if (!MatchMap.TryGetValue(key, out var list))
+                {
+                    list = new List<MatchObject>();
+                    MatchMap[key] = list;
+                    SortedKeys.Add(key);
+                }
+
+                if (!list.Any(m => m.Unit == match.Unit))
+                {
+                    list.Add(match);
+                }
+                else
+                {
+                    list[list.IndexOf(list.First(m => m.Unit == match.Unit))] = match;
+                }
+            }
+
+            public virtual IEnumerable<(Object key, List<MatchObject> matches)> GetResults()
+            {
+                SortedKeys.Sort((a, b) => string.Compare(GetSortKey(a), GetSortKey(b), StringComparison.Ordinal));
+                return SortedKeys.Select(key => (key, MatchMap[key]));
+            }
+
+            protected virtual string GetSortKey(Object key)
+            {
+                return key.name;
+            }
+
+            public virtual Object GetAssetForElement(GraphReference reference)
+            {
+                return reference?.rootObject;
+            }
+        }
+
+        // Optimized data structures
+        private readonly Dictionary<Type, IGraphProvider> _graphProviders = new();
+        private readonly Dictionary<Type, IMatchHandler> _matchHandlers = new();
+        private readonly Dictionary<Type, List<MatchObject>> _matchMap = new();
+        private readonly List<MatchObject> _matchObjects = new();
+
+        // Cache
+        private readonly Dictionary<GraphReference, List<(GraphReference, IGraphElement)>> _graphElementCache = new();
+        private float _lastSearchTime;
+        private const float SearchCooldown = 0.5f; // Prevent too frequent searches
+
+        // State
         private string _pattern = "";
-        private string _previousPattern = ""; // Store the previous text input
-
-        private bool _matchError = true;
-        private bool _checkScriptGraphAssets = true;
-        private bool _checkStateGraphAssets = true;
-        private bool _checkScriptMachines = true;
-        private bool _checkStateMachines = true;
-        private bool _checkClassAssets = true;
-        private bool _checkStructAssets = true;
-        private List<MatchObject> _matchObjects = new();
-        private Dictionary<ScriptGraphAsset, List<MatchObject>> _matchScriptGraphMap = new();
-        private Dictionary<ScriptMachine, List<MatchObject>> _matchScriptMachineMap = new();
-        private Dictionary<StateMachine, List<MatchObject>> _matchStateMachineMap = new();
-        private Dictionary<StateGraphAsset, List<MatchObject>> _matchStateGraphMap = new();
-        private Dictionary<ClassAsset, List<MatchObject>> _matchClassAssetMap = new();
-        private Dictionary<StructAsset, List<MatchObject>> _matchStructAssetMap = new();
-        private List<ScriptGraphAsset> _sortedScriptGraphKey = new();
-        private List<ScriptMachine> _sortedScriptMachineKey = new();
-        private List<StateMachine> _sortedStateMachineKey = new();
-        private List<StateGraphAsset> _sortedStateGraphKey = new();
-        private List<ClassAsset> _sortedClassAssetKey = new();
-        private List<StructAsset> _sortedStructAssetKey = new();
-        private float errorCheckInterval = 1.0f;
-        private float lastErrorCheckTime;
-
-        // scroll view position
+        private string _previousPattern = "";
         private Vector2 _scrollViewRoot;
+        private bool _matchError = true;
+        private float _lastErrorCheckTime;
+        private const float ErrorCheckInterval = 1.0f;
 
+        // Add these near the top with other private fields
+        private class FilterOption
+        {
+            public string Label { get; set; }
+            public bool IsEnabled { get; set; }
+            public Action<bool> OnToggled { get; set; }
+            public bool RequiresSearch { get; set; }
+            public Type ProviderType { get; set; }
+        }
+
+        private readonly List<FilterOption> _filters = new();
+
+        private bool _needsSearch = false;
+
+        private bool _showProviderFilters = true;
+        private bool _showTypeFilters = true;
+        private bool _showSpecialFilters = true;
+        private Dictionary<MatchType, bool> _typeFilters = new();
 
         [MenuItem("Window/Community Addons/Node Finder")]
         public static void Open()
@@ -77,52 +148,81 @@ namespace Unity.VisualScripting.Community
         private void OnDisable()
         {
             _matchObjects.Clear();
-            _matchScriptGraphMap.Clear();
-            _sortedScriptGraphKey.Clear();
-            _matchScriptMachineMap.Clear();
-            _matchStateMachineMap.Clear();
-            _matchClassAssetMap.Clear();
-            _matchStructAssetMap.Clear();
-            _sortedScriptMachineKey.Clear();
-            _sortedStateMachineKey.Clear();
-            _matchStateGraphMap.Clear();
-            _sortedStateGraphKey.Clear();
-            _sortedClassAssetKey.Clear();
-            _sortedStructAssetKey.Clear();
+            _matchMap.Clear();
         }
 
         private void OnEnable()
         {
-            _previousPattern = _pattern;
+            RegisterDefaultProviders();
+            RegisterDefaultHandlers();
+            InitializeFilters();
+            InitializeTypeFilters();
             Search();
+        }
+
+        private void RegisterDefaultProviders()
+        {
+            RegisterProvider(new ScriptGraphProvider(this));
+            RegisterProvider(new StateGraphProvider(this));
+            RegisterProvider(new ClassAssetProvider(this));
+            RegisterProvider(new StructAssetProvider(this));
+            RegisterProvider(new ScriptMachineProvider(this));
+            RegisterProvider(new StateMachineProvider(this));
+        }
+
+        private void RegisterDefaultHandlers()
+        {
+            RegisterHandler(new UnitMatchHandler());
+            RegisterHandler(new GroupMatchHandler());
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+            RegisterHandler(new StickyNoteMatchHandler());
+#endif
+            RegisterHandler(new CommentsMatchHandler());
+        }
+
+        private void RegisterProvider<T>(T provider) where T : IGraphProvider
+        {
+            _graphProviders[provider.GetType()] = provider;
+        }
+
+        private void RegisterHandler<T>(T handler) where T : IMatchHandler
+        {
+            _matchHandlers[handler.GetType()] = handler;
         }
 
         private void OnGUI()
         {
+            // Remove automatic error checking from OnGUI
             Event e = Event.current;
             DrawSearchBar();
             GUILayout.Space(6);
             DrawFilters();
             GUILayout.Space(6);
-            if (e.keyCode == KeyCode.Return)
+
+            // Only flag for search, don't search immediately
+            if (e.keyCode == KeyCode.Return || _pattern != _previousPattern)
             {
-                Search();
+                _needsSearch = true;
             }
 
-            if (_pattern != _previousPattern)
+            // Do the actual search only when needed
+            if (_needsSearch)
             {
                 Search();
-                _previousPattern = _pattern; // Update the previous pattern
-            }
-
-            if (Time.realtimeSinceStartup - lastErrorCheckTime >= errorCheckInterval)
-            {
-                if (_matchError)
-                    SearchForErrors();
-                lastErrorCheckTime = Time.realtimeSinceStartup;
+                _previousPattern = _pattern;
+                _needsSearch = false;
             }
 
             DrawResults();
+
+            // Handle error checking
+            if (_matchError && Time.realtimeSinceStartup - _lastErrorCheckTime >= ErrorCheckInterval)
+            {
+                _needsSearch = false;
+                SearchForErrors();
+                _lastErrorCheckTime = Time.realtimeSinceStartup;
+                Repaint();
+            }
         }
 
         private void DrawSearchBar()
@@ -142,80 +242,158 @@ namespace Unity.VisualScripting.Community
                 });
         }
 
+        private void InitializeFilters()
+        {
+            _filters.Clear();
+
+            foreach (var provider in _graphProviders.Values)
+            {
+                AddFilter(provider.Name,
+                    () => provider.IsEnabled,
+                    (enabled) =>
+                    {
+                        if (provider is BaseGraphProvider baseProvider)
+                        {
+                            baseProvider.SetEnabled(enabled);
+                            if (enabled) Search();
+                        }
+                    },
+                    true,
+                    provider.GetType());
+            }
+
+            // Add special filters like errors that aren't tied to providers
+            AddFilter("Errors",
+                () => _matchError,
+                (enabled) =>
+                {
+                    _matchError = enabled;
+                    if (enabled) SearchForErrors();
+                });
+        }
+
+        private void InitializeTypeFilters()
+        {
+            foreach (MatchType type in Enum.GetValues(typeof(MatchType)))
+            {
+                if (!_typeFilters.ContainsKey(type))
+                {
+                    _typeFilters[type] = true;
+                }
+            }
+        }
+
+        public void AddFilter(string label, Func<bool> getter, Action<bool> onToggled, bool requiresSearch = true, Type providerType = null)
+        {
+            _filters.Add(new FilterOption
+            {
+                Label = label,
+                IsEnabled = getter(),
+                OnToggled = onToggled,
+                RequiresSearch = requiresSearch,
+                ProviderType = providerType
+            });
+        }
+
         private void DrawFilters()
         {
             var filterLabelStyle = new GUIStyle(LudiqStyles.toolbarLabel)
             {
                 fontSize = 12,
-                alignment = TextAnchor.MiddleCenter,
+                alignment = TextAnchor.MiddleLeft,
+                fontStyle = FontStyle.Bold
+            };
+
+            var foldoutStyle = new GUIStyle(EditorStyles.foldout)
+            {
+                fontSize = 12,
                 fontStyle = FontStyle.Bold
             };
 
             HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(0, 0, 0, 0), new RectOffset(1, 1, 1, 1), () =>
-               {
-                   GUILayout.Label("Filters:", filterLabelStyle);
-                   HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground, Color.black, 7, () =>
-                                         {
-                                             bool prevCheckScriptGraphAssets = _checkScriptGraphAssets;
-                                             bool prevCheckStateGraphAssets = _checkStateGraphAssets;
-                                             bool prevCheckScriptMachines = _checkScriptMachines;
-                                             bool prevCheckStateMachines = _checkStateMachines;
-                                             bool prevCheckClassAssets = _checkClassAssets;
-                                             bool prevCheckStructAssets = _checkStructAssets;
-                                             bool prevMatchError = _matchError;
+            {
+                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(2, 2, 2, 2), new RectOffset(1, 1, 1, 1), () =>
+                {
+                    // Provider Filters Section
+                    _showProviderFilters = EditorGUILayout.Foldout(_showProviderFilters, "Provider Filters", true, foldoutStyle);
+                    if (_showProviderFilters)
+                    {
+                        EditorGUI.indentLevel++;
+                        EditorGUILayout.BeginVertical();
+                        var providerFilters = _filters.Where(f => f.ProviderType != null).ToList();
+                        for (int i = 0; i < providerFilters.Count; i++)
+                        {
+                            DrawFilterToggle(providerFilters[i]);
+                            GUILayout.Space(4);
+                        }
+                        EditorGUILayout.EndVertical();
+                        EditorGUI.indentLevel--;
+                    }
+                });
+                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(2, 2, 2, 2), new RectOffset(1, 1, 1, 1), () =>
+                {
+                    // Match Type Filters Section
+                    _showTypeFilters = EditorGUILayout.Foldout(_showTypeFilters, "Type Filters", true, foldoutStyle);
+                    if (_showTypeFilters)
+                    {
+                        EditorGUI.indentLevel++;
 
-                                             _checkScriptGraphAssets = GUILayout.Toggle(_checkScriptGraphAssets, "ScriptGraphAssets", EditorStyles.toolbarButton);
-                                             _checkStateGraphAssets = GUILayout.Toggle(_checkStateGraphAssets, "StateGraphAssets", EditorStyles.toolbarButton);
-                                             _checkScriptMachines = GUILayout.Toggle(_checkScriptMachines, "ScriptMachines", EditorStyles.toolbarButton);
-                                             _checkStateMachines = GUILayout.Toggle(_checkStateMachines, "StateMachines", EditorStyles.toolbarButton);
-                                             _checkClassAssets = GUILayout.Toggle(_checkClassAssets, "ClassAssets", EditorStyles.toolbarButton);
-                                             _checkStructAssets = GUILayout.Toggle(_checkStructAssets, "StructAssets", EditorStyles.toolbarButton);
-                                             _matchError = GUILayout.Toggle(_matchError, "Errors", EditorStyles.toolbarButton);
+                        EditorGUILayout.BeginVertical();
+                        var types = Enum.GetValues(typeof(MatchType)).Cast<MatchType>().ToList();
+                        for (int i = 0; i < types.Count; i++)
+                        {
+                            DrawTypeFilterToggle(types[i]);
+                            GUILayout.Space(4);
 
+                        }
+                        EditorGUILayout.EndVertical();
+                        EditorGUI.indentLevel--;
+                    }
+                });
 
-                                             if (_checkScriptGraphAssets != prevCheckScriptGraphAssets)
-                                             {
-                                                 if (_checkScriptGraphAssets)
-                                                     Search();
-                                             }
+                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(2, 2, 2, 2), new RectOffset(1, 1, 1, 1), () =>
+                {
+                    // Special Filters Section
+                    _showSpecialFilters = EditorGUILayout.Foldout(_showSpecialFilters, "Special Filters", true, foldoutStyle);
+                    if (_showSpecialFilters)
+                    {
+                        var specialFilters = _filters.Where(f => f.ProviderType == null).ToList();
+                        if (specialFilters.Any())
+                        {
+                            foreach (var filter in specialFilters)
+                            {
+                                DrawFilterToggle(filter);
+                            }
+                        }
+                    }
+                });
+            });
+        }
 
-                                             if (_checkStateGraphAssets != prevCheckStateGraphAssets)
-                                             {
-                                                 if (_checkStateGraphAssets)
-                                                     Search();
-                                             }
+        private void DrawFilterToggle(FilterOption filter)
+        {
+            bool previousState = filter.IsEnabled;
+            filter.IsEnabled = GUILayout.Toggle(filter.IsEnabled, filter.Label, EditorStyles.toolbarButton);
 
-                                             if (_checkScriptMachines != prevCheckScriptMachines)
-                                             {
-                                                 if (_checkScriptMachines)
-                                                     Search();
-                                             }
+            if (filter.IsEnabled != previousState)
+            {
+                filter.OnToggled?.Invoke(filter.IsEnabled);
+                if (filter.RequiresSearch)
+                {
+                    Search();
+                }
+            }
+        }
 
-                                             if (_checkStateMachines != prevCheckStateMachines)
-                                             {
-                                                 if (_checkStateMachines)
-                                                     Search();
-                                             }
+        private void DrawTypeFilterToggle(MatchType type)
+        {
+            bool previousState = _typeFilters[type];
+            _typeFilters[type] = GUILayout.Toggle(previousState, type.ToString(), EditorStyles.toolbarButton);
 
-                                             if (_checkClassAssets != prevCheckClassAssets)
-                                             {
-                                                 if (_checkClassAssets)
-                                                     Search();
-                                             }
-
-                                             if (_checkStructAssets != prevCheckStructAssets)
-                                             {
-                                                 if (_checkStructAssets)
-                                                     Search();
-                                             }
-
-                                             if (_matchError != prevMatchError)
-                                             {
-                                                 if (_matchError) SearchForErrors();
-                                             }
-
-                                         }, false, false);
-               });
+            if (_typeFilters[type] != previousState)
+            {
+                Search();
+            }
         }
 
         private void DrawResults()
@@ -226,592 +404,31 @@ namespace Unity.VisualScripting.Community
 
                 bool empty = string.IsNullOrEmpty(_pattern) || _matchObjects.Count == 0;
                 bool isShowingErrors = false;
-
+                // Show total results count
                 if (!empty)
                 {
-                    // Display Script Graph results
-                    foreach (var key in _sortedScriptGraphKey)
+                    EditorGUILayout.LabelField($"Total Results: {_matchObjects.Count}", EditorStyles.boldLabel);
+
+                    // Display all results
+                    foreach (var provider in _graphProviders.Values.Where(p => p.IsEnabled))
                     {
-                        var list = _matchScriptGraphMap[key];
-                        if (!ShouldShowItem(list)) continue;
-
-                        EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                        var icon = EditorGUIUtility.ObjectContent(key, typeof(ScriptGraphAsset));
-                        var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
+                        foreach (var (key, matches) in (provider as BaseGraphProvider)?.GetResults() ?? Enumerable.Empty<(Object, List<MatchObject>)>())
                         {
-                            fontStyle = FontStyle.Bold,
-                            fontSize = 14,
-                            alignment = TextAnchor.MiddleLeft,
-                            richText = true
-                        };
-                        GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
-
-                        foreach (var match in list)
-                        {
-                            var pathNames = GetUnitPath(match.Reference);
-                            if (match.Matches.Contains(MatchType.Error) && _matchError)
-                            {
-                                isShowingErrors = true;
-                                var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                // Create the GUIStyle and enable rich text
-                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                {
-                                    alignment = TextAnchor.MiddleLeft,
-                                    richText = true // Enable rich text
-                                };
-
-                                // Display the button with the formatted label
-                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                {
-                                    FocusMatchObject(match);
-                                }
-                            }
-                            else
-                            {
-                                var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
-                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                {
-                                    alignment = TextAnchor.MiddleLeft,
-                                    richText = true
-                                };
-
-                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                {
-                                    FocusMatchObject(match);
-                                }
-                            }
-                        }
-                    }
-
-                    // Display ScriptMachine Graph Results
-                    foreach (var key in _sortedScriptMachineKey)
-                    {
-                        var list = _matchScriptMachineMap[key];
-                        if (!ShouldShowItem(list)) continue;
-                        EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-
-                        // Using GameObject's default icon
-                        var icon = EditorGUIUtility.IconContent("GameObject Icon");
-                        var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                        {
-                            fontStyle = FontStyle.Bold,
-                            fontSize = 14,
-                            alignment = TextAnchor.MiddleLeft,
-                            richText = true
-                        };
-
-                        GUILayout.Label(new GUIContent(key.name + "(ScriptMachine)", icon.image), headerStyle);
-
-                        foreach (var match in list)
-                        {
-                            var pathNames = GetUnitPath(match.Reference);
-                            if (match.Matches.Contains(MatchType.Error) && _matchError)
-                            {
-                                isShowingErrors = true;
-                                var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                // Create the GUIStyle and enable rich text
-                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                {
-                                    alignment = TextAnchor.MiddleLeft,
-                                    richText = true // Enable rich text
-                                };
-
-                                // Display the button with the formatted label
-                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                {
-                                    FocusMatchObject(match);
-                                }
-                            }
-                            else
-                            {
-                                var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
-                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                {
-                                    alignment = TextAnchor.MiddleLeft,
-                                    richText = true
-                                };
-
-                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                {
-                                    FocusMatchObject(match);
-                                }
-                            }
-                        }
-                    }
-
-                    // Display StateMachine Graph Results
-                    foreach (var key in _sortedStateMachineKey)
-                    {
-                        var list = _matchStateMachineMap[key];
-                        if (!ShouldShowItem(list)) continue;
-
-                        EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-
-                        // Using GameObject's default icon
-                        var icon = EditorGUIUtility.IconContent("GameObject Icon");
-                        var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                        {
-                            fontStyle = FontStyle.Bold,
-                            fontSize = 14,
-                            alignment = TextAnchor.MiddleLeft,
-                            richText = true
-                        };
-
-                        GUILayout.Label(new GUIContent(key.name + "(StateMachine)", icon.image), headerStyle);
-
-                        foreach (var match in list)
-                        {
-                            var pathNames = GetUnitPath(match.Reference);
-                            if (match.Matches.Contains(MatchType.Error) && _matchError)
-                            {
-                                isShowingErrors = true;
-                                var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                // Create the GUIStyle and enable rich text
-                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                {
-                                    alignment = TextAnchor.MiddleLeft,
-                                    richText = true // Enable rich text
-                                };
-
-                                // Display the button with the formatted label
-                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                {
-                                    FocusMatchObject(match);
-                                }
-                            }
-                            else
-                            {
-                                var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
-                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                {
-                                    alignment = TextAnchor.MiddleLeft,
-                                    richText = true
-                                };
-
-                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                {
-                                    FocusMatchObject(match);
-                                }
-                            }
-                        }
-                    }
-
-                    // Display State Graph results
-                    foreach (var key in _sortedStateGraphKey)
-                    {
-                        var list = _matchStateGraphMap[key];
-                        if (!ShouldShowItem(list)) continue;
-
-                        EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                        var icon = EditorGUIUtility.ObjectContent(key, typeof(StateGraphAsset));
-                        var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                        {
-                            fontStyle = FontStyle.Bold,
-                            fontSize = 14,
-                            alignment = TextAnchor.MiddleLeft,
-                            richText = true
-                        };
-                        GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
-
-                        foreach (var match in list)
-                        {
-                            var pathNames = GetUnitPath(match.Reference);
-                            if (match.Matches.Contains(MatchType.Error) && _matchError)
-                            {
-                                isShowingErrors = true;
-                                var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                {
-                                    alignment = TextAnchor.MiddleLeft,
-                                    richText = true
-                                };
-
-                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                {
-                                    FocusMatchObject(match);
-                                }
-                            }
-                            else
-                            {
-                                var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
-                                var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                {
-                                    alignment = TextAnchor.MiddleLeft,
-                                    richText = true
-                                };
-
-                                if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                {
-                                    FocusMatchObject(match);
-                                }
-                            }
-                        }
-                    }
-
-                    if (_checkClassAssets)
-                    {
-                        // Display Class Asset results
-                        foreach (var key in _sortedClassAssetKey)
-                        {
-                            var list = _matchClassAssetMap[key];
-                            if (!ShouldShowItem(list)) continue;
-                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                            {
-                                fontStyle = FontStyle.Bold,
-                                fontSize = 14,
-                                alignment = TextAnchor.MiddleLeft,
-                                richText = true
-                            };
-                            GUILayout.Label(new GUIContent(key.name, key.icon), headerStyle);
-
-                            foreach (var match in list)
-                            {
-                                var pathNames = GetUnitPath(match.Reference);
-                                if (match.Matches.Contains(MatchType.Error))
-                                {
-                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                    {
-                                        alignment = TextAnchor.MiddleLeft,
-                                        richText = true
-                                    };
-
-                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                    {
-                                        FocusMatchObject(match);
-                                    }
-                                }
-                                else
-                                {
-                                    var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
-                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                    {
-                                        alignment = TextAnchor.MiddleLeft,
-                                        richText = true
-                                    };
-
-                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                    {
-                                        FocusMatchObject(match);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (_checkStructAssets)
-                    {
-                        // Display Struct Asset results
-                        foreach (var key in _sortedStructAssetKey)
-                        {
-                            var list = _matchStructAssetMap[key];
-                            if (!ShouldShowItem(list)) continue;
-                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                            {
-                                fontStyle = FontStyle.Bold,
-                                fontSize = 14,
-                                alignment = TextAnchor.MiddleLeft,
-                                richText = true
-                            };
-                            GUILayout.Label(new GUIContent(key.name, key.icon), headerStyle);
-
-                            foreach (var match in list)
-                            {
-                                var pathNames = GetUnitPath(match.Reference);
-                                if (match.Matches.Contains(MatchType.Error))
-                                {
-                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                    {
-                                        alignment = TextAnchor.MiddleLeft,
-                                        richText = true
-                                    };
-
-                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                    {
-                                        FocusMatchObject(match);
-                                    }
-                                }
-                                else
-                                {
-                                    var label = $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
-                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                    {
-                                        alignment = TextAnchor.MiddleLeft,
-                                        richText = true
-                                    };
-
-                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                    {
-                                        FocusMatchObject(match);
-                                    }
-                                }
-                            }
+                            if (!ShouldShowItem(matches)) continue;
+                            DrawResultGroup(key, matches, ref isShowingErrors);
                         }
                     }
                 }
-                else
+                else if (_matchError)
                 {
-                    if (_checkScriptGraphAssets)
+                    // Show errors
+                    foreach (var provider in _graphProviders.Values.Where(p => p.IsEnabled))
                     {
-                        foreach (var key in _sortedScriptGraphKey)
+                        foreach (var (key, matches) in (provider as BaseGraphProvider)?.GetResults() ?? Enumerable.Empty<(Object, List<MatchObject>)>())
                         {
-                            var list = _matchScriptGraphMap[key];
-                            if (!IsError(list)) continue;
+                            if (!IsError(matches)) continue;
                             isShowingErrors = true;
-                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                            var icon = EditorGUIUtility.ObjectContent(key, typeof(ScriptGraphAsset));
-                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                            {
-                                fontStyle = FontStyle.Bold,
-                                fontSize = 14,
-                                alignment = TextAnchor.MiddleLeft,
-                                richText = true
-                            };
-                            GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
-
-                            foreach (var match in list)
-                            {
-                                if (match.Matches.Contains(MatchType.Error))
-                                {
-                                    var pathNames = GetUnitPath(match.Reference);
-
-                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                    // Create the GUIStyle and enable rich text
-                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                    {
-                                        alignment = TextAnchor.MiddleLeft,
-                                        richText = true // Enable rich text
-                                    };
-
-                                    // Display the button with the formatted label
-                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                    {
-                                        FocusMatchObject(match);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (_checkScriptMachines)
-                    {
-                        // Display ScriptMachine Graph Results
-                        foreach (var key in _sortedScriptMachineKey)
-                        {
-                            var list = _matchScriptMachineMap[key];
-                            if (!IsError(list)) continue;
-                            isShowingErrors = true;
-                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-
-                            // Using GameObject's default icon
-                            var icon = EditorGUIUtility.IconContent("GameObject Icon");
-                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                            {
-                                fontStyle = FontStyle.Bold,
-                                fontSize = 14,
-                                alignment = TextAnchor.MiddleLeft,
-                                richText = true
-                            };
-                            GUILayout.Label(new GUIContent(key.name + "(ScriptMachine)", icon.image), headerStyle);
-
-                            foreach (var match in list)
-                            {
-                                if (match.Matches.Contains(MatchType.Error))
-                                {
-                                    var pathNames = GetUnitPath(match.Reference);
-
-                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                    {
-                                        alignment = TextAnchor.MiddleLeft,
-                                        richText = true
-                                    };
-
-                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                    {
-                                        FocusMatchObject(match);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (_checkStateMachines)
-                    {
-                        // Display StateMachine Graph Results
-                        foreach (var key in _sortedStateMachineKey)
-                        {
-                            var list = _matchStateMachineMap[key];
-                            if (!IsError(list)) continue;
-                            isShowingErrors = true;
-                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-
-                            // Using GameObject's default icon
-                            var icon = EditorGUIUtility.IconContent("GameObject Icon");
-                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                            {
-                                fontStyle = FontStyle.Bold,
-                                fontSize = 14,
-                                alignment = TextAnchor.MiddleLeft,
-                                richText = true
-                            };
-                            GUILayout.Label(new GUIContent(key.name + "(StateMachine)", icon.image), headerStyle);
-
-                            foreach (var match in list)
-                            {
-                                if (match.Matches.Contains(MatchType.Error))
-                                {
-                                    var pathNames = GetUnitPath(match.Reference);
-
-                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                    {
-                                        alignment = TextAnchor.MiddleLeft,
-                                        richText = true
-                                    };
-
-                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                    {
-                                        FocusMatchObject(match);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (_checkStateGraphAssets)
-                    {
-                        // Display State Graph results
-                        foreach (var key in _sortedStateGraphKey)
-                        {
-                            var list = _matchStateGraphMap[key];
-                            if (!IsError(list)) continue;
-                            isShowingErrors = true;
-                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                            var icon = EditorGUIUtility.ObjectContent(key, typeof(StateGraphAsset));
-                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                            {
-                                fontStyle = FontStyle.Bold,
-                                fontSize = 14,
-                                alignment = TextAnchor.MiddleLeft,
-                                richText = true
-                            };
-                            GUILayout.Label(new GUIContent(key.name, icon.image), headerStyle);
-
-                            foreach (var match in list)
-                            {
-                                if (match.Matches.Contains(MatchType.Error))
-                                {
-                                    var pathNames = GetUnitPath(match.Reference);
-
-                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                    {
-                                        alignment = TextAnchor.MiddleLeft,
-                                        richText = true
-                                    };
-
-                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                    {
-                                        FocusMatchObject(match);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (_checkClassAssets)
-                    {
-                        // Display Class Assets results
-                        foreach (var key in _sortedClassAssetKey)
-                        {
-                            var list = _matchClassAssetMap[key];
-                            if (!IsError(list)) continue;
-                            isShowingErrors = true;
-                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                            {
-                                fontStyle = FontStyle.Bold,
-                                fontSize = 14,
-                                alignment = TextAnchor.MiddleLeft,
-                                richText = true
-                            };
-                            GUILayout.Label(new GUIContent(key.name, key.icon), headerStyle);
-
-                            foreach (var match in list)
-                            {
-                                if (match.Matches.Contains(MatchType.Error))
-                                {
-                                    var pathNames = GetUnitPath(match.Reference);
-
-                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                    {
-                                        alignment = TextAnchor.MiddleLeft,
-                                        richText = true
-                                    };
-
-                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                    {
-                                        FocusMatchObject(match);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (_checkStructAssets)
-                    {
-                        // Display Struct Assets results
-                        foreach (var key in _sortedStructAssetKey)
-                        {
-                            var list = _matchStructAssetMap[key];
-                            if (!IsError(list)) continue;
-                            isShowingErrors = true;
-                            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
-                            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
-                            {
-                                fontStyle = FontStyle.Bold,
-                                fontSize = 14,
-                                alignment = TextAnchor.MiddleLeft,
-                                richText = true
-                            };
-                            GUILayout.Label(new GUIContent(key.name, key.icon), headerStyle);
-
-                            foreach (var match in list)
-                            {
-                                if (match.Matches.Contains(MatchType.Error))
-                                {
-                                    var pathNames = GetUnitPath(match.Reference);
-
-                                    var label = $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>";
-
-                                    var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
-                                    {
-                                        alignment = TextAnchor.MiddleLeft,
-                                        richText = true
-                                    };
-
-                                    if (GUILayout.Button(new GUIContent(label, GetUnitIcon((Unit)match.Unit)), pathStyle))
-                                    {
-                                        FocusMatchObject(match);
-                                    }
-                                }
-                            }
+                            DrawResultGroup(key, matches, ref isShowingErrors, true);
                         }
                     }
                 }
@@ -825,44 +442,73 @@ namespace Unity.VisualScripting.Community
             });
         }
 
-        private Texture GetUnitIcon(Unit unit)
+        private void DrawResultGroup(Object key, List<MatchObject> matches, ref bool isShowingErrors, bool errorsOnly = false)
         {
-            if (unit is MemberUnit)
+            EditorGUIUtility.SetIconSize(new Vector2(16, 16));
+
+            var headerStyle = new GUIStyle(LudiqStyles.toolbarLabel)
             {
-                if (unit is InvokeMember invokeMember)
+                fontStyle = FontStyle.Bold,
+                fontSize = 14,
+                alignment = TextAnchor.MiddleLeft,
+                richText = true
+            };
+
+            var icon = GetGroupIcon(key);
+            var label = GetGroupLabel(key);
+
+            GUILayout.Label(new GUIContent(label, icon), headerStyle);
+
+            foreach (var match in matches)
+            {
+                if (errorsOnly && !match.Matches.Any(m => m == MatchType.Error)) continue;
+                DrawMatchItem(match, ref isShowingErrors);
+            }
+        }
+
+        private Texture GetUnitIcon(IGraphElement element)
+        {
+            if (element is null) return typeof(Null).Icon()[1];
+            if (element is MemberUnit)
+            {
+                if (element is InvokeMember invokeMember)
                 {
                     var descriptor = invokeMember.Descriptor<InvokeMemberDescriptor>();
                     return descriptor.Icon()[1];
                 }
-                else if (unit is GetMember getMember)
+                else if (element is GetMember getMember)
                 {
                     var descriptor = getMember.Descriptor<GetMemberDescriptor>();
                     return descriptor.Icon()[1];
                 }
                 else
                 {
-                    var descriptor = unit.Descriptor<SetMemberDescriptor>();
+                    var descriptor = element.Descriptor<SetMemberDescriptor>();
                     return descriptor.Icon()[1];
                 }
             }
-            else if (unit is Literal literal)
+            else if (element is Literal literal)
             {
                 var descriptor = literal.Descriptor<LiteralDescriptor>();
                 return descriptor.Icon()[1];
             }
-            else if (unit is UnifiedVariableUnit unifiedVariableUnit)
+            else if (element is UnifiedVariableUnit unifiedVariableUnit)
             {
                 var descriptor = unifiedVariableUnit.Descriptor<UnitDescriptor<UnifiedVariableUnit>>();
                 return descriptor.Icon()[1];
             }
+            else if (element is CommentNode commentNode)
+            {
+                return commentNode.Descriptor<CommentDescriptor>().Icon()[1];
+            }
             else
             {
-                var iconDescriptor = unit.GetType().Icon();
-                return iconDescriptor[1];
+                var icon = element.GetType().Icon();
+                return icon[1];
             }
         }
 
-        string GetUnitPath(GraphReference reference)
+        string GetElementPath(GraphReference reference)
         {
             var nodePath = reference;
             var pathNames = "";
@@ -909,473 +555,154 @@ namespace Unity.VisualScripting.Community
 
         private void SearchForErrors()
         {
-            if (_checkScriptGraphAssets)
+            // Remove time-based cooldown
+            if (Time.realtimeSinceStartup - _lastErrorCheckTime < ErrorCheckInterval) return;
+
+            _lastErrorCheckTime = Time.realtimeSinceStartup;
+
+            // Search for errors in all enabled providers
+            foreach (var provider in _graphProviders.Values.Where(p => p.IsEnabled))
             {
-                var guids = AssetDatabase.FindAssets("t:ScriptGraphAsset", null);
-                foreach (var guid in guids)
+                foreach (var element in GetCachedElements(provider))
                 {
-                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                    var asset = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(assetPath);
-                    if (asset.GetReference().graph is not FlowGraph flowGraph) continue;
-                    var baseRef = asset.GetReference().AsReference();
-                    foreach (var element in TraverseFlowGraph(baseRef))
+                    if (element.Item2 is not Unit unit) continue;
+
+                    var match = MatchUnit(unit, element.Item1);
+                    if (match != null)
                     {
-                        var reference = element.Item1;
-                        var unit = element.Item2;
-                        var newMatch = MatchUnit(unit, reference);
-                        if (newMatch == null) continue;
-                        newMatch.ScriptGraphAsset = asset;
-                        newMatch.Reference = reference;
-                        _matchObjects.Add(newMatch);
-                        if (_matchScriptGraphMap.TryGetValue(newMatch.ScriptGraphAsset, out var list))
-                        {
-                            if (!list.Any(match => match.Unit == newMatch.Unit))
-                            {
-                                list.Add(newMatch);
-                            }
-                            else
-                            {
-                                list[list.IndexOf(list.First(match => match.Unit == newMatch.Unit))] = newMatch;
-                            }
-                        }
-                        else
-                        {
-                            _matchScriptGraphMap[newMatch.ScriptGraphAsset] = new List<MatchObject>() { newMatch };
-                        }
+                        match.Reference = element.Item1;
+                        ProcessMatch(match, provider);
                     }
                 }
-
-                _sortedScriptGraphKey = _matchScriptGraphMap.Keys.ToList();
-                _sortedScriptGraphKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
-            }
-
-            if (_checkScriptMachines)
-            {
-                foreach (var machine in UnityObjectUtility.FindObjectsOfTypeIncludingInactive<ScriptMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
-                {
-                    if (machine == null || machine.GetReference() == null || machine.GetReference().graph is not FlowGraph flowGraph) continue;
-                    var baseRef = machine.GetReference().AsReference();
-                    foreach (var element in TraverseFlowGraph(baseRef))
-                    {
-                        var reference = element.Item1;
-                        var unit = element.Item2;
-                        var newMatch = MatchUnit(unit, reference);
-                        if (newMatch == null) continue;
-                        newMatch.ScriptMachine = machine;
-                        newMatch.Reference = reference;
-                        _matchObjects.Add(newMatch);
-                        if (_matchScriptMachineMap.TryGetValue(newMatch.ScriptMachine, out var list))
-                        {
-                            if (!list.Any(match => match.Unit == newMatch.Unit))
-                            {
-                                list.Add(newMatch);
-                            }
-                            else
-                            {
-                                list[list.IndexOf(list.First(match => match.Unit == newMatch.Unit))] = newMatch;
-                            }
-                        }
-                        else
-                        {
-                            _matchScriptMachineMap[newMatch.ScriptMachine] = new List<MatchObject>() { newMatch };
-                        }
-                    }
-                }
-
-                _sortedScriptMachineKey = _matchScriptMachineMap.Keys.ToList();
-                _sortedScriptMachineKey.Sort((a, b) => string.Compare(a.nest.graph.title, b.nest.graph.title, StringComparison.Ordinal));
-            }
-
-            if (_checkStateMachines)
-            {
-                foreach (var machine in UnityObjectUtility.FindObjectsOfTypeIncludingInactive<StateMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
-                {
-                    if (machine == null || machine.GetReference() == null || machine.GetReference().graph is not StateGraph flowGraph) continue;
-                    var baseRef = machine.GetReference().AsReference();
-                    foreach (var element in TraverseStateGraph(baseRef))
-                    {
-                        var reference = element.Item1;
-                        var unit = element.Item2;
-                        var newMatch = MatchUnit(unit, reference);
-                        if (newMatch == null) continue;
-                        newMatch.StateMachine = machine;
-                        newMatch.Reference = reference;
-                        _matchObjects.Add(newMatch);
-                        if (_matchStateMachineMap.TryGetValue(newMatch.StateMachine, out var list))
-                        {
-                            if (!list.Any(match => match.Unit == newMatch.Unit))
-                            {
-                                list.Add(newMatch);
-                            }
-                            else
-                            {
-                                list[list.IndexOf(list.First(match => match.Unit == newMatch.Unit))] = newMatch;
-                            }
-                        }
-                        else
-                        {
-                            _matchStateMachineMap[newMatch.StateMachine] = new List<MatchObject>() { newMatch };
-                        }
-                    }
-                }
-
-                _sortedStateMachineKey = _matchStateMachineMap.Keys.ToList();
-                _sortedStateMachineKey.Sort((a, b) => string.Compare(a.nest.graph.title, b.nest.graph.title, StringComparison.Ordinal));
-            }
-
-            if (_checkStateGraphAssets)
-            {
-                var guids = AssetDatabase.FindAssets("t:StateGraphAsset", null);
-                foreach (var guid in guids)
-                {
-                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                    var asset = AssetDatabase.LoadAssetAtPath<StateGraphAsset>(assetPath);
-
-                    var baseRef = asset.GetReference().AsReference();
-                    foreach (var element in TraverseStateGraph(baseRef))
-                    {
-                        var reference = element.Item1;
-                        var unit = element.Item2;
-                        var newMatch = MatchUnit(unit, reference);
-                        if (newMatch == null) continue;
-                        newMatch.StateGraphAsset = asset;
-                        newMatch.Reference = reference;
-                        _matchObjects.Add(newMatch);
-                        if (_matchStateGraphMap.TryGetValue(newMatch.StateGraphAsset, out var list))
-                        {
-                            if (!list.Any(match => match.Unit == newMatch.Unit))
-                            {
-                                list.Add(newMatch);
-                            }
-                            else
-                            {
-                                list[list.IndexOf(list.First(match => match.Unit == newMatch.Unit))] = newMatch;
-                            }
-                        }
-                        else
-                        {
-                            _matchStateGraphMap[newMatch.StateGraphAsset] = new List<MatchObject>() { newMatch };
-                        }
-                    }
-                }
-
-                _sortedStateGraphKey = _matchStateGraphMap.Keys.ToList();
-                _sortedStateGraphKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
-            }
-
-            if (_checkClassAssets)
-            {
-                var guids = AssetDatabase.FindAssets("t:ClassAsset", null);
-                foreach (var guid in guids)
-                {
-                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                    var asset = AssetDatabase.LoadAssetAtPath<ClassAsset>(assetPath);
-
-                    var references = GetReferences(asset);
-                    foreach (var reference in references)
-                    {
-                        foreach (var element in TraverseFlowGraph(reference))
-                        {
-                            var targetReference = element.Item1;
-                            var unit = element.Item2;
-                            var newMatch = MatchUnit(unit, targetReference);
-                            if (newMatch == null) continue;
-                            newMatch.ClassAsset = asset;
-                            newMatch.Reference = targetReference;
-                            if (_matchClassAssetMap.TryGetValue(newMatch.ClassAsset, out var list))
-                            {
-                                if (!list.Any(match => match.Unit == newMatch.Unit))
-                                {
-                                    list.Add(newMatch);
-                                }
-                                else
-                                {
-                                    list[list.IndexOf(list.First(match => match.Unit == newMatch.Unit))] = newMatch;
-                                }
-                            }
-                            else
-                            {
-                                _matchClassAssetMap[newMatch.ClassAsset] = new List<MatchObject>() { newMatch };
-                            }
-                        }
-                    }
-                }
-
-                _sortedClassAssetKey = _matchClassAssetMap.Keys.ToList();
-                _sortedClassAssetKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
-            }
-
-            if (_checkStructAssets)
-            {
-                var guids = AssetDatabase.FindAssets("t:StructAsset", null);
-                foreach (var guid in guids)
-                {
-                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                    var asset = AssetDatabase.LoadAssetAtPath<StructAsset>(assetPath);
-
-                    var references = GetReferences(asset);
-                    foreach (var reference in references)
-                    {
-                        foreach (var element in TraverseFlowGraph(reference))
-                        {
-                            var targetReference = element.Item1;
-                            var unit = element.Item2;
-                            var newMatch = MatchUnit(unit, targetReference);
-                            if (newMatch == null) continue;
-                            newMatch.StructAsset = asset;
-                            newMatch.Reference = targetReference;
-                            if (_matchStructAssetMap.TryGetValue(newMatch.StructAsset, out var list))
-                            {
-                                if (!list.Any(match => match.Unit == newMatch.Unit))
-                                {
-                                    list.Add(newMatch);
-                                }
-                                else
-                                {
-                                    list[list.IndexOf(list.First(match => match.Unit == newMatch.Unit))] = newMatch;
-                                }
-                            }
-                            else
-                            {
-                                _matchStructAssetMap[newMatch.StructAsset] = new List<MatchObject>() { newMatch };
-                            }
-                        }
-                    }
-                }
-
-                _sortedStructAssetKey = _matchStructAssetMap.Keys.ToList();
-                _sortedStructAssetKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
             }
         }
 
         private void Search()
         {
+            if (Time.realtimeSinceStartup - _lastSearchTime < SearchCooldown) return;
+
+            _lastSearchTime = Time.realtimeSinceStartup;
+
+            // Only clear matches, not the maps
             _matchObjects.Clear();
-            _matchScriptGraphMap.Clear();
-            _sortedScriptGraphKey.Clear();
-            _matchStateGraphMap.Clear();
-            _sortedStateGraphKey.Clear();
-            _matchScriptMachineMap.Clear();
-            _sortedScriptMachineKey.Clear();
-            _matchStateMachineMap.Clear();
-            _sortedStateMachineKey.Clear();
-            _matchClassAssetMap.Clear();
-            _sortedClassAssetKey.Clear();
-            _matchStructAssetMap.Clear();
-            _sortedStructAssetKey.Clear();
 
-            var matchWord = new Regex(_pattern, RegexOptions.IgnoreCase);
-            // for script graphs.
-            // begin of script graph
-
-            if (_checkScriptGraphAssets)
+            foreach (var provider in _graphProviders.Values.Where(p => p.IsEnabled))
             {
-                var guids = AssetDatabase.FindAssets("t:ScriptGraphAsset", null);
-                foreach (var guid in guids)
+                if (provider is BaseGraphProvider baseProvider)
                 {
-                    // continue;
-                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                    var asset = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(assetPath);
-                    if (asset.GetReference().graph is not FlowGraph flowGraph) continue;
-                    var baseRef = asset.GetReference().AsReference();
-                    foreach (var element in TraverseFlowGraph(baseRef))
+                    baseProvider.ClearResults();
+                }
+                List<IGraphElement> elements = new();
+                foreach (var element in provider.GetElements())
+                {
+                    foreach (var handler in _matchHandlers.Values)
                     {
-                        var reference = element.Item1;
-                        var unit = element.Item2;
-                        var newMatch = MatchUnit(matchWord, unit);
-                        if (newMatch == null) continue;
-                        newMatch.ScriptGraphAsset = asset;
-                        newMatch.Reference = reference;
-                        _matchObjects.Add(newMatch);
-                        if (_matchScriptGraphMap.TryGetValue(newMatch.ScriptGraphAsset, out var list))
+                        if (!handler.CanHandle(element.Item2) || elements.Contains(element.Item2)) continue;
+                        elements.Add(element.Item2);
+                        var match = handler.HandleMatch(element.Item2, _pattern);
+                        if (match != null)
                         {
-                            list.Add(newMatch);
-                        }
-                        else
-                        {
-                            _matchScriptGraphMap[newMatch.ScriptGraphAsset] = new List<MatchObject>() { newMatch };
+                            match.Reference = element.Item1;
+                            ProcessMatch(match, provider);
                         }
                     }
                 }
-
-                _sortedScriptGraphKey = _matchScriptGraphMap.Keys.ToList();
-                _sortedScriptGraphKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
-            }
-
-            if (_checkScriptMachines)
-            {
-                foreach (var machine in UnityObjectUtility.FindObjectsOfTypeIncludingInactive<ScriptMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
-                {
-                    if (machine == null || machine.GetReference() == null || machine.GetReference().graph is not FlowGraph flowGraph) continue;
-                    var baseRef = machine.GetReference().AsReference();
-                    foreach (var element in TraverseFlowGraph(baseRef))
-                    {
-                        var reference = element.Item1;
-                        var unit = element.Item2;
-                        var newMatch = MatchUnit(matchWord, unit);
-                        if (newMatch == null) continue;
-                        newMatch.ScriptMachine = machine;
-                        newMatch.Reference = reference;
-                        _matchObjects.Add(newMatch);
-                        if (_matchScriptMachineMap.TryGetValue(newMatch.ScriptMachine, out var list))
-                        {
-                            list.Add(newMatch);
-                        }
-                        else
-                        {
-                            _matchScriptMachineMap[newMatch.ScriptMachine] = new List<MatchObject>() { newMatch };
-                        }
-                    }
-                }
-
-                _sortedScriptMachineKey = _matchScriptMachineMap.Keys.ToList();
-                _sortedScriptMachineKey.Sort((a, b) => string.Compare(a.nest.graph.title, b.nest.graph.title, StringComparison.Ordinal));
-            }
-
-            if (_checkStateMachines)
-            {
-                foreach (var machine in UnityObjectUtility.FindObjectsOfTypeIncludingInactive<StateMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
-                {
-                    if (machine == null || machine.GetReference() == null || machine.GetReference().graph is not StateGraph stateGraph) continue;
-                    var baseRef = machine.GetReference().AsReference();
-                    foreach (var element in TraverseStateGraph(baseRef))
-                    {
-                        var reference = element.Item1;
-                        var unit = element.Item2;
-                        var newMatch = MatchUnit(matchWord, unit);
-                        if (newMatch == null) continue;
-                        newMatch.StateMachine = machine;
-                        newMatch.Reference = reference;
-                        _matchObjects.Add(newMatch);
-                        if (_matchStateMachineMap.TryGetValue(newMatch.StateMachine, out var list))
-                        {
-                            list.Add(newMatch);
-                        }
-                        else
-                        {
-                            _matchStateMachineMap[newMatch.StateMachine] = new List<MatchObject>() { newMatch };
-                        }
-                    }
-                }
-
-                _sortedStateMachineKey = _matchStateMachineMap.Keys.ToList();
-                _sortedStateMachineKey.Sort((a, b) => string.Compare(a.nest.graph.title, b.nest.graph.title, StringComparison.Ordinal));
-            }
-
-            if (_checkStateGraphAssets)
-            {
-                var guids = AssetDatabase.FindAssets("t:StateGraphAsset", null);
-                foreach (var guid in guids)
-                {
-                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                    var asset = AssetDatabase.LoadAssetAtPath<StateGraphAsset>(assetPath);
-
-                    var baseRef = asset.GetReference().AsReference();
-                    foreach (var element in TraverseStateGraph(baseRef))
-                    {
-                        var reference = element.Item1;
-                        var unit = element.Item2;
-                        var newMatch = MatchUnit(matchWord, unit);
-                        if (newMatch == null) continue;
-                        newMatch.StateGraphAsset = asset;
-                        newMatch.Reference = reference;
-                        _matchObjects.Add(newMatch);
-                        if (_matchStateGraphMap.TryGetValue(newMatch.StateGraphAsset, out var list))
-                        {
-                            if (!list.Any(match => match.Unit == newMatch.Unit))
-                            {
-                                list.Add(newMatch);
-                            }
-                        }
-                        else
-                        {
-                            _matchStateGraphMap[newMatch.StateGraphAsset] = new List<MatchObject>() { newMatch };
-                        }
-                    }
-                }
-
-                _sortedStateGraphKey = _matchStateGraphMap.Keys.ToList();
-                _sortedStateGraphKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
-            }
-
-            if (_checkClassAssets)
-            {
-                var guids = AssetDatabase.FindAssets("t:ClassAsset", null);
-                foreach (var guid in guids)
-                {
-                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                    var asset = AssetDatabase.LoadAssetAtPath<ClassAsset>(assetPath);
-                    var references = GetReferences(asset);
-                    foreach (var reference in references)
-                    {
-                        foreach (var element in TraverseFlowGraph(reference))
-                        {
-                            var targetReference = element.Item1;
-                            var unit = element.Item2;
-                            var newMatch = MatchUnit(matchWord, unit);
-                            if (newMatch == null) continue;
-                            newMatch.ClassAsset = asset;
-                            newMatch.Reference = targetReference;
-                            _matchObjects.Add(newMatch);
-                            if (_matchClassAssetMap.TryGetValue(newMatch.ClassAsset, out var list))
-                            {
-                                if (!list.Any(match => match.Unit == newMatch.Unit))
-                                {
-                                    list.Add(newMatch);
-                                }
-                            }
-                            else
-                            {
-                                _matchClassAssetMap[newMatch.ClassAsset] = new List<MatchObject>() { newMatch };
-                            }
-                        }
-                    }
-                }
-
-                _sortedClassAssetKey = _matchClassAssetMap.Keys.ToList();
-                _sortedClassAssetKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
-            }
-
-            if (_checkStructAssets)
-            {
-                var guids = AssetDatabase.FindAssets("t:StructAsset", null);
-                foreach (var guid in guids)
-                {
-                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                    var asset = AssetDatabase.LoadAssetAtPath<StructAsset>(assetPath);
-                    var references = GetReferences(asset);
-                    foreach (var reference in references)
-                    {
-                        foreach (var element in TraverseFlowGraph(reference))
-                        {
-                            var targetReference = element.Item1;
-                            var unit = element.Item2;
-                            var newMatch = MatchUnit(matchWord, unit);
-                            if (newMatch == null) continue;
-                            newMatch.StructAsset = asset;
-                            newMatch.Reference = targetReference;
-                            _matchObjects.Add(newMatch);
-                            if (_matchStructAssetMap.TryGetValue(newMatch.StructAsset, out var list))
-                            {
-                                if (!list.Any(match => match.Unit == newMatch.Unit))
-                                {
-                                    list.Add(newMatch);
-                                }
-                            }
-                            else
-                            {
-                                _matchStructAssetMap[newMatch.StructAsset] = new List<MatchObject>() { newMatch };
-                            }
-                        }
-                    }
-                }
-
-                _sortedStructAssetKey = _matchStructAssetMap.Keys.ToList();
-                _sortedStructAssetKey.Sort((a, b) => String.Compare(a.name, b.name, StringComparison.Ordinal));
             }
         }
 
-        private IEnumerable<GraphReference> GetReferences(ClassAsset asset)
+        private IEnumerable<(GraphReference, IGraphElement)> GetCachedElements(IGraphProvider provider)
+        {
+            // Check if we need to refresh the cache
+            bool shouldRefreshCache = false;
+            foreach (var graphRef in _graphElementCache.Keys.ToList())
+            {
+                if (graphRef?.graph == null || !graphRef.isValid)
+                {
+                    _graphElementCache.Remove(graphRef);
+                    shouldRefreshCache = true;
+                }
+            }
+
+            // Get elements from provider
+            var elements = provider.GetElements();
+
+            // Process each element
+            foreach (var (reference, element) in elements)
+            {
+                // Skip invalid references
+                if (reference == null || !reference.isValid) continue;
+
+                // Check cache for this reference
+                if (!shouldRefreshCache && _graphElementCache.TryGetValue(reference, out var cachedElements))
+                {
+                    // Verify cached elements are still valid
+                    bool cacheValid = true;
+                    foreach (var (_, cachedElement) in cachedElements)
+                    {
+                        if (cachedElement is Unit unit && !unit.graph.elements.Contains(unit))
+                        {
+                            cacheValid = false;
+                            break;
+                        }
+                    }
+
+                    // Use cache if valid
+                    if (cacheValid)
+                    {
+                        foreach (var cachedElement in cachedElements)
+                        {
+                            yield return cachedElement;
+                        }
+                        continue;
+                    }
+                }
+
+                // Build new cache entry
+                var newElements = new List<(GraphReference, IGraphElement)>();
+
+                // Process the element
+                if (element != null)
+                {
+                    newElements.Add((reference, element));
+                    yield return (reference, element);
+                }
+
+                // Cache the results
+                _graphElementCache[reference] = newElements;
+            }
+        }
+
+        private void ProcessMatch(MatchObject match, IGraphProvider provider)
+        {
+            if (match == null || match.Matches.Count == 0) return;
+
+            _matchObjects.Add(match);
+            // Assign the appropriate asset type based on provider
+            if (provider is ScriptGraphProvider)
+                match.ScriptGraphAsset = provider.GetAssetForElement(match.Reference) as ScriptGraphAsset;
+            else if (provider is StateGraphProvider)
+                match.StateGraphAsset = provider.GetAssetForElement(match.Reference) as StateGraphAsset;
+            else if (provider is ClassAssetProvider)
+                match.ClassAsset = provider.GetAssetForElement(match.Reference) as ClassAsset;
+            else if (provider is StructAssetProvider)
+                match.StructAsset = provider.GetAssetForElement(match.Reference) as StructAsset;
+
+            // Let provider handle the match
+            provider.HandleMatch(match);
+        }
+
+        private Object GetAssetKeyForMatch(MatchObject match)
+        {
+            if (match.ScriptGraphAsset != null) return match.ScriptGraphAsset;
+            if (match.StateGraphAsset != null) return match.StateGraphAsset;
+            if (match.ClassAsset != null) return match.ClassAsset;
+            if (match.StructAsset != null) return match.StructAsset;
+            if (match.ScriptMachine != null) return match.ScriptMachine;
+            if (match.StateMachine != null) return match.StateMachine;
+            return null;
+        }
+
+        public IEnumerable<GraphReference> GetReferences(ClassAsset asset)
         {
             foreach (var constructor in asset.constructors)
             {
@@ -1397,7 +724,7 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private IEnumerable<GraphReference> GetReferences(StructAsset asset)
+        public IEnumerable<GraphReference> GetReferences(StructAsset asset)
         {
             foreach (var constructor in asset.constructors)
             {
@@ -1466,15 +793,14 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        IEnumerable<(GraphReference, Unit)> TraverseFlowGraph(GraphReference graphReference)
+        public IEnumerable<(GraphReference, IGraphElement)> TraverseFlowGraph(GraphReference graphReference)
         {
             var flowGraph = graphReference.graph as FlowGraph;
             if (flowGraph == null) yield break;
-            var units = flowGraph.units;
+            var units = flowGraph.elements;
             foreach (var element in units)
             {
-                var unit = element as Unit;
-                switch (unit)
+                switch (element)
                 {
                     // going deep
                     case SubgraphUnit subgraphUnit:
@@ -1505,13 +831,14 @@ namespace Unity.VisualScripting.Community
                             break;
                         }
                     default:
-                        yield return (graphReference, unit);
+                        yield return (graphReference, element);
                         break;
                 }
             }
         }
-        private bool HandleSearch(IUnit unit, out string name)
+        private bool HandleUnitSearch(IUnit unit, out string name)
         {
+            if (unit is null) { name = ""; return false; }
             if (unit is MemberUnit memberUnit)
             {
                 var _name = memberUnit.member.ToPseudoDeclarer().ToString();
@@ -1532,7 +859,21 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        IEnumerable<(GraphReference, Unit)> TraverseStateGraph(GraphReference graphReference)
+        private bool HandleStickyNoteSearch(StickyNote note, out string name)
+        {
+            var _name = StickyNoteFullName(note);
+            name = _name;
+            return SearchUtility.Matches(SearchUtility.Relevance(_pattern, _name));
+        }
+
+        private bool HandleGraphGroupSearch(GraphGroup group, out string name)
+        {
+            var _name = GroupFullName(group);
+            name = _name;
+            return SearchUtility.Matches(SearchUtility.Relevance(_pattern, _name));
+        }
+
+        internal IEnumerable<(GraphReference, IGraphElement)> TraverseStateGraph(GraphReference graphReference)
         {
             var stateGraph = graphReference.graph as StateGraph;
             if (stateGraph == null) yield break;
@@ -1590,8 +931,96 @@ namespace Unity.VisualScripting.Community
         }
 
 
-        private MatchObject MatchUnit(Regex matchWord, Unit unit)
+        private MatchObject MatchUnit(Regex matchWord, IGraphElement element)
         {
+            MatchObject matchRecord = null;
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+            if (element is StickyNote stickyNote)
+            {
+                matchRecord = matchRecord = new MatchObject
+                {
+                    Matches = new List<MatchType>(),
+                    stickyNote = stickyNote,
+                    FullTypeName = StickyNoteFullName(stickyNote)
+                };
+                if (HandleStickyNoteSearch(stickyNote, out string name))
+                {
+                    matchRecord.Matches.Add(MatchType.StickyNote);
+                }
+            }
+            else if (element is GraphGroup graphGroup)
+            {
+                matchRecord = matchRecord = new MatchObject
+                {
+                    Matches = new List<MatchType>(),
+                    group = graphGroup,
+                    FullTypeName = GroupFullName(graphGroup)
+                };
+                if (HandleGraphGroupSearch(graphGroup, out string name))
+                {
+                    matchRecord.Matches.Add(MatchType.Group);
+                }
+            }
+            else
+            {
+                var unit = element as Unit;
+                matchRecord = new MatchObject
+                {
+                    Matches = new List<MatchType>(),
+                    Unit = unit,
+                    FullTypeName = GetUnitFullName(unit)
+                };
+                CheckMemberUnit(matchWord, unit, matchRecord);
+                CheckLiteralUnit(unit, matchRecord);
+                CheckFields(matchWord, unit, matchRecord);
+                CheckDefaultValues(matchWord, unit, matchRecord);
+                if (HandleUnitSearch(unit, out string name))
+                {
+                    matchRecord.FullTypeName = GetFullNameWithInputs(unit, name);
+                    matchRecord.Matches.Add(MatchType.Unit);
+                }
+            }
+#else
+            if (element is GraphGroup graphGroup)
+            {
+                matchRecord = matchRecord = new MatchObject
+                {
+                    Matches = new List<MatchType>(),
+                    group = graphGroup,
+                    FullTypeName = GroupFullName(graphGroup)
+                };
+                if (HandleGraphGroupSearch(graphGroup, out string name))
+                {
+                    matchRecord.Matches.Add(MatchType.Group);
+                }
+            }
+            else
+            {
+                var unit = element as Unit;
+                matchRecord = new MatchObject
+                {
+                    Matches = new List<MatchType>(),
+                    Unit = unit,
+                    FullTypeName = GetUnitFullName(unit)
+                };
+                CheckMemberUnit(matchWord, unit, matchRecord);
+                CheckLiteralUnit(unit, matchRecord);
+                CheckFields(matchWord, unit, matchRecord);
+                CheckDefaultValues(matchWord, unit, matchRecord);
+                if (HandleUnitSearch(unit, out string name))
+                {
+                    matchRecord.FullTypeName = GetFullNameWithInputs(unit, name);
+                    matchRecord.Matches.Add(MatchType.Unit);
+                }
+            }
+#endif      
+            return matchRecord.Matches.Count > 0 ? matchRecord : null;
+        }
+
+        private MatchObject MatchUnit(Unit unit, GraphReference baseRef)
+        {
+            if (unit == null) return null;
+
             var matchRecord = new MatchObject
             {
                 Matches = new List<MatchType>(),
@@ -1599,43 +1028,20 @@ namespace Unity.VisualScripting.Community
                 FullTypeName = GetUnitFullName(unit)
             };
 
-            CheckMemberUnit(matchWord, unit, matchRecord);
-            CheckLiteralUnit(unit, matchRecord);
-            CheckFields(matchWord, unit, matchRecord);
-            CheckDefaultValues(matchWord, unit, matchRecord);
+            bool hasError = unit.GetException(baseRef) != null || unit is MissingType;
+            if (!hasError) return null;
 
-            if (HandleSearch(unit, out string name))
+            if (unit.GetException(baseRef) != null)
             {
-                matchRecord.FullTypeName = GetFullNameWithInputs(unit, name);
-                matchRecord.Matches.Add(MatchType.Unit);
+                matchRecord.FullTypeName += $" ({unit.GetException(baseRef).Message})";
+            }
+            else if (unit is MissingType missingType)
+            {
+                matchRecord.FullTypeName += $" {(missingType.formerType == null ? "Missing Type" : "Missing Type : " + missingType.formerType)}";
             }
 
-            return matchRecord.Matches.Count > 0 ? matchRecord : null;
-        }
-
-        private MatchObject MatchUnit(Unit unit, GraphReference baseRef)
-        {
-            var matchRecord = new MatchObject
-            {
-                Matches = new List<MatchType>(),
-                Unit = unit,
-                FullTypeName = GetFullNameWithInputs(unit, GetUnitFullName(unit))
-            };
-
-            if (unit.GetException(baseRef) != null || unit is MissingType)
-            {
-                if (unit.GetException(baseRef) != null)
-                {
-                    matchRecord.FullTypeName += $" ({unit.GetException(baseRef).Message})";
-                }
-                else if (unit is MissingType missingType)
-                {
-                    matchRecord.FullTypeName += $" {(missingType.formerType == null ? "Missing Type" : "Missing Type : " + missingType.formerType)}";
-                }
-                matchRecord.Matches.Add(MatchType.Error);
-            }
-
-            return matchRecord.Matches.Count > 0 ? matchRecord : null;
+            matchRecord.Matches.Add(MatchType.Error);
+            return matchRecord;
         }
 
         private string GetUnitFullName(Unit unit)
@@ -1649,9 +1055,44 @@ namespace Unity.VisualScripting.Community
 
             return typeName;
         }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+        private string StickyNoteFullName(StickyNote note)
+        {
+            if (!string.IsNullOrEmpty(note.title) && !string.IsNullOrEmpty(note.body))
+            {
+                return "StickyNote : " + note.title + "." + note.body;
+            }
+            else if (!string.IsNullOrEmpty(note.title))
+            {
+                return "StickyNote : " + note.title;
+            }
+            else if (!string.IsNullOrEmpty(note.body))
+            {
+                return "StickyNote : " + note.body;
+            }
+            return "Empty StickyNote";
+        }
+#endif
+        private string GroupFullName(GraphGroup group)
+        {
+            if (!string.IsNullOrEmpty(group.label) && !string.IsNullOrEmpty(group.comment))
+            {
+                return "Graph Group : " + group.label + "." + group.comment;
+            }
+            else if (!string.IsNullOrEmpty(group.label))
+            {
+                return "Graph Group : " + group.label;
+            }
+            else if (!string.IsNullOrEmpty(group.comment))
+            {
+                return "Graph Group : " + group.comment;
+            }
+            return "Unnamed Graph Group";
+        }
 
         private void CheckMemberUnit(Regex matchWord, Unit unit, MatchObject matchRecord)
         {
+            if (unit is null) return;
             if (unit is MemberUnit)
             {
                 if (matchWord.IsMatch(matchRecord.FullTypeName))
@@ -1663,6 +1104,7 @@ namespace Unity.VisualScripting.Community
 
         private void CheckLiteralUnit(Unit unit, MatchObject matchRecord)
         {
+            if (unit is null) return;
             if (unit is Literal literal)
             {
                 matchRecord.FullTypeName = $"{matchRecord.FullTypeName} (Type : {literal.type.As().CSharpName(false, false, false)}, Value : {literal.value})";
@@ -1675,6 +1117,7 @@ namespace Unity.VisualScripting.Community
 
         private void CheckFields(Regex matchWord, Unit unit, MatchObject matchRecord)
         {
+            if (unit is null) return;
             var fields = unit.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
 
             foreach (var field in fields)
@@ -1691,6 +1134,7 @@ namespace Unity.VisualScripting.Community
 
         private void CheckDefaultValues(Regex matchWord, Unit unit, MatchObject matchRecord)
         {
+            if (unit is null) return;
             foreach (var kvp in unit.defaultValues)
             {
                 var value = kvp.Value;
@@ -1706,6 +1150,7 @@ namespace Unity.VisualScripting.Community
 
         private string GetFullNameWithInputs(Unit unit, string baseName)
         {
+            if (unit is null) return "";
             if (unit is Literal literal)
             {
                 return $"{baseName} (Type : {literal.type.As().CSharpName(false, false, false)}, Value : {literal.value})";
@@ -1721,9 +1166,12 @@ namespace Unity.VisualScripting.Community
             return baseName;
         }
 
-        private string GetUnitName(Unit unit)
+        private string GetUnitName(IGraphElement element)
         {
-            return BoltFlowNameUtility.UnitTitle(unit.GetType(), true, false);
+            if (element is Unit unit)
+                return BoltFlowNameUtility.UnitTitle(unit.GetType(), true, false);
+            else if (element is not null) return element.Descriptor().description.title;
+            return "Null Element";
         }
 
         private string GetValue(ValueInput valueInput)
@@ -1751,12 +1199,14 @@ namespace Unity.VisualScripting.Community
         {
             foreach (var match in list)
             {
-                if (match.Matches.Contains(MatchType.Unit))
+                foreach (var matchType in match.Matches)
                 {
-                    return true;
+                    if (_typeFilters[matchType])
+                    {
+                        return true;
+                    }
                 }
             }
-
             return false;
         }
 
@@ -1810,7 +1260,18 @@ namespace Unity.VisualScripting.Community
             if (context == null)
                 return;
             context.BeginEdit();
-            context.canvas?.ViewElements(((IGraphElement)match.Unit).Yield());
+            if (match.group != null)
+            {
+                context.canvas?.ViewElements(((IGraphElement)match.group).Yield());
+            }
+            else if (match.stickyNote != null)
+            {
+                context.canvas?.ViewElements(((IGraphElement)match.stickyNote).Yield());
+            }
+            else if (match.Unit != null)
+            {
+                context.canvas?.ViewElements(((IGraphElement)match.Unit).Yield());
+            }
             context.EndEdit();
         }
 
@@ -1842,6 +1303,599 @@ namespace Unity.VisualScripting.Community
                 }
             }
             return targetReference;
+        }
+
+        // Match type enum for categorizing different types of matches
+        public enum MatchType
+        {
+            Unit,
+            Comment,
+            Group,
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+            StickyNote,
+#endif
+            Error
+        }
+
+        // Class to store match information
+        public class MatchObject
+        {
+            public List<MatchType> Matches { get; set; } = new List<MatchType>();
+            public ScriptGraphAsset ScriptGraphAsset { get; set; }
+            public ScriptMachine ScriptMachine { get; set; }
+            public StateMachine StateMachine { get; set; }
+            public StateGraphAsset StateGraphAsset { get; set; }
+            public ClassAsset ClassAsset { get; set; }
+            public StructAsset StructAsset { get; set; }
+            public GraphReference Reference { get; set; }
+            public string FullTypeName { get; set; }
+            public IUnit Unit { get; set; }
+            public GraphGroup group { get; set; }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+            public StickyNote stickyNote { get; set; }
+#endif
+            public CommentNode comment { get; set; }
+        }
+
+        private Texture GetGroupIcon(Object key)
+        {
+            switch (key)
+            {
+                case ScriptGraphAsset _:
+                    return EditorGUIUtility.ObjectContent(key, typeof(ScriptGraphAsset)).image;
+                case StateGraphAsset _:
+                    return EditorGUIUtility.ObjectContent(key, typeof(StateGraphAsset)).image;
+                case ScriptMachine _:
+                case StateMachine _:
+                    return EditorGUIUtility.IconContent("GameObject Icon").image;
+                case ClassAsset classAsset:
+                    return classAsset.icon ?? typeof(ClassAsset).Icon()[1];
+                case StructAsset structAsset:
+                    return structAsset.icon ?? typeof(StructAsset).Icon()[1];
+                default:
+                    return null;
+            }
+        }
+
+        private string GetGroupLabel(Object key)
+        {
+            switch (key)
+            {
+                case ScriptMachine scriptMachine:
+                    return $"{scriptMachine.name} (ScriptMachine)";
+                case StateMachine stateMachine:
+                    return $"{stateMachine.name} (StateMachine)";
+                default:
+                    return key.name;
+            }
+        }
+
+        private void DrawMatchItem(MatchObject match, ref bool isShowingErrors, bool errorsOnly = false)
+        {
+            var pathNames = GetElementPath(match.Reference);
+            var isError = match.Matches.Contains(MatchType.Error) && _matchError;
+
+            if (isError)
+            {
+                isShowingErrors = true;
+            }
+
+            var label = isError
+                ? $"      {pathNames} <color=#FF6800>{SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}</color>"
+                : $"      {pathNames} {SearchUtility.HighlightQuery(match.FullTypeName, _pattern)}";
+
+            var pathStyle = new GUIStyle(LudiqStyles.paddedButton)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                richText = true
+            };
+            if (match.Matches.Contains(MatchType.Error) && !_matchError) return;
+            IGraphElement element = match.Unit;
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+            if (match.stickyNote != null) element = match.stickyNote;
+#endif
+            if (match.group != null) element = match.group;
+
+            if (match.comment != null) element = match.comment;
+            if (GUILayout.Button(new GUIContent(label, GetUnitIcon(element)), pathStyle))
+            {
+                FocusMatchObject(match);
+            }
+        }
+    }
+
+    public class ScriptMachineProvider : NodeFinderWindow.BaseGraphProvider
+    {
+        public override string Name => "ScriptMachines";
+        public ScriptMachineProvider(NodeFinderWindow nodeFinderWindow) : base(nodeFinderWindow)
+        {
+        }
+
+        public override IEnumerable<(GraphReference, IGraphElement)> GetElements()
+        {
+            foreach (var machine in UnityObjectUtility.FindObjectsOfTypeIncludingInactive<ScriptMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
+            {
+                if (machine?.GetReference().graph is not FlowGraph) continue;
+
+                var baseRef = machine.GetReference().AsReference();
+                foreach (var element in _window.TraverseFlowGraph(baseRef))
+                {
+                    yield return element;
+                }
+            }
+        }
+
+        public override void HandleMatch(NodeFinderWindow.MatchObject match)
+        {
+            var machine = match.ScriptMachine;
+            if (machine != null)
+            {
+                AddMatch(match, machine);
+            }
+        }
+
+        protected override string GetSortKey(Object key)
+        {
+            return (key as ScriptMachine).graph.title ?? base.GetSortKey(key);
+        }
+    }
+
+    // Implement concrete providers and handlers
+    public class ScriptGraphProvider : NodeFinderWindow.BaseGraphProvider
+    {
+        public override string Name => "ScriptGraphAssets";
+
+        public ScriptGraphProvider(NodeFinderWindow window) : base(window) { }
+
+        public override IEnumerable<(GraphReference, IGraphElement)> GetElements()
+        {
+            if (!IsEnabled) yield break;
+
+            var guids = AssetDatabase.FindAssets("t:ScriptGraphAsset", null);
+            foreach (var guid in guids)
+            {
+                var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(assetPath);
+                if (asset?.GetReference().graph is not FlowGraph) continue;
+
+                var baseRef = asset.GetReference().AsReference();
+                foreach (var element in _window.TraverseFlowGraph(baseRef))
+                {
+                    yield return element;
+                }
+            }
+        }
+
+        public override void HandleMatch(NodeFinderWindow.MatchObject match)
+        {
+            var asset = match.ScriptGraphAsset;
+            if (asset != null)
+            {
+                AddMatch(match, asset);
+            }
+        }
+
+        protected override string GetSortKey(Object key)
+        {
+            return (key as ScriptGraphAsset).graph.title ?? base.GetSortKey(key);
+        }
+    }
+
+    public class StateGraphProvider : NodeFinderWindow.BaseGraphProvider
+    {
+        public override string Name => "StateGraphAssets";
+
+        public StateGraphProvider(NodeFinderWindow window) : base(window) { }
+
+        public override IEnumerable<(GraphReference, IGraphElement)> GetElements()
+        {
+            if (!IsEnabled) yield break;
+
+            var guids = AssetDatabase.FindAssets("t:StateGraphAsset", null);
+            foreach (var guid in guids)
+            {
+                var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadAssetAtPath<StateGraphAsset>(assetPath);
+                if (asset?.GetReference().graph is not StateGraph) continue;
+
+                var baseRef = asset.GetReference().AsReference();
+                foreach (var element in _window.TraverseStateGraph(baseRef))
+                {
+                    yield return element;
+                }
+            }
+        }
+
+        public override void HandleMatch(NodeFinderWindow.MatchObject match)
+        {
+            var asset = match.StateGraphAsset;
+            if (asset != null)
+            {
+                AddMatch(match, asset);
+            }
+        }
+
+        protected override string GetSortKey(Object key)
+        {
+            return (key as StateGraphAsset).graph.title ?? base.GetSortKey(key);
+        }
+    }
+
+    public class StateMachineProvider : NodeFinderWindow.BaseGraphProvider
+    {
+        public override string Name => "StateMachines";
+
+        public StateMachineProvider(NodeFinderWindow window) : base(window) { }
+
+        public override IEnumerable<(GraphReference, IGraphElement)> GetElements()
+        {
+            if (!IsEnabled) yield break;
+
+            foreach (var machine in UnityObjectUtility.FindObjectsOfTypeIncludingInactive<StateMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
+            {
+                if (machine?.GetReference().graph is not FlowGraph) continue;
+
+                var baseRef = machine.GetReference().AsReference();
+                foreach (var element in _window.TraverseFlowGraph(baseRef))
+                {
+                    yield return element;
+                }
+            }
+        }
+
+        public override void HandleMatch(NodeFinderWindow.MatchObject match)
+        {
+            var asset = match.StateGraphAsset;
+            if (asset != null)
+            {
+                AddMatch(match, asset);
+            }
+        }
+
+        protected override string GetSortKey(Object key)
+        {
+            return (key as StateMachine).graph.title ?? base.GetSortKey(key);
+        }
+    }
+
+    public class ClassAssetProvider : NodeFinderWindow.BaseGraphProvider
+    {
+        public override string Name => "ClassAssets";
+
+        public ClassAssetProvider(NodeFinderWindow window) : base(window) { }
+
+        public override IEnumerable<(GraphReference, IGraphElement)> GetElements()
+        {
+            if (!IsEnabled) yield break;
+
+            var guids = AssetDatabase.FindAssets("t:ClassAsset", null);
+            foreach (var guid in guids)
+            {
+                var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadAssetAtPath<ClassAsset>(assetPath);
+                if (asset == null) continue;
+
+                foreach (var reference in _window.GetReferences(asset))
+                {
+                    foreach (var element in _window.TraverseFlowGraph(reference))
+                    {
+                        yield return element;
+                    }
+                }
+            }
+        }
+
+        public override void HandleMatch(NodeFinderWindow.MatchObject match)
+        {
+            var asset = match.ClassAsset;
+            if (asset != null)
+            {
+                AddMatch(match, asset);
+            }
+        }
+    }
+
+    public class StructAssetProvider : NodeFinderWindow.BaseGraphProvider
+    {
+        public override string Name => "StructAssets";
+
+        public StructAssetProvider(NodeFinderWindow window) : base(window) { }
+
+        public override IEnumerable<(GraphReference, IGraphElement)> GetElements()
+        {
+            if (!IsEnabled) yield break;
+
+            var guids = AssetDatabase.FindAssets("t:StructAsset", null);
+            foreach (var guid in guids)
+            {
+                var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadAssetAtPath<StructAsset>(assetPath);
+                if (asset == null) continue;
+
+                foreach (var reference in _window.GetReferences(asset))
+                {
+                    foreach (var element in _window.TraverseFlowGraph(reference))
+                    {
+                        yield return element;
+                    }
+                }
+            }
+        }
+
+        public override void HandleMatch(NodeFinderWindow.MatchObject match)
+        {
+            var asset = match.StructAsset;
+            if (asset != null)
+            {
+                AddMatch(match, asset);
+            }
+        }
+    }
+
+    public class UnitMatchHandler : NodeFinderWindow.IMatchHandler
+    {
+        public bool CanHandle(IGraphElement element)
+        {
+            return element is Unit && element is not CommentNode;
+        }
+
+        public NodeFinderWindow.MatchObject HandleMatch(IGraphElement element, string pattern)
+        {
+            if (element is Unit unit)
+            {
+                var matchRecord = new NodeFinderWindow.MatchObject
+                {
+                    Matches = new List<NodeFinderWindow.MatchType>(),
+                    Unit = unit,
+                    FullTypeName = GetFullNameWithInputs(unit, GetUnitFullName(unit))
+                };
+
+                // Check for matches in the unit name
+                if (SearchUtility.Matches(pattern, matchRecord.FullTypeName))
+                {
+                    matchRecord.Matches.Add(NodeFinderWindow.MatchType.Unit);
+                }
+
+                // Check member unit
+                if (unit is MemberUnit && SearchUtility.Matches(pattern, GetUnitFullName(unit)))
+                {
+                    matchRecord.Matches.Add(NodeFinderWindow.MatchType.Unit);
+                }
+
+                if (unit.valueInputs.Count > 0)
+                {
+                    var inputValues = GetFullNameWithInputs(unit, matchRecord.FullTypeName);
+                    if (SearchUtility.Matches(pattern, inputValues))
+                    {
+                        matchRecord.Matches.Add(NodeFinderWindow.MatchType.Unit);
+                    }
+                }
+
+                // Check literal values
+                if (unit is Literal literal)
+                {
+                    if (literal.value != null && SearchUtility.Matches(pattern, literal.value.ToString()))
+                    {
+                        matchRecord.Matches.Add(NodeFinderWindow.MatchType.Unit);
+                    }
+                }
+
+                if (matchRecord.Matches.Count > 0)
+                {
+                    return matchRecord;
+                }
+            }
+            return null;
+        }
+
+        private string GetValue(ValueInput valueInput)
+        {
+            if (valueInput.hasAnyConnection)
+            {
+                if (valueInput.hasValidConnection)
+                {
+                    return $"{valueInput.key.LegalMemberName().Prettify()} : Connected To : " + GetUnitName(valueInput.connection.source.unit as Unit);
+                }
+                else if (valueInput.hasInvalidConnection)
+                {
+                    return $"{valueInput.key.LegalMemberName().Prettify()} : Invalid Connection";
+                }
+            }
+            if (valueInput.hasDefaultValue)
+            {
+                return $"{valueInput.key.LegalMemberName().Prettify()} : " + (!valueInput.nullMeansSelf ? valueInput.unit.defaultValues[valueInput.key] is Type type ? type.HumanName() : (valueInput.unit.defaultValues[valueInput.key] is Object obj ? obj.name : valueInput.unit.defaultValues[valueInput.key]?.ToString()) ?? "null" : "Self");
+            }
+
+            return $"{valueInput.key.LegalMemberName().Prettify()} : No Value";
+        }
+
+        private string GetUnitFullName(Unit unit)
+        {
+            var typeName = GetUnitName(unit);
+
+            if (unit is MemberUnit member && member.member.targetType != null)
+            {
+                typeName = member.member.ToPseudoDeclarer().ToString();
+            }
+
+            return typeName;
+        }
+
+        private string GetUnitName(IGraphElement element)
+        {
+            if (element is Unit unit)
+            {
+                if (unit is SubgraphUnit subgraphUnit)
+                {
+                    if (subgraphUnit.nest.source == GraphSource.Embed)
+                    {
+                        return !string.IsNullOrEmpty(subgraphUnit.nest.graph.title) ? subgraphUnit.nest.graph.title : "Unnamed Subgraph";
+                    }
+                    else
+                    {
+                        return !string.IsNullOrEmpty(subgraphUnit.nest.graph.title) ? subgraphUnit.nest.graph.title : !string.IsNullOrEmpty(subgraphUnit.nest.macro.name) ? subgraphUnit.nest.macro.name : "Unnamed Subgraph";
+                    }
+                }
+                return BoltFlowNameUtility.UnitTitle(unit.GetType(), false, false);
+            }
+            else if (element is not null) return element.Descriptor().description.title;
+            return "Null Element";
+        }
+
+        private string GetFullNameWithInputs(Unit unit, string baseName)
+        {
+            if (unit is null) return "";
+            if (unit is Literal literal)
+            {
+                return $"{baseName} (Type : {literal.type.As().CSharpName(false, false, false)}, Value : {literal.value ?? "No Value"})";
+            }
+            else if (unit is MemberUnit memberUnit && memberUnit.member.targetType != null)
+            {
+                return $"{memberUnit.member.ToPseudoDeclarer()} : ({string.Join(", ", unit.valueInputs.Select(port => GetValue(port)))})";
+            }
+            else if (unit.valueInputs.Count > 0)
+            {
+                return $"{baseName} : ({string.Join(", ", unit.valueInputs.Select(port => GetValue(port)))})";
+            }
+            return baseName;
+        }
+    }
+
+    public class GroupMatchHandler : NodeFinderWindow.IMatchHandler
+    {
+        public bool CanHandle(IGraphElement element)
+        {
+            return element is GraphGroup;
+        }
+
+        public NodeFinderWindow.MatchObject HandleMatch(IGraphElement element, string pattern)
+        {
+            if (element is GraphGroup group)
+            {
+                var matchRecord = new NodeFinderWindow.MatchObject
+                {
+                    Matches = new List<NodeFinderWindow.MatchType>(),
+                    group = group,
+                    FullTypeName = GetGroupFullName(group)
+                };
+
+                if (SearchUtility.Matches(pattern, matchRecord.FullTypeName))
+                {
+                    matchRecord.Matches.Add(NodeFinderWindow.MatchType.Group);
+                    return matchRecord;
+                }
+            }
+            return null;
+        }
+
+        private string GetGroupFullName(GraphGroup group)
+        {
+            if (!string.IsNullOrEmpty(group.label) && !string.IsNullOrEmpty(group.comment))
+            {
+                return "Graph Group : " + group.label + "." + group.comment;
+            }
+            else if (!string.IsNullOrEmpty(group.label))
+            {
+                return "Graph Group : " + group.label;
+            }
+            else if (!string.IsNullOrEmpty(group.comment))
+            {
+                return "Graph Group : " + group.comment;
+            }
+            return "Unnamed Graph Group";
+        }
+    }
+
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+    public class StickyNoteMatchHandler : NodeFinderWindow.IMatchHandler
+    {
+        public bool CanHandle(IGraphElement element)
+        {
+            return element is StickyNote;
+        }
+
+        public NodeFinderWindow.MatchObject HandleMatch(IGraphElement element, string pattern)
+        {
+            if (element is StickyNote note)
+            {
+                var matchRecord = new NodeFinderWindow.MatchObject
+                {
+                    Matches = new List<NodeFinderWindow.MatchType>(),
+                    stickyNote = note,
+                    FullTypeName = GetStickyNoteFullName(note)
+                };
+
+                if (SearchUtility.Matches(pattern, matchRecord.FullTypeName))
+                {
+                    matchRecord.Matches.Add(NodeFinderWindow.MatchType.StickyNote);
+                    return matchRecord;
+                }
+            }
+            return null;
+        }
+
+        private string GetStickyNoteFullName(StickyNote note)
+        {
+            if (!string.IsNullOrEmpty(note.title) && !string.IsNullOrEmpty(note.body))
+            {
+                return "StickyNote : " + note.title + "." + note.body;
+            }
+            else if (!string.IsNullOrEmpty(note.title))
+            {
+                return "StickyNote : " + note.title;
+            }
+            else if (!string.IsNullOrEmpty(note.body))
+            {
+                return "StickyNote : " + note.body;
+            }
+            return "Empty StickyNote";
+        }
+
+    }
+#endif
+
+    public class CommentsMatchHandler : NodeFinderWindow.IMatchHandler
+    {
+        public bool CanHandle(IGraphElement element)
+        {
+            return element is CommentNode;
+        }
+
+        public NodeFinderWindow.MatchObject HandleMatch(IGraphElement element, string pattern)
+        {
+            if (element is CommentNode comment)
+            {
+                var matchRecord = new NodeFinderWindow.MatchObject
+                {
+                    Matches = new List<NodeFinderWindow.MatchType>(),
+                    comment = comment,
+                    FullTypeName = GetCommentFullName(comment)
+                };
+
+                if (SearchUtility.Matches(pattern, matchRecord.FullTypeName))
+                {
+                    matchRecord.Matches.Add(NodeFinderWindow.MatchType.Comment);
+                    return matchRecord;
+                }
+            }
+            return null;
+        }
+
+        private string GetCommentFullName(CommentNode note)
+        {
+            if (!string.IsNullOrEmpty(note.title) && !string.IsNullOrEmpty(note.comment))
+            {
+                return "Comment : " + note.title + "." + note.comment;
+            }
+            else if (!string.IsNullOrEmpty(note.title))
+            {
+                return "Comment : " + note.title;
+            }
+            else if (!string.IsNullOrEmpty(note.comment))
+            {
+                return "Comment : " + note.comment;
+            }
+            return "Empty Comment";
         }
     }
 }

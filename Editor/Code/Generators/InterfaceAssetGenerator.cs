@@ -1,6 +1,7 @@
 ﻿using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using Unity.VisualScripting;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -14,7 +15,7 @@ namespace Unity.VisualScripting.Community
             {
                 var output = string.Empty;
                 NamespaceGenerator @namespace = NamespaceGenerator.Namespace(Data.category);
-                InterfaceGenerator @interface = InterfaceGenerator.Interface(Data.title.LegalMemberName());
+                InterfaceGenerator @interface = InterfaceGenerator.Interface(Data.title.LegalMemberName(), Data.interfaces.Select(@interface => @interface.type).ToArray());
 
                 if (string.IsNullOrEmpty(Data.title)) return output;
 
@@ -42,12 +43,14 @@ namespace Unity.VisualScripting.Community
                     @interface.AddMethod(methodGen);
                 }
 
-#if VISUAL_SCRIPTING_1_7
-                if (Data.lastCompiledName != Data.GetFullTypeName() && !string.IsNullOrEmpty(Data.GetFullTypeName()) && !string.IsNullOrEmpty(Data.lastCompiledName))
+                foreach (var name in Data.lastCompiledNames)
                 {
-                    @interface.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
+                    if (!string.IsNullOrEmpty(Data.GetFullTypeName()) && name != Data.GetFullTypeName())
+                    {
+                        if (!string.IsNullOrEmpty(name))
+                            @interface.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(name));
+                    }
                 }
-#endif
 
                 @namespace.AddInterface(@interface);
                 return @namespace.Generate(indent);

@@ -84,6 +84,11 @@ namespace Unity.VisualScripting.Community
                 @class.AddAttribute(attrGenerator);
             }
 
+            foreach (var @interface in Data.interfaces)
+            {
+                @class.ImplementInterface(@interface.type);
+            }
+
             foreach (var constructorData in Data.constructors)
             {
                 var parameters = constructorData.parameters;
@@ -198,7 +203,7 @@ namespace Unity.VisualScripting.Community
             foreach (var _unit in graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
             {
                 var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
-                TriggerHandleOtherGenerators(_unit.GetType(), @class, generator);
+                HandleOtherGenerators(@class, generator);
                 if (_unit.GetType() == typeof(Timer))
                 {
                     specialUnits.Add(_unit);
@@ -311,6 +316,7 @@ namespace Unity.VisualScripting.Community
             generationData.returns = returnType;
             foreach (var variable in Data.variables)
             {
+                if(!string.IsNullOrEmpty(variable.FieldName))
                 generationData.AddLocalNameInScope(variable.FieldName, variable.type);
             }
             return generationData;
@@ -337,29 +343,9 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private Dictionary<Type, Action<ClassGenerator, NodeGenerator>> HandleOtherGeneratorsMethods = new Dictionary<Type, Action<ClassGenerator, NodeGenerator>>();
-
-        private void TriggerHandleOtherGenerators(Type type, ClassGenerator @class, NodeGenerator generator)
+        private void HandleOtherGenerators(ClassGenerator @class, NodeGenerator generator)
         {
-            if (!HandleOtherGeneratorsMethods.TryGetValue(type, out var cachedDelegate))
-            {
-                var method = GetType()
-                    .GetMethod(nameof(HandleOtherGenerators),
-                               BindingFlags.Instance | BindingFlags.InvokeMethod | BindingFlags.NonPublic)
-                    .MakeGenericMethod(type);
-
-                cachedDelegate = (Action<ClassGenerator, NodeGenerator>)
-                    Delegate.CreateDelegate(typeof(Action<ClassGenerator, NodeGenerator>), this, method);
-
-                HandleOtherGeneratorsMethods[type] = cachedDelegate;
-            }
-
-            cachedDelegate.Invoke(@class, generator);
-        }
-
-        private void HandleOtherGenerators<T>(ClassGenerator @class, NodeGenerator generator) where T : Unit
-        {
-            if (generator is VariableNodeGenerator<T> variableGenerator)
+            if (generator is VariableNodeGenerator variableGenerator)
             {
                 var existingFields = new HashSet<string>(@class.fields.Select(f => f.name));
                 variableGenerator.count = 0;
@@ -371,7 +357,7 @@ namespace Unity.VisualScripting.Community
 
                 @class.AddField(FieldGenerator.Field(variableGenerator.AccessModifier, variableGenerator.FieldModifier, variableGenerator.Type, variableGenerator.Name));
             }
-            else if (generator is MethodNodeGenerator<T> methodGenerator)
+            else if (generator is MethodNodeGenerator methodGenerator)
             {
                 var existingMethods = new HashSet<string>(@class.methods.Select(m => m.name));
                 methodGenerator.count = 0;
@@ -391,7 +377,7 @@ namespace Unity.VisualScripting.Community
                     else if (methodGenerator.GenericCount > 0 && param.usesGeneric)
                     {
                         var genericString = method.generics[param.generic];
-                        method.AddParameter(ParameterGenerator.Parameter(param.name, genericString, param.modifier));
+                        method.AddParameter(ParameterGenerator.Parameter(param.name, genericString, param.type, param.modifier));
                     }
                 }
 

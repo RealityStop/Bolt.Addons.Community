@@ -30,62 +30,16 @@ namespace Unity.VisualScripting.Community
 
         private bool canMakeArrayTypeForBaseType;
 
+
         public static void ShowWindow(Rect position, Metadata Meta, bool canMakeArray = true, Type[] types = null, Action onChanged = null)
         {
             if (window == null)
             {
                 window = CreateInstance<TypeBuilderWindow>();
             }
-            window.onChanged = onChanged; 
-            window.canMakeArrayTypeForBaseType = canMakeArray;
             targetMetadata = Meta;
-            if (Meta != null)
-            {
-                window.OnEnable();
-                var type = Meta.value as Type;
-                if (type != null)
-                {
-                    if (type.IsGenericType)
-                    {
-                        genericParameter = new GenericParameter(type, type.Name);
-                        genericParameter.AddGenericParameters(type, (generic) => window.GetConstrainedTypes(generic));
-                        window.baseType = genericParameter.ConstructType();
-                    }
-                    else if (type.IsArray)
-                    {
-                        var tempType = type.GetElementType();
-                        while (tempType.IsArray)
-                        {
-                            tempType = tempType.GetElementType();
-                        }
-
-                        genericParameter = new GenericParameter(tempType, tempType.Name);
-                        genericParameter.AddGenericParameters(tempType, (generic) => window.GetConstrainedTypes(generic));
-                        window.baseType = genericParameter.ConstructType();
-                    }
-                    else
-                    {
-                        genericParameter = new GenericParameter(type, type.Name);
-                        genericParameter.AddGenericParameters(type, (generic) => window.GetConstrainedTypes(generic));
-                        window.baseType = genericParameter.ConstructType();
-                    }
-                }
-                else
-                {
-                    genericParameter.Clear();
-                }
-            }
-            position = GUIUtility.GUIToScreenRect(position);
-            position.width = Mathf.Clamp(position.width, 300, 600);
-            window.minSize = new Vector2(300, 200);
-            window.titleContent = new GUIContent("Type Builder");
-            if (types != null)
-            {
-                window.customTypeLookup = types;
-            }
-            var initialSize = new Vector2(position.width, 320);
-
-            window.ShowAsDropDown(position, initialSize);
+            var type = Meta?.value as Type;
+            ConfigureWindow(window, position, type, types, canMakeArray, onChanged);
         }
 
         public static void ShowWindow(Rect position, Action<Type> result, Type currentType, bool canMakeArray = true, Type[] types = null, Action onChanged = null)
@@ -94,69 +48,57 @@ namespace Unity.VisualScripting.Community
             {
                 window = CreateInstance<TypeBuilderWindow>();
             }
-            window.onChanged = onChanged; 
-            window.canMakeArrayTypeForBaseType = canMakeArray;
             window.result = result;
             targetMetadata = null;
-            window.OnEnable();
-            var type = currentType;
+            ConfigureWindow(window, position, currentType, types, canMakeArray, onChanged);
+        }
+        const float DefaultHeight = 320f;
+        const float MinWidth = 300f;
+        const float MaxWidth = 1000f;
+        private bool triggerDropdownOnOpen = false;
+        private static void ConfigureWindow(TypeBuilderWindow window, Rect position, Type type, Type[] types, bool canMakeArray, Action onChanged)
+        {
+            window.onChanged = onChanged;
+            window.canMakeArrayTypeForBaseType = canMakeArray;
+
             if (type != null)
             {
-                if (type.IsGenericType)
-                {
-                    genericParameter = new GenericParameter(type, type.Name);
-                    genericParameter.AddGenericParameters(type, (generic) => window.GetConstrainedTypes(generic));
-                    window.baseType = genericParameter.ConstructType();
-                }
-                else if (type.IsArray)
-                {
-                    var tempType = type.GetElementType();
-                    while (tempType.IsArray)
-                    {
-                        tempType = tempType.GetElementType();
-                    }
-
-                    genericParameter = new GenericParameter(tempType, tempType.Name);
-                    genericParameter.AddGenericParameters(tempType, (generic) => window.GetConstrainedTypes(generic));
-                    window.baseType = genericParameter.ConstructType();
-                }
-                else
-                {
-                    genericParameter = new GenericParameter(type, type.Name);
-                    genericParameter.AddGenericParameters(type, (generic) => window.GetConstrainedTypes(generic));
-                    window.baseType = genericParameter.ConstructType();
-                }
+                genericParameter = new GenericParameter(type, type.Name);
+                genericParameter.AddGenericParameters(type, (generic) => window.GetConstrainedTypes(generic));
+                window.baseType = genericParameter.ConstructType();
             }
             else
             {
                 genericParameter.Clear();
             }
+
             position = GUIUtility.GUIToScreenRect(position);
-            position.width = Mathf.Clamp(position.width, 300, 600);
+            position.width = Mathf.Clamp(position.width, MinWidth, MaxWidth);
             window.minSize = new Vector2(300, 200);
             window.titleContent = new GUIContent("Type Builder");
+
             if (types != null)
             {
+                if (window.baseType == null)
+                    window.baseType = types.First();
                 window.customTypeLookup = types;
             }
-            var initialSize = new Vector2(position.width, 320);
 
+            var initialSize = new Vector2(position.width, DefaultHeight);
             window.ShowAsDropDown(position, initialSize);
         }
 
         private void OnEnable()
         {
+            triggerDropdownOnOpen = true;
             settingAssemblyTypesLookup = Codebase.settingsAssembliesTypes.ToArray();
-            baseTypeLookup = settingAssemblyTypesLookup
-                .Except(settingAssemblyTypesLookup.Where(t => TypeHasSpecialName(t) || t == null))
-                .ToArray();
+            baseTypeLookup = settingAssemblyTypesLookup.Where(t => !TypeHasSpecialName(t) && t != null)
+                .ToArray(); ;
         }
 
         private bool TypeHasSpecialName(Type t)
         {
-            if (t.IsArray || typeof(IList).IsAssignableFrom(t) || typeof(IDictionary).IsAssignableFrom(t))
-                return true;
-            return t.IsSpecialName || t.IsDefined(typeof(CompilerGeneratedAttribute));
+            return t.IsSpecialName || t.IsDefined(typeof(CompilerGeneratedAttribute)) || t.DisplayName().StartsWith("<");
         }
 
         private IFuzzyOptionTree GetBaseTypeOptions()
@@ -171,65 +113,69 @@ namespace Unity.VisualScripting.Community
             return new TypeBuilderTypeOptionTree(constrainedTypes);
         }
 
-        private Type[] GetConstrainedTypes(GenericParameter param)
+        private Type[] GetConstrainedTypes(GenericParameter genericParameter)
         {
-            if (param.constraints == null && param.type.type.IsGenericParameter)
+            if (genericParameter.constraints == null && genericParameter.type.type.IsGenericParameter)
             {
-                var constraints = param.type.type.GetGenericParameterConstraints();
+                var constraints = genericParameter.type.type.GetGenericParameterConstraints();
 
                 if (constraints.Length > 0)
                 {
-                    var constrainedTypes = settingAssemblyTypesLookup.Where(t =>
-                    {
-                        foreach (var constraint in constraints)
-                        {
-                            if (!constraint.IsAssignableFrom(t))
-                            {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }).ToArray();
+                    var constrainedTypes = settingAssemblyTypesLookup
+                        .AsParallel()
+                        .Where(candidateType => constraints.All(constraint => constraint.IsAssignableFrom(candidateType)))
+                        .ToArray();
 
-                    param.constraints = constrainedTypes;
+                    genericParameter.constraints = constrainedTypes;
                     return constrainedTypes;
                 }
                 else
                 {
-                    var attributes = param.type.type.GenericParameterAttributes;
-                    var constrainedTypes = GetConstraintAttributeTypes(attributes, !param.HasParent && customTypeLookup != null ? customTypeLookup : settingAssemblyTypesLookup);
-                    param.constraints = constrainedTypes;
+                    var attributes = genericParameter.type.type.GenericParameterAttributes;
+                    var constrainedTypes = GetConstraintAttributeTypes(attributes,
+                        !genericParameter.HasParent && customTypeLookup != null
+                            ? customTypeLookup
+                            : settingAssemblyTypesLookup);
+
+                    genericParameter.constraints = constrainedTypes;
                     return constrainedTypes;
                 }
             }
-            return param.constraints;
+            return genericParameter.constraints;
         }
 
+        private static readonly Dictionary<(GenericParameterAttributes, Type[]), Type[]> constraintCache = new();
         public Type[] GetConstraintAttributeTypes(GenericParameterAttributes attributes, Type[] typesLookup)
         {
-            var constrainedTypes = typesLookup.AsEnumerable();
-
-            if ((attributes & GenericParameterAttributes.ReferenceTypeConstraint) != 0)
+            var key = (attributes, typesLookup);
+            if (constraintCache.TryGetValue(key, out var cachedResult))
             {
-                constrainedTypes = constrainedTypes.Where(type => type.IsClass);
-            }
-            if ((attributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0)
-            {
-                constrainedTypes = constrainedTypes.Where(type => !type.IsNullable() || type.IsStruct());
-            }
-            if ((attributes & GenericParameterAttributes.DefaultConstructorConstraint) != 0)
-            {
-                constrainedTypes = constrainedTypes.Where(type => type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic).Any(constructor => constructor.GetParameters().Length == 0));
+                return cachedResult;
             }
 
-            return constrainedTypes.Where(t => !TypeHasSpecialName(t)).ToArray();
+            var constrainedTypes = typesLookup
+                .Where(candidateType =>
+                    ((attributes & GenericParameterAttributes.ReferenceTypeConstraint) == 0 || candidateType.IsClass) &&
+                    ((attributes & GenericParameterAttributes.NotNullableValueTypeConstraint) == 0 ||
+                        (!candidateType.IsNullable() || candidateType.IsStruct())) &&
+                    ((attributes & GenericParameterAttributes.DefaultConstructorConstraint) == 0 ||
+                        candidateType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic)
+                            .Any(constructor => constructor.GetParameters().Length == 0)) &&
+                    !TypeHasSpecialName(candidateType))
+                .ToArray();
+
+            constraintCache[key] = constrainedTypes;
+            return constrainedTypes;
         }
 
         private void OnGUI()
         {
-            if (Event.current.keyCode == KeyCode.Escape || Event.current.rawType == EventType.KeyUp && !mouseOverWindow)
+            if (Event.current.type == EventType.KeyUp && Event.current.keyCode == KeyCode.Escape)
             {
-                Close();
+                if (!IsMouseOverWindow())
+                {
+                    Close();
+                }
             }
             HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 2, 2), () =>
             {
@@ -250,14 +196,18 @@ namespace Unity.VisualScripting.Community
                 lastRect = GUILayoutUtility.GetLastRect();
                 var buttonWidth = GUI.skin.button.CalcSize(inheritButtonContent).x;
                 contentWidth = Mathf.Max(contentWidth, buttonWidth);
-                DrawTypeField(inheritButtonContent, genericParameter, true);
-
-                if (genericParameter != null)
+                var (size, buttonRect) = DrawTypeField(inheritButtonContent, genericParameter, true);
+                if (triggerDropdownOnOpen && Event.current.type == EventType.Repaint)
+                {
+                    triggerDropdownOnOpen = false;
+                    TriggerDropdown(buttonRect);
+                }
+                if (genericParameter != null && genericParameter.type.type.IsGenericType || GetArrayBase(genericParameter.type.type).IsGenericType)
                 {
                     var index = 0;
                     foreach (var param in genericParameter.nestedParameters)
                     {
-                        contentWidth = Mathf.Max(contentWidth, DrawGenericParameter(param, genericParameter.type.type.GetGenericTypeDefinition().GetGenericArguments()[index]));
+                        contentWidth = Mathf.Max(contentWidth, DrawGenericParameter(param, GetArrayBase(genericParameter.type.type).GetGenericTypeDefinition().GetGenericArguments()[index]));
                         index++;
                     }
                 }
@@ -266,7 +216,16 @@ namespace Unity.VisualScripting.Community
                 EditorGUI.BeginDisabledGroup(!IsValidType(baseType, false));
                 if (!IsValidType(baseType, false))
                 {
-                    EditorGUILayout.HelpBox($"Can not create arrays of Open Generics, e.g {baseType.As().CSharpName(false, false, false).RemoveHighlights().RemoveMarkdown()} is invalid it has to have a types set for {string.Join(", ", GetInvalidParameters(baseType))}", MessageType.Warning);
+                    if (baseType != null)
+                        EditorGUILayout.HelpBox($"Can not create arrays of Open Generics, e.g {baseType.As().CSharpName(false, false, false).RemoveHighlights().RemoveMarkdown()} is invalid it has to have a types set for {string.Join(", ", GetInvalidParameters(baseType))}", MessageType.Error);
+                }
+                else if (IsEditorAssembly(GetArrayBase(baseType).Assembly, new HashSet<string>()))
+                {
+                    EditorGUILayout.HelpBox(
+                        "The selected type is an editor-only type. Using this type in a graph, asset, or script intended for runtime may cause build errors.\n" +
+                        "If you are certain this type is not editor-only or you are using it for a editor only script., you can safely use it.",
+                        MessageType.Warning
+                    );
                 }
                 if (GUILayout.Button("Create Type"))
                 {
@@ -282,12 +241,120 @@ namespace Unity.VisualScripting.Community
                 window.position = new Rect(position.x, position.y, contentWidth + 50, position.height);
             });
         }
+        private void TriggerDropdown(Rect buttonRect)
+        {
+            // Ensure this triggers the same logic as the button press
+            int selectedIndex = Array.IndexOf(customTypeLookup != null ? customTypeLookup : baseTypeLookup, typeof(object));
+            Type _selected = null;
+            LudiqGUI.FuzzyDropdown(buttonRect, GetBaseTypeOptions(), selectedIndex, (type) =>
+            {
+                _selected = (type as TypeBuilderType).Type;
+                var genericParams = new GenericParameter(genericParameter, _selected, _selected.Name);
+                baseType = _selected;
+                genericParameter?.Clear();
+                genericParams.AddGenericParameters(_selected);
+                genericParameter = genericParams;
+            });
+        }
+        private bool IsMouseOverWindow()
+        {
+            return position.Contains(GUIUtility.GUIToScreenPoint(Event.current.mousePosition));
+        }
+        private static bool IsUnityEditorAssembly(string name)
+        {
+            return
+                name == "Assembly-CSharp-Editor" ||
+                name == "Assembly-CSharp-Editor-firstpass" ||
+                name == "UnityEditor" ||
+                name == "UnityEditor.CoreModule";
+        }
+
+        private static bool IsSpecialCaseRuntimeAssembly(string assemblyName)
+        {
+            return assemblyName == "UnityEngine.UI" || // has a reference to UnityEditor.CoreModule
+                assemblyName == "Unity.TextMeshPro"; // has a reference to UnityEditor.TextCoreFontEngineModule
+        }
+        private static readonly Dictionary<Assembly, bool> _editorAssemblyCache = new Dictionary<Assembly, bool>();
+        private static bool IsEditorAssembly(Assembly assembly, HashSet<string> visited)
+        {
+            if (_editorAssemblyCache.TryGetValue(assembly, out var isEditor))
+            {
+                return isEditor;
+            }
+
+            var name = assembly.GetName().Name;
+            if (visited.Contains(name))
+            {
+                return false;
+            }
+
+            visited.Add(name);
+
+            if (IsSpecialCaseRuntimeAssembly(name))
+            {
+                _editorAssemblyCache.Add(assembly, false);
+                return false;
+            }
+
+            if (Attribute.IsDefined(assembly, typeof(AssemblyIsEditorAssembly)))
+            {
+                _editorAssemblyCache.Add(assembly, true);
+                return true;
+            }
+
+            if (IsUserAssembly(name))
+            {
+                _editorAssemblyCache.Add(assembly, false);
+                return false;
+            }
+
+            if (IsUnityEditorAssembly(name))
+            {
+                _editorAssemblyCache.Add(assembly, true);
+                return true;
+            }
+
+            AssemblyName[] listOfAssemblyNames = assembly.GetReferencedAssemblies();
+            foreach (var dependencyName in listOfAssemblyNames)
+            {
+                try
+                {
+                    Assembly dependency = Assembly.Load(dependencyName);
+
+                    if (IsEditorAssembly(dependency, visited))
+                    {
+                        _editorAssemblyCache.Add(assembly, true);
+                        return true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning(e.Message);
+                }
+            }
+
+            _editorAssemblyCache.Add(assembly, false);
+
+            return false;
+        }
+
+        private static bool IsUserAssembly(string name)
+        {
+            return
+                name == "Assembly-CSharp" ||
+                name == "Assembly-CSharp-firstpass";
+        }
+
         private Type GetArrayBase(Type type)
         {
-            type = type.GetElementType();
-            while (type.IsArray)
+            if (type.IsArray)
             {
                 type = type.GetElementType();
+                while (type.IsArray)
+                {
+                    type = type.GetElementType();
+                }
+                return type;
             }
             return type;
         }
@@ -398,11 +465,13 @@ namespace Unity.VisualScripting.Community
             return true;
         }
 
-        private float DrawTypeField(GUIContent buttonContent, GenericParameter generic, bool isBaseType)
+        private (float, Rect) DrawTypeField(GUIContent buttonContent, GenericParameter generic, bool isBaseType)
         {
             GUILayout.BeginHorizontal();
+            Rect buttonRect = new Rect();
             if (GUILayout.Button(buttonContent, GUILayout.MaxHeight(19f)))
             {
+                buttonRect = lastRect;
                 int selectedIndex = Array.IndexOf(isBaseType && customTypeLookup != null ? customTypeLookup : baseTypeLookup, generic != null ? generic.type : typeof(object));
                 Type _selected = null;
                 LudiqGUI.FuzzyDropdown(lastRect, isBaseType ? GetBaseTypeOptions() : GetNestedTypeOptions(generic), selectedIndex, (type) =>
@@ -410,7 +479,7 @@ namespace Unity.VisualScripting.Community
                     _selected = (type as TypeBuilderType).Type;
                     if (isBaseType)
                     {
-                        var genericParams = new GenericParameter(_selected, _selected.Name);
+                        var genericParams = new GenericParameter(generic, _selected, _selected.Name);
                         baseType = _selected;
                         genericParameter?.Clear();
                         genericParams.AddGenericParameters(_selected);
@@ -477,7 +546,7 @@ namespace Unity.VisualScripting.Community
             }
             GUILayout.EndHorizontal();
             var buttonWidth = GUI.skin.button.CalcSize(buttonContent).x;
-            return buttonWidth;
+            return (buttonWidth, buttonRect);
         }
 
         private bool CanTypeSupportArray(GenericParameter param)

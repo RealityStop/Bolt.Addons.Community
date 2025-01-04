@@ -9,8 +9,9 @@ using UnityEngine.SceneManagement;
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(IsVariableDefined))]
-    public class IsVariableDefinedGenerator : LocalVariableGenerator<IsVariableDefined>
+    public class IsVariableDefinedGenerator : LocalVariableGenerator
     {
+        private IsVariableDefined Unit => unit as IsVariableDefined;
         public IsVariableDefinedGenerator(Unit unit) : base(unit)
         {
         }

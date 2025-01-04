@@ -16,11 +16,16 @@ namespace Unity.VisualScripting.Community
         public Color TypeColor = new Color(51, 238, 170, 255);
         public Color EnumColor = new Color(255, 255, 187, 255);
         public Color InterfaceColor = new Color(221, 255, 187, 255);
+
         [HideInInspector]
         public bool isInitalized = false;
-        public bool ShowSubgraphComment = true;
-        public bool ShowRecommendations = true;
-        public bool ShowTooltips = true;
+        public bool showSubgraphComment = true;
+        public bool showRecommendations = true;
+        public bool showTooltips = true;
+
+        public static bool ShouldShowSubgraphComment = true;
+        public static bool ShouldShowRecommendations = true;
+        public static bool ShouldGenerateTooltips = true;
 
         public void Initalize()
         {

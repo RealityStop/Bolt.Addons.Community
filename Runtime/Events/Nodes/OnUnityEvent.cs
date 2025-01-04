@@ -7,7 +7,6 @@ using UnityEngine.Events;
 
 namespace Unity.VisualScripting.Community
 {
-
     internal class OnUnityEventData : EventUnit<EventData>.Data
     {
         public object EventListener { get; set; }
@@ -131,9 +130,9 @@ namespace Unity.VisualScripting.Community
 
                 return method?.MakeGenericMethod(delegateType.GetGenericArguments()).Invoke(this, new object[] { reference });
             }
-            else if (GetAotSupportMethodsType() != null)
+            else if (GetAotSupportMethodsType() is Type type)
             {
-                Type aotSupportMethodsType = GetAotSupportMethodsType();
+                Type aotSupportMethodsType = type;
                 var method = aotSupportMethodsType.GetMethods().First(method => method.ReturnType == delegateType);
                 return method?.Invoke(null, new object[] { reference, this });
             }
@@ -141,9 +140,7 @@ namespace Unity.VisualScripting.Community
             {
                 throw new InvalidOperationException("Could not find AOT Support Methods");
             }
- 
 #else
-
             string methodName;
 
             if (numParams == 1) methodName = nameof(OneParamHandler);
@@ -155,7 +152,6 @@ namespace Unity.VisualScripting.Community
 
             return method?.MakeGenericMethod(delegateType.GetGenericArguments()).Invoke(this, new object[] { reference });
 #endif
-
         }
 
         internal UnityAction<T1> OneParamHandler<T1>(GraphReference reference)

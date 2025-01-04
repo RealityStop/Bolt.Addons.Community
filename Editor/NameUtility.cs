@@ -9,7 +9,7 @@ namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// This was just copied and pasted from Visual Scripting
-    /// to fix some errors when using SettingAssemblyTypes amd Display name
+    /// to fix some errors when using SettingAssemblyTypes and Display name
     /// </summary>
     public static class NameUtility
     {

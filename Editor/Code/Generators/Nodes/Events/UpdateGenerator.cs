@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(Update))]
-    public class UpdateGenerator : MethodNodeGenerator<Update>
+    public class UpdateGenerator : MethodNodeGenerator
     {
         public UpdateGenerator(Update unit) : base(unit)
         {
@@ -26,9 +26,13 @@ namespace Unity.VisualScripting.Community
 
         public override List<TypeParam> Parameters => new List<TypeParam>();
 
+        public override ControlOutput OutputPort => (unit as Update).trigger;
+
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>();
+
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return GetNextUnit(Unit.trigger, Data ?? data, indent);
+            return GetNextUnit(OutputPort, Data ?? data, indent);
         }
     }
 }

@@ -9,19 +9,23 @@ using UnityEngine;
 using System.Text;
 using System;
 [NodeGenerator(typeof(Unity.VisualScripting.Once))]
-public sealed class OnceGenerator : VariableNodeGenerator<Unity.VisualScripting.Once>
+public sealed class OnceGenerator : VariableNodeGenerator
 {
     public OnceGenerator(Unity.VisualScripting.Once unit) : base(unit)
     {
     }
-
+    private Unity.VisualScripting.Once Unit => unit as Unity.VisualScripting.Once;
     public override AccessModifier AccessModifier => AccessModifier.Private;
 
     public override FieldModifier FieldModifier => FieldModifier.None;
 
     public override string Name => "Once_" + count;
 
+    public override object DefaultValue => null;
+
     public override Type Type => typeof(bool);
+
+    public override bool HasDefaultValue => false;
 
     public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
     {

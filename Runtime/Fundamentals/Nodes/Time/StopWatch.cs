@@ -9,7 +9,7 @@ namespace Unity.VisualScripting.Community
     [TypeIcon(typeof(Timer))]
     public class StopwatchUnit : Unit
     {
-        private Stopwatch stopwatch;
+        public Stopwatch stopwatch;
 
         [DoNotSerialize]
         public ControlInput start;

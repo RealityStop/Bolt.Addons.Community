@@ -2,6 +2,7 @@ using System;
 
 namespace Unity.VisualScripting.Community 
 {
+    [TypeIcon(typeof(GraphOutput))]
     public class SnippetValueSourceUnit : SnippetSourceUnit
     {
         [Obsolete(Serialization.ConstructorWarning)]

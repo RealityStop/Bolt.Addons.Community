@@ -41,7 +41,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             var _warning = !string.IsNullOrEmpty(warning) ? CodeBuilder.Indent(indent) + $"/* {warning} */\n".WarningHighlight() : string.Empty;
             var modSpace = modifier == MethodModifier.None ? string.Empty : " ";
             var genericTypes = generics.Count > 0 ? $"<{string.Join(", ", generics)}>" : string.Empty;
-            return attributes + _warning + CodeBuilder.Indent(indent) + scope.AsString().ToLower().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + returnType.As().CSharpName() + " " + name.LegalMemberName() + genericTypes + CodeBuilder.Parameters(this.parameters);
+            return attributes + _warning + CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + returnType.As().CSharpName() + " " + name.LegalMemberName() + genericTypes + CodeBuilder.Parameters(this.parameters);
         }
 
         protected override sealed string GenerateBody(int indent)

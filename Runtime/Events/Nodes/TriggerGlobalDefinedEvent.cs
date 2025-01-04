@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
@@ -54,9 +56,10 @@ namespace Unity.VisualScripting.Community
         private IDefinedEventType New_eventType;
 
         [DoNotSerialize]
-        public IDefinedEventType NeweventType
+        [InspectableIf(nameof(IsNotRestricted))]
+        public Type NeweventType
         {
-            get { return New_eventType; }
+            get { return New_eventType.type; }
             set { New_eventType = value; }
         }
 
@@ -125,69 +128,93 @@ namespace Unity.VisualScripting.Community
         private void BuildFromInfo()
         {
             inputPorts.Clear();
-            if (NeweventType.type == null)
+            if (New_eventType == null || New_eventType.type == null || IsNotRestricted)
                 return;
 
-            Info = ReflectedInfo.For(NeweventType.type);
-            foreach (var field in Info.reflectedFields)
+            if (IsRestricted)
             {
-                if (field.Value.FieldType == typeof(bool))
-                    inputPorts.Add(ValueInput<bool>(field.Value.Name, false));
-                else if (field.Value.FieldType == typeof(int))
-                    inputPorts.Add(ValueInput<int>(field.Value.Name, 0));
-                else if (field.Value.FieldType == typeof(float))
-                    inputPorts.Add(ValueInput<float>(field.Value.Name, 0.0f));
-                else if (field.Value.FieldType == typeof(string))
-                    inputPorts.Add(ValueInput<string>(field.Value.Name, ""));
-                else if (field.Value.FieldType == typeof(GameObject))
-                    inputPorts.Add(ValueInput<GameObject>(field.Value.Name, null).NullMeansSelf());
-                else
-                    inputPorts.Add(ValueInput(field.Value.FieldType, field.Value.Name));
+                Info = ReflectedInfo.For(New_eventType.type);
+                foreach (var field in Info.reflectedFields)
+                {
+                    if (field.Value.FieldType == typeof(bool))
+                        inputPorts.Add(ValueInput<bool>(field.Value.Name, false));
+                    else if (field.Value.FieldType == typeof(int))
+                        inputPorts.Add(ValueInput<int>(field.Value.Name, 0));
+                    else if (field.Value.FieldType == typeof(float))
+                        inputPorts.Add(ValueInput<float>(field.Value.Name, 0.0f));
+                    else if (field.Value.FieldType == typeof(string))
+                        inputPorts.Add(ValueInput<string>(field.Value.Name, ""));
+                    else if (field.Value.FieldType == typeof(GameObject))
+                        inputPorts.Add(ValueInput<GameObject>(field.Value.Name, null).NullMeansSelf());
+                    else
+                        inputPorts.Add(ValueInput(field.Value.FieldType, field.Value.Name));
+                }
+
+
+                foreach (var property in Info.reflectedProperties)
+                {
+                    if (property.Value.PropertyType == typeof(bool))
+                        inputPorts.Add(ValueInput<bool>(property.Value.Name, false));
+                    else if (property.Value.PropertyType == typeof(int))
+                        inputPorts.Add(ValueInput<int>(property.Value.Name, 0));
+                    else if (property.Value.PropertyType == typeof(float))
+                        inputPorts.Add(ValueInput<float>(property.Value.Name, 0.0f));
+                    else if (property.Value.PropertyType == typeof(string))
+                        inputPorts.Add(ValueInput<string>(property.Value.Name, ""));
+                    else if (property.Value.PropertyType == typeof(GameObject))
+                        inputPorts.Add(ValueInput<GameObject>(property.Value.Name, null).NullMeansSelf());
+                    else
+                        inputPorts.Add(ValueInput(property.Value.PropertyType, property.Value.Name));
+                }
             }
-
-
-            foreach (var property in Info.reflectedProperties)
+            else
             {
-                if (property.Value.PropertyType == typeof(bool))
-                    inputPorts.Add(ValueInput<bool>(property.Value.Name, false));
-                else if (property.Value.PropertyType == typeof(int))
-                    inputPorts.Add(ValueInput<int>(property.Value.Name, 0));
-                else if (property.Value.PropertyType == typeof(float))
-                    inputPorts.Add(ValueInput<float>(property.Value.Name, 0.0f));
-                else if (property.Value.PropertyType == typeof(string))
-                    inputPorts.Add(ValueInput<string>(property.Value.Name, ""));
-                else if (property.Value.PropertyType == typeof(GameObject))
-                    inputPorts.Add(ValueInput<GameObject>(property.Value.Name, null).NullMeansSelf());
+                if (NeweventType == typeof(bool))
+                    inputPorts.Add(ValueInput<bool>(NeweventType.As().CSharpName(false, false, false), false));
+                else if (NeweventType == typeof(int))
+                    inputPorts.Add(ValueInput<int>(NeweventType.As().CSharpName(false, false, false), 0));
+                else if (NeweventType == typeof(float))
+                    inputPorts.Add(ValueInput<float>(NeweventType.As().CSharpName(false, false, false), 0.0f));
+                else if (NeweventType == typeof(string))
+                    inputPorts.Add(ValueInput<string>(NeweventType.As().CSharpName(false, false, false), ""));
+                else if (NeweventType == typeof(GameObject))
+                    inputPorts.Add(ValueInput<GameObject>(NeweventType.As().CSharpName(false, false, false), null).NullMeansSelf());
                 else
-                    inputPorts.Add(ValueInput(property.Value.PropertyType, property.Value.Name));
+                    inputPorts.Add(ValueInput(NeweventType, NeweventType.As().CSharpName(false, false, false)));
             }
         }
 
         private ControlOutput Trigger(Flow flow)
         {
+            if (New_eventType.type == null) return exit;
 
-            if (NeweventType.type == null) return exit;
-
-            var eventInstance = System.Activator.CreateInstance(NeweventType.type);
-
-            for (var i = 0; i < inputPorts.Count; i++)
+            if (IsRestricted)
             {
-                var inputPort = inputPorts[i];
-                var key = inputPort.key;
-                var value = flow.GetValue(inputPort);
-                if (Info.reflectedFields.ContainsKey(key))
-                {
-                    var reflectedField = Info.reflectedFields[key];
-                    reflectedField.SetValue(eventInstance, value);
-                }
-                else if (Info.reflectedProperties.ContainsKey(key))
-                {
-                    var reflectedProperty = Info.reflectedProperties[key];
-                    reflectedProperty.SetValue(eventInstance, value);
-                }
-            }
+                var eventInstance = System.Activator.CreateInstance(New_eventType.type);
 
-            GlobalDefinedEventNode.Trigger(eventInstance);
+                for (var i = 0; i < inputPorts.Count; i++)
+                {
+                    var inputPort = inputPorts[i];
+                    var key = inputPort.key;
+                    var value = flow.GetValue(inputPort);
+                    if (Info.reflectedFields.ContainsKey(key))
+                    {
+                        var reflectedField = Info.reflectedFields[key];
+                        reflectedField.SetValue(eventInstance, value);
+                    }
+                    else if (Info.reflectedProperties.ContainsKey(key))
+                    {
+                        var reflectedProperty = Info.reflectedProperties[key];
+                        reflectedProperty.SetValue(eventInstance, value);
+                    }
+                }
+
+                GlobalDefinedEventNode.Trigger(eventInstance);
+            }
+            else
+            {
+                GlobalDefinedEventNode.Trigger(flow.GetValue(inputPorts.Find(port => port.key == NeweventType.As().CSharpName(false, false, false))));
+            }
 
             return exit;
         }

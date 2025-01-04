@@ -45,7 +45,7 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
             var output = string.Empty;
 
             var subgraphName = Unit.nest.graph.title?.Length > 0 ? Unit.nest.graph.title : Unit.nest.source == GraphSource.Macro ? Unit.nest.macro.name : "UnnamedSubgraph";
-            if (CSharpPreview.ShowSubgraphComment)
+            if (CSharpPreviewSettings.ShouldShowSubgraphComment)
             {
                 if (_graphinput != null || _graphOutput != null)
                 {

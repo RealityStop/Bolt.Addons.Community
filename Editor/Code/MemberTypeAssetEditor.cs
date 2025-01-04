@@ -41,6 +41,9 @@ namespace Unity.VisualScripting.Community
         protected Metadata variables;
         protected SerializedProperty variablesProp;
 
+        protected Metadata interfaces;
+        protected SerializedProperty interfacesProp;
+
         private Type[] attributeTypes = new Type[] { };
         private Type[] classAttributeTypes = new Type[] { };
 
@@ -108,12 +111,6 @@ namespace Unity.VisualScripting.Community
             {
                 return true;
             }
-
-            // // Check for abstract events
-            // if (inheritedType.GetEvents(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Any(e => e.GetAddMethod(true)?.IsAbstract == true || e.GetRemoveMethod(true)?.IsAbstract == true))
-            // {
-            //     return true;
-            // }
 
             // Check if the inherited type is not abstract and is a class with parameterized constructors
             if (!inheritedType.IsAbstract && inheritedType.IsClass)
@@ -408,26 +405,6 @@ namespace Unity.VisualScripting.Community
                     }
 
                     //TODO : Add event support
-
-                    // var abstractEvents = inheritedType.GetEvents(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-                    // .Where(e => e.GetAddMethod(true)?.IsAbstract == true || e.GetRemoveMethod(true)?.IsAbstract == true)
-                    // .ToArray();
-
-                    // for (int i = 0; i < abstractEvents.Length; i++)
-                    // {
-                    //     var index = i;
-                    //     HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
-                    //     {
-                    //         GUILayout.Label(abstractEvents[index].Name);
-
-                    //         if (GUILayout.Button("Add", GUILayout.Width(60)))
-                    //         {
-
-                    //         }
-                    //     }, true);
-
-                    //     GUILayout.Space(4);
-                    // }
 
                     var parameterizedConstructors = inheritedType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
                     .Where(constructor => constructor.GetParameters().Length > 0)
@@ -784,31 +761,12 @@ namespace Unity.VisualScripting.Community
                     }
 
                     // TODO: Add event support
-                    // var nonFinalEvents = inheritedType.GetEvents(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-                    // .Where(e => e.GetAddMethod(true)?.IsFinal == false || e.GetRemoveMethod(true)?.IsFinal == false)
-                    // .ToArray();
-
-                    // for (int i = 0; i < nonFinalEvents.Length; i++)
-                    // {
-                    //     var index = i;
-                    //     HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
-                    //     {
-                    //         GUILayout.Label(nonFinalEvents[index].Name);
-
-                    //         if (GUILayout.Button("Add", GUILayout.Width(60)))
-                    //         {
-                    //             // Add event handling code here
-                    //         }
-                    //     }, true);
-
-                    //     GUILayout.Space(4);
-                    // }
                 });
             });
         }
 
 
-        protected virtual Texture2D DefaultIcon() { return PathUtil.Load("object_32", CommunityEditorPath.Code).Single(); }
+        protected virtual Texture2D DefaultIcon() { return null; }
 
         protected override void OnEnable()
         {
@@ -838,19 +796,13 @@ namespace Unity.VisualScripting.Community
                 attributesProp = serializedObject.FindProperty("attributes");
             }
 
-            //TODO: add Custom Unit Generator
-            // if (typeof(TMemberTypeAsset) != typeof(UnitAsset))
-            // {
+            if (interfaces == null || interfacesProp == null)
+            {
+                interfaces = Metadata.FromProperty(serializedObject.FindProperty("interfaces"));
+                interfacesProp = serializedObject.FindProperty("interfaces");
+            }
+
             if (Target.icon == null) Target.icon = DefaultIcon();
-            // }
-            // else
-            // {
-            //     if (typeIcon == null || typeIconProp == null)
-            //     {
-            //         typeIcon = Metadata.FromProperty(serializedObject.FindProperty("TypeIcon"));
-            //         typeIconProp = serializedObject.FindProperty("TypeIcon");
-            //     }
-            // }
 
             CacheConstrainedAttributes();
 
@@ -973,6 +925,81 @@ namespace Unity.VisualScripting.Community
                 shouldUpdate = true;
             }
             OnExtendedOptionsGUI();
+
+            if (Target is ClassAsset or StructAsset or InterfaceAsset)
+            {
+                Interfaces();
+            }
+        }
+
+        private void Interfaces()
+        {
+            Target.interfacesOpened = HUMEditor.Foldout(Target.interfacesOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            {
+                HUMEditor.Image(typeof(IAction).Icon()[IconSize.Small], 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
+                GUILayout.Label("Interfaces");
+            }, () =>
+            {
+                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                {
+                    var listOfInterfaces = Target.interfaces;
+
+                    for (int i = 0; i < listOfInterfaces.Count; i++)
+                    {
+                        var index = i;
+                        var _interface = listOfInterfaces[i];
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label($"Interface {i}");
+                        if (GUILayout.Button(new GUIContent(_interface.type.DisplayName(), _interface.type.Icon()[IconSize.Small])))
+                        {
+                            TypeBuilderWindow.ShowWindow(GUILayoutUtility.GetLastRect(), interfaces[i]["type"], false, Codebase.settingsAssembliesTypes.Where(t => t.IsInterface && t.IsPublic).ToArray());
+                        }
+
+                        if (GUILayout.Button("...", GUILayout.Width(19)))
+                        {
+                            GenericMenu menu = new GenericMenu();
+                            menu.AddItem(new GUIContent("Delete"), false, (obj) =>
+                            {
+                                Undo.RegisterCompleteObjectUndo(Target, "Deleted Interface");
+                                shouldUpdate = true;
+                                interfaces.Remove(obj as SystemType);
+                            }, listOfInterfaces[index]);
+
+                            if (i > 0)
+                            {
+                                menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                                {
+                                    Undo.RegisterCompleteObjectUndo(Target, "Moved Interface up");
+                                    shouldUpdate = true;
+                                    MoveItemUp(Target.interfaces, index);
+                                }, listOfInterfaces[index]);
+                            }
+
+                            if (i < listOfInterfaces.Count - 1)
+                            {
+                                menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                                {
+                                    Undo.RegisterCompleteObjectUndo(Target, "Moved Interface down");
+                                    shouldUpdate = true;
+                                    MoveItemDown(Target.interfaces, index);
+                                }, listOfInterfaces[index]);
+                            }
+                            menu.ShowAsContext();
+                        }
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.Space(4);
+                    }
+                    if (GUILayout.Button("+ Add Interface"))
+                    {
+                        Undo.RegisterCompleteObjectUndo(Target, "Added Interface");
+                        shouldUpdate = true;
+                        Target.interfaces.Add(new SystemType(Codebase.settingsAssembliesTypes.Where(t => t.IsInterface && t.IsPublic).First()));
+                        AssetDatabase.SaveAssets();
+                        AssetDatabase.Refresh();
+                    }
+                });
+            });
         }
 
         private Type AttributeTypeField(AttributeDeclaration attribute, AttributeUsageType usage)
@@ -1020,7 +1047,7 @@ namespace Unity.VisualScripting.Community
         {
             var allAttributeTypes = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(assembly => assembly.GetTypes())
-                .Where(t => t.IsSubclassOf(typeof(Attribute)) || t == typeof(Attribute))
+                .Where(t => (t.IsSubclassOf(typeof(Attribute)) || t == typeof(Attribute)) && t.IsPublic)
                 .ToArray();
 
             // Filter attributes based on valid targets
@@ -1466,6 +1493,7 @@ namespace Unity.VisualScripting.Community
             };
         }
         Dictionary<Metadata, HashSet<int>> subscribedEvents = new Dictionary<Metadata, HashSet<int>>();
+        Dictionary<Metadata, Type> typeChangedLookup = new Dictionary<Metadata, Type>();
         private void DrawParameters(Metadata paramMeta, UnityEngine.Object target, FunctionNode functionUnit = null)
         {
             var parameters = paramMeta.value as List<TypeParam>;
@@ -1491,7 +1519,7 @@ namespace Unity.VisualScripting.Community
                             menu.AddItem(new GUIContent("Delete"), false, (obj) =>
                             {
                                 TypeParam paramToRemove = obj as TypeParam;
-                                Undo.RegisterCompleteObjectUndo(target, $"Deleted {parameters[i].name} parameter");
+                                Undo.RegisterCompleteObjectUndo(target, $"Deleted {paramToRemove.name} parameter");
                                 parameters.Remove(paramToRemove);
                                 shouldUpdate = true;
                             }, parameters[i]);
@@ -1503,7 +1531,7 @@ namespace Unity.VisualScripting.Community
                                     var paramIndex = parameters.IndexOf(obj as TypeParam);
                                     if (paramIndex > 0)
                                     {
-                                        Undo.RegisterCompleteObjectUndo(target, $"Moved {parameters[i].name} parameter up");
+                                        Undo.RegisterCompleteObjectUndo(target, $"Moved {(obj as TypeParam).name} parameter up");
                                         var temp = parameters[paramIndex];
                                         parameters[paramIndex] = parameters[paramIndex - 1];
                                         parameters[paramIndex - 1] = temp;
@@ -1519,7 +1547,7 @@ namespace Unity.VisualScripting.Community
                                     var paramIndex = parameters.IndexOf(obj as TypeParam);
                                     if (paramIndex < parameters.Count - 1)
                                     {
-                                        Undo.RegisterCompleteObjectUndo(target, $"Moved {parameters[i].name} parameter down");
+                                        Undo.RegisterCompleteObjectUndo(target, $"Moved {(obj as TypeParam).name} parameter down");
                                         var temp = parameters[paramIndex];
                                         parameters[paramIndex] = parameters[paramIndex + 1];
                                         parameters[paramIndex + 1] = temp;
@@ -1534,10 +1562,10 @@ namespace Unity.VisualScripting.Community
                         HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, new RectOffset(6, 6, 6, 6), new RectOffset(1, 1, 0, 1), () =>
                         {
                             Inspector.BeginBlock(paramMeta, new Rect());
-
+                            var currentParam = paramMeta[i];
                             GUIContent TypebuilderButtonContent = new GUIContent(
-                            (paramMeta[i]["type"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
-                            (paramMeta[i]["type"].value as Type)?.Icon()?[IconSize.Small]
+                            (currentParam["type"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                            (currentParam["type"].value as Type)?.Icon()?[IconSize.Small]
                             );
 
                             GUILayout.BeginHorizontal();
@@ -1545,7 +1573,7 @@ namespace Unity.VisualScripting.Community
                             var lastRect = GUILayoutUtility.GetLastRect();
                             if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                             {
-                                TypeBuilderWindow.ShowWindow(lastRect, paramMeta[i]["type"], true, null, () =>
+                                TypeBuilderWindow.ShowWindow(lastRect, (type) => { currentParam["type"].value = type; }, parameters[i].type, true, null, () =>
                                 {
                                     Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Type");
                                     shouldUpdate = true;
@@ -1553,9 +1581,9 @@ namespace Unity.VisualScripting.Community
                             }
                             GraphWindow.active?.context?.BeginEdit();
                             GUILayout.EndHorizontal();
-                            Inspector.BeginBlock(paramMeta[i]["modifier"], new Rect());
-                            LudiqGUI.InspectorLayout(paramMeta[i]["modifier"], new GUIContent("Modifier"));
-                            if (Inspector.EndBlock(paramMeta[i]["modifier"]))
+                            Inspector.BeginBlock(currentParam["modifier"], new Rect());
+                            LudiqGUI.InspectorLayout(currentParam["modifier"], new GUIContent("Modifier"));
+                            if (Inspector.EndBlock(currentParam["modifier"]))
                             {
                                 Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
                                 shouldUpdate = true;
@@ -1563,20 +1591,21 @@ namespace Unity.VisualScripting.Community
                             GUILayout.Space(4);
                             if (parameters[i].showCall)
                             {
-                                Inspector.BeginBlock(paramMeta[i]["useInCall"], new Rect());
-                                LudiqGUI.InspectorLayout(paramMeta[i]["useInCall"], new GUIContent("Use In Call"));
-                                if (Inspector.EndBlock(paramMeta[i]["useInCall"]))
+                                Inspector.BeginBlock(currentParam["useInCall"], new Rect());
+                                LudiqGUI.InspectorLayout(currentParam["useInCall"], new GUIContent("Use In Call"));
+                                if (Inspector.EndBlock(currentParam["useInCall"]))
                                 {
-                                    Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                    Undo.RegisterCompleteObjectUndo(target, "Toggled Use In Call");
                                     shouldUpdate = true;
                                 }
                                 GUILayout.Space(4);
                             }
-                            Inspector.BeginBlock(paramMeta[i]["hasDefault"], new Rect());
-                            LudiqGUI.InspectorLayout(paramMeta[i]["hasDefault"], new GUIContent("Has Default Value"));
-                            if (Inspector.EndBlock(paramMeta[i]["hasDefault"]))
+
+                            Inspector.BeginBlock(currentParam["hasDefault"], new Rect());
+                            LudiqGUI.InspectorLayout(currentParam["hasDefault"], new GUIContent("Has Default Value"));
+                            if (Inspector.EndBlock(currentParam["hasDefault"]))
                             {
-                                Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                Undo.RegisterCompleteObjectUndo(target, "Toggled Has Default");
                                 shouldUpdate = true;
                             }
                             GraphWindow.active?.context?.BeginEdit();
@@ -1586,46 +1615,26 @@ namespace Unity.VisualScripting.Community
                             {
                                 if (parameters[i].hasDefault)
                                 {
-                                    if (!subscribedEvents.ContainsKey(paramMeta))
+                                    if (typeChangedLookup.TryGetValue(currentParam["type"], out var type))
                                     {
-                                        subscribedEvents[paramMeta] = new HashSet<int>();
-                                    }
-
-                                    if (!subscribedEvents[paramMeta].Contains(i))
-                                    {
-                                        paramMeta[i]["type"].valueChanged += (type) =>
+                                        if (type != currentParam["type"].value as Type || parameters[i].defaultValue?.GetType() != type)
                                         {
-                                            GraphWindow.active?.context?.DescribeAndAnalyze();
-                                            paramMeta[i]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
-
-                                            if (paramMeta[i]["defaultValue"].value?.GetType() == type as Type)
-                                            {
-                                                return;
-                                            }
-
-                                            if (type == null)
-                                            {
-                                                paramMeta[i]["defaultValue"].value = null;
-                                            }
-                                            else if (ConversionUtility.CanConvert(paramMeta[i]["defaultValue"].value, type as Type, true))
-                                            {
-                                                paramMeta[i]["defaultValue"].value = ConversionUtility.Convert(paramMeta[i]["defaultValue"].value, type as Type);
-                                            }
-                                            else
-                                            {
-                                                paramMeta[i]["defaultValue"].value = (type as Type).Default();
-                                            }
-
-                                            paramMeta[i]["defaultValue"].InferOwnerFromParent();
+                                            UpdateDefaultValueType((Type)currentParam["type"].value, currentParam);
+                                            typeChangedLookup[currentParam["type"]] = (Type)currentParam["type"].value;
                                             shouldUpdate = true;
-                                        };
-
-                                        subscribedEvents[paramMeta].Add(i);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        typeChangedLookup[currentParam["type"]] = (Type)currentParam["type"].value;
+                                    }
+                                    if (parameters[i].type.IsBasic())
+                                    {
+                                        var inspector = currentParam["defaultValue"].Inspector();
+                                        typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
+                                        inspector.DrawLayout(new GUIContent("Value               "));
                                     }
 
-                                    var inspector = paramMeta[i]["defaultValue"].Inspector();
-                                    typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
-                                    inspector.DrawLayout(new GUIContent("Value               "));
                                     GUILayout.Space(4);
                                 }
                             }
@@ -1637,7 +1646,7 @@ namespace Unity.VisualScripting.Community
                                 GUILayout.Label("Attributes");
                             }, () =>
                             {
-                                DrawAttributes(paramMeta[i]["attributes"], parameters[i].attributes, AttributeUsageType.Parameter, target, "Changed Parameter attribute");
+                                DrawAttributes(currentParam["attributes"], parameters[i].attributes, AttributeUsageType.Parameter, target, "Changed Parameter attribute");
                             });
                             if (Inspector.EndBlock(paramMeta))
                             {
@@ -1664,9 +1673,35 @@ namespace Unity.VisualScripting.Community
                     }
                     name += index;
                     Undo.RegisterCompleteObjectUndo(target, "Added Parameter");
-                    parameters.Add(new TypeParam(typeof(int), name) { defaultValue = "" });
+                    parameters.Add(new TypeParam(typeof(string), name) { defaultValue = "" });
                 }
             });
+        }
+
+        void UpdateDefaultValueType(Type type, Metadata currentParam)
+        {
+            currentParam["typeHandle"].value = new SerializableType(type.AssemblyQualifiedName);
+            if (currentParam["defaultValue"].value?.GetType() == type)
+            {
+                return;
+            }
+
+            if (type == null)
+            {
+                currentParam["defaultValue"].value = null;
+            }
+            else if (ConversionUtility.CanConvert(currentParam["defaultValue"].value, type, true))
+            {
+                currentParam["defaultValue"].value = ConversionUtility.Convert(currentParam["defaultValue"].value, type);
+            }
+            else
+            {
+                currentParam["defaultValue"].value = type.PseudoDefault();
+            }
+
+            currentParam["defaultValue"].InferOwnerFromParent();
+            shouldUpdate = true;
+            GraphWindow.active?.context?.DescribeAndAnalyze();
         }
         private object GetDefaultParameterValue(Type parameterType)
         {
@@ -1702,9 +1737,9 @@ namespace Unity.VisualScripting.Community
                             }, () =>
                             {
                                 listOfMethods[index].name = listOfMethods[index].methodName.LegalMemberName();
-                                var funcionUnit = (listOfMethods[index].graph.units[0] as FunctionNode);
-                                funcionUnit.Define();
-                                funcionUnit.Describe();
+                                var functionUnit = listOfMethods[index].graph.units[0] as FunctionNode;
+                                functionUnit.Define();
+                                functionUnit.Describe();
                                 shouldUpdate = true;
                             });
                             GraphWindow.active?.context?.EndEdit();
@@ -2018,40 +2053,20 @@ namespace Unity.VisualScripting.Community
                                     if (!listOfVariables[index].isProperty || (listOfVariables[index].get && !(listOfVariables[index].getter.graph.units[0] as FunctionNode).invoke.hasValidConnection) ||
                                     (listOfVariables[index].set && !(listOfVariables[index].setter.graph.units[0] as FunctionNode).invoke.hasValidConnection))
                                     {
-                                        if (!subscribedEvents.ContainsKey(variables[index]["type"]))
+                                        if (typeChangedLookup.TryGetValue(variables[index]["type"], out var type))
                                         {
-                                            subscribedEvents[variables[index]["type"]] = new HashSet<int>();
-                                        }
-
-                                        if (!subscribedEvents[variables[index]["type"]].Contains(i))
-                                        {
-                                            variables[index]["type"].valueChanged += (type) =>
+                                            Type currentType = variables[index]["type"].value as Type;
+                                            if (type != currentType || listOfVariables[i].value?.GetType() != currentType)
                                             {
-                                                GraphWindow.active?.context?.DescribeAndAnalyze();
-                                                variables[index]["typeHandle"].value = new SerializableType((type as Type).AssemblyQualifiedName);
-                                                if (variables[index]["defaultValue"].value?.GetType() == type as Type)
-                                                {
-                                                    return;
-                                                }
-
-                                                if (type == null)
-                                                {
-                                                    variables[index]["defaultValue"].value = null;
-                                                }
-                                                else if (ConversionUtility.CanConvert(variables[index]["defaultValue"].value, type as Type, true))
-                                                {
-                                                    variables[index]["defaultValue"].value = ConversionUtility.Convert(variables[index]["defaultValue"].value, type as Type);
-                                                }
-                                                else
-                                                {
-                                                    variables[index]["defaultValue"].value = (type as Type).Default();
-                                                }
-
-                                                variables[index]["defaultValue"].InferOwnerFromParent();
-                                                shouldUpdate = true;
-                                            };
-                                            subscribedEvents[variables[index]["type"]].Add(i);
+                                                UpdateDefaultValueType(currentType, variables[index]);
+                                                typeChangedLookup[variables[index]["type"]] = currentType;
+                                            }
                                         }
+                                        else
+                                        {
+                                            typeChangedLookup[variables[index]["type"]] = (Type)variables[index]["type"].value;
+                                        }
+
                                         var inspector = variables[index]["defaultValue"].Inspector();
                                         typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
                                         Inspector.BeginBlock(variables[index]["defaultValue"], new Rect(10, 10, 10, 10));
@@ -2239,24 +2254,21 @@ namespace Unity.VisualScripting.Community
             });
         }
 
-        private void MoveItemDown<T>(List<T> list, int index)
-        {
-            if (index < list.Count - 1)
-            {
-                T item = list[index];
-                list.RemoveAt(index);
-                list.Insert(index + 1, item);
-            }
-        }
-
         private void MoveItemUp<T>(List<T> list, int index)
         {
-            if (index > 0)
-            {
-                T item = list[index];
-                list.RemoveAt(index);
-                list.Insert(index - 1, item);
-            }
+            if (index <= 0 || index >= list.Count) return; // Validate index
+            T item = list[index];
+            list.RemoveAt(index);
+            list.Insert(index - 1, item);
         }
+
+        private void MoveItemDown<T>(List<T> list, int index)
+        {
+            if (index < 0 || index >= list.Count - 1) return; // Validate index
+            T item = list[index];
+            list.RemoveAt(index);
+            list.Insert(index + 1, item);
+        }
+
     }
 }

@@ -16,6 +16,7 @@ namespace Unity.VisualScripting.Community
         private UnitOptionTree unitOptionTree;
 
         private FuzzyGroup csharpGroup = new FuzzyGroup("CSharp", typeof(ClassAsset).Icon());
+        private FuzzyGroup snippetsGroup = new FuzzyGroup("Snippet", typeof(SnippetInputNode).Icon());
 
         #region Inherited
         private FuzzyGroup inheritedMembersGroup = new FuzzyGroup("Inherited", typeof(ClassAsset).Icon());
@@ -31,6 +32,7 @@ namespace Unity.VisualScripting.Community
         #region Asset
         private FuzzyGroup assetMembersGroup = new FuzzyGroup("Asset", typeof(ClassAsset).Icon());
         private FuzzyGroup assetFuncsGroup = new FuzzyGroup("Funcs", typeof(Method).Icon());
+        private FuzzyGroup assetActionsGroup = new FuzzyGroup("Actions", typeof(Method).Icon());
         private FuzzyGroup assetVariableMembersGroup = new FuzzyGroup("Variables", typeof(Field).Icon());
         private FuzzyGroup assetMethodMembersGroup = new FuzzyGroup("Methods", typeof(Method).Icon());
         private FuzzyGroup assetVariableGetGroup = new FuzzyGroup("Get", PathUtil.Load("return", CommunityEditorPath.Events));
@@ -52,6 +54,10 @@ namespace Unity.VisualScripting.Community
             if (options == null)
                 yield break;
 
+            if (unitOptionTree.reference.macro is GraphSnippet)
+            {
+                yield return snippetsGroup;
+            }
             // Check to see if current graph is part of a Class Asset only Class Assets have the AssetType unit
             if (options.Any(option => option is AssetTypeOption assetTypeOption && assetTypeOption.classAsset != null && assetTypeOption.unit.asset != null))
                 yield return csharpGroup;
@@ -92,6 +98,11 @@ namespace Unity.VisualScripting.Community
                     yield return assetMembersGroup;
                 }
             }
+            else if (parent == snippetsGroup)
+            {
+                foreach (var option in GetOptionsOfType<SnippetInputNode, SnippetInputNodeOption>())
+                    yield return option;
+            }
             else if (parent == inheritedMembersGroup)
             {
                 if (HasOptionsOfType<BaseMethodCall, BaseMethodUnitOption>(o => o.unit.member != null) ||
@@ -116,10 +127,17 @@ namespace Unity.VisualScripting.Community
                     yield return assetMethodMembersGroup;
                 if (HasOptionsOfType<AssetFuncUnit, AssetFuncUnitOption>(o => o.unit.method != null))
                     yield return assetFuncsGroup;
+                if (HasOptionsOfType<AssetActionUnit, AssetActionUnitOption>(o => o.unit.method != null))
+                    yield return assetActionsGroup;
             }
             else if (parent == assetFuncsGroup)
             {
                 foreach (var option in GetOptionsOfType<AssetFuncUnit, AssetFuncUnitOption>(o => o.unit.method != null))
+                    yield return option;
+            }
+            else if (parent == assetActionsGroup)
+            {
+                foreach (var option in GetOptionsOfType<AssetActionUnit, AssetActionUnitOption>(o => o.unit.method != null))
                     yield return option;
             }
             else if (parent == assetVariableMembersGroup)
@@ -266,10 +284,20 @@ namespace Unity.VisualScripting.Community
             return options.OfType<TOption>().Where(option => option.UnitIs<TUnit>() && predicate(option));
         }
 
+        private IEnumerable<IUnitOption> GetOptionsOfType<TUnit, TOption>() where TOption : class, IUnitOption
+        {
+            return options.OfType<TOption>().Where(option => option.UnitIs<TUnit>());
+        }
+
         private IUnitOption GetFirstOptionOfType<TUnit, TOption>(Func<TOption, bool> predicate)
             where TOption : class, IUnitOption
         {
             return options.OfType<TOption>().FirstOrDefault(option => option.UnitIs<TUnit>() && predicate(option));
+        }
+
+        private IUnitOption GetFirstOptionOfType<TUnit, TOption>() where TOption : class, IUnitOption
+        {
+            return options.OfType<TOption>().FirstOrDefault(option => option.UnitIs<TUnit>());
         }
     }
 }

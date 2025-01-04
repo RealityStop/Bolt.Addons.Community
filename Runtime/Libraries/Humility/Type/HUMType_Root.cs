@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 
 namespace Unity.VisualScripting.Community.Libraries.Humility
@@ -107,9 +108,19 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return null;
         }
 
+        /// <summary>
+        /// Tries to create a instance of <paramref name="type"/> if it cannot it will return null.
+        /// </summary>
+        /// <param name="type">type to create instance of</param>
+        /// <param name="args">arguments for the constructor</param>
+        /// <returns>instance of <paramref name="type"/></returns>
         public static object New(this Type type, params object[] args)
         {
-            return System.Activator.CreateInstance(type, args);
+            if (args.Length == 0 && type.GetPublicDefaultConstructor() != null)
+                return System.Activator.CreateInstance(type);
+            else if (args.Length > 0 && type.GetPublicConstructorAccepting(args.Select(arg => arg?.GetType()).ToArray()) != null)
+                return System.Activator.CreateInstance(type, args);
+            return null;
         }
     }
 }

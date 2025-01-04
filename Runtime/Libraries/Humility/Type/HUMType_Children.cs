@@ -439,7 +439,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(double) || type == typeof(decimal)) return @as.value.ToString().Replace(",", ".");
             if (type == typeof(string)) return @"""" + @as.value.ToString() + @"""";
             if (type == typeof(char)) return string.IsNullOrEmpty(@as.value.ToString()) ? "new Char()" : $"'{@as.value}'";
-            if (type == typeof(UnityEngine.GameObject)) return "null";
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return "null";
             if (type.IsNumeric()) return @as.value.ToString();
             if (type.IsEnum) return type.Name + "." + @as.value.ToString();
 
@@ -472,7 +472,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(double) || type == typeof(decimal)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().Replace(",", "."));
             if (type == typeof(string)) return CodeUtility.MakeSelectable(unit, @"""" + @as.value.ToString() + @"""");
             if (type == typeof(char)) return CodeUtility.MakeSelectable(unit, string.IsNullOrEmpty(@as.value.ToString()) ? "new Char()" : $"'{@as.value}'");
-            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"Cannot generate {(@as.value as GameObject).name}", "null", false));
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"Cannot generate {(@as.value as UnityEngine.Object).name}", "null", false));
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name + "." + @as.value.ToString());
 
@@ -504,7 +504,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(double) || type == typeof(decimal)) return @as.value.ToString().Replace(",", ".").NumericHighlight();
             if (type == typeof(string)) return (@"""" + @as.value.ToString() + @"""").StringHighlight();
             if (type == typeof(char)) return (char)@as.value == char.MinValue ? "/* Cannot have a empty character */".WarningHighlight() : $"'{@as.value}'".StringHighlight();
-            if (type == typeof(UnityEngine.GameObject)) return "null".ConstructHighlight();
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return "null".ConstructHighlight();
             if (type.IsNumeric()) return @as.value.ToString().NumericHighlight();
             if (type.IsEnum) return type.Name.EnumHighlight() + "." + @as.value.ToString();
             if (isNew)
@@ -535,7 +535,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(double) || type == typeof(decimal)) return CodeUtility.MakeSelectable(unit, @as.value.ToString().Replace(",", ".").NumericHighlight());
             if (type == typeof(string)) return CodeUtility.MakeSelectable(unit, (@"""" + @as.value.ToString() + @"""").StringHighlight());
             if (type == typeof(char)) return (char)@as.value == char.MinValue ? CodeUtility.MakeSelectable(unit, "/* Cannot have an empty character */".WarningHighlight()) : CodeUtility.MakeSelectable(unit, $"'{@as.value}'".StringHighlight());
-            if (type == typeof(UnityEngine.GameObject)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"Cannot generate {(@as.value as GameObject).name}", "null".ConstructHighlight()));
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type)) return CodeUtility.MakeSelectable(unit, CodeUtility.ToolTip("You need to make a variable for this, the variable needs to be a class variable so you can set the value after compiling the script or use a Scene/Application/Saved variable", $"Cannot generate {(@as.value as UnityEngine.Object).name}", "null".ConstructHighlight()));
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString().NumericHighlight());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name.EnumHighlight() + "." + @as.value.ToString());
             if (isNew)
@@ -580,7 +580,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 }
             }
 
-            output += (newLine ? "\n" : string.Empty) + "new " + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName, false) : GenericDeclaration(value.GetType(), fullName), false) + (value.GetType().IsArray ? "" : "()");
+            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) + "new " + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName, false) : GenericDeclaration(value.GetType(), fullName), false) + (value.GetType().IsArray ? "" : "()");
 
             if (isMultiLine)
             {
@@ -692,7 +692,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 }
             }
 
-            output += (newLine ? "\n" : string.Empty) + "new ".ConstructHighlight() + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName) : GenericDeclaration(value.GetType(), fullName)) + (value.GetType().IsArray ? "" : "()");
+            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) + "new ".ConstructHighlight() + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName) : GenericDeclaration(value.GetType(), fullName)) + (value.GetType().IsArray ? "" : "()");
 
             if (isMultiLine)
             {
@@ -808,7 +808,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 }
             }
 
-            output += (newLine ? "\n" : string.Empty) + CodeUtility.MakeSelectable(unit, "new " + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName, false) : GenericDeclaration(value.GetType(), fullName), false) + (value.GetType().IsArray ? "" : "()"));
+            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) + CodeUtility.MakeSelectable(unit, "new " + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName, false) : GenericDeclaration(value.GetType(), fullName), false) + (value.GetType().IsArray ? "" : "()"));
 
             if (isMultiLine)
             {
@@ -920,7 +920,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 }
             }
 
-            output += (newLine ? "\n" : string.Empty) + CodeUtility.MakeSelectable(unit, "new ".ConstructHighlight() + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName) : GenericDeclaration(value.GetType(), fullName)) + (value.GetType().IsArray ? "" : "()"));
+            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) + CodeUtility.MakeSelectable(unit, "new ".ConstructHighlight() + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName) : GenericDeclaration(value.GetType(), fullName)) + (value.GetType().IsArray ? "" : "()"));
 
             if (isMultiLine)
             {
@@ -1018,7 +1018,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (!type.IsConstructedGenericType && !type.IsGenericType) throw new Exception("Type is not a generic type but you are trying to declare a generic.");
             if (highlight)
             {
-                output += (fullName ? type.Namespace.NamespaceHighlight() + "." : "") + (type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight());
+                output += (fullName ? type.Namespace.NamespaceHighlight() + "." : "") + (type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type) : type.Name.WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type));
             }
             else
             {
@@ -1046,7 +1046,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (!type.IsConstructedGenericType && !type.IsGenericType) return type.As().CSharpName(false, fullName, highlight);
             if (highlight)
             {
-                output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight();
+                output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type) : type.Name.WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type);
             }
             else
             {
@@ -1088,7 +1088,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (!type.IsConstructedGenericType && !type.IsGenericType) return type.As().CSharpName();
             if (highlight)
             {
-                output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).TypeHighlight() : type.Name.TypeHighlight();
+                output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type) : type.Name.WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type);
             }
             else
             {

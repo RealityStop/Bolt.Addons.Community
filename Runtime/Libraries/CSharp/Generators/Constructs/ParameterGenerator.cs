@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Utility;
 using System.Linq;
 using Unity.VisualScripting;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -26,9 +27,9 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (!useAssemblyQualifiedType && type == null) return "/* Parameter type is null */".WarningHighlight();
             var _attributes = attributes != null && attributes.Count > 0 ? string.Join(" ", attributes.Select(attr => $"[{attr.GetAttributeType().As().CSharpName()}]")) + " " : string.Empty;
             var param = isParameters ? "params ".ConstructHighlight() : string.Empty;
-            var _modifier = modifier != ParameterModifier.None ? modifier.AsString().ConstructHighlight() + " " : string.Empty;
-            var _default = isLiteral ? " = " + defaultValue.As().Code(true, true) : "";
-            var parameter = _attributes + (useAssemblyQualifiedType ? param + _modifier + assemblyQualifiedType + " " + name.VariableHighlight() : param + _modifier + type.As().CSharpName() + " " + name.LegalMemberName().VariableHighlight()) + _default;
+            var _modifier = modifier != ParameterModifier.None && !isParameters ? modifier.AsString().ConstructHighlight() + " " : string.Empty;
+            var _default = isLiteral && !useAssemblyQualifiedType ? type.IsBasic() ? " = " + defaultValue.As().Code(true, true) : " = " + "null".ConstructHighlight() : "";
+            var parameter = _attributes + (useAssemblyQualifiedType ? param + _modifier + assemblyQualifiedType + (type.IsStruct() && isLiteral && !type.IsBasic() ? "?" : "") + " " + name.VariableHighlight() : param + _modifier + type.As().CSharpName() + (type.IsStruct() && isLiteral && !type.IsBasic() ? "?" : "") + " " + name.LegalMemberName().VariableHighlight()) + _default;
             return parameter;
         }
 
@@ -66,14 +67,15 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return parameter;
         }
 
-        public static ParameterGenerator Parameter(string name, string assemblyQualifiedType, ParameterModifier modifier, bool isLiteral = false, bool isParameters = false, object defaultValue = null)
+        public static ParameterGenerator Parameter(string name, string stringType, Type actualType, ParameterModifier modifier, bool isLiteral = false, bool isParameters = false, object defaultValue = null)
         {
             var parameter = new ParameterGenerator();
             parameter.name = name;
-            parameter.assemblyQualifiedType = assemblyQualifiedType;
+            parameter.assemblyQualifiedType = stringType;
             parameter.useAssemblyQualifiedType = true;
             parameter.modifier = modifier;
             parameter.isLiteral = isLiteral;
+            parameter.type = actualType;
             parameter.defaultValue = defaultValue;
             if (modifier == ParameterModifier.None)
                 parameter.isParameters = isParameters;

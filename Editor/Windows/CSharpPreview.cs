@@ -10,6 +10,7 @@ using System.Collections.Generic;
 namespace Unity.VisualScripting.Community
 {
     [Serializable]
+    [Obsolete("CSharp preview functionality was moved to 'CSharpPreviewWindow'")]
     public sealed class CSharpPreview
     {
         public string output = string.Empty;
@@ -43,8 +44,6 @@ namespace Unity.VisualScripting.Community
         #endregion
         const string path = "Assets/Unity.VisualScripting.Community.Generated/";
         private static CSharpPreviewSettings Settings;
-
-        public static bool ShowSubgraphComment = true;
 
         public static Color background => HUMColor.Grey(0.1f);
         public static Color Settingsbackground => HUMColor.Grey(0.2f);
@@ -291,7 +290,7 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            var clickableRegions = CodeUtility.ExtractClickableRegions(output);
+            var clickableRegions = CodeUtility.ExtractAndPopulateClickableRegions(output);
             var plainOutput = CodeUtility.RemoveAllSelectableTags(output);
             var lines = plainOutput.Split(new[] { '\n' }, StringSplitOptions.None);
 
@@ -429,7 +428,7 @@ namespace Unity.VisualScripting.Community
         {
             if (Event.current.shift && firstSelectedRegion != null)
             {
-                SelectRange(firstSelectedRegion, region, CodeUtility.ExtractClickableRegions(output));
+                SelectRange(firstSelectedRegion, region, CodeUtility.ExtractAndPopulateClickableRegions(output));
             }
             else if (Event.current.control)
             {
@@ -465,7 +464,7 @@ namespace Unity.VisualScripting.Community
                 {
                     if (Event.current.shift && firstSelectedRegion != null) // Shift-click logic
                     {
-                        SelectRange(firstSelectedRegion, region, CodeUtility.ExtractClickableRegions(output));
+                        SelectRange(firstSelectedRegion, region, CodeUtility.ExtractAndPopulateClickableRegions(output));
                     }
                     else if (Event.current.control) // Ctrl-click logic
                     {
@@ -880,7 +879,7 @@ namespace Unity.VisualScripting.Community
 
                     EditorGUILayout.BeginHorizontal();
                     DrawLabelWithTooltip("Show Subgraph Comments", "A comment where the Subgraph and Port are being generated.", labelRect, GUILayout.Width(200));
-                    Settings.ShowSubgraphComment = EditorGUILayout.Toggle(Settings.ShowSubgraphComment);
+                    Settings.showSubgraphComment = EditorGUILayout.Toggle(Settings.showSubgraphComment);
                     EditorGUILayout.EndHorizontal();
 
                     GUILayout.Space(10);
@@ -947,7 +946,7 @@ namespace Unity.VisualScripting.Community
             Settings.StringColor = StringColor;
             Settings.InterfaceColor = InterfaceColor;
             Settings.TypeColor = TypeColor;
-            Settings.ShowSubgraphComment = ShowSubgraphComment;
+            Settings.showSubgraphComment = CSharpPreviewSettings.ShouldShowSubgraphComment;
             Settings.SaveAndDirty();
         }
 
@@ -960,7 +959,7 @@ namespace Unity.VisualScripting.Community
             CodeBuilder.TypeColor = Settings.TypeColor.ToHexString();
             CodeBuilder.EnumColor = Settings.EnumColor.ToHexString();
             CodeBuilder.InterfaceColor = Settings.InterfaceColor.ToHexString();
-            ShowSubgraphComment = Settings.ShowSubgraphComment;
+            CSharpPreviewSettings.ShouldShowSubgraphComment = Settings.showSubgraphComment;
         }
     }
 }

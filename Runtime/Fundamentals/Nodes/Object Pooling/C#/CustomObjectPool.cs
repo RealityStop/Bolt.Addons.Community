@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.VisualScripting;
+using System.Collections.ObjectModel;
 
 namespace Unity.VisualScripting.Community
 {
@@ -56,9 +57,9 @@ namespace Unity.VisualScripting.Community
             EventBus.Trigger<PoolData>(ObjectPoolEvents.OnReturned, new(this, obj));
         }
 
-        public List<GameObject> GetActiveObjects()
+        public ReadOnlyCollection<GameObject> GetActiveObjects()
         {
-            return activeObjects;
+            return activeObjects.AsReadOnly();
         }
     }
 

@@ -34,6 +34,11 @@
             "name": "com.unity.visualscripting",
             "expression": "1.7.5",
             "define": "VISUAL_SCRIPTING_1_7_5_OR_GREATER"
+        },
+        {
+            "name": "com.unity.visualscripting",
+            "expression": "1.8.0",
+            "define": "VISUAL_SCRIPTING_1_8_0_OR_GREATER"
         }
     ],
     "noEngineReferences": false

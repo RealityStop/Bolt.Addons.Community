@@ -1,8 +1,5 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using System;
-using Unity.VisualScripting.Community;
 
 namespace Unity.VisualScripting.Community
 {
@@ -17,21 +14,18 @@ namespace Unity.VisualScripting.Community
         {
             get
             {
-                if (selection.Count >= 2)
+                if (selection.Count > 0)
                 {
                     yield return new GraphContextMenuItem(ConvertToEmbed, "To Embed Subgraph");
                     yield return new GraphContextMenuItem(ConvertToMacro, "To Macro Subgraph");
-                }
-
-                if (selection.Count == 0)
-                {
-                    yield return new GraphContextMenuItem(OpenCSharpPreview, "Open Utility Window");
                 }
 
                 foreach (var item in base.contextMenuItems)
                 {
                     yield return item;
                 }
+
+                yield return new GraphContextMenuItem(OpenCSharpPreview, "Open Utility Window");
             }
         }
 

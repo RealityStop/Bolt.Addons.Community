@@ -18,7 +18,10 @@ namespace Unity.VisualScripting.Community
             if (Data.inspectable) @struct.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
             if (Data.serialized) @struct.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());
             if (Data.includeInSettings) @struct.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
-
+            foreach (var @interface in Data.interfaces.Select(i => i.type))
+            {
+                @struct.ImplementInterface(@interface);
+            }
             foreach (var attribute in Data.attributes)
             {
                 var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());

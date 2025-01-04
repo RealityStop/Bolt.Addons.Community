@@ -6,13 +6,13 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
 [NodeGenerator(typeof(Timer))]
-public class TimerGenerator : VariableNodeGenerator<Timer>
+public class TimerGenerator : VariableNodeGenerator
 {
     public TimerGenerator(Timer unit) : base(unit)
     {
         NameSpace = "Unity.VisualScripting.Community";
     }
-
+    private Timer Unit => unit as Timer;
     public override AccessModifier AccessModifier => AccessModifier.Private;
 
     public override FieldModifier FieldModifier => FieldModifier.None;
@@ -20,6 +20,11 @@ public class TimerGenerator : VariableNodeGenerator<Timer>
     public override string Name => "timer" + count;
 
     public override Type Type => typeof(TimerLogic);
+
+    public override object DefaultValue => new TimerLogic();
+
+    public override bool HasDefaultValue => true;
+
     private bool _generatedOnTick = false;
     private bool _generatedOnCompleted = false;
 

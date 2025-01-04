@@ -46,8 +46,7 @@ namespace Unity.VisualScripting.Community
     
         public string parameterCode;
     
-        [Serialize]
-        List<string> parameterNames;
+        public List<string> parameterNames;
     
         protected override void Definition()
         {

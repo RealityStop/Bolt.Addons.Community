@@ -12,7 +12,11 @@ namespace Unity.VisualScripting.Community
     {
         [HideInInspector]
         public string SnippetName = "";
+        [InspectorWide]
+        public List<SnippetArgument> snippetArguments = new List<SnippetArgument>();
         public abstract SnippetType SnippetType { get; }
+
+        public bool graphContainsUnit => graph.units.Contains(SourceUnit());
         public abstract Unit SourceUnit();
         public sealed override FlowGraph DefaultGraph()
         {
@@ -23,6 +27,18 @@ namespace Unity.VisualScripting.Community
         protected override void ShowData()
         {
             base.ShowData();
+        }
+
+        [Inspectable]
+        [Serializable]
+        public class SnippetArgument
+        {
+            [Inspectable]
+            public string argumentName = "arg";
+            [Inspectable]
+            [TypeFilter(TypesMatching.Any, typeof(string), typeof(int), typeof(float), typeof(double), typeof(decimal), typeof(bool), typeof(char), typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(uint), typeof(long), typeof(ulong), typeof(LayerMask))]
+            [TypeSet(TypeSet.SettingsAssembliesTypes)]
+            public Type argumentType = typeof(string);
         }
     }
 

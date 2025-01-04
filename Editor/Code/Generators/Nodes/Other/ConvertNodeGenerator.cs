@@ -7,36 +7,39 @@ using System.Linq;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-[NodeGenerator(typeof(ConvertNode))]
-public class ConvertNodeGenerator : NodeGenerator<ConvertNode>
+namespace Unity.VisualScripting.Community 
 {
-    public ConvertNodeGenerator(Unit unit) : base(unit)
+    [NodeGenerator(typeof(ConvertNode))]
+    public class ConvertNodeGenerator : NodeGenerator<ConvertNode>
     {
-    }
-
-    public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-    {
-        if (data.GetExpectedType() != null && data.GetExpectedType() == Unit.type)
+        public ConvertNodeGenerator(Unit unit) : base(unit)
         {
-            data.SetCurrentExpectedTypeMet(true, Unit.type);
         }
-        if (Unit.conversion == ConversionType.Any)
+    
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            NameSpace = "";
-            if (Unit.type == typeof(object)) return GenerateValue(Unit.value, data);
-            NameSpace = Unit.type.Namespace;
-            return MakeSelectableForThisUnit($"({Unit.type.As().CSharpName(true, true)})") + GenerateValue(Unit.value, data);
+            if (data.GetExpectedType() != null && data.GetExpectedType() == Unit.type)
+            {
+                data.SetCurrentExpectedTypeMet(true, Unit.type);
+            }
+            if (Unit.conversion == ConversionType.Any)
+            {
+                NameSpace = "";
+                if (Unit.type == typeof(object)) return GenerateValue(Unit.value, data);
+                NameSpace = Unit.type.Namespace;
+                return MakeSelectableForThisUnit($"({Unit.type.As().CSharpName(true, true)})") + GenerateValue(Unit.value, data);
+            }
+            else if (Unit.conversion == ConversionType.ToArrayOfObject)
+            {
+                NameSpace = "System.Linq";
+                return MakeSelectableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeSelectableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToArray()");
+            }
+            else if (Unit.conversion == ConversionType.ToListOfObject)
+            {
+                NameSpace = "System.Linq";
+                return MakeSelectableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeSelectableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToList()");
+            }
+            return base.GenerateValue(output, data);
         }
-        else if (Unit.conversion == ConversionType.ToArrayOfObject)
-        {
-            NameSpace = "System.Linq";
-            return MakeSelectableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeSelectableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToArray()");
-        }
-        else if (Unit.conversion == ConversionType.ToListOfObject)
-        {
-            NameSpace = "System.Linq";
-            return MakeSelectableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeSelectableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToList()");
-        }
-        return base.GenerateValue(output, data);
-    }
+    } 
 }

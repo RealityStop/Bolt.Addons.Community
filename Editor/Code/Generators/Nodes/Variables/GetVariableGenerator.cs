@@ -9,13 +9,14 @@ using UnityEngine.SceneManagement;
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(GetVariable))]
-    public class GetVariableGenerator : LocalVariableGenerator<GetVariable>
+    public class GetVariableGenerator : LocalVariableGenerator
     {
+        private GetVariable Unit => unit as GetVariable;
         public GetVariableGenerator(Unit unit) : base(unit)
         {
             SetNamespaceBasedOnVariableKind();
         }
-        
+
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             SetNamespaceBasedOnVariableKind();
@@ -37,7 +38,7 @@ namespace Unity.VisualScripting.Community
 
         private string GenerateConnectedVariableCode(ControlGenerationData data)
         {
-            variableType = GetVariableType("$_UndefinedType_$", data);
+            variableType = GetVariableType("", data, false);
             if (data.GetExpectedType() == variableType)
                 data.SetCurrentExpectedTypeMet(true, variableType);
             else
@@ -55,9 +56,9 @@ namespace Unity.VisualScripting.Community
             return Unit.kind switch
             {
                 VariableKind.Object => MakeSelectableForThisUnit(variables + $".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeSelectableForThisUnit($").Get{typeString}(")}",
-                VariableKind.Scene => MakeSelectableForThisUnit(variables + $".Scene({"SceneManager".TypeHighlight()}.GetActiveScene()).Get{typeString}("),
-                VariableKind.Application => MakeSelectableForThisUnit(variables + ".Application".VariableHighlight() + $".Get{typeString}("),
-                VariableKind.Saved => MakeSelectableForThisUnit(variables + ".Saved".VariableHighlight()) + $".Get{typeString}(",
+                VariableKind.Scene => MakeSelectableForThisUnit(variables + $"." + "ActiveScene".VariableHighlight() + $".Get{typeString}("),
+                VariableKind.Application => MakeSelectableForThisUnit(variables + "." + "Application".VariableHighlight() + $".Get{typeString}("),
+                VariableKind.Saved => MakeSelectableForThisUnit(variables + "." + "Saved".VariableHighlight()) + $".Get{typeString}(",
                 _ => string.Empty,
             };
         }
@@ -65,7 +66,7 @@ namespace Unity.VisualScripting.Community
         private string GenerateDisconnectedVariableCode(ControlGenerationData data)
         {
             var name = Unit.defaultValues[Unit.name.key] as string;
-            variableType = GetVariableType(name, data);
+            variableType = GetVariableType(name, data, true);
             if (Unit.kind == VariableKind.Scene || Unit.kind == VariableKind.Application || Unit.kind == VariableKind.Saved)
             {
                 var typeString = variableType != null ? $"<{variableType.As().CSharpName(false, true)}>" : string.Empty;
@@ -81,13 +82,16 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private Type GetVariableType(string name, ControlGenerationData data)
+        private Type GetVariableType(string name, ControlGenerationData data, bool checkDecleration)
         {
-            var isDefined = IsVariableDefined(name);
-            if (isDefined)
+            if (checkDecleration)
             {
-                var declaration = GetVariableDeclaration(name);
-                return declaration.typeHandle.Identification != null ? Type.GetType(declaration.typeHandle.Identification) : null;
+                var isDefined = IsVariableDefined(name);
+                if (isDefined)
+                {
+                    var declaration = GetVariableDeclaration(name);
+                    return declaration.typeHandle.Identification != null ? Type.GetType(declaration.typeHandle.Identification) : null;
+                }
             }
             return data.TryGetVariableType(data.GetVariableName(name), out Type targetType) ? targetType : data.GetExpectedType() ?? typeof(object);
         }
@@ -96,7 +100,7 @@ namespace Unity.VisualScripting.Community
         {
             return Unit.kind switch
             {
-                VariableKind.Scene => VisualScripting.Variables.Scene(SceneManager.GetActiveScene()).IsDefined(name),
+                VariableKind.Scene => VisualScripting.Variables.ActiveScene.IsDefined(name),
                 VariableKind.Application => VisualScripting.Variables.Application.IsDefined(name),
                 VariableKind.Saved => VisualScripting.Variables.Saved.IsDefined(name),
                 _ => false,
@@ -107,7 +111,7 @@ namespace Unity.VisualScripting.Community
         {
             return Unit.kind switch
             {
-                VariableKind.Scene => VisualScripting.Variables.Scene(SceneManager.GetActiveScene()).GetDeclaration(name),
+                VariableKind.Scene => VisualScripting.Variables.ActiveScene.GetDeclaration(name),
                 VariableKind.Application => VisualScripting.Variables.Application.GetDeclaration(name),
                 VariableKind.Saved => VisualScripting.Variables.Saved.GetDeclaration(name),
                 _ => null,

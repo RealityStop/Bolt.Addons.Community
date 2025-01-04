@@ -39,6 +39,22 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             UnitBase.dynamicUnitsExtensions.Add(MachineVariableOptions);
             UnitBase.contextualUnitsExtensions.Add(InheritedMembersOptions);
             UnitBase.dynamicUnitsExtensions.Add(GetDynamicOptions);
+            UnitBase.contextualUnitsExtensions.Add(SnippetInputNodeOption);
+        }
+
+        private static IEnumerable<IUnitOption> SnippetInputNodeOption(GraphReference reference)
+        {
+            if (reference.macro is GraphSnippet graphSnippet)
+            {
+                yield return new SnippetInputNodeOption(new SnippetInputNode());
+
+                foreach (var arg in graphSnippet.snippetArguments)
+                {
+                    var node = new SnippetInputNode();
+                    node.argumentName = arg.argumentName;
+                    yield return new SnippetInputNodeOption(node);
+                }
+            }
         }
 
         private static void InitializeFuzzyLiteralOptions()
@@ -160,6 +176,11 @@ namespace Unity.VisualScripting.Community.Variables.Editor
                             yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.ReturnValue));
                             yield return new AssetFuncUnitOption(new AssetFuncUnit(method));
                         }
+                        else if (method.returnType == typeof(void) || method.returnType == typeof(Libraries.CSharp.Void))
+                        {
+
+                            yield return new AssetActionUnitOption(new AssetActionUnit(method));
+                        }
                     }
 
                     foreach (var field in classAsset.variables)
@@ -254,12 +275,20 @@ namespace Unity.VisualScripting.Community.Variables.Editor
 
         private static bool IsEvent(this MethodInfo methodInfo)
         {
-            return methodInfo.Name.Contains("add_") || methodInfo.Name.Contains("remove_");
+            return (methodInfo.Name.Contains("add_") && methodInfo.DeclaringType.GetEvents()
+                    .Any(e => e.GetAddMethod() == methodInfo))
+                || (methodInfo.Name.Contains("remove_") && methodInfo.DeclaringType.GetEvents()
+                    .Any(e => e.GetRemoveMethod() == methodInfo));
         }
+
 
         private static bool IsProperty(this MethodInfo methodInfo)
         {
-            return methodInfo.Name.Contains("get_") || methodInfo.Name.Contains("set_");
+            var property = methodInfo.DeclaringType
+                .GetProperties()
+                .FirstOrDefault(p => p.GetGetMethod() == methodInfo || p.GetSetMethod() == methodInfo);
+
+            return property != null;
         }
     }
 }

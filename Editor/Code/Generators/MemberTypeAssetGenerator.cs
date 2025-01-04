@@ -1,11 +1,12 @@
 ﻿using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using Unity.VisualScripting;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
     [Serializable]
-    public abstract class MemberTypeAssetGenerator<TMemberTypeAsset, TFieldDeclaration, TMethodDeclaration, TConstructorDeclaration> : CodeGenerator<TMemberTypeAsset> 
+    public abstract class MemberTypeAssetGenerator<TMemberTypeAsset, TFieldDeclaration, TMethodDeclaration, TConstructorDeclaration> : CodeGenerator<TMemberTypeAsset>
         where TMemberTypeAsset : MemberTypeAsset<TFieldDeclaration, TMethodDeclaration, TConstructorDeclaration>
         where TFieldDeclaration : FieldDeclaration
         where TMethodDeclaration : MethodDeclaration
@@ -15,7 +16,7 @@ namespace Unity.VisualScripting.Community
 
         public override string Generate(int indent)
         {
-            if (decorated  != null)
+            if (decorated != null)
             {
                 var output = string.Empty;
                 NamespaceGenerator @namespace = NamespaceGenerator.Namespace(string.Empty);
@@ -30,10 +31,17 @@ namespace Unity.VisualScripting.Community
                 ClassGenerator classType = type as ClassGenerator;
                 StructGenerator structType = type as StructGenerator;
 
-                if (Data.lastCompiledName != Data.GetFullTypeName() && !string.IsNullOrEmpty(Data.lastCompiledName))
+                foreach (var name in Data.lastCompiledNames)
                 {
-                    if (classType != null) classType.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
-                    if (structType != null) structType.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
+                    if (!string.IsNullOrEmpty(Data.GetFullTypeName()) && name != Data.GetFullTypeName())
+                    {
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            if (classType != null) classType.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(name));
+                            if (structType != null) structType.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(name));
+                        }
+
+                    }
                 }
 
                 return @namespace.Generate(indent);

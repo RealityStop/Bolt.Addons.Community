@@ -21,7 +21,7 @@ namespace Unity.VisualScripting.Community
         public bool
             refresh = true;     // Unused - for optimisation
 
-        public List<Unit> connectedUnits = new List<Unit>();
+        public List<IGraphElement> connectedElements = new List<IGraphElement>();
 
         public Rect
     wholeRect,

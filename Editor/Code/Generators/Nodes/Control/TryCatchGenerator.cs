@@ -7,8 +7,9 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
 [NodeGenerator(typeof(TryCatch))]
-public class TryCatchGenerator : LocalVariableGenerator<TryCatch>
+public class TryCatchGenerator : LocalVariableGenerator
 {
+    private TryCatch Unit => unit as TryCatch;
     public TryCatchGenerator(Unit unit) : base(unit)
     {
     }

@@ -11,8 +11,9 @@ namespace Unity.VisualScripting.Community
 {
 
     [NodeGenerator(typeof(SetVariable))]
-    public class SetVariableGenerator : LocalVariableGenerator<SetVariable>
+    public class SetVariableGenerator : LocalVariableGenerator
     {
+        private SetVariable Unit => unit as SetVariable;
         public SetVariableGenerator(Unit unit) : base(unit)
         {
             if (Unit.kind == VariableKind.Scene)

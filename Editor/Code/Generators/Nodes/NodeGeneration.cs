@@ -9,59 +9,44 @@ namespace Unity.VisualScripting.Community
     {
         public static string GenerateValue<T>(this T node, ValueInput input, ControlGenerationData data = null) where T : Unit
         {
-            var comments = "";
-
-            if (node.graph.units.Any(unit => unit is CommentNode commentNode))
-            {
-                var commentNodes = node.graph.units.Where(unit => unit is CommentNode).Cast<CommentNode>();
-                foreach (var unit in commentNodes)
-                {
-                    if (unit.connectedUnits.Contains(node))
-                    {
-                        comments += CodeUtility.MakeSelectable(unit, $"/* {unit.comment} */ ".CommentHighlight());
-                    }
-                }
-            }
             var generator = NodeGenerator<T>.GetSingleDecorator(node, node);
-            return comments + generator.GenerateValue(input, data);
+            return generator.GenerateValue(input, data);
         }
 
         public static string GenerateValue<T>(this T node, ValueOutput output, ControlGenerationData data = null) where T : Unit
         {
-            var comments = "";
-
-            if (node.graph.units.Any(unit => unit is CommentNode commentNode))
-            {
-                var commentNodes = node.graph.units.Where(unit => unit is CommentNode).Cast<CommentNode>();
-                foreach (var unit in commentNodes)
-                {
-                    if (unit.connectedUnits.Contains(node))
-                    {
-                        comments += CodeUtility.MakeSelectable(unit, $"/* {unit.comment} */ ".CommentHighlight());
-                    }
-                }
-            }
             var generator = NodeGenerator<T>.GetSingleDecorator(node, node);
-            return comments + generator.GenerateValue(output, data);
+            return generator.GenerateValue(output, data);
         }
 
         public static string GenerateControl<T>(this T node, ControlInput input, ControlGenerationData data, int indent) where T : Unit
         {
-            var comments = "";
-
-            if (node.graph.units.Any(unit => unit is CommentNode commentNode))
-            {
-                var commentNodes = node.graph.units.Where(unit => unit is CommentNode).Cast<CommentNode>();
-                foreach (var unit in commentNodes)
-                {
-                    if (unit.connectedUnits.Contains(node))
-                    {
-                        comments += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(unit, $"// {unit.comment}".CommentHighlight()) + "\n";
-                    }
-                }
-            }
             var generator = NodeGenerator<T>.GetSingleDecorator(node, node);
-            return comments + generator.GenerateControl(input, data, indent);
+            return generator.GenerateControl(input, data, indent);
+        }
+
+        public static NodeGenerator GetGenerator(this Unit node)
+        {
+            var generator = NodeGenerator.GetSingleDecorator(node, node);
+            return generator;
+        }
+
+        public static MethodNodeGenerator GetMethodGenerator<T>(this T node) where T : Unit
+        {
+            var generator = MethodNodeGenerator.GetSingleDecorator(node, node);
+            return (MethodNodeGenerator)generator;
+        }
+
+        public static VariableNodeGenerator GetVariableGenerator<T>(this T node) where T : Unit
+        {
+            var generator = VariableNodeGenerator.GetSingleDecorator(node, node);
+            return (VariableNodeGenerator)generator;
+        }
+
+        public static LocalVariableGenerator GetLocalVariableGenerator<T>(this T node) where T : Unit
+        {
+            var generator = LocalVariableGenerator.GetSingleDecorator(node, node);
+            return (LocalVariableGenerator)generator;
         }
 
         public static IUnitValuePort GetPsudoSource(this ValueInput input)

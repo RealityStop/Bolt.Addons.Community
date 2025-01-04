@@ -57,7 +57,6 @@ namespace Unity.VisualScripting.Community
             return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"/*{(input != null ? " Port '" + input.key + "' of " : "")}'{unit.GetType().Name}' Missing Generator. */".WarningHighlight());
         }
 
-
         public string GetNextUnit(ControlOutput controlOutput, ControlGenerationData data, int indent)
         {
             return controlOutput.hasValidConnection ? (controlOutput.connection.destination.unit as Unit).GenerateControl(controlOutput.connection.destination, data, indent) : string.Empty;
@@ -107,9 +106,9 @@ namespace Unity.VisualScripting.Community
                 return type;
             }
 
-            if (valueInput.hasValidConnection && valueInput.GetPsudoSource() != null && GetSingleDecorator(valueInput.GetPsudoSource().unit as Unit, valueInput.GetPsudoSource().unit as Unit) is LocalVariableGenerator<GetVariable> getVariable && getVariable.variableType != null)
+            if (valueInput.hasValidConnection && valueInput.GetPsudoSource() != null && GetSingleDecorator(valueInput.GetPsudoSource().unit as Unit, valueInput.GetPsudoSource().unit as Unit) is LocalVariableGenerator localVariable && localVariable.variableType != null)
             {
-                return getVariable.variableType;
+                return localVariable.variableType;
             }
 
             if (valueInput.hasValidConnection && valueInput.GetPsudoSource() != null && valueInput.GetPsudoSource()?.type != typeof(object))

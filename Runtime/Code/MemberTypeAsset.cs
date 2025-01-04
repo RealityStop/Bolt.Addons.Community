@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using System;
 using UnityEngine;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community
 {
@@ -25,9 +26,14 @@ namespace Unity.VisualScripting.Community
         [InspectorWide]
         [SerializeField]
         public List<TMethodDeclaration> methods = new List<TMethodDeclaration>();
-
+        [Inspectable]
+        [InspectorWide]
         [SerializeField]
         public List<AttributeDeclaration> attributes = new List<AttributeDeclaration>();
+        [Inspectable]
+        [InspectorWide]
+        [SerializeField]
+        public List<SystemType> interfaces = new List<SystemType>();
 
         [Inspectable]
         public bool inspectable = true;
@@ -48,6 +54,7 @@ namespace Unity.VisualScripting.Community
         public bool attributesOpened;
         public bool requiredInfoOpened;
         public bool overridableMembersInfoOpened;
+        public bool interfacesOpened;
 #endif
     }
 }

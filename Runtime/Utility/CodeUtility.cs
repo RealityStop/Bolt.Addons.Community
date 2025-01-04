@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
@@ -16,8 +18,6 @@ namespace Unity.VisualScripting.Community
         private static readonly ConcurrentDictionary<string, string> RemoveAllCache = new();
 
         private static readonly Dictionary<string, Regex> HighlightCodeRegexCache = new();
-
-        public static bool GenerateTooltips = true;
 
         public static string HighlightCode(string code, string unitId)
         {
@@ -67,12 +67,46 @@ namespace Unity.VisualScripting.Community
             {
                 return result;
             }
-
             result = RemoveStartTagsRegex.Replace(RemoveAllTagsRegex.Replace(code, "$1"), string.Empty);
             RemoveAllCache[code] = result;
             return result;
         }
+        public static string RemovePattern(string input, string startPattern, string endPattern)
+        {
+            if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(startPattern) || string.IsNullOrEmpty(endPattern))
+                return input;
 
+            StringBuilder result = new StringBuilder();
+            int index = 0;
+
+            while (index < input.Length)
+            {
+                int startIndex = input.IndexOf(startPattern, index);
+                if (startIndex == -1)
+                {
+                    // No more patterns, append the rest of the string
+                    result.Append(input.Substring(index));
+                    break;
+                }
+
+                // Append text before the pattern
+                result.Append(input.Substring(index, startIndex - index));
+
+                // Find the end of the pattern
+                int endIndex = input.IndexOf(endPattern, startIndex + startPattern.Length);
+                if (endIndex == -1)
+                {
+                    // If end pattern not found, treat it as invalid and append the rest of the string
+                    result.Append(input.Substring(startIndex));
+                    break;
+                }
+
+                // Skip the pattern
+                index = endIndex + endPattern.Length;
+            }
+
+            return result.ToString();
+        }
         public static string MakeSelectable(Unit unit, string code)
         {
             return $"[CommunityAddonsCodeSelectable({unit})]{code}[CommunityAddonsCodeSelectableEnd({unit})]";
@@ -80,7 +114,7 @@ namespace Unity.VisualScripting.Community
 
         public static string ToolTip(string ToolTip, string notifyString, string code, bool highlight = true)
         {
-            return GenerateTooltips ? $"[CommunityAddonsCodeToolTip({ToolTip})]{(highlight ? $"/* {notifyString} (Hover for more info) */".WarningHighlight() : $"/* {notifyString} (Hover for more info) */")}[CommunityAddonsCodeToolTipEnd] {code}" : code;
+            return CSharpPreviewSettings.ShouldGenerateTooltips ? $"[CommunityAddonsCodeToolTip({ToolTip})]{(highlight ? $"/* {notifyString} (Hover for more info) */".WarningHighlight() : $"/* {notifyString} (Hover for more info) */")}[CommunityAddonsCodeToolTipEnd] {code}" : code;
         }
 
         private static readonly Dictionary<string, string> ToolTipCache = new();
@@ -144,60 +178,78 @@ namespace Unity.VisualScripting.Community
 
         private static readonly Dictionary<string, List<ClickableRegion>> clickableRegionsCache = new();
 
-        public static List<ClickableRegion> ExtractClickableRegions(string code)
+        public static List<ClickableRegion> ExtractAndPopulateClickableRegions(string input)
         {
-            if (clickableRegionsCache.TryGetValue(code, out var cachedRegions))
+            if (clickableRegionsCache.TryGetValue(input, out var cachedRegions))
             {
                 return cachedRegions;
             }
 
             var clickableRegions = new List<ClickableRegion>();
-            var stack = new Stack<(int startIndex, string unitId)>();
-            var lineBreaks = PrecomputeLineBreaks(code);
+            var lineBreaks = PrecomputeLineBreaks(input.AsSpan(0, input.Length));
+            int index = 0;
 
-            foreach (Match match in SelectableRegex.Matches(code))
+            while (index < input.Length)
             {
-                if (match.Groups[1].Success)
+                int startSelectable = input.IndexOf("[CommunityAddonsCodeSelectable(", index);
+                if (startSelectable == -1) break;
+                int endSelectable = input.IndexOf(")]", startSelectable);
+                if (endSelectable == -1) break;
+                string unitId = input.Substring(startSelectable + "[CommunityAddonsCodeSelectable(".Length, endSelectable - (startSelectable + "[CommunityAddonsCodeSelectable(".Length));
+                int startSelectableEnd = input.IndexOf($"[CommunityAddonsCodeSelectableEnd({unitId})]", endSelectable);
+                if (startSelectableEnd == -1) break;
+                int innerContentStart = endSelectable + 2;
+                string code = input.Substring(innerContentStart, startSelectableEnd - innerContentStart);
+
+                int startLine = GetLineNumber(lineBreaks, startSelectable);
+                int endLine = GetLineNumber(lineBreaks, startSelectableEnd);
+
+                var clickableRegion = new ClickableRegion(unitId, code, startLine, endLine);
+
+                // If there's a previous region with the same unitId and it's adjacent, merge them
+                if (clickableRegions.Count > 0)
                 {
-                    string unitId = match.Groups[1].Value;
-                    stack.Push((match.Index + match.Length, unitId));
-                }
-                else if (match.Groups[2].Success && stack.Count > 0)
-                {
-                    var (startIndex, unitId) = stack.Pop();
-                    int length = match.Index - startIndex;
-                    var codePart = code.AsSpan(startIndex, length);
-
-                    int startLine = GetLineNumber(lineBreaks, startIndex);
-                    int endLine = GetLineNumber(lineBreaks, match.Index);
-
-                    var newRegion = new ClickableRegion(unitId, codePart.ToString(), startLine, endLine);
-
-                    if (clickableRegions.Count > 0 && clickableRegions[^1].unitId == unitId)
+                    var lastRegion = clickableRegions[clickableRegions.Count - 1];
+                    if (lastRegion.unitId == unitId && lastRegion.endLine == startLine)
                     {
-                        var lastRegion = clickableRegions[^1];
-
-                        if (lastRegion.endLine == newRegion.endLine)
-                        {
-                            lastRegion.code += codePart.ToString();
-                            lastRegion.endLine = newRegion.endLine;
-
-                            continue;
-                        }
+                        // Merge regions
+                        lastRegion.code += code;
+                        lastRegion.endLine = endLine;
+                        clickableRegions[clickableRegions.Count - 1] = lastRegion;
                     }
-
-                    clickableRegions.Add(newRegion);
+                    else
+                    {
+                        clickableRegions.Add(clickableRegion);
+                    }
                 }
+                else
+                {
+                    clickableRegions.Add(clickableRegion);
+                }
+
+                // Move index forward
+                index = startSelectableEnd + $"[CommunityAddonsCodeSelectableEnd({unitId})]".Length;
             }
 
-            clickableRegionsCache[code] = clickableRegions;
+            clickableRegionsCache[input] = clickableRegions;
             return clickableRegions;
         }
 
-        private static List<int> PrecomputeLineBreaks(string code)
+        private static int GetLineNumber(string[] lines, int charIndex)
+        {
+            int currentCharCount = 0;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                currentCharCount += lines[i].Length + 1; // Include the newline character
+                if (charIndex < currentCharCount)
+                    return i + 1; // Line numbers are 1-based
+            }
+            return lines.Length; // Default to the last line if index is beyond bounds
+        }
+
+        private static List<int> PrecomputeLineBreaks(ReadOnlySpan<char> span)
         {
             var lineBreaks = new List<int> { 0 };
-            var span = code.AsSpan();
             int start = 0;
             int index;
             while ((index = span[start..].IndexOf('\n')) != -1)

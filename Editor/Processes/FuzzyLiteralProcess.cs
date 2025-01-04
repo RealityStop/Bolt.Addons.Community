@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Variables.Editor;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community
 {
     public class FuzzyLiteralProcess : GraphProcess<FlowGraph, FlowCanvas>
     {
@@ -23,10 +23,10 @@ namespace Unity.VisualScripting.Community
             var queryField = fuzzyWindowType.GetField("query", BindingFlags.Instance | BindingFlags.NonPublic);
             var currentQuery = (string)queryField.GetValue(__instance);
             query = currentQuery;
-            
+
             Options.dynamicLiteralOptions[typeof(string)].unit.value = query;
             Options.dynamicLiteralOptions[typeof(string)].Update(query);
-    
+
             if (TryParseValue(query, out var value))
             {
                 foreach (var optionType in Options.dynamicLiteralOptions.Keys)
@@ -46,12 +46,12 @@ namespace Unity.VisualScripting.Community
                     }
                 }
             }
-            
+
             if (IsExpression(query))
             {
                 string[] tokens = TokenizeExpression(query);
                 Options.fuzzyExpressionOption.unit.tokens.Clear();
-    
+
                 foreach (string token in tokens)
                 {
                     Options.fuzzyExpressionOption.unit.tokens.Add(token);
@@ -63,7 +63,7 @@ namespace Unity.VisualScripting.Community
                 return;
             }
         }
-    
+
         private static bool TryParseValue(string target, out object value)
         {
             if (int.TryParse(target, out var intValue))
@@ -129,19 +129,19 @@ namespace Unity.VisualScripting.Community
             value = target;
             return false;
         }
-    
+
         private static string[] TokenizeExpression(string expression)
         {
             return Regex.Split(expression, @"(\+|\-|\*|\/|\(|\)|\b\d+(\.\d+)?\b)")
                         .Where(s => !string.IsNullOrWhiteSpace(s))
                         .ToArray();
         }
-    
+
         private static bool IsExpression(string query)
         {
             string pattern = @"^\s*\(*\s*\d+(\s*[+\-*\/]\s*\d+\s*)*\)*\s*$";
-    
+
             return Regex.IsMatch(query, pattern);
         }
-    } 
+    }
 }

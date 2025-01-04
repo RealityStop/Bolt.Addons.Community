@@ -8,7 +8,7 @@ using Unity.VisualScripting.Community.Utility;
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(Start))]
-    public class StartGenerator : MethodNodeGenerator<Start>
+    public class StartGenerator : MethodNodeGenerator
     {
         public override AccessModifier AccessModifier => AccessModifier.Private;
 
@@ -19,6 +19,10 @@ namespace Unity.VisualScripting.Community
         public override Type ReturnType => typeof(void);
 
         public override List<TypeParam> Parameters => new List<TypeParam>();
+        private Start Unit => unit as Start;
+        public override ControlOutput OutputPort => Unit.trigger;
+
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>();
 
         public StartGenerator(Start unit) : base(unit) { }
 

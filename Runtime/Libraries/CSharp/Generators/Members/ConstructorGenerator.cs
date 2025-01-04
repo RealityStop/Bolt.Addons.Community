@@ -56,7 +56,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             var _callChainParameters = string.Empty;
             _callChainParameters = string.Join(", ", callChainParameters);
             string callChain = callType != ConstructorCallType.None ? $" : {(callType == ConstructorCallType.Base ? "base" : "this").ConstructHighlight()}(" + _callChainParameters + ")" : string.Empty;
-            return attributes + CodeBuilder.Indent(indent) + scope.AsString().ToLower().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + name.LegalMemberName().TypeHighlight() + "(" + parameters + ")" + callChain;
+            return attributes + CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + name.LegalMemberName().TypeHighlight() + "(" + parameters + ")" + callChain;
         }
 
         protected override sealed string GenerateBody(int indent)

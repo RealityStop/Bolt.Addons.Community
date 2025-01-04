@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Unity.VisualScripting.Community.Libraries.CSharp;
@@ -9,7 +10,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
-
+using Debug = UnityEngine.Debug;
 namespace Unity.VisualScripting.Community
 {
     [Serializable]
@@ -18,7 +19,7 @@ namespace Unity.VisualScripting.Community
         public static CSharpPreviewWindow instance;
         private float zoomFactor = 1.0f;
         public bool showCodeWindow = true;
-        private List<(Label, int)> labels = new List<(Label, int)>();
+        private List<(Label label, int)> labels = new List<(Label, int)>();
 
         public static Object asset;
 
@@ -28,15 +29,17 @@ namespace Unity.VisualScripting.Community
             CSharpPreviewWindow window = GetWindow<CSharpPreviewWindow>();
             window.titleContent = new GUIContent("C# Preview");
             instance = window;
+            window.minSize = new Vector2(400, 400);
         }
 
         public void CreateGUI()
         {
-            if(instance == null)
+            if (instance == null)
             {
                 CSharpPreviewWindow window = GetWindow<CSharpPreviewWindow>();
                 instance = window;
             }
+
             Selection.selectionChanged += ChangeSelection;
             var toolbar = new Toolbar();
             toolbar.name = "Toolbar";
@@ -111,9 +114,6 @@ namespace Unity.VisualScripting.Community
             var copyButton = CreateToolbarButton("Copy to Clipboard", CopyToClipboard);
             toolbar.Add(copyButton);
 
-            var utilityButton = CreateToolbarButton("Utility Window", OpenUtilityWindow);
-            toolbar.Add(utilityButton);
-
             var refreshButton = CreateToolbarButton("Refresh", UpdateCodeDisplay);
             toolbar.Add(refreshButton);
 
@@ -129,12 +129,34 @@ namespace Unity.VisualScripting.Community
             codeView.style.display = showCodeWindow ? DisplayStyle.Flex : DisplayStyle.None;
             settingsContainer.style.display = showCodeWindow ? DisplayStyle.None : DisplayStyle.Flex;
         }
+
+        private class ExternalEventManipulator : Manipulator
+        {
+            private readonly List<VisualElement> externalElements;
+            private EventCallback<ClickEvent> action;
+            public ExternalEventManipulator(List<VisualElement> externalElements, EventCallback<ClickEvent> action)
+            {
+                this.externalElements = externalElements;
+                this.action = action;
+            }
+
+            protected override void RegisterCallbacksOnTarget()
+            {
+                externalElements.ForEach(e => e.RegisterCallback(action));
+            }
+
+            protected override void UnregisterCallbacksFromTarget()
+            {
+                externalElements.ForEach(e => e.UnregisterCallback(action));
+            }
+        }
+
         private void CreateSettingsUI(ScrollView settingsContainer)
         {
             var path = "Assets/Unity.VisualScripting.Community.Generated/";
             HUMIO.Ensure(path).Path();
             CSharpPreviewSettings settings = AssetDatabase.LoadAssetAtPath<CSharpPreviewSettings>(path + "CSharpPreviewSettings.asset");
-
+            // Ensure that there are settings.
             if (settings == null)
             {
                 settings = ScriptableObject.CreateInstance<CSharpPreviewSettings>();
@@ -146,7 +168,7 @@ namespace Unity.VisualScripting.Community
             {
                 settings.Initalize();
             }
-            CodeBuilder.ShowRecommendations = settings.ShowRecommendations;
+            CSharpPreviewSettings.ShouldShowRecommendations = settings.showRecommendations;
 
             var settingsLabel = new Label("C# Preview Settings")
             {
@@ -182,7 +204,7 @@ namespace Unity.VisualScripting.Community
 
             var showSubgraphLabel = new Label("Show Subgraph Comment :")
             {
-                tooltip = "Generate a comment where the Subgraph and Port are being generated.",
+                tooltip = "Generate a comment where the Subgraph and Port are being generated. Useful for navigating the code.",
                 style = { unityFontStyleAndWeight = FontStyle.Bold, marginRight = 10, width = labelWidth }
             };
 
@@ -190,13 +212,13 @@ namespace Unity.VisualScripting.Community
             {
                 style = { marginLeft = 10 }
             };
-            showSubgraphCommentToggle.value = settings.ShowSubgraphComment;
-            CSharpPreview.ShowSubgraphComment = settings.ShowSubgraphComment;
+            showSubgraphCommentToggle.value = settings.showSubgraphComment;
+            CSharpPreviewSettings.ShouldShowSubgraphComment = settings.showSubgraphComment;
 
             showSubgraphCommentToggle.RegisterValueChangedCallback(evt =>
             {
-                settings.ShowSubgraphComment = evt.newValue;
-                CSharpPreview.ShowSubgraphComment = evt.newValue;
+                settings.showSubgraphComment = evt.newValue;
+                CSharpPreviewSettings.ShouldShowSubgraphComment = evt.newValue;
                 settings.SaveAndDirty();
             });
 
@@ -221,12 +243,12 @@ namespace Unity.VisualScripting.Community
                 style = { marginLeft = 10 }
             };
 
-            showRecommendationToggle.value = settings.ShowRecommendations;
-            CodeBuilder.ShowRecommendations = settings.ShowRecommendations;
+            showRecommendationToggle.value = settings.showRecommendations;
+            CSharpPreviewSettings.ShouldShowRecommendations = settings.showRecommendations;
             showRecommendationToggle.RegisterValueChangedCallback(evt =>
             {
-                settings.ShowRecommendations = evt.newValue;
-                CodeBuilder.ShowRecommendations = evt.newValue;
+                settings.showRecommendations = evt.newValue;
+                CSharpPreviewSettings.ShouldShowRecommendations = evt.newValue;
                 settings.SaveAndDirty();
             });
 
@@ -251,12 +273,12 @@ namespace Unity.VisualScripting.Community
                 style = { marginLeft = 10 }
             };
 
-            showTooltipToggle.value = settings.ShowTooltips;
-            CodeUtility.GenerateTooltips = settings.ShowTooltips;
+            showTooltipToggle.value = settings.showTooltips;
+            CSharpPreviewSettings.ShouldGenerateTooltips = settings.showTooltips;
             showTooltipToggle.RegisterValueChangedCallback(evt =>
             {
-                settings.ShowTooltips = evt.newValue;
-                CodeUtility.GenerateTooltips = evt.newValue;
+                settings.showTooltips = evt.newValue;
+                CSharpPreviewSettings.ShouldGenerateTooltips = evt.newValue;
                 settings.SaveAndDirty();
             });
 
@@ -520,11 +542,6 @@ namespace Unity.VisualScripting.Community
             return Regex.Replace(input, @"<color=#[0-9a-fA-F]{6,8}>|</color>", string.Empty, RegexOptions.Compiled);
         }
 
-        private void OpenUtilityWindow()
-        {
-            UtilityWindow.Open();
-        }
-
         private void ToggleWindowMode()
         {
             showCodeWindow = !showCodeWindow;
@@ -542,13 +559,10 @@ namespace Unity.VisualScripting.Community
 
         private void ChangeSelection()
         {
-            var firstReference = GetFirstReference();
             if (Selection.activeObject is CodeAsset _asset)
             {
                 asset = _asset;
                 UpdateCodeDisplay();
-                if (firstReference != null)
-                    GraphWindow.activeReference = firstReference;
             }
             else if (Selection.activeObject is ScriptGraphAsset _graphAsset)
             {
@@ -573,84 +587,185 @@ namespace Unity.VisualScripting.Community
                 DisplayCode(lineNumbersScrollView, scrollView, code);
             }
         }
+
         Dictionary<string, List<(Label, int)>> unitIDRegions = new Dictionary<string, List<(Label, int)>>();
-        private void DisplayCode(ScrollView lineNumbersScrolView, ScrollView scrollView, string code)
+        private void DisplayCode(ScrollView lineNumbersScrollView, ScrollView scrollView, string code)
         {
             scrollView.Clear();
-            lineNumbersScrolView.Clear();
+            lineNumbersScrollView.Clear();
             labels.Clear();
-            SetupScrollbarMarkers(scrollView);
+            unitIDRegions.Clear();
 
-            var clickableRegions = CodeUtility.ExtractClickableRegions(code);
+            var clickableRegions = CodeUtility.ExtractAndPopulateClickableRegions(code);
             var regionsByLine = clickableRegions
                 .GroupBy(region => region.startLine)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            var lines = CodeUtility.RemoveAllSelectableTags(code).Split('\n');
-            var width = 20f;
-            for (int i = 0; i < lines.Length; i++)
+            var beforeRemoveLines = CodeUtility.RemovePattern(code, "[CommunityAddonsCodeSelectable(", ")]");
+            var operatedLines = CodeUtility.RemovePattern(beforeRemoveLines, "[CommunityAddonsCodeSelectableEnd(", ")]");
+            var lines = operatedLines.Split('\n');
+
+            // Create containers for batch operations
+            var lineNumberContainers = new VisualElement();
+            var codeContainers = new VisualElement();
+            float width = 20f;
+            if (lines.Length < 700)
             {
-                var lineNumberContainer = new Label($"{i + 1}");
-                width = Mathf.Max(width, lineNumberContainer.MeasureTextSize($"{i + 1}", lineNumberContainer.style.width.value.value, VisualElement.MeasureMode.Exactly, lineNumberContainer.style.height.value.value, VisualElement.MeasureMode.Exactly).x);
-                lineNumberContainer.style.width = width;
-                lineNumberContainer.style.unityTextAlign = TextAnchor.MiddleLeft;
-                lineNumberContainer.style.color = Color.gray;
-                lineNumberContainer.style.marginLeft = 5;
-                lineNumberContainer.style.marginRight = 5;
-                lineNumberContainer.style.paddingRight = 0;
-                lineNumberContainer.style.paddingLeft = 0;
-                lineNumbersScrolView.Add(lineNumberContainer);
-
-                var codeContainer = new VisualElement { style = { flexDirection = FlexDirection.Row, marginLeft = 10 } };
-
-                if (regionsByLine.TryGetValue(i, out var regions))
+                for (int i = 0; i < lines.Length; i++)
                 {
-                    AdjustLeadingWhitespacesForFirstRegion(lines[i], regions[0]);
-                    foreach (var region in regions)
+                    // Line numbers
+                    var lineNumberContainer = new Label($"{i + 1}")
                     {
-                        var label = CreateCodeLabel(region, i);
-                        labels.Add((label, i));
-                        codeContainer.Add(label);
-                        if (!unitIDRegions.ContainsKey(region.unitId))
+                        style =
+                    {
+                        unityTextAlign = TextAnchor.MiddleLeft,
+                        color = Color.gray,
+                        marginLeft = 5,
+                        marginRight = 5,
+                        paddingRight = 0,
+                        paddingLeft = 0
+                    }
+                    };
+                    width = Mathf.Max(width, lineNumberContainer.MeasureTextSize($"{i + 1}",
+                        lineNumberContainer.style.width.value.value,
+                        VisualElement.MeasureMode.Exactly,
+                        lineNumberContainer.style.height.value.value,
+                        VisualElement.MeasureMode.Exactly).x);
+                    lineNumberContainer.style.width = width;
+                    lineNumberContainers.Add(lineNumberContainer);
+
+                    // Code content
+                    var codeContainer = new VisualElement
+                    {
+                        style = { flexDirection = FlexDirection.Row, marginLeft = 10 }
+                    };
+                    var capturedIndex = i;
+                    var scheduler = codeContainer.schedule.Execute(() =>
+                    {
+                        if (regionsByLine.TryGetValue(capturedIndex, out var regions))
                         {
-                            unitIDRegions[region.unitId] = new List<(Label, int)>() { (label, i) };
+                            AdjustLeadingWhitespacesForFirstRegion(lines[capturedIndex], regions[0]);
+                            foreach (var region in regions)
+                            {
+                                var label = CreateCodeLabel(region, capturedIndex);
+                                labels.Add((label, capturedIndex));
+                                codeContainer.Add(label);
+
+                                if (!unitIDRegions.ContainsKey(region.unitId))
+                                {
+                                    unitIDRegions[region.unitId] = new List<(Label, int)> { (label, capturedIndex) };
+                                }
+                                else
+                                {
+                                    unitIDRegions[region.unitId].Add((label, capturedIndex));
+                                }
+                            }
                         }
                         else
                         {
-                            unitIDRegions[region.unitId].Add((label, i));
+                            var label = CreateNonClickableLabel(lines[capturedIndex], capturedIndex);
+                            labels.Add((label, capturedIndex));
+                            codeContainer.Add(label);
                         }
-                    }
+                    });
+                    codeContainers.Add(codeContainer);
                 }
-                else
-                {
-                    var label = CreateNonClickableLabel(lines[i], i);
-                    labels.Add((label, i));
-                    codeContainer.Add(label);
-                }
-                scrollView.Add(codeContainer);
             }
+            else
+            {
+                const int batchSize = 100;
+                var currentBatch = 0;
+                var scheduler = codeContainers.schedule.Execute((t) =>
+                {
+                    for (int i = currentBatch; i < (currentBatch + batchSize) || i >= lines.Length; i++)
+                    {
+                        if (i >= lines.Length) break;
+                        // Line numbers
+                        var lineNumberContainer = new Label($"{i + 1}")
+                        {
+                            style =
+                            {
+                                unityTextAlign = TextAnchor.MiddleLeft,
+                                color = Color.gray,
+                                marginLeft = 5,
+                                marginRight = 5,
+                                paddingRight = 0,
+                                paddingLeft = 0
+                            }
+                        };
+                        width = Mathf.Max(width, lineNumberContainer.MeasureTextSize($"{i + 1}",
+                            lineNumberContainer.style.width.value.value,
+                            VisualElement.MeasureMode.Exactly,
+                            lineNumberContainer.style.height.value.value,
+                            VisualElement.MeasureMode.Exactly).x);
+                        lineNumberContainer.style.width = width;
+                        lineNumberContainers.Add(lineNumberContainer);
+
+                        // Code content
+                        var codeContainer = new VisualElement
+                        {
+                            style = { flexDirection = FlexDirection.Row, marginLeft = 10 }
+                        };
+                        var capturedIndex = i;
+
+                        if (regionsByLine.TryGetValue(capturedIndex, out var regions))
+                        {
+                            AdjustLeadingWhitespacesForFirstRegion(lines[capturedIndex], regions[0]);
+                            foreach (var region in regions)
+                            {
+                                var label = CreateCodeLabel(region, capturedIndex);
+                                labels.Add((label, capturedIndex));
+                                codeContainer.Add(label);
+
+                                if (!unitIDRegions.ContainsKey(region.unitId))
+                                {
+                                    unitIDRegions[region.unitId] = new List<(Label, int)> { (label, capturedIndex) };
+                                }
+                                else
+                                {
+                                    unitIDRegions[region.unitId].Add((label, capturedIndex));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var label = CreateNonClickableLabel(lines[capturedIndex], capturedIndex);
+                            labels.Add((label, capturedIndex));
+                            codeContainer.Add(label);
+                        }
+                        codeContainers.Add(codeContainer);
+                    }
+                    currentBatch += batchSize;
+                });
+                scheduler.Until(() => codeContainers.childCount >= lines.Length);
+            }
+
+            lineNumbersScrollView.Add(lineNumberContainers);
+            scrollView.Add(codeContainers);
+            SetupScrollbarMarkers(scrollView);
         }
 
         private VisualElement markerContainer;
-
+        ExternalEventManipulator scrollBarMarkerManipulator;
         private void SetupScrollbarMarkers(ScrollView scrollView)
         {
+            if (scrollBarMarkerManipulator != null)
+                scrollView.RemoveManipulator(scrollBarMarkerManipulator);
+
+            scrollBarMarkerManipulator = new ExternalEventManipulator(labels.Select(val => val.label as VisualElement).ToList(), (evt) => UpdateScrollBarMarkers(scrollView, selectedLabels));
             // Create a container for the markers
             markerContainer = new VisualElement
             {
                 style =
-        {
-            position = Position.Absolute,
-            width = 4,
-            backgroundColor = Color.gray,
-            right = 0, // Align to the right side
-        }
+                {
+                    position = Position.Absolute,
+                    width = 4,
+                    backgroundColor = Color.gray,
+                    right = 0,
+                }
             };
             scrollView.hierarchy.Add(markerContainer);
-
-            // Ensure markers update when the scroll view changes
-            scrollView.RegisterCallback<GeometryChangedEvent>(evt => UpdateScrollBarMarkers(scrollView, selectedLabels));
-            scrollView.verticalScroller.valueChanged += _ => UpdateScrollBarMarkers(scrollView, selectedLabels);
+            scrollView.AddManipulator(scrollBarMarkerManipulator);
         }
 
         private void UpdateScrollBarMarkers(ScrollView scrollView, List<(Label, int)> selectedLines)
@@ -658,7 +773,6 @@ namespace Unity.VisualScripting.Community
             var verticalScrollBar = scrollView.verticalScroller;
             if (verticalScrollBar == null)
                 return;
-
             foreach (VisualElement child in verticalScrollBar.Children().ToList())
             {
                 if (child.name != null && child.name.StartsWith("marker"))
@@ -1287,59 +1401,5 @@ namespace Unity.VisualScripting.Community
                 }
             }
         }
-
-        private GraphReference GetFirstReference()
-        {
-            if (asset is ClassAsset classAsset)
-            {
-                var variables = classAsset.variables.Where(variable => variable.isProperty);
-                if (classAsset.constructors.Count > 0 && ((classAsset.constructors[0].GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
-                {
-                    return classAsset.constructors[0].GetReference() as GraphReference;
-                }
-                else if (variables.Count() > 0)
-                {
-                    var first = variables.First();
-                    if (first.get && ((first.getter.GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
-                    {
-                        return first.getter.GetReference() as GraphReference;
-                    }
-                    else if (first.set && ((first.setter.GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
-                    {
-                        return first.setter.GetReference() as GraphReference;
-                    }
-                }
-                else if (classAsset.methods.Count > 0 && ((classAsset.methods[0].GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
-                {
-                    return classAsset.methods[0].GetReference() as GraphReference;
-                }
-            }
-            else if (asset is StructAsset structAsset)
-            {
-                var variables = structAsset.variables.Where(variable => variable.isProperty);
-                if (structAsset.constructors.Count > 0)
-                {
-                    return structAsset.constructors[0].GetReference() as GraphReference;
-                }
-                else if (variables.Count() > 0)
-                {
-                    var first = variables.First();
-                    if (first.get)
-                    {
-                        return first.getter.GetReference() as GraphReference;
-                    }
-                    else if (first.set)
-                    {
-                        return first.setter.GetReference() as GraphReference;
-                    }
-                }
-                else if (structAsset.methods.Count > 0)
-                {
-                    return structAsset.methods[0].GetReference() as GraphReference;
-                }
-            }
-            return null;
-        }
-
     }
 }

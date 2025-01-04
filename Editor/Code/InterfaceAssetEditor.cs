@@ -4,14 +4,15 @@ using UnityEditor;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting.Community.Utility;
 
 namespace Unity.VisualScripting.Community
 {
     [CustomEditor(typeof(InterfaceAsset))]
     public class InterfaceAssetEditor : CodeAssetEditor<InterfaceAsset, InterfaceAssetGenerator>
     {
-        private Metadata variables, methods;
-        private SerializedProperty variablesProp, methodsProp;
+        private Metadata variables, methods, interfaces;
 
         protected override void OnEnable()
         {
@@ -20,15 +21,17 @@ namespace Unity.VisualScripting.Community
             if (variables == null)
             {
                 variables = Metadata.FromProperty(serializedObject.FindProperty("variables"));
-                variablesProp = serializedObject.FindProperty("variables");
             }
 
             if (methods == null)
             {
                 methods = Metadata.FromProperty(serializedObject.FindProperty("methods"));
-                methodsProp = serializedObject.FindProperty("methods");
             }
 
+            if (interfaces == null)
+            {
+                interfaces = Metadata.FromProperty(serializedObject.FindProperty("interfaces"));
+            }
             shouldUpdate = true;
         }
 
@@ -46,6 +49,81 @@ namespace Unity.VisualScripting.Community
                 HUMEditor.Vertical(() =>
                 {
                     base.OnTypeHeaderGUI();
+                });
+            });
+        }
+
+        protected override void OptionsGUI()
+        {
+            Interfaces();
+        }
+
+        private void Interfaces()
+        {
+            Target.interfacesOpened = HUMEditor.Foldout(Target.interfacesOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            {
+                HUMEditor.Image(typeof(IAction).Icon()[IconSize.Small], 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
+                GUILayout.Label("Interfaces");
+            }, () =>
+            {
+                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                {
+                    var listOfInterfaces = Target.interfaces;
+
+                    for (int i = 0; i < listOfInterfaces.Count; i++)
+                    {
+                        var index = i;
+                        var _interface = listOfInterfaces[i];
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label($"Interface {i}");
+                        if (GUILayout.Button(new GUIContent(_interface.type.DisplayName(), _interface.type.Icon()[IconSize.Small])))
+                        {
+                            TypeBuilderWindow.ShowWindow(GUILayoutUtility.GetLastRect(), interfaces[i]["type"], false, Codebase.settingsAssembliesTypes.Where(t => t.IsInterface && t.IsPublic).ToArray());
+                        }
+
+                        if (GUILayout.Button("...", GUILayout.Width(19)))
+                        {
+                            GenericMenu menu = new GenericMenu();
+                            menu.AddItem(new GUIContent("Delete"), false, (obj) =>
+                            {
+                                Undo.RegisterCompleteObjectUndo(Target, "Deleted Interface");
+                                shouldUpdate = true;
+                                interfaces.Remove(obj as SystemType);
+                            }, listOfInterfaces[index]);
+
+                            if (i > 0)
+                            {
+                                menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                                {
+                                    Undo.RegisterCompleteObjectUndo(Target, "Moved Interface up");
+                                    shouldUpdate = true;
+                                    MoveItemUp(Target.interfaces, index);
+                                }, listOfInterfaces[index]);
+                            }
+
+                            if (i < listOfInterfaces.Count - 1)
+                            {
+                                menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                                {
+                                    Undo.RegisterCompleteObjectUndo(Target, "Moved Interface down");
+                                    shouldUpdate = true;
+                                    MoveItemDown(Target.interfaces, index);
+                                }, listOfInterfaces[index]);
+                            }
+                            menu.ShowAsContext();
+                        }
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.Space(4);
+                    }
+                    if (GUILayout.Button("+ Add Interface"))
+                    {
+                        Undo.RegisterCompleteObjectUndo(Target, "Added Interface");
+                        shouldUpdate = true;
+                        Target.interfaces.Add(new SystemType(Codebase.settingsAssembliesTypes.Where(t => t.IsInterface && t.IsPublic).First()));
+                        AssetDatabase.SaveAssets();
+                        AssetDatabase.Refresh();
+                    }
                 });
             });
         }
@@ -116,7 +194,7 @@ namespace Unity.VisualScripting.Community
                                 {
                                     menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
                                     {
-                                        // To Do
+                                        MoveItemUp(methods.value as List<InterfaceMethodItem>, index);
                                     }, listOfMethods[index]);
                                 }
 
@@ -124,7 +202,7 @@ namespace Unity.VisualScripting.Community
                                 {
                                     menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
                                     {
-                                        // To Do
+                                        MoveItemDown(methods.value as List<InterfaceMethodItem>, index);
                                     }, listOfMethods[index]);
                                 }
                                 menu.ShowAsContext();
@@ -148,6 +226,10 @@ namespace Unity.VisualScripting.Community
                                 }, () =>
                                 {
                                     var paramMeta = methods[index]["parameters"];
+                                    foreach (var param in paramMeta.value as List<TypeParam>)
+                                    {
+                                        param.supportsAttributes = false;
+                                    }
                                     Inspector.BeginBlock(paramMeta, new Rect());
                                     LudiqGUI.InspectorLayout(paramMeta, GUIContent.none);
                                     if (Inspector.EndBlock(paramMeta))
@@ -156,7 +238,7 @@ namespace Unity.VisualScripting.Community
                                     }
                                 });
 
-                            }, true, false);
+                            }, true, false);//
                         });
 
                         GUILayout.Space(4);
@@ -168,6 +250,22 @@ namespace Unity.VisualScripting.Community
                     }
                 });
             });
+        }
+
+        private void MoveItemUp<T>(List<T> list, int index)
+        {
+            if (index <= 0 || index >= list.Count) return; // Validate index
+            T item = list[index];
+            list.RemoveAt(index);
+            list.Insert(index - 1, item);
+        }
+
+        private void MoveItemDown<T>(List<T> list, int index)
+        {
+            if (index < 0 || index >= list.Count - 1) return; // Validate index
+            T item = list[index];
+            list.RemoveAt(index);
+            list.Insert(index + 1, item);
         }
     }
 }

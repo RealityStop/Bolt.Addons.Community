@@ -24,14 +24,7 @@ namespace Unity.VisualScripting.Community
             {
                 settings.Initalize();
             }
-            CodeBuilder.ShowRecommendations = settings.ShowRecommendations;
-            CSharpPreview.NumericColor = settings.NumericColor;
-            CSharpPreview.EnumColor = settings.EnumColor;
-            CSharpPreview.ConstructColor = settings.ConstructColor;
-            CSharpPreview.VariableColor = settings.VariableColor;
-            CSharpPreview.StringColor = settings.StringColor;
-            CSharpPreview.InterfaceColor = settings.InterfaceColor;
-            CSharpPreview.TypeColor = settings.TypeColor;
+            CSharpPreviewSettings.ShouldShowRecommendations = settings.showRecommendations;
         }
     }
-}
+}//

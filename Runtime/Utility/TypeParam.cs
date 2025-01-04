@@ -42,6 +42,7 @@ namespace Unity.VisualScripting.Community.Utility
         public SerializableType typeHandle;
         public bool showCall = false;
         public bool showDefault = false;
+        public bool supportsAttributes = true;
 
 #if UNITY_EDITOR
         public bool attributesOpened;
@@ -58,7 +59,7 @@ namespace Unity.VisualScripting.Community.Utility
 
         [NonSerialized]
         private List<AttributeDeclaration> _attributes;
-        [Inspectable]
+        [InspectableIf(nameof(supportsAttributes))]
         public List<AttributeDeclaration> attributes
         {
             get => _attributes ??= new List<AttributeDeclaration>();

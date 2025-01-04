@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -17,8 +18,6 @@ namespace Unity.VisualScripting.Community
             {
                 var output = string.Empty;
                 NamespaceGenerator @namespace = null;
-                EnumGenerator @enum = null;
-
                 if (string.IsNullOrEmpty(Data.title)) return output;
 
                 if (!string.IsNullOrEmpty(Data.category))
@@ -26,8 +25,7 @@ namespace Unity.VisualScripting.Community
                     @namespace = NamespaceGenerator.Namespace(Data.category);
                 }
 
-                @enum = EnumGenerator.Enum(Data.title.LegalMemberName());
-
+                EnumGenerator @enum = EnumGenerator.Enum(Data.title.LegalMemberName());
                 indices.Clear();
 
                 for (int i = 0; i < Data.items.Count; i++)
@@ -47,12 +45,14 @@ namespace Unity.VisualScripting.Community
 
                 @enum.indexing = Data.useIndex;
 
-#if VISUAL_SCRIPTING_1_7
-                if (Data.lastCompiledName != Data.GetFullTypeName())
+                foreach (var name in Data.lastCompiledNames)
                 {
-                    @enum.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(Data.lastCompiledName));
+                    if (!string.IsNullOrEmpty(Data.GetFullTypeName()) && name != Data.GetFullTypeName())
+                    {
+                        if (!string.IsNullOrEmpty(name))
+                            @enum.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(name));
+                    }
                 }
-#endif
 
                 if (@namespace != null)
                 {

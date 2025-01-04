@@ -7,8 +7,9 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 [NodeGenerator(typeof(Unity.VisualScripting.For))]
-public sealed class ForGenerator : LocalVariableGenerator<Unity.VisualScripting.For>
+public sealed class ForGenerator : LocalVariableGenerator
 {
+    private For Unit => unit as For;
     public ForGenerator(Unity.VisualScripting.For unit) : base(unit)
     {
     }

@@ -43,12 +43,14 @@ namespace Unity.VisualScripting.Community
 
         GUIStyle
             textGUI = new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true },
-            titleGUI = new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true, alignment = TextAnchor.MiddleLeft, fontSize = 8 };
+            titleGUI = new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true, alignment = TextAnchor.MiddleLeft, fontSize = 10 };
 
         public override Rect position
         {
             get => unit.wholeRect; set => unit.wholeRect = value;
         }
+
+        public override bool canClip => false;
 
         void MigrateRects()
         {
@@ -63,7 +65,7 @@ namespace Unity.VisualScripting.Community
                 textRect = default;
             }
         }
-        
+
         public override void DrawBackground()
         {
             if (hash == 0) hash = unit.GetHashCode();
@@ -98,17 +100,24 @@ namespace Unity.VisualScripting.Community
                 GUI.DrawTexture(unit.wholeRect, Texture2D.whiteTexture, ScaleMode.ScaleAndCrop, true, 0, unit.color * new Color(0.5f, 0.5f, 0.5f, 0.5f), 0, borderOutside);
             }
 
+            List<int> invalidIndexs = new List<int>();
+            int index = 0;
             // Draw connections to other units
-            foreach (var connectedUnit in unit.connectedUnits)
+            foreach (var connectedElement in unit.connectedElements)
             {
-                if (connectedUnit == null || !(graph as FlowGraph).units.Contains(connectedUnit)) continue;
-                var unitWidget = canvas.Widget(connectedUnit);
+                if (connectedElement == null || !canvas.widgetProvider.IsValid(connectedElement))
+                {
+                    invalidIndexs.Add(index);
+                    continue;
+                }
+                var elementWidget = canvas.Widget(connectedElement);
                 var lineColor = unit.color;
                 if (unit.curvedLine)
                 {
                     Vector3 start = new Vector3(unit.position.x + unit.wholeRect.width / 2, unit.position.y + unit.wholeRect.height / 2, 0);
-                    Vector3 end = new Vector3(connectedUnit.position.x + unitWidget.position.width / 2, connectedUnit.position.y + unitWidget.position.height / 2, 0);
-                    Vector3 connectionEnd = new Vector2(GetEdgePosition(unitWidget.position, CompareVectors(start, end)).x, GetEdgePosition(unitWidget.position, CompareVectors(start, end)).y);
+                    Vector3 end = GetElementPosition(connectedElement, elementWidget);
+                    var targetEdge = CompareVectors(start, end);
+                    Vector3 connectionEnd = CorrectLineEnd(targetEdge, new Vector2(GetEdgePosition(elementWidget.position, targetEdge, connectedElement).x, GetEdgePosition(elementWidget.position, targetEdge, connectedElement).y));
                     // Draw the connection
                     GraphGUI.DrawConnection(
                         lineColor,
@@ -124,19 +133,29 @@ namespace Unity.VisualScripting.Community
                     );
 
                     Edge edge = CompareVectors(start, end);
-                    Vector3 arrowBase = GetEdgePosition(unitWidget.position, edge);
+                    Vector3 arrowBase = GetEdgePosition(elementWidget.position, edge, connectedElement);
                     DrawArrowheadAtEnd(arrowBase, edge, lineColor);
                 }
                 else
                 {
                     Vector3 start = new Vector3(unit.position.x + unit.wholeRect.width / 2, unit.position.y + unit.wholeRect.height / 2, 0);
-                    Vector3 end = new Vector3(connectedUnit.position.x + unitWidget.position.width / 2, connectedUnit.position.y + unitWidget.position.height / 2, 0);
-                    Vector3 connectionEnd = new Vector2(GetEdgePosition(unitWidget.position, CompareVectors(start, end)).x, GetEdgePosition(unitWidget.position, CompareVectors(start, end)).y);
+                    Vector3 end = GetElementPosition(connectedElement, elementWidget);
+                    var targetEdge = CompareVectors(start, end);
+                    Vector3 connectionEnd = CorrectLineEnd(targetEdge, new Vector2(GetEdgePosition(elementWidget.position, targetEdge, connectedElement).x, GetEdgePosition(elementWidget.position, targetEdge, connectedElement).y));
                     Vector3[] points = { start, connectionEnd };
                     Handles.color = lineColor;
                     Handles.DrawAAPolyLine(5f, points);
                     Handles.color = Color.white;
+                    Edge edge = CompareVectors(start, end);
+                    Vector3 arrowBase = GetEdgePosition(elementWidget.position, edge, connectedElement);
+                    DrawArrowheadAtEnd(arrowBase, edge, lineColor);
                 }
+                index++;
+            }
+
+            foreach (var _index in invalidIndexs)
+            {
+                unit.connectedElements.RemoveAt(_index);
             }
 
             // Get inner area rect
@@ -145,6 +164,58 @@ namespace Unity.VisualScripting.Community
             // Draw border
             GUI.DrawTexture(unit.borderRect, Texture2D.whiteTexture, ScaleMode.ScaleAndCrop, true, 0, unit.color, 0, 7);
             GUI.DrawTexture(unit.borderRect, Texture2D.whiteTexture, ScaleMode.ScaleAndCrop, true, 0, unit.color * (2f - unit.color.grayscale), borderInside, 7);
+        }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+        private Vector2 GetElementPosition(IGraphElement graphElement, IGraphElementWidget elementWidget)
+        {
+            if (graphElement is GraphGroup graphGroup)
+            {
+                return new Vector2(graphGroup.position.position.x + elementWidget.position.width / 2, graphGroup.position.position.y + elementWidget.position.height / 2);
+            }
+            else if (graphElement is StickyNote stickyNote)
+            {
+                return new Vector2(stickyNote.position.position.x + elementWidget.position.width / 2, stickyNote.position.position.y + elementWidget.position.height / 2);
+            }
+            else if (graphElement is Unit unit)
+            {
+                return new Vector2(unit.position.x + elementWidget.position.width / 2, unit.position.y + elementWidget.position.height / 2);
+            }
+
+            throw new InvalidOperationException("Cannot get element position : " + graphElement);
+        }
+#else
+        private Vector2 GetElementPosition(IGraphElement graphElement, IGraphElementWidget elementWidget)
+        {
+            if (graphElement is GraphGroup graphGroup)
+            {
+                return new Vector2(graphGroup.position.position.x + elementWidget.position.width / 2, graphGroup.position.position.y + elementWidget.position.height / 2);
+            }
+            else if (graphElement is Unit unit)
+            {
+                return new Vector2(unit.position.x + elementWidget.position.width / 2, unit.position.y + elementWidget.position.height / 2);
+            }
+
+            throw new InvalidOperationException("Cannot get element position : " + graphElement);
+        }
+#endif
+        Vector2 CorrectLineEnd(Edge edge, Vector2 vector2)
+        {
+            if (edge == Edge.Top)
+            {
+                return new Vector2(vector2.x, vector2.y - 10);
+            }
+            else if (edge == Edge.Bottom)
+            {
+                return new Vector2(vector2.x, vector2.y + 10);
+            }
+            else if (edge == Edge.Right)
+            {
+                return new Vector2(vector2.x - 10, vector2.y);
+            }
+            else
+            {
+                return new Vector2(vector2.x + 10, vector2.y);
+            }
         }
 
         void DrawArrowheadAtEnd(Vector3 arrowBase, Edge edge, Color color)
@@ -195,24 +266,81 @@ namespace Unity.VisualScripting.Community
 
             Handles.color = Color.white;
         }
-
-        public Vector2 GetEdgePosition(Rect target, Edge edge)
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+        public Vector2 GetEdgePosition(Rect target, Edge edge, IGraphElement graphElement)
         {
             switch (edge)
             {
                 case Edge.Top:
-                    return new Vector2(target.center.x, target.yMin - 3);
+                    {
+                        if (graphElement is GraphGroup or StickyNote)
+                        {
+                            return new Vector2(target.center.x, target.yMin);
+                        }
+                        return new Vector2(target.center.x, target.yMin - 3);
+                    }
                 case Edge.Bottom:
-                    return new Vector2(target.center.x, target.yMax + 6);
+                    {
+                        if (graphElement is GraphGroup or StickyNote)
+                        {
+                            new Vector2(target.center.x, target.yMax);
+                        }
+                        return new Vector2(target.center.x, target.yMax + 6);
+                    }
                 case Edge.Left:
+                    if (graphElement is GraphGroup)
+                    {
+                        return new Vector2(target.xMax, target.center.y);
+                    }
                     return new Vector2(target.xMax + 2, target.center.y);
                 case Edge.Right:
+                    if (graphElement is GraphGroup)
+                    {
+                        return new Vector2(target.xMin, target.center.y);
+                    }
                     return new Vector2(target.xMin - 2, target.center.y);
                 default:
                     throw new System.ArgumentException("Invalid edge type specified.");
             }
         }
-
+#else
+        public Vector2 GetEdgePosition(Rect target, Edge edge, IGraphElement graphElement)
+        {
+            switch (edge)
+            {
+                case Edge.Top:
+                    {
+                        if (graphElement is GraphGroup)
+                        {
+                            return new Vector2(target.center.x, target.yMin);
+                        }
+                        return new Vector2(target.center.x, target.yMin - 3);
+                    }
+                case Edge.Bottom:
+                    {
+                        if (graphElement is GraphGroup)
+                        {
+                            new Vector2(target.center.x, target.yMax);
+                        }
+                        return new Vector2(target.center.x, target.yMax + 6);
+                    }
+                case Edge.Left:
+                    if (graphElement is GraphGroup)
+                    {
+                        return new Vector2(target.xMax, target.center.y);
+                    }
+                    return new Vector2(target.xMax + 2, target.center.y);
+                case Edge.Right:
+                    if (graphElement is GraphGroup)
+                    {
+                        return new Vector2(target.xMin, target.center.y);
+                    }
+                    return new Vector2(target.xMin - 2, target.center.y);
+                default:
+                    throw new System.ArgumentException("Invalid edge type specified.");
+            }
+        }
+#endif
         public Edge CompareVectors(Vector2 first, Vector2 second)
         {
             float deltaX = second.x - first.x;
@@ -250,31 +378,29 @@ namespace Unity.VisualScripting.Community
             {
                 if (e.keyCode == KeyCode.C)
                 {
-                    metadata["connectedUnits"].RecordUndo();
-                    foreach (var item in canvas.selection)
+                    metadata["connectedElements"].RecordUndo();
+                    foreach (var element in canvas.selection)
                     {
-                        if (item is Unit unit && !this.unit.connectedUnits.Contains(unit) && unit != this.unit)
+                        if (!unit.connectedElements.Contains(element) && element != unit)
                         {
-                            this.unit.connectedUnits.Add(unit);
+                            unit.connectedElements.Add(element);
                         }
                     }
                     Reposition();
-                    EditorUtility.SetDirty(LudiqEditorUtility.editedObject);
                 }
                 else if (e.keyCode == KeyCode.X)
                 {
-                    metadata["connectedUnits"].RecordUndo();
-                    var connectedUnits = new List<Unit>();
-                    connectedUnits.AddRange(unit.connectedUnits);
-                    foreach (var item in connectedUnits)
+                    metadata["connectedElements"].RecordUndo();
+                    var connectedElements = new List<IGraphElement>();
+                    connectedElements.AddRange(unit.connectedElements);
+                    foreach (var element in connectedElements)
                     {
-                        if (item is Unit unit && this.unit.connectedUnits.Contains(unit) && canvas.selection.Contains(unit))
+                        if (unit.connectedElements.Contains(element) && canvas.selection.Contains(element))
                         {
-                            this.unit.connectedUnits.Remove(unit);
+                            unit.connectedElements.Remove(element);
                         }
                     }
                     Reposition();
-                    EditorUtility.SetDirty(LudiqEditorUtility.editedObject);
                 }
             }
         }
@@ -287,17 +413,17 @@ namespace Unity.VisualScripting.Community
                 {
                     yield return option;
                 }
-                foreach (var connectedUnit in unit.connectedUnits)
+                foreach (var connectedUnit in unit.connectedElements)
                 {
-                    Action action = () => { metadata["connectedUnits"].RecordUndo(); unit.connectedUnits.Remove(connectedUnit); EditorUtility.SetDirty(LudiqEditorUtility.editedObject); };
+                    Action action = () => { metadata["connectedElements"].RecordUndo(); unit.connectedElements.Remove(connectedUnit); };
                     yield return new DropdownOption(action, "Disconnect " + connectedUnit);
                 }
-                foreach (var unit in canvas.selection.Where(element => element is Unit).Cast<Unit>())
+                foreach (var element in canvas.selection.Where(element => element is IGraphElement))
                 {
-                    if (unit != this.unit)
+                    if (element != unit)
                     {
-                        Action action = () => { metadata["connectedUnits"].RecordUndo(); base.unit.connectedUnits.Add(unit); EditorUtility.SetDirty(LudiqEditorUtility.editedObject); };
-                        yield return new DropdownOption(action, "Connect " + unit);
+                        Action action = () => { metadata["connectedElements"].RecordUndo(); unit.connectedElements.Add(element); };
+                        yield return new DropdownOption(action, "Connect " + element);
                     }
                 }
             }
@@ -331,6 +457,7 @@ namespace Unity.VisualScripting.Community
                     metadata["comment"].RecordUndo();
                     metadata["comment"].value = comment;
                 }
+                GUI.contentColor = Color.white;
                 return;
             }
 

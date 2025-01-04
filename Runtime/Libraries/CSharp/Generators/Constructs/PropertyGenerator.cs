@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -128,133 +129,150 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public override string Generate(int indent)
         {
-            var getterscope = getterScope != scope ? getterScope.AsString().ConstructHighlight() + " " : string.Empty;
-            var setterscope = setterScope != scope ? setterScope.AsString().ConstructHighlight() + " " : string.Empty;
+            var getterscope = getterScope != scope && getterScope != AccessModifier.None ? getterScope.AsString().ConstructHighlight() + " " : string.Empty;
+            var setterscope = setterScope != scope && setterScope != AccessModifier.None ? setterScope.AsString().ConstructHighlight() + " " : string.Empty;
+            var modifierStr = modifier != PropertyModifier.None ? modifier.AsString().ConstructHighlight() + " " : string.Empty;
+            var scopeStr = scope != AccessModifier.None ? scope.AsString().ConstructHighlight() + " " : string.Empty;
+            var typeStr = useAssemblyQualifiedReturnType ? assemblyQualifiedReturnType : returnType.As().CSharpName();
 
-            var _attributes = string.Empty;
+            // Generate attributes
+            var attributesStr = string.Empty;
             foreach (AttributeGenerator attr in attributes)
             {
-                _attributes += attr.Generate(indent) + "\n";
+                attributesStr += attr.Generate(indent) + "\n";
             }
 
-            var modSpace = (modifier == PropertyModifier.None) ? string.Empty : " ";
-
-            if (hasGetter && modifier == PropertyModifier.Override && (string.IsNullOrEmpty(getterBody) || string.IsNullOrWhiteSpace(getterBody)))
+            // Handle auto-implemented override properties
+            if (hasGetter && modifier == PropertyModifier.Override && string.IsNullOrWhiteSpace(getterBody))
             {
                 SingleStatementGetter(getterScope, defaultValue.As().Code(true, true));
             }
-
-            if (hasSetter && modifier == PropertyModifier.Override && (string.IsNullOrEmpty(setterBody) || string.IsNullOrWhiteSpace(setterBody)))
+            if (hasSetter && modifier == PropertyModifier.Override && string.IsNullOrWhiteSpace(setterBody))
             {
                 SingleStatementSetter(setterScope, defaultValue.As().Code(true, true));
             }
 
-            var definition = CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace +
-                             (useAssemblyQualifiedReturnType ? assemblyQualifiedReturnType : returnType.As().CSharpName().TypeHighlight()) +
-                             (hasIndexer ? $"[{indexerBody}]" : string.Empty) + " " + name.LegalMemberName() + " " + GetterSetter();
-
-            var output = defaultValue != null && hasDefault && GetAndSetDoesNotHaveBody() && modifier != PropertyModifier.Override ? " = " + defaultValue.As().Code(true, true) + ";" : string.Empty;
-
-            if (hasGetter && hasSetter)
+            // Build property header
+            var header = CodeBuilder.Indent(indent) + scopeStr + modifierStr + typeStr;
+            if (hasIndexer)
             {
-                if (getterScope != scope && setterScope != scope)
-                {
-                    output += "\n" + CodeBuilder.Indent(indent) + " /* Cannot specify accessibility modifiers for both getter and setter */".WarningHighlight();
-                }
+                header += " this".ConstructHighlight() + $"[{indexerBody}]";
+            }
+            else
+            {
+                header += " " + name.LegalMemberName().VariableHighlight();
             }
 
-            if (hasGetter && !hasSetter && getterScope != scope)
+            // Property body
+            var body = string.Empty;
+            var warnings = new List<string>();
+
+            // Validate accessibility modifiers
+            if (hasGetter && hasSetter && getterScope != scope && setterScope != scope && getterScope != AccessModifier.None && setterScope != AccessModifier.None)
             {
-                output += "\n" + CodeBuilder.Indent(indent) + " /* Accessibility modifier on getter may only be used if the property has both a get and a set */".WarningHighlight();
+                warnings.Add("Cannot specify accessibility modifiers for both getter and setter");
+            }
+            if (hasGetter && !hasSetter && getterScope != scope && getterScope != AccessModifier.None)
+            {
+                warnings.Add("Accessibility modifier on getter may only be used if the property has both a get and a set");
+            }
+            if (!hasGetter && hasSetter && setterScope != scope && setterScope != AccessModifier.None)
+            {
+                warnings.Add("Accessibility modifier on setter may only be used if the property has both a get and a set");
+            }
+            if (hasGetter && modifier == PropertyModifier.Abstract && getterScope == AccessModifier.Private)
+            {
+                warnings.Add("Abstract Properties cannot have a private getter");
+            }
+            if (hasSetter && modifier == PropertyModifier.Abstract && setterScope == AccessModifier.Private)
+            {
+                warnings.Add("Abstract Properties cannot have a private setter");
+            }
+            if (hasGetter && getterScope != scope && getterScope != AccessModifier.None && !CodeBuilder.IsMoreRestrictive(getterScope, scope))
+            {
+                warnings.Add("Accessibility modifier on getter must be more restrictive than the property itself");
+            }
+            if (hasSetter && setterScope != scope && setterScope != AccessModifier.None && !CodeBuilder.IsMoreRestrictive(setterScope, scope))
+            {
+                warnings.Add("Accessibility modifier on setter must be more restrictive than the property itself");
             }
 
-            if (!hasGetter && hasSetter && setterScope != scope)
+            // Generate accessor body
+            if (IsAutoImplemented())
             {
-                output += "\n" + CodeBuilder.Indent(indent) + " /* Accessibility modifier on setter may only be used if the property has both a get and a set */".WarningHighlight();
-            }
-
-            if (hasGetter)
-            {
-                if (modifier == PropertyModifier.Abstract && getterScope == AccessModifier.Private)
+                body = " { ";
+                if (hasGetter)
                 {
-                    output += "\n" + CodeBuilder.Indent(indent) + " /* Abstract Properties cannot have a private getter */".WarningHighlight();
+                    body += getterscope + "get".ConstructHighlight() + "; ";
                 }
-            }
-
-            if (hasSetter)
-            {
-                if (modifier == PropertyModifier.Abstract && setterScope == AccessModifier.Private)
+                if (hasSetter)
                 {
-                    output += "\n" + CodeBuilder.Indent(indent) + " /* Abstract Properties cannot have a private setter */".WarningHighlight();
+                    body += setterscope + "set".ConstructHighlight() + "; ";
                 }
-            }
+                body += "}";
 
-            return _attributes + definition + output;
-
-            string GetterSetter()
-            {
-                var result = string.Empty;
-
-                if (GetAndSetDoesNotHaveBody())
+                // Add default value for auto-implemented properties if needed
+                if (hasDefault && defaultValue != null && modifier != PropertyModifier.Override)
                 {
-                    return $"{{ {(hasGetter ? getterscope + "get".ConstructHighlight() + ";" : string.Empty)} {(hasSetter ? setterscope + "set".ConstructHighlight() + ";" : string.Empty)} }}";
-                }
-
-                if (multiStatementGetter || multiStatementSetter)
-                {
-                    return (string.IsNullOrEmpty(getterBody) ? "\n" + CodeBuilder.Indent(indent) + "{" : "\n" + CodeBuilder.Indent(indent) + "{\n" + Getter()) +
-                           (string.IsNullOrEmpty(setterBody) ? "\n" : (multiStatementGetter ? "\n" : string.Empty) + "\n" + Setter() + "\n") +
-                           CodeBuilder.Indent(indent) + "}";
-                }
-                else
-                {
-                    return " { " + (string.IsNullOrEmpty(getterBody) ? string.Empty : Getter() + " ") +
-                           (string.IsNullOrEmpty(setterBody) ? string.Empty : (string.IsNullOrEmpty(getterBody) ? " " : string.Empty) + Setter() + " ") + "}";
+                    body += " = " + defaultValue.As().Code(true, true) + ";";
                 }
             }
-
-            string Getter()
+            else
             {
-                if (GetAndSetDoesNotHaveBody())
+                // Handle properties with implementations
+                body = "\n" + CodeBuilder.Indent(indent) + "{";
+
+                // Getter
+                if (hasGetter)
                 {
-                    return $"{{ {(hasGetter ? getterscope + "get".ConstructHighlight() + ";" : string.Empty)} }} " + hasDefault;
+                    body += "\n" + CodeBuilder.Indent(indent + 1) + getterscope + "get".ConstructHighlight();
+                    if (multiStatementGetter)
+                    {
+                        body += "\n" + CodeBuilder.Indent(indent + 1) + "{\n" +
+                               CodeBuilder.Indent(indent + 2) + getterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 2)) +
+                               "\n" + CodeBuilder.Indent(indent + 1) + "}";
+                    }
+                    else if (!string.IsNullOrWhiteSpace(getterBody))
+                    {
+                        body += " => " + getterBody + ";";
+                    }
                 }
 
-                if (multiStatementGetter)
+                // Setter
+                if (hasSetter)
                 {
-                    return CodeBuilder.Indent(indent + 1) + getterscope + "get \n".ConstructHighlight() + CodeBuilder.Indent(indent + 1) + "{\n" +
-                           CodeBuilder.Indent(indent + 2) + getterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 2)) + "\n" + CodeBuilder.Indent(indent + 1) + "}";
+                    if (hasGetter) body += "\n";
+                    body += CodeBuilder.Indent(indent + 1) + setterscope + "set".ConstructHighlight();
+                    if (multiStatementSetter)
+                    {
+                        body += "\n" + CodeBuilder.Indent(indent + 1) + "{\n" +
+                               CodeBuilder.Indent(indent + 2) + setterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 2)) +
+                               "\n" + CodeBuilder.Indent(indent + 1) + "}";
+                    }
+                    else if (!string.IsNullOrWhiteSpace(setterBody))
+                    {
+                        body += " => " + setterBody + ";";
+                    }
                 }
-                else
-                {
-                    var _indent = multiStatementSetter ? CodeBuilder.Indent(indent + 1) : string.Empty;
-                    return _indent + getterscope + "get".ConstructHighlight() + " => " + getterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 1)) + ";";
-                }
+
+                body += "\n" + CodeBuilder.Indent(indent) + "}";
             }
 
-            string Setter()
+            // Add warnings
+            var warningsStr = string.Empty;
+            if (warnings.Count > 0)
             {
-                if (GetAndSetDoesNotHaveBody())
-                {
-                    return $"{{ {(hasGetter ? getterscope + "set".ConstructHighlight() + ";" : string.Empty)} }}";
-                }
-
-                if (multiStatementSetter)
-                {
-                    return CodeBuilder.Indent(indent + 1) + setterscope + "set \n".ConstructHighlight() + CodeBuilder.Indent(indent + 1) + "{\n" +
-                           CodeBuilder.Indent(indent + 2) + setterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 2)) + "\n" + CodeBuilder.Indent(indent + 1) + "}";
-                }
-                else
-                {
-                    var _indent = multiStatementGetter ? CodeBuilder.Indent(indent + 1) : string.Empty;
-                    return _indent + setterscope + "set".ConstructHighlight() + " => " + setterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 1)) + ";";
-                }
+                warningsStr = "\n" + string.Join("\n", warnings.Select(w =>
+                    CodeBuilder.Indent(indent) + (" /* " + w + " */").WarningHighlight()));
             }
+
+            return attributesStr + header + body + warningsStr;
         }
 
-        private bool GetAndSetDoesNotHaveBody()
+        private bool IsAutoImplemented()
         {
-            return (string.IsNullOrEmpty(getterBody) || string.IsNullOrWhiteSpace(getterBody)) && (string.IsNullOrEmpty(setterBody) || string.IsNullOrWhiteSpace(setterBody));
+            return (string.IsNullOrWhiteSpace(getterBody) && string.IsNullOrWhiteSpace(setterBody)) ||
+                   (modifier == PropertyModifier.Abstract);
         }
 
         public override List<string> Usings()

@@ -13,11 +13,11 @@ namespace Unity.VisualScripting.Community
         public MethodDeclaration method;
         [DoNotSerialize]
         [PortLabelHidden]
-        public ControlInput enter;
+        public ControlInput enter { get; private set; }
 
         [DoNotSerialize]
         [PortLabelHidden]
-        public ControlOutput exit;
+        public ControlOutput exit { get; private set; }
 
         [DoNotSerialize]
         public Dictionary<int, ValueInput> InputParameters { get; private set; }
@@ -33,8 +33,7 @@ namespace Unity.VisualScripting.Community
 
         public string parameterCode;
 
-        [Serialize]
-        List<string> parameterNames;
+        public List<string> parameterNames;
 
         [Obsolete(Serialization.ConstructorWarning)]
         public AssetMethodCallUnit()

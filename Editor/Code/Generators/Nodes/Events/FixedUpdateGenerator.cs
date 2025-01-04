@@ -6,7 +6,7 @@ using Unity.VisualScripting.Community.Utility;
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(FixedUpdate))]
-    public class FixedUpdateGenerator : MethodNodeGenerator<FixedUpdate>
+    public class FixedUpdateGenerator : MethodNodeGenerator
     {
         public FixedUpdateGenerator(FixedUpdate unit) : base(unit) { }
 
@@ -17,8 +17,12 @@ namespace Unity.VisualScripting.Community
         public override string Name => "FixedUpdate";
 
         public override Type ReturnType => typeof(void);
-
+        private FixedUpdate Unit => unit as FixedUpdate;
         public override List<TypeParam> Parameters => new List<TypeParam>();
+
+        public override ControlOutput OutputPort => Unit.trigger;
+
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>();
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {

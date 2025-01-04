@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community
                     {
                         if (type.IsAssignableFrom(p))
                         {
-                            return p.Assembly != type.Assembly;
+                            return p != type;
                         }
                         return false;
                     }).ToList();
@@ -36,11 +36,14 @@ namespace Unity.VisualScripting.Community
 
                 if (types.Count() == 1)
                 {
-                    
-                    CommunityOptions options = (CommunityOptions)Activator.CreateInstance(types.First());
-                    DefinedEvent_ForceOptimizedInEditor = options.DefinedEvent_ForceOptimizedInEditor;
-                    DefinedEvent_RestrictEventTypes = options.DefinedEvent_RestrictEventTypes;
-                    SilenceLogMessages = options.SilenceLogMessages;
+
+                    var options = Activator.CreateInstance(types.First());
+                    if (options is CommunityOptions communityOptions)
+                    {
+                        DefinedEvent_ForceOptimizedInEditor = communityOptions.DefinedEvent_ForceOptimizedInEditor;
+                        DefinedEvent_RestrictEventTypes = communityOptions.DefinedEvent_RestrictEventTypes;
+                        SilenceLogMessages = communityOptions.SilenceLogMessages;
+                    }
 
                     if (!SilenceLogMessages)
                     {
@@ -50,6 +53,7 @@ namespace Unity.VisualScripting.Community
 
                     return;
                 }
+
                 Debug.Log("No Community Options script found; using defaults");
             }
         }

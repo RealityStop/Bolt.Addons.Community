@@ -8,7 +8,7 @@ using Unity.VisualScripting.Community.Utility;
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(OnDisable))]
-    public class OnDisableGenerator : MethodNodeGenerator<OnDisable>
+    public class OnDisableGenerator : MethodNodeGenerator
     {
         public OnDisableGenerator(OnDisable unit) : base(unit) { }
 
@@ -19,9 +19,12 @@ namespace Unity.VisualScripting.Community
         public override string Name => "OnDisable";
 
         public override Type ReturnType => typeof(void);
-
+        private OnDisable Unit => unit as OnDisable;
         public override List<TypeParam> Parameters => new List<TypeParam>();
 
+        public override ControlOutput OutputPort => Unit.trigger;
+
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>();
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {

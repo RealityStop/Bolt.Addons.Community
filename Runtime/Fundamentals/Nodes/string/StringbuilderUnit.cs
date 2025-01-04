@@ -36,7 +36,7 @@ namespace Unity.VisualScripting.Community
 
         [Inspectable, InspectorLabel("Append Modes", "List to store the modes for each input (Max: 10 items)")]
         [InspectorWide]
-        public List<AppendType> appendModes = new List<AppendType>();
+        public List<AppendStringType> appendModes = new List<AppendStringType>();
 
         public List<ValueInput> inputPorts { get; private set; } = new List<ValueInput>();
         
@@ -69,7 +69,7 @@ namespace Unity.VisualScripting.Community
         {
             if (appendModes.Count < MinInputs)
             {
-                appendModes.Add(new AppendType());
+                appendModes.Add(new AppendStringType());
             }
 
             if (appendModes.Count > MaxInputs)
@@ -171,7 +171,7 @@ namespace Unity.VisualScripting.Community
         }
     }
 
-    public class AppendType
+    public class AppendStringType
     {
         public StringBuilderUnit.AppendMode appendMode;
         public string delimiter;      // Used for 'Delimiter' mode.

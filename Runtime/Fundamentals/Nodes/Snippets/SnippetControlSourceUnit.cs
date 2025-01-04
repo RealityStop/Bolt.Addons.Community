@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
+    [TypeIcon(typeof(GraphInput))]
     public class SnippetControlSourceUnit : SnippetSourceUnit
     {
         [PortLabelHidden]

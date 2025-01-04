@@ -123,37 +123,21 @@ namespace Unity.VisualScripting.Community
                         variable.value != null
                             ? $" = "
                                 + ""
-                                + $"{variable.value.As().Code(true, true, true)};\n"
-                            : string.Empty + ";"
+                                + $"{variable.value.As().Code(true, true, true, "", true, true)};\n"
+                            : string.Empty + ";\n"
                     );
             };
 
             foreach (Unit unit in Units)
             {
-                if (unit is Once)
+                if (unit.GetGenerator() is VariableNodeGenerator variableNodeGenerator)
                 {
+                    CodeBuilder.Indent(1);
                     script +=
-                        "\n    " + "private ".ConstructHighlight()
-                        + "bool ".ConstructHighlight()
-                        + (NodeGenerator.GetSingleDecorator(unit, unit) as OnceGenerator).Name.VariableHighlight()
-                        + ";\n";
-                }
-                else if (unit is ToggleFlow)
-                {
-                    script +=
-                        "\n    " + "private ".ConstructHighlight()
-                        + "ToggleFlowLogic ".TypeHighlight()
-                        + "Toggle_".VariableHighlight()
-                        + NodeGenerator.GetSingleDecorator(unit, unit).UniqueID.VariableHighlight()
-                        + ";\n";
-                }
-                else if (unit is Timer timer)
-                {
-                    script +=
-                        "\n    " + "private ".ConstructHighlight()
-                        + "TimerLogic ".TypeHighlight()
-                        + (NodeGenerator.GetSingleDecorator(unit, unit) as TimerGenerator).Name.VariableHighlight()
-                        + ";\n";
+                        "\n    " + CodeUtility.MakeSelectable(unit, variableNodeGenerator.AccessModifier.AsString().ConstructHighlight() + " "
+                        + variableNodeGenerator.Type.As().CSharpName(false, true) + " " + variableNodeGenerator.FieldModifier.AsString().ConstructHighlight()
+                        + variableNodeGenerator.Name.VariableHighlight()
+                        + (variableNodeGenerator.HasDefaultValue ? $" = " : "")) + (variableNodeGenerator.HasDefaultValue ? variableNodeGenerator.DefaultValue.As().Code(variableNodeGenerator.IsNew, variableNodeGenerator.unit, variableNodeGenerator.Literal, true, "", variableNodeGenerator.NewLineLiteral, true) : "") + CodeUtility.MakeSelectable(unit, ";") + "\n";
                 }
             }
             customEventIds = new Dictionary<CustomEvent, int>();

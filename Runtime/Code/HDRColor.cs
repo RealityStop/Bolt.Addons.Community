@@ -1,11 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
+using System;
 using UnityEngine;
+using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community
 {
-    [System.Serializable]
+    [Serializable]
     [TypeIcon(typeof(Color))]
     [IncludeInSettings(true)]
     [Inspectable]
@@ -15,5 +14,20 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         [ColorUsage(true, true)]
         public Color color;
-    } 
+
+        public static implicit operator Color(HDRColor hdrColor)
+        {
+            return hdrColor.color;
+        }
+
+        public static implicit operator HDRColor(Color color)
+        {
+            return new HDRColor { color = color };
+        }
+        
+        public override string ToString()
+        {
+            return color.ToString();
+        }
+    }
 }

@@ -6,11 +6,12 @@
     [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.AccessModifier")]
     public enum AccessModifier
     {
-        Public,
-        Private,
-        Protected,
-        Internal,
-        ProtectedInternal,
-        PrivateProtected
+        Public = 0,
+        Private = 6,
+        Protected = 4,
+        Internal = 3,
+        ProtectedInternal = 2,
+        PrivateProtected = 5,
+        None = 1
     }
 }

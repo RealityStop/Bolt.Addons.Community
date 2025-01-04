@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(SelectOnFlow))]
-    public class SelectOnFlowGenerator : MethodNodeGenerator<SelectOnFlow>
+    public class SelectOnFlowGenerator : MethodNodeGenerator
     {
         public SelectOnFlowGenerator(SelectOnFlow unit) : base(unit)
         {
@@ -27,14 +27,18 @@ namespace Unity.VisualScripting.Community
         {
             get => string.IsNullOrEmpty(_name) ? $"SelectOnFlow{count}" : _name;
         }
-
+        private SelectOnFlow Unit => unit as SelectOnFlow;
         public override Type ReturnType => typeof(void);
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(0, "value") };
 
-        public override string MethodBody => GetNextUnit(Unit.exit, Data, 0);
+        public override string MethodBody => GetNextUnit(OutputPort, Data, 0);
 
         public override int GenericCount => 1;
+
+        public override ControlOutput OutputPort => Unit.exit;
+
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>() {Unit.selection};
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {

@@ -24,7 +24,7 @@ namespace Unity.VisualScripting.Community
                 {
                     if (@event != null)
                     {
-                        if (@event.keyCode == KeyCode.Slash && @event.rawType == EventType.KeyUp && @event.control)
+                        if (@event.keyCode == KeyCode.Slash && @event.rawType == EventType.KeyUp && @event.CtrlOrCmd())
                         {
                             firstSlash = true;
                         }
@@ -32,7 +32,7 @@ namespace Unity.VisualScripting.Community
                 }
                 else
                 {
-                    if (@event.keyCode == KeyCode.Slash && @event.rawType == EventType.KeyUp && @event.control)
+                    if (@event.keyCode == KeyCode.Slash && @event.rawType == EventType.KeyUp && @event.CtrlOrCmd())
                     {
                         CommentPopup.Open();
                         firstSlash = false;

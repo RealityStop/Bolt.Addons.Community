@@ -24,10 +24,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static string SummaryColor = "00CC00";
         public static string VariableColor = "00FFFF";
         public static string RecommendationColor = "FFD700";
+        /// <summary>
+        /// Unused
+        /// </summary>
         public static string MethodColor = "EBEB5B";
         #endregion
-
-        public static bool ShowRecommendations = true;
 
         public static int currentIndent { get; private set; }
         /// <summary>
@@ -377,10 +378,21 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return !type.Is().NullOrVoid() ? type.As().CSharpName() + " " + CodeBuilder.Assign(name, HUMValue.Create().New(type).As().Code(false)) + "\n" : string.Empty;
         }
 
-        public static string Qoute()
+        public static string InitializeVariable(string name, Type type, string value)
+        {
+            return !type.Is().NullOrVoid() ? type.As().CSharpName() + " " + CodeBuilder.Assign(name, value) + "\n" : string.Empty;
+        }
+
+        public static string Quote()
         {
             return @"""";
         }
+
+        public static string Quotes(this string value)
+        {
+            return @"""" + value + @"""";
+        }
+
 
         public static string Comma()
         {
@@ -435,7 +447,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string Assign(string member, string value, Type castedType)
         {
-            return member + " = " + "(" + castedType.As().CSharpName() + ")" + value + ";";
+            return member + " = " + value.Cast(castedType) + ";";
         }
 
         public static string Assign(string member, string value)
@@ -448,19 +460,14 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return "return ".ControlHighlight() + value + ";";
         }
 
+        public static string Cast(this string value, Type type)
+        {
+            return $"({type.As().CSharpName(false, true)}){value}";
+        }
+
         public static string CastAs(this string value, Type type)
         {
-            return $"({type.As().CSharpName()}){value}";
-        }
-
-        public static string MethodCall(string name, Type[] generics, params string[] parameters)
-        {
-            return name.MethodHighlight() + $"{(generics.Length > 0 ? $"<{string.Join(", ", generics.Select(t => t.As().CSharpName(false, true)))}>" : "")}({string.Join(", ", parameters)})";
-        }
-
-        public static string TargetMethodCall(this string target, string name, Type[] generics = null, params string[] parameters)
-        {
-            return target + "." + name.MethodHighlight() + $"{(generics != null && generics.Length > 0 ? $"<{string.Join(", ", generics.Select(t => t.As().CSharpName(false, true)))}>" : "")}({string.Join(", ", parameters)})";
+            return $"(({type.As().CSharpName(false, true)}){value})";
         }
 
         public static string LegalMemberName(this string memberName)
@@ -533,7 +540,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string MakeRecommendation(string Message)
         {
-            if (ShowRecommendations) return $"/*(Recommendation) {Message}*/".RecommendationHighlight();
+            if (CSharpPreviewSettings.ShouldShowRecommendations) return $"/*(Recommendation) {Message}*/".RecommendationHighlight();
             else return "";
         }
 
@@ -551,11 +558,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 return code.ControlHighlight();
             }
             return Highlight(code, ConstructColor);
-        }
-
-        public static string MethodHighlight(this string code)
-        {
-            return Highlight(code, MethodColor);
         }
 
         public static string NamespaceHighlight(this string code)

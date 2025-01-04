@@ -21,7 +21,10 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public override string Generate(int indent)
         {
             var parameters = string.Empty;
-
+            if(type == null)
+            {
+                return "";
+            }
             for (int i = 0; i < parameterValues.Count; i++)
             {
                 parameters += parameterValues[i].As().Code(false);

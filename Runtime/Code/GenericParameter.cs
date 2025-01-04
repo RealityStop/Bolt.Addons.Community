@@ -62,7 +62,8 @@ namespace Unity.VisualScripting.Community
             if (type.type.IsGenericType)
             {
                 type.type = type.type.GetGenericTypeDefinition();
-                selectedType.type = selectedType.type.GetGenericTypeDefinition();
+                if (selectedType.type.IsGenericType)
+                    selectedType.type = selectedType.type.GetGenericTypeDefinition();
             }
             else if (type.type.IsArray)
             {
@@ -131,7 +132,7 @@ namespace Unity.VisualScripting.Community
                 }
                 catch (ArgumentException ex)
                 {
-                    Debug.LogError($"Failed to construct generic type: {ex.Message}");
+                    Debug.LogError($"Failed to construct generic type: {ex.Message}, Type: {type.type.FullName}");
                     return type.type;
                 }
             }
@@ -139,17 +140,28 @@ namespace Unity.VisualScripting.Community
             {
                 var tempType = type.type.GetElementType();
                 var ArrayCount = 1;
+                var amountToGoBack = 0;
                 while (tempType.IsArray)
                 {
                     tempType = tempType.GetElementType();
                     ArrayCount++;
+                    amountToGoBack++;
                 }
 
                 if (tempType.IsGenericType)
                 {
                     try
                     {
-                        var genericArguments = nestedParameters.Select(tp =>
+                        GenericParameter _target = this;
+                        for (int i = 0; i < amountToGoBack; i++)
+                        {
+                            if (_target.parent != null)
+                            {
+                                _target = _target.parent;
+                            }
+                        }
+
+                        var genericArguments = _target.nestedParameters.Select(tp =>
                         {
                             if (tp.selectedType.type == null)
                             {
@@ -167,7 +179,7 @@ namespace Unity.VisualScripting.Community
                     }
                     catch (ArgumentException ex)
                     {
-                        Debug.LogError($"Failed to construct generic type: {ex.Message}");
+                        Debug.LogError($"Failed to construct generic array type: {ex.Message}");
                         return type.type;
                     }
                 }
@@ -190,6 +202,35 @@ namespace Unity.VisualScripting.Community
                     nestedParameters.Add(parameter);
                     parameter.AddGenericParameters(arg, foreachParameter);
                     index++;
+                }
+            }
+            else if (type.IsArray)
+            {
+                var tempType = type.GetElementType();
+                var ArrayCount = 1;
+                while (tempType.IsArray)
+                {
+                    tempType = tempType.GetElementType();
+                    ArrayCount++;
+                }
+                if (tempType.IsGenericType)
+                {
+                    var genericArguments = tempType.GetGenericArguments();
+                    var index = 0;
+                    foreach (var arg in genericArguments)
+                    {
+                        var parameter = new GenericParameter(this, tempType.GetGenericTypeDefinition().GetGenericArguments()[index], arg.As().CSharpName(false, false, false));
+                        foreachParameter?.Invoke(parameter);
+                        parameter.type.type = arg;
+                        nestedParameters.Add(parameter);
+                        parameter.AddGenericParameters(arg, foreachParameter);
+                        index++;
+                    }
+                    var constructedType = ConstructType();
+                    for (int i = 0; i < ArrayCount; i++)
+                    {
+                        this.type.type = constructedType.MakeArrayType();
+                    }
                 }
             }
         }

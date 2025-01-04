@@ -5,14 +5,14 @@ using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community
 {
-    [Inspector(typeof(AppendType))]
+    [Inspector(typeof(AppendStringType))]
     public class AppendTypeInspector : Inspector
     {
         public AppendTypeInspector(Metadata metadata) : base(metadata) { }
 
         protected override float GetHeight(float width, GUIContent label)
         {
-            var target = metadata.value as AppendType;
+            var target = metadata.value as AppendStringType;
 
             float height = EditorGUIUtility.singleLineHeight;
 
@@ -34,7 +34,7 @@ namespace Unity.VisualScripting.Community
         }
         protected override void OnGUI(Rect position, GUIContent label)
         {
-            var target = metadata.value as AppendType;
+            var target = metadata.value as AppendStringType;
 
             LudiqGUI.Inspector(metadata["appendMode"], position, new GUIContent("Mode"));
 

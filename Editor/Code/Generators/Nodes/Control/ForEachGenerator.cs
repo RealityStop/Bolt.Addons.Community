@@ -10,8 +10,9 @@ using System.Collections;
 using System;
 using System.Collections.Specialized;
 [NodeGenerator(typeof(Unity.VisualScripting.ForEach))]
-public sealed class ForEachGenerator : LocalVariableGenerator<Unity.VisualScripting.ForEach>
+public sealed class ForEachGenerator : LocalVariableGenerator
 {
+    private ForEach Unit => unit as ForEach;
     private string currentIndex;
     public ForEachGenerator(Unity.VisualScripting.ForEach unit) : base(unit)
     {
@@ -27,8 +28,8 @@ public sealed class ForEachGenerator : LocalVariableGenerator<Unity.VisualScript
             Type type;
             if (Unit.collection.hasValidConnection)
             {
-                var connectedVariable = GetSourceType(Unit.collection, data);
-                type = connectedVariable != null ? GetElementType(connectedVariable, typeof(object)) : GetElementType(Unit.collection.connection.source.type, typeof(object));
+                var connectedValue = GetSourceType(Unit.collection, data);
+                type = connectedValue != null ? GetElementType(connectedValue, typeof(object)) : GetElementType(Unit.collection.connection.source.type, typeof(object));
                 variableName = data.AddLocalNameInScope("item", type);
             }
             else
@@ -104,13 +105,13 @@ public sealed class ForEachGenerator : LocalVariableGenerator<Unity.VisualScript
         {
             if (Unit.dictionary)
             {
-                return MakeSelectableForThisUnit(variableName.VariableHighlight() + ".Value");
+                return MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "Value".VariableHighlight());
             }
             return MakeSelectableForThisUnit(variableName.VariableHighlight());
         }
         else if (output == Unit.currentKey)
         {
-            return MakeSelectableForThisUnit(variableName.VariableHighlight() + ".Key");
+            return MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "Key".VariableHighlight());
         }
         else
         {
@@ -124,10 +125,11 @@ public sealed class ForEachGenerator : LocalVariableGenerator<Unity.VisualScript
         {
             if (input.hasValidConnection)
             {
-                data.SetExpectedType(Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable));
+                var sourceType = GetSourceType(Unit.collection, data);
+                data.SetExpectedType(sourceType == typeof(object) ? (Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable)) : sourceType);
                 var connectedCode = GetNextValueUnit(input, data);
                 data.RemoveExpectedType();
-                return new ValueCode(connectedCode, Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable), ShouldCast(input, data, false));
+                return new ValueCode(connectedCode, sourceType == typeof(object) ? (Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable)) : sourceType, ShouldCast(input, data, false));
             }
         }
 

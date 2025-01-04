@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using UnityEngine;
 
-public class LocalVariableGenerator<TUnit> : NodeGenerator<TUnit> where TUnit : Unit
+public class LocalVariableGenerator : NodeGenerator
 {
     public Type variableType = typeof(object);
     public LocalVariableGenerator(Unit unit) : base(unit)
