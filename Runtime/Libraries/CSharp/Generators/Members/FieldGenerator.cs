@@ -95,7 +95,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (attributes.Count > 0) _attributes += "\n";
             var modSpace = (modifier == FieldModifier.None) ? string.Empty : " ";
             var definition = CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + (typeIsString ? stringType.WithHighlight(highlightType) : type.As().CSharpName()) + " " + name.LegalMemberName().VariableHighlight();
-            var output = !isString && (defaultValue == null || (!(typeIsString ? stringType == nameof(Type) : type == typeof(Type)) && defaultValue.Equals(type.PseudoDefault()))) ? ";" : " = " + (isString ? stringDefault : defaultValue.As().Code(true, true) + ";");
+            var output = !isString && (defaultValue == null || (!(typeIsString ? stringType == nameof(Type) : type == typeof(Type)) && defaultValue.Equals(type.PseudoDefault()))) ? ";" : " = " + (isString ? stringDefault : defaultValue.As().Code(true, true, true, "", false, true, false) + ";");
             return _attributes + definition + output;
         }
 

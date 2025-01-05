@@ -20,8 +20,8 @@ namespace Unity.VisualScripting.Community
 
         [Inspectable]
         public StructAsset structAsset;
-
-        public ConstructorCallType CallType = ConstructorCallType.None;
+        [RenamedFrom("CallType")]
+        public ConstructorInitializer initalizerType = ConstructorInitializer.None;
 
         [InspectorWide]
         public List<TypeParam> parameters = new List<TypeParam>();

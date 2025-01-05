@@ -115,7 +115,7 @@ namespace Unity.VisualScripting.Community
             foreach (VariableDeclaration variable in Data.graph.variables)
             {
                 script +=
-                    "\n    " + "public ".ConstructHighlight()
+                    "\n" + CodeBuilder.Indent(1) + "public ".ConstructHighlight()
                     + Type.GetType(variable.typeHandle.Identification).As().CSharpName(false, true)
                     + " "
                     + variable.name.LegalMemberName().VariableHighlight()
@@ -123,7 +123,7 @@ namespace Unity.VisualScripting.Community
                         variable.value != null
                             ? $" = "
                                 + ""
-                                + $"{variable.value.As().Code(true, true, true, "", true, true)};\n"
+                                + $"{variable.value.As().Code(true, true, true, "", false, true, false)};\n"
                             : string.Empty + ";\n"
                     );
             };
@@ -134,18 +134,18 @@ namespace Unity.VisualScripting.Community
                 {
                     CodeBuilder.Indent(1);
                     script +=
-                        "\n    " + CodeUtility.MakeSelectable(unit, variableNodeGenerator.AccessModifier.AsString().ConstructHighlight() + " "
+                        "\n" + CodeBuilder.Indent(1) + CodeUtility.MakeSelectable(unit, variableNodeGenerator.AccessModifier.AsString().ConstructHighlight() + " "
                         + variableNodeGenerator.Type.As().CSharpName(false, true) + " " + variableNodeGenerator.FieldModifier.AsString().ConstructHighlight()
                         + variableNodeGenerator.Name.VariableHighlight()
-                        + (variableNodeGenerator.HasDefaultValue ? $" = " : "")) + (variableNodeGenerator.HasDefaultValue ? variableNodeGenerator.DefaultValue.As().Code(variableNodeGenerator.IsNew, variableNodeGenerator.unit, variableNodeGenerator.Literal, true, "", variableNodeGenerator.NewLineLiteral, true) : "") + CodeUtility.MakeSelectable(unit, ";") + "\n";
+                        + (variableNodeGenerator.HasDefaultValue ? $" = " : "")) + (variableNodeGenerator.HasDefaultValue ? variableNodeGenerator.DefaultValue.As().Code(variableNodeGenerator.IsNew, variableNodeGenerator.unit, variableNodeGenerator.Literal, true, "", variableNodeGenerator.NewLineLiteral, true, false) : "") + CodeUtility.MakeSelectable(unit, ";") + "\n";
                 }
             }
             customEventIds = new Dictionary<CustomEvent, int>();
             if (Data.graph.units.Any(unit => unit is CustomEvent))
             {
                 var customEvents = Data.graph.units.Where(unit => unit is CustomEvent);
-                script += $"\n    " + "private void".ConstructHighlight() + " Awake()";
-                script += "\n    {\n";
+                script += $"\n" + CodeBuilder.Indent(1) + "private void".ConstructHighlight() + " Awake()";
+                script += "\n" + CodeBuilder.Indent(1) + "{\n";
                 int id = 0;
                 foreach (CustomEvent eventUnit in customEvents)
                 {

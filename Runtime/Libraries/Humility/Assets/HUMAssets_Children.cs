@@ -136,7 +136,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
         public static List<T> OfType<T>(this HUMAssets.Data.Assets assets) where T : class
         {
-            var assetIds = UnityEditor.AssetDatabase.FindAssets("t:" + typeof(UnityEngine.Object));
+            var assetIds = UnityEditor.AssetDatabase.FindAssets("t:" + typeof(T));
             var assetsList = new List<T>();
 
             foreach (string assetId in assetIds)

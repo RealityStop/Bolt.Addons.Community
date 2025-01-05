@@ -14,14 +14,14 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public List<string> callChainParameters = new List<string>();
 
-        private ConstructorCallType callType;
+        private ConstructorInitializer callType;
 
         private ConstructorGenerator() { }
 
         /// <summary>
         /// Create a new constructor.
         /// </summary>
-        public static ConstructorGenerator Constructor(AccessModifier scope, ConstructorModifier modifier, ConstructorCallType callType, string name)
+        public static ConstructorGenerator Constructor(AccessModifier scope, ConstructorModifier modifier, ConstructorInitializer callType, string name)
         {
             var constructor = new ConstructorGenerator
             {
@@ -55,7 +55,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             var _callChainParameters = string.Empty;
             _callChainParameters = string.Join(", ", callChainParameters);
-            string callChain = callType != ConstructorCallType.None ? $" : {(callType == ConstructorCallType.Base ? "base" : "this").ConstructHighlight()}(" + _callChainParameters + ")" : string.Empty;
+            string callChain = callType != ConstructorInitializer.None ? $" : {(callType == ConstructorInitializer.Base ? "base" : "this").ConstructHighlight()}(" + _callChainParameters + ")" : string.Empty;
             return attributes + CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + name.LegalMemberName().TypeHighlight() + "(" + parameters + ")" + callChain;
         }
 

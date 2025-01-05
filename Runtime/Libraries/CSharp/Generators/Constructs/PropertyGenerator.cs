@@ -214,7 +214,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 // Add default value for auto-implemented properties if needed
                 if (hasDefault && defaultValue != null && modifier != PropertyModifier.Override)
                 {
-                    body += " = " + defaultValue.As().Code(true, true) + ";";
+                    body += " = " + defaultValue.As().Code(true, true, true, "", false, true, false) + ";";
                 }
             }
             else

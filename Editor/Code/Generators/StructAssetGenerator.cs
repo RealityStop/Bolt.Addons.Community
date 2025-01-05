@@ -57,7 +57,7 @@ namespace Unity.VisualScripting.Community
 
             for (int i = 0; i < Data.constructors.Count; i++)
             {
-                var constructor = ConstructorGenerator.Constructor(Data.constructors[i].scope, Data.constructors[i].modifier, Data.constructors[i].CallType, Data.title.LegalMemberName());
+                var constructor = ConstructorGenerator.Constructor(Data.constructors[i].scope, Data.constructors[i].modifier, Data.constructors[i].initalizerType, Data.title.LegalMemberName());
                 if (Data.constructors[i].graph.units.Count > 0)
                 {
                     var usings = new List<string>();

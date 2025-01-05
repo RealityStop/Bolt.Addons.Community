@@ -97,7 +97,7 @@ namespace Unity.VisualScripting.Community
                     continue;
                 }
 
-                var constructor = ConstructorGenerator.Constructor(constructorData.scope, constructorData.modifier, constructorData.CallType, className);
+                var constructor = ConstructorGenerator.Constructor(constructorData.scope, constructorData.modifier, constructorData.initalizerType, className);
 
                 if (constructorData.graph.units.Count > 0)
                 {
@@ -107,10 +107,10 @@ namespace Unity.VisualScripting.Community
 
                     foreach (var param in parameters)
                     {
-                        param.showCall = true;
+                        param.showInitalizer = true;
                         if (!string.IsNullOrEmpty(param.name))
                         {
-                            constructor.AddParameter(param.useInCall, CreateParameter(param));
+                            constructor.AddParameter(param.useInInitalizer, CreateParameter(param));
                         }
                     }
 
@@ -316,8 +316,8 @@ namespace Unity.VisualScripting.Community
             generationData.returns = returnType;
             foreach (var variable in Data.variables)
             {
-                if(!string.IsNullOrEmpty(variable.FieldName))
-                generationData.AddLocalNameInScope(variable.FieldName, variable.type);
+                if (!string.IsNullOrEmpty(variable.FieldName))
+                    generationData.AddLocalNameInScope(variable.FieldName, variable.type);
             }
             return generationData;
         }

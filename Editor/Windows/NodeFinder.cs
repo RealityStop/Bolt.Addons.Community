@@ -9,6 +9,7 @@ using System.Reflection;
 using Object = UnityEngine.Object;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using UnityEngine.SceneManagement;
 
 namespace Unity.VisualScripting.Community
 {
@@ -319,14 +320,14 @@ namespace Unity.VisualScripting.Community
                     if (_showProviderFilters)
                     {
                         EditorGUI.indentLevel++;
-                        EditorGUILayout.BeginVertical();
+                        EditorGUILayout.BeginHorizontal();
                         var providerFilters = _filters.Where(f => f.ProviderType != null).ToList();
                         for (int i = 0; i < providerFilters.Count; i++)
                         {
                             DrawFilterToggle(providerFilters[i]);
                             GUILayout.Space(4);
                         }
-                        EditorGUILayout.EndVertical();
+                        EditorGUILayout.EndHorizontal();
                         EditorGUI.indentLevel--;
                     }
                 });
@@ -338,7 +339,7 @@ namespace Unity.VisualScripting.Community
                     {
                         EditorGUI.indentLevel++;
 
-                        EditorGUILayout.BeginVertical();
+                        EditorGUILayout.BeginHorizontal();
                         var types = Enum.GetValues(typeof(MatchType)).Cast<MatchType>().ToList();
                         for (int i = 0; i < types.Count; i++)
                         {
@@ -346,7 +347,7 @@ namespace Unity.VisualScripting.Community
                             GUILayout.Space(4);
 
                         }
-                        EditorGUILayout.EndVertical();
+                        EditorGUILayout.EndHorizontal();
                         EditorGUI.indentLevel--;
                     }
                 });
@@ -360,10 +361,12 @@ namespace Unity.VisualScripting.Community
                         var specialFilters = _filters.Where(f => f.ProviderType == null).ToList();
                         if (specialFilters.Any())
                         {
+                            EditorGUILayout.BeginHorizontal();
                             foreach (var filter in specialFilters)
                             {
                                 DrawFilterToggle(filter);
                             }
+                            EditorGUILayout.EndHorizontal();
                         }
                     }
                 });
@@ -534,6 +537,19 @@ namespace Unity.VisualScripting.Community
                                 prefix = propertyGetterMacro.name;
                             else if (reference.root is PropertySetterMacro propertySetterMacro)
                                 prefix = propertySetterMacro.name;
+                            else if (reference.IsWithin<SubgraphUnit>())
+                            {
+                                var parent = reference.GetParent<SubgraphUnit>();
+                                prefix = parent.nest.source == GraphSource.Macro ? parent.nest.macro.name : nodePath.graph.GetType().ToString().Split(".").Last();
+                            }
+                            else if (reference.isRoot && reference.root is Object asset && reference.root is not IEventMachine)
+                            {
+                                prefix = asset.name;
+                            }
+                            else if (reference.isRoot && reference.root is IEventMachine eventMachine)
+                            {
+                                prefix = eventMachine.GetType().ToString();
+                            }
                             else
                                 prefix = nodePath.graph.GetType().ToString().Split(".").Last();
                         }
@@ -1027,18 +1043,24 @@ namespace Unity.VisualScripting.Community
                 Unit = unit,
                 FullTypeName = GetUnitFullName(unit)
             };
-
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
             bool hasError = unit.GetException(baseRef) != null || unit is MissingType;
             if (!hasError) return null;
+#else
+            bool hasError = unit.GetException(baseRef) != null;
+            if (!hasError) return null;
+#endif
 
             if (unit.GetException(baseRef) != null)
             {
                 matchRecord.FullTypeName += $" ({unit.GetException(baseRef).Message})";
             }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
             else if (unit is MissingType missingType)
             {
                 matchRecord.FullTypeName += $" {(missingType.formerType == null ? "Missing Type" : "Missing Type : " + missingType.formerType)}";
             }
+#endif
 
             matchRecord.Matches.Add(MatchType.Error);
             return matchRecord;
@@ -1264,10 +1286,12 @@ namespace Unity.VisualScripting.Community
             {
                 context.canvas?.ViewElements(((IGraphElement)match.group).Yield());
             }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
             else if (match.stickyNote != null)
             {
                 context.canvas?.ViewElements(((IGraphElement)match.stickyNote).Yield());
             }
+#endif
             else if (match.Unit != null)
             {
                 context.canvas?.ViewElements(((IGraphElement)match.Unit).Yield());
@@ -1413,7 +1437,7 @@ namespace Unity.VisualScripting.Community
 
         public override IEnumerable<(GraphReference, IGraphElement)> GetElements()
         {
-            foreach (var machine in UnityObjectUtility.FindObjectsOfTypeIncludingInactive<ScriptMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
+            foreach (var machine in FindObjectsOfTypeIncludingInactive<ScriptMachine>().Where(_asset => _asset.nest.source == GraphSource.Embed))
             {
                 if (machine?.GetReference().graph is not FlowGraph) continue;
 
@@ -1421,6 +1445,29 @@ namespace Unity.VisualScripting.Community
                 foreach (var element in _window.TraverseFlowGraph(baseRef))
                 {
                     yield return element;
+                }
+            }
+        }
+
+        private static IEnumerable<T> FindObjectsOfTypeIncludingInactive<T>()
+        {
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+
+                if (scene.isLoaded)
+                {
+                    foreach (var rootGameObject in scene.GetRootGameObjects())
+                    {
+                        foreach (var result in rootGameObject.GetComponents<T>())
+                        {
+                            yield return result;
+                        }
+                        foreach (var result in rootGameObject.GetComponentsInChildren<T>(true))
+                        {
+                            yield return result;
+                        }
+                    }
                 }
             }
         }

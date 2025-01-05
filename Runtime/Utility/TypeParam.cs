@@ -25,8 +25,9 @@ namespace Unity.VisualScripting.Community.Utility
         [InspectableIf("showDefault")]
         public bool hasDefault;
 
-        [InspectableIf("showCall")]
-        public bool useInCall;
+        [InspectableIf("showInitalizer")]
+        [RenamedFrom("useInCall")]
+        public bool useInInitalizer;
 
         public bool usesGeneric { get; }
 
@@ -40,7 +41,8 @@ namespace Unity.VisualScripting.Community.Utility
         [InspectorToggleLeft]
         public object defaultValue;
         public SerializableType typeHandle;
-        public bool showCall = false;
+        [RenamedFrom("showCall")]
+        public bool showInitalizer = false;
         public bool showDefault = false;
         public bool supportsAttributes = true;
 

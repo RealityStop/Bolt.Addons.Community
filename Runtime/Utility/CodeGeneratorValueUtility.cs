@@ -6,17 +6,32 @@ using UnityEngine;
 
 public static class CodeGeneratorValueUtility
 {
-    private static Dictionary<ValueInput, (string name, Object value)> ValueInputObjectValueHandlers = new Dictionary<ValueInput, (string name, Object value)>();
-    private static Dictionary<string, Object> ObjectValueHandlers = new Dictionary<string, Object>();
-
-    public static void AddValue(ValueInput valueInput, string VariableName, Object VariableValue)
+    private static Dictionary<Object, Dictionary<string, Object>> ObjectValueHandlers = new Dictionary<Object, Dictionary<string, Object>>();
+    public static Object currentAsset;
+    public static void AddValue(Object target, string variableName, Object variableValue)
     {
-        if (!ValueInputObjectValueHandlers.ContainsKey(valueInput))
-            ValueInputObjectValueHandlers.Add(valueInput, (VariableName, VariableValue));
+        if (!ObjectValueHandlers.ContainsKey(target))
+        {
+            ObjectValueHandlers.Add(target, new Dictionary<string, Object>() { { variableName, variableValue } });
+        }
+        else if (!ObjectValueHandlers[target].ContainsKey(variableName))
+        {
+            ObjectValueHandlers[target].Add(variableName, variableValue);
+        }
     }
 
-    public static Dictionary<string, Object> GetAllValues()
+    public static bool TryGetVariable(Object target, Object value, out string variableName)
     {
-        return ValueInputObjectValueHandlers.Select(kvp => kvp.Value).ToDictionary(v => v.name, v => v.value).Concat(ObjectValueHandlers).ToDictionary(v => v.Key, v => v.Value);
+        if (ObjectValueHandlers.ContainsKey(target) && ObjectValueHandlers[target].ContainsValue(value))
+        {
+            variableName = ObjectValueHandlers[target].First(kvp => kvp.Value == value).Key;
+            return true;
+        }
+        variableName = "";
+        return false;
+    }
+    public static Dictionary<string, Object> GetAllValues(Object target)
+    {
+        return ObjectValueHandlers[target];
     }
 }

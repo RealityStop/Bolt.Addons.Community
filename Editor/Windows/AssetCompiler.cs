@@ -8,12 +8,13 @@ using System.Text.RegularExpressions;
 using System.Reflection;
 using System;
 using System.IO;
+using UnityEditor.Compilation;
 
 namespace Unity.VisualScripting.Community
 {
     public static class AssetCompiler
     {
-        private static readonly Dictionary<Assembly, bool> _editorAssemblyCache = new Dictionary<Assembly, bool>();
+        private static readonly Dictionary<System.Reflection.Assembly, bool> _editorAssemblyCache = new Dictionary<System.Reflection.Assembly, bool>();
 
         [MenuItem("Addons/Compile All")]
         public static void Compile()
@@ -27,12 +28,18 @@ namespace Unity.VisualScripting.Community
         private static void DoCompileAll()
         {
             var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
+            var basePath = "Assets" + "/Unity.VisualScripting.Community.Generated/";
             var oldPath = Application.dataPath + "/Bolt.Addons.Generated/";
             var scriptsPath = path + "Scripts/";
+            var scriptsRelativePath = basePath + "Scripts/";
+            var editorPath = path + "Editor/";
+            var editorRelativePath = basePath + "Editor/";
             var csharpPath = scriptsPath + "Objects/";
             var delegatesPath = scriptsPath + "Delegates/";
             var enumPath = scriptsPath + "Enums/";
             var interfacePath = scriptsPath + "Interfaces/";
+            var csharpRelativePath = scriptsRelativePath + "Objects/";
+            var interfaceRelativePath = scriptsRelativePath + "Interfaces/";
             HUMIO.Ensure(oldPath).Path();
             HUMIO.Ensure(path).Path();
             HUMIO.Ensure(scriptsPath).Path();
@@ -63,18 +70,43 @@ namespace Unity.VisualScripting.Community
 
             for (int i = 0; i < classes.Count; i++)
             {
-                var asset = classes[i];
-                var fullPath = csharpPath + classes[i].title.LegalMemberName() + ".cs";
-                HUMIO.Save(ClassAssetGenerator.GetSingleDecorator(classes[i]).GenerateClean(0)).Custom(fullPath).Text(false);
-                var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                if (!asset.lastCompiledNames.Contains(name))
-                    asset.lastCompiledNames.Add(name);
-                var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(csharpPath + asset.title.LegalMemberName() + ".cs");
-                var variables = asset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && variable.scope == AccessModifier.Public);
-                var variableNames = variables.Select(variable => variable.FieldName).ToArray();
-                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).ToArray();
+                var classAsset = classes[i];
+                string fullPath;
+                string relativePath;
+                if (classAsset.inheritsType && IsEditorAssembly(classAsset.GetInheritedType().Assembly, new HashSet<string>()))
+                {
+                    fullPath = editorPath + classAsset.title.LegalMemberName() + ".cs";
+                    relativePath = editorRelativePath + classAsset.title.LegalMemberName() + ".cs";
+                }
+                else
+                {
+                    fullPath = csharpPath + classAsset.title.LegalMemberName() + ".cs";
+                    relativePath = csharpRelativePath + classAsset.title.LegalMemberName() + ".cs";
+                }
+                var code = ClassAssetGenerator.GetSingleDecorator(classes[i]).GenerateClean(0);
+                var ObjectVariables = "\n";
+                var values = CodeGeneratorValueUtility.GetAllValues(classAsset);
+                foreach (var variable in values)
+                {
+                    if (variable.Value != null)
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    else
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+
+                }
+                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
+                HUMIO.Save(code).Custom(fullPath).Text(false);
+                var name = classAsset.category + (string.IsNullOrEmpty(classAsset.category) ? string.Empty : ".") + classAsset.title.LegalMemberName();
+                if (!classAsset.lastCompiledNames.Contains(name))
+                    classAsset.lastCompiledNames.Add(name);
+                var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
+                var variables = classAsset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && (variable.scope == AccessModifier.Public || variable.attributes.Any(a => a.GetAttributeType() == typeof(SerializeField))));
+                var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                var ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                var variableNames = variables.Select(variable => variable.FieldName).Concat(ObjectNamesArray).ToArray();
+                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).Concat(ObjectValuesArray).ToArray();
+                scriptImporter.SetIcon(classAsset.icon);
                 scriptImporter.SetDefaultReferences(variableNames, variableValues);
-                scriptImporter.SetIcon(asset.icon);
             }
 
             for (int i = 0; i < structs.Count; i++)
@@ -101,14 +133,14 @@ namespace Unity.VisualScripting.Community
 
             for (int i = 0; i < interfaces.Count; i++)
             {
-                var asset = interfaces[i];
-                var fullPath = interfacePath + asset.title.LegalMemberName() + ".cs";
-                HUMIO.Save(InterfaceAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
-                var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                if (!asset.lastCompiledNames.Contains(name))
-                    asset.lastCompiledNames.Add(name);
-                var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(interfacePath + asset.title.LegalMemberName() + ".cs");
-                scriptImporter.SetIcon(asset.icon);
+                var interfaceAsset = interfaces[i];
+                var fullPath = interfacePath + interfaceAsset.title.LegalMemberName() + ".cs";
+                HUMIO.Save(InterfaceAssetGenerator.GetSingleDecorator(interfaceAsset).GenerateClean(0)).Custom(fullPath).Text(false);
+                var name = interfaceAsset.category + (string.IsNullOrEmpty(interfaceAsset.category) ? string.Empty : ".") + interfaceAsset.title.LegalMemberName();
+                if (!interfaceAsset.lastCompiledNames.Contains(name))
+                    interfaceAsset.lastCompiledNames.Add(name);
+                var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(interfaceRelativePath + interfaceAsset.title.LegalMemberName() + ".cs");
+                scriptImporter.SetIcon(interfaceAsset.icon);
             }
 
             for (int i = 0; i < delegates.Count; i++)
@@ -123,12 +155,36 @@ namespace Unity.VisualScripting.Community
                     asset.lastCompiledNames.Add(name);
             }
 
+            var attemptSubgraphs = !scriptGraphAssets.Any(asset => asset.graph.units.Any(unit => unit is GraphInput or GraphOutput)) || EditorUtility.DisplayDialog("Compile Subgraphs", "Attempt to compile subgraphs, this could cause errors in the generated script and will not generate anything connected to the Graph Input and Output.", "Yes", "No");
+
             for (int i = 0; i < scriptGraphAssets.Count; i++)
             {
-                var asset = scriptGraphAssets[i];
-                if (asset.graph != null || asset.graph.units.Any(unit => unit is GraphInput or GraphOutput)) continue;
-                var fullPath = csharpPath + (!string.IsNullOrEmpty(asset.graph.title) ? asset.graph.title.LegalMemberName() : asset.name.LegalMemberName()) + ".cs";
-                HUMIO.Save(ScriptGraphAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
+                var scriptGraphAsset = scriptGraphAssets[i];
+                if (scriptGraphAsset.graph != null || (scriptGraphAsset.graph.units.Any(unit => unit is GraphInput or GraphOutput) && !attemptSubgraphs)) continue;
+                string fullPath = csharpPath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
+                string relativePath = csharpRelativePath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
+                HUMIO.Delete(fullPath);
+                HUMIO.Ensure(fullPath).Path();
+                var code = ScriptGraphAssetGenerator.GetSingleDecorator(scriptGraphAsset).GenerateClean(0);
+                var ObjectVariables = "\n";
+                var values = CodeGeneratorValueUtility.GetAllValues(scriptGraphAsset);
+                foreach (var variable in values)
+                {
+                    if (variable.Value != null)
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    else
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+
+                }
+                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
+                HUMIO.Save(code).Custom(fullPath).Text(false);
+                var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
+                var variables = scriptGraphAsset.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
+                var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                var ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                scriptImporter.SetDefaultReferences(variableNames, variableValues);
             }
 
 
@@ -143,13 +199,19 @@ namespace Unity.VisualScripting.Community
             var graphAssets = Selection.GetFiltered<ScriptGraphAsset>(SelectionMode.Assets).ToList();
 
             var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
+            var basePath = "Assets" + "/Unity.VisualScripting.Community.Generated/";
             var oldPath = Application.dataPath + "/Bolt.Addons.Generated/";
             var scriptsPath = path + "Scripts/";
+            var scriptsRelativePath = basePath + "Scripts/";
             var editorPath = path + "Editor/";
+            var editorRelativePath = basePath + "Editor/";
             var csharpPath = scriptsPath + "Objects/";
             var delegatesPath = scriptsPath + "Delegates/";
             var enumPath = scriptsPath + "Enums/";
             var interfacePath = scriptsPath + "Interfaces/";
+            var csharpRelativePath = scriptsRelativePath + "Objects/";
+            var interfaceRelativePath = scriptsRelativePath + "Interfaces/";
+
 
             HUMIO.Ensure(oldPath).Path();
             HUMIO.Ensure(path).Path();
@@ -166,28 +228,46 @@ namespace Unity.VisualScripting.Community
             {
                 if (asset is ClassAsset classAsset)
                 {
-                    var fullPath = string.Empty;
-                    if (classAsset.inheritsType && IsEditorAssembly(classAsset.inherits.type.Assembly, new HashSet<string>()))
+                    string fullPath;
+                    string relativePath;
+                    if (classAsset.inheritsType && IsEditorAssembly(classAsset.GetInheritedType().Assembly, new HashSet<string>()))
                     {
                         fullPath = editorPath + classAsset.title.LegalMemberName() + ".cs";
+                        relativePath = editorRelativePath + classAsset.title.LegalMemberName() + ".cs";
                     }
                     else
                     {
                         fullPath = csharpPath + classAsset.title.LegalMemberName() + ".cs";
+                        relativePath = csharpRelativePath + classAsset.title.LegalMemberName() + ".cs";
                     }
 
                     HUMIO.Delete(fullPath);
                     HUMIO.Ensure(fullPath).Path();
-                    HUMIO.Save(ClassAssetGenerator.GetSingleDecorator(classAsset).GenerateClean(0)).Custom(fullPath).Text(false);
+                    var code = ClassAssetGenerator.GetSingleDecorator(classAsset).GenerateClean(0);
+                    var ObjectVariables = "\n";
+                    var values = CodeGeneratorValueUtility.GetAllValues(classAsset);
+                    foreach (var variable in values)
+                    {
+                        if (variable.Value != null)
+                            ObjectVariables += CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        else
+                            ObjectVariables += CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+
+                    }
+                    code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                     var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
                     if (!asset.lastCompiledNames.Contains(name))
                         asset.lastCompiledNames.Add(name);
-                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(csharpPath + classAsset.title.LegalMemberName() + ".cs");
-                    var variables = classAsset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && variable.scope == AccessModifier.Public);
-                    var variableNames = variables.Select(variable => variable.FieldName).ToArray();
-                    var variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).ToArray();
-                    scriptImporter.SetDefaultReferences(variableNames, variableValues);
+                    HUMIO.Save(code).Custom(fullPath).Text(true);
+                    var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
+                    var variables = classAsset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && (variable.scope == AccessModifier.Public || variable.attributes.Any(a => a.GetAttributeType() == typeof(SerializeField))));
+                    var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                    var ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                    var variableNames = variables.Select(variable => variable.FieldName).Concat(ObjectNamesArray).ToArray();
+                    var variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).Concat(ObjectValuesArray).ToArray();
                     scriptImporter.SetIcon(classAsset.icon);
+                    scriptImporter.SetDefaultReferences(variableNames, variableValues);
+
                 }
                 else if (asset is StructAsset structAsset)
                 {
@@ -198,7 +278,7 @@ namespace Unity.VisualScripting.Community
                     var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
                     if (!asset.lastCompiledNames.Contains(name))
                         asset.lastCompiledNames.Add(name);
-                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath("Assets/Unity.VisualScripting.Community.Generated/Scripts/Objects/" + asset.title.LegalMemberName() + ".cs");
+                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(csharpRelativePath + asset.title.LegalMemberName() + ".cs");
                     scriptImporter.SetIcon(structAsset.icon);
                 }
                 else if (asset is EnumAsset)
@@ -236,9 +316,7 @@ namespace Unity.VisualScripting.Community
                     var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
                     if (!asset.lastCompiledNames.Contains(name))
                         asset.lastCompiledNames.Add(name);
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
-                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(interfacePath + interfaceAsset.title.LegalMemberName() + ".cs");
+                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(interfaceRelativePath + interfaceAsset.title.LegalMemberName() + ".cs");
                     scriptImporter.SetIcon(interfaceAsset.icon);
                 }
             }
@@ -246,33 +324,50 @@ namespace Unity.VisualScripting.Community
             foreach (var scriptGraphAsset in graphAssets)
             {
                 string fullPath = csharpPath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
+                string relativePath = csharpRelativePath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
                 HUMIO.Delete(fullPath);
                 HUMIO.Ensure(fullPath).Path();
                 var code = ScriptGraphAssetGenerator.GetSingleDecorator(scriptGraphAsset).GenerateClean(0);
+                var ObjectVariables = "\n";
+                var values = CodeGeneratorValueUtility.GetAllValues(scriptGraphAsset);
+                foreach (var variable in values)
+                {
+                    if (variable.Value != null)
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    else
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+
+                }
+                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                 HUMIO.Save(code).Custom(fullPath).Text(false);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-                var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(csharpPath + GetGraphName(scriptGraphAsset) + ".cs");
+                var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
                 var variables = scriptGraphAsset.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                var variableNames = variables.Select(variable => variable.name).ToArray();
-                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).ToArray();
+                var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                var ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                 scriptImporter.SetDefaultReferences(variableNames, variableValues);
             }
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
-
+        public static MonoImporter monoImporter;
         public static void CompileAsset(UnityEngine.Object targetasset)
         {
             var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
+            var basePath = "Assets" + "/Unity.VisualScripting.Community.Generated/";
             var oldPath = Application.dataPath + "/Bolt.Addons.Generated/";
             var scriptsPath = path + "Scripts/";
+            var scriptsRelativePath = basePath + "Scripts/";
             var editorPath = path + "Editor/";
+            var editorRelativePath = basePath + "Editor/";
             var csharpPath = scriptsPath + "Objects/";
             var delegatesPath = scriptsPath + "Delegates/";
             var enumPath = scriptsPath + "Enums/";
             var interfacePath = scriptsPath + "Interfaces/";
+            var csharpRelativePath = scriptsRelativePath + "Objects/";
+            var interfaceRelativePath = scriptsRelativePath + "Interfaces/";
 
             HUMIO.Ensure(oldPath).Path();
             HUMIO.Ensure(path).Path();
@@ -290,30 +385,45 @@ namespace Unity.VisualScripting.Community
                 if (asset is ClassAsset classAsset)
                 {
                     string fullPath;
+                    string relativePath;
                     if (classAsset.inheritsType && IsEditorAssembly(classAsset.GetInheritedType().Assembly, new HashSet<string>()))
                     {
                         fullPath = editorPath + classAsset.title.LegalMemberName() + ".cs";
+                        relativePath = editorRelativePath + classAsset.title.LegalMemberName() + ".cs";
                     }
                     else
                     {
                         fullPath = csharpPath + classAsset.title.LegalMemberName() + ".cs";
+                        relativePath = csharpRelativePath + classAsset.title.LegalMemberName() + ".cs";
                     }
 
                     HUMIO.Delete(fullPath);
                     HUMIO.Ensure(fullPath).Path();
-                    HUMIO.Save(ClassAssetGenerator.GetSingleDecorator(classAsset).GenerateClean(0)).Custom(fullPath).Text(false);
+                    var code = ClassAssetGenerator.GetSingleDecorator(classAsset).GenerateClean(0);
+                    var ObjectVariables = "\n";
+                    var values = CodeGeneratorValueUtility.GetAllValues(classAsset);
+                    foreach (var variable in values)
+                    {
+                        if (variable.Value != null)
+                            ObjectVariables += CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        else
+                            ObjectVariables += CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+
+                    }
+                    code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                     var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
                     if (!asset.lastCompiledNames.Contains(name))
                         asset.lastCompiledNames.Add(name);
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
-
-                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(csharpPath + classAsset.title.LegalMemberName() + ".cs");
-                    var variables = classAsset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && variable.scope == AccessModifier.Public);
-                    var variableNames = variables.Select(variable => variable.FieldName).ToArray();
-                    var variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).ToArray();
-                    scriptImporter.SetDefaultReferences(variableNames, variableValues);
+                    HUMIO.Save(code).Custom(fullPath).Text(true);
+                    var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
+                    var variables = classAsset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && (variable.scope == AccessModifier.Public || variable.attributes.Any(a => a.GetAttributeType() == typeof(SerializeField))));
+                    var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                    var ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                    var variableNames = variables.Select(variable => variable.FieldName).Concat(ObjectNamesArray).ToArray();
+                    var variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).Concat(ObjectValuesArray).ToArray();
                     scriptImporter.SetIcon(classAsset.icon);
+                    scriptImporter.SetDefaultReferences(variableNames, variableValues);
+
                 }
                 else if (asset is StructAsset structAsset)
                 {
@@ -324,10 +434,10 @@ namespace Unity.VisualScripting.Community
                     var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
                     if (!asset.lastCompiledNames.Contains(name))
                         asset.lastCompiledNames.Add(name);
+                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(csharpRelativePath + structAsset.title.LegalMemberName() + ".cs");
+                    scriptImporter.SetIcon(structAsset.icon);
                     AssetDatabase.SaveAssets();
                     AssetDatabase.Refresh();
-                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(csharpPath + structAsset.title.LegalMemberName() + ".cs");
-                    scriptImporter.SetIcon(structAsset.icon);
                 }
                 else if (asset is EnumAsset)
                 {
@@ -370,23 +480,35 @@ namespace Unity.VisualScripting.Community
                         asset.lastCompiledNames.Add(name);
                     AssetDatabase.SaveAssets();
                     AssetDatabase.Refresh();
-                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(interfacePath + interfaceAsset.title.LegalMemberName() + ".cs");
+                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(interfaceRelativePath + interfaceAsset.title.LegalMemberName() + ".cs");
                     scriptImporter.SetIcon(interfaceAsset.icon);
                 }
             }
             else if (targetasset is ScriptGraphAsset scriptGraphAsset)
             {
                 string fullPath = csharpPath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
+                string relativePath = csharpRelativePath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
                 HUMIO.Delete(fullPath);
                 HUMIO.Ensure(fullPath).Path();
                 var code = ScriptGraphAssetGenerator.GetSingleDecorator(scriptGraphAsset).GenerateClean(0);
-                HUMIO.Save(code).Custom(fullPath).Text(false);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-                var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(csharpPath + GetGraphName(scriptGraphAsset) + ".cs");
+                var ObjectVariables = "\n";
+                var values = CodeGeneratorValueUtility.GetAllValues(scriptGraphAsset);
+                foreach (var variable in values)
+                {
+                    if (variable.Value != null)
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    else
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+
+                }
+                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
+                HUMIO.Save(code).Custom(fullPath).Text(true);
+                var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
                 var variables = scriptGraphAsset.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                var variableNames = variables.Select(variable => variable.name).ToArray();
-                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).ToArray();
+                var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                var ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                 scriptImporter.SetDefaultReferences(variableNames, variableValues);
             }
         }
@@ -402,10 +524,10 @@ namespace Unity.VisualScripting.Community
                 return graphAsset.name;
             }
             else
-                return "Unnamed Graph";
+                return "UnnamedGraph";
         }
 
-        private static bool IsEditorAssembly(Assembly assembly, HashSet<string> visited)
+        private static bool IsEditorAssembly(System.Reflection.Assembly assembly, HashSet<string> visited)
         {
             if (_editorAssemblyCache.TryGetValue(assembly, out var isEditor))
             {
@@ -455,7 +577,7 @@ namespace Unity.VisualScripting.Community
             {
                 try
                 {
-                    Assembly dependency = Assembly.Load(dependencyName);
+                    System.Reflection.Assembly dependency = System.Reflection.Assembly.Load(dependencyName);
 
                     if (IsEditorAssembly(dependency, visited))
                     {

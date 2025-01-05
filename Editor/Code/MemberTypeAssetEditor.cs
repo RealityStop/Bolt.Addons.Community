@@ -132,20 +132,20 @@ namespace Unity.VisualScripting.Community
             {
                 foreach (var constructor in listOfConstructors)
                 {
-                    foreach (var param in constructor.parameters.Where(param => !param.showCall))
+                    foreach (var param in constructor.parameters.Where(param => !param.showInitalizer))
                     {
-                        param.showCall = true;
+                        param.showInitalizer = true;
                     }
                     if (constructor.scope != c.GetScope()) continue;
                     var inheritedType = (Target as ClassAsset).inherits.type;
                     var constructorParameters = c.GetParameters();
-                    bool requiredParametersHaveBase = constructor.parameters.Where(parameter => parameter.useInCall).Select(parameter => parameter.type).SequenceEqual(constructorParameters.Select(parameter => parameter.ParameterType));
+                    bool requiredParametersHaveBase = constructor.parameters.Where(parameter => parameter.useInInitalizer).Select(parameter => parameter.type).SequenceEqual(constructorParameters.Select(parameter => parameter.ParameterType));
                     if (!requiredParametersHaveBase)
                     {
                         continue;
                     }
 
-                    if (!constructor.parameters.Where(parameter => parameter.useInCall).Select(parameter => parameter.modifier).SequenceEqual(constructorParameters.Select(parameter => parameter.GetModifier()))) continue;
+                    if (!constructor.parameters.Where(parameter => parameter.useInInitalizer).Select(parameter => parameter.modifier).SequenceEqual(constructorParameters.Select(parameter => parameter.GetModifier()))) continue;
 
                     return true;
                 }
@@ -456,12 +456,12 @@ namespace Unity.VisualScripting.Community
 
                                 var listOfVariables = variables.value as List<TFieldDeclaration>;
                                 declaration.scope = parameterizedConstructors[index].GetScope();
-                                declaration.CallType = ConstructorCallType.Base;
+                                declaration.initalizerType = ConstructorInitializer.Base;
                                 declaration.parameters = parameterizedConstructors[index]
                                     .GetParameters()
                                     .Select(param => new TypeParam(param.ParameterType, param.Name)
                                     {
-                                        useInCall = !inheritedType.IsAbstract && inheritedType.IsClass
+                                        useInInitalizer = !inheritedType.IsAbstract && inheritedType.IsClass
                                     })
                                     .ToList();
                                 declaration.modifier = parameterizedConstructors[index].GetModifier();
@@ -1166,12 +1166,12 @@ namespace Unity.VisualScripting.Community
                                 EditorGUILayout.BeginHorizontal();
                                 //HUMEditor.Image(PathUtil.Load("scope_32", CommunityEditorPath.Code).Single(), 16, 16);
                                 EditorGUI.BeginChangeCheck();
-                                var CallType = (ConstructorCallType)EditorGUILayout.EnumPopup("CallType", listOfConstructors[index].CallType);
+                                var CallType = (ConstructorInitializer)EditorGUILayout.EnumPopup("CallType", listOfConstructors[index].initalizerType);
                                 if (EditorGUI.EndChangeCheck())
                                 {
                                     Undo.RegisterCompleteObjectUndo(listOfConstructors[index], "Changed Constructor CallType");
                                     shouldUpdate = true;
-                                    listOfConstructors[index].CallType = CallType;
+                                    listOfConstructors[index].initalizerType = CallType;
                                 }
                                 EditorGUILayout.EndHorizontal();
                                 GUILayout.Space(4);
@@ -1589,7 +1589,7 @@ namespace Unity.VisualScripting.Community
                                 shouldUpdate = true;
                             }
                             GUILayout.Space(4);
-                            if (parameters[i].showCall)
+                            if (parameters[i].showInitalizer)
                             {
                                 Inspector.BeginBlock(currentParam["useInCall"], new Rect());
                                 LudiqGUI.InspectorLayout(currentParam["useInCall"], new GUIContent("Use In Call"));

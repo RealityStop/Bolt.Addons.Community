@@ -562,11 +562,13 @@ namespace Unity.VisualScripting.Community
             if (Selection.activeObject is CodeAsset _asset)
             {
                 asset = _asset;
+                CodeGeneratorValueUtility.currentAsset = _asset;
                 UpdateCodeDisplay();
             }
             else if (Selection.activeObject is ScriptGraphAsset _graphAsset)
             {
                 asset = _graphAsset;
+                CodeGeneratorValueUtility.currentAsset = _graphAsset;
                 UpdateCodeDisplay();
             }
         }
@@ -582,6 +584,17 @@ namespace Unity.VisualScripting.Community
                     code = "#pragma warning disable\n".ConstructHighlight().RemoveMarkdown();
                 }
                 code += loadedCode;
+                var ObjectVariables = "\n";
+                var values = CodeGeneratorValueUtility.GetAllValues(CodeGeneratorValueUtility.currentAsset);
+                foreach (var variable in values)
+                {
+                    if (variable.Value != null)
+                        ObjectVariables += CodeBuilder.Indent(1) + "public ".ConstructHighlight() + variable.Value.GetType().As().CSharpName(false, true, true) + " " + variable.Key.LegalMemberName().VariableHighlight() + ";\n";
+                    else
+                        ObjectVariables += CodeBuilder.Indent(1) + "public ".ConstructHighlight() + typeof(UnityEngine.Object).As().CSharpName(false, true, true) + " " + variable.Key.LegalMemberName().VariableHighlight() + ";\n";
+
+                }
+                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables.RemoveMarkdown());
                 var scrollView = rootVisualElement.Q<VisualElement>("codeView").Q<ScrollView>("codeContainer");
                 var lineNumbersScrollView = rootVisualElement.Q<VisualElement>("codeView").Q<ScrollView>("lineNumbersContainer");
                 DisplayCode(lineNumbersScrollView, scrollView, code);
@@ -673,6 +686,7 @@ namespace Unity.VisualScripting.Community
             }
             else
             {
+                // Attempt to improve performance
                 const int batchSize = 100;
                 var currentBatch = 0;
                 var scheduler = codeContainers.schedule.Execute((t) =>
