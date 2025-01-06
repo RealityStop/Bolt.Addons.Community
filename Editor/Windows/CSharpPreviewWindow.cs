@@ -720,13 +720,14 @@ namespace Unity.VisualScripting.Community
                 code += loadedCode;
                 var ObjectVariables = "\n";
                 var values = CodeGeneratorValueUtility.currentAsset != null ? CodeGeneratorValueUtility.GetAllValues(CodeGeneratorValueUtility.currentAsset) : new Dictionary<string, Object>();
+                var index = 0;
                 foreach (var variable in values)
                 {
                     if (variable.Value != null)
-                        ObjectVariables += CodeBuilder.Indent(1) + "public ".ConstructHighlight() + variable.Value.GetType().As().CSharpName(false, true, true) + " " + variable.Key.LegalMemberName().VariableHighlight() + ";\n";
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[{"Foldout".TypeHighlight()}({"ObjectReferences".Quotes().StringHighlight()})]\n" : index == values.Count - 1 ? CodeBuilder.Indent(1) + $"[{"FoldoutEnd".TypeHighlight()}]\n" + CodeBuilder.Indent(1) + $"[{typeof(HideInInspector).As().CSharpName(false, true)}]\n" : CodeBuilder.Indent(1) + $"[{typeof(HideInInspector).As().CSharpName(false, true)}]\n") + CodeBuilder.Indent(1) + "public ".ConstructHighlight() + variable.Value.GetType().As().CSharpName(false, true, true) + " " + variable.Key.LegalMemberName().VariableHighlight() + ";\n";
                     else
-                        ObjectVariables += CodeBuilder.Indent(1) + "public ".ConstructHighlight() + typeof(UnityEngine.Object).As().CSharpName(false, true, true) + " " + variable.Key.LegalMemberName().VariableHighlight() + ";\n";
-
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[{"Foldout".TypeHighlight()}({"ObjectReferences".Quotes().StringHighlight()})]\n" : index == values.Count - 1 ? CodeBuilder.Indent(1) + $"[{"FoldoutEnd".TypeHighlight()}]\n" + CodeBuilder.Indent(1) + $"[{typeof(HideInInspector).As().CSharpName(false, true)}]\n" : CodeBuilder.Indent(1) + $"[{typeof(HideInInspector).As().CSharpName(false, true)}]\n")  + CodeBuilder.Indent(1) + "public ".ConstructHighlight() + typeof(UnityEngine.Object).As().CSharpName(false, true, true) + " " + variable.Key.LegalMemberName().VariableHighlight() + ";\n";
+                    index++;
                 }
                 code = code.Insert(code.IndexOf("{") + 1, ObjectVariables.RemoveMarkdown());
                 var scrollView = rootVisualElement.Q<VisualElement>("codeView").Q<ScrollView>("codeContainer");
