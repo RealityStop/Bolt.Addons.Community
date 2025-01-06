@@ -35,7 +35,7 @@ namespace Unity.VisualScripting.Community
 
         [Inspectable]
         public bool
-            curvedLine,
+            curvedLine = true,
             customPalette = false,
             fontColorize = false,
             lockedToPalette = false,

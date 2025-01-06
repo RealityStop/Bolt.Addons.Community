@@ -9,6 +9,7 @@ using System.Reflection;
 using System;
 using System.IO;
 using UnityEditor.Compilation;
+using UnityEngine.SceneManagement;
 
 namespace Unity.VisualScripting.Community
 {
@@ -67,6 +68,7 @@ namespace Unity.VisualScripting.Community
             var delegates = HUMAssets.Find().Assets().OfType<DelegateAsset>();
             var interfaces = HUMAssets.Find().Assets().OfType<InterfaceAsset>();
             var scriptGraphAssets = HUMAssets.Find().Assets().OfType<ScriptGraphAsset>();
+            var scriptMachines = FindObjectsOfTypeIncludingInactive<ScriptMachine>().Concat(HUMAssets.Find().Assets().OfType<GameObject>().SelectMany(obj => obj.GetComponents<ScriptMachine>())).ToList();
 
             for (int i = 0; i < classes.Count; i++)
             {
@@ -187,9 +189,63 @@ namespace Unity.VisualScripting.Community
                 scriptImporter.SetDefaultReferences(variableNames, variableValues);
             }
 
+            for (int i = 0; i < scriptMachines.Count; i++)
+            {
+                var scriptMachine = scriptMachines[i];
+                if (scriptMachine.graph != null || (scriptMachine.graph.units.Any(unit => unit is GraphInput or GraphOutput) && !attemptSubgraphs)) continue;
+                string fullPath = csharpPath + GetGraphName(scriptMachine).LegalMemberName() + ".cs";
+                string relativePath = csharpRelativePath + GetGraphName(scriptMachine).LegalMemberName() + ".cs";
+                HUMIO.Delete(fullPath);
+                HUMIO.Ensure(fullPath).Path();
+                var code = GameObjectGenerator.GetSingleDecorator(scriptMachine.gameObject).GenerateClean(0);
+                var ObjectVariables = "\n";
+                var values = CodeGeneratorValueUtility.GetAllValues(scriptMachine);
+                foreach (var variable in values)
+                {
+                    if (variable.Value != null)
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    else
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+
+                }
+                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
+                HUMIO.Save(code).Custom(fullPath).Text(false);
+                var script = AssetDatabase.LoadAssetAtPath<MonoScript>(relativePath);
+                var type = script.GetClass();
+                var component = scriptMachine.gameObject.AddComponent(type);
+                var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
+                var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                var ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                for (int index = 0; index < variableValues.Length; index++)
+                {
+                    type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
+                }
+            }
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
+
+        private static IEnumerable<T> FindObjectsOfTypeIncludingInactive<T>()
+        {
+            var scene = SceneManager.GetActiveScene();
+
+            if (scene.isLoaded)
+            {
+                foreach (var rootGameObject in scene.GetRootGameObjects())
+                {
+                    foreach (var result in rootGameObject.GetComponents<T>())
+                    {
+                        yield return result;
+                    }
+                    foreach (var result in rootGameObject.GetComponentsInChildren<T>(true))
+                    {
+                        yield return result;
+                    }
+                }
+            }
         }
 
         [MenuItem("Addons/Compile Selected")]
@@ -197,6 +253,7 @@ namespace Unity.VisualScripting.Community
         {
             var codeAssets = Selection.GetFiltered<CodeAsset>(SelectionMode.Assets).ToList();
             var graphAssets = Selection.GetFiltered<ScriptGraphAsset>(SelectionMode.Assets).ToList();
+            var gameObjects = Selection.GetFiltered<GameObject>(SelectionMode.Unfiltered).ToList();
 
             var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
             var basePath = "Assets" + "/Unity.VisualScripting.Community.Generated/";
@@ -347,6 +404,39 @@ namespace Unity.VisualScripting.Community
                 var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
                 var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                 scriptImporter.SetDefaultReferences(variableNames, variableValues);
+            }
+
+            foreach (var scriptMachine in gameObjects.SelectMany(obj => obj.GetComponents<ScriptMachine>()))
+            {
+                string fullPath = csharpPath + GetGraphName(scriptMachine).LegalMemberName() + ".cs";
+                string relativePath = csharpRelativePath + GetGraphName(scriptMachine).LegalMemberName() + ".cs";
+                HUMIO.Delete(fullPath);
+                HUMIO.Ensure(fullPath).Path();
+                var code = GameObjectGenerator.GetSingleDecorator(scriptMachine.gameObject).GenerateClean(0);
+                var ObjectVariables = "\n";
+                var values = CodeGeneratorValueUtility.GetAllValues(scriptMachine);
+                foreach (var variable in values)
+                {
+                    if (variable.Value != null)
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    else
+                        ObjectVariables += CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+
+                }
+                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
+                HUMIO.Save(code).Custom(fullPath).Text(false);
+                var script = AssetDatabase.LoadAssetAtPath<MonoScript>(relativePath);
+                var type = script.GetClass();
+                var component = scriptMachine.gameObject.AddComponent(type);
+                var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
+                var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                var ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                for (int index = 0; index < variableValues.Length; index++)
+                {
+                    type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
+                }
             }
 
             AssetDatabase.SaveAssets();
@@ -511,6 +601,50 @@ namespace Unity.VisualScripting.Community
                 var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                 scriptImporter.SetDefaultReferences(variableNames, variableValues);
             }
+            else if (targetasset is GameObject gameObject)
+            {
+                index = 0;
+                @object = gameObject;
+                if (EditorUtility.DisplayDialog("Compile All Machines", "Compile all script machines attached to this GameObject?.", "Yes", "No"))
+                {
+                    var gen = (GameObjectGenerator)GameObjectGenerator.GetSingleDecorator(gameObject);
+                    foreach (var scriptMachine in gameObject.GetComponents<ScriptMachine>())
+                    {
+                        var name = GetGraphName(scriptMachine);
+                        string fullPath = csharpPath + name.LegalMemberName() + ".cs";
+                        string relativePath = csharpRelativePath + name.LegalMemberName() + ".cs";
+                        HUMIO.Delete(fullPath);
+                        HUMIO.Ensure(fullPath).Path();
+                        gen.current = scriptMachine;
+                        var code = gen.GenerateClean(0);
+                        var ObjectVariables = "\n";
+                        var values = CodeGeneratorValueUtility.GetAllValues(scriptMachine);
+                        foreach (var variable in values)
+                        {
+                            if (variable.Value != null)
+                                ObjectVariables += CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                            else
+                                ObjectVariables += CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+
+                        }
+                        code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
+                        HUMIO.Save(code).Custom(fullPath).Text(true);
+
+                        var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
+                        var type = scriptImporter.GetScript().GetClass();
+                        var component = scriptMachine.gameObject.GetComponent(type) ?? scriptMachine.gameObject.AddComponent(type);
+                        var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
+                        var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                        var ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                        var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                        var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                        for (int index = 0; index < variableValues.Length; index++)
+                        {
+                            type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
+                        }
+                    }
+                }
+            }
         }
 
         private static string GetGraphName(ScriptGraphAsset graphAsset)
@@ -525,6 +659,17 @@ namespace Unity.VisualScripting.Community
             }
             else
                 return "UnnamedGraph";
+        }
+        static int index = 0;
+        static GameObject @object;
+        private static string GetGraphName(ScriptMachine machine)
+        {
+            if (@object != machine.gameObject)
+            {
+                index = 0;
+                @object = machine.gameObject;
+            }
+            return machine.nest.graph.title?.Length > 0 ? machine.nest.graph.title : machine.gameObject.name + "_ScriptMachine_" + index++;
         }
 
         private static bool IsEditorAssembly(System.Reflection.Assembly assembly, HashSet<string> visited)
@@ -623,6 +768,25 @@ namespace Unity.VisualScripting.Community
                 name == "Assembly-CSharp-Editor-firstpass" ||
                 name == "UnityEditor" ||
                 name == "UnityEditor.CoreModule";
+        }
+
+        [InitializeOnLoad]
+        private static class ScriptMachineFetcher
+        {
+            static ScriptMachineFetcher()
+            {
+                CodeGeneratorValueUtility.requestMachine += (obj) =>
+                {
+                    var gen = GameObjectGenerator.GetSingleDecorator(obj) as GameObjectGenerator;
+                    if (gen.current == null)
+                    {
+                        var component = obj.GetComponent<ScriptMachine>();
+                        gen.current = component;
+                        return component;
+                    }
+                    return gen.current;
+                };
+            }
         }
     }
 }

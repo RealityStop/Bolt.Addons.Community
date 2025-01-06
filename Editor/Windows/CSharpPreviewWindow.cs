@@ -23,6 +23,14 @@ namespace Unity.VisualScripting.Community
 
         public static Object asset;
 
+        [SerializeField] private int currentComponentIndex = 0;
+
+        private GameObjectGenerator currentGameObjectGenerator;
+        private Button previousButton;
+        private Button nextButton;
+        private Label componentCountLabel;
+        private Toolbar toolbar;
+
         [MenuItem("Window/Community Addons/C# Preview")]
         public static void Open()
         {
@@ -40,9 +48,23 @@ namespace Unity.VisualScripting.Community
                 instance = window;
             }
 
-            Selection.selectionChanged += ChangeSelection;
-            var toolbar = new Toolbar();
+            Selection.selectionChanged += () =>
+            {
+                if (Selection.activeGameObject != null)
+                {
+                    currentComponentIndex = 0;
+                    UpdateComponentSelectionUI(Selection.activeGameObject);
+                }
+                else
+                {
+                    ClearComponentNavigationUI();
+                }
+                ChangeSelection();
+            };
+
+            toolbar = new Toolbar();
             toolbar.name = "Toolbar";
+
             var codeView = new VisualElement() { style = { flexDirection = FlexDirection.Row, flexGrow = 1 }, name = "codeView" };
             var codeContainer = new ScrollView
             {
@@ -108,16 +130,16 @@ namespace Unity.VisualScripting.Community
             toolbar.Add(zoomContainer);
 
             // Toolbar Buttons with toolbar-like styling
-            var compileButton = CreateToolbarButton("Compile", CompileCode);
+            var compileButton = CreateToolbarButton("Compile", CompileCode, false, true);
             toolbar.Add(compileButton);
 
-            var copyButton = CreateToolbarButton("Copy to Clipboard", CopyToClipboard);
+            var copyButton = CreateToolbarButton("Copy to Clipboard", CopyToClipboard, false, true);
             toolbar.Add(copyButton);
 
-            var refreshButton = CreateToolbarButton("Refresh", UpdateCodeDisplay);
+            var refreshButton = CreateToolbarButton("Refresh", UpdateCodeDisplay, true, true);
             toolbar.Add(refreshButton);
 
-            var toggleButton = CreateToolbarButton(showCodeWindow ? "Settings" : "Preview", ToggleWindowMode);
+            var toggleButton = CreateToolbarButton(showCodeWindow ? "Settings" : "Preview", ToggleWindowMode, true, false);
             toggleButton.name = "toggleButton";
             toolbar.Add(toggleButton);
 
@@ -457,7 +479,7 @@ namespace Unity.VisualScripting.Community
             #endregion
         }
 
-        private Button CreateToolbarButton(string text, Action onClick)
+        private Button CreateToolbarButton(string text, Action onClick, bool right, bool left)
         {
             var button = new Button(onClick) { text = text };
             button.style.paddingLeft = 6;
@@ -473,8 +495,14 @@ namespace Unity.VisualScripting.Community
             button.style.borderRightColor = new Color(0.1f, 0.1f, 0.1f);
             button.style.borderTopWidth = 0;
             button.style.borderBottomWidth = 0;
-            button.style.borderLeftWidth = 1;
-            button.style.borderRightWidth = 0;
+            if (left)
+                button.style.borderLeftWidth = 1;
+            else
+                button.style.borderLeftWidth = 0;
+            if (right)
+                button.style.borderRightWidth = 1;
+            else
+                button.style.borderRightWidth = 0;
             button.style.color = Color.white;
             button.style.borderTopLeftRadius = 0;
             button.style.borderBottomLeftRadius = 0;
@@ -562,15 +590,121 @@ namespace Unity.VisualScripting.Community
             if (Selection.activeObject is CodeAsset _asset)
             {
                 asset = _asset;
-                CodeGeneratorValueUtility.currentAsset = _asset;
+                ClearComponentNavigationUI();
                 UpdateCodeDisplay();
             }
             else if (Selection.activeObject is ScriptGraphAsset _graphAsset)
             {
                 asset = _graphAsset;
-                CodeGeneratorValueUtility.currentAsset = _graphAsset;
+                ClearComponentNavigationUI();
                 UpdateCodeDisplay();
             }
+            else if (Selection.activeObject is GameObject gameObject)
+            {
+                asset = gameObject;
+                UpdateComponentSelectionUI(gameObject);
+                UpdateCodeDisplay();
+            }
+        }
+
+        private void UpdateComponentSelectionUI(GameObject obj)
+        {
+            if (obj == null || toolbar == null) return;
+
+            currentGameObjectGenerator = CodeGenerator.GetSingleDecorator(obj) as GameObjectGenerator;
+            if (currentGameObjectGenerator == null) return;
+
+            var components = obj.GetComponents<ScriptMachine>();
+
+            // Remove existing component navigation elements if they exist
+            ClearComponentNavigationUI();
+
+            if (components == null || components.Length <= 1)
+            {
+                currentComponentIndex = 0;
+                return;
+            }
+
+            // Ensure currentComponentIndex is within valid range
+            currentComponentIndex = Mathf.Clamp(currentComponentIndex, 0, components.Length - 1);
+            currentGameObjectGenerator.current = components[currentComponentIndex];
+            CodeGeneratorValueUtility.currentAsset = components[currentComponentIndex];
+
+            // Create new component navigation elements
+            previousButton = new Button(() => NavigateComponents(-1, obj))
+            {
+                name = "Toolbar-Previous-Component",
+                text = "<",
+                style = { marginLeft = 5 }
+            };
+
+            componentCountLabel = new Label($"{currentComponentIndex + 1}/{components.Length}")
+            {
+                name = "Toolbar-Components-Display",
+                style = { marginLeft = 5, marginRight = 5, alignSelf = Align.Center }
+            };
+
+            nextButton = new Button(() => NavigateComponents(1, obj))
+            {
+                name = "Toolbar-Next-Component",
+                text = ">",
+                style = { marginRight = 10 }
+            };
+
+            toolbar.Add(previousButton);
+            toolbar.Add(componentCountLabel);
+            toolbar.Add(nextButton);
+
+            UpdateComponentNavigationState(obj);
+        }
+
+        private void NavigateComponents(int direction, GameObject obj)
+        {
+            if (currentGameObjectGenerator?.components == null) return;
+
+            var components = currentGameObjectGenerator.components;
+            var newIndex = currentComponentIndex + direction;
+
+            if (newIndex >= 0 && newIndex < components.Length)
+            {
+                currentComponentIndex = newIndex;
+                currentGameObjectGenerator.current = components[currentComponentIndex];
+                UpdateComponentNavigationState(obj);
+                UpdateCodeDisplay();
+            }
+        }
+
+        private void UpdateComponentNavigationState(GameObject obj)
+        {
+            var components = obj.GetComponents<ScriptMachine>();
+            if (components == null || components.Length <= 1) return;
+
+            if (componentCountLabel != null)
+                componentCountLabel.text = $"{currentComponentIndex + 1}/{components.Length}";
+
+            if (previousButton != null)
+                previousButton.SetEnabled(currentComponentIndex > 0);
+
+            if (nextButton != null)
+                nextButton.SetEnabled(currentComponentIndex < components.Length - 1);
+        }
+
+        private void ClearComponentNavigationUI()
+        {
+            if (toolbar == null) return;
+
+            if (previousButton != null)
+                toolbar.Remove(previousButton);
+
+            if (componentCountLabel != null)
+                toolbar.Remove(componentCountLabel);
+
+            if (nextButton != null)
+                toolbar.Remove(nextButton);
+
+            previousButton = null;
+            componentCountLabel = null;
+            nextButton = null;
         }
 
         public void UpdateCodeDisplay()
@@ -585,7 +719,7 @@ namespace Unity.VisualScripting.Community
                 }
                 code += loadedCode;
                 var ObjectVariables = "\n";
-                var values = CodeGeneratorValueUtility.GetAllValues(CodeGeneratorValueUtility.currentAsset);
+                var values = CodeGeneratorValueUtility.currentAsset != null ? CodeGeneratorValueUtility.GetAllValues(CodeGeneratorValueUtility.currentAsset) : new Dictionary<string, Object>();
                 foreach (var variable in values)
                 {
                     if (variable.Value != null)

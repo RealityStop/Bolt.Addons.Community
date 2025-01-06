@@ -9,8 +9,8 @@ using System.Collections;
 namespace Unity.VisualScripting.Community
 {
     [Serializable]
-    [CodeGenerator(typeof(ScriptGraphAsset))]
-    public sealed class ScriptGraphAssetGenerator : CodeGenerator<ScriptGraphAsset>
+    [CodeGenerator(typeof(GameObject))]
+    public sealed class GameObjectGenerator : CodeGenerator<GameObject>
     {
         #region Static Fields
         private static readonly Dictionary<string, string> EVENT_NAMES = new Dictionary<string, string>()
@@ -39,10 +39,17 @@ namespace Unity.VisualScripting.Community
         private Dictionary<CustomEvent, int> _customEventIds;
         private readonly List<Timer> _timers = new List<Timer>();
         #endregion
-
+        public ScriptMachine[] components = new ScriptMachine[0];
+        public ScriptMachine current;
         public override string Generate(int indent)
         {
-            if (Data?.graph == null) return string.Empty;
+            components = Data?.GetComponents<ScriptMachine>();
+            if (components == null || components.Length == 0) return string.Empty;
+
+            if(current == null)
+            {
+                current = components[0];
+            }
 
             InitializeCollections();
             var script = GenerateScriptHeader();
@@ -67,7 +74,7 @@ namespace Unity.VisualScripting.Community
 
         private string GenerateScriptHeader()
         {
-            var units = Data.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth));
+            var units = current.nest.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth));
             var usings = GetRequiredNamespaces(units.Cast<Unit>().ToList());
             return string.Join("\n", usings.Select(u => GenerateUsingStatement(u))) + "\n";
         }
@@ -112,7 +119,7 @@ namespace Unity.VisualScripting.Community
         private string GenerateClassDefinition()
         {
             return $"\n" + "public class ".ConstructHighlight()
-                + $"{(Data.graph.title?.Length > 0 ? Data.graph.title : Data.name)}".LegalMemberName().TypeHighlight()
+                + $"{(current.nest.graph.title?.Length > 0 ? current.nest.graph.title : Data.name + "_ScriptMachine_" + components.ToList().IndexOf(current))}".LegalMemberName().TypeHighlight()
                 + " : "
                 + "MonoBehaviour\n".TypeHighlight()
                 + "{";
@@ -121,7 +128,7 @@ namespace Unity.VisualScripting.Community
         private string GenerateVariableDeclarations()
         {
             var script = string.Empty;
-            foreach (VariableDeclaration variable in Data.graph.variables)
+            foreach (VariableDeclaration variable in current.nest.graph.variables)
             {
                 script +=
                     "\n" + CodeBuilder.Indent(1) + "public ".ConstructHighlight()
@@ -137,7 +144,7 @@ namespace Unity.VisualScripting.Community
                     );
             };
 
-            foreach (Unit unit in Data.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)))
+            foreach (Unit unit in current.nest.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)))
             {
                 if (unit.GetGenerator() is VariableNodeGenerator variableNodeGenerator)
                 {
@@ -155,9 +162,9 @@ namespace Unity.VisualScripting.Community
         private string GenerateCustomEventHandlers()
         {
             var script = string.Empty;
-            if (Data.graph.units.Any(unit => unit is CustomEvent))
+            if (current.nest.graph.units.Any(unit => unit is CustomEvent))
             {
-                var customEvents = Data.graph.units.Where(unit => unit is CustomEvent);
+                var customEvents = current.nest.graph.units.Where(unit => unit is CustomEvent);
                 script += $"\n" + CodeBuilder.Indent(1) + "private void".ConstructHighlight() + " Awake()";
                 script += "\n" + CodeBuilder.Indent(1) + "{\n";
                 int id = 0;
@@ -167,7 +174,7 @@ namespace Unity.VisualScripting.Community
                     data.ScriptType = typeof(MonoBehaviour);
                     data.returns = eventUnit.coroutine ? typeof(IEnumerator) : typeof(void);
                     data.AddLocalNameInScope("args", typeof(CustomEventArgs));
-                    foreach (VariableDeclaration variable in Data.graph.variables)
+                    foreach (VariableDeclaration variable in current.nest.graph.variables)
                     {
                         data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
                     };
@@ -190,9 +197,9 @@ namespace Unity.VisualScripting.Community
         {
             var script = string.Empty;
             bool addedTimerCode = false;
-            foreach (IEventUnit unit in Data.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Where(unit => unit is IEventUnit).Cast<IEventUnit>())
+            foreach (IEventUnit unit in current.nest.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Where(unit => unit is IEventUnit).Cast<IEventUnit>())
             {
-                if (unit is CustomEvent && unit.graph != Data.graph) continue;
+                if (unit is CustomEvent && unit.graph != current.nest.graph) continue;
                 var timerCode = "";
                 if (unit.coroutine)
                 {
@@ -201,7 +208,7 @@ namespace Unity.VisualScripting.Community
                         var data = new ControlGenerationData();
                         data.ScriptType = typeof(MonoBehaviour);
                         data.returns = typeof(IEnumerator);
-                        foreach (VariableDeclaration variable in Data.graph.variables)
+                        foreach (VariableDeclaration variable in current.nest.graph.variables)
                         {
                             data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
                         }
@@ -244,7 +251,7 @@ namespace Unity.VisualScripting.Community
                         var data = new ControlGenerationData();
                         data.ScriptType = typeof(MonoBehaviour);
                         data.returns = typeof(void);
-                        foreach (VariableDeclaration variable in Data.graph.variables)
+                        foreach (VariableDeclaration variable in current.nest.graph.variables)
                         {
                             data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
                         };
@@ -278,7 +285,7 @@ namespace Unity.VisualScripting.Community
         private string GenerateTimerUpdateMethod()
         {
             var script = string.Empty;
-            if (!Data.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Where(unit => unit is IEventUnit).Cast<IEventUnit>().Any(e => e is Update) && _timers.Count > 0)
+            if (!current.nest.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Where(unit => unit is IEventUnit).Cast<IEventUnit>().Any(e => e is Update) && _timers.Count > 0)
             {
                 var unit = new Update();
                 var data = new ControlGenerationData();
@@ -294,7 +301,7 @@ namespace Unity.VisualScripting.Community
             var script = string.Empty;
             foreach (var method in _methods.Values)
             {
-                script += "\n" + method.GetMethod() + "\n";
+                script += method.GetMethod() + "\n";
             }
             return script;
         }

@@ -443,11 +443,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 if (variableForObject)
                 {
-                    var hasVariable = CodeGeneratorValueUtility.TryGetVariable(CodeGeneratorValueUtility.currentAsset, (UnityEngine.Object)@as.value, out string current);
+                    var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
                     var variable = hasVariable ? current : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
 
                     if (!hasVariable)
-                        CodeGeneratorValueUtility.AddValue(CodeGeneratorValueUtility.currentAsset, variable, (UnityEngine.Object)@as.value);
+                        CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
                     return variable;
                 }
                 else
@@ -491,11 +491,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 if (variableForObject)
                 {
-                    var hasVariable = CodeGeneratorValueUtility.TryGetVariable(CodeGeneratorValueUtility.currentAsset, (UnityEngine.Object)@as.value, out string current);
+                    var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
                     var variable = hasVariable ? current : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
 
                     if (!hasVariable)
-                        CodeGeneratorValueUtility.AddValue(CodeGeneratorValueUtility.currentAsset, variable, (UnityEngine.Object)@as.value);
+                        CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
                     return CodeUtility.MakeSelectable(unit, variable);
                 }
                 else
@@ -538,11 +538,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 if (variableForObject)
                 {
-                    var hasVariable = CodeGeneratorValueUtility.TryGetVariable(CodeGeneratorValueUtility.currentAsset, (UnityEngine.Object)@as.value, out string current);
+                    var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
                     var variable = hasVariable ? current : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
 
                     if (!hasVariable)
-                        CodeGeneratorValueUtility.AddValue(CodeGeneratorValueUtility.currentAsset, variable, (UnityEngine.Object)@as.value);
+                        CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
                     return variable.VariableHighlight();
                 }
                 else
@@ -584,11 +584,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 if (variableForObject)
                 {
-                    var hasVariable = CodeGeneratorValueUtility.TryGetVariable(CodeGeneratorValueUtility.currentAsset, (UnityEngine.Object)@as.value, out string current);
+                    var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
                     var variable = hasVariable ? current : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
 
                     if (!hasVariable)
-                        CodeGeneratorValueUtility.AddValue(CodeGeneratorValueUtility.currentAsset, variable, (UnityEngine.Object)@as.value);
+                        CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
 
                     return CodeUtility.MakeSelectable(unit, variable.VariableHighlight());
                 }
