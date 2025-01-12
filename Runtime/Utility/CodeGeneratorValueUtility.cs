@@ -38,7 +38,8 @@ public static class CodeGeneratorValueUtility
     }
 
     private static Dictionary<Object, Dictionary<string, Object>> ObjectValueHandlers = new Dictionary<Object, Dictionary<string, Object>>();
-    private const string SAVE_PATH = "Library/CodeGeneratorValues.json";
+    private const string OLD_SAVE_PATH = "Library/CodeGeneratorValues.json";
+    private const string NEW_SAVE_PATH = "Assets/Unity.VisualScripting.Community.Generated/CodeGeneratorValues.json";
 #if UNITY_EDITOR
     [System.Serializable]
     private class SerializableKeyValuePair
@@ -126,88 +127,105 @@ public static class CodeGeneratorValueUtility
             }
         }
 
-        File.WriteAllText(SAVE_PATH, JsonUtility.ToJson(wrapper, true));
+        File.WriteAllText(NEW_SAVE_PATH, JsonUtility.ToJson(wrapper, true));
     }
 
     private static void LoadValues()
     {
-        if (!File.Exists(SAVE_PATH)) return;
-
-        var json = File.ReadAllText(SAVE_PATH);
-        var wrapper = JsonUtility.FromJson<SerializableWrapper>(json);
-
-        foreach (var handler in wrapper.handlers)
+        if (File.Exists(OLD_SAVE_PATH))
         {
-            Object target = null;
-
-            // Try load scene object
-            if (!string.IsNullOrEmpty(handler.scenePath))
+            File.Move(OLD_SAVE_PATH, NEW_SAVE_PATH);
+            if (File.Exists(OLD_SAVE_PATH))
             {
-                if (handler.scenePath.Contains(','))
+                File.Delete(OLD_SAVE_PATH);
+            }
+            LoadValues(); // Ensure it loads
+        }
+        else
+        {
+            try
+            {
+                var json = File.ReadAllText(NEW_SAVE_PATH);
+                var wrapper = JsonUtility.FromJson<SerializableWrapper>(json);
+
+                foreach (var handler in wrapper.handlers)
                 {
-                    var split = handler.scenePath.Split(',');
-                    var instanceID = int.Parse(split[0]);
-                    var go = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
-                    if (go != null)
+                    Object target = null;
+
+                    // Try load scene object
+                    if (!string.IsNullOrEmpty(handler.scenePath))
                     {
-                        target = go.GetComponents<Component>()
-                            .FirstOrDefault(c => c != null && c.GetInstanceID() == int.Parse(split[1]));
+                        if (handler.scenePath.Contains(','))
+                        {
+                            var split = handler.scenePath.Split(',');
+                            var instanceID = int.Parse(split[0]);
+                            var go = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+                            if (go != null)
+                            {
+                                target = go.GetComponents<Component>()
+                                    .FirstOrDefault(c => c != null && c.GetInstanceID() == int.Parse(split[1]));
+                            }
+                        }
+                        else
+                        {
+                            var instanceID = int.Parse(handler.scenePath);
+                            target = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+                        }
                     }
-                }
-                else
-                {
-                    var instanceID = int.Parse(handler.scenePath);
-                    target = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
-                }
-            }
 
-            if (target == null) continue;
+                    if (target == null) continue;
 
-            // Check if target already exists in dictionary
-            if (ObjectValueHandlers.ContainsKey(target)) continue;
+                    // Check if target already exists in dictionary
+                    if (ObjectValueHandlers.ContainsKey(target)) continue;
 
-            var valueDict = new Dictionary<string, Object>();
+                    var valueDict = new Dictionary<string, Object>();
 
-            // Load asset values
-            foreach (var pair in handler.assetValues)
-            {
-                var valuePath = AssetDatabase.GUIDToAssetPath(pair.value);
-                var value = AssetDatabase.LoadAssetAtPath<Object>(valuePath);
-                if (value != null && !valueDict.ContainsValue(value))
-                {
-                    valueDict.Add(pair.key, value);
-                }
-            }
-
-            // Load scene object values
-            foreach (var pair in handler.sceneObjectValues)
-            {
-                Object sceneValue = null;
-                if (pair.value.Contains(','))
-                {
-                    var split = pair.value.Split(',');
-                    var instanceID = int.Parse(split[0]);
-                    var go = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
-                    if (go != null)
+                    // Load asset values
+                    foreach (var pair in handler.assetValues)
                     {
-                        sceneValue = go.GetComponents<Component>()
-                            .FirstOrDefault(c => c.GetInstanceID() == int.Parse(split[1]));
+                        var valuePath = AssetDatabase.GUIDToAssetPath(pair.value);
+                        var value = AssetDatabase.LoadAssetAtPath<Object>(valuePath);
+                        if (value != null && !valueDict.ContainsValue(value))
+                        {
+                            valueDict.Add(pair.key, value);
+                        }
                     }
-                }
-                else
-                {
-                    var instanceID = int.Parse(pair.value);
-                    sceneValue = EditorUtility.InstanceIDToObject(instanceID);
-                }
 
-                if (sceneValue != null && !valueDict.ContainsValue(sceneValue))
-                {
-                    valueDict.Add(pair.key, sceneValue);
+                    // Load scene object values
+                    foreach (var pair in handler.sceneObjectValues)
+                    {
+                        Object sceneValue = null;
+                        if (pair.value.Contains(','))
+                        {
+                            var split = pair.value.Split(',');
+                            var instanceID = int.Parse(split[0]);
+                            var go = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+                            if (go != null)
+                            {
+                                sceneValue = go.GetComponents<Component>()
+                                    .FirstOrDefault(c => c.GetInstanceID() == int.Parse(split[1]));
+                            }
+                        }
+                        else
+                        {
+                            var instanceID = int.Parse(pair.value);
+                            sceneValue = EditorUtility.InstanceIDToObject(instanceID);
+                        }
+
+                        if (sceneValue != null && !valueDict.ContainsValue(sceneValue))
+                        {
+                            valueDict.Add(pair.key, sceneValue);
+                        }
+                    }
+
+                    if (valueDict.Count > 0)
+                        ObjectValueHandlers.Add(target, valueDict);
                 }
             }
-
-            if (valueDict.Count > 0)
-                ObjectValueHandlers.Add(target, valueDict);
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to load serialized data: {ex.Message}");
+            }
         }
     }
 #endif

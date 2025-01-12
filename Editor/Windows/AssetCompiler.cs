@@ -68,7 +68,7 @@ namespace Unity.VisualScripting.Community
             var delegates = HUMAssets.Find().Assets().OfType<DelegateAsset>();
             var interfaces = HUMAssets.Find().Assets().OfType<InterfaceAsset>();
             var scriptGraphAssets = HUMAssets.Find().Assets().OfType<ScriptGraphAsset>();
-            var scriptMachines = FindObjectsOfTypeIncludingInactive<ScriptMachine>().Concat(HUMAssets.Find().Assets().OfType<GameObject>().SelectMany(obj => obj.GetComponents<ScriptMachine>())).ToList();
+            var scriptMachines = AssetCompilierUtility.FindObjectsOfTypeIncludingInactive<ScriptMachine>().Concat(HUMAssets.Find().Assets().OfType<GameObject>().SelectMany(obj => obj.GetComponents<ScriptMachine>())).ToList();
 
             for (int i = 0; i < classes.Count; i++)
             {
@@ -91,10 +91,10 @@ namespace Unity.VisualScripting.Community
                 foreach (var variable in values)
                 {
                     if (variable.Value != null)
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
                     else
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    index++;
                 }
                 code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                 HUMIO.Save(code).Custom(fullPath).Text(false);
@@ -103,10 +103,10 @@ namespace Unity.VisualScripting.Community
                     classAsset.lastCompiledNames.Add(name);
                 var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
                 var variables = classAsset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && (variable.scope == AccessModifier.Public || variable.attributes.Any(a => a.GetAttributeType() == typeof(SerializeField))));
-                var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                var variableNames = variables.Select(variable => variable.FieldName).Concat(ObjectNamesArray).ToArray();
-                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).Concat(ObjectValuesArray).ToArray();
+                string[] ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                UnityEngine.Object[] ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                 scriptImporter.SetIcon(classAsset.icon);
                 scriptImporter.SetDefaultReferences(variableNames, variableValues);
             }
@@ -173,19 +173,19 @@ namespace Unity.VisualScripting.Community
                 foreach (var variable in values)
                 {
                     if (variable.Value != null)
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
                     else
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    index++;
                 }
                 code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                 HUMIO.Save(code).Custom(fullPath).Text(false);
                 var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
                 var variables = scriptGraphAsset.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                string[] ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                UnityEngine.Object[] ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                 scriptImporter.SetDefaultReferences(variableNames, variableValues);
             }
 
@@ -203,10 +203,10 @@ namespace Unity.VisualScripting.Community
                 foreach (var variable in values)
                 {
                     if (variable.Value != null)
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
                     else
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    index++;
                 }
                 code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                 HUMIO.Save(code).Custom(fullPath).Text(false);
@@ -214,10 +214,10 @@ namespace Unity.VisualScripting.Community
                 var type = script.GetClass();
                 var component = scriptMachine.gameObject.AddComponent(type);
                 var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                string[] ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                UnityEngine.Object[] ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                 for (int index = 0; index < variableValues.Length; index++)
                 {
                     type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
@@ -227,7 +227,7 @@ namespace Unity.VisualScripting.Community
             List<(string path, ScriptMachine machine, Dictionary<string, UnityEngine.Object> values)> compiledObjects = new();
             for (int i = 0; i < scriptMachines.Count; i++)
             {
-                 var scriptMachine = scriptMachines[i];
+                var scriptMachine = scriptMachines[i];
                 var name = GetGraphName(scriptMachine);
                 string fullPath = csharpPath + name.LegalMemberName() + ".cs";
                 string relativePath = csharpRelativePath + name.LegalMemberName() + ".cs";
@@ -241,10 +241,10 @@ namespace Unity.VisualScripting.Community
                 foreach (var variable in values)
                 {
                     if (variable.Value != null)
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
                     else
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    index++;
                 }
                 code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                 HUMIO.Save(code).Custom(fullPath).Text(false);
@@ -262,33 +262,13 @@ namespace Unity.VisualScripting.Community
                     var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
                     var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
                     var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                    var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                    var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                    string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                    UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                     for (int index = 0; index < variableValues.Length; index++)
                     {
                         type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
                     }
                 };
-            }
-        }
-
-        private static IEnumerable<T> FindObjectsOfTypeIncludingInactive<T>()
-        {
-            var scene = SceneManager.GetActiveScene();
-
-            if (scene.isLoaded)
-            {
-                foreach (var rootGameObject in scene.GetRootGameObjects())
-                {
-                    foreach (var result in rootGameObject.GetComponents<T>())
-                    {
-                        yield return result;
-                    }
-                    foreach (var result in rootGameObject.GetComponentsInChildren<T>(true))
-                    {
-                        yield return result;
-                    }
-                }
             }
         }
 
@@ -350,10 +330,10 @@ namespace Unity.VisualScripting.Community
                     foreach (var variable in values)
                     {
                         if (variable.Value != null)
-                            ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
                         else
-                            ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-
+                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        index++;
                     }
                     code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                     var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
@@ -364,8 +344,8 @@ namespace Unity.VisualScripting.Community
                     var variables = classAsset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && (variable.scope == AccessModifier.Public || variable.attributes.Any(a => a.GetAttributeType() == typeof(SerializeField))));
                     var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
                     var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                    var variableNames = variables.Select(variable => variable.FieldName).Concat(ObjectNamesArray).ToArray();
-                    var variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).Concat(ObjectValuesArray).ToArray();
+                    string[] variableNames = variables.Select(variable => variable.FieldName).Concat(ObjectNamesArray).ToArray();
+                    UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).Concat(ObjectValuesArray).ToArray();
                     scriptImporter.SetIcon(classAsset.icon);
                     scriptImporter.SetDefaultReferences(variableNames, variableValues);
                 }
@@ -433,19 +413,19 @@ namespace Unity.VisualScripting.Community
                 foreach (var variable in values)
                 {
                     if (variable.Value != null)
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
                     else
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    index++;
                 }
                 code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                 HUMIO.Save(code).Custom(fullPath).Text(false);
                 var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
                 var variables = scriptGraphAsset.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                string[] ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                UnityEngine.Object[] ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                 scriptImporter.SetDefaultReferences(variableNames, variableValues);
             }
             var components = gameObjects.SelectMany(obj => obj.GetComponents<ScriptMachine>());
@@ -465,10 +445,10 @@ namespace Unity.VisualScripting.Community
                 foreach (var variable in values)
                 {
                     if (variable.Value != null)
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
                     else
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    index++;
                 }
                 code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                 HUMIO.Save(code).Custom(fullPath).Text(false);
@@ -486,8 +466,8 @@ namespace Unity.VisualScripting.Community
                     var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
                     var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
                     var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                    var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                    var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                    string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                    UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                     for (int index = 0; index < variableValues.Length; index++)
                     {
                         type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
@@ -548,10 +528,10 @@ namespace Unity.VisualScripting.Community
                     foreach (var variable in values)
                     {
                         if (variable.Value != null)
-                            ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
                         else
-                            ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-
+                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        index++;
                     }
                     code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                     var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
@@ -562,8 +542,8 @@ namespace Unity.VisualScripting.Community
                     var variables = classAsset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && (variable.scope == AccessModifier.Public || variable.attributes.Any(a => a.GetAttributeType() == typeof(SerializeField))));
                     var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
                     var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                    var variableNames = variables.Select(variable => variable.FieldName).Concat(ObjectNamesArray).ToArray();
-                    var variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).Concat(ObjectValuesArray).ToArray();
+                    string[] variableNames = variables.Select(variable => variable.FieldName).Concat(ObjectNamesArray).ToArray();
+                    UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).Concat(ObjectValuesArray).ToArray();
                     scriptImporter.SetIcon(classAsset.icon);
                     scriptImporter.SetDefaultReferences(variableNames, variableValues);
 
@@ -639,26 +619,24 @@ namespace Unity.VisualScripting.Community
                 foreach (var variable in values)
                 {
                     if (variable.Value != null)
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
                     else
-                        ObjectVariables += CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-
+                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                    index++;
                 }
                 code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
                 HUMIO.Save(code).Custom(fullPath).Text(true);
                 var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
                 var variables = scriptGraphAsset.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                string[] ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                UnityEngine.Object[] ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                 scriptImporter.SetDefaultReferences(variableNames, variableValues);
             }
             else if (targetasset is GameObject gameObject)
             {
-                index = 0;
-                @object = gameObject;
-                if (EditorUtility.DisplayDialog("Compile All Machines", "Compile all script machines attached to this GameObject?.", "Yes", "No"))
+                if (gameObject.GetComponents<ScriptMachine>()?.Length > 1 && EditorUtility.DisplayDialog("Compile All Machines", "Compile all script machines attached to this GameObject?.", "Yes", "No"))
                 {
                     var gen = (GameObjectGenerator)GameObjectGenerator.GetSingleDecorator(gameObject);
                     foreach (var scriptMachine in gameObject.GetComponents<ScriptMachine>())
@@ -676,13 +654,13 @@ namespace Unity.VisualScripting.Community
                         foreach (var variable in values)
                         {
                             if (variable.Value != null)
-                                ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                                ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
                             else
-                                ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                                ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
                             index++;
                         }
                         code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                        HUMIO.Save(code).Custom(fullPath).Text(true);
+                        HUMIO.Save(code).Custom(fullPath).Text(false);
                         CompilationPipeline.compilationFinished += (v) =>
                         {
                             var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
@@ -691,14 +669,55 @@ namespace Unity.VisualScripting.Community
                             var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
                             var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
                             var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                            var variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                            var variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                            string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                            UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
                             for (int index = 0; index < variableValues.Length; index++)
                             {
                                 type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
                             }
                         };
                     }
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+                }
+                else if (gameObject.GetComponents<ScriptMachine>()?.Length > 0)
+                {
+                    var gen = (GameObjectGenerator)GameObjectGenerator.GetSingleDecorator(gameObject);
+                    var scriptMachine = gen.current;
+                    var name = GetGraphName(scriptMachine);
+                    string fullPath = csharpPath + name.LegalMemberName() + ".cs";
+                    string relativePath = csharpRelativePath + name.LegalMemberName() + ".cs";
+                    HUMIO.Delete(fullPath);
+                    HUMIO.Ensure(fullPath).Path();
+                    var code = gen.GenerateClean(0);
+                    var ObjectVariables = "\n";
+                    var values = CodeGeneratorValueUtility.GetAllValues(scriptMachine);
+                    var index = 0;
+                    foreach (var variable in values)
+                    {
+                        if (variable.Value != null)
+                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        else
+                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
+                        index++;
+                    }
+                    code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
+                    HUMIO.Save(code).Custom(fullPath).Text(true);
+                    CompilationPipeline.compilationFinished += (v) =>
+                    {
+                        var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
+                        var type = scriptImporter.GetScript().GetClass();
+                        var component = scriptMachine.gameObject.GetComponent(type) ?? scriptMachine.gameObject.AddComponent(type);
+                        var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
+                        var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
+                        var ObjectValuesArray = values.Select(v => v.Value).ToArray();
+                        string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
+                        UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
+                        for (int index = 0; index < variableValues.Length; index++)
+                        {
+                            type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
+                        }
+                    };
                 }
             }
         }
@@ -824,25 +843,6 @@ namespace Unity.VisualScripting.Community
                 name == "Assembly-CSharp-Editor-firstpass" ||
                 name == "UnityEditor" ||
                 name == "UnityEditor.CoreModule";
-        }
-
-        [InitializeOnLoad]
-        private static class ScriptMachineFetcher
-        {
-            static ScriptMachineFetcher()
-            {
-                CodeGeneratorValueUtility.requestMachine += (obj) =>
-                {
-                    var gen = GameObjectGenerator.GetSingleDecorator(obj) as GameObjectGenerator;
-                    if (gen.current == null)
-                    {
-                        var component = obj.GetComponent<ScriptMachine>();
-                        gen.current = component;
-                        return component;
-                    }
-                    return gen.current;
-                };
-            }
         }
     }
 }

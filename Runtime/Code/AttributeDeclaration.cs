@@ -18,6 +18,8 @@ namespace Unity.VisualScripting.Community
         private SystemType attributeType = new SystemType();
         [SerializeField]
         public List<TypeParam> parameters = new List<TypeParam>();
+        [Serialize]
+        public Dictionary<string, object> fields = new Dictionary<string, object>();
         public int constructor = 0;
         public int selectedconstructor;
 
@@ -49,6 +51,11 @@ namespace Unity.VisualScripting.Community
         public Type GetAttributeType()
         {
             return attributeType.type;
+        }
+
+        public void SetField(string name, object value)
+        {
+            fields[name] = value;
         }
 
         public void AddParameter(string name, Type type, object value)

@@ -1347,9 +1347,8 @@ namespace Unity.VisualScripting.Community
                     () =>
                     {
                         var attributeParamMeta = attributesMeta[attrIndex]["parameters"];
-
                         string[] constructorNames = attribute?.GetAttributeType()?.GetConstructors()
-                        .Where(constructor => constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
+                        .Where(constructor => constructor.IsPublic && constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
                         .Select(constructor =>
                         {
                             string paramInfo = string.Join(
@@ -1376,7 +1375,7 @@ namespace Unity.VisualScripting.Community
                         shouldUpdate = EditorGUI.EndChangeCheck();
 
                         var selectedConstructor = attribute?.GetAttributeType()?.GetConstructors()
-                            .Where(constructor => constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
+                            .Where(constructor => constructor.IsPublic && constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
                             .ToList()[attribute.constructor];
 
                         if (selectedConstructor != null)
@@ -1462,6 +1461,52 @@ namespace Unity.VisualScripting.Community
 
                             paramIndex = 0;
                         }
+                        var fields = attribute.GetAttributeType()?.GetFields().Cast<MemberInfo>().Concat(attribute.GetAttributeType()?.GetProperties()).ToArray();
+                        foreach (var field in attribute.fields)
+                        {
+                            var metadata = attributesMeta[attrIndex]["fields"].Indexer(field.Key);
+                            Inspector.BeginBlock(metadata, new Rect());
+                            if (metadata.value is Type type)
+                            {
+                                GUIContent TypebuilderButtonContent = new GUIContent(
+                                (metadata.value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                                (metadata.value as Type)?.Icon()?[IconSize.Small]
+                                );
+
+                                GUILayout.BeginHorizontal();
+                                GUILayout.Label(field.Key + ":");
+                                var lastRect = GUILayoutUtility.GetLastRect();
+                                if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
+                                {
+                                    TypeBuilderWindow.ShowWindow(lastRect, metadata, true, null, () => shouldUpdate = true);
+                                }
+                                GUILayout.EndHorizontal();
+                            }
+                            else
+                            {
+                                LudiqGUI.InspectorLayout(
+                                    metadata,
+                                    new GUIContent(field.Key + ":")
+                                );
+                            }
+                            if (Inspector.EndBlock(metadata))
+                            {
+                                metadata.RecordUndo();
+                                shouldUpdate = true;
+                            }
+                        }
+
+                        if (GUILayout.Button("+ Add Field"))
+                        {
+                            var field = fields.FirstOrDefault(f => !attribute.fields.Any(field => field.Key == f.Name));
+                            if (field != null)
+                            {
+                                attribute.SetField(field.Name, GetDefaultValue(field is FieldInfo fieldInfo ? fieldInfo.FieldType : (field as PropertyInfo).PropertyType));
+                                Undo.RegisterCompleteObjectUndo(target, "Added Attribute Field");
+                                shouldUpdate = true;
+                            }
+                        }
+
                         if (attributeList.Count > 0) GUILayout.Space(4);
                     });
                 }
@@ -1475,6 +1520,17 @@ namespace Unity.VisualScripting.Community
                     shouldUpdate = true;
                 }
             });
+        }
+
+        public object GetDefaultValue(Type type)
+        {
+            var defaultValue = type.PseudoDefault();
+            if (defaultValue != null) return defaultValue;
+            var defaultConstructor = type.GetDefaultConstructor();
+            if (defaultConstructor != null) return defaultConstructor.Invoke(new object[0]);
+            var pseudoDefaultConstructor = type.GetConstructors().FirstOrDefault(c => c.IsPublic && c.GetParameters().All(p => p.IsOptional));
+            if (pseudoDefaultConstructor != null) return pseudoDefaultConstructor.Invoke(new object[pseudoDefaultConstructor.GetParameters().Length]);
+            return null;
         }
 
         Type[] GetConstrainedAttributeTypes(AttributeUsageType usage)

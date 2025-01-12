@@ -112,6 +112,10 @@ namespace Unity.VisualScripting.Community
             return $"[CommunityAddonsCodeSelectable({unit})]{code}[CommunityAddonsCodeSelectableEnd({unit})]";
         }
 
+        /// <summary>
+        /// Used for the csharp preview to generate a tooltip
+        /// </summary>
+        /// <returns></returns>
         public static string ToolTip(string ToolTip, string notifyString, string code, bool highlight = true)
         {
             return CSharpPreviewSettings.ShouldGenerateTooltips ? $"[CommunityAddonsCodeToolTip({ToolTip})]{(highlight ? $"/* {notifyString} (Hover for more info) */".WarningHighlight() : $"/* {notifyString} (Hover for more info) */")}[CommunityAddonsCodeToolTipEnd] {code}" : code;

@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Reflection;
 using Unity.VisualScripting.Community.Utility;
+using UnityEngine.InputSystem;
+using Unity.VisualScripting.InputSystem;
 
 namespace Unity.VisualScripting.Community
 {
@@ -17,9 +19,12 @@ namespace Unity.VisualScripting.Community
         /// <summary>
         /// Units that require the Update method in a monobehaviour to function
         /// </summary>
-        private readonly List<Type> specialUnitTypes = new List<Type>() { typeof(Timer) };
+        private readonly List<Type> specialUnitTypes = new List<Type>() { typeof(Timer), typeof(Cooldown),
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+            typeof(OnInputSystemEventButton), typeof(OnInputSystemEventVector2), typeof(OnInputSystemEventFloat)
+#endif
+        };
         private List<Unit> specialUnits = new List<Unit>();
-        private ControlGenerationData UpdateGenerationData;
         protected override TypeGenerator OnGenerateType(ref string output, NamespaceGenerator @namespace)
         {
             if (Data == null)
@@ -153,10 +158,6 @@ namespace Unity.VisualScripting.Community
                     if (methodData.graph.units.Count > 0)
                     {
                         var generationData = CreateGenerationData(methodData.returnType);
-                        if (methodData.methodName.Replace(" ", "") == "Update")
-                        {
-                            UpdateGenerationData = generationData;
-                        }
                         @class.AddUsings(ProcessGraphUnits(methodData.graph, @class));
                         var unit = methodData.graph.units[0] as FunctionNode;
                         method.Body(unit.GenerateControl(null, generationData, 0));
@@ -184,14 +185,84 @@ namespace Unity.VisualScripting.Community
                         if (!visited.Add(specialUnit))
                             continue;
                         var generator = NodeGenerator.GetSingleDecorator(specialUnit, specialUnit);
-                        if (specialUnit is Timer timer && !string.IsNullOrEmpty(generator.variableName) && Data.inheritsType && Data.GetInheritedType() == typeof(MonoBehaviour))
+                        if (Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
                         {
-                            var convertedGenerator = generator as TimerGenerator;
-                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(timer, generator.variableName.VariableHighlight() + ".Update();") + "\n";
+                            if (generator is VariableNodeGenerator && !string.IsNullOrEmpty(generator.variableName))
+                            {
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                                if (specialUnit is OnInputSystemEvent) continue;
+#endif
+                                method.beforeBody += string.Join("\n", specialUnits.Select(t => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(t, (NodeGenerator.GetSingleDecorator(t, t) as VariableNodeGenerator).Name.VariableHighlight() + ".Update();")));
+                            }
                         }
+                    }
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                    if (UnityEngine.InputSystem.InputSystem.settings.updateMode == InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
+                    {
+                        foreach (var unit in specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
+                        {
+                            if (!unit.trigger.hasValidConnection) continue;
+                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();") + "\n";
+                        }
+                    }
+#endif
+                }
+                else
+                {
+                    var method = MethodGenerator.Method(AccessModifier.None, MethodModifier.None, typeof(void), "Update");
+                    foreach (var specialUnit in specialUnits)
+                    {
+                        if (!visited.Add(specialUnit))
+                            continue;
+                        var generator = NodeGenerator.GetSingleDecorator(specialUnit, specialUnit);
+                        if (Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
+                        {
+                            if (generator is VariableNodeGenerator && !string.IsNullOrEmpty(generator.variableName))
+                            {
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                                if (specialUnit is OnInputSystemEvent) continue;
+#endif
+                                method.beforeBody += string.Join("\n", specialUnits.Select(t => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(t, (NodeGenerator.GetSingleDecorator(t, t) as VariableNodeGenerator).Name.VariableHighlight() + ".Update();")));
+                            }
+                        }
+                    }
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                    if (UnityEngine.InputSystem.InputSystem.settings.updateMode == InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
+                    {
+                        foreach (var unit in specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
+                        {
+                            if (!unit.trigger.hasValidConnection) continue;
+                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();") + "\n";
+                        }
+                    }
+#endif
+                    @class.AddMethod(method);
+                }
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                if (UnityEngine.InputSystem.InputSystem.settings.updateMode != InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
+                {
+                    if (@class.methods.Any(m => m.name.Replace(" ", "") == "FixedUpdate"))
+                    {
+                        var method = @class.methods.First(m => m.name.Replace(" ", "") == "FixedUpdate");
+                        foreach (var unit in specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
+                        {
+                            if (!unit.trigger.hasValidConnection) continue;
+                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, unit.GetMethodGenerator().Name + "();") + "\n";
+                        }
+                    }
+                    else
+                    {
+                        var method = MethodGenerator.Method(AccessModifier.None, MethodModifier.None, typeof(void), "FixedUpdate");
+                        foreach (var unit in specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
+                        {
+                            if (!unit.trigger.hasValidConnection) continue;
+                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();") + "\n";
+                        }
+                        @class.AddMethod(method);
                     }
                 }
             }
+#endif
 
             @namespace.AddClass(@class);
             return @class;
@@ -204,15 +275,13 @@ namespace Unity.VisualScripting.Community
             {
                 var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
                 HandleOtherGenerators(@class, generator);
-                if (_unit.GetType() == typeof(Timer))
+                if (specialUnitTypes.Contains(_unit.GetType()))
                 {
                     specialUnits.Add(_unit);
                 }
 
                 AddNamespacesToUsings(generator, usings);
             }
-
-            // Add usings to constructor or method as necessary
             return usings;
         }
 

@@ -1,6 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
@@ -13,8 +12,45 @@ namespace Unity.VisualScripting.Community
         private float elapsedTime = 0f;
         private bool isRunning = false;
 
-        public Action OnCompleted;
-        public Action OnTick;
+        private Action onCompleted;
+        private Action onTick;
+
+        // Events
+        public event Action OnCompleted
+        {
+            add
+            {
+                if (onCompleted == null || !onCompleted.GetInvocationList().Contains(value))
+                {
+                    onCompleted += value;
+                }
+            }
+            remove
+            {
+                if (onCompleted != null && onCompleted.GetInvocationList().Contains(value))
+                {
+                    onCompleted -= value;
+                }
+            }
+        }
+
+        public event Action OnTick
+        {
+            add
+            {
+                if (onTick == null || !onTick.GetInvocationList().Contains(value))
+                {
+                    onTick += value;
+                }
+            }
+            remove
+            {
+                if (onTick != null && onTick.GetInvocationList().Contains(value))
+                {
+                    onTick -= value;
+                }
+            }
+        }
 
         public void Update()
         {
@@ -24,11 +60,12 @@ namespace Unity.VisualScripting.Community
                 elapsedTime += unscaled ? Time.unscaledDeltaTime : Time.deltaTime;
 
                 // Call tick event
-                OnTick?.Invoke();
+                onTick?.Invoke();
+
                 // Check if timer is completed
                 if (elapsedTime >= duration)
                 {
-                    OnCompleted?.Invoke();
+                    onCompleted?.Invoke();
 
                     isRunning = false;
                 }

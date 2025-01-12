@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    public class DefaultCommunityOptions : CommunityOptions
+    public sealed class DefaultCommunityOptions : CommunityOptions
     {
         public override bool DefinedEvent_ForceOptimizedInEditor => false;
 

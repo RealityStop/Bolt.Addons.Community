@@ -42,7 +42,7 @@ namespace Unity.VisualScripting.Community
             }
             else if (input.hasDefaultValue)
             {
-                return input.unit.defaultValues[input.key].As().Code(true, unit, true, true, "", false, true);
+                return input.unit.defaultValues[input.key].As().Code(true, unit, true, true, "", true, true);
             }
             else
             {

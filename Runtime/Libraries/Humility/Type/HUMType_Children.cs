@@ -43,7 +43,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (@as.type == typeof(void)) return "void";
             if (@as.type == typeof(object) && @as.type.BaseType == null) return hideSystemObject ? string.Empty : "object";
             if (@as.type == typeof(object[])) return "object[]";
-            if (@as.type.Name.Contains("Attribute")) return fullName ? @as.type.CSharpFullName().Replace("Attribute", "") : @as.type.CSharpName().Replace("Attribute", "");
+            if (@as.type.Name.Contains("Attribute")) return fullName && !string.IsNullOrEmpty(@as.type.Namespace) ? @as.type.CSharpFullName().Replace("Attribute", "") : @as.type.CSharpName().Replace("Attribute", "");
             if (@as.type.IsArray)
             {
                 var tempType = @as.type.GetElementType();
@@ -57,7 +57,14 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 var tempTypeName = tempType.As().CSharpName(hideSystemObject, fullName, highlight);
                 return tempTypeName + arrayString;
             }
-
+            if (string.IsNullOrEmpty(@as.type.Name))
+            {
+                return "UnknownType".WarningHighlight();
+            }
+            else if (string.IsNullOrEmpty(@as.type.Namespace))
+            {
+                return @as.type.CSharpName();
+            }
             return fullName ? @as.type.CSharpFullName() : @as.type.CSharpName();
         }
 
@@ -78,7 +85,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (@as.type.IsInterface) return (!string.IsNullOrEmpty(@as.type.Namespace) && fullName ? @as.type.Namespace.NamespaceHighlight() + "." : "") + @as.type.Name.InterfaceHighlight();
             if (@as.type == typeof(System.Object) && @as.type.BaseType == null) return hideSystemObject ? string.Empty : "object".ConstructHighlight();
             if (@as.type == typeof(object[])) return "object".ConstructHighlight() + "[]";
-            if (@as.type.Name.Contains("Attribute")) return fullName ? @as.type.CSharpFullName().Replace(@as.type.Name, @as.type.Name.TypeHighlight()).Replace(@as.type.Namespace, @as.type.Namespace.NamespaceHighlight()).Replace("Attribute", "") : @as.type.CSharpName().TypeHighlight().Replace("Attribute", "");
+            if (@as.type.Name.Contains("Attribute")) return fullName && !string.IsNullOrEmpty(@as.type.Namespace) ? @as.type.CSharpFullName().Replace(@as.type.Name, @as.type.Name.TypeHighlight()).Replace(@as.type.Namespace, @as.type.Namespace.NamespaceHighlight()).Replace("Attribute", "") : @as.type.CSharpName().TypeHighlight().Replace("Attribute", "");
             if (@as.type.IsArray)
             {
                 var tempType = @as.type.GetElementType();
@@ -92,7 +99,14 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 var tempTypeName = tempType.As().CSharpName(hideSystemObject, fullName, true);
                 return tempTypeName + arrayString;
             }
-
+            if (string.IsNullOrEmpty(@as.type.Name))
+            {
+                return "UnknownType".WarningHighlight();
+            }
+            else if (string.IsNullOrEmpty(@as.type.Namespace))
+            {
+                return @as.type.CSharpName().TypeHighlight();
+            }
             return fullName ? @as.type.CSharpFullName().Replace(@as.type.Name, @as.type.Name.TypeHighlight()).Replace(@as.type.Namespace, @as.type.Namespace.NamespaceHighlight()) : @as.type.CSharpName().TypeHighlight();
         }
 
@@ -464,11 +478,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 {
                     if (type.IsGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false, variableForObject) : "new " + GenericDeclaration(type, fullName, false) + "()";
                     if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false, variableForObject) : "new " + GenericDeclaration(type, fullName, false) + "(" + parameters + ")";
-                    return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false, variableForObject) : "new " + (fullName ? type.FullName : type.Name) + "(" + parameters + ")";
+                    return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false, variableForObject) : "new " + type.As().CSharpName(false, fullName, false) + "(" + parameters + ")";
                 }
                 else
                 {
-                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false, variableForObject) : "new " + (fullName ? type.FullName : type.Name) + "(" + parameters + ")";
+                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false, variableForObject) : "new " + type.As().CSharpName(false, fullName, false) + "(" + parameters + ")";
                 }
             }
 
@@ -508,11 +522,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
             if (isNew)
             {
-                if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)
+                if (type.IsClass || (!type.IsClass && !type.IsInterface && !type.IsEnum))
                 {
                     if (type.IsGenericType) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, false, variableForObject) : CodeUtility.MakeSelectable(unit, "new ".ConstructHighlight() + GenericDeclaration(type, fullName, false) + "()");
                     if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, false, variableForObject) : CodeUtility.MakeSelectable(unit, "new " + GenericDeclaration(type, fullName, false) + "(" + parameters + ")");
-                    return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, false, variableForObject) : CodeUtility.MakeSelectable(unit, "new " + (fullName ? type.FullName : type.Name) + "(" + parameters + ")");
+                    return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, false, variableForObject) : CodeUtility.MakeSelectable(unit, "new " + type.As().CSharpName(false, fullName, false) + "(" + parameters + ")");
                 }
                 else
                 {
@@ -558,11 +572,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 {
                     if (type.IsGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, true, variableForObject) : "new ".ConstructHighlight() + GenericDeclaration(type, fullName) + "()";
                     if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, true, variableForObject) : "new ".ConstructHighlight() + GenericDeclaration(type, fullName) + "(" + parameters + ")";
-                    return isLiteral ? Literal(@as.value, newLineLiteral, fullName, true, variableForObject) : "new ".ConstructHighlight() + (fullName ? type.Namespace.NamespaceHighlight() + "." + type.Name.TypeHighlight() : type.Name.TypeHighlight()) + "(" + parameters + ")";
+                    return isLiteral ? Literal(@as.value, newLineLiteral, fullName, true, variableForObject) : "new ".ConstructHighlight() + type.As().CSharpName(false, fullName, true) + "(" + parameters + ")";
                 }
                 else
                 {
-                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, true, variableForObject) : "new ".ConstructHighlight() + (fullName ? type.Namespace.NamespaceHighlight() + "." + type.Name.TypeHighlight() : type.Name.TypeHighlight()) + "(" + parameters + ")";
+                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, true, variableForObject) : "new ".ConstructHighlight() + type.As().CSharpName(false, fullName, true) + "(" + parameters + ")";
                 }
             }
 
@@ -605,11 +619,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 {
                     if (type.IsGenericType) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, true, variableForObject) : CodeUtility.MakeSelectable(unit, "new ".ConstructHighlight() + GenericDeclaration(type, fullName) + "()");
                     if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, true, variableForObject) : CodeUtility.MakeSelectable(unit, "new ".ConstructHighlight() + GenericDeclaration(type, fullName) + "(" + parameters + ")");
-                    return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, true, variableForObject) : CodeUtility.MakeSelectable(unit, "new ".ConstructHighlight() + (fullName ? type.Namespace.NamespaceHighlight() + "." + type.Name.TypeHighlight() : type.Name.TypeHighlight()) + "(" + parameters + ")");
+                    return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, true, variableForObject) : CodeUtility.MakeSelectable(unit, "new ".ConstructHighlight() + type.As().CSharpName(false, fullName, true) + "(" + parameters + ")");
                 }
                 else
                 {
-                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, true, variableForObject) : CodeUtility.MakeSelectable(unit, "new ".ConstructHighlight() + (fullName ? type.Namespace.NamespaceHighlight() + "." + type.Name.TypeHighlight() : type.Name.TypeHighlight()) + "(" + parameters + ")");
+                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, unit, newLineLiteral, fullName, true, variableForObject) : CodeUtility.MakeSelectable(unit, "new ".ConstructHighlight() + type.As().CSharpName(false, fullName, true) + "(" + parameters + ")");
                 }
             }
 
@@ -1079,11 +1093,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (!type.IsConstructedGenericType && !type.IsGenericType) throw new Exception("Type is not a generic type but you are trying to declare a generic.");
             if (highlight)
             {
-                output += (fullName ? type.Namespace.NamespaceHighlight() + "." : "") + (type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type) : type.Name.WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type));
+                output += (fullName && !string.IsNullOrEmpty(type.Namespace) ? type.Namespace.NamespaceHighlight() + "." : "") + (type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type) : type.Name.WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type));
             }
             else
             {
-                output += (fullName ? type.Namespace + "." : "") + (type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")) : type.Name);
+                output += (fullName && !string.IsNullOrEmpty(type.Namespace) ? type.Namespace + "." : "") + (type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")) : type.Name);
             }
             output += "<";
 
@@ -1369,7 +1383,7 @@ namespace Unity.VisualScripting.Community
 
                 if (!type.IsNested)
                 {
-                    if ((qualifier == TypeQualifier.Namespace || qualifier == TypeQualifier.GlobalNamespace) && type.Namespace != null)
+                    if ((qualifier == TypeQualifier.Namespace || qualifier == TypeQualifier.GlobalNamespace) && !string.IsNullOrEmpty(type.Namespace))
                     {
                         name = type.Namespace + "." + name;
                     }

@@ -19,6 +19,10 @@ namespace Unity.VisualScripting.Community
         private int scopeIdCounter = 0;
         private Stack<(Type type, bool isMet)> expectedTypes = new Stack<(Type type, bool isMet)>();
 
+        /// <summary>
+        /// Used to store any infomation for the generator, For example seeing if a port has been generated already to avoid duplicate generation.
+        /// </summary>
+        public readonly Dictionary<object, object> generatorData = new Dictionary<object, object>(); 
         private Dictionary<Unit, UnitSymbol> UnitSymbols = new Dictionary<Unit, UnitSymbol>();
 
         public Type ScriptType = typeof(object);
