@@ -24,19 +24,19 @@ namespace Unity.VisualScripting.Community
             }
             if (Unit.conversion == ConversionType.Any)
             {
-                NameSpace = "";
+                NameSpaces = "";
                 if (Unit.type == typeof(object)) return GenerateValue(Unit.value, data);
-                NameSpace = Unit.type.Namespace;
+                NameSpaces = Unit.type.Namespace;
                 return MakeSelectableForThisUnit($"({Unit.type.As().CSharpName(true, true)})") + GenerateValue(Unit.value, data);
             }
             else if (Unit.conversion == ConversionType.ToArrayOfObject)
             {
-                NameSpace = "System.Linq";
+                NameSpaces = "System.Linq";
                 return MakeSelectableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeSelectableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToArray()");
             }
             else if (Unit.conversion == ConversionType.ToListOfObject)
             {
-                NameSpace = "System.Linq";
+                NameSpaces = "System.Linq";
                 return MakeSelectableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeSelectableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToList()");
             }
             return base.GenerateValue(output, data);

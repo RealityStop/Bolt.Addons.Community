@@ -21,11 +21,11 @@ namespace Unity.VisualScripting.Community
         {
             if (Unit.member.isExtension)
             {
-                NameSpace = Unit.member.info.DeclaringType.Namespace;
+                NameSpaces = Unit.member.info.DeclaringType.Namespace;
             }
             else
             {
-                NameSpace = Unit.member.declaringType.Namespace;
+                NameSpaces = Unit.member.declaringType.Namespace;
             }
         }
 

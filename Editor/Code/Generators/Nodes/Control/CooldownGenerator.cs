@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community
     {
         public CooldownGenerator(Cooldown unit) : base(unit)
         {
-            NameSpace = "Unity.VisualScripting.Community";
+            NameSpaces = "Unity.VisualScripting.Community";
         }
 
         private Cooldown Unit => unit as Cooldown;
@@ -34,7 +34,7 @@ namespace Unity.VisualScripting.Community
             variableName = Name;
             if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
             {
-                return CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit(CodeUtility.ToolTip("Cooldown only work with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate Cooldown", ""));
+                return CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit(CodeUtility.ToolTip("Cooldown only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate Cooldown", ""));
             }
 
             var output = string.Empty;

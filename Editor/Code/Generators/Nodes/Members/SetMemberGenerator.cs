@@ -14,7 +14,7 @@ namespace Unity.VisualScripting.Community
     {
         public SetMemberGenerator(SetMember unit) : base(unit)
         {
-            NameSpace = Unit.member.declaringType.Namespace;
+            NameSpaces = Unit.member.declaringType.Namespace;
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)

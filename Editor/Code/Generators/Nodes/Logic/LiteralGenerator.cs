@@ -16,7 +16,7 @@ namespace Unity.VisualScripting.Community
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             if (Unit.value != null)
-                NameSpace = Unit.value.GetType().Namespace;
+                NameSpaces = Unit.value.GetType().Namespace;
             return Unit.value.As().Code(true, Unit, true, true, "", false, true);
         }
     }

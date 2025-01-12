@@ -19,9 +19,8 @@ namespace Unity.VisualScripting.Community
     {
         public Unit unit;
 
-        public string NameSpace = "";
+        public string NameSpaces = "";
 
-        public string UniqueID = "";
         public string variableName = "";
 
         #region Subgraphs

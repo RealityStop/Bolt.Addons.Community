@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community
     {
         public TimerGenerator(Timer unit) : base(unit)
         {
-            NameSpace = "Unity.VisualScripting.Community";
+            NameSpaces = "Unity.VisualScripting.Community";
         }
         private Timer Unit => unit as Timer;
         public override AccessModifier AccessModifier => AccessModifier.Private;
@@ -32,7 +32,7 @@ namespace Unity.VisualScripting.Community
             variableName = Name;
             if(!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
             {
-                return CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit(CodeUtility.ToolTip("Timers only work with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour",  "Could not generate Timer", ""));
+                return CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit(CodeUtility.ToolTip("Timers only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour",  "Could not generate Timer", ""));
             }
     
             var output = string.Empty;

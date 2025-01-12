@@ -7,7 +7,7 @@ namespace Unity.VisualScripting.Community
     {
         public WaitForEndOfFrameGenerator(Unit unit) : base(unit)
         {
-            NameSpace = "UnityEngine";
+            NameSpaces = "UnityEngine";
         }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)

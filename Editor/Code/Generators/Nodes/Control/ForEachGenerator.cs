@@ -45,7 +45,7 @@ public sealed class ForEachGenerator : LocalVariableGenerator
                 currentIndex = data.AddLocalNameInScope("currentIndex", typeof(int));
                 output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(typeof(int).As().CSharpName() + " " + currentIndex.VariableHighlight() + " = -1;") + "\n";
             }
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"foreach".ControlHighlight() + " (" + (fallback && type == typeof(object) ? "var".ConstructHighlight() : $"{type.As().CSharpName()}") + $" {variableName}".VariableHighlight() + " in ".ConstructHighlight()) + $"{collection}" + MakeSelectableForThisUnit(")");
+            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"foreach".ControlHighlight() + " (" + (fallback && type == typeof(object) ? "var".ConstructHighlight() : $"{type.As().CSharpName()}") + $" {variableName}".VariableHighlight() + " in".ConstructHighlight()) + $" {collection}" + MakeSelectableForThisUnit(")");
             output += "\n";
             output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{");
             output += "\n";

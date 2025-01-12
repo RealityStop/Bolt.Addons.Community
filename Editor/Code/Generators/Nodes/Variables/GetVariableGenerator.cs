@@ -33,7 +33,7 @@ namespace Unity.VisualScripting.Community
 
         private void SetNamespaceBasedOnVariableKind()
         {
-            NameSpace = Unit.kind == VariableKind.Scene ? "UnityEngine.SceneManagement" : string.Empty;
+            NameSpaces = Unit.kind == VariableKind.Scene ? "UnityEngine.SceneManagement" : string.Empty;
         }
 
         private string GenerateConnectedVariableCode(ControlGenerationData data)

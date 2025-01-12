@@ -14,7 +14,7 @@ namespace Unity.VisualScripting.Community
     {
         public GetMemberGenerator(Unity.VisualScripting.GetMember unit) : base(unit)
         {
-            NameSpace = Unit.member.declaringType.Namespace;
+            NameSpaces = Unit.member.declaringType.Namespace;
         }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)

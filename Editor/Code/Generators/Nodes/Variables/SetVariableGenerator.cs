@@ -18,11 +18,11 @@ namespace Unity.VisualScripting.Community
         {
             if (Unit.kind == VariableKind.Scene)
             {
-                NameSpace = "UnityEngine.SceneManagement";
+                NameSpaces = "UnityEngine.SceneManagement";
             }
             else
             {
-                NameSpace = string.Empty;
+                NameSpaces = string.Empty;
             }
         }
 
@@ -31,11 +31,11 @@ namespace Unity.VisualScripting.Community
             var output = string.Empty;
             if (Unit.kind == VariableKind.Scene)
             {
-                NameSpace = "UnityEngine.SceneManagement";
+                NameSpaces = "UnityEngine.SceneManagement";
             }
             else
             {
-                NameSpace = string.Empty;
+                NameSpaces = string.Empty;
             }
             if (Unit.name.hasValidConnection || (Unit.@object != null && Unit.@object.hasValidConnection))
             {

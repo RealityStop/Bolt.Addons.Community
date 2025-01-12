@@ -63,8 +63,8 @@ namespace Unity.VisualScripting.Community
                     var usings = new List<string>();
                     foreach (var _unit in Data.constructors[i].graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                     {
-                        if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
-                            usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                        if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces))
+                            usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces);
                     }
 
                     @struct.AddUsings(usings);
@@ -131,8 +131,8 @@ namespace Unity.VisualScripting.Community
                             var usings = new List<string>();
                             foreach (var _unit in Data.variables[i].getter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                             {
-                                if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
-                                    usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                                if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces))
+                                    usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces);
                             }
 
                             @struct.AddUsings(usings);
@@ -152,8 +152,8 @@ namespace Unity.VisualScripting.Community
                             var usings = new List<string>();
                             foreach (var _unit in Data.variables[i].setter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                             {
-                                if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
-                                    usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                                if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces))
+                                    usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces);
                             }
 
                             @struct.AddUsings(usings);
@@ -256,8 +256,8 @@ namespace Unity.VisualScripting.Community
                         var usings = new List<string>();
                         foreach (var _unit in Data.methods[i].graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                         {
-                            if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace))
-                                usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpace);
+                            if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces))
+                                usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces);
                         }
 
                         @struct.AddUsings(usings);

@@ -50,6 +50,16 @@
             "name": "com.unity.inputsystem",
             "expression": "1.2.0",
             "define": "PACKAGE_INPUT_SYSTEM_1_2_0_OR_NEWER_EXISTS"
+        },
+        {
+            "name": "com.unity.modules.physics2d",
+            "expression": "1.0.0",
+            "define": "MODULE_PHYSICS_2D_EXISTS"
+        },
+        {
+            "name": "com.unity.modules.physics",
+            "expression": "1.0.0",
+            "define": "MODULE_PHYSICS_EXISTS"
         }
     ],
     "noEngineReferences": false

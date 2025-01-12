@@ -393,9 +393,9 @@ namespace Unity.VisualScripting.Community
 
         private void AddNamespacesToUsings(NodeGenerator generator, List<string> usings)
         {
-            if (!string.IsNullOrEmpty(generator.NameSpace))
+            if (!string.IsNullOrEmpty(generator.NameSpaces))
             {
-                usings.Add(generator.NameSpace);
+                usings.Add(generator.NameSpaces);
             }
         }
 
@@ -426,7 +426,7 @@ namespace Unity.VisualScripting.Community
 
                 @class.AddField(FieldGenerator.Field(variableGenerator.AccessModifier, variableGenerator.FieldModifier, variableGenerator.Type, variableGenerator.Name));
             }
-            else if (generator is MethodNodeGenerator methodGenerator)
+            else if (generator is MethodNodeGenerator methodGenerator && methodGenerator.unit is not IEventUnit)
             {
                 var existingMethods = new HashSet<string>(@class.methods.Select(m => m.name));
                 methodGenerator.count = 0;
@@ -435,7 +435,11 @@ namespace Unity.VisualScripting.Community
                 {
                     methodGenerator.count++;
                 }
-
+                var data = new ControlGenerationData() { ScriptType = Data.GetInheritedType() };
+                foreach (var item in @class.fields)
+                {
+                    data.AddLocalNameInScope(item.name, item.type);
+                }
                 var method = MethodGenerator.Method(methodGenerator.AccessModifier, methodGenerator.MethodModifier, methodGenerator.ReturnType, methodGenerator.Name);
                 method.AddGenerics(methodGenerator.GenericCount);
 
@@ -454,8 +458,8 @@ namespace Unity.VisualScripting.Community
                 {
                     methodGenerator.Data.AddLocalNameInScope(variable.FieldName, variable.type);
                 }
-
-                method.Body(methodGenerator.MethodBody);
+                methodGenerator.Data = data;
+                method.Body(string.IsNullOrEmpty(methodGenerator.MethodBody) ? methodGenerator.GenerateControl(methodGenerator.unit.controlInputs.Count == 0 ? null : methodGenerator.unit.controlInputs[0], data, 0) : methodGenerator.MethodBody);
                 @class.AddMethod(method);
             }
         }

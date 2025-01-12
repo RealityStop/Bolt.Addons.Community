@@ -28,15 +28,36 @@ namespace Unity.VisualScripting.Community
 
         private static readonly HashSet<Type> UNITY_METHOD_TYPES = new HashSet<Type>
         {
-            typeof(OnCollisionEnter), typeof(OnCollisionExit), typeof(OnCollisionStay),
-            typeof(OnJointBreak), typeof(OnCollisionEnter2D), typeof(OnCollisionExit2D),
-            typeof(OnCollisionStay2D), typeof(OnJointBreak2D), typeof(OnTriggerEnter),
-            typeof(OnTriggerEnter2D), typeof(OnTriggerExit), typeof(OnTriggerStay),
-            typeof(OnTriggerExit2D), typeof(OnTriggerStay2D), typeof(OnControllerColliderHit),
-            typeof(OnApplicationFocus), typeof(OnApplicationPause), typeof(Start),
-            typeof(Update), typeof(FixedUpdate), typeof(LateUpdate), 
+#if MODULE_PHYSICS_EXISTS
+            typeof(OnCollisionEnter),
+            typeof(OnCollisionExit),
+            typeof(OnCollisionStay),
+            typeof(OnJointBreak),
+            typeof(OnTriggerEnter),
+            typeof(OnTriggerExit),
+            typeof(OnTriggerStay),
+            typeof(OnControllerColliderHit),
+            typeof(OnParticleCollision),
+#endif
+#if MODULE_PHYSICS_2D_EXISTS
+            typeof(OnCollisionEnter2D),
+            typeof(OnCollisionExit2D),
+            typeof(OnCollisionStay2D),
+            typeof(OnJointBreak2D),
+            typeof(OnTriggerEnter2D),
+            typeof(OnTriggerExit2D),
+            typeof(OnTriggerStay2D),
+#endif
+            typeof(OnApplicationFocus),
+            typeof(OnApplicationPause),
+            typeof(Start),
+            typeof(Update),
+            typeof(FixedUpdate),
+            typeof(LateUpdate),
 #if PACKAGE_INPUT_SYSTEM_EXISTS
-            typeof(OnInputSystemEventButton), typeof(OnInputSystemEventVector2), typeof(OnInputSystemEventFloat)
+            typeof(OnInputSystemEventButton),
+            typeof(OnInputSystemEventVector2),
+            typeof(OnInputSystemEventFloat),
 #endif
         };
         #endregion
@@ -125,9 +146,9 @@ namespace Unity.VisualScripting.Community
                     generatorCount[methodNodeGenerator.GetType()]++;
                 }
 
-                if (!string.IsNullOrEmpty(generator.NameSpace))
+                if (!string.IsNullOrEmpty(generator.NameSpaces))
                 {
-                    foreach (var ns in generator.NameSpace.Split(","))
+                    foreach (var ns in generator.NameSpaces.Split(","))
                     {
                         if (!usings.Any(@using => @using.Item1 == ns))
                         {
@@ -552,29 +573,33 @@ namespace Unity.VisualScripting.Community
         #region Helper Classes
         private static class MethodParameterMapper
         {
-            private static readonly Dictionary<Type, (string signature, (Type type, string name) info)> _parameterMap
+ private static readonly Dictionary<Type, (string signature, (Type type, string name) info)> _parameterMap
                 = new Dictionary<Type, (string, (Type, string))>
             {
-                { typeof(OnCollisionEnter), ("Collision collision", (typeof(Collision), "collision")) },
-                { typeof(OnCollisionExit), ("Collision collision", (typeof(Collision), "collision")) },
-                { typeof(OnCollisionStay), ("Collision collision", (typeof(Collision), "collision")) },
-                { typeof(OnJointBreak), ("float breakForce", (typeof(float), "breakForce")) },
-                { typeof(OnCollisionEnter2D), ("Collision2D collision", (typeof(Collision2D), "collision")) },
-                { typeof(OnCollisionExit2D), ("Collision2D collision", (typeof(Collision2D), "collision")) },
-                { typeof(OnCollisionStay2D), ("Collision2D collision", (typeof(Collision2D), "collision")) },
-                { typeof(OnJointBreak2D), ("Joint2D brokenJoint", (typeof(Joint2D), "brokenJoint")) },
-                { typeof(OnTriggerEnter), ("Collider other", (typeof(Collider), "other")) },
-                { typeof(OnTriggerEnter2D), ("Collider2D other", (typeof(Collider2D), "other")) },
-                { typeof(OnTriggerExit), ("Collider other", (typeof(Collider), "other")) },
-                { typeof(OnTriggerStay), ("Collider other", (typeof(Collider), "other")) },
-                { typeof(OnTriggerExit2D), ("Collider2D other", (typeof(Collider2D), "other")) },
-                { typeof(OnTriggerStay2D), ("Collider2D other", (typeof(Collider2D), "other")) },
-                { typeof(OnControllerColliderHit), ("ControllerColliderHit hitData", (typeof(ControllerColliderHit), "hitData")) },
-                { typeof(OnApplicationFocus), ("bool focusStatus", (typeof(bool), "focusStatus")) },
-                { typeof(OnApplicationPause), ("bool pauseStatus", (typeof(bool), "pauseStatus")) },
-                { typeof(CustomEvent), ("CustomEventArgs args", (typeof(CustomEventArgs), "args")) }
+#if MODULE_PHYSICS_EXISTS
+                { typeof(OnCollisionEnter), ($"{"Collision".TypeHighlight()} {"collision".VariableHighlight()}", (typeof(Collision), "collision")) },
+                { typeof(OnCollisionExit), ($"{"Collision".TypeHighlight()} {"collision".VariableHighlight()}", (typeof(Collision), "collision")) },
+                { typeof(OnCollisionStay), ($"{"Collision".TypeHighlight()} {"collision".VariableHighlight()}", (typeof(Collision), "collision")) },
+                { typeof(OnJointBreak), ($"{"float".ConstructHighlight()} {"breakForce".VariableHighlight()}", (typeof(float), "breakForce")) },
+                { typeof(OnTriggerEnter), ($"{"Collider".TypeHighlight()} {"other".VariableHighlight()}", (typeof(Collider), "other")) },
+                { typeof(OnTriggerExit), ($"{"Collider".TypeHighlight()} {"other".VariableHighlight()}", (typeof(Collider), "other")) },
+                { typeof(OnTriggerStay), ($"{"Collider".TypeHighlight()} {"other".VariableHighlight()}", (typeof(Collider), "other")) },
+                { typeof(OnControllerColliderHit), ($"{"ControllerColliderHit".TypeHighlight()} {"hitData".VariableHighlight()}", (typeof(ControllerColliderHit), "hitData")) },
+                { typeof(OnParticleCollision), ($"{"GameObject".TypeHighlight()} {"other".VariableHighlight()}", (typeof(GameObject), "other")) },
+#endif
+#if MODULE_PHYSICS_2D_EXISTS
+                { typeof(OnCollisionEnter2D), ($"{"Collision2D".TypeHighlight()} {"collision".VariableHighlight()}", (typeof(Collision2D), "collision")) },
+                { typeof(OnCollisionExit2D), ($"{"Collision2D".TypeHighlight()} {"collision".VariableHighlight()}", (typeof(Collision2D), "collision")) },
+                { typeof(OnCollisionStay2D), ($"{"Collision2D".TypeHighlight()} {"collision".VariableHighlight()}", (typeof(Collision2D), "collision")) },
+                { typeof(OnJointBreak2D), ($"{"Joint2D".TypeHighlight()} {"brokenJoint".VariableHighlight()}", (typeof(Joint2D), "brokenJoint")) },
+                { typeof(OnTriggerEnter2D), ($"{"Collider2D".TypeHighlight()} {"other".VariableHighlight()}", (typeof(Collider2D), "other")) },
+                { typeof(OnTriggerExit2D), ($"{"Collider2D".TypeHighlight()} {"other".VariableHighlight()}", (typeof(Collider2D), "other")) },
+                { typeof(OnTriggerStay2D), ($"{"Collider2D".TypeHighlight()} {"other".VariableHighlight()}", (typeof(Collider2D), "other")) },
+#endif
+                { typeof(OnApplicationFocus), ($"{"bool".ConstructHighlight()} {"focusStatus".VariableHighlight()}", (typeof(bool), "focusStatus")) },
+                { typeof(OnApplicationPause), ($"{"bool".ConstructHighlight()} {"pauseStatus".VariableHighlight()}", (typeof(bool), "pauseStatus")) },
+                { typeof(CustomEvent), ($"{"CustomEventArgs".TypeHighlight()} {"args".VariableHighlight()}", (typeof(CustomEventArgs), "args")) }
             };
-
             public static (string parameterSignature, (Type parameterType, string parameterName) paramInfo)
                 GetParameters(IEventUnit eventUnit)
             {

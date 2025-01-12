@@ -21,11 +21,11 @@ namespace Unity.VisualScripting.Community
 
             if (Unit.kind == VariableKind.Scene)
             {
-                NameSpace = "UnityEngine.SceneManagement";
+                NameSpaces = "UnityEngine.SceneManagement";
             }
             else
             {
-                NameSpace = string.Empty;
+                NameSpaces = string.Empty;
             }
 
             var variables = MakeSelectableForThisUnit(typeof(VisualScripting.Variables).As().CSharpName(true, true));

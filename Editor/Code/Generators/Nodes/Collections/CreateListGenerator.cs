@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community
     {
         public CreateListGenerator(Unit unit) : base(unit)
         {
-            NameSpace = "Unity.VisualScripting";
+            NameSpaces = "Unity.VisualScripting";
         }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)

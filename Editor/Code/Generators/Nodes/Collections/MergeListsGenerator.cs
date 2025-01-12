@@ -39,7 +39,7 @@ namespace Unity.VisualScripting.Community
                 {
                     return typeof(object);
                 }
-                NameSpace = type.Namespace;
+                NameSpaces = type.Namespace;
             }
             return null;
         }
