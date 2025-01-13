@@ -29,13 +29,14 @@ namespace Unity.VisualScripting.Community
         {
             if (Data == null)
                 return ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, "", null);
-
+            
             string className = Data.title.LegalMemberName();
             Type baseType = Data.scriptableObject
                 ? typeof(ScriptableObject)
                 : (Data.inheritsType && Data.inherits.type != null ? Data.GetInheritedType() : typeof(object));
 
             var @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, className, baseType);
+            @class.beforeUsings = "#pragma warning disable\n".ConstructHighlight();
 
             if (Data.definedEvent)
                 @class.ImplementInterface(typeof(IDefinedEvent));

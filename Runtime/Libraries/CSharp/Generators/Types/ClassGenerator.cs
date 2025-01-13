@@ -34,7 +34,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         private bool useAssemblyQualifiedNameForInheritance;
         public string assemblyQualifiedInheritanceNamespace;
         public string assemblyQualifiedInheritanceType;
-
+        public string beforeUsings;
         private ClassGenerator() { }
 
         /// <summary>
@@ -84,8 +84,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         protected override string GenerateBefore(int indent)
         {
-            var output = string.Empty;
-
+            var output = beforeUsings;
             if (generateUsings)
             {
                 var usings = Usings();

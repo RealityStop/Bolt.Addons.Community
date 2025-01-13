@@ -14,6 +14,7 @@ namespace Unity.VisualScripting.Community
         protected override TypeGenerator OnGenerateType(ref string output, NamespaceGenerator @namespace)
         {
             var @struct = StructGenerator.Struct(RootAccessModifier.Public, StructModifier.None, Data.title.LegalMemberName());
+            @struct.beforeUsings = "#pragma warning disable\n".ConstructHighlight();
             if (Data.definedEvent) @struct.ImplementInterface(typeof(IDefinedEvent));
             if (Data.inspectable) @struct.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
             if (Data.serialized) @struct.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());

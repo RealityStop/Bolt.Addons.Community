@@ -21,8 +21,12 @@ namespace Unity.VisualScripting.Community
         {
             SetNamespaceBasedOnVariableKind();
 
-            if (Unit.name.hasValidConnection || (Unit.@object != null && Unit.@object.hasValidConnection))
+            if (Unit.name.hasValidConnection || Unit.kind == VariableKind.Object)
             {
+                if(Unit.kind == VariableKind.Object && !Unit.name.hasValidConnection)
+                {
+                    return GenerateDisconnectedVariableCode(data);
+                }
                 return GenerateConnectedVariableCode(data);
             }
             else

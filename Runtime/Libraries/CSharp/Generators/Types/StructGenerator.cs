@@ -25,6 +25,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         private List<InterfaceGenerator> subInterfaces = new List<InterfaceGenerator>();
         private List<Type> interfaces = new List<Type>();
         public bool generateUsings;
+        public string beforeUsings;
 
         private StructGenerator() { }
 
@@ -50,7 +51,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         protected override string GenerateBefore(int indent)
         {
-            var output = string.Empty;
+            var output = beforeUsings;
 
             if (generateUsings)
             {

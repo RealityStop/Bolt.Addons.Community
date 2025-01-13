@@ -713,10 +713,6 @@ namespace Unity.VisualScripting.Community
             {
                 var loadedCode = LoadCode();
                 var code = "";
-                if (loadedCode.Length > 0)
-                {
-                    code = "#pragma warning disable\n".ConstructHighlight().RemoveMarkdown();
-                }
                 code += loadedCode;
                 var ObjectVariables = "\n";
                 var values = CodeGeneratorValueUtility.currentAsset != null ? CodeGeneratorValueUtility.GetAllValues(CodeGeneratorValueUtility.currentAsset) : new Dictionary<string, Object>();

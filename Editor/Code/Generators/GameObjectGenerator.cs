@@ -106,7 +106,7 @@ namespace Unity.VisualScripting.Community
         private string GenerateScriptHeader()
         {
             var usings = GetRequiredNamespaces();
-            return "#pragma warning disable\n" + string.Join("\n", usings.Select(u => GenerateUsingStatement(u))) + "\n";
+            return "#pragma warning disable\n".ConstructHighlight() + string.Join("\n", usings.Select(u => GenerateUsingStatement(u))) + "\n";
         }
         private Dictionary<Type, int> generatorCount = new Dictionary<Type, int>();
         private List<(string, Unit)> GetRequiredNamespaces()

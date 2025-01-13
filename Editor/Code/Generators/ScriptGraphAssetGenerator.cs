@@ -97,7 +97,7 @@ namespace Unity.VisualScripting.Community
         {
             units = Data.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>().ToList();
             var usings = GetRequiredNamespaces();
-            return "#pragma warning disable\n" + string.Join("\n", usings.Select(u => GenerateUsingStatement(u))) + "\n";
+            return "#pragma warning disable\n".ConstructHighlight() + string.Join("\n", usings.Select(u => GenerateUsingStatement(u))) + "\n";
         }
 
         private Dictionary<Type, int> generatorCount = new Dictionary<Type, int>();
