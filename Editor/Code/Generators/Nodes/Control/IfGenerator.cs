@@ -139,7 +139,10 @@ namespace Unity.VisualScripting.Community
             {
                 if (Unit.condition.hasAnyConnection)
                 {
-                    return GetNextValueUnit(Unit.condition, data);
+                    data.SetExpectedType(typeof(bool));
+                    var code = GetNextValueUnit(Unit.condition, data);
+                    data.RemoveExpectedType();
+                    return code;
                 }
             }
 

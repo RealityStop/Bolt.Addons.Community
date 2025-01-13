@@ -2024,6 +2024,9 @@ namespace Unity.VisualScripting.Community
                                 {
                                     Undo.RegisterCompleteObjectUndo(Target, "Deleted variable");
                                     variables.Remove(obj as TFieldDeclaration);
+                                    AssetDatabase.RemoveObjectFromAsset((obj as TFieldDeclaration).setter);
+                                    AssetDatabase.RemoveObjectFromAsset((obj as TFieldDeclaration).getter);
+                                    AssetDatabase.RemoveObjectFromAsset(obj as TFieldDeclaration);
                                     shouldUpdate = true;
                                 }, listOfVariables[index]);
 

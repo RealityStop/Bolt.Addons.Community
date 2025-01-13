@@ -125,15 +125,15 @@ namespace Unity.VisualScripting.Community
                     {
 
                         var target = GenerateValue(Unit.target, data);
-                        if (Unit.member.pseudoDeclaringType == typeof(GameObject) && Unit.target.hasValidConnection && Unit.target.connection.source.type.IsSubclassOf(typeof(Component)))
+                        if (Unit.member.pseudoDeclaringType == typeof(GameObject) && Unit.target.hasValidConnection && typeof(Component).IsAssignableFrom(GetSourceType(Unit.target, data) ?? Unit.target.connection.source.type))
                         {
-                            output += CodeBuilder.Indent(indent) + target + MakeSelectableForThisUnit($".gameObject.GetComponent<{Unit.target.connection.source.type.As().CSharpName(false, true)}>().{Unit.member.name}(") + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(");")}" + "\n";
+                            output += CodeBuilder.Indent(indent) + target + (typeof(Component).IsAssignableFrom(Unit.target.type) && Unit.target.type != typeof(object) ? MakeSelectableForThisUnit($".{"gameObject".VariableHighlight()}.GetComponent<{(GetSourceType(Unit.target, data) ?? Unit.target.connection.source.type).As().CSharpName(false, true)}>().{Unit.member.name}(") : MakeSelectableForThisUnit($".{"gameObject".VariableHighlight()}.{Unit.member.name}(")) + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(");")}" + "\n";
                         }
-                        else if (Unit.target.hasValidConnection && Unit.target.type != Unit.target.connection.source.type && Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
+                        else if (Unit.target.hasValidConnection && Unit.target.type != Unit.target.connection.source.type && typeof(Component).IsAssignableFrom(Unit.member.pseudoDeclaringType))
                         {
                             output += CodeBuilder.Indent(indent) + target + MakeSelectableForThisUnit($"{GetComponent(Unit.target, data)}.{Unit.member.name}(") + GenerateArguments(data) + MakeSelectableForThisUnit(");") + "\n";
                         }
-                        else if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
+                        else if (typeof(Component).IsAssignableFrom(Unit.member.pseudoDeclaringType))
                         {
                             output += CodeBuilder.Indent(indent) + target + MakeSelectableForThisUnit($"{GetComponent(Unit.target, data)}.{Unit.member.name}(") + GenerateArguments(data) + MakeSelectableForThisUnit(");") + "\n";
                         }

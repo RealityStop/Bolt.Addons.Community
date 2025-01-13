@@ -35,25 +35,25 @@ namespace Unity.VisualScripting.Community
                     }
                     else
                     {
-                        type = Unit.member.ToPseudoDeclarer().ToString();
+                        type = Unit.member.ToPseudoDeclarer().ToString(); // I don't think this should be possible.
                     }
 
                     string outputCode;
 
-                    if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
+                    if (typeof(Component).IsAssignableFrom(Unit.member.pseudoDeclaringType))
                     {
-                        outputCode = new ValueCode($"{GenerateValue(Unit.target, data)}{MakeSelectableForThisUnit($"{GetComponent(Unit.target, data)}.{type}")}");
+                        outputCode = new ValueCode($"{GenerateValue(Unit.target, data)}{MakeSelectableForThisUnit($"{GetComponent(Unit.target, data)}.{type.VariableHighlight()}")}");
                     }
                     else
                     {
-                        outputCode = new ValueCode(GenerateValue(Unit.target, data) + MakeSelectableForThisUnit($".{type}"));
+                        outputCode = new ValueCode(GenerateValue(Unit.target, data) + MakeSelectableForThisUnit($".{type.VariableHighlight()}"));
                     }
 
                     return outputCode;
                 }
                 else
                 {
-                    return $"{GenerateValue(Unit.target, data)}{MakeSelectableForThisUnit($".{Unit.member.name}")}";
+                    return $"{GenerateValue(Unit.target, data)}{MakeSelectableForThisUnit($".{Unit.member.name.VariableHighlight()}")}";
                 }
             }
             else

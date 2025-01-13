@@ -90,13 +90,14 @@ namespace Unity.VisualScripting.Community
             _methods = new Dictionary<string, GraphMethodDecleration>();
             _customEventIds = new Dictionary<CustomEvent, int>();
             _specialUnits.Clear();
+            generatorCount.Clear();
         }
 
         private string GenerateScriptHeader()
         {
             units = Data.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>().ToList();
             var usings = GetRequiredNamespaces();
-            return string.Join("\n", usings.Select(u => GenerateUsingStatement(u))) + "\n";
+            return "#pragma warning disable\n" + string.Join("\n", usings.Select(u => GenerateUsingStatement(u))) + "\n";
         }
 
         private Dictionary<Type, int> generatorCount = new Dictionary<Type, int>();
@@ -257,7 +258,7 @@ namespace Unity.VisualScripting.Community
                     string runnerCode = GetCustomEventRunnerCode(eventUnit, data);
                     AddNewMethod(eventUnit, eventName, GetMethodSignature(eventUnit, false, eventName, AccessModifier.Private), runnerCode, "CustomEventArgs ".TypeHighlight() + "args".VariableHighlight(), data);
                 }
-                script += $"\n{CodeBuilder.Indent(1)}\n";
+                script += $"\n{CodeBuilder.Indent(1)}}}\n";
             }
             return script;
         }
