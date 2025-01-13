@@ -71,7 +71,7 @@ namespace Unity.VisualScripting.Community
         {
             var name = Unit.defaultValues[Unit.name.key] as string;
             variableType = GetVariableType(name, data, true);
-            if (Unit.kind == VariableKind.Scene || Unit.kind == VariableKind.Application || Unit.kind == VariableKind.Saved)
+            if (Unit.kind == VariableKind.Object || Unit.kind == VariableKind.Scene || Unit.kind == VariableKind.Application || Unit.kind == VariableKind.Saved)
             {
                 var typeString = variableType != null ? $"<{variableType.As().CSharpName(false, true)}>" : string.Empty;
                 var isExpectedType = data.GetExpectedType() != null ? (variableType != null && data.GetExpectedType().IsAssignableFrom(variableType)) || (IsVariableDefined(name) && !string.IsNullOrEmpty(GetVariableDeclaration(name).typeHandle.Identification) && Type.GetType(GetVariableDeclaration(name).typeHandle.Identification) == data.GetExpectedType()) || (data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && targetType == data.GetExpectedType()) : true;
