@@ -29,7 +29,7 @@ namespace Unity.VisualScripting.Community
         {
             if (Data == null)
                 return ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, "", null);
-            
+
             string className = Data.title.LegalMemberName();
             Type baseType = Data.scriptableObject
                 ? typeof(ScriptableObject)
@@ -177,9 +177,14 @@ namespace Unity.VisualScripting.Community
 
             if (specialUnits.Count > 0)
             {
+                bool addedSpecialUpdatedCode = false;
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                bool addedSpecialFixedUpdatedCode = false;
+#endif
                 HashSet<Unit> visited = new HashSet<Unit>();
-                if (@class.methods.Any(m => m.name.Replace(" ", "") == "Update"))
+                if (!addedSpecialUpdatedCode && @class.methods.Any(m => m.name.Replace(" ", "") == "Update"))
                 {
+                    addedSpecialUpdatedCode = true;
                     var method = @class.methods.First(m => m.name.Replace(" ", "") == "Update");
                     foreach (var specialUnit in specialUnits)
                     {
@@ -208,10 +213,15 @@ namespace Unity.VisualScripting.Community
                     }
 #endif
                 }
-                else
+                else if (!addedSpecialUpdatedCode)
                 {
+                    addedSpecialUpdatedCode = true;
                     var method = MethodGenerator.Method(AccessModifier.None, MethodModifier.None, typeof(void), "Update");
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                    foreach (var specialUnit in specialUnits.Where(unit => unit is not OnInputSystemEvent))
+#else
                     foreach (var specialUnit in specialUnits)
+#endif
                     {
                         if (!visited.Add(specialUnit))
                             continue;
@@ -220,9 +230,6 @@ namespace Unity.VisualScripting.Community
                         {
                             if (generator is VariableNodeGenerator && !string.IsNullOrEmpty(generator.variableName))
                             {
-#if PACKAGE_INPUT_SYSTEM_EXISTS
-                                if (specialUnit is OnInputSystemEvent) continue;
-#endif
                                 method.beforeBody += string.Join("\n", specialUnits.Select(t => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(t, (NodeGenerator.GetSingleDecorator(t, t) as VariableNodeGenerator).Name.VariableHighlight() + ".Update();")));
                             }
                         }
@@ -242,8 +249,9 @@ namespace Unity.VisualScripting.Community
 #if PACKAGE_INPUT_SYSTEM_EXISTS
                 if (UnityEngine.InputSystem.InputSystem.settings.updateMode != InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
                 {
-                    if (@class.methods.Any(m => m.name.Replace(" ", "") == "FixedUpdate"))
+                    if (!addedSpecialFixedUpdatedCode && @class.methods.Any(m => m.name.Replace(" ", "") == "FixedUpdate"))
                     {
+                        addedSpecialFixedUpdatedCode = true;
                         var method = @class.methods.First(m => m.name.Replace(" ", "") == "FixedUpdate");
                         foreach (var unit in specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
                         {
@@ -251,8 +259,9 @@ namespace Unity.VisualScripting.Community
                             method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, unit.GetMethodGenerator().Name + "();") + "\n";
                         }
                     }
-                    else
+                    else if (!addedSpecialFixedUpdatedCode)
                     {
+                        addedSpecialFixedUpdatedCode = true;
                         var method = MethodGenerator.Method(AccessModifier.None, MethodModifier.None, typeof(void), "FixedUpdate");
                         foreach (var unit in specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
                         {

@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -23,7 +24,7 @@ namespace Unity.VisualScripting.Community
 
             if (Unit.name.hasValidConnection || Unit.kind == VariableKind.Object)
             {
-                if(Unit.kind == VariableKind.Object && !Unit.name.hasValidConnection)
+                if (Unit.kind == VariableKind.Object && !Unit.name.hasValidConnection)
                 {
                     return GenerateDisconnectedVariableCode(data);
                 }
@@ -74,7 +75,7 @@ namespace Unity.VisualScripting.Community
             if (Unit.kind == VariableKind.Object || Unit.kind == VariableKind.Scene || Unit.kind == VariableKind.Application || Unit.kind == VariableKind.Saved)
             {
                 var typeString = variableType != null ? $"<{variableType.As().CSharpName(false, true)}>" : string.Empty;
-                var isExpectedType = data.GetExpectedType() != null ? (variableType != null && data.GetExpectedType().IsAssignableFrom(variableType)) || (IsVariableDefined(name) && !string.IsNullOrEmpty(GetVariableDeclaration(name).typeHandle.Identification) && Type.GetType(GetVariableDeclaration(name).typeHandle.Identification) == data.GetExpectedType()) || (data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && targetType == data.GetExpectedType()) : true;
+                var isExpectedType = data.GetExpectedType() == null || (variableType != null && data.GetExpectedType().IsAssignableFrom(variableType)) || (IsVariableDefined(name) && !string.IsNullOrEmpty(GetVariableDeclaration(name).typeHandle.Identification) && Type.GetType(GetVariableDeclaration(name).typeHandle.Identification) == data.GetExpectedType()) || (data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && targetType == data.GetExpectedType());
                 data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
                 var code = GetKind(data, typeString) + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(")")}";
                 return new ValueCode(code, variableType, !isExpectedType);
@@ -102,8 +103,10 @@ namespace Unity.VisualScripting.Community
 
         private bool IsVariableDefined(string name)
         {
+            var objectDefined = Unit.kind == VariableKind.Object && !Unit.@object.hasValidConnection && Selection.activeGameObject != null && VisualScripting.Variables.Object(Selection.activeGameObject).IsDefined(name);
             return Unit.kind switch
             {
+                VariableKind.Object => objectDefined,
                 VariableKind.Scene => VisualScripting.Variables.ActiveScene.IsDefined(name),
                 VariableKind.Application => VisualScripting.Variables.Application.IsDefined(name),
                 VariableKind.Saved => VisualScripting.Variables.Saved.IsDefined(name),
@@ -113,8 +116,10 @@ namespace Unity.VisualScripting.Community
 
         private VariableDeclaration GetVariableDeclaration(string name)
         {
+            var objectDeclaration = Unit.kind == VariableKind.Object && !Unit.@object.hasValidConnection && Selection.activeGameObject != null ? VisualScripting.Variables.Object(Selection.activeGameObject).GetDeclaration(name) : null;
             return Unit.kind switch
             {
+                VariableKind.Object => objectDeclaration,
                 VariableKind.Scene => VisualScripting.Variables.ActiveScene.GetDeclaration(name),
                 VariableKind.Application => VisualScripting.Variables.Application.GetDeclaration(name),
                 VariableKind.Saved => VisualScripting.Variables.Saved.GetDeclaration(name),
