@@ -49,10 +49,10 @@ namespace Unity.VisualScripting.Community
                     case VariableKind.Graph:
                         return MakeSelectableForThisUnit(CodeUtility.ToolTip("Graph Variables do not support connected names", "Could not generate Graph Variable", ""));
                     case VariableKind.Object:
-                        kind = MakeSelectableForThisUnit(variables + $".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeSelectableForThisUnit(")")}";
+                        kind = MakeSelectableForThisUnit(variables + ".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeSelectableForThisUnit(")")}";
                         break;
                     case VariableKind.Scene:
-                        kind = MakeSelectableForThisUnit(variables + $"." + "ActiveScene".VariableHighlight());
+                        kind = MakeSelectableForThisUnit(variables + "." + "ActiveScene".VariableHighlight());
                         if (!Unit.name.hasValidConnection && VisualScripting.Variables.ActiveScene.IsDefined(Unit.defaultValues[Unit.name.key] as string))
                         {
                             var identification = VisualScripting.Variables.ActiveScene.GetDeclaration(Unit.defaultValues[Unit.name.key] as string).typeHandle.Identification;
@@ -105,9 +105,9 @@ namespace Unity.VisualScripting.Community
                 switch (Unit.kind)
                 {
                     case VariableKind.Object:
-                        return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}$" + "." + $"Object({GenerateValue(Unit.@object, data)})" + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
+                        return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}" + "." + $"Object({GenerateValue(Unit.@object, data)})" + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
                     case VariableKind.Scene:
-                        return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}$" + "." + "ActiveScene".VariableHighlight() + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
+                        return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}" + "." + "ActiveScene".VariableHighlight() + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
                     case VariableKind.Application:
                         return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}{"." + "Application".VariableHighlight() + ".Set("}") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
                     case VariableKind.Saved:
