@@ -29,25 +29,21 @@ namespace Unity.VisualScripting.Community
         {
             List<Type> inheritableTypes = new List<Type>();
 
-            var types = Codebase.settingsAssembliesTypes.Where(t =>
-                t.Is().Inheritable() &&
-                t != typeof(string) &&
-                t != typeof(GameObject) &&
-                t != typeof(Unity.VisualScripting.Community.Libraries.CSharp.Void) &&
-                t != typeof(void) &&
-                !!TypeHasSpecialName(t)
-            ).ToArray();
-
-            inheritableTypes.AddRange(types);
-
-            inheritableTypes.Add(typeof(MonoBehaviour));
-
-            var editorTypes = Codebase.editorTypes.Where(t =>
+            var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).Where(t =>
                 t.Is().Inheritable() &&
                 !TypeHasSpecialName(t)
             ).ToArray();
 
-            inheritableTypes.AddRange(editorTypes);
+            inheritableTypes.AddRange(types);
+
+            // inheritableTypes.Add(typeof(MonoBehaviour));
+
+            // var editorTypes = Codebase.editorTypes.Where(t =>
+            //     t.Is().Inheritable() &&
+            //     !TypeHasSpecialName(t)
+            // ).ToArray();
+
+            // inheritableTypes.AddRange(editorTypes);
 
             return inheritableTypes.ToArray();
         }

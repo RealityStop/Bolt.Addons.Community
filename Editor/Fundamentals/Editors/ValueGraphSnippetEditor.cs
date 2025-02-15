@@ -48,7 +48,7 @@ namespace Unity.VisualScripting.Community
             EditorGUILayout.PrefixLabel("Source Type:");
             if(GUILayout.Button(new GUIContent((type["type"].value as Type).DisplayName(), (type["type"].value as Type).Icon()[IconSize.Small])))
             {
-                TypeBuilderWindow.ShowWindow(GUILayoutUtility.GetLastRect(), type["type"], true);
+                TypeBuilderWindow.ShowWindow(GUILayoutUtility.GetLastRect(), type["type"], true, new Type[0]);
             }
             EditorGUILayout.EndHorizontal();
 

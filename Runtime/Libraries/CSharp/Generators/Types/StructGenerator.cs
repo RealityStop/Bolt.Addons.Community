@@ -249,5 +249,14 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return usings;
         }
 
+        public List<FieldGenerator> GetFields()
+        {
+            return fields;
+        }
+
+        public List<MethodGenerator> GetMethods()
+        {
+            return methods;
+        }
     }
 }

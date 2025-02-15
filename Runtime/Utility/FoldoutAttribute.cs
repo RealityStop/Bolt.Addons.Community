@@ -1,16 +1,19 @@
 using System;
 using UnityEngine;
 
-public class FoldoutAttribute : PropertyAttribute
+namespace Unity.VisualScripting.Community 
 {
-    public string header;
-    public bool isOpen;
-    public FoldoutAttribute(string header)
+    public class FoldoutAttribute : PropertyAttribute
     {
-        this.header = header;
+        public string header;
+        public bool isOpen;
+        public FoldoutAttribute(string header)
+        {
+            this.header = header;
+        }
     }
-}
-
-public class FoldoutEndAttribute : PropertyAttribute
-{
+    
+    public class FoldoutEndAttribute : PropertyAttribute
+    {
+    } 
 }

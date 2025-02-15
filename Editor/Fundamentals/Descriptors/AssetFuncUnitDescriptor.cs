@@ -9,7 +9,7 @@ namespace Unity.VisualScripting.Community
     
         protected override string DefinedSurtitle()
         {
-            return target.method.classAsset.title;
+            return target.method.parentAsset.title;
         }
     
         protected override EditorTexture DefinedIcon()
@@ -19,7 +19,7 @@ namespace Unity.VisualScripting.Community
     
         protected override string DefinedTitle()
         {
-            return target.method.classAsset.title + "." + target.method.methodName;
+            return target.method.parentAsset.title + "." + target.method.methodName;
         }
     
         protected override string DefinedShortTitle()

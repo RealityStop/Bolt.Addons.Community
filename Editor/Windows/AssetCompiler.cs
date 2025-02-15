@@ -15,834 +15,96 @@ namespace Unity.VisualScripting.Community
 {
     public static class AssetCompiler
     {
-        private static readonly Dictionary<System.Reflection.Assembly, bool> _editorAssemblyCache = new Dictionary<System.Reflection.Assembly, bool>();
+        private static readonly Dictionary<System.Type, IAssetCompiler> compilers = new Dictionary<System.Type, IAssetCompiler>();
+        private static readonly PathConfig paths;
 
+        static AssetCompiler()
+        {
+            paths = new PathConfig();
+            RegisterDefaultCompilers();
+        }
+
+        private static void RegisterDefaultCompilers()
+        {
+            RegisterCompiler<ClassAsset>(new ClassAssetCompiler());
+            RegisterCompiler<StructAsset>(new StructAssetCompiler());
+            RegisterCompiler<EnumAsset>(new EnumAssetCompiler());
+            RegisterCompiler<DelegateAsset>(new DelegateAssetCompiler());
+            RegisterCompiler<InterfaceAsset>(new InterfaceAssetCompiler());
+            RegisterCompiler<ScriptGraphAsset>(new ScriptGraphAssetCompiler());
+            RegisterCompiler<ScriptMachine>(new ScriptMachineCompiler());
+        }
+
+        public static void RegisterCompiler<T>(IAssetCompiler compiler) where T : UnityEngine.Object
+        {
+            compilers[typeof(T)] = compiler;
+        }
+        public const string GeneratedPath = "Unity.VisualScripting.Community.Generated";
         [MenuItem("Addons/Compile All")]
         public static void Compile()
         {
-            if (EditorUtility.DisplayDialog("Compile All Assets", "Compile all Graph, Class, Struct, Interace, Enum and Delegate Assets? This will clear all scripts in the 'Unity.VisualScripting.Community.Generated/Scripts, /Enums, /Interfaces, /Delegates' folder make sure to backup any scripts.", "Yes", "No"))
-            {
-                DoCompileAll();
-            }
-        }
+            if (!EditorUtility.DisplayDialog("Compile All Assets",
+                $"Compile all assets? This will clear all generated scripts in {GeneratedPath}.", "Yes", "No"))
+                return;
 
-        private static void DoCompileAll()
-        {
-            var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
-            var basePath = "Assets" + "/Unity.VisualScripting.Community.Generated/";
-            var oldPath = Application.dataPath + "/Bolt.Addons.Generated/";
-            var scriptsPath = path + "Scripts/";
-            var scriptsRelativePath = basePath + "Scripts/";
-            var editorPath = path + "Editor/";
-            var editorRelativePath = basePath + "Editor/";
-            var csharpPath = scriptsPath + "Objects/";
-            var delegatesPath = scriptsPath + "Delegates/";
-            var enumPath = scriptsPath + "Enums/";
-            var interfacePath = scriptsPath + "Interfaces/";
-            var csharpRelativePath = scriptsRelativePath + "Objects/";
-            var interfaceRelativePath = scriptsRelativePath + "Interfaces/";
-            HUMIO.Ensure(oldPath).Path();
-            HUMIO.Ensure(path).Path();
-            HUMIO.Ensure(scriptsPath).Path();
-            HUMIO.Ensure(delegatesPath).Path();
-            HUMIO.Ensure(csharpPath).Path();
-            HUMIO.Ensure(enumPath).Path();
-            HUMIO.Ensure(interfacePath).Path();
+            paths.EnsureDirectories();
+            paths.ClearGeneratedFiles();
 
-            HUMIO.Delete(oldPath);
-            HUMIO.Delete(delegatesPath);
-            HUMIO.Delete(csharpPath);
-            HUMIO.Delete(enumPath);
-            HUMIO.Delete(interfacePath);
+            CompileAssets(HUMAssets.Find().Assets().OfType<CodeAsset>());
+            CompileAssets(HUMAssets.Find().Assets().OfType<ScriptGraphAsset>());
+            CompileGameObjects(AssetCompilierUtility.FindObjectsOfTypeIncludingInactive<ScriptMachine>());
 
-            HUMIO.Ensure(path).Path();
-            HUMIO.Ensure(scriptsPath).Path();
-            HUMIO.Ensure(delegatesPath).Path();
-            HUMIO.Ensure(csharpPath).Path();
-            HUMIO.Ensure(enumPath).Path();
-            HUMIO.Ensure(interfacePath).Path();
-
-            var classes = HUMAssets.Find().Assets().OfType<ClassAsset>().ToList();
-            var structs = HUMAssets.Find().Assets().OfType<StructAsset>();
-            var enums = HUMAssets.Find().Assets().OfType<EnumAsset>();
-            var delegates = HUMAssets.Find().Assets().OfType<DelegateAsset>();
-            var interfaces = HUMAssets.Find().Assets().OfType<InterfaceAsset>();
-            var scriptGraphAssets = HUMAssets.Find().Assets().OfType<ScriptGraphAsset>();
-            var scriptMachines = AssetCompilierUtility.FindObjectsOfTypeIncludingInactive<ScriptMachine>().Concat(HUMAssets.Find().Assets().OfType<GameObject>().SelectMany(obj => obj.GetComponents<ScriptMachine>())).ToList();
-
-            for (int i = 0; i < classes.Count; i++)
-            {
-                var classAsset = classes[i];
-                string fullPath;
-                string relativePath;
-                if (classAsset.inheritsType && IsEditorAssembly(classAsset.GetInheritedType().Assembly, new HashSet<string>()))
-                {
-                    fullPath = editorPath + classAsset.title.LegalMemberName() + ".cs";
-                    relativePath = editorRelativePath + classAsset.title.LegalMemberName() + ".cs";
-                }
-                else
-                {
-                    fullPath = csharpPath + classAsset.title.LegalMemberName() + ".cs";
-                    relativePath = csharpRelativePath + classAsset.title.LegalMemberName() + ".cs";
-                }
-                var code = ClassAssetGenerator.GetSingleDecorator(classes[i]).GenerateClean(0);
-                var ObjectVariables = "\n";
-                var values = CodeGeneratorValueUtility.GetAllValues(classAsset);
-                foreach (var variable in values)
-                {
-                    if (variable.Value != null)
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    else
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    index++;
-                }
-                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                HUMIO.Save(code).Custom(fullPath).Text(false);
-                var name = classAsset.category + (string.IsNullOrEmpty(classAsset.category) ? string.Empty : ".") + classAsset.title.LegalMemberName();
-                if (!classAsset.lastCompiledNames.Contains(name))
-                    classAsset.lastCompiledNames.Add(name);
-                var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
-                var variables = classAsset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && (variable.scope == AccessModifier.Public || variable.attributes.Any(a => a.GetAttributeType() == typeof(SerializeField))));
-                string[] ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                UnityEngine.Object[] ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
-                scriptImporter.SetIcon(classAsset.icon);
-                scriptImporter.SetDefaultReferences(variableNames, variableValues);
-            }
-
-            for (int i = 0; i < structs.Count; i++)
-            {
-                var asset = structs[i];
-                var fullPath = csharpPath + structs[i].title.LegalMemberName() + ".cs";
-                HUMIO.Save(StructAssetGenerator.GetSingleDecorator(structs[i]).GenerateClean(0)).Custom(fullPath).Text(false);
-                var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                if (!asset.lastCompiledNames.Contains(name))
-                    asset.lastCompiledNames.Add(name);
-                var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(csharpPath + asset.title.LegalMemberName() + ".cs");
-                scriptImporter.SetIcon(asset.icon);
-            }
-
-            for (int i = 0; i < enums.Count; i++)
-            {
-                var asset = enums[i];
-                var fullPath = enumPath + asset.title.LegalMemberName() + ".cs";
-                HUMIO.Save(EnumAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
-                var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                if (!asset.lastCompiledNames.Contains(name))
-                    asset.lastCompiledNames.Add(name);
-            }
-
-            for (int i = 0; i < interfaces.Count; i++)
-            {
-                var interfaceAsset = interfaces[i];
-                var fullPath = interfacePath + interfaceAsset.title.LegalMemberName() + ".cs";
-                HUMIO.Save(InterfaceAssetGenerator.GetSingleDecorator(interfaceAsset).GenerateClean(0)).Custom(fullPath).Text(false);
-                var name = interfaceAsset.category + (string.IsNullOrEmpty(interfaceAsset.category) ? string.Empty : ".") + interfaceAsset.title.LegalMemberName();
-                if (!interfaceAsset.lastCompiledNames.Contains(name))
-                    interfaceAsset.lastCompiledNames.Add(name);
-                var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(interfaceRelativePath + interfaceAsset.title.LegalMemberName() + ".cs");
-                scriptImporter.SetIcon(interfaceAsset.icon);
-            }
-
-            for (int i = 0; i < delegates.Count; i++)
-            {
-                var asset = delegates[i];
-                var fullPath = delegatesPath + asset.title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName() + ".cs";
-                var code = DelegateAssetGenerator.GetSingleDecorator(delegates[i]).GenerateClean(0);
-
-                HUMIO.Save(code).Custom(fullPath).Text(false);
-                var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName();
-                if (!asset.lastCompiledNames.Contains(name))
-                    asset.lastCompiledNames.Add(name);
-            }
-
-            var attemptSubgraphs = !scriptGraphAssets.Any(asset => asset.graph.units.Any(unit => unit is GraphInput or GraphOutput)) || EditorUtility.DisplayDialog("Compile Subgraphs", "Attempt to compile subgraphs, this could cause errors in the generated script and will not generate anything connected to the Graph Input and Output.", "Yes", "No");
-
-            for (int i = 0; i < scriptGraphAssets.Count; i++)
-            {
-                var scriptGraphAsset = scriptGraphAssets[i];
-                if (scriptGraphAsset.graph != null || (scriptGraphAsset.graph.units.Any(unit => unit is GraphInput or GraphOutput) && !attemptSubgraphs)) continue;
-                string fullPath = csharpPath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
-                string relativePath = csharpRelativePath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
-                HUMIO.Delete(fullPath);
-                HUMIO.Ensure(fullPath).Path();
-                var code = ScriptGraphAssetGenerator.GetSingleDecorator(scriptGraphAsset).GenerateClean(0);
-                var ObjectVariables = "\n";
-                var values = CodeGeneratorValueUtility.GetAllValues(scriptGraphAsset);
-                foreach (var variable in values)
-                {
-                    if (variable.Value != null)
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    else
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    index++;
-                }
-                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                HUMIO.Save(code).Custom(fullPath).Text(false);
-                var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
-                var variables = scriptGraphAsset.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                string[] ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                UnityEngine.Object[] ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
-                scriptImporter.SetDefaultReferences(variableNames, variableValues);
-            }
-
-            for (int i = 0; i < scriptMachines.Count; i++)
-            {
-                var scriptMachine = scriptMachines[i];
-                if (scriptMachine.graph != null || (scriptMachine.graph.units.Any(unit => unit is GraphInput or GraphOutput) && !attemptSubgraphs)) continue;
-                string fullPath = csharpPath + GetGraphName(scriptMachine).LegalMemberName() + ".cs";
-                string relativePath = csharpRelativePath + GetGraphName(scriptMachine).LegalMemberName() + ".cs";
-                HUMIO.Delete(fullPath);
-                HUMIO.Ensure(fullPath).Path();
-                var code = GameObjectGenerator.GetSingleDecorator(scriptMachine.gameObject).GenerateClean(0);
-                var ObjectVariables = "\n";
-                var values = CodeGeneratorValueUtility.GetAllValues(scriptMachine);
-                foreach (var variable in values)
-                {
-                    if (variable.Value != null)
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    else
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    index++;
-                }
-                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                HUMIO.Save(code).Custom(fullPath).Text(false);
-                var script = AssetDatabase.LoadAssetAtPath<MonoScript>(relativePath);
-                var type = script.GetClass();
-                var component = scriptMachine.gameObject.AddComponent(type);
-                var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                string[] ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                UnityEngine.Object[] ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
-                for (int index = 0; index < variableValues.Length; index++)
-                {
-                    type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
-                }
-            }
-
-            List<(string path, ScriptMachine machine, Dictionary<string, UnityEngine.Object> values)> compiledObjects = new();
-            for (int i = 0; i < scriptMachines.Count; i++)
-            {
-                var scriptMachine = scriptMachines[i];
-                var name = GetGraphName(scriptMachine);
-                string fullPath = csharpPath + name.LegalMemberName() + ".cs";
-                string relativePath = csharpRelativePath + name.LegalMemberName() + ".cs";
-                HUMIO.Delete(fullPath);
-                HUMIO.Ensure(fullPath).Path();
-                var gen = (GameObjectGenerator)GameObjectGenerator.GetSingleDecorator(scriptMachine.gameObject);
-                gen.current = scriptMachine;
-                var code = gen.GenerateClean(0);
-                var ObjectVariables = "\n";
-                var values = CodeGeneratorValueUtility.GetAllValues(scriptMachine);
-                foreach (var variable in values)
-                {
-                    if (variable.Value != null)
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    else
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    index++;
-                }
-                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                HUMIO.Save(code).Custom(fullPath).Text(false);
-                compiledObjects.Add((relativePath, scriptMachine, values));
-            }
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            foreach (var (relativePath, scriptMachine, values) in compiledObjects)
-            {
-                CompilationPipeline.compilationFinished += (v) =>
-                {
-                    var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
-                    var type = scriptImporter.GetScript().GetClass();
-                    var component = scriptMachine.gameObject.GetComponent(type) ?? scriptMachine.gameObject.AddComponent(type);
-                    var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                    var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                    var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                    string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                    UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
-                    for (int index = 0; index < variableValues.Length; index++)
-                    {
-                        type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
-                    }
-                };
-            }
         }
 
         [MenuItem("Addons/Compile Selected")]
         public static void CompileSelected()
         {
-            var codeAssets = Selection.GetFiltered<CodeAsset>(SelectionMode.Assets).ToList();
-            var graphAssets = Selection.GetFiltered<ScriptGraphAsset>(SelectionMode.Assets).ToList();
-            var gameObjects = Selection.GetFiltered<GameObject>(SelectionMode.Unfiltered).ToList();
+            paths.EnsureDirectories();
 
-            var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
-            var basePath = "Assets" + "/Unity.VisualScripting.Community.Generated/";
-            var oldPath = Application.dataPath + "/Bolt.Addons.Generated/";
-            var scriptsPath = path + "Scripts/";
-            var scriptsRelativePath = basePath + "Scripts/";
-            var editorPath = path + "Editor/";
-            var editorRelativePath = basePath + "Editor/";
-            var csharpPath = scriptsPath + "Objects/";
-            var delegatesPath = scriptsPath + "Delegates/";
-            var enumPath = scriptsPath + "Enums/";
-            var interfacePath = scriptsPath + "Interfaces/";
-            var csharpRelativePath = scriptsRelativePath + "Objects/";
-            var interfaceRelativePath = scriptsRelativePath + "Interfaces/";
+            CompileAssets(Selection.GetFiltered<CodeAsset>(SelectionMode.Assets));
+            CompileAssets(Selection.GetFiltered<ScriptGraphAsset>(SelectionMode.Assets));
+            CompileGameObjects(Selection.GetFiltered<GameObject>(SelectionMode.Unfiltered)
+                .SelectMany(go => go.GetComponents<ScriptMachine>()));
 
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
 
-            HUMIO.Ensure(oldPath).Path();
-            HUMIO.Ensure(path).Path();
-            HUMIO.Ensure(scriptsPath).Path();
-            HUMIO.Ensure(editorPath).Path();
-            HUMIO.Ensure(delegatesPath).Path();
-            HUMIO.Ensure(csharpPath).Path();
-            HUMIO.Ensure(enumPath).Path();
-            HUMIO.Ensure(interfacePath).Path();
+        public static void CompileAsset(UnityEngine.Object asset)
+        {
+            paths.EnsureDirectories();
 
-            HUMIO.Delete(oldPath);
-
-            foreach (var asset in codeAssets)
+            var type = asset.GetType();
+            if (compilers.TryGetValue(type, out var compiler))
             {
-                if (asset is ClassAsset classAsset)
-                {
-                    string fullPath;
-                    string relativePath;
-                    if (classAsset.inheritsType && IsEditorAssembly(classAsset.GetInheritedType().Assembly, new HashSet<string>()))
-                    {
-                        fullPath = editorPath + classAsset.title.LegalMemberName() + ".cs";
-                        relativePath = editorRelativePath + classAsset.title.LegalMemberName() + ".cs";
-                    }
-                    else
-                    {
-                        fullPath = csharpPath + classAsset.title.LegalMemberName() + ".cs";
-                        relativePath = csharpRelativePath + classAsset.title.LegalMemberName() + ".cs";
-                    }
-
-                    HUMIO.Delete(fullPath);
-                    HUMIO.Ensure(fullPath).Path();
-                    var code = ClassAssetGenerator.GetSingleDecorator(classAsset).GenerateClean(0);
-                    var ObjectVariables = "\n";
-                    var values = CodeGeneratorValueUtility.GetAllValues(classAsset);
-                    foreach (var variable in values)
-                    {
-                        if (variable.Value != null)
-                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                        else
-                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                        index++;
-                    }
-                    code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                    var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                    if (!asset.lastCompiledNames.Contains(name))
-                        asset.lastCompiledNames.Add(name);
-                    HUMIO.Save(code).Custom(fullPath).Text(false);
-                    var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
-                    var variables = classAsset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && (variable.scope == AccessModifier.Public || variable.attributes.Any(a => a.GetAttributeType() == typeof(SerializeField))));
-                    var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                    var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                    string[] variableNames = variables.Select(variable => variable.FieldName).Concat(ObjectNamesArray).ToArray();
-                    UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).Concat(ObjectValuesArray).ToArray();
-                    scriptImporter.SetIcon(classAsset.icon);
-                    scriptImporter.SetDefaultReferences(variableNames, variableValues);
-                }
-                else if (asset is StructAsset structAsset)
-                {
-                    var fullPath = csharpPath + asset.title.LegalMemberName() + ".cs";
-                    HUMIO.Delete(fullPath);
-                    HUMIO.Ensure(fullPath).Path();
-                    HUMIO.Save(StructAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
-                    var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                    if (!asset.lastCompiledNames.Contains(name))
-                        asset.lastCompiledNames.Add(name);
-                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(csharpRelativePath + asset.title.LegalMemberName() + ".cs");
-                    scriptImporter.SetIcon(structAsset.icon);
-                }
-                else if (asset is EnumAsset)
-                {
-                    var fullPath = enumPath + asset.title.LegalMemberName() + ".cs";
-                    HUMIO.Delete(fullPath);
-                    HUMIO.Ensure(fullPath).Path();
-                    HUMIO.Save(EnumAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
-                    var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                    if (!asset.lastCompiledNames.Contains(name))
-                        asset.lastCompiledNames.Add(name);
-                }
-                else if (asset is DelegateAsset)
-                {
-                    var generator = DelegateAssetGenerator.GetSingleDecorator(asset);
-                    var code = generator.GenerateClean(0);
-                    var fullPath = delegatesPath + asset.title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName() + ".cs";
-
-                    HUMIO.Delete(fullPath);
-                    HUMIO.Ensure(fullPath).Path();
-                    HUMIO.Save(code).Custom(fullPath).Text(false);
-                    var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName();
-                    if (!asset.lastCompiledNames.Contains(name))
-                        asset.lastCompiledNames.Add(name);
-                }
-                else if (asset is InterfaceAsset interfaceAsset)
-                {
-                    var generator = InterfaceAssetGenerator.GetSingleDecorator(asset);
-                    var code = generator.GenerateClean(0);
-                    var fullPath = interfacePath + asset.title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName() + ".cs";
-
-                    HUMIO.Delete(fullPath);
-                    HUMIO.Ensure(fullPath).Path();
-                    HUMIO.Save(code).Custom(fullPath).Text(false);
-                    var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                    if (!asset.lastCompiledNames.Contains(name))
-                        asset.lastCompiledNames.Add(name);
-                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(interfaceRelativePath + interfaceAsset.title.LegalMemberName() + ".cs");
-                    scriptImporter.SetIcon(interfaceAsset.icon);
-                }
-            }
-
-            foreach (var scriptGraphAsset in graphAssets)
-            {
-                string fullPath = csharpPath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
-                string relativePath = csharpRelativePath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
-                HUMIO.Delete(fullPath);
-                HUMIO.Ensure(fullPath).Path();
-                var code = ScriptGraphAssetGenerator.GetSingleDecorator(scriptGraphAsset).GenerateClean(0);
-                var ObjectVariables = "\n";
-                var values = CodeGeneratorValueUtility.GetAllValues(scriptGraphAsset);
-                foreach (var variable in values)
-                {
-                    if (variable.Value != null)
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    else
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    index++;
-                }
-                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                HUMIO.Save(code).Custom(fullPath).Text(false);
-                var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
-                var variables = scriptGraphAsset.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                string[] ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                UnityEngine.Object[] ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
-                scriptImporter.SetDefaultReferences(variableNames, variableValues);
-            }
-            var components = gameObjects.SelectMany(obj => obj.GetComponents<ScriptMachine>());
-            List<(string path, ScriptMachine machine, Dictionary<string, UnityEngine.Object> values)> compiledObjects = new();
-            foreach (var scriptMachine in components)
-            {
-                var name = GetGraphName(scriptMachine);
-                string fullPath = csharpPath + name.LegalMemberName() + ".cs";
-                string relativePath = csharpRelativePath + name.LegalMemberName() + ".cs";
-                HUMIO.Delete(fullPath);
-                HUMIO.Ensure(fullPath).Path();
-                var gen = (GameObjectGenerator)GameObjectGenerator.GetSingleDecorator(scriptMachine.gameObject);
-                gen.current = scriptMachine;
-                var code = gen.GenerateClean(0);
-                var ObjectVariables = "\n";
-                var values = CodeGeneratorValueUtility.GetAllValues(scriptMachine);
-                foreach (var variable in values)
-                {
-                    if (variable.Value != null)
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    else
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    index++;
-                }
-                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                HUMIO.Save(code).Custom(fullPath).Text(false);
-                compiledObjects.Add((relativePath, scriptMachine, values));
+                compiler.Compile(asset, paths);
             }
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            foreach (var (relativePath, scriptMachine, values) in compiledObjects)
-            {
-                CompilationPipeline.compilationFinished += (v) =>
-                {
-                    var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
-                    var type = scriptImporter.GetScript().GetClass();
-                    var component = scriptMachine.gameObject.GetComponent(type) ?? scriptMachine.gameObject.AddComponent(type);
-                    var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                    var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                    var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                    string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                    UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
-                    for (int index = 0; index < variableValues.Length; index++)
-                    {
-                        type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
-                    }
-                };
-            }
         }
-        public static MonoImporter monoImporter;
-        public static void CompileAsset(UnityEngine.Object targetasset)
+
+        private static void CompileAssets<T>(IEnumerable<T> assets) where T : UnityEngine.Object
         {
-            var path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/";
-            var basePath = "Assets" + "/Unity.VisualScripting.Community.Generated/";
-            var oldPath = Application.dataPath + "/Bolt.Addons.Generated/";
-            var scriptsPath = path + "Scripts/";
-            var scriptsRelativePath = basePath + "Scripts/";
-            var editorPath = path + "Editor/";
-            var editorRelativePath = basePath + "Editor/";
-            var csharpPath = scriptsPath + "Objects/";
-            var delegatesPath = scriptsPath + "Delegates/";
-            var enumPath = scriptsPath + "Enums/";
-            var interfacePath = scriptsPath + "Interfaces/";
-            var csharpRelativePath = scriptsRelativePath + "Objects/";
-            var interfaceRelativePath = scriptsRelativePath + "Interfaces/";
-
-            HUMIO.Ensure(oldPath).Path();
-            HUMIO.Ensure(path).Path();
-            HUMIO.Ensure(scriptsPath).Path();
-            HUMIO.Ensure(editorPath).Path();
-            HUMIO.Ensure(delegatesPath).Path();
-            HUMIO.Ensure(csharpPath).Path();
-            HUMIO.Ensure(enumPath).Path();
-            HUMIO.Ensure(interfacePath).Path();
-
-            HUMIO.Delete(oldPath);
-
-            if (targetasset is CodeAsset asset)
+            if (compilers.TryGetValue(typeof(T), out var compiler))
             {
-                if (asset is ClassAsset classAsset)
+                foreach (var asset in assets)
                 {
-                    string fullPath;
-                    string relativePath;
-                    if (classAsset.inheritsType && IsEditorAssembly(classAsset.GetInheritedType().Assembly, new HashSet<string>()))
-                    {
-                        fullPath = editorPath + classAsset.title.LegalMemberName() + ".cs";
-                        relativePath = editorRelativePath + classAsset.title.LegalMemberName() + ".cs";
-                    }
-                    else
-                    {
-                        fullPath = csharpPath + classAsset.title.LegalMemberName() + ".cs";
-                        relativePath = csharpRelativePath + classAsset.title.LegalMemberName() + ".cs";
-                    }
-
-                    HUMIO.Delete(fullPath);
-                    HUMIO.Ensure(fullPath).Path();
-                    var code = ClassAssetGenerator.GetSingleDecorator(classAsset).GenerateClean(0);
-                    var ObjectVariables = "\n";
-                    var values = CodeGeneratorValueUtility.GetAllValues(classAsset);
-                    foreach (var variable in values)
-                    {
-                        if (variable.Value != null)
-                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                        else
-                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                        index++;
-                    }
-                    code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                    var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                    if (!asset.lastCompiledNames.Contains(name))
-                        asset.lastCompiledNames.Add(name);
-                    HUMIO.Save(code).Custom(fullPath).Text(true);
-                    var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
-                    var variables = classAsset.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(variable.type) && (variable.scope == AccessModifier.Public || variable.attributes.Any(a => a.GetAttributeType() == typeof(SerializeField))));
-                    var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                    var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                    string[] variableNames = variables.Select(variable => variable.FieldName).Concat(ObjectNamesArray).ToArray();
-                    UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.defaultValue).Concat(ObjectValuesArray).ToArray();
-                    scriptImporter.SetIcon(classAsset.icon);
-                    scriptImporter.SetDefaultReferences(variableNames, variableValues);
-
-                }
-                else if (asset is StructAsset structAsset)
-                {
-                    var fullPath = csharpPath + asset.title.LegalMemberName() + ".cs";
-                    HUMIO.Delete(fullPath);
-                    HUMIO.Ensure(fullPath).Path();
-                    HUMIO.Save(StructAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
-                    var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                    if (!asset.lastCompiledNames.Contains(name))
-                        asset.lastCompiledNames.Add(name);
-                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(csharpRelativePath + structAsset.title.LegalMemberName() + ".cs");
-                    scriptImporter.SetIcon(structAsset.icon);
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
-                }
-                else if (asset is EnumAsset)
-                {
-                    var fullPath = enumPath + asset.title.LegalMemberName() + ".cs";
-                    HUMIO.Delete(fullPath);
-                    HUMIO.Ensure(fullPath).Path();
-                    HUMIO.Save(EnumAssetGenerator.GetSingleDecorator(asset).GenerateClean(0)).Custom(fullPath).Text(false);
-                    var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                    if (!asset.lastCompiledNames.Contains(name))
-                        asset.lastCompiledNames.Add(name);
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
-                }
-                else if (asset is DelegateAsset)
-                {
-                    var generator = DelegateAssetGenerator.GetSingleDecorator(asset);
-                    var code = generator.GenerateClean(0);
-                    var fullPath = delegatesPath + asset.title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName() + ".cs";
-
-                    HUMIO.Delete(fullPath);
-                    HUMIO.Ensure(fullPath).Path();
-                    HUMIO.Save(code).Custom(fullPath).Text(false);
-                    var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName();
-                    if (!asset.lastCompiledNames.Contains(name))
-                        asset.lastCompiledNames.Add(name);
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
-                }
-                else if (asset is InterfaceAsset interfaceAsset)
-                {
-                    var generator = InterfaceAssetGenerator.GetSingleDecorator(asset);
-                    var code = generator.GenerateClean(0);
-                    var fullPath = interfacePath + asset.title.EnsureNonConstructName().Replace("`", string.Empty).Replace("&", string.Empty).LegalMemberName() + ".cs";
-
-                    HUMIO.Delete(fullPath);
-                    HUMIO.Ensure(fullPath).Path();
-                    HUMIO.Save(code).Custom(fullPath).Text(false);
-                    var name = asset.category + (string.IsNullOrEmpty(asset.category) ? string.Empty : ".") + asset.title.LegalMemberName();
-                    if (!asset.lastCompiledNames.Contains(name))
-                        asset.lastCompiledNames.Add(name);
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
-                    var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(interfaceRelativePath + interfaceAsset.title.LegalMemberName() + ".cs");
-                    scriptImporter.SetIcon(interfaceAsset.icon);
-                }
-            }
-            else if (targetasset is ScriptGraphAsset scriptGraphAsset)
-            {
-                string fullPath = csharpPath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
-                string relativePath = csharpRelativePath + GetGraphName(scriptGraphAsset).LegalMemberName() + ".cs";
-                HUMIO.Delete(fullPath);
-                HUMIO.Ensure(fullPath).Path();
-                var code = ScriptGraphAssetGenerator.GetSingleDecorator(scriptGraphAsset).GenerateClean(0);
-                var ObjectVariables = "\n";
-                var values = CodeGeneratorValueUtility.GetAllValues(scriptGraphAsset);
-                foreach (var variable in values)
-                {
-                    if (variable.Value != null)
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    else
-                        ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                    index++;
-                }
-                code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                HUMIO.Save(code).Custom(fullPath).Text(true);
-                var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
-                var variables = scriptGraphAsset.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                string[] ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                UnityEngine.Object[] ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
-                scriptImporter.SetDefaultReferences(variableNames, variableValues);
-            }
-            else if (targetasset is GameObject gameObject)
-            {
-                if (gameObject.GetComponents<ScriptMachine>()?.Length > 1 && EditorUtility.DisplayDialog("Compile All Machines", "Compile all script machines attached to this GameObject?.", "Yes", "No"))
-                {
-                    var gen = (GameObjectGenerator)GameObjectGenerator.GetSingleDecorator(gameObject);
-                    foreach (var scriptMachine in gameObject.GetComponents<ScriptMachine>())
-                    {
-                        var name = GetGraphName(scriptMachine);
-                        string fullPath = csharpPath + name.LegalMemberName() + ".cs";
-                        string relativePath = csharpRelativePath + name.LegalMemberName() + ".cs";
-                        HUMIO.Delete(fullPath);
-                        HUMIO.Ensure(fullPath).Path();
-                        gen.current = scriptMachine;
-                        var code = gen.GenerateClean(0);
-                        var ObjectVariables = "\n";
-                        var values = CodeGeneratorValueUtility.GetAllValues(scriptMachine);
-                        var index = 0;
-                        foreach (var variable in values)
-                        {
-                            if (variable.Value != null)
-                                ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                            else
-                                ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                            index++;
-                        }
-                        code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                        HUMIO.Save(code).Custom(fullPath).Text(false);
-                        CompilationPipeline.compilationFinished += (v) =>
-                        {
-                            var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
-                            var type = scriptImporter.GetScript().GetClass();
-                            var component = scriptMachine.gameObject.GetComponent(type) ?? scriptMachine.gameObject.AddComponent(type);
-                            var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                            var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                            var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                            string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                            UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
-                            for (int index = 0; index < variableValues.Length; index++)
-                            {
-                                type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
-                            }
-                        };
-                    }
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
-                }
-                else if (gameObject.GetComponents<ScriptMachine>()?.Length > 0)
-                {
-                    var gen = (GameObjectGenerator)GameObjectGenerator.GetSingleDecorator(gameObject);
-                    var scriptMachine = gen.current;
-                    var name = GetGraphName(scriptMachine);
-                    string fullPath = csharpPath + name.LegalMemberName() + ".cs";
-                    string relativePath = csharpRelativePath + name.LegalMemberName() + ".cs";
-                    HUMIO.Delete(fullPath);
-                    HUMIO.Ensure(fullPath).Path();
-                    var code = gen.GenerateClean(0);
-                    var ObjectVariables = "\n";
-                    var values = CodeGeneratorValueUtility.GetAllValues(scriptMachine);
-                    var index = 0;
-                    foreach (var variable in values)
-                    {
-                        if (variable.Value != null)
-                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" + CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + variable.Value.GetType().As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                        else
-                            ObjectVariables += (index == 0 ? CodeBuilder.Indent(1) + $"[Foldout({"ObjectReferences".Quotes()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + "[FoldoutEnd]\n" + CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n" : CodeBuilder.Indent(1) + "[UnityEngine.HideInInspector]\n") + CodeBuilder.Indent(1) + "public " + typeof(UnityEngine.Object).As().CSharpName(false, true, false) + " " + variable.Key.LegalMemberName() + ";\n";
-                        index++;
-                    }
-                    code = code.Insert(code.IndexOf("{") + 1, ObjectVariables);
-                    HUMIO.Save(code).Custom(fullPath).Text(true);
-                    CompilationPipeline.compilationFinished += (v) =>
-                    {
-                        var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
-                        var type = scriptImporter.GetScript().GetClass();
-                        var component = scriptMachine.gameObject.GetComponent(type) ?? scriptMachine.gameObject.AddComponent(type);
-                        var variables = scriptMachine.graph.variables.Where(variable => typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(variable.typeHandle.Identification)));
-                        var ObjectNamesArray = values.Select(v => v.Key.LegalMemberName()).ToArray();
-                        var ObjectValuesArray = values.Select(v => v.Value).ToArray();
-                        string[] variableNames = variables.Select(variable => variable.name).Concat(ObjectNamesArray).ToArray();
-                        UnityEngine.Object[] variableValues = variables.Select(variable => (UnityEngine.Object)variable.value).Concat(ObjectValuesArray).ToArray();
-                        for (int index = 0; index < variableValues.Length; index++)
-                        {
-                            type.GetFields().Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null).FirstOrDefault(f => f.Name == variableNames[index])?.SetValue(component, variableValues[index]);
-                        }
-                    };
+                    compiler.Compile(asset, paths);
                 }
             }
         }
 
-        private static string GetGraphName(ScriptGraphAsset graphAsset)
+        private static void CompileGameObjects(IEnumerable<ScriptMachine> machines)
         {
-            if (!string.IsNullOrEmpty(graphAsset.graph.title))
+            if (compilers.TryGetValue(typeof(ScriptMachine), out var compiler))
             {
-                return graphAsset.graph.title;
-            }
-            else if (!string.IsNullOrEmpty(graphAsset.name))
-            {
-                return graphAsset.name;
-            }
-            else
-                return "UnnamedGraph";
-        }
-        static int index = 0;
-        static GameObject @object;
-        private static string GetGraphName(ScriptMachine machine)
-        {
-            if (@object != machine.gameObject)
-            {
-                index = 0;
-                @object = machine.gameObject;
-            }
-            return machine.nest.graph.title?.Length > 0 ? machine.nest.graph.title : machine.gameObject.name + "_ScriptMachine_" + index++;
-        }
-
-        private static bool IsEditorAssembly(System.Reflection.Assembly assembly, HashSet<string> visited)
-        {
-            if (_editorAssemblyCache.TryGetValue(assembly, out var isEditor))
-            {
-                return isEditor;
-            }
-
-            var name = assembly.GetName().Name;
-            if (visited.Contains(name))
-            {
-                return false;
-            }
-
-            visited.Add(name);
-
-            if (IsSpecialCaseRuntimeAssembly(name))
-            {
-                _editorAssemblyCache.Add(assembly, false);
-                return false;
-            }
-
-            if (IsVisualScriptingRuntimeAssembly(name))
-            {
-                _editorAssemblyCache.Add(assembly, false);
-                return false;
-            }
-
-            if (Attribute.IsDefined(assembly, typeof(AssemblyIsEditorAssembly)))
-            {
-                _editorAssemblyCache.Add(assembly, true);
-                return true;
-            }
-
-            if (IsUserAssembly(name))
-            {
-                _editorAssemblyCache.Add(assembly, false);
-                return false;
-            }
-
-            if (IsUnityEditorAssembly(name))
-            {
-                _editorAssemblyCache.Add(assembly, true);
-                return true;
-            }
-
-            AssemblyName[] listOfAssemblyNames = assembly.GetReferencedAssemblies();
-            foreach (var dependencyName in listOfAssemblyNames)
-            {
-                try
+                foreach (var machine in machines)
                 {
-                    System.Reflection.Assembly dependency = System.Reflection.Assembly.Load(dependencyName);
-
-                    if (IsEditorAssembly(dependency, visited))
-                    {
-                        _editorAssemblyCache.Add(assembly, true);
-                        return true;
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning(e.Message);
+                    compiler.Compile(machine, paths);
                 }
             }
-
-            _editorAssemblyCache.Add(assembly, false);
-
-            return false;
-        }
-
-        private static bool IsSpecialCaseRuntimeAssembly(string assemblyName)
-        {
-            return assemblyName == "UnityEngine.UI" ||
-                assemblyName == "Unity.TextMeshPro";
-        }
-
-        private static bool IsUserAssembly(string name)
-        {
-            return
-                name == "Assembly-CSharp" ||
-                name == "Assembly-CSharp-firstpass";
-        }
-
-        private static bool IsVisualScriptingRuntimeAssembly(string name)
-        {
-            return
-                name == "Unity.VisualScripting.Flow" ||
-                name == "Unity.VisualScripting.Core" || name == "Unity.VisualScripting.State";
-        }
-
-        private static bool IsUnityEditorAssembly(string name)
-        {
-            return
-                name == "Assembly-CSharp-Editor" ||
-                name == "Assembly-CSharp-Editor-firstpass" ||
-                name == "UnityEditor" ||
-                name == "UnityEditor.CoreModule";
         }
     }
 }

@@ -175,6 +175,16 @@ namespace Unity.VisualScripting.Community
         private string GenerateVariableDeclarations()
         {
             var script = string.Empty;
+            var values = CodeGeneratorValueUtility.GetAllValues(Data);
+            var index = 0;
+            foreach (var variable in values)
+            {
+                if (variable.Value != null)
+                    script += (index == 0 ? "\n" + CodeBuilder.Indent(1) + $"[{typeof(FoldoutAttribute).As().CSharpName(false, true, true)}({"ObjectReferences".Quotes().StringHighlight()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + $"[{typeof(FoldoutEndAttribute).As().CSharpName(false, true, true)}]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + $"[{"FoldoutEnd".TypeHighlight()}]\n" + CodeBuilder.Indent(1) + $"[{"UnityEngine".NamespaceHighlight()}.{"HideInInspector".TypeHighlight()}]\n" : CodeBuilder.Indent(1) + $"[{"UnityEngine".NamespaceHighlight()}.{"HideInInspector".TypeHighlight()}]\n") + CodeBuilder.Indent(1) + "public ".ConstructHighlight() + variable.Value.GetType().As().CSharpName(false, true, true) + " " + variable.Key.LegalMemberName().VariableHighlight() + ";\n";
+                else
+                    script += (index == 0 ? "\n" + CodeBuilder.Indent(1) + $"[{typeof(FoldoutAttribute).As().CSharpName(false, true, true)}({"ObjectReferences".Quotes().StringHighlight()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + $"[{"FoldoutEnd".TypeHighlight()}]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + $"[{"FoldoutEnd".TypeHighlight()}]\n" + CodeBuilder.Indent(1) + $"[{"UnityEngine".NamespaceHighlight()}.{"HideInInspector".TypeHighlight()}]\n" : CodeBuilder.Indent(1) + $"[{"UnityEngine".NamespaceHighlight()}.{"HideInInspector".TypeHighlight()}]\n") + CodeBuilder.Indent(1) + "public ".ConstructHighlight() + typeof(UnityEngine.Object).As().CSharpName(false, true, true) + " " + variable.Key.LegalMemberName().VariableHighlight() + ";\n";
+                index++;
+            }
             foreach (VariableDeclaration variable in Data.graph.variables)
             {
                 script +=
@@ -183,7 +193,8 @@ namespace Unity.VisualScripting.Community
                     + " "
                     + variable.name.LegalMemberName().VariableHighlight()
                     + (variable.value != null ? $" = " + "" + $"{variable.value.As().Code(true, true, true, "", true, true, false)};\n" : string.Empty + ";\n");
-            };
+            }
+            ;
 
             foreach (Unit unit in units)
             {
@@ -240,14 +251,15 @@ namespace Unity.VisualScripting.Community
                 int id = 0;
                 foreach (CustomEvent eventUnit in customEvents)
                 {
-                    var data = new ControlGenerationData();
+                    var data = new ControlGenerationData(Data.GetReference());
                     data.ScriptType = typeof(MonoBehaviour);
                     data.returns = eventUnit.coroutine ? typeof(IEnumerator) : typeof(void);
                     data.AddLocalNameInScope("args", typeof(CustomEventArgs));
                     foreach (VariableDeclaration variable in Data.graph.variables)
                     {
                         data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
-                    };
+                    }
+                    ;
                     _customEventIds.Add(eventUnit, id);
                     id++;
                     script += CodeUtility.MakeSelectable(eventUnit, $"{CodeBuilder.Indent(2)}{"CSharpUtility".TypeHighlight()}.RegisterCustomEvent(") + eventUnit.GenerateValue(eventUnit.target) + CodeUtility.MakeSelectable(eventUnit, $", ") + GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, "Runner);");
@@ -277,7 +289,7 @@ namespace Unity.VisualScripting.Community
                 {
                     if (!_methods.ContainsKey(methodName))
                     {
-                        var data = new ControlGenerationData();
+                        var data = new ControlGenerationData(Data.GetReference());
                         data.ScriptType = typeof(MonoBehaviour);
                         data.returns = typeof(IEnumerator);
                         foreach (VariableDeclaration variable in Data.graph.variables)
@@ -340,13 +352,14 @@ namespace Unity.VisualScripting.Community
                 {
                     if (!_methods.ContainsKey(methodName))
                     {
-                        var data = new ControlGenerationData();
+                        var data = new ControlGenerationData(Data.GetReference());
                         data.ScriptType = typeof(MonoBehaviour);
                         data.returns = typeof(void);
                         foreach (VariableDeclaration variable in Data.graph.variables)
                         {
                             data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
-                        };
+                        }
+                        ;
                         var parameters = GetMethodParameters(unit);
                         data.AddLocalNameInScope(parameters.paramInfo.parameterName, parameters.paramInfo.parameterType);
                         if (unit is Update update && !addedSpecialUpdateCode)
@@ -400,7 +413,7 @@ namespace Unity.VisualScripting.Community
             if (_specialUnits.Count > 0 && !units.Any(e => e is Update))
             {
                 var update = new Update();
-                var data = new ControlGenerationData
+                var data = new ControlGenerationData(Data.GetReference())
                 {
                     ScriptType = typeof(MonoBehaviour)
                 };
@@ -421,7 +434,7 @@ namespace Unity.VisualScripting.Community
             else if (UnityEngine.InputSystem.InputSystem.settings.updateMode == InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && !units.Any(e => e is Update) && units.Any(unit => unit is OnInputSystemEvent onInputSystemEvent && onInputSystemEvent.trigger.hasValidConnection))
             {
                 var update = new Update();
-                var data = new ControlGenerationData
+                var data = new ControlGenerationData(Data.GetReference())
                 {
                     ScriptType = typeof(MonoBehaviour)
                 };
@@ -436,7 +449,7 @@ namespace Unity.VisualScripting.Community
             else if (UnityEngine.InputSystem.InputSystem.settings.updateMode != InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && !units.Any(e => e is FixedUpdate) && units.Any(unit => unit is OnInputSystemEvent onInputSystemEvent && onInputSystemEvent.trigger.hasValidConnection))
             {
                 var update = new FixedUpdate();
-                var data = new ControlGenerationData
+                var data = new ControlGenerationData(Data.GetReference())
                 {
                     ScriptType = typeof(MonoBehaviour)
                 };

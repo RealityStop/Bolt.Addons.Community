@@ -44,8 +44,6 @@ namespace Unity.VisualScripting.Community
     
         public MethodType methodType;
     
-        public string parameterCode;
-    
         public List<string> parameterNames;
     
         protected override void Definition()
@@ -57,7 +55,7 @@ namespace Unity.VisualScripting.Community
             {
                 enter = ControlInput(nameof(enter), (flow) =>
                 {
-                    Debug.Log("This node is for the code generators only it does not work inside normal graphs");
+                    Debug.LogError("This node is for the code generators only it is not meant to be triggered!");
                     return exit;
                 });
                 exit = ControlOutput(nameof(exit));
@@ -67,7 +65,7 @@ namespace Unity.VisualScripting.Community
             if (methodType == MethodType.ReturnValue && member.isGettable)
                 result = ValueOutput(member.methodInfo.ReturnType, nameof(result), (flow) =>
                 {
-                    Debug.Log("This node is for the code generators only it does not work inside normal graphs");
+                    Debug.LogError("This node is for the code generators only it is not meant to be triggered!");
                     return member.methodInfo.ReturnType.PseudoDefault();
                 });
     

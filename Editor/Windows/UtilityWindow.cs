@@ -141,36 +141,15 @@ namespace Unity.VisualScripting.Community
                 {
                     if (root is MethodDeclaration methodDeclaration)
                     {
-                        if (methodDeclaration.classAsset != null)
-                        {
-                            root = methodDeclaration.classAsset;
-                        }
-                        else
-                        {
-                            root = methodDeclaration.structAsset;
-                        }
+                        root = methodDeclaration.parentAsset;
                     }
                     else if (root is ConstructorDeclaration constructorDeclaration)
                     {
-                        if (constructorDeclaration.classAsset != null)
-                        {
-                            root = constructorDeclaration.classAsset;
-                        }
-                        else
-                        {
-                            root = constructorDeclaration.structAsset;
-                        }
+                        root = constructorDeclaration.parentAsset;
                     }
                     else if (root is FieldDeclaration fieldDeclaration)
                     {
-                        if (fieldDeclaration.classAsset != null)
-                        {
-                            root = fieldDeclaration.classAsset;
-                        }
-                        else
-                        {
-                            root = fieldDeclaration.structAsset;
-                        }
+                        root = fieldDeclaration.parentAsset;
                     }
                     if (root != null)
                         AssetCompiler.CompileAsset(root);

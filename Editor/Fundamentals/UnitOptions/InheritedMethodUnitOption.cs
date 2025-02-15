@@ -13,7 +13,7 @@ namespace Unity.VisualScripting.Community
     {
         public InheritedMethodUnitOption(InheritedMethodCall unit) : base(unit)
         {
-            sourceScriptGuids = sourceScriptGuids = Unity.VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.member.targetType));
+            sourceScriptGuids =  Unity.VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.member.targetType));
         }
 
         private Member _member;

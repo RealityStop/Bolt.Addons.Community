@@ -1,16 +1,7 @@
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using Unity.VisualScripting;
-using System.Reflection;
 using System;
-using UnityEngine;
-using System.Linq;
-using System.Collections.Concurrent;
-using Unity.VisualScripting.Community;
-using System.Text;
-using UnityEngine.Pool;
 
 namespace Unity.VisualScripting.Community
 {
@@ -22,6 +13,8 @@ namespace Unity.VisualScripting.Community
         public string NameSpaces = "";
 
         public string variableName = "";
+        private int currentRecursionDepth = CSharpPreviewSettings.RecursionDepth;
+        public Recursion recursion = Recursion.New(CSharpPreviewSettings.RecursionDepth);
 
         #region Subgraphs
         public List<ControlOutput> connectedGraphOutputs = new List<ControlOutput>();
@@ -31,6 +24,15 @@ namespace Unity.VisualScripting.Community
         public NodeGenerator(Unit unit)
         {
             this.unit = unit;
+        }
+
+        public void UpdateRecursion()
+        {
+            if (currentRecursionDepth != CSharpPreviewSettings.RecursionDepth)
+            {
+                recursion = Recursion.New(CSharpPreviewSettings.RecursionDepth);
+                currentRecursionDepth = CSharpPreviewSettings.RecursionDepth;
+            }
         }
 
         public virtual string GenerateValue(ValueInput input, ControlGenerationData data)
@@ -48,7 +50,7 @@ namespace Unity.VisualScripting.Community
                 return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
             }
         }
-        
+
         public virtual string GenerateValue(ValueOutput output, ControlGenerationData data) { return MakeSelectableForThisUnit($"/* Port '{output.key}' of '{output.unit.GetType().Name}' Missing Generator. */".WarningHighlight()); }
 
         public virtual string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -95,27 +97,31 @@ namespace Unity.VisualScripting.Community
 
         public Type GetSourceType(ValueInput valueInput, ControlGenerationData data)
         {
-            if (valueInput.hasValidConnection && data.TryGetSymbol(valueInput.GetPsudoSource().unit as Unit, out var symbol))
+            if(data == null)
+            {
+                return valueInput.type;
+            }
+            if (valueInput.hasValidConnection && data.TryGetSymbol(valueInput.GetPesudoSource().unit as Unit, out var symbol))
             {
                 return symbol.Type;
             }
 
-            if (data != null && valueInput.hasValidConnection && valueInput.GetPsudoSource() != null && data.TryGetVariableType(GetSingleDecorator(valueInput.GetPsudoSource().unit as Unit, valueInput.GetPsudoSource().unit as Unit).variableName, out Type type))
+            if (data != null && valueInput.hasValidConnection && valueInput.GetPesudoSource() != null && data.TryGetVariableType(GetSingleDecorator(valueInput.GetPesudoSource().unit as Unit, valueInput.GetPesudoSource().unit as Unit).variableName, out Type type))
             {
                 return type;
             }
 
-            if (valueInput.hasValidConnection && valueInput.GetPsudoSource() != null && GetSingleDecorator(valueInput.GetPsudoSource().unit as Unit, valueInput.GetPsudoSource().unit as Unit) is LocalVariableGenerator localVariable && localVariable.variableType != null)
+            if (valueInput.hasValidConnection && valueInput.GetPesudoSource() != null && GetSingleDecorator(valueInput.GetPesudoSource().unit as Unit, valueInput.GetPesudoSource().unit as Unit) is LocalVariableGenerator localVariable && localVariable.variableType != null)
             {
                 return localVariable.variableType;
             }
 
-            if (valueInput.hasValidConnection && valueInput.GetPsudoSource() != null && valueInput.GetPsudoSource()?.type != typeof(object))
+            if (valueInput.hasValidConnection && valueInput.GetPesudoSource() != null && valueInput.GetPesudoSource()?.type != typeof(object))
             {
-                return valueInput.GetPsudoSource().type;
+                return valueInput.GetPesudoSource().type;
             }
 
-            if(valueInput.hasValidConnection)
+            if (valueInput.hasValidConnection)
             {
                 return valueInput.connection.source.type;
             }

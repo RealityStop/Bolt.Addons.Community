@@ -25,6 +25,8 @@ namespace Unity.VisualScripting.Community
         public virtual bool NewLineLiteral => false;
         public virtual bool IsNew => true;
 
+        public ControlGenerationData data;
+
         public int count;
         protected VariableNodeGenerator(Unit unit) : base(unit)
         {

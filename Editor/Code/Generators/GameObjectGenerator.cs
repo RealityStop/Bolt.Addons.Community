@@ -115,7 +115,6 @@ namespace Unity.VisualScripting.Community
             foreach (Unit unit in units)
             {
                 var generator = NodeGenerator.GetSingleDecorator(unit, unit);
-
                 if (unit is Timer timer)
                 {
                     if (!generatorCount.ContainsKey(typeof(TimerGenerator)))
@@ -181,6 +180,16 @@ namespace Unity.VisualScripting.Community
         private string GenerateVariableDeclarations()
         {
             var script = string.Empty;
+            var values = CodeGeneratorValueUtility.GetAllValues(current);
+            var index = 0;
+            foreach (var variable in values)
+            {
+                if (variable.Value != null)
+                    script += (index == 0 ? "\n" + CodeBuilder.Indent(1) + $"[{typeof(FoldoutAttribute).As().CSharpName(false, true, true)}({"ObjectReferences".Quotes().StringHighlight()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + $"[{typeof(FoldoutEndAttribute).As().CSharpName(false, true, true)}]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + $"[{"FoldoutEnd".TypeHighlight()}]\n" + CodeBuilder.Indent(1) + $"[{"UnityEngine".NamespaceHighlight()}.{"HideInInspector".TypeHighlight()}]\n" : CodeBuilder.Indent(1) + $"[{"UnityEngine".NamespaceHighlight()}.{"HideInInspector".TypeHighlight()}]\n") + CodeBuilder.Indent(1) + "public ".ConstructHighlight() + variable.Value.GetType().As().CSharpName(false, true, true) + " " + variable.Key.LegalMemberName().VariableHighlight() + ";\n";
+                else
+                    script += (index == 0 ? "\n" + CodeBuilder.Indent(1) + $"[{typeof(FoldoutAttribute).As().CSharpName(false, true, true)}({"ObjectReferences".Quotes().StringHighlight()})]\n" + (values.Count == 1 ? CodeBuilder.Indent(1) + $"[{"FoldoutEnd".TypeHighlight()}]\n" : "") : index == values.Count - 1 ? CodeBuilder.Indent(1) + $"[{"FoldoutEnd".TypeHighlight()}]\n" + CodeBuilder.Indent(1) + $"[{"UnityEngine".NamespaceHighlight()}.{"HideInInspector".TypeHighlight()}]\n" : CodeBuilder.Indent(1) + $"[{"UnityEngine".NamespaceHighlight()}.{"HideInInspector".TypeHighlight()}]\n") + CodeBuilder.Indent(1) + "public ".ConstructHighlight() + typeof(UnityEngine.Object).As().CSharpName(false, true, true) + " " + variable.Key.LegalMemberName().VariableHighlight() + ";\n";
+                index++;
+            }
             foreach (VariableDeclaration variable in current.nest.graph.variables)
             {
                 script +=
@@ -195,7 +204,8 @@ namespace Unity.VisualScripting.Community
                                 + $"{variable.value.As().Code(true, true, true, "", true, true, false)};\n"
                             : string.Empty + ";\n"
                     );
-            };
+            }
+            ;
 
             foreach (Unit unit in units)
             {
@@ -252,14 +262,16 @@ namespace Unity.VisualScripting.Community
                 int id = 0;
                 foreach (CustomEvent eventUnit in customEvents)
                 {
-                    var data = new ControlGenerationData();
+                    var data = new ControlGenerationData(current.GetReference());
                     data.ScriptType = typeof(MonoBehaviour);
+                    data.gameObject = Data;
                     data.returns = eventUnit.coroutine ? typeof(IEnumerator) : typeof(void);
                     data.AddLocalNameInScope("args", typeof(CustomEventArgs));
                     foreach (VariableDeclaration variable in current.nest.graph.variables)
                     {
                         data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
-                    };
+                    }
+                    ;
                     _customEventIds.Add(eventUnit, id);
                     id++;
                     script += CodeUtility.MakeSelectable(eventUnit, $"{CodeBuilder.Indent(2)}{"CSharpUtility".TypeHighlight()}.RegisterCustomEvent(") + eventUnit.GenerateValue(eventUnit.target) + CodeUtility.MakeSelectable(eventUnit, $", ") + GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, "Runner);");
@@ -268,7 +280,7 @@ namespace Unity.VisualScripting.Community
 
                     var eventName = GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, "Runner");
                     string runnerCode = GetCustomEventRunnerCode(eventUnit, data);
-                    AddNewMethod(eventUnit, eventName, GetMethodSignature(eventUnit, false, eventName, AccessModifier.Private), runnerCode, "CustomEventArgs ".TypeHighlight() + "args".VariableHighlight(), data);
+                    AddNewMethod(eventUnit, CodeUtility.CleanCode(eventName), GetMethodSignature(eventUnit, false, eventName, AccessModifier.Private), runnerCode, "CustomEventArgs ".TypeHighlight() + "args".VariableHighlight(), data);
                 }
                 script += $"\n{CodeBuilder.Indent(1)}}}\n";
             }
@@ -289,9 +301,10 @@ namespace Unity.VisualScripting.Community
                 {
                     if (!_methods.ContainsKey(methodName))
                     {
-                        var data = new ControlGenerationData();
+                        var data = new ControlGenerationData(current.GetReference());
                         data.ScriptType = typeof(MonoBehaviour);
                         data.returns = typeof(IEnumerator);
+                        data.gameObject = Data;
                         foreach (VariableDeclaration variable in current.nest.graph.variables)
                         {
                             data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
@@ -333,13 +346,13 @@ namespace Unity.VisualScripting.Community
                             {
                                 if (unit.controlOutputs["trigger"].hasValidConnection)
                                 {
-                                    AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit, false), specialUnitCode + CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit as Unit, $"StartCoroutine(") + GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine());"), parameters.parameterSignature, data);
-                                    AddNewMethod(unit as Unit, GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine"), GetMethodSignature(unit, GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine")), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                                    AddNewMethod(unit as Unit, CodeUtility.CleanCode(GetMethodName(unit)), GetMethodSignature(unit, false), specialUnitCode + CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit as Unit, $"StartCoroutine(") + GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine());"), parameters.parameterSignature, data);
+                                    AddNewMethod(unit as Unit, CodeUtility.CleanCode(GetMethodName(unit)) + "_Coroutine", GetMethodSignature(unit, GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine")), GetMethodBody(unit, data), parameters.parameterSignature, data);
                                 }
                             }
                             else if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection)
                             {
-                                AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                                AddNewMethod(unit as Unit, CodeUtility.CleanCode(GetMethodName(unit)), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
                             }
                         }
                     }
@@ -352,13 +365,15 @@ namespace Unity.VisualScripting.Community
                 {
                     if (!_methods.ContainsKey(methodName))
                     {
-                        var data = new ControlGenerationData();
+                        var data = new ControlGenerationData(current.GetReference());
                         data.ScriptType = typeof(MonoBehaviour);
                         data.returns = typeof(void);
+                        data.gameObject = Data;
                         foreach (VariableDeclaration variable in current.nest.graph.variables)
                         {
                             data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
-                        };
+                        }
+                        ;
                         var parameters = GetMethodParameters(unit);
                         data.AddLocalNameInScope(parameters.paramInfo.parameterName, parameters.paramInfo.parameterType);
                         if (unit is Update update && !addedSpecialUpdateCode)
@@ -390,11 +405,11 @@ namespace Unity.VisualScripting.Community
 #endif
                         if (unit.controlOutputs.Any(output => output.key == "trigger"))
                         {
-                            if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), specialUnitCode + GetMethodBody(unit, data), parameters.parameterSignature, data);
+                            if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection) AddNewMethod(unit as Unit, CodeUtility.CleanCode(GetMethodName(unit)), GetMethodSignature(unit), specialUnitCode + GetMethodBody(unit, data), parameters.parameterSignature, data);
                         }
                         else
                         {
-                            if (unit.controlOutputs.Count > 0 && unit.controlOutputs[0].hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                            if (unit.controlOutputs.Count > 0 && unit.controlOutputs[0].hasValidConnection) AddNewMethod(unit as Unit, CodeUtility.CleanCode(GetMethodName(unit)), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
                         }
                     }
                     else if (_methods.TryGetValue(methodName, out var method))
@@ -412,7 +427,7 @@ namespace Unity.VisualScripting.Community
             if (_specialUnits.Count > 0 && !units.Any(e => e is Update))
             {
                 var update = new Update();
-                var data = new ControlGenerationData
+                var data = new ControlGenerationData(current.GetReference())
                 {
                     ScriptType = typeof(MonoBehaviour)
                 };
@@ -427,13 +442,13 @@ namespace Unity.VisualScripting.Community
                     }
                 }
 #endif
-                AddNewMethod(update, GetMethodName(update), GetMethodSignature(update), specialCode, "", data);
+                AddNewMethod(update, CodeUtility.CleanCode(GetMethodName(update)), GetMethodSignature(update), specialCode, "", data);
             }
 #if PACKAGE_INPUT_SYSTEM_EXISTS
             else if (UnityEngine.InputSystem.InputSystem.settings.updateMode == InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && !units.Any(e => e is Update) && units.Any(unit => unit is OnInputSystemEvent onInputSystemEvent && onInputSystemEvent.trigger.hasValidConnection))
             {
                 var update = new Update();
-                var data = new ControlGenerationData
+                var data = new ControlGenerationData(current.GetReference())
                 {
                     ScriptType = typeof(MonoBehaviour)
                 };
@@ -443,12 +458,12 @@ namespace Unity.VisualScripting.Community
                     if (!unit.trigger.hasValidConnection) continue;
                     specialCode += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();") + "\n";
                 }
-                AddNewMethod(update, GetMethodName(update), GetMethodSignature(update), specialCode, "", data);
+                AddNewMethod(update, CodeUtility.CleanCode(GetMethodName(update)), GetMethodSignature(update), specialCode, "", data);
             }
             else if (UnityEngine.InputSystem.InputSystem.settings.updateMode != InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && !units.Any(e => e is FixedUpdate) && units.Any(unit => unit is OnInputSystemEvent onInputSystemEvent && onInputSystemEvent.trigger.hasValidConnection))
             {
                 var update = new FixedUpdate();
-                var data = new ControlGenerationData
+                var data = new ControlGenerationData(current.GetReference())
                 {
                     ScriptType = typeof(MonoBehaviour)
                 };
@@ -458,7 +473,7 @@ namespace Unity.VisualScripting.Community
                     if (!unit.trigger.hasValidConnection) continue;
                     specialCode += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();") + "\n";
                 }
-                AddNewMethod(update, GetMethodName(update), GetMethodSignature(update), specialCode, "", data);
+                AddNewMethod(update, CodeUtility.CleanCode(GetMethodName(update)), GetMethodSignature(update), specialCode, "", data);
             }
 #endif
             return script;
@@ -573,9 +588,9 @@ namespace Unity.VisualScripting.Community
         #region Helper Classes
         private static class MethodParameterMapper
         {
- private static readonly Dictionary<Type, (string signature, (Type type, string name) info)> _parameterMap
-                = new Dictionary<Type, (string, (Type, string))>
-            {
+            private static readonly Dictionary<Type, (string signature, (Type type, string name) info)> _parameterMap
+                           = new Dictionary<Type, (string, (Type, string))>
+                       {
 #if MODULE_PHYSICS_EXISTS
                 { typeof(OnCollisionEnter), ($"{"Collision".TypeHighlight()} {"collision".VariableHighlight()}", (typeof(Collision), "collision")) },
                 { typeof(OnCollisionExit), ($"{"Collision".TypeHighlight()} {"collision".VariableHighlight()}", (typeof(Collision), "collision")) },
@@ -599,7 +614,7 @@ namespace Unity.VisualScripting.Community
                 { typeof(OnApplicationFocus), ($"{"bool".ConstructHighlight()} {"focusStatus".VariableHighlight()}", (typeof(bool), "focusStatus")) },
                 { typeof(OnApplicationPause), ($"{"bool".ConstructHighlight()} {"pauseStatus".VariableHighlight()}", (typeof(bool), "pauseStatus")) },
                 { typeof(CustomEvent), ($"{"CustomEventArgs".TypeHighlight()} {"args".VariableHighlight()}", (typeof(CustomEventArgs), "args")) }
-            };
+                       };
             public static (string parameterSignature, (Type parameterType, string parameterName) paramInfo)
                 GetParameters(IEventUnit eventUnit)
             {

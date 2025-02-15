@@ -7,8 +7,6 @@ namespace Unity.VisualScripting.Community
     [Serializable]
     public sealed class CSharpPreviewSettings : ScriptableObject
     {
-        [SerializeField]
-        public static CSharpPreviewSettings settings;
         public Color VariableColor = new Color(38, 204, 204, 255);
         public Color StringColor = new Color(204, 136, 51, 255);
         public Color NumericColor = new Color(221, 255, 187, 255);
@@ -22,10 +20,12 @@ namespace Unity.VisualScripting.Community
         public bool showSubgraphComment = true;
         public bool showRecommendations = true;
         public bool showTooltips = true;
+        public int recursionDepth = 10;
 
         public static bool ShouldShowSubgraphComment = true;
         public static bool ShouldShowRecommendations = true;
         public static bool ShouldGenerateTooltips = true;
+        public static int RecursionDepth = 10;
 
         public void Initalize()
         {
@@ -43,7 +43,6 @@ namespace Unity.VisualScripting.Community
 
             InterfaceColor = new Color(221, 255, 187, 255);
             isInitalized = true;
-            settings = this;
         }
     }
 }

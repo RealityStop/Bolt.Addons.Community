@@ -1,0 +1,5 @@
+Label mark.highlight {
+    background-color: rgba(255, 255, 0, 0.3);
+    color: rgb(255, 255, 255);
+    border-radius: 2px;
+}

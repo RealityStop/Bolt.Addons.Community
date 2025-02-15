@@ -25,13 +25,7 @@ namespace Unity.VisualScripting.Community
         public string GenerateClean(int indent)
         {
             var generatedCode = CodeUtility.CleanCode(Generate(indent).RemoveHighlights().RemoveMarkdown());
-            var code = "";
-            if(generatedCode.Length > 0)
-            {
-                code = "#pragma warning disable\n";
-            }
-            code += generatedCode;
-            return code;
+            return generatedCode;
         }
     }
 

@@ -6,19 +6,22 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-[NodeGenerator(typeof(AsUnit))]
-public class AsUnitGenerator : NodeGenerator<AsUnit>
+namespace Unity.VisualScripting.Community 
 {
-    public AsUnitGenerator(Unit unit) : base(unit)
+    [NodeGenerator(typeof(AsUnit))]
+    public class AsUnitGenerator : NodeGenerator<AsUnit>
     {
-    }
-
-    public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-    {
-        if (data.GetExpectedType() != null && data.GetExpectedType() == Unit.AsType)
+        public AsUnitGenerator(Unit unit) : base(unit)
         {
-            data.SetCurrentExpectedTypeMet(true, Unit.AsType);
         }
-        return MakeSelectableForThisUnit("(") + GenerateValue(Unit.Value, data) + MakeSelectableForThisUnit(" as ".ConstructHighlight() + Unit.AsType.As().CSharpName(false, true, true) + ")");
-    }
+    
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        {
+            if (data.GetExpectedType() != null && data.GetExpectedType() == Unit.AsType)
+            {
+                data.SetCurrentExpectedTypeMet(true, Unit.AsType);
+            }
+            return MakeSelectableForThisUnit("(") + GenerateValue(Unit.Value, data) + MakeSelectableForThisUnit(" as ".ConstructHighlight() + Unit.AsType.As().CSharpName(false, true, true) + ")");
+        }
+    } 
 }

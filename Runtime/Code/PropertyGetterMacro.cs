@@ -6,11 +6,7 @@ namespace Unity.VisualScripting.Community
     [TypeIcon(typeof(Property))]
     public sealed class PropertyGetterMacro : Macro<FlowGraph>
     {
-        [Inspectable]
-        public ClassAsset classAsset;
-
-        [Inspectable]
-        public StructAsset structAsset;
+        public CodeAsset parentAsset;
 #if UNITY_EDITOR
         public bool opened;
 #endif

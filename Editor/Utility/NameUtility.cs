@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityObject = UnityEngine.Object;
 
 namespace Unity.VisualScripting.Community
@@ -82,6 +83,11 @@ namespace Unity.VisualScripting.Community
             "Had",
             "Were"
         };
+
+        public static bool TypeHasSpecialName(Type t)
+        {
+            return t.IsSpecialName || t.IsDefined(typeof(CompilerGeneratedAttribute)) || t.DisplayName().StartsWith("<") || t.DisplayName().Contains("<>") ;
+        }
 
         public static string SelectedName(this Type type, bool human, bool includeGenericParameters = true)
         {

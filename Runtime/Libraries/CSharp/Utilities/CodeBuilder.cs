@@ -495,13 +495,38 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return output;
         }
 
+        public static string GenericName(this string memberName, int count)
+        {
+            if (string.IsNullOrEmpty(memberName)) return "T" + count;
+
+            var output = memberName;
+            output = output.Replace(" ", string.Empty);
+
+            var newCopy = output;
+
+            for (int i = 0; i < newCopy.Length; i++)
+            {
+                if (!char.IsLetter(newCopy[i]) && !char.IsNumber(newCopy[i]) && newCopy[i] != "_".ToCharArray()[0])
+                {
+                    output = output.Replace(newCopy[i].ToString(), string.Empty);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(output) && char.IsNumber(output[0]))
+            {
+                output = "T" + output;
+            }
+
+            return output;
+        }
+
         /// <summary>
         /// Generate code for calling a method in the CSharpUtilityClass
         /// </summary>
         /// <param name="unit">Unit to make the code selectable for</param>
         /// <param name="methodName">Method to call, This is not made selectable</param>
         /// <param name="parameters">Parameters for the method, This is not made selectable</param>
-        /// <returns>Th method call</returns>
+        /// <returns>The method call as a string</returns>
         public static string CallCSharpUtilityMethod(Unit unit, string methodName, params string[] parameters)
         {
             return CodeUtility.MakeSelectable(unit, $"{"CSharpUtility".TypeHighlight()}.") + methodName + CodeUtility.MakeSelectable(unit, "(") + string.Join(CodeUtility.MakeSelectable(unit, ", "), parameters) + CodeUtility.MakeSelectable(unit, ")");
@@ -511,10 +536,10 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         /// Generate code for calling a extensition method in the CSharpUtilityClass
         /// </summary>
         /// <param name="unit">Unit to make the code selectable for</param>
-        /// <param name="target">Target for the methodm This is not made selectable</param>
+        /// <param name="target">Target for the method This is not made selectable</param>
         /// <param name="methodName">Method to call, This is not made selectable</param>
         /// <param name="parameters">Parameters for the method, This is not made selectable</param>
-        /// <returns>Th method call</returns>
+        /// <returns>The method call as a string</returns>
         public static string CallCSharpUtilityExtensitionMethod(Unit unit, string target, string methodName, params string[] parameters)
         {
             return target + CodeUtility.MakeSelectable(unit, ".") + methodName + CodeUtility.MakeSelectable(unit, "(") + string.Join(CodeUtility.MakeSelectable(unit, ", "), parameters) + CodeUtility.MakeSelectable(unit, ")");
@@ -616,7 +641,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return Highlight(code, RecommendationColor);
         }
 
-        private static Dictionary<string, string> RemoveHighlightsCache = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> RemoveHighlightsCache = new();
         public static string RemoveHighlights(this string code)
         {
             if (RemoveHighlightsCache.TryGetValue(code, out var result))

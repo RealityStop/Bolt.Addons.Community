@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Unity.VisualScripting
 {
-    [Inspector(typeof(IDefinedEventType))]
+    [Inspector(typeof(DefinedEventType))]
     public sealed class IDefinedEventTypeInspector : Inspector
     {
         public IDefinedEventTypeInspector(Metadata metadata) : base(metadata) { }
@@ -32,7 +32,7 @@ namespace Unity.VisualScripting
 
         public override float GetAdaptiveWidth()
         {
-            var definedEventType = metadata.value as IDefinedEventType;
+            var definedEventType = metadata.value as DefinedEventType;
 
             if (definedEventType != null)
             {
@@ -44,7 +44,7 @@ namespace Unity.VisualScripting
 
         protected override void OnGUI(Rect position, GUIContent label)
         {
-            var definedEventType = metadata.value as IDefinedEventType;
+            var definedEventType = metadata.value as DefinedEventType;
 
             position = BeginLabeledBlock(metadata, position, label);
 
@@ -61,7 +61,7 @@ namespace Unity.VisualScripting
             if (EndBlock(metadata))
             {
                 metadata.RecordUndo();
-                metadata.value = new IDefinedEventType(newType);
+                metadata.value = new DefinedEventType(newType);
             }
         }
     }

@@ -138,7 +138,7 @@ namespace Unity.VisualScripting.Community
 
             if (GUILayout.Button("Compile", LudiqStyles.toolbarButton, GUILayout.Width(80)))
             {
-                AssetCompiler.CompileAsset(CSharpPreviewWindow.asset);
+                //AssetCompiler.CompileAsset(CSharpPreviewWindow.asset);
             }
 
             EditorGUI.EndDisabledGroup();
@@ -643,37 +643,37 @@ namespace Unity.VisualScripting.Community
 
         private void ProcessMethodDeclaration(MethodDeclaration methodDeclaration, List<(GraphReference, Unit)> units)
         {
-            if (methodDeclaration.classAsset != null)
+            if (methodDeclaration.parentAsset is ClassAsset classAsset)
             {
-                AddUnitsFromClassAsset(methodDeclaration.classAsset, units);
+                AddUnitsFromClassAsset(classAsset, units);
             }
-            else if (methodDeclaration.structAsset != null)
+            else if (methodDeclaration.parentAsset is StructAsset structAsset)
             {
-                AddUnitsFromStructAsset(methodDeclaration.structAsset, units);
+                AddUnitsFromStructAsset(structAsset, units);
             }
         }
 
         private void ProcessConstructorDeclaration(ConstructorDeclaration constructorDeclaration, List<(GraphReference, Unit)> units)
         {
-            if (constructorDeclaration.classAsset != null)
+            if (constructorDeclaration.parentAsset is ClassAsset classAsset)
             {
-                AddUnitsFromClassAsset(constructorDeclaration.classAsset, units);
+                AddUnitsFromClassAsset(classAsset, units);
             }
-            else if (constructorDeclaration.structAsset != null)
+            else if (constructorDeclaration.parentAsset is StructAsset structAsset)
             {
-                AddUnitsFromStructAsset(constructorDeclaration.structAsset, units);
+                AddUnitsFromStructAsset(structAsset, units);
             }
         }
 
         private void ProcessFieldDeclaration(FieldDeclaration fieldDeclaration, List<(GraphReference, Unit)> units)
         {
-            if (fieldDeclaration.classAsset != null)
+            if (fieldDeclaration.parentAsset is ClassAsset classAsset)
             {
-                AddUnitsFromClassAsset(fieldDeclaration.classAsset, units);
+                AddUnitsFromClassAsset(classAsset, units);
             }
-            else if (fieldDeclaration.structAsset != null)
+            else if (fieldDeclaration.parentAsset is StructAsset structAsset)
             {
-                AddUnitsFromStructAsset(fieldDeclaration.structAsset, units);
+                AddUnitsFromStructAsset(structAsset, units);
             }
         }
 

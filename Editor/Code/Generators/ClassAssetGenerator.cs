@@ -27,6 +27,8 @@ namespace Unity.VisualScripting.Community
         private List<Unit> specialUnits = new List<Unit>();
         protected override TypeGenerator OnGenerateType(ref string output, NamespaceGenerator @namespace)
         {
+            specialUnits.Clear();
+
             if (Data == null)
                 return ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, "", null);
 
@@ -70,7 +72,7 @@ namespace Unity.VisualScripting.Community
                 {
                     if (param.defaultValue is IList list)
                     {
-                        if (param.isParamsParameter)
+                        if (param.modifier == Libraries.CSharp.ParameterModifier.Params)
                         {
                             foreach (var item in list)
                             {
@@ -107,8 +109,8 @@ namespace Unity.VisualScripting.Community
 
                 if (constructorData.graph.units.Count > 0)
                 {
-                    @class.AddUsings(ProcessGraphUnits(constructorData.graph, @class));
-                    var generationData = CreateGenerationData(typeof(void));
+                    @class.AddUsings(ProcessGraphUnits(constructorData.graph, @class, constructorData.GetReference()));
+                    var generationData = CreateGenerationData(constructorData.GetReference(), typeof(void));
                     constructor.Body((constructorData.graph.units[0] as Unit).GenerateControl(null, generationData, 0));
 
                     foreach (var param in parameters)
@@ -154,12 +156,13 @@ namespace Unity.VisualScripting.Community
                     }
 
                     var method = MethodGenerator.Method(methodData.scope, methodData.modifier, methodData.returnType, methodData.name);
+                    method.AddGenerics(methodData.genericParameters.ToArray());
                     AddMethodAttributes(method, methodData);
 
                     if (methodData.graph.units.Count > 0)
                     {
-                        var generationData = CreateGenerationData(methodData.returnType);
-                        @class.AddUsings(ProcessGraphUnits(methodData.graph, @class));
+                        var generationData = CreateGenerationData(methodData.GetReference(), methodData.returnType);
+                        @class.AddUsings(ProcessGraphUnits(methodData.graph, @class, methodData.GetReference()));
                         var unit = methodData.graph.units[0] as FunctionNode;
                         method.Body(unit.GenerateControl(null, generationData, 0));
 
@@ -186,21 +189,9 @@ namespace Unity.VisualScripting.Community
                 {
                     addedSpecialUpdatedCode = true;
                     var method = @class.methods.First(m => m.name.Replace(" ", "") == "Update");
-                    foreach (var specialUnit in specialUnits)
+                    if (Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
                     {
-                        if (!visited.Add(specialUnit))
-                            continue;
-                        var generator = NodeGenerator.GetSingleDecorator(specialUnit, specialUnit);
-                        if (Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
-                        {
-                            if (generator is VariableNodeGenerator && !string.IsNullOrEmpty(generator.variableName))
-                            {
-#if PACKAGE_INPUT_SYSTEM_EXISTS
-                                if (specialUnit is OnInputSystemEvent) continue;
-#endif
-                                method.beforeBody += string.Join("\n", specialUnits.Select(t => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(t, (NodeGenerator.GetSingleDecorator(t, t) as VariableNodeGenerator).Name.VariableHighlight() + ".Update();")));
-                            }
-                        }
+                        method.beforeBody += string.Join("", specialUnits.Select(unit => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, (unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();") + "\n"));
                     }
 #if PACKAGE_INPUT_SYSTEM_EXISTS
                     if (UnityEngine.InputSystem.InputSystem.settings.updateMode == InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
@@ -217,23 +208,11 @@ namespace Unity.VisualScripting.Community
                 {
                     addedSpecialUpdatedCode = true;
                     var method = MethodGenerator.Method(AccessModifier.None, MethodModifier.None, typeof(void), "Update");
-#if PACKAGE_INPUT_SYSTEM_EXISTS
-                    foreach (var specialUnit in specialUnits.Where(unit => unit is not OnInputSystemEvent))
-#else
-                    foreach (var specialUnit in specialUnits)
-#endif
+                    if (Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
                     {
-                        if (!visited.Add(specialUnit))
-                            continue;
-                        var generator = NodeGenerator.GetSingleDecorator(specialUnit, specialUnit);
-                        if (Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
-                        {
-                            if (generator is VariableNodeGenerator && !string.IsNullOrEmpty(generator.variableName))
-                            {
-                                method.beforeBody += string.Join("\n", specialUnits.Select(t => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(t, (NodeGenerator.GetSingleDecorator(t, t) as VariableNodeGenerator).Name.VariableHighlight() + ".Update();")));
-                            }
-                        }
+                        method.beforeBody += string.Join("", specialUnits.Select(unit => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, (unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();")) + "\n");
                     }
+
 #if PACKAGE_INPUT_SYSTEM_EXISTS
                     if (UnityEngine.InputSystem.InputSystem.settings.updateMode == InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
                     {
@@ -256,7 +235,7 @@ namespace Unity.VisualScripting.Community
                         foreach (var unit in specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
                         {
                             if (!unit.trigger.hasValidConnection) continue;
-                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, unit.GetMethodGenerator().Name + "();") + "\n";
+                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, unit.GetMethodGenerator()?.Name + "();") + "\n";
                         }
                     }
                     else if (!addedSpecialFixedUpdatedCode)
@@ -266,25 +245,47 @@ namespace Unity.VisualScripting.Community
                         foreach (var unit in specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
                         {
                             if (!unit.trigger.hasValidConnection) continue;
-                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();") + "\n";
+                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit)?.Name + "();") + "\n";
                         }
                         @class.AddMethod(method);
                     }
                 }
             }
 #endif
+            var values = CodeGeneratorValueUtility.GetAllValues(Data);
+            var index = 0;
+            foreach (var variable in values)
+            {
+                var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, variable.Value != null ? variable.Value.GetType() : typeof(UnityEngine.Object), variable.Key.LegalMemberName());
+                if (index == 0)
+                {
+                    var attribute = AttributeGenerator.Attribute(typeof(FoldoutAttribute));
+                    attribute.AddParameter("ObjectReferences");
+                    field.AddAttribute(attribute);
+                }
+                else
+                {
+                    field.AddAttribute(AttributeGenerator.Attribute(typeof(HideInInspector)));
+                }
 
+                if (index == values.Count - 1)
+                {
+                    field.AddAttribute(AttributeGenerator.Attribute(typeof(FoldoutEndAttribute)));
+                }
+                @class.AddField(field);
+                index++;
+            }
             @namespace.AddClass(@class);
             return @class;
         }
 
-        private List<string> ProcessGraphUnits(FlowGraph graph, ClassGenerator @class)
+        private List<string> ProcessGraphUnits(FlowGraph graph, ClassGenerator @class, GraphPointer graphPointer)
         {
             var usings = new List<string>();
             foreach (var _unit in graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
             {
                 var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
-                HandleOtherGenerators(@class, generator);
+                HandleOtherGenerators(@class, generator, graphPointer);
                 if (specialUnitTypes.Contains(_unit.GetType()))
                 {
                     specialUnits.Add(_unit);
@@ -304,16 +305,16 @@ namespace Unity.VisualScripting.Community
             // Handle getter
             if (variableData.get)
             {
-                var generationData = CreateGenerationData(variableData.type);
-                @class.AddUsings(ProcessGraphUnits(variableData.getter.graph, @class));
+                var generationData = CreateGenerationData(variableData.getter.GetReference(), variableData.type);
+                @class.AddUsings(ProcessGraphUnits(variableData.getter.graph, @class, variableData.getter.GetReference()));
                 property.MultiStatementGetter(variableData.getterScope, (variableData.getter.graph.units[0] as Unit).GenerateControl(null, generationData, 0));
             }
 
             // Handle setter
             if (variableData.set)
             {
-                @class.AddUsings(ProcessGraphUnits(variableData.setter.graph, @class));
-                var generationData = CreateGenerationData(typeof(void));
+                @class.AddUsings(ProcessGraphUnits(variableData.setter.graph, @class, variableData.setter.GetReference()));
+                var generationData = CreateGenerationData(variableData.setter.GetReference(), typeof(void));
                 property.MultiStatementSetter(variableData.setterScope, (variableData.setter.graph.units[0] as Unit).GenerateControl(null, generationData, 0));
             }
 
@@ -353,7 +354,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (param.defaultValue is IList list)
                 {
-                    if (param.isParamsParameter)
+                    if (param.modifier == Libraries.CSharp.ParameterModifier.Params)
                     {
                         foreach (var item in list)
                         {
@@ -380,14 +381,13 @@ namespace Unity.VisualScripting.Community
                 parameter.modifier,
                 parameter.attributes,
                 parameter.hasDefault,
-                parameter.isParamsParameter,
                 parameter.defaultValue
             );
         }
 
-        private ControlGenerationData CreateGenerationData(Type returnType)
+        private ControlGenerationData CreateGenerationData(GraphPointer graphPointer, Type returnType)
         {
-            var generationData = new ControlGenerationData();
+            var generationData = new ControlGenerationData(graphPointer);
             if (Data.inheritsType)
             {
                 generationData.ScriptType = Data.GetInheritedType();
@@ -422,7 +422,7 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private void HandleOtherGenerators(ClassGenerator @class, NodeGenerator generator)
+        private void HandleOtherGenerators(ClassGenerator @class, NodeGenerator generator, GraphPointer graphPointer)
         {
             if (generator is VariableNodeGenerator variableGenerator)
             {
@@ -445,7 +445,7 @@ namespace Unity.VisualScripting.Community
                 {
                     methodGenerator.count++;
                 }
-                var data = new ControlGenerationData() { ScriptType = Data.GetInheritedType() };
+                var data = new ControlGenerationData(graphPointer) { ScriptType = Data.GetInheritedType() };
                 foreach (var item in @class.fields)
                 {
                     data.AddLocalNameInScope(item.name, item.type);
@@ -459,7 +459,7 @@ namespace Unity.VisualScripting.Community
                         method.AddParameter(ParameterGenerator.Parameter(param.name, param.type, param.modifier));
                     else if (methodGenerator.GenericCount > 0 && param.usesGeneric)
                     {
-                        var genericString = method.generics[param.generic];
+                        var genericString = method.generics[param.generic].name;
                         method.AddParameter(ParameterGenerator.Parameter(param.name, genericString, param.type, param.modifier));
                     }
                 }
@@ -469,8 +469,7 @@ namespace Unity.VisualScripting.Community
                     methodGenerator.Data.AddLocalNameInScope(variable.FieldName, variable.type);
                 }
                 methodGenerator.Data = data;
-                method.Body(string.IsNullOrEmpty(methodGenerator.MethodBody) ? methodGenerator.GenerateControl(methodGenerator.unit.controlInputs.Count == 0 ? null : methodGenerator.unit.controlInputs[0], data, 0) : methodGenerator.MethodBody);
-                @class.AddMethod(method);
+                method.Body(string.IsNullOrEmpty(methodGenerator.MethodBody) ? methodGenerator.GenerateControl(methodGenerator.unit.controlInputs.Count == 0 ? null : methodGenerator.unit.controlInputs[0], data, 0) : methodGenerator.MethodBody); @class.AddMethod(method);
             }
         }
     }

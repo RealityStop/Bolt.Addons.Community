@@ -2,30 +2,30 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Void = Unity.VisualScripting.Community.Libraries.CSharp.Void;
 
 namespace Unity.VisualScripting.Community
 {
     public sealed class ControlGenerationData
     {
-        public Type returns = typeof(void);
-        public bool mustBreak;
-        public bool hasBroke;
-        public bool mustReturn;
-        public bool hasReturned;
-        public List<string> localNames = new List<string>();
-        public Stack<GeneratorScope> scopes = new Stack<GeneratorScope>();
-        private Stack<GeneratorScope> preservedScopes = new Stack<GeneratorScope>();
-        private int scopeIdCounter = 0;
-        private Stack<(Type type, bool isMet)> expectedTypes = new Stack<(Type type, bool isMet)>();
-
-        /// <summary>
-        /// Used to store any infomation for the generator, For example seeing if a port has been generated already to avoid duplicate generation.
-        /// </summary>
-        public readonly Dictionary<object, object> generatorData = new Dictionary<object, object>(); 
-        private Dictionary<Unit, UnitSymbol> UnitSymbols = new Dictionary<Unit, UnitSymbol>();
-
-        public Type ScriptType = typeof(object);
+        public Type returns { get; set; } = typeof(void);
+        public bool mustBreak { get; set; }
+        public bool hasBroke { get; set; }
+        public bool mustReturn { get; set; }
+        public bool hasReturned { get; set; }
+        
+        private readonly List<string> localNames = new();
+        private readonly Stack<GeneratorScope> scopes = new();
+        private readonly Stack<GeneratorScope> preservedScopes = new();
+        private readonly Stack<(Type type, bool isMet)> expectedTypes = new();
+        public readonly Dictionary<object, object> generatorData = new();
+        private readonly Dictionary<Unit, UnitSymbol> unitSymbols = new();
+        
+        private int scopeIdCounter;
+        private GraphPointer graphPointer;
+        public GameObject gameObject { get; set; }
+        public Type ScriptType { get; set; } = typeof(object);
 
         public void NewScope()
         {
@@ -188,20 +188,20 @@ namespace Unity.VisualScripting.Community
 
         public void CreateSymbol(Unit unit, Type Type, string CodeRepresentation, Dictionary<string, object> Metadata = null)
         {
-            if (!UnitSymbols.ContainsKey(unit))
+            if (!unitSymbols.ContainsKey(unit))
             {
-                UnitSymbols.Add(unit, new UnitSymbol(unit, Type, CodeRepresentation, Metadata));
+                unitSymbols.Add(unit, new UnitSymbol(unit, Type, CodeRepresentation, Metadata));
             }
         }
 
         public bool TryGetSymbol(Unit unit, out UnitSymbol symbol)
         {
-            return UnitSymbols.TryGetValue(unit, out symbol);
+            return unitSymbols.TryGetValue(unit, out symbol);
         }
 
         public void SetSymbolType(Unit unit, Type type)
         {
-            if (UnitSymbols.TryGetValue(unit, out var symbol))
+            if (unitSymbols.TryGetValue(unit, out var symbol))
             {
                 symbol.Type = type;
             }
@@ -209,7 +209,42 @@ namespace Unity.VisualScripting.Community
                 throw new MissingReferenceException($"No symbol found for {unit}");
         }
 
-        public ControlGenerationData() { }
+        public bool TryGetGameObject(out GameObject gameObject)
+        {
+            if (this.gameObject != null)
+            {
+                gameObject = this.gameObject;
+                return true;
+            }
+            gameObject = null;
+            return false;
+        }
+
+        public bool TryGetGraphPointer(out GraphPointer graphPointer)
+        {
+            if (this.graphPointer != null)
+            {
+                graphPointer = this.graphPointer;
+                return true;
+            }
+            graphPointer = null;
+            return false;
+        }
+
+        public void SetGraphPointer(GraphReference graphReference)
+        {
+            if(gameObject == null && graphReference != null && graphReference.gameObject == null)
+            {
+                var target = SceneManager.GetActiveScene().GetRootGameObjects()[0] ?? new GameObject("C# Preview Placeholder");
+                typeof(GraphPointer).GetProperty("gameObject").SetValue(graphReference, target);
+            }
+            graphPointer = graphReference;
+        }
+
+        public ControlGenerationData(GraphPointer graphPointer)
+        {
+            this.graphPointer = graphPointer;
+        }
 
         public ControlGenerationData(ControlGenerationData data)
         {
@@ -219,24 +254,26 @@ namespace Unity.VisualScripting.Community
             mustReturn = data.mustReturn;
             hasReturned = data.hasReturned;
             localNames = new List<string>(data.localNames);
-            scopes = new Stack<GeneratorScope>(data.scopes.Select(scope => new GeneratorScope(scope.id, new Dictionary<string, Type>(scope.scopeVariables), new Dictionary<string, string>(scope.nameMapping), PeekScope()?.ParentScope)));
+            scopes = new Stack<GeneratorScope>(data.scopes.Select(scope => new GeneratorScope(scope.Id, new Dictionary<string, Type>(scope.scopeVariables), new Dictionary<string, string>(scope.nameMapping), PeekScope()?.ParentScope)));
             expectedTypes = data.expectedTypes;
             ScriptType = data.ScriptType;
+            gameObject = data.gameObject;
+            graphPointer = data.graphPointer;
         }
 
-        public class GeneratorScope
+        public sealed class GeneratorScope
         {
-            public string id { get; private set; } = "";
+            public string Id { get; private set; } = string.Empty;
             public Dictionary<string, Type> scopeVariables { get; private set; }
             public Dictionary<string, string> nameMapping { get; private set; }
             public GeneratorScope ParentScope { get; private set; }
 
-            public GeneratorScope(string id, Dictionary<string, Type> scopeVariables, Dictionary<string, string> nameMapping, GeneratorScope ParentScope)
+            public GeneratorScope(string id, Dictionary<string, Type> scopeVariables, Dictionary<string, string> nameMapping, GeneratorScope parentScope)
             {
-                this.id = id;
+                Id = id;
                 this.scopeVariables = scopeVariables;
                 this.nameMapping = nameMapping;
-                this.ParentScope = ParentScope;
+                ParentScope = parentScope;
             }
         }
     }

@@ -3,17 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices;
-using JetBrains.Annotations;
-using NUnit.Framework.Internal;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Utility;
-using Unity.VisualScripting.ReorderableList;
 using UnityEditor;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using ParameterModifier = Unity.VisualScripting.Community.Libraries.CSharp.ParameterModifier;
 
 namespace Unity.VisualScripting.Community
 {
@@ -76,7 +71,8 @@ namespace Unity.VisualScripting.Community
 
         protected override void BeforePreview()
         {
-            GraphWindow.active?.context?.BeginEdit();
+            if (GraphWindow.active != null && GraphWindow.active.context != null)
+                GraphWindow.active.context.BeginEdit();
             Constructors();
             GUILayout.Space(4);
             Variables();
@@ -91,7 +87,8 @@ namespace Unity.VisualScripting.Community
                 GUILayout.Space(4);
                 OverridableMembersInfo();
             }
-            GraphWindow.active?.context?.EndEdit();
+            if (GraphWindow.active != null && GraphWindow.active.context != null)
+                GraphWindow.active.context.EndEdit();
         }
 
         private bool RequiresInfo()
@@ -248,12 +245,7 @@ namespace Unity.VisualScripting.Community
 
                                 var declaration = CreateInstance<TMethodDeclaration>();
                                 Undo.RegisterCreatedObjectUndo(declaration, "Created Method Declaration");
-
-                                if (Target is ClassAsset classAsset)
-                                    declaration.classAsset = classAsset;
-                                else if (Target is StructAsset structAsset)
-                                    declaration.structAsset = structAsset;
-
+                                declaration.parentAsset = Target;
                                 declaration.modifier = MethodModifier.Override;
                                 declaration.methodName = abstractMethods[i].Name;
                                 declaration.name = declaration.methodName;
@@ -277,29 +269,6 @@ namespace Unity.VisualScripting.Community
                                 shouldUpdate = true;
                                 AssetDatabase.SaveAssets();
                                 AssetDatabase.Refresh();
-                            }
-
-                            if (methods.Count != methodsCount)
-                            {
-                                if (Target is ClassAsset)
-                                {
-                                    for (int i = 0; i < methods.Count; i++)
-                                    {
-                                        ((TMethodDeclaration)methods[i].value).classAsset = Target as ClassAsset;
-                                    }
-                                }
-                                else
-                                {
-                                    if (Target is StructAsset)
-                                    {
-                                        for (int i = 0; i < methods.Count; i++)
-                                        {
-                                            ((TMethodDeclaration)methods[i].value).structAsset = Target as StructAsset;
-                                        }
-                                    }
-                                }
-
-                                methodsCount = methods.Count;
                             }
                         }, true);
 
@@ -326,28 +295,13 @@ namespace Unity.VisualScripting.Community
 
                                 var declaration = CreateInstance<TFieldDeclaration>();
                                 Undo.RegisterCreatedObjectUndo(declaration, "Created Field Declaration");
-
-                                if (Target is ClassAsset classAsset)
-                                    declaration.classAsset = classAsset;
-                                else if (Target is StructAsset structAsset)
-                                    declaration.structAsset = structAsset;
-
+                                declaration.parentAsset = Target;
                                 var getter = CreateInstance<PropertyGetterMacro>();
                                 var setter = CreateInstance<PropertySetterMacro>();
                                 Undo.RegisterCreatedObjectUndo(getter, "Created Property Getter Macro");
                                 Undo.RegisterCreatedObjectUndo(setter, "Created Property Setter Macro");
-
-                                if (typeof(TMemberTypeAsset) == typeof(ClassAsset))
-                                {
-                                    getter.classAsset = Target as ClassAsset;
-                                    setter.classAsset = Target as ClassAsset;
-                                }
-                                else
-                                {
-                                    getter.structAsset = Target as StructAsset;
-                                    setter.structAsset = Target as StructAsset;
-                                }
-
+                                getter.parentAsset = Target;
+                                setter.parentAsset = Target;
                                 AssetDatabase.AddObjectToAsset(declaration, Target);
                                 AssetDatabase.AddObjectToAsset(getter, Target);
                                 AssetDatabase.AddObjectToAsset(setter, Target);
@@ -435,12 +389,7 @@ namespace Unity.VisualScripting.Community
 
                                 var declaration = CreateInstance<TConstructorDeclaration>();
                                 Undo.RegisterCreatedObjectUndo(declaration, "Created Constructor Declaration");
-
-                                if (Target is ClassAsset classAsset)
-                                    declaration.classAsset = classAsset;
-                                else if (Target is StructAsset structAsset)
-                                    declaration.structAsset = structAsset;
-
+                                declaration.parentAsset = Target;
                                 declaration.hideFlags = HideFlags.HideInHierarchy;
                                 AssetDatabase.AddObjectToAsset(declaration, Target);
 
@@ -470,29 +419,6 @@ namespace Unity.VisualScripting.Community
                                 Undo.CollapseUndoOperations(undoGroup);
                                 AssetDatabase.SaveAssets();
                                 AssetDatabase.Refresh();
-
-                                if (methods.Count != methodsCount)
-                                {
-                                    if (Target is ClassAsset)
-                                    {
-                                        for (int i = 0; i < methods.Count; i++)
-                                        {
-                                            ((TMethodDeclaration)methods[i].value).classAsset = Target as ClassAsset;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (Target is StructAsset)
-                                        {
-                                            for (int i = 0; i < methods.Count; i++)
-                                            {
-                                                ((TMethodDeclaration)methods[i].value).structAsset = Target as StructAsset;
-                                            }
-                                        }
-                                    }
-
-                                    methodsCount = methods.Count;
-                                }
                             }
                         }, true);
 
@@ -575,12 +501,7 @@ namespace Unity.VisualScripting.Community
 
                                 var declaration = CreateInstance<TMethodDeclaration>();
                                 Undo.RegisterCreatedObjectUndo(declaration, "Created Overridable Method");
-
-                                if (Target is ClassAsset classAsset)
-                                    declaration.classAsset = classAsset;
-                                else if (Target is StructAsset structAsset)
-                                    declaration.structAsset = structAsset;
-
+                                declaration.parentAsset = Target;
                                 declaration.modifier = MethodModifier.Override;
                                 declaration.methodName = nonFinalMethods[i].Name;
                                 declaration.name = declaration.methodName;
@@ -631,30 +552,6 @@ namespace Unity.VisualScripting.Community
                                 AssetDatabase.SaveAssets();
                                 AssetDatabase.Refresh();
                             }
-
-
-                            if (methods.Count != methodsCount)
-                            {
-                                if (Target is ClassAsset)
-                                {
-                                    for (int i = 0; i < methods.Count; i++)
-                                    {
-                                        ((TMethodDeclaration)methods[i].value).classAsset = Target as ClassAsset;
-                                    }
-                                }
-                                else
-                                {
-                                    if (Target is StructAsset)
-                                    {
-                                        for (int i = 0; i < methods.Count; i++)
-                                        {
-                                            ((TMethodDeclaration)methods[i].value).structAsset = Target as StructAsset;
-                                        }
-                                    }
-                                }
-
-                                methodsCount = methods.Count;
-                            }
                         }, true);
 
                         GUILayout.Space(4);
@@ -681,28 +578,15 @@ namespace Unity.VisualScripting.Community
                                 var declaration = CreateInstance<TFieldDeclaration>();
                                 Undo.RegisterCreatedObjectUndo(declaration, "Created Overridable Property");
 
-                                if (Target is ClassAsset classAsset)
-                                    declaration.classAsset = classAsset;
-                                else if (Target is StructAsset structAsset)
-                                    declaration.structAsset = structAsset;
+                                declaration.parentAsset = Target;
 
                                 var getter = CreateInstance<PropertyGetterMacro>();
                                 Undo.RegisterCreatedObjectUndo(getter, "Created Getter Macro");
 
                                 var setter = CreateInstance<PropertySetterMacro>();
                                 Undo.RegisterCreatedObjectUndo(setter, "Created Setter Macro");
-
-                                if (Target is ClassAsset)
-                                {
-                                    getter.classAsset = Target as ClassAsset;
-                                    setter.classAsset = Target as ClassAsset;
-                                }
-                                else
-                                {
-                                    getter.structAsset = Target as StructAsset;
-                                    setter.structAsset = Target as StructAsset;
-                                }
-
+                                getter.parentAsset = Target;
+                                setter.parentAsset = Target;
                                 AssetDatabase.AddObjectToAsset(declaration, Target);
                                 AssetDatabase.AddObjectToAsset(getter, Target);
                                 AssetDatabase.AddObjectToAsset(setter, Target);
@@ -1198,12 +1082,7 @@ namespace Unity.VisualScripting.Community
 
                         var declaration = CreateInstance<TConstructorDeclaration>();
                         Undo.RegisterCreatedObjectUndo(declaration, "Created Constructor");
-
-                        if (Target is ClassAsset classAsset)
-                            declaration.classAsset = classAsset;
-                        else if (Target is StructAsset structAsset)
-                            declaration.structAsset = structAsset;
-
+                        declaration.parentAsset = Target;
                         declaration.hideFlags = HideFlags.HideInHierarchy;
                         AssetDatabase.AddObjectToAsset(declaration, Target);
 
@@ -1224,30 +1103,6 @@ namespace Unity.VisualScripting.Community
 
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();
-                    }
-
-
-                    if (methods.Count != methodsCount)
-                    {
-                        if (Target is ClassAsset)
-                        {
-                            for (int i = 0; i < methods.Count; i++)
-                            {
-                                ((TMethodDeclaration)methods[i].value).classAsset = Target as ClassAsset;
-                            }
-                        }
-                        else
-                        {
-                            if (Target is StructAsset)
-                            {
-                                for (int i = 0; i < methods.Count; i++)
-                                {
-                                    ((TMethodDeclaration)methods[i].value).structAsset = Target as StructAsset;
-                                }
-                            }
-                        }
-
-                        methodsCount = methods.Count;
                     }
                 });
             });
@@ -1411,7 +1266,7 @@ namespace Unity.VisualScripting.Community
 
                                 var isParamsParameter = parameter.IsDefined(typeof(ParamArrayAttribute));
 
-                                Param.isParamsParameter = isParamsParameter;
+                                Param.modifier = ParameterModifier.Params;
 
                                 Inspector.BeginBlock(
                                     attributeParamMeta[paramIndex]["defaultValue"],
@@ -1431,7 +1286,7 @@ namespace Unity.VisualScripting.Community
                                         var lastRect = GUILayoutUtility.GetLastRect();
                                         if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                                         {
-                                            TypeBuilderWindow.ShowWindow(lastRect, attributeParamMeta[paramIndex]["defaultValue"], true, null, () => shouldUpdate = true);
+                                            TypeBuilderWindow.ShowWindow(lastRect, attributeParamMeta[paramIndex]["defaultValue"], true, new Type[0], () => shouldUpdate = true);
                                         }
                                         GUILayout.EndHorizontal();
                                     }
@@ -1478,7 +1333,7 @@ namespace Unity.VisualScripting.Community
                                 var lastRect = GUILayoutUtility.GetLastRect();
                                 if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                                 {
-                                    TypeBuilderWindow.ShowWindow(lastRect, metadata, true, null, () => shouldUpdate = true);
+                                    TypeBuilderWindow.ShowWindow(lastRect, metadata, true, new Type[0], () => shouldUpdate = true);
                                 }
                                 GUILayout.EndHorizontal();
                             }
@@ -1619,17 +1474,21 @@ namespace Unity.VisualScripting.Community
                         {
                             Inspector.BeginBlock(paramMeta, new Rect());
                             var currentParam = paramMeta[i];
-                            GUIContent TypebuilderButtonContent = new GUIContent(
-                            (currentParam["type"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
-                            (currentParam["type"].value as Type)?.Icon()?[IconSize.Small]
-                            );
-
+                            var param = parameters[i];
                             GUILayout.BeginHorizontal();
                             GUILayout.Label("Type");
                             var lastRect = GUILayoutUtility.GetLastRect();
-                            if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
+                            List<FakeGenericParameterType> fakeGenericParameterTypes = new List<FakeGenericParameterType>();
+                            if (target is MethodDeclaration methodDeclaration)
                             {
-                                TypeBuilderWindow.ShowWindow(lastRect, (type) => { currentParam["type"].value = type; }, parameters[i].type, true, null, () =>
+                                foreach (var generic in methodDeclaration.genericParameters)
+                                {
+                                    fakeGenericParameterTypes.Add(new FakeGenericParameterType(generic.name, methodDeclaration.genericParameters.IndexOf(generic), generic.typeParameterConstraints, generic.baseTypeConstraint, generic.constraints?.ToList()));
+                                }
+                            }
+                            if (TypeBuilderWindow.Button(currentParam["type"].value as Type))
+                            {
+                                TypeBuilderWindow.ShowWindow(lastRect, (type) => { currentParam["type"].value = type; }, parameters[i].type, true, fakeGenericParameterTypes, () =>
                                 {
                                     Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Type");
                                     shouldUpdate = true;
@@ -1637,9 +1496,102 @@ namespace Unity.VisualScripting.Community
                             }
                             GraphWindow.active?.context?.BeginEdit();
                             GUILayout.EndHorizontal();
-                            Inspector.BeginBlock(currentParam["modifier"], new Rect());
-                            LudiqGUI.InspectorLayout(currentParam["modifier"], new GUIContent("Modifier"));
-                            if (Inspector.EndBlock(currentParam["modifier"]))
+                            EditorGUI.BeginChangeCheck();
+                            GUILayout.BeginHorizontal();
+                            GUILayout.Label("Modifiers");
+                            var modifiers = (ParameterModifier)currentParam["modifier"].value;
+                            if ((param.modifier & (ParameterModifier.Params)) != 0 && !param.type.IsArray)
+                            {
+                                param.modifier &= ~ParameterModifier.Params;
+                            }
+                            if (GUILayout.Button(modifiers.GetEnumString(ParameterModifier.None), EditorStyles.popup, GUILayout.MaxHeight(19f)))
+                            {
+                                GenericMenu menu = new GenericMenu();
+                                menu.AddItem(new GUIContent("None"), modifiers == ParameterModifier.None, (obj) =>
+                                {
+                                    var _param = obj as TypeParam;
+                                    _param.modifier = ParameterModifier.None;
+                                }, param);
+                                menu.AddSeparator("");
+                                bool canUseIn = (param.modifier & (ParameterModifier.Out | ParameterModifier.Ref)) == 0;
+                                bool canUseOut = (param.modifier & (ParameterModifier.In | ParameterModifier.Ref)) == 0;
+                                bool canUseRef = (param.modifier & (ParameterModifier.In | ParameterModifier.Out)) == 0;
+                                if (canUseIn)
+                                {
+                                    menu.AddItem(new GUIContent("In"), (param.modifier & ParameterModifier.In) != 0, (obj) =>
+                                    {
+                                        var _param = obj as TypeParam;
+                                        _param.modifier ^= ParameterModifier.In;
+                                    }, param);
+                                }
+                                else
+                                {
+                                    menu.AddDisabledItem(new GUIContent("In"));
+                                }
+
+                                if (canUseOut)
+                                {
+                                    menu.AddItem(new GUIContent("Out"), (param.modifier & ParameterModifier.Out) != 0, (obj) =>
+                                    {
+                                        var _param = obj as TypeParam;
+                                        _param.modifier ^= ParameterModifier.Out;
+                                    }, param);
+                                }
+                                else
+                                {
+                                    menu.AddDisabledItem(new GUIContent("Out"));
+                                }
+
+                                if (canUseRef)
+                                {
+                                    menu.AddItem(new GUIContent("Ref"), (param.modifier & ParameterModifier.Ref) != 0, (obj) =>
+                                    {
+                                        var _param = obj as TypeParam;
+                                        _param.modifier ^= ParameterModifier.Ref;
+                                    }, param);
+                                }
+                                else
+                                {
+                                    menu.AddDisabledItem(new GUIContent("Ref"));
+                                }
+                                menu.AddSeparator("");
+                                if (param.type.IsArray)
+                                {
+                                    menu.AddItem(new GUIContent("Params"), (modifiers & ParameterModifier.Params) != 0, (obj) =>
+                                    {
+                                        var _param = obj as TypeParam;
+                                        if ((_param.modifier & ParameterModifier.Params) == 0)
+                                        {
+                                            _param.modifier |= ParameterModifier.Params;
+                                        }
+                                        else
+                                        {
+                                            _param.modifier &= ~ParameterModifier.Params;
+                                        }
+                                    }, param);
+                                }
+                                else
+                                {
+                                    menu.AddDisabledItem(new GUIContent("Params"));
+                                }
+
+                                menu.AddItem(new GUIContent("This"), (modifiers & ParameterModifier.This) != 0, (obj) =>
+                                {
+                                    var _param = obj as TypeParam;
+                                    if ((_param.modifier & ParameterModifier.This) == 0)
+                                    {
+                                        _param.modifier |= ParameterModifier.This;
+                                    }
+                                    else
+                                    {
+                                        _param.modifier &= ~ParameterModifier.This;
+                                    }
+                                }, param);
+
+                                menu.ShowAsContext();
+                            }
+                            GUILayout.EndHorizontal();
+                            if (EditorGUI.EndChangeCheck())
                             {
                                 Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
                                 shouldUpdate = true;
@@ -1684,14 +1636,14 @@ namespace Unity.VisualScripting.Community
                                     {
                                         typeChangedLookup[currentParam["type"]] = (Type)currentParam["type"].value;
                                     }
+
                                     if (parameters[i].type.IsBasic())
                                     {
                                         var inspector = currentParam["defaultValue"].Inspector();
                                         typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
                                         inspector.DrawLayout(new GUIContent("Value               "));
+                                        GUILayout.Space(4);
                                     }
-
-                                    GUILayout.Space(4);
                                 }
                             }
 
@@ -1739,9 +1691,25 @@ namespace Unity.VisualScripting.Community
             currentParam["typeHandle"].value = new SerializableType(type.AssemblyQualifiedName);
             if (currentParam["defaultValue"].value?.GetType() == type)
             {
+                currentParam["defaultValue"].value = null;
+                return;
+            }
+            if (type is FakeGenericParameterType)
+            {
+                currentParam["defaultValue"].value = null;
+                return;
+            }
+            if (type.IsGenericType && RuntimeTypeUtility.GetNestedFakeGenerics(type).Count() > 0)
+            {
+                currentParam["defaultValue"].value = null;
                 return;
             }
 
+            if (type.IsArray && RuntimeTypeUtility.GetNestedFakeGenerics(RuntimeTypeUtility.GetArrayBase(type)).Count() > 0)
+            {
+                currentParam["defaultValue"].value = null;
+                return;
+            }
             if (type == null)
             {
                 currentParam["defaultValue"].value = null;
@@ -1851,17 +1819,17 @@ namespace Unity.VisualScripting.Community
                                 listOfMethods[index].modifier = (MethodModifier)EditorGUILayout.EnumPopup("Modifier", listOfMethods[index].modifier);
                                 shouldUpdate = EditorGUI.EndChangeCheck();
 
-                                GUIContent TypebuilderButtonContent = new GUIContent(
-                                    (methods[index]["returnType"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
-                                    (methods[index]["returnType"].value as Type)?.Icon()?[IconSize.Small]
-                                    );
-
                                 GUILayout.BeginHorizontal();
                                 GUILayout.Label("Returns");
                                 var lastRect = GUILayoutUtility.GetLastRect();
-                                if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
+                                if (TypeBuilderWindow.Button(methods[index]["returnType"].value as Type))
                                 {
-                                    TypeBuilderWindow.ShowWindow(lastRect, methods[index]["returnType"], true, null, () =>
+                                    var types = new List<FakeGenericParameterType>();
+                                    foreach (var generic in listOfMethods[index].genericParameters)
+                                    {
+                                        types.Add(new FakeGenericParameterType(generic.name, listOfMethods[index].genericParameters.IndexOf(generic), generic.typeParameterConstraints, generic.baseTypeConstraint, generic.constraints?.ToList()));
+                                    }
+                                    TypeBuilderWindow.ShowWindow(lastRect, methods[index]["returnType"], true, types, () =>
                                     {
                                         Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Changed Method Return Type");
                                         shouldUpdate = true;
@@ -1891,6 +1859,195 @@ namespace Unity.VisualScripting.Community
                                 });
 
                                 GUILayout.Space(4);
+                                listOfMethods[index].genericsOpened = HUMEditor.Foldout(listOfMethods[index].genericsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                {
+                                    HUMEditor.Image(typeof(Type).Icon()[IconSize.Small], 16, 16);
+
+                                    GUILayout.Label("Generics");
+                                }, () =>
+                                {
+                                    HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                                    {
+                                        for (int gIndex = 0; gIndex < listOfMethods[index].genericParameterCount; gIndex++)
+                                        {
+                                            listOfMethods[index].genericParameters[gIndex].isOpen = HUMEditor.Foldout(listOfMethods[index].genericParameters[gIndex].isOpen, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+                                            {
+                                                EditorGUI.BeginChangeCheck();
+                                                var previousName = listOfMethods[index].genericParameters[gIndex].name;
+                                                var name = GUILayout.TextField(listOfMethods[index].genericParameters[gIndex].name).GenericName(gIndex);
+                                                listOfMethods[index].genericParameters[gIndex].SetName(name);
+                                                if (EditorGUI.EndChangeCheck() && RuntimeTypeUtility.GetInstanceOfGenericFromMethod(listOfMethods[index], previousName) != null)
+                                                {
+                                                    var param = RuntimeTypeUtility.GetInstanceOfGenericFromMethod(listOfMethods[index], previousName);
+                                                    param?.ChangeName(name);
+                                                }
+
+                                                if (GUILayout.Button("...", GUILayout.Width(19)))
+                                                {
+                                                    GenericMenu menu = new GenericMenu();
+                                                    menu.AddItem(new GUIContent("Delete"), false, (obj) =>
+                                                    {
+                                                        GenericParameter paramToRemove = obj as GenericParameter;
+                                                        Undo.RegisterCompleteObjectUndo(target, $"Deleted {paramToRemove} generic parameter");
+                                                        listOfMethods[index].genericParameters.Remove(paramToRemove);
+                                                        shouldUpdate = true;
+                                                    }, listOfMethods[index].genericParameters[gIndex]);
+
+                                                    if (gIndex > 0)
+                                                    {
+                                                        menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                                                        {
+                                                            var paramIndex = listOfMethods[index].genericParameters.IndexOf(obj as GenericParameter);
+                                                            if (paramIndex > 0)
+                                                            {
+                                                                Undo.RegisterCompleteObjectUndo(target, $"Moved {(obj as GenericParameter).name} generic parameter up");
+                                                                var temp = listOfMethods[index].genericParameters[paramIndex];
+                                                                listOfMethods[index].genericParameters[paramIndex] = listOfMethods[index].genericParameters[paramIndex - 1];
+                                                                listOfMethods[index].genericParameters[paramIndex - 1] = temp;
+                                                                shouldUpdate = true;
+                                                            }
+                                                        }, listOfMethods[index].genericParameters[gIndex]);
+                                                    }
+
+                                                    if (gIndex < listOfMethods[index].genericParameters.Count - 1)
+                                                    {
+                                                        menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                                                        {
+                                                            var paramIndex = listOfMethods[index].genericParameters.IndexOf(obj as GenericParameter);
+                                                            if (paramIndex < listOfMethods[index].genericParameters.Count - 1)
+                                                            {
+                                                                Undo.RegisterCompleteObjectUndo(target, $"Moved {(obj as GenericParameter).name} generic parameter down");
+                                                                var temp = listOfMethods[index].genericParameters[paramIndex];
+                                                                listOfMethods[index].genericParameters[paramIndex] = listOfMethods[index].genericParameters[paramIndex + 1];
+                                                                listOfMethods[index].genericParameters[paramIndex + 1] = temp;
+                                                                shouldUpdate = true;
+                                                            }
+                                                        }, listOfMethods[index].genericParameters[gIndex]);
+                                                    }
+                                                    menu.ShowAsContext();
+                                                }
+                                            }, () =>
+                                            {
+                                                GUILayout.BeginHorizontal();
+                                                GUILayout.Label("Base Type Constraint");
+                                                var lastRect = GUILayoutUtility.GetLastRect();
+                                                if (TypeBuilderWindow.Button(listOfMethods[index].genericParameters[gIndex].baseTypeConstraint))
+                                                {
+                                                    var settingAssemblyTypesLookup = Codebase.settingsAssembliesTypes.ToArray();
+                                                    var baseTypeLookup = settingAssemblyTypesLookup.Where(t => t != null && !NameUtility.TypeHasSpecialName(t) && RuntimeTypeUtility.IsValidGenericConstraint(t) && !t.IsInterface)
+                                                        .ToArray();
+                                                    TypeBuilderWindow.ShowWindow(lastRect, methods[index]["genericParameters"][gIndex]["baseTypeConstraint"], true, baseTypeLookup, () =>
+                                                    {
+                                                        Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Changed Generic Base Type Constraint");
+                                                        shouldUpdate = true;
+                                                    });
+                                                }
+                                                GUILayout.EndHorizontal();
+                                                GUILayout.BeginHorizontal();
+                                                GUILayout.Label("Type Parameter Constraints");
+                                                var constraints = listOfMethods[index].genericParameters[gIndex].typeParameterConstraints;
+                                                listOfMethods[index].genericParameters[gIndex].typeParameterConstraints = (TypeParameterConstraints)EditorGUILayout.EnumFlagsField(constraints);
+                                                GUILayout.EndHorizontal();
+                                                listOfMethods[index].genericParameters[gIndex].interfaceConstraintsOpen = HUMEditor.Foldout(listOfMethods[index].genericParameters[gIndex].interfaceConstraintsOpen, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                                {
+                                                    HUMEditor.Image(typeof(IAction).Icon()[IconSize.Small], 16, 16);
+                                                    GUILayout.Label("Interface Constraints");
+                                                }, () =>
+                                                {
+                                                    var interfaceConstraints = listOfMethods[index].genericParameters[gIndex].constraints ?? new Type[0];
+                                                    for (int _i = 0; _i < interfaceConstraints.Length; _i++)
+                                                    {
+                                                        GUILayout.BeginHorizontal();
+                                                        GUILayout.Label("Constraint" + _i);
+                                                        var lastRect = GUILayoutUtility.GetLastRect();
+                                                        if (TypeBuilderWindow.Button(interfaceConstraints[_i]))
+                                                        {
+                                                            TypeBuilderWindow.ShowWindow(lastRect, methods[index]["genericParameters"][gIndex]["constraints"][_i], true, AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).Where(t => t.IsInterface && t.IsPublic).ToArray(), () =>
+                                                            {
+                                                                Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Changed Generic Interface Type Constraint");
+                                                                shouldUpdate = true;
+                                                            });
+                                                        }
+                                                        if (GUILayout.Button("...", GUILayout.Width(19)))
+                                                        {
+                                                            var iv = gIndex;
+                                                            GenericMenu menu = new GenericMenu();
+                                                            menu.AddItem(new GUIContent("Delete"), false, (obj) =>
+                                                            {
+                                                                Type paramToRemove = obj as Type;
+                                                                Undo.RegisterCompleteObjectUndo(target, $"Deleted {paramToRemove} generic parameter");
+                                                                var list = listOfMethods[index].genericParameters[iv].constraints.ToList();
+                                                                list.Remove(paramToRemove);
+                                                                listOfMethods[index].genericParameters[iv].constraints = list.ToArray();
+                                                                shouldUpdate = true;
+                                                            }, listOfMethods[index].genericParameters[gIndex].constraints[_i]);
+
+                                                            if (_i > 0)
+                                                            {
+                                                                menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
+                                                                {
+                                                                    var paramIndex = Array.IndexOf(listOfMethods[index].genericParameters[iv].constraints, obj as Type);
+                                                                    if (paramIndex > 0)
+                                                                    {
+                                                                        Undo.RegisterCompleteObjectUndo(target, $"Moved {(obj as Type).As().CSharpName(false, false, false)} generic constraint up");
+                                                                        var temp = listOfMethods[index].genericParameters[iv].constraints[paramIndex];
+                                                                        var list = listOfMethods[index].genericParameters[iv].constraints.ToList();
+                                                                        list[paramIndex] = list[paramIndex - 1];
+                                                                        list[paramIndex - 1] = temp;
+                                                                        listOfMethods[index].genericParameters[iv].constraints = list.ToArray();
+                                                                        shouldUpdate = true;
+                                                                    }
+                                                                }, listOfMethods[index].genericParameters[gIndex].constraints[_i]);
+                                                            }
+
+                                                            if (_i < listOfMethods[index].genericParameters[gIndex].constraints.Length - 1)
+                                                            {
+                                                                menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
+                                                                {
+                                                                    var paramIndex = Array.IndexOf(listOfMethods[index].genericParameters[iv].constraints, obj as Type);
+                                                                    if (paramIndex < listOfMethods[index].genericParameters[iv].constraints.Length - 1)
+                                                                    {
+                                                                        Undo.RegisterCompleteObjectUndo(target, $"Moved {(obj as Type).As().CSharpName(false, false, false)} generic constraint up");
+                                                                        var temp = listOfMethods[index].genericParameters[iv].constraints[paramIndex];
+                                                                        var list = listOfMethods[index].genericParameters[iv].constraints.ToList();
+                                                                        list[paramIndex] = list[paramIndex + 1];
+                                                                        list[paramIndex + 1] = temp;
+                                                                        listOfMethods[index].genericParameters[iv].constraints = list.ToArray();
+                                                                        shouldUpdate = true;
+                                                                    }
+                                                                }, listOfMethods[index].genericParameters[gIndex].constraints[_i]);
+                                                            }
+                                                            menu.ShowAsContext();
+                                                        }
+                                                        GUILayout.EndHorizontal();
+                                                    }
+                                                    if (GUILayout.Button("+ Add Constraint"))
+                                                    {
+                                                        Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Added Generic Constraint");
+                                                        if (listOfMethods[index].genericParameters[gIndex].constraints == null)
+                                                        {
+                                                            listOfMethods[index].genericParameters[gIndex].constraints = new Type[0];
+                                                        }
+                                                        var list = listOfMethods[index].genericParameters[gIndex].constraints.ToList();
+                                                        list.Add(typeof(ICollection));
+                                                        listOfMethods[index].genericParameters[gIndex].constraints = list.ToArray();
+                                                        shouldUpdate = true;
+                                                    }
+                                                });
+                                            });
+                                        }
+                                        if (GUILayout.Button("+ Add Generic"))
+                                        {
+                                            Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Added Generic");
+                                            var name = $"T{listOfMethods[index].genericParameterCount}";
+                                            var parameter = GenericParameter.Create(typeof(object), name);
+                                            parameter.baseTypeConstraint = typeof(object);
+                                            listOfMethods[index].genericParameters.Add(parameter);
+                                            shouldUpdate = true;
+                                        }
+                                    });
+                                });
+                                GUILayout.Space(4);
 
                                 listOfMethods[index].parametersOpened = HUMEditor.Foldout(listOfMethods[index].parametersOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                                 {
@@ -1909,15 +2066,11 @@ namespace Unity.VisualScripting.Community
 
                     if (GUILayout.Button("+ Add Method"))
                     {
-                        // Register undo for the parent object (Target)
                         Undo.RegisterCompleteObjectUndo(Target, "Added Method");
 
                         var declaration = CreateInstance<TMethodDeclaration>();
 
-                        if (Target.GetType() == typeof(ClassAsset))
-                            declaration.classAsset = Target as ClassAsset;
-                        if (Target.GetType() == typeof(StructAsset))
-                            declaration.structAsset = Target as StructAsset;
+                        declaration.parentAsset = Target;
 
                         declaration.hideFlags = HideFlags.HideInHierarchy;
 
@@ -1933,29 +2086,6 @@ namespace Unity.VisualScripting.Community
 
                         AssetDatabase.SaveAssets();
                         AssetDatabase.Refresh();
-                    }
-
-                    if (methods.Count != methodsCount)
-                    {
-                        if (Target is ClassAsset)
-                        {
-                            for (int i = 0; i < methods.Count; i++)
-                            {
-                                ((TMethodDeclaration)methods[i].value).classAsset = Target as ClassAsset;
-                            }
-                        }
-                        else
-                        {
-                            if (Target is StructAsset)
-                            {
-                                for (int i = 0; i < methods.Count; i++)
-                                {
-                                    ((TMethodDeclaration)methods[i].value).structAsset = Target as StructAsset;
-                                }
-                            }
-                        }
-
-                        methodsCount = methods.Count;
                     }
                 });
             });
@@ -1978,7 +2108,8 @@ namespace Unity.VisualScripting.Community
                         var index = i;
                         listOfVariables[index].opened = HUMEditor.Foldout(listOfVariables[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
-                            GraphWindow.active?.context?.BeginEdit();
+                            if (GraphWindow.active != null && GraphWindow.active.context != null)
+                                GraphWindow.active.context.BeginEdit();
 
                             EditorGUI.BeginChangeCheck();
                             var fieldName = GUILayout.TextField(listOfVariables[index].name);
@@ -2003,18 +2134,13 @@ namespace Unity.VisualScripting.Community
                                 setterFunctionUnit.Describe();
                                 shouldUpdate = true;
                             }
+                            if (GraphWindow.active != null && GraphWindow.active.context != null)
+                                GraphWindow.active.context.EndEdit();
 
-                            GraphWindow.active?.context?.EndEdit();
-
-                            if (typeof(TMemberTypeAsset) == typeof(ClassAsset) && (listOfVariables[index].getter.classAsset == null || listOfVariables[index].setter.classAsset == null))
+                            if (listOfVariables[index].getter.parentAsset == null || listOfVariables[index].setter.parentAsset == null)
                             {
-                                listOfVariables[index].getter.classAsset = Target as ClassAsset;
-                                listOfVariables[index].setter.classAsset = Target as ClassAsset;
-                            }
-                            else if (typeof(TMemberTypeAsset) == typeof(StructAsset) && (listOfVariables[index].getter.structAsset == null || listOfVariables[index].setter.structAsset == null))
-                            {
-                                listOfVariables[index].getter.structAsset = Target as StructAsset;
-                                listOfVariables[index].setter.structAsset = Target as StructAsset;
+                                listOfVariables[index].getter.parentAsset = Target;
+                                listOfVariables[index].setter.parentAsset = Target;
                             }
 
                             if (GUILayout.Button("...", GUILayout.Width(19)))
@@ -2099,7 +2225,7 @@ namespace Unity.VisualScripting.Community
                                 var lastRect = GUILayoutUtility.GetLastRect();
                                 if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                                 {
-                                    TypeBuilderWindow.ShowWindow(lastRect, variables[index]["type"], true, null, () =>
+                                    TypeBuilderWindow.ShowWindow(lastRect, variables[index]["type"], true, new Type[0], () =>
                                     {
                                         Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Type");
                                         shouldUpdate = true;
@@ -2264,27 +2390,14 @@ namespace Unity.VisualScripting.Community
                         var declaration = CreateInstance<TFieldDeclaration>();
                         Undo.RegisterCreatedObjectUndo(declaration, "Created Variable");
 
-                        if (Target is ClassAsset classAsset)
-                            declaration.classAsset = classAsset;
-                        else if (Target is StructAsset structAsset)
-                            declaration.structAsset = structAsset;
+                        declaration.parentAsset = Target;
 
                         var getter = CreateInstance<PropertyGetterMacro>();
                         Undo.RegisterCreatedObjectUndo(getter, "Created Getter");
                         var setter = CreateInstance<PropertySetterMacro>();
                         Undo.RegisterCreatedObjectUndo(setter, "Created Setter");
-
-                        if (Target is ClassAsset)
-                        {
-                            getter.classAsset = Target as ClassAsset;
-                            setter.classAsset = Target as ClassAsset;
-                        }
-                        else
-                        {
-                            getter.structAsset = Target as StructAsset;
-                            setter.structAsset = Target as StructAsset;
-                        }
-
+                        getter.parentAsset = Target;
+                        setter.parentAsset = Target;
                         AssetDatabase.AddObjectToAsset(declaration, Target);
                         AssetDatabase.AddObjectToAsset(getter, Target);
                         AssetDatabase.AddObjectToAsset(setter, Target);

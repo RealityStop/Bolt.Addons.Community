@@ -113,9 +113,9 @@ namespace Unity.VisualScripting.Community
 
                 @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(object), "GetDelegate").Body("return".ControlHighlight() + $" {"callback".VariableHighlight()};"));
 
-                @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, IsAction ? typeof(void) : typeof(object), IsAction ? "Invoke" : "DynamicInvoke").AddParameter(ParameterGenerator.Parameter("parameters", typeof(object[]), Libraries.CSharp.ParameterModifier.None, isParameters: true)).Body($"{(IsAction ? string.Empty : "return").ControlHighlight()} {"callback".VariableHighlight()}({invokeString});"));
+                @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, IsAction ? typeof(void) : typeof(object), IsAction ? "Invoke" : "DynamicInvoke").AddParameter(ParameterGenerator.Parameter("parameters", typeof(object[]), Libraries.CSharp.ParameterModifier.Params)).Body($"{(IsAction ? string.Empty : "return").ControlHighlight()} {"callback".VariableHighlight()}({invokeString});"));
 
-                if (!IsAction) @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, Data.type.type.GetGenericArguments().Last(), "Invoke").AddParameter(ParameterGenerator.Parameter("parameters", typeof(object[]), Libraries.CSharp.ParameterModifier.None, isParameters: true)).Body($"{(IsAction ? string.Empty : "return").ControlHighlight()} {"callback".VariableHighlight()}({invokeString});"));
+                if (!IsAction) @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, Data.type.type.GetGenericArguments().Last(), "Invoke").AddParameter(ParameterGenerator.Parameter("parameters", typeof(object[]), Libraries.CSharp.ParameterModifier.Params)).Body($"{(IsAction ? string.Empty : "return").ControlHighlight()} {"callback".VariableHighlight()}({invokeString});"));
 
                 @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(void), "Initialize").
                     AddParameter(ParameterGenerator.Parameter("flow", typeof(Flow), Libraries.CSharp.ParameterModifier.None)).
@@ -150,6 +150,13 @@ namespace Unity.VisualScripting.Community
                     .Body(
                     $"{"callback".VariableHighlight()} -= {"other".VariableHighlight()};"
                     ));
+                string warning = $"\"Delegate {{".StringHighlight() + $"{"other".VariableHighlight()}.GetType().As().CSharpName({"false".ConstructHighlight()}, {"false".ConstructHighlight()}, {"false".ConstructHighlight()})" + $"}} is not of type {{".StringHighlight() + $"{"callback".VariableHighlight()}.GetType().As().CSharpName({"false".ConstructHighlight()}, {"false".ConstructHighlight()}, {"false".ConstructHighlight()})" + "}.\"".StringHighlight();
+                @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(void), "Combine").
+                    AddParameter(ParameterGenerator.Parameter("other", typeof(Delegate), Libraries.CSharp.ParameterModifier.None))
+                    .Body(
+                        $"{"if".ControlHighlight()} ({"other".VariableHighlight()} {"is not".ConstructHighlight()} {type}) {"throw".ControlHighlight()} {"new".ConstructHighlight()} {"Exception".TypeHighlight()}(" + "$".StringHighlight() + warning + ");" + "\n" +
+                    $"{"callback".VariableHighlight()} = (" + type + $")Delegate.Combine({"callback".VariableHighlight()}, {"other".VariableHighlight()});"
+                    ));
 
                 @class.AddUsings(new List<string>() { Data.type.type.Namespace, "System" });
 
@@ -171,7 +178,6 @@ namespace Unity.VisualScripting.Community
 
             return string.Empty;
         }
-
 
         private string GetCompoundTitle()
         {

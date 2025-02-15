@@ -10,6 +10,7 @@ namespace Unity.VisualScripting.Community
 {
     public class AssetActionUnit : CodeAssetUnit
     {
+        [Obsolete(Serialization.ConstructorWarning)]
         public AssetActionUnit() { }
         public AssetActionUnit(MethodDeclaration method)
         {
@@ -61,13 +62,14 @@ namespace Unity.VisualScripting.Community
             };
         }
 
-
+        private bool isRegistered;
         protected override void Definition()
         {
-            if (method != null)
+            if (method != null && !isRegistered)
             {
                 // Insures that the type is correct if the Method Return Type is changed
                 method.OnSerialized += UpdateActionType;
+                isRegistered = true;
             }
             if (actionType == null) UpdateActionType();
             action = ValueOutput(actionType, nameof(action), (flow) => throw new Exception("This is not supported"));

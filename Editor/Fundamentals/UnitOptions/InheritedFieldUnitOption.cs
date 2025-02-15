@@ -15,7 +15,7 @@ namespace Unity.VisualScripting.Community
 
         public InheritedFieldUnitOption(InheritedFieldUnit unit) : base(unit)
         {
-            sourceScriptGuids = sourceScriptGuids = VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.member.targetType));
+            sourceScriptGuids =  VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.member.targetType));
         }
 
         private Member _member;

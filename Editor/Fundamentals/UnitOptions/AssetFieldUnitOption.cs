@@ -16,7 +16,7 @@ namespace Unity.VisualScripting.Community
 
         public AssetFieldUnitOption(AssetFieldUnit unit) : base(unit)
         {
-            sourceScriptGuids = sourceScriptGuids = VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.field.type));
+            sourceScriptGuids = VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.field.type));
         }
 
         public bool humanNaming => BoltCore.Configuration.humanNaming;

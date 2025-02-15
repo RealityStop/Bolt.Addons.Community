@@ -178,7 +178,7 @@ namespace Unity.VisualScripting.Community
             }
             else if (graphElement is Unit unit)
             {
-                return new Vector2(unit.position.x + elementWidget.position.width / 2, unit.position.y + elementWidget.position.height / 2);
+                return new Vector2(unit.position.x + elementWidget.position.width / 2, unit.position.y + (elementWidget.position.height / 2));
             }
 
             throw new InvalidOperationException("Cannot get element position : " + graphElement);
@@ -292,13 +292,13 @@ namespace Unity.VisualScripting.Community
                     {
                         return new Vector2(target.xMax, target.center.y);
                     }
-                    return new Vector2(target.xMax + 2, target.center.y);
+                    return new Vector2(target.xMax + 2, target.yMin + 30);
                 case Edge.Right:
                     if (graphElement is GraphGroup)
                     {
                         return new Vector2(target.xMin, target.center.y);
                     }
-                    return new Vector2(target.xMin - 2, target.center.y);
+                    return new Vector2(target.xMin - 2, target.yMin + 30);
                 default:
                     throw new System.ArgumentException("Invalid edge type specified.");
             }
@@ -329,13 +329,13 @@ namespace Unity.VisualScripting.Community
                     {
                         return new Vector2(target.xMax, target.center.y);
                     }
-                    return new Vector2(target.xMax + 2, target.center.y);
+                    return new Vector2(target.xMax + 2, target.yMin + 30);
                 case Edge.Right:
                     if (graphElement is GraphGroup)
                     {
                         return new Vector2(target.xMin, target.center.y);
                     }
-                    return new Vector2(target.xMin - 2, target.center.y);
+                    return new Vector2(target.xMin - 2, target.yMin + 30);
                 default:
                     throw new System.ArgumentException("Invalid edge type specified.");
             }

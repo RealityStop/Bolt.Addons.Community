@@ -14,11 +14,15 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
     public SubgraphGenerator(Unity.VisualScripting.SubgraphUnit unit) : base(unit)
     {
     }
-    
+
     private Dictionary<CustomEvent, int> customEventIds = new Dictionary<CustomEvent, int>();
 
     public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
     {
+        if (data.TryGetGraphPointer(out var graphPointer))
+        {
+            data.SetGraphPointer(graphPointer.AsReference().ChildReference(Unit, false));
+        }
         var Units = Unit.nest.graph.units;
         var customEvents = Units.Where(unit => unit is CustomEvent);
         var _graphinput = Units.FirstOrDefault(unit => unit is GraphInput) as Unit;
@@ -72,7 +76,10 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
                 index++;
                 customEventIds[customEvent] = index;
                 if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
-                    return "/* Custom Event units only work on monobehaviours */".WarningHighlight();
+                {
+                    output += CodeUtility.ToolTip("/* Custom Event units only work on monobehaviours */", "Could not generate Custom Events", "");
+                    break;
+                }
                 var generator = GetSingleDecorator(customEvent, customEvent);
                 var action = CodeUtility.MakeSelectable(customEvent, customEvent.coroutine ? $"({"args".VariableHighlight()}) => StartCoroutine({GetMethodName(customEvent)}({"args".VariableHighlight()}))" : GetMethodName(customEvent));
                 output += CodeBuilder.Indent(indent) + CodeBuilder.CallCSharpUtilityMethod(customEvent, CodeUtility.MakeSelectable(customEvent, nameof(CSharpUtility.RegisterCustomEvent)), generator.GenerateValue(customEvent.target, data), action) + CodeUtility.MakeSelectable(customEvent, ";") + "\n";
@@ -98,7 +105,10 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>
                     output += GetNextUnit(_output, data, indent);
                 }
             }
-
+            if (data.TryGetGraphPointer(out var _graphPointer))
+            {
+                data.SetGraphPointer(graphPointer.AsReference().ParentReference(false));
+            }
             return output;
         }
         else

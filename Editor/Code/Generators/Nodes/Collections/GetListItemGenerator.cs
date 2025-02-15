@@ -1,28 +1,27 @@
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
-using UnityEngine;
 
-[NodeGenerator(typeof(GetListItem))]
-public class GetListItemGenerator : NodeGenerator<GetListItem>
+namespace Unity.VisualScripting.Community 
 {
-    public GetListItemGenerator(Unit unit) : base(unit)
+    [NodeGenerator(typeof(GetListItem))]
+    public class GetListItemGenerator : NodeGenerator<GetListItem>
     {
-    }
-
-    public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-    {
-        var code = MakeSelectableForThisUnit($"[") + GenerateValue(Unit.index, data) + MakeSelectableForThisUnit("]");
-        data.CreateSymbol(Unit, typeof(object), code);
-        data.SetExpectedType(Unit.list.type);
-        var listCode = GenerateValue(Unit.list, data);
-        var result = data.RemoveExpectedType();
-        if (result.isMet)
+        public GetListItemGenerator(Unit unit) : base(unit)
         {
-            if (result.type.IsGenericType && typeof(IList).IsAssignableFrom(result.type))
-                data.SetSymbolType(Unit, result.type.GetGenericArguments()[0]);
         }
-        return new ValueCode(listCode + code, data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !(data.TryGetSymbol(Unit, out var symbol) && data.GetExpectedType().IsAssignableFrom(symbol.Type)));
-    }
+    
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        {
+            var code = MakeSelectableForThisUnit($"[") + GenerateValue(Unit.index, data) + MakeSelectableForThisUnit("]");
+            data.CreateSymbol(Unit, typeof(object), code);
+            data.SetExpectedType(Unit.list.type);
+            var listCode = GenerateValue(Unit.list, data);
+            var result = data.RemoveExpectedType();
+            if (result.isMet)
+            {
+                if (result.type.IsGenericType && typeof(IList).IsAssignableFrom(result.type))
+                    data.SetSymbolType(Unit, result.type.GetGenericArguments()[0]);
+            }
+            return new ValueCode(listCode + code, data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !(data.TryGetSymbol(Unit, out var symbol) && data.GetExpectedType().IsAssignableFrom(symbol.Type)));
+        }
+    } 
 }

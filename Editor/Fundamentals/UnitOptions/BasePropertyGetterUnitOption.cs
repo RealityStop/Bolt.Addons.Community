@@ -15,7 +15,7 @@ namespace Unity.VisualScripting.Community
 
         public BasePropertyGetterUnitOption(BasePropertyGetterUnit unit) : base(unit)
         {
-            sourceScriptGuids = sourceScriptGuids = Unity.VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.member.targetType));
+            sourceScriptGuids =  Unity.VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.member.targetType));
         }
 
         private Member _member;

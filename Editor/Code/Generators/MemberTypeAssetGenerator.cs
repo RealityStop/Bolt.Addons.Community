@@ -31,7 +31,7 @@ namespace Unity.VisualScripting.Community
                 ClassGenerator classType = type as ClassGenerator;
                 StructGenerator structType = type as StructGenerator;
 
-                foreach (var name in Data.lastCompiledNames)
+                foreach (var name in Data.lastCompiledNames ?? new System.Collections.Generic.List<string>())
                 {
                     if (!string.IsNullOrEmpty(Data.GetFullTypeName()) && name != Data.GetFullTypeName())
                     {

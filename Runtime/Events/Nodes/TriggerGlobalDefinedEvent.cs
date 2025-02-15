@@ -53,10 +53,11 @@ namespace Unity.VisualScripting.Community
 
         #region New Event Type Handling
         [SerializeAs(nameof(NeweventType))]
-        private IDefinedEventType New_eventType;
+        private DefinedEventType New_eventType;
 
         [DoNotSerialize]
         [InspectableIf(nameof(IsNotRestricted))]
+        [InspectorLabel("EventType")]
         public Type NeweventType
         {
             get { return New_eventType.type; }
@@ -66,7 +67,8 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize]
         [UnitHeaderInspectable]
         [InspectableIf(nameof(IsRestricted))]
-        public IDefinedEventType NewrestrictedEventType
+        [InspectorLabel("EventType")]
+        public DefinedEventType NewrestrictedEventType
         {
             get { return New_eventType; }
             set { New_eventType = value; }
@@ -106,13 +108,13 @@ namespace Unity.VisualScripting.Community
             // For backward compatibility, convert the Type to IDefinedEventType
             if (restrictedEventType != null)
             {
-                NewrestrictedEventType = new IDefinedEventType(restrictedEventType);
+                NewrestrictedEventType = new DefinedEventType(restrictedEventType);
                 restrictedEventType = null;
             }
 
             if (NewrestrictedEventType == null)
             {
-                NewrestrictedEventType = new IDefinedEventType();
+                NewrestrictedEventType = new DefinedEventType();
             }
 
             enter = ControlInput(nameof(enter), Trigger);
@@ -137,13 +139,13 @@ namespace Unity.VisualScripting.Community
                 foreach (var field in Info.reflectedFields)
                 {
                     if (field.Value.FieldType == typeof(bool))
-                        inputPorts.Add(ValueInput<bool>(field.Value.Name, false));
+                        inputPorts.Add(ValueInput(field.Value.Name, false));
                     else if (field.Value.FieldType == typeof(int))
-                        inputPorts.Add(ValueInput<int>(field.Value.Name, 0));
+                        inputPorts.Add(ValueInput(field.Value.Name, 0));
                     else if (field.Value.FieldType == typeof(float))
-                        inputPorts.Add(ValueInput<float>(field.Value.Name, 0.0f));
+                        inputPorts.Add(ValueInput(field.Value.Name, 0.0f));
                     else if (field.Value.FieldType == typeof(string))
-                        inputPorts.Add(ValueInput<string>(field.Value.Name, ""));
+                        inputPorts.Add(ValueInput(field.Value.Name, ""));
                     else if (field.Value.FieldType == typeof(GameObject))
                         inputPorts.Add(ValueInput<GameObject>(field.Value.Name, null).NullMeansSelf());
                     else
@@ -154,13 +156,13 @@ namespace Unity.VisualScripting.Community
                 foreach (var property in Info.reflectedProperties)
                 {
                     if (property.Value.PropertyType == typeof(bool))
-                        inputPorts.Add(ValueInput<bool>(property.Value.Name, false));
+                        inputPorts.Add(ValueInput(property.Value.Name, false));
                     else if (property.Value.PropertyType == typeof(int))
-                        inputPorts.Add(ValueInput<int>(property.Value.Name, 0));
+                        inputPorts.Add(ValueInput(property.Value.Name, 0));
                     else if (property.Value.PropertyType == typeof(float))
-                        inputPorts.Add(ValueInput<float>(property.Value.Name, 0.0f));
+                        inputPorts.Add(ValueInput(property.Value.Name, 0.0f));
                     else if (property.Value.PropertyType == typeof(string))
-                        inputPorts.Add(ValueInput<string>(property.Value.Name, ""));
+                        inputPorts.Add(ValueInput(property.Value.Name, ""));
                     else if (property.Value.PropertyType == typeof(GameObject))
                         inputPorts.Add(ValueInput<GameObject>(property.Value.Name, null).NullMeansSelf());
                     else
@@ -170,13 +172,13 @@ namespace Unity.VisualScripting.Community
             else
             {
                 if (NeweventType == typeof(bool))
-                    inputPorts.Add(ValueInput<bool>(NeweventType.As().CSharpName(false, false, false), false));
+                    inputPorts.Add(ValueInput(NeweventType.As().CSharpName(false, false, false), false));
                 else if (NeweventType == typeof(int))
-                    inputPorts.Add(ValueInput<int>(NeweventType.As().CSharpName(false, false, false), 0));
+                    inputPorts.Add(ValueInput(NeweventType.As().CSharpName(false, false, false), 0));
                 else if (NeweventType == typeof(float))
-                    inputPorts.Add(ValueInput<float>(NeweventType.As().CSharpName(false, false, false), 0.0f));
+                    inputPorts.Add(ValueInput(NeweventType.As().CSharpName(false, false, false), 0.0f));
                 else if (NeweventType == typeof(string))
-                    inputPorts.Add(ValueInput<string>(NeweventType.As().CSharpName(false, false, false), ""));
+                    inputPorts.Add(ValueInput(NeweventType.As().CSharpName(false, false, false), ""));
                 else if (NeweventType == typeof(GameObject))
                     inputPorts.Add(ValueInput<GameObject>(NeweventType.As().CSharpName(false, false, false), null).NullMeansSelf());
                 else

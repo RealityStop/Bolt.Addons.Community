@@ -10,7 +10,8 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("CustomNodeGeneratorWindow")]
-    public class CustomNodeGeneratorWindow : EditorWindow
+    [RenamedFrom("Unity.VisualScripting.Community.CustomNodeGeneratorWindow")]
+    public class CustomNodeCreationWizard : EditorWindow
     {
         private List<InputData> controlInputs = new List<InputData>();
         private List<InputData> controlOutputs = new List<InputData>();
@@ -40,7 +41,7 @@ namespace Unity.VisualScripting.Community
         [MenuItem("Window/Community Addons/Custom Node Generator")]
         public static void ShowWindow()
         {
-            var window = GetWindow<CustomNodeGeneratorWindow>("Custom Node Generator");
+            var window = GetWindow<CustomNodeCreationWizard>("Custom Node Generator");
             window.minSize = new Vector2(1000, 400);
         }
 

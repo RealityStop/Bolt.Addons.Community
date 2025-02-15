@@ -11,6 +11,7 @@ namespace Unity.VisualScripting.Community
     [RenamedFrom("AssetFuncUnit")]
     public class AssetFuncUnit : CodeAssetUnit
     {
+        [Obsolete(Serialization.ConstructorWarning)]
         public AssetFuncUnit() { }
         public AssetFuncUnit(MethodDeclaration method)
         {
@@ -62,13 +63,14 @@ namespace Unity.VisualScripting.Community
                 _ => throw new ArgumentException("Too many parameters. Func only supports up to 16 parameters."),
             };
         }
-
+        private bool isRegistered;
         protected override void Definition()
         {
-            if (method != null)
+            if (method != null && !isRegistered)
             {
                 // Insures that the type is correct if the Method Return Type is changed
                 method.OnSerialized += UpdateFuncType;
+                isRegistered = true;
             }
             if (funcType == null) UpdateFuncType();
             func = ValueOutput(funcType, nameof(func), (flow) => throw new Exception("This is not supported"));

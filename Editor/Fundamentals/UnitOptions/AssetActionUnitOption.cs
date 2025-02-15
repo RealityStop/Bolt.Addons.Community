@@ -10,7 +10,7 @@ namespace Unity.VisualScripting.Community
     {
         public AssetActionUnitOption(AssetActionUnit assetFuncUnit) : base(assetFuncUnit)
         {
-            sourceScriptGuids = sourceScriptGuids = Unity.VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.method.returnType));
+            sourceScriptGuids =  Unity.VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.method.returnType));
         }
     
         protected override string Label(bool human)

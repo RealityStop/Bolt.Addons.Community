@@ -13,6 +13,7 @@ namespace Unity.VisualScripting.Community.Utility
     {
         [SerializeField]
         [Inspectable]
+        [FullSerializer.fsProperty(Converter = typeof(FakeGenericParameterTypeConverter))]
         public Type type = typeof(object);
 
         [SerializeField]
@@ -34,6 +35,7 @@ namespace Unity.VisualScripting.Community.Utility
         public int generic;
 
         [SerializeField]
+        [Obsolete("Use modifier instead")]
         public bool isParamsParameter;
 
         [Serialize]
@@ -57,8 +59,11 @@ namespace Unity.VisualScripting.Community.Utility
         private SerializationData attributesSerialized;
 
         [Inspectable]
+        [DoNotSerialize]
         public ParameterModifier modifier = ParameterModifier.None;
-
+        [SerializeField]
+        [Serialize]
+        private string modifierSerialization;
         [NonSerialized]
         private List<AttributeDeclaration> _attributes;
         [InspectableIf(nameof(supportsAttributes))]
@@ -109,6 +114,11 @@ namespace Unity.VisualScripting.Community.Utility
             {
                 attributesSerialized = _attributes.Serialize();
             }
+
+            if (modifier == ParameterModifier.None)
+                modifierSerialization = "";
+            else
+                modifierSerialization = modifier.GetEnumString(ParameterModifier.None);
         }
 
         public void OnAfterDeserialize()
@@ -118,6 +128,24 @@ namespace Unity.VisualScripting.Community.Utility
             {
                 _attributes = (List<AttributeDeclaration>)attributesSerialized.Deserialize();
             }
+            if (!string.IsNullOrEmpty(modifierSerialization))
+                DeserializeModifer();
+            else
+                modifier = ParameterModifier.None;
+        }
+
+        private void DeserializeModifer()
+        {
+            if (modifierSerialization.Contains("In"))
+                modifier |= ParameterModifier.In;
+            if (modifierSerialization.Contains("Out"))
+                modifier |= ParameterModifier.Out;
+            if (modifierSerialization.Contains("Ref"))
+                modifier |= ParameterModifier.Ref;
+            if (modifierSerialization.Contains("Params"))
+                modifier |= ParameterModifier.Params;
+            if (modifierSerialization.Contains("This"))
+                modifier |= ParameterModifier.This;
         }
     }
 }

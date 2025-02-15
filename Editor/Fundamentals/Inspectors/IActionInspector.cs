@@ -1,31 +1,25 @@
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEditor;
 using UnityEngine;
-[Inspector(typeof(IAction))]
-public class IActionInspector : Inspector
+namespace Unity.VisualScripting.Community
 {
-    public IActionInspector(Metadata metadata) : base(metadata)
+    [Inspector(typeof(IAction))]
+    public class IActionInspector : Inspector
     {
-    }
-
-    protected override float GetHeight(float width, GUIContent label)
-    {
-        return EditorGUIUtility.singleLineHeight;
-    }
-
-    protected override void OnGUI(Rect position, GUIContent label)
-    {
-        if (metadata["Unit"].value == null)
+        public IActionInspector(Metadata metadata) : base(metadata)
         {
-            EditorGUI.HelpBox(position, "No Action Node for this action.", MessageType.Warning);
         }
-        else if (GUI.Button(position, "Preview", LudiqStyles.paddedButton))
+
+        protected override float GetHeight(float width, GUIContent label)
         {
-            var unit = metadata["Unit"].value as DelegateNode;
-            CSharpPreviewWindow.Open();
-            // CSharpPreviewWindow.instance.preview.output = DelegateNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, new ControlGenerationData(), 0).RemoveMarkdown();
+            return EditorGUIUtility.singleLineHeight;
+        }
+
+        protected override void OnGUI(Rect position, GUIContent label)
+        {
+            if (metadata.value != null)
+                GUI.Label(position, "Action");
+            else
+                GUI.Label(position, "No Action");
         }
     }
 }

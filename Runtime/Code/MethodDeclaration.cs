@@ -1,4 +1,4 @@
-﻿using Unity.VisualScripting;
+using Unity.VisualScripting;
 using System;
 using UnityEngine;
 using System.Collections.Generic;
@@ -22,16 +22,16 @@ namespace Unity.VisualScripting.Community
         [TypeFilter(Abstract = true, Classes = true, Enums = true, Generic = false, Interfaces = true,
             Nested = true, NonPublic = false, NonSerializable = true, Object = true, Obsolete = false, OpenConstructedGeneric = false,
             Primitives = true, Public = true, Reference = true, Sealed = true, Static = false, Structs = true, Value = true)]
+        [FullSerializer.fsProperty(Converter = typeof(FakeGenericParameterTypeConverter))]
         public Type returnType = typeof(Libraries.CSharp.Void);
 
         [SerializeField]
         [HideInInspector]
         private string qualifiedReturnTypeName;
 
-        public int genericParameterCount = 0;
+        public int genericParameterCount => genericParameters.Count;
 
-        public ValueTuple<int, List<Type>> genericParameterConstraints = new ValueTuple<int, List<Type>>();
-        public ValueTuple<int, List<GenericParameterAttributes>> genericParameterAttributes = new ValueTuple<int, List<GenericParameterAttributes>>();
+        public List<GenericParameter> genericParameters = new List<GenericParameter>();
 
         /// <summary>
         /// Left this to not overwrite current methodParameters
@@ -41,15 +41,13 @@ namespace Unity.VisualScripting.Community
         [HideInInspector]
         private string serializedParams;
 
-        [SerializeField]
-        [HideInInspector]
-        private SerializationData serialization;
+        // [Inspectable]
+        // public ClassAsset classAsset;
 
-        [Inspectable]
-        public ClassAsset classAsset;
+        // [Inspectable]
+        // public StructAsset structAsset;
 
-        [Inspectable]
-        public StructAsset structAsset;
+        public CodeAsset parentAsset;
 
         [Serialize]
         [InspectorWide]
@@ -63,16 +61,24 @@ namespace Unity.VisualScripting.Community
         public MethodModifier modifier = MethodModifier.None;
 
         public Action OnSerialized;
+        public bool isGeneric => genericParameterCount > 0;
+
+
 #if UNITY_EDITOR
         public bool opened;
         public bool parametersOpened;
         public bool attributesOpened;
+        public bool genericsOpened;
 #endif
         private FunctionNode _functionNode;
         public FunctionNode functionNode
         {
             get
             {
+                if (_functionNode != null)
+                {
+                    return _functionNode;
+                }
                 var expectedUnit = graph.units[0];
                 if (expectedUnit is FunctionNode functionNode)
                 {
@@ -83,7 +89,7 @@ namespace Unity.VisualScripting.Community
                 {
                     if (!graph.units.Any(unit => unit is FunctionNode))
                     {
-                        throw new Exception(methodName + " on " + classAsset.name + " does not contain a function unit in the main graph!");
+                        throw new Exception(methodName + " on " + parentAsset.title + " does not contain a function unit in the main graph!");
                     }
 
                     _functionNode ??= graph.units.First(unit => unit is FunctionNode) as FunctionNode;
@@ -100,9 +106,11 @@ namespace Unity.VisualScripting.Community
         {
             base.OnAfterDeserialize();
 
-            if (!(string.IsNullOrWhiteSpace(qualifiedReturnTypeName) || string.IsNullOrEmpty(qualifiedReturnTypeName)))
+            if (!string.IsNullOrEmpty(serializedParams))
             {
-                returnType = Type.GetType(qualifiedReturnTypeName);
+                var serialization = new SerializationData(serializedParams);
+                parameters = (List<TypeParam>)serialization.Deserialize();
+                serializedParams = string.Empty;
             }
 
             foreach (var param in parameters)
@@ -117,13 +125,6 @@ namespace Unity.VisualScripting.Community
         {
             base.OnBeforeSerialize();
 
-            if (returnType == null)
-            {
-                qualifiedReturnTypeName = string.Empty;
-                return;
-            }
-
-            qualifiedReturnTypeName = returnType.AssemblyQualifiedName;
             foreach (var param in parameters)
             {
                 param.OnBeforeSerialize();

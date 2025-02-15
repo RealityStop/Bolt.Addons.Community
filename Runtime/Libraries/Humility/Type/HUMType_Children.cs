@@ -43,6 +43,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (@as.type == typeof(void)) return "void";
             if (@as.type == typeof(object) && @as.type.BaseType == null) return hideSystemObject ? string.Empty : "object";
             if (@as.type == typeof(object[])) return "object[]";
+            if (@as.type is FakeGenericParameterType fakeGenericParameter) return fakeGenericParameter.Name;
             if (@as.type.Name.Contains("Attribute")) return fullName && !string.IsNullOrEmpty(@as.type.Namespace) ? @as.type.CSharpFullName().Replace("Attribute", "") : @as.type.CSharpName().Replace("Attribute", "");
             if (@as.type.IsArray)
             {
@@ -54,7 +55,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                     arrayString += "[]";
                 }
 
-                var tempTypeName = tempType.As().CSharpName(hideSystemObject, fullName, highlight);
+                var tempTypeName = tempType.As().CSharpName(hideSystemObject, fullName, false);
                 return tempTypeName + arrayString;
             }
             if (string.IsNullOrEmpty(@as.type.Name))
@@ -83,8 +84,23 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (@as.type == typeof(void)) return "void".ConstructHighlight();
             if (@as.type.IsEnum) return (!string.IsNullOrEmpty(@as.type.Namespace) && fullName ? @as.type.Namespace.NamespaceHighlight() + "." : "") + @as.type.Name.EnumHighlight();
             if (@as.type.IsInterface) return (!string.IsNullOrEmpty(@as.type.Namespace) && fullName ? @as.type.Namespace.NamespaceHighlight() + "." : "") + @as.type.Name.InterfaceHighlight();
-            if (@as.type == typeof(System.Object) && @as.type.BaseType == null) return hideSystemObject ? string.Empty : "object".ConstructHighlight();
+            if (@as.type == typeof(object) && @as.type.BaseType == null) return hideSystemObject ? string.Empty : "object".ConstructHighlight();
             if (@as.type == typeof(object[])) return "object".ConstructHighlight() + "[]";
+            if (@as.type is FakeGenericParameterType fakeGenericParameter)
+            {
+                if (fakeGenericParameter._isArrayType)
+                {
+                    var tempType = @as.type.GetElementType() as FakeGenericParameterType;
+                    while (tempType._isArrayType)
+                    {
+                        tempType = (FakeGenericParameterType)tempType.GetElementType();
+                    }
+
+                    var tempTypeName = tempType.Name.TypeHighlight();
+                    return fakeGenericParameter.Name.Replace(tempType.Name, tempTypeName);
+                }
+                return fakeGenericParameter.Name.TypeHighlight();
+            }
             if (@as.type.Name.Contains("Attribute")) return fullName && !string.IsNullOrEmpty(@as.type.Namespace) ? @as.type.CSharpFullName().Replace(@as.type.Name, @as.type.Name.TypeHighlight()).Replace(@as.type.Namespace, @as.type.Namespace.NamespaceHighlight()).Replace("Attribute", "") : @as.type.CSharpName().TypeHighlight().Replace("Attribute", "");
             if (@as.type.IsArray)
             {
@@ -461,13 +477,39 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                     var variable = hasVariable ? current : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
 
                     if (!hasVariable)
+                    {
                         CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
+                    }
+                    else
+                    {
+                        CodeGeneratorValueUtility.SetIsUsed(current);
+                    }
                     return variable;
                 }
                 else
                 {
                     return "null";
                 }
+            }
+            if (type == typeof(Vector2))
+            {
+                var value = (Vector2)@as.value;
+                return Create("Vector2", value.x.As().Code(false, false, false), value.y.As().Code(false, false, false));
+            }
+            if (type == typeof(Vector3))
+            {
+                var value = (Vector3)@as.value;
+                return Create("Vector3", value.x.As().Code(false, false, false), value.y.As().Code(false, false, false), value.z.As().Code(false, false, false));
+            }
+            if (type == typeof(Vector4))
+            {
+                var value = (Vector4)@as.value;
+                return Create("Vector4", value.x.As().Code(false, false, false), value.y.As().Code(false, false, false), value.z.As().Code(false, false, false), value.w.As().Code(false, false, false));
+            }
+            if (type == typeof(AnimationCurve))
+            {
+                var value = @as.value as AnimationCurve;
+                return Create("AnimationCurve", value.keys.Select(k => Create("Keyframe", k.time.As().Code(false, false, false), k.value.As().Code(false, false, false), k.inTangent.As().Code(false, false, false), k.outTangent.As().Code(false, false, false), k.inWeight.As().Code(false, false, false), k.outWeight.As().Code(false, false, false))).ToArray());
             }
             if (type.IsNumeric()) return @as.value.ToString();
             if (type.IsEnum) return type.Name + "." + @as.value.ToString();
@@ -510,12 +552,34 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
                     if (!hasVariable)
                         CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
+                    else
+                        CodeGeneratorValueUtility.SetIsUsed(current);
                     return CodeUtility.MakeSelectable(unit, variable);
                 }
                 else
                 {
                     return CodeUtility.MakeSelectable(unit, "null");
                 }
+            }
+            if (type == typeof(Vector2))
+            {
+                var value = (Vector2)@as.value;
+                return CodeUtility.MakeSelectable(unit, Create("Vector2", value.x.As().Code(false, false, false), value.y.As().Code(false, false, false)));
+            }
+            if (type == typeof(Vector3))
+            {
+                var value = (Vector3)@as.value;
+                return CodeUtility.MakeSelectable(unit, Create("Vector3", value.x.As().Code(false, false, false), value.y.As().Code(false, false, false), value.z.As().Code(false, false, false)));
+            }
+            if (type == typeof(Vector4))
+            {
+                var value = (Vector4)@as.value;
+                return CodeUtility.MakeSelectable(unit, Create("Vector4", value.x.As().Code(false, false, false), value.y.As().Code(false, false, false), value.z.As().Code(false, false, false), value.w.As().Code(false, false, false)));
+            }
+            if (type == typeof(AnimationCurve))
+            {
+                var value = @as.value as AnimationCurve;
+                return CodeUtility.MakeSelectable(unit, Create("AnimationCurve", value.keys.Select(k => Create("Keyframe", k.time.As().Code(false, false, false), k.value.As().Code(false, false, false), k.inTangent.As().Code(false, false, false), k.outTangent.As().Code(false, false, false), k.inWeight.As().Code(false, false, false), k.outWeight.As().Code(false, false, false))).ToArray()));
             }
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name + "." + @as.value.ToString());
@@ -557,12 +621,34 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
                     if (!hasVariable)
                         CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
+                    else
+                        CodeGeneratorValueUtility.SetIsUsed(current);
                     return variable.VariableHighlight();
                 }
                 else
                 {
                     return "null".ConstructHighlight();
                 }
+            }
+            if (type == typeof(Vector2))
+            {
+                var value = (Vector2)@as.value;
+                return CreateHighlighted("Vector2", value.x.As().Code(false, false, true), value.y.As().Code(false, false, true));
+            }
+            if (type == typeof(Vector3))
+            {
+                var value = (Vector3)@as.value;
+                return CreateHighlighted("Vector3", value.x.As().Code(false, false, true), value.y.As().Code(false, false, true), value.z.As().Code(false, false, true));
+            }
+            if (type == typeof(Vector4))
+            {
+                var value = (Vector4)@as.value;
+                return CreateHighlighted("Vector4", value.x.As().Code(false, false, true), value.y.As().Code(false, false, true), value.z.As().Code(false, false, true), value.w.As().Code(false, false, true));
+            }
+            if (type == typeof(AnimationCurve))
+            {
+                var value = @as.value as AnimationCurve;
+                return CreateHighlighted("AnimationCurve", value.keys.Select(k => CreateHighlighted("Keyframe", k.time.As().Code(false), k.value.As().Code(false), k.inTangent.As().Code(false), k.outTangent.As().Code(false), k.inWeight.As().Code(false), k.outWeight.As().Code(false))).ToArray());
             }
             if (type.IsNumeric()) return @as.value.ToString().NumericHighlight();
             if (type.IsEnum) return type.Name.EnumHighlight() + "." + @as.value.ToString();
@@ -603,6 +689,8 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
                     if (!hasVariable)
                         CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
+                    else
+                        CodeGeneratorValueUtility.SetIsUsed(current);
 
                     return CodeUtility.MakeSelectable(unit, variable.VariableHighlight());
                 }
@@ -610,6 +698,26 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 {
                     return CodeUtility.MakeSelectable(unit, "null".ConstructHighlight());
                 }
+            }
+            if (type == typeof(Vector2))
+            {
+                var value = (Vector2)@as.value;
+                return CodeUtility.MakeSelectable(unit, CreateHighlighted("Vector2", value.x.As().Code(false, false, true), value.y.As().Code(false, false, true)));
+            }
+            if (type == typeof(Vector3))
+            {
+                var value = (Vector3)@as.value;
+                return CodeUtility.MakeSelectable(unit, CreateHighlighted("Vector3", value.x.As().Code(false, false, true), value.y.As().Code(false, false, true), value.z.As().Code(false, false, true)));
+            }
+            if (type == typeof(Vector4))
+            {
+                var value = (Vector4)@as.value;
+                return CodeUtility.MakeSelectable(unit, CreateHighlighted("Vector4", value.x.As().Code(false, false, true), value.y.As().Code(false, false, true), value.z.As().Code(false, false, true), value.w.As().Code(false, false, true)));
+            }
+            if (type == typeof(AnimationCurve))
+            {
+                var value = @as.value as AnimationCurve;
+                return CodeUtility.MakeSelectable(unit, CreateHighlighted("AnimationCurve", value.keys.Select(k => CreateHighlighted("Keyframe", k.time.As().Code(false), k.value.As().Code(false), k.inTangent.As().Code(false), k.outTangent.As().Code(false), k.inWeight.As().Code(false), k.outWeight.As().Code(false))).ToArray()));
             }
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString().NumericHighlight());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name.EnumHighlight() + "." + @as.value.ToString());
@@ -630,13 +738,46 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return CodeUtility.MakeSelectable(unit, @as.value.ToString());
         }
 
+        private static string New(bool highlight = true)
+        {
+            return highlight ? "new ".ConstructHighlight() : "new ";
+        }
+
+        private static string CreateHighlighted(string type, params string[] parameters)
+        {
+            return New() + Type(type) + "(" + string.Join(", ", parameters) + ")";
+        }
+
+        private static string Create(string type, params string[] parameters)
+        {
+            return New(false) + Type(type, false) + "(" + string.Join(", ", parameters) + ")";
+        }
+
+        private static string Type(string type, bool highlight = true)
+        {
+            return highlight ? type.TypeHighlight() : type;
+        }
+
+        private static readonly Dictionary<Type, FieldInfo[]> FieldCache = new();
+
+        private static FieldInfo[] GetCachedFields(Type type)
+        {
+            if (type == null) return new FieldInfo[0];
+            if (!FieldCache.TryGetValue(type, out var fields))
+            {
+                fields = type.GetFields(BindingFlags.Public);
+                FieldCache[type] = fields;
+            }
+            return fields;
+        }
+
         private static string Literal(object value, bool newLine = false, bool fullName = false, bool highlight = true, bool variableForObject = true)
         {
             if (highlight)
             {
                 return HightlightedLiteral(value, newLine, fullName, variableForObject);
             }
-            var fields = value?.GetType().GetFields();
+            var fields = GetCachedFields(value?.GetType());
             var output = string.Empty;
             var usableFields = new List<FieldInfo>();
             var isMultiLine = fields.Length > 2;
@@ -748,7 +889,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
         private static string HightlightedLiteral(object value, bool newLine = false, bool fullName = false, bool variableForObject = true)
         {
-            var fields = value?.GetType().GetFields();
+            var fields = GetCachedFields(value?.GetType());
             var output = string.Empty;
             var usableFields = new List<FieldInfo>();
             var isMultiLine = fields.Length > 2;
@@ -864,7 +1005,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 return HighlightedLiteral(value, unit, newLine, fullName, variableForObject);
             }
-            var fields = value?.GetType().GetFields();
+            var fields = GetCachedFields(value?.GetType());
             var output = string.Empty;
             var usableFields = new List<FieldInfo>();
             var isMultiLine = fields.Length > 2;
@@ -976,7 +1117,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
         private static string HighlightedLiteral(object value, Unit unit, bool newLine = false, bool fullName = false, bool variableForObject = false)
         {
-            var fields = value?.GetType().GetFields();
+            var fields = GetCachedFields(value?.GetType());
             var output = string.Empty;
             var usableFields = new List<FieldInfo>();
             var isMultiLine = fields.Length > 2;

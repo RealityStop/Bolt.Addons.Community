@@ -38,8 +38,20 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             UnitBase.dynamicUnitsExtensions.Add(DynamicEditorOptions);
             UnitBase.dynamicUnitsExtensions.Add(MachineVariableOptions);
             UnitBase.contextualUnitsExtensions.Add(InheritedMembersOptions);
+            UnitBase.contextualUnitsExtensions.Add(GenericOptions);
             UnitBase.dynamicUnitsExtensions.Add(GetDynamicOptions);
             UnitBase.contextualUnitsExtensions.Add(SnippetInputNodeOption);
+        }
+
+        private static IEnumerable<IUnitOption> GenericOptions(GraphReference reference)
+        {
+            if (reference.macro is MethodDeclaration method)
+            {
+                foreach (var generic in method.genericParameters)
+                {
+                    yield return new GenericNodeOption(new GenericNode(method, method.genericParameters.IndexOf(generic)));
+                }
+            }
         }
 
         private static IEnumerable<IUnitOption> SnippetInputNodeOption(GraphReference reference)
@@ -178,7 +190,6 @@ namespace Unity.VisualScripting.Community.Variables.Editor
                         }
                         else if (method.returnType == typeof(void) || method.returnType == typeof(Libraries.CSharp.Void))
                         {
-
                             yield return new AssetActionUnitOption(new AssetActionUnit(method));
                         }
                     }
@@ -191,7 +202,7 @@ namespace Unity.VisualScripting.Community.Variables.Editor
 
                     foreach (var method in inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
                     {
-                        if (method.IsPrivate || method.IsProperty() || method.IsEvent()) continue;
+                        if (method.IsPrivate || method.IsAssembly || method.IsProperty() || method.IsEvent() || method.IsGenericMethod) continue;
 
                         if (method.IsAbstract || method.IsVirtual)
                         {
@@ -199,7 +210,8 @@ namespace Unity.VisualScripting.Community.Variables.Editor
                             if (method.ReturnType != typeof(void) && method.GetParameters().All(param => !param.HasOutModifier() && !param.ParameterType.IsByRef))
                                 yield return new BaseMethodUnitOption(new BaseMethodCall(new Member(inheritedType, method), MethodType.ReturnValue));
                         }
-                        else
+
+                        if (!method.IsAbstract)
                         {
                             yield return new InheritedMethodUnitOption(new InheritedMethodCall(new Member(inheritedType, method), MethodType.Invoke));
                             if (method.ReturnType != typeof(void))
@@ -209,12 +221,12 @@ namespace Unity.VisualScripting.Community.Variables.Editor
 
                     foreach (var property in inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Where(property => property.GetMethod?.IsAbstract == true || property.SetMethod?.IsAbstract == true))
                     {
-                        if (property.GetMethod != null && !property.GetMethod.IsPrivate)
+                        if (property.GetMethod != null && !property.GetMethod.IsPrivate && !property.GetMethod.IsAssembly && !property.GetMethod.IsGenericMethod)
                         {
                             yield return new BasePropertyGetterUnitOption(new BasePropertyGetterUnit(new Member(inheritedType, property)));
                         }
 
-                        if (property.SetMethod != null && !property.SetMethod.IsPrivate)
+                        if (property.SetMethod != null && !property.SetMethod.IsPrivate && !property.SetMethod.IsAssembly && !property.SetMethod.IsGenericMethod)
                         {
                             yield return new BasePropertySetterUnitOption(new BasePropertySetterUnit(new Member(inheritedType, property)));
                         }
@@ -222,19 +234,19 @@ namespace Unity.VisualScripting.Community.Variables.Editor
 
                     foreach (var field in inheritedType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
                     {
-                        if (field.IsPrivate) continue;
+                        if (field.IsPrivate || field.IsAssembly) continue;
                         yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Get));
                         yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Set));
                     }
 
                     foreach (var property in inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
                     {
-                        if (property.GetMethod != null && !property.GetMethod.IsPrivate)
+                        if (property.GetMethod != null && !property.GetMethod.IsPrivate && !property.GetMethod.IsAssembly && !property.GetMethod.IsGenericMethod)
                         {
                             yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, property), ActionDirection.Get));
                         }
 
-                        if (property.SetMethod != null && !property.SetMethod.IsPrivate)
+                        if (property.SetMethod != null && !property.SetMethod.IsPrivate && !property.SetMethod.IsAssembly && !property.SetMethod.IsGenericMethod)
                         {
                             yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, property), ActionDirection.Set));
                         }
@@ -256,19 +268,19 @@ namespace Unity.VisualScripting.Community.Variables.Editor
         {
             if (macro is ConstructorDeclaration constructorDeclaration)
             {
-                return constructorDeclaration.classAsset;
+                return constructorDeclaration.parentAsset as ClassAsset;
             }
             else if (macro is PropertyGetterMacro propertyGetterMacro)
             {
-                return propertyGetterMacro.classAsset;
+                return propertyGetterMacro.parentAsset as ClassAsset;
             }
             else if (macro is PropertySetterMacro propertySetterMacro)
             {
-                return propertySetterMacro.classAsset;
+                return propertySetterMacro.parentAsset as ClassAsset;
             }
             else if (macro is MethodDeclaration methodDeclaration)
             {
-                return methodDeclaration.classAsset;
+                return methodDeclaration.parentAsset as ClassAsset;
             }
             return null;
         }

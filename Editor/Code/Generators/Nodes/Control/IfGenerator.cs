@@ -14,12 +14,9 @@ namespace Unity.VisualScripting.Community
         {
             var output = new StringBuilder();
             string cachedIndent = CodeBuilder.Indent(indent);
-            string cachedIndentPlusOne = CodeBuilder.Indent(indent + 1);
 
             var trueData = new ControlGenerationData(data);
             var falseData = new ControlGenerationData(data);
-            string trueCode = "";
-
             if (input == Unit.enter)
             {
                 // Constructing the "if" statement
@@ -31,6 +28,7 @@ namespace Unity.VisualScripting.Community
                       .Append(cachedIndent)
                       .AppendLine(MakeSelectableForThisUnit("{"));
 
+                string trueCode;
                 // Handling the true branch
                 if (!TrueIsUnreachable())
                 {
@@ -105,8 +103,8 @@ namespace Unity.VisualScripting.Community
             if (Unit.condition.connection.source.unit is Literal literal && (bool)literal.value == false)
                 return true;
 
-            if (Unit.condition.GetPsudoSource() is ValueInput valueInput &&
-                valueInput.hasDefaultValue &&
+            if (Unit.condition.GetPesudoSource() is ValueInput valueInput &&
+                valueInput.hasDefaultValue && !valueInput.hasValidConnection &&
                 valueInput.unit.defaultValues[valueInput.key] is bool condition &&
                 condition == false)
             {
@@ -123,8 +121,8 @@ namespace Unity.VisualScripting.Community
             if (Unit.condition.connection.source.unit is Literal literal && (bool)literal.value == true)
                 return true;
 
-            if (Unit.condition.GetPsudoSource() is ValueInput valueInput &&
-                valueInput.hasDefaultValue &&
+            if (Unit.condition.GetPesudoSource() is ValueInput valueInput &&
+                valueInput.hasDefaultValue && !valueInput.hasValidConnection &&
                 valueInput.unit.defaultValues[valueInput.key] is bool condition &&
                 condition == true)
             {

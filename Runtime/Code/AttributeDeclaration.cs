@@ -78,5 +78,19 @@ namespace Unity.VisualScripting.Community
                 parameters.Add(paramValue);
             }
         }
+
+        public List<string> Usings()
+        {
+            List<string> usings = new List<string>();
+
+            if (!usings.Contains(attributeType.type.Namespace) && !attributeType.type.IsPrimitive) usings.Add(attributeType.type.Namespace);
+
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                if (!usings.Contains(parameters[i].type.Namespace) && !parameters[i].type.IsPrimitive) usings.Add(parameters[i].type.Namespace);
+            }
+
+            return usings;
+        }
     }
 }

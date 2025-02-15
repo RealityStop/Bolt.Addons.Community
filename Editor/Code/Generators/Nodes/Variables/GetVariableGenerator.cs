@@ -43,7 +43,7 @@ namespace Unity.VisualScripting.Community
 
         private string GenerateConnectedVariableCode(ControlGenerationData data)
         {
-            variableType = GetVariableType("", data, false);
+            variableType = GetVariableType(data.TryGetGraphPointer(out var graphPointer) ? Flow.Predict<string>(Unit.name, graphPointer.AsReference()) : "", data, false);
             if (data.GetExpectedType() == variableType)
                 data.SetCurrentExpectedTypeMet(true, variableType);
             else
@@ -75,7 +75,7 @@ namespace Unity.VisualScripting.Community
             if (Unit.kind == VariableKind.Object || Unit.kind == VariableKind.Scene || Unit.kind == VariableKind.Application || Unit.kind == VariableKind.Saved)
             {
                 var typeString = variableType != null ? $"<{variableType.As().CSharpName(false, true)}>" : string.Empty;
-                var isExpectedType = data.GetExpectedType() == null || (variableType != null && data.GetExpectedType().IsAssignableFrom(variableType)) || (IsVariableDefined(name) && !string.IsNullOrEmpty(GetVariableDeclaration(name).typeHandle.Identification) && Type.GetType(GetVariableDeclaration(name).typeHandle.Identification) == data.GetExpectedType()) || (data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && targetType == data.GetExpectedType());
+                var isExpectedType = data.GetExpectedType() == null || (variableType != null && data.GetExpectedType().IsAssignableFrom(variableType)) || (IsVariableDefined(data, name) && !string.IsNullOrEmpty(GetVariableDeclaration(data, name).typeHandle.Identification) && Type.GetType(GetVariableDeclaration(data, name).typeHandle.Identification) == data.GetExpectedType()) || (data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && targetType == data.GetExpectedType());
                 data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
                 var code = GetKind(data, typeString) + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(")")}";
                 return new ValueCode(code, variableType, !isExpectedType);
@@ -91,22 +91,22 @@ namespace Unity.VisualScripting.Community
         {
             if (checkDecleration)
             {
-                var isDefined = IsVariableDefined(name);
+                var isDefined = IsVariableDefined(data, name);
                 if (isDefined)
                 {
-                    var declaration = GetVariableDeclaration(name);
+                    var declaration = GetVariableDeclaration(data, name);
                     return declaration.typeHandle.Identification != null ? Type.GetType(declaration.typeHandle.Identification) : null;
                 }
             }
             return data.TryGetVariableType(data.GetVariableName(name), out Type targetType) ? targetType : data.GetExpectedType() ?? typeof(object);
         }
 
-        private bool IsVariableDefined(string name)
+        private bool IsVariableDefined(ControlGenerationData data, string name)
         {
-            var objectDefined = Unit.kind == VariableKind.Object && !Unit.@object.hasValidConnection && Selection.activeGameObject != null && VisualScripting.Variables.Object(Selection.activeGameObject).IsDefined(name);
+            var target = Unit.kind == VariableKind.Object ? GetTarget(data) : null;
             return Unit.kind switch
             {
-                VariableKind.Object => objectDefined,
+                VariableKind.Object => target != null && VisualScripting.Variables.Object(target).IsDefined(name),
                 VariableKind.Scene => VisualScripting.Variables.ActiveScene.IsDefined(name),
                 VariableKind.Application => VisualScripting.Variables.Application.IsDefined(name),
                 VariableKind.Saved => VisualScripting.Variables.Saved.IsDefined(name),
@@ -114,24 +114,57 @@ namespace Unity.VisualScripting.Community
             };
         }
 
-        private VariableDeclaration GetVariableDeclaration(string name)
+        private VariableDeclaration GetVariableDeclaration(ControlGenerationData data, string name)
         {
-            var objectDeclaration = Unit.kind == VariableKind.Object && !Unit.@object.hasValidConnection && Selection.activeGameObject != null ? VisualScripting.Variables.Object(Selection.activeGameObject).GetDeclaration(name) : null;
+            var target = Unit.kind == VariableKind.Object ? GetTarget(data) : null;
             return Unit.kind switch
             {
-                VariableKind.Object => objectDeclaration,
+                VariableKind.Object => target != null ? VisualScripting.Variables.Object(target).GetDeclaration(name) : null,
                 VariableKind.Scene => VisualScripting.Variables.ActiveScene.GetDeclaration(name),
                 VariableKind.Application => VisualScripting.Variables.Application.GetDeclaration(name),
                 VariableKind.Saved => VisualScripting.Variables.Saved.GetDeclaration(name),
                 _ => null,
             };
         }
-
+        private GameObject GetTarget(ControlGenerationData data)
+        {
+            if (!Unit.@object.hasValidConnection && Unit.defaultValues[Unit.@object.key] == null && data.TryGetGameObject(out var gameObject))
+            {
+                return gameObject;
+            }
+            else if (!Unit.@object.hasValidConnection && Unit.defaultValues[Unit.@object.key] != null)
+            {
+                return Unit.defaultValues[Unit.@object.key].ConvertTo<GameObject>();
+            }
+            else
+            {
+                if (data.TryGetGraphPointer(out var graphPointer))
+                {
+                    if (Unit.@object.hasValidConnection)
+                    {
+                        try
+                        {
+                            return Flow.Predict(Unit.@object.GetPesudoSource(), graphPointer.AsReference()) as GameObject;
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            Debug.LogError(ex);
+                            return null; // Don't break code view so just log the error and return null.
+                        }
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                return null;
+            }
+        }
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
-            if (input == Unit.@object && !input.hasValidConnection)
+            if (input == Unit.@object && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
             {
-                return "gameObject".VariableHighlight();
+                return MakeSelectableForThisUnit("gameObject".VariableHighlight());
             }
 
             if (input == Unit.@object)

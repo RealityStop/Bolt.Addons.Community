@@ -13,5 +13,6 @@ namespace Unity.VisualScripting.Community
         bool initialized { get; set; }
         void Bind(IDelegate other);
         void Unbind(IDelegate other);
+        void Combine(Delegate other);
     }
 }

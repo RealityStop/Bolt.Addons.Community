@@ -43,7 +43,7 @@ namespace Unity.VisualScripting.Community
             Rect buttonRect = new Rect(position.x + 45, position.y, position.width - 45, EditorGUIUtility.singleLineHeight);  // Adjust the width of the button as needed
             if (GUI.Button(buttonRect, new GUIContent(((Type)metadata["type"].value).DisplayName(), ((Type)metadata["type"].value).Icon()[IconSize.Small])))
             {
-                TypeBuilderWindow.ShowWindow(labelRect, metadata["type"], true, null, () =>
+                TypeBuilderWindow.ShowWindow(labelRect, metadata["type"], true, new Type[0], () =>
                 {
                     selectiveExpose.selectedMembers.Clear();
                     selectiveExpose.Define();

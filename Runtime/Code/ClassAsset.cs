@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
 {
     [CreateAssetMenu(menuName = "Visual Scripting/Community/Code/Class")]
     [RenamedFrom("Bolt.Addons.Community.Code.ClassAsset")]
-    public class ClassAsset : MemberTypeAsset<ClassFieldDeclaration, ClassMethodDeclaration, ClassConstructorDeclaration>, IGraphRoot
+    public class ClassAsset : MemberTypeAsset<ClassFieldDeclaration, ClassMethodDeclaration, ClassConstructorDeclaration>
     {
         [Inspectable]
         public bool scriptableObject;
@@ -25,17 +25,10 @@ namespace Unity.VisualScripting.Community
         public Action<Type> onValueChanged;
 
         [InspectorWide]
-        [SerializeField]
         public List<GenericParameter> typeParameters = new List<GenericParameter>();
 
         [SerializeField]
         private SerializationData typeParametersSerialization;
-
-        public IGraph childGraph => GetFirstGraph();
-
-        public bool isSerializationRoot => true;
-
-        public UnityEngine.Object serializedObject => this;
 
         public void OnAfterDeserialize()
         {
@@ -83,68 +76,6 @@ namespace Unity.VisualScripting.Community
             }
 
             return baseType;
-        }
-
-        public GraphPointer GetReference()
-        {
-            return GetFirstReference();
-        }
-
-        public IGraph DefaultGraph()
-        {
-            return new FlowGraph();
-        }
-
-        private GraphReference GetFirstReference()
-        {
-            var variables = this.variables.Where(variable => variable.isProperty);
-            if (constructors.Count > 0 && ((constructors[0].GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
-            {
-                return constructors[0].GetReference() as GraphReference;
-            }
-            else if (variables.Count() > 0)
-            {
-                var first = variables.First();
-                if (first.get && ((first.getter.GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
-                {
-                    return first.getter.GetReference() as GraphReference;
-                }
-                else if (first.set && ((first.setter.GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
-                {
-                    return first.setter.GetReference() as GraphReference;
-                }
-            }
-            else if (methods.Count > 0 && ((methods[0].GetReference() as GraphReference).graph as FlowGraph).units.Count > 1)
-            {
-                return methods[0].GetReference() as GraphReference;
-            }
-            return null;
-        }
-
-        private IGraph GetFirstGraph()
-        {
-            var variables = this.variables.Where(variable => variable.isProperty);
-            if (constructors.Count > 0 && (constructors[0]?.graph).units.Count > 1)
-            {
-                return constructors[0].graph;
-            }
-            else if (variables.Count() > 0)
-            {
-                var first = variables.First();
-                if (first.get && first.getter.graph.units.Count > 1)
-                {
-                    return first.getter.graph;
-                }
-                else if (first.set && first.setter.graph.units.Count > 1)
-                {
-                    return first.setter.graph;
-                }
-            }
-            else if (methods.Count > 0 && methods[0].graph.units.Count > 1)
-            {
-                return methods[0].graph;
-            }
-            return null;
         }
     }
 }

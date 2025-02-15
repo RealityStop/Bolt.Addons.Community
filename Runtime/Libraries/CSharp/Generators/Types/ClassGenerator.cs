@@ -84,7 +84,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         protected override string GenerateBefore(int indent)
         {
-            var output = beforeUsings;
+            var output = "";
+            output += !string.IsNullOrEmpty(beforeUsings) ? CodeBuilder.Indent(indent) + beforeUsings : string.Empty;
             if (generateUsings)
             {
                 var usings = Usings();
@@ -234,7 +235,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return usings;
         }
 
-        
+
         public ClassGenerator Inherit(Type type)
         {
             inherits = type;

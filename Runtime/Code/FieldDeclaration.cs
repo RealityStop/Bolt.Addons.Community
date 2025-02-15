@@ -35,8 +35,7 @@ namespace Unity.VisualScripting.Community
 
         public List<AttributeDeclaration> attributes = new List<AttributeDeclaration>();
 
-        public ClassAsset classAsset;
-        public StructAsset structAsset;
+        public CodeAsset parentAsset;
 
         public PropertyGetterMacro getter;
         public PropertySetterMacro setter;

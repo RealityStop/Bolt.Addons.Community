@@ -10,6 +10,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         [Inspectable]
         [InspectorLabel("")]
         [InspectorWide]
+        [FullSerializer.fsProperty(Converter = typeof(FakeGenericParameterTypeConverter))]
         public Type type;
         [SerializeField][HideInInspector]
         private string qualifiedName;

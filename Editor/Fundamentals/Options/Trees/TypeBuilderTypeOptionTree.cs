@@ -19,13 +19,13 @@ namespace Unity.VisualScripting.Community
     
         public override IFuzzyOption Option(object item)
         {
-            if (item is Namespace)
+            if (item is Namespace @namespace)
             {
-                return new NamespaceOption((Namespace)item, true);
+                return new NamespaceOption(@namespace, true);
             }
-            else if (item is Type)
+            else if (item is Type type)
             {
-                return new TypeBuilderTypeOption((Type)item);
+                return new TypeBuilderTypeOption(type);
             }
     
             return base.Option(item);
@@ -82,7 +82,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (surfaceCommonTypes)
                 {
-                    foreach (var type in EditorTypeUtility.commonTypes)
+                    foreach (var type in Unity.VisualScripting.EditorTypeUtility.commonTypes)
                     {
                         if (types.Contains(type))
                         {

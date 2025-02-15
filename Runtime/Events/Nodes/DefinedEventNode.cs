@@ -21,14 +21,16 @@ namespace Unity.VisualScripting.Community
         #region Previous Event Type Handling (for backward compatibility)
         [SerializeAs(nameof(eventType))]
         private System.Type _eventType;
-        
+
 
         [DoNotSerialize]
         //[InspectableIf(nameof(IsNotRestricted))]
         public System.Type eventType
         {
-            get {
-                return _eventType; }
+            get
+            {
+                return _eventType;
+            }
             set
             {
                 _eventType = value;
@@ -54,10 +56,12 @@ namespace Unity.VisualScripting.Community
 
         #region New Event Type Handling
         [SerializeAs(nameof(NeweventType))]
-        private IDefinedEventType New_eventType;
+        private DefinedEventType New_eventType;
 
         [DoNotSerialize]
-        public IDefinedEventType NeweventType
+        [InspectableIf(nameof(IsNotRestricted))]
+        [InspectorLabel("EventType")]
+        public DefinedEventType NeweventType
         {
             get { return New_eventType; }
             set { New_eventType = value; }
@@ -66,7 +70,8 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize]
         [UnitHeaderInspectable]
         [InspectableIf(nameof(IsRestricted))]
-        public IDefinedEventType NewrestrictedEventType
+        [InspectorLabel("EventType")]
+        public DefinedEventType NewrestrictedEventType
         {
             get { return New_eventType; }
             set { New_eventType = value; }
@@ -81,7 +86,7 @@ namespace Unity.VisualScripting.Community
         {
             get { return !IsRestricted; }
         }
-#endregion
+        #endregion
 
         [DoNotSerialize]
         public List<ValueOutput> outputPorts { get; } = new List<ValueOutput>();
@@ -105,13 +110,13 @@ namespace Unity.VisualScripting.Community
             // For backward compatibility, convert the Type to IDefinedEventType
             if (restrictedEventType != null)
             {
-                NewrestrictedEventType = new IDefinedEventType(restrictedEventType);
+                NewrestrictedEventType = new DefinedEventType(restrictedEventType);
                 restrictedEventType = null;
             }
 
             if (NewrestrictedEventType == null)
             {
-                NewrestrictedEventType = new IDefinedEventType();
+                NewrestrictedEventType = new DefinedEventType();
             }
 
             BuildFromInfo();
@@ -152,7 +157,7 @@ namespace Unity.VisualScripting.Community
                     var reflectedProperty = Info.reflectedProperties[key];
                     flow.SetValue(outputPort, reflectedProperty.GetValue(args.eventData));
                 }
-            } 
+            }
         }
         public override EventHook GetHook(GraphReference reference)
         {
@@ -171,18 +176,19 @@ namespace Unity.VisualScripting.Community
         }
 
 
-        public static void Trigger(GameObject target,object eventData)
+        public static void Trigger(GameObject target, object eventData)
         {
             var eventHook = ConstructHook(target, eventData.GetType());
             EventBus.Trigger(eventHook, new DefinedEventArgs(eventData));
         }
 
-        
 
-        public static IDisposable RegisterListener<T>(GameObject target, Action<T> onEvent) 
+
+        public static IDisposable RegisterListener<T>(GameObject target, Action<T> onEvent)
         {
             var eventHook = ConstructHook(target, typeof(T));
-            Action<DefinedEventArgs> action = (x) => {
+            Action<DefinedEventArgs> action = (x) =>
+            {
                 if (x.eventData.GetType() == typeof(T))
                     onEvent((T)x.eventData);
             };

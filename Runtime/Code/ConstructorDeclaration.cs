@@ -16,10 +16,7 @@ namespace Unity.VisualScripting.Community
         public ConstructorModifier modifier;
 
         [Inspectable]
-        public ClassAsset classAsset;
-
-        [Inspectable]
-        public StructAsset structAsset;
+        public CodeAsset parentAsset;
         [RenamedFrom("CallType")]
         public ConstructorInitializer initalizerType = ConstructorInitializer.None;
 

@@ -469,7 +469,8 @@ namespace Unity.VisualScripting.Community
                             type = connectionData[index].valueType
                         });
                         superUnitGraph.PortDefinitionsChanged();
-                        graphInput.valueOutputs.Single((op) => { return op.key == _key; }).ConnectToValid(superUnitGraph.units[connectionData[index].destinationUnitIndex].valueInputs.ToList()[connectionData[index].destinationInputIndex] as ValueInput);
+                        if (graphInput.valueOutputs.Any(op => op.key == _key))
+                            graphInput.valueOutputs.Single((op) => { return op.key == _key; }).ConnectToValid(superUnitGraph.units[connectionData[index].destinationUnitIndex].valueInputs.ToList()[connectionData[index].destinationInputIndex] as ValueInput);
                         connectionData[index].subgraph.valueInputs.Single((op) => { return op.key == _key; }).ConnectToValid(connectionData[index].externalPort as ValueOutput);
                         break;
 

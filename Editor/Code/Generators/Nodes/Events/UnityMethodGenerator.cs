@@ -6,21 +6,24 @@ using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
-public abstract class UnityMethodGenerator<TEventUnit, TArgs> : MethodNodeGenerator where TEventUnit : EventUnit<TArgs>
+namespace Unity.VisualScripting.Community 
 {
-    protected UnityMethodGenerator(Unit unit) : base(unit)
+    public abstract class UnityMethodGenerator<TEventUnit, TArgs> : MethodNodeGenerator where TEventUnit : EventUnit<TArgs>
     {
-    }
-
-    protected TEventUnit Unit => unit as TEventUnit;
-    public override ControlOutput OutputPort => Unit.trigger;
-    public override MethodModifier MethodModifier => MethodModifier.None;
-    public override AccessModifier AccessModifier => AccessModifier.Private;
-    public override Type ReturnType => typeof(void);
-    public override string Name => Unity.VisualScripting.Community.NameUtility.DisplayName(typeof(TEventUnit));
-    public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-    {
-        if(!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeSelectableForThisUnit(CodeUtility.ToolTip($"{Unity.VisualScripting.Community.NameUtility.DisplayName(typeof(TEventUnit))} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {Unity.VisualScripting.Community.NameUtility.DisplayName(typeof(TEventUnit))}", ""));
-        return GetNextUnit(Unit.trigger, data, indent);
-    }
+        protected UnityMethodGenerator(Unit unit) : base(unit)
+        {
+        }
+    
+        protected TEventUnit Unit => unit as TEventUnit;
+        public override ControlOutput OutputPort => Unit.trigger;
+        public override MethodModifier MethodModifier => MethodModifier.None;
+        public override AccessModifier AccessModifier => AccessModifier.Private;
+        public override Type ReturnType => typeof(void);
+        public override string Name => typeof(TEventUnit).DisplayName();
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            if(!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeSelectableForThisUnit(CodeUtility.ToolTip($"{typeof(TEventUnit).DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {typeof(TEventUnit).DisplayName()}", ""));
+            return GetNextUnit(Unit.trigger, data, indent);
+        }
+    } 
 }

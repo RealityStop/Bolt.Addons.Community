@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
         public string category;
         public bool optionsOpened;
         public bool preview;
-        public List<string> lastCompiledNames;
+        public List<string> lastCompiledNames = new List<string>();
 
         #if UNITY_EDITOR
         public bool shouldRefresh;

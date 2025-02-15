@@ -15,7 +15,7 @@ namespace Unity.VisualScripting.Community
     
         protected override string DefinedSurtitle()
         {
-            return target.field.classAsset.title;
+            return target.field.parentAsset.title;
         }
     
         protected override EditorTexture DefinedIcon()
@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community
     
         protected override string DefinedTitle()
         {
-            return target.field.classAsset.title + "." + target.field.FieldName;
+            return target.field.parentAsset.title + "." + target.field.FieldName;
         }
     
         protected override string DefinedShortTitle()

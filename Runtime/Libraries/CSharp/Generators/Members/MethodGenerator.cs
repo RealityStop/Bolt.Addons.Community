@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -14,7 +15,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public Type returnType;
         public List<ParameterGenerator> parameters = new List<ParameterGenerator>();
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
-        public List<string> generics = new List<string>();
+        public List<GenericDeclaration> generics = new List<GenericDeclaration>();
         public string body;
         public string beforeBody;
         public string warning;
@@ -40,8 +41,43 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
             var _warning = !string.IsNullOrEmpty(warning) ? CodeBuilder.Indent(indent) + $"/* {warning} */\n".WarningHighlight() : string.Empty;
             var modSpace = modifier == MethodModifier.None ? string.Empty : " ";
-            var genericTypes = generics.Count > 0 ? $"<{string.Join(", ", generics)}>" : string.Empty;
-            return attributes + _warning + CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + returnType.As().CSharpName() + " " + name.LegalMemberName() + genericTypes + CodeBuilder.Parameters(this.parameters);
+            var genericTypes = generics.Count > 0 ? $"<{string.Join(", ", generics.Select(g => g.name.TypeHighlight()))}>" : string.Empty;
+            var constraints = generics.Count > 0 && generics.Any(g => g.baseTypeConstraint.type != typeof(object) || g.interfaceConstraints.Count > 0 || g.typeParameterConstraints != TypeParameterConstraints.None) ? $" {"where".ConstructHighlight()} " : "";
+            foreach (var generic in generics)
+            {
+                if (generic.baseTypeConstraint.type != typeof(object) || generic.interfaceConstraints.Count > 0 || generic.typeParameterConstraints != TypeParameterConstraints.None)
+                {
+                    if (generic.baseTypeConstraint.type != typeof(object))
+                    {
+                        constraints += $"{generic.name.TypeHighlight()} : {generic.baseTypeConstraint.type.As().CSharpName(false, true)}" + (generic.interfaceConstraints.Count > 0 ? ", " + string.Join(", ", generic.interfaceConstraints.Select(i => i.type.As().CSharpName(false, true))) : string.Empty) + (generic.typeParameterConstraints != TypeParameterConstraints.None ? ", " + GetSelectedConstraints(generic.typeParameterConstraints) : string.Empty);
+                    }
+                    else if (generic.interfaceConstraints.Count > 0)
+                    {
+                        constraints += $"{generic.name.TypeHighlight()} : {string.Join(", ", generic.interfaceConstraints.Select(i => i.type.As().CSharpName(false, true)))}" + (generic.typeParameterConstraints != TypeParameterConstraints.None ? ", " + GetSelectedConstraints(generic.typeParameterConstraints) : string.Empty);
+                    }
+                    else if (generic.typeParameterConstraints != TypeParameterConstraints.None)
+                    {
+                        constraints += $"{generic.name.TypeHighlight()} : {GetSelectedConstraints(generic.typeParameterConstraints)}";
+                    }
+                }
+            }
+            return attributes + _warning + CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + returnType.As().CSharpName() + " " + name.LegalMemberName() + genericTypes + CodeBuilder.Parameters(this.parameters) + constraints;
+        }
+
+        string GetSelectedConstraints(TypeParameterConstraints constraints)
+        {
+            List<string> selected = new List<string>();
+
+            if (constraints == TypeParameterConstraints.None)
+                return "";
+            if ((constraints & TypeParameterConstraints.Class) != 0)
+                selected.Add("class".ConstructHighlight());
+            if ((constraints & TypeParameterConstraints.Struct) != 0)
+                selected.Add("struct".ConstructHighlight());
+            if ((constraints & TypeParameterConstraints.New) != 0)
+                selected.Add("new".ConstructHighlight() + "()");
+
+            return string.Join(", ", selected);
         }
 
         protected override sealed string GenerateBody(int indent)
@@ -70,7 +106,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public MethodGenerator AddGeneric()
         {
             var count = generics.Count == 1 ? "" : (generics.Count - 1).ToString();
-            generics.Add("T" + count);
+            generics.Add(new GenericDeclaration("T" + count));
             return this;
         }
 
@@ -79,9 +115,18 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             for (int i = 0; i < count; i++)
             {
                 if (i == 0)
-                    generics.Add("T".TypeHighlight());
+                    generics.Add(new GenericDeclaration("T"));
                 else
-                    generics.Add(("T" + i).TypeHighlight());
+                    generics.Add(new GenericDeclaration("T" + i));
+            }
+            return this;
+        }
+
+        public MethodGenerator AddGenerics(params GenericParameter[] parameters)
+        {
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                generics.Add(new GenericDeclaration(parameters[i]));
             }
             return this;
         }
@@ -109,9 +154,21 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 usings.MergeUnique(attributes[i].Usings());
             }
 
+            foreach (var generic in generics)
+            {
+                if (!usings.Contains(generic.baseTypeConstraint.type.Namespace))
+                    usings.Add(generic.baseTypeConstraint.type.Namespace);
+
+                foreach (var interfaceConstraint in generic.interfaceConstraints)
+                {
+                    if (!usings.Contains(interfaceConstraint.type.Namespace))
+                        usings.Add(interfaceConstraint.type.Namespace);
+                }
+            }
+
             for (int i = 0; i < parameters.Count; i++)
             {
-                if (!parameters[i].useAssemblyQualifiedType && !usings.Contains(parameters[i].Using()) && !parameters[i].type.Is().PrimitiveStringOrVoid()) usings.Add(parameters[i].Using());
+                if (!parameters[i].useAssemblyQualifiedType && !usings.Contains(parameters[i].Using()) && !parameters[i].type.Is().PrimitiveStringOrVoid()) usings.MergeUnique(parameters[i].Usings());
             }
 
             return usings;

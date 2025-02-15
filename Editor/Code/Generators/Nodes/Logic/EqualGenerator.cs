@@ -16,12 +16,12 @@ namespace Unity.VisualScripting.Community
             {
                 if (Unit.a.hasAnyConnection)
                 {
-                    if (Unit.b.hasValidConnection && Unit.b.GetPsudoSource()?.unit is Literal literal)
+                    if (Unit.b.hasValidConnection && Unit.b.GetPesudoSource()?.unit is Literal literal)
                     {
                         data.SetExpectedType(literal.type);
                     }
                     var code = base.GenerateValue(Unit.a, data);
-                    if (Unit.b.hasValidConnection && Unit.b.GetPsudoSource()?.unit is Literal)
+                    if (Unit.b.hasValidConnection && Unit.b.GetPesudoSource()?.unit is Literal)
                     {
                         data.RemoveExpectedType();
                     }
@@ -33,12 +33,12 @@ namespace Unity.VisualScripting.Community
             {
                 if (Unit.b.hasAnyConnection)
                 {
-                    if (Unit.a.hasValidConnection && Unit.a.GetPsudoSource()?.unit is Literal literal)
+                    if (Unit.a.hasValidConnection && Unit.a.GetPesudoSource()?.unit is Literal literal)
                     {
                         data.SetExpectedType(literal.type);
                     }
                     var code = base.GenerateValue(Unit.b, data);
-                    if (Unit.a.hasValidConnection && Unit.a.GetPsudoSource()?.unit is Literal)
+                    if (Unit.a.hasValidConnection && Unit.a.GetPesudoSource()?.unit is Literal)
                     {
                         data.RemoveExpectedType();
                     }

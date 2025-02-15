@@ -13,25 +13,23 @@ using UnityEngine.SceneManagement;
 
 namespace Unity.VisualScripting.Community
 {
+
+    public interface IGraphProvider
+    {
+        string Name { get; }
+        bool IsEnabled { get; }
+        IEnumerable<(GraphReference, IGraphElement)> GetElements();
+        void HandleMatch(NodeFinderWindow.MatchObject match);
+        Object GetAssetForElement(GraphReference reference);
+    }
+
+    public interface IMatchHandler
+    {
+        bool CanHandle(IGraphElement element);
+        NodeFinderWindow.MatchObject HandleMatch(IGraphElement element, string pattern);
+    }
     public class NodeFinderWindow : EditorWindow
     {
-        // Interfaces for extensibility
-        public interface IGraphProvider
-        {
-            string Name { get; }
-            bool IsEnabled { get; }
-            IEnumerable<(GraphReference, IGraphElement)> GetElements();
-            void HandleMatch(MatchObject match);
-            Object GetAssetForElement(GraphReference reference);
-        }
-
-        public interface IMatchHandler
-        {
-            bool CanHandle(IGraphElement element);
-            MatchObject HandleMatch(IGraphElement element, string pattern);
-        }
-
-        // Base classes for graph providers
         public abstract class BaseGraphProvider : IGraphProvider
         {
             protected readonly NodeFinderWindow _window;
@@ -179,6 +177,7 @@ namespace Unity.VisualScripting.Community
             RegisterHandler(new StickyNoteMatchHandler());
 #endif
             RegisterHandler(new CommentsMatchHandler());
+            RegisterHandler(new ErrorMatchHandler());
         }
 
         private void RegisterProvider<T>(T provider) where T : IGraphProvider
@@ -193,30 +192,23 @@ namespace Unity.VisualScripting.Community
 
         private void OnGUI()
         {
-            // Remove automatic error checking from OnGUI
             Event e = Event.current;
             DrawSearchBar();
             GUILayout.Space(6);
             DrawFilters();
-            GUILayout.Space(6);
-
-            // Only flag for search, don't search immediately
+            DrawSeparator();
             if (e.keyCode == KeyCode.Return || _pattern != _previousPattern)
             {
                 _needsSearch = true;
             }
 
-            // Do the actual search only when needed
             if (_needsSearch)
             {
                 Search();
                 _previousPattern = _pattern;
                 _needsSearch = false;
             }
-
             DrawResults();
-
-            // Handle error checking
             if (_matchError && Time.realtimeSinceStartup - _lastErrorCheckTime >= ErrorCheckInterval)
             {
                 _needsSearch = false;
@@ -331,6 +323,7 @@ namespace Unity.VisualScripting.Community
                         EditorGUI.indentLevel--;
                     }
                 });
+                DrawSeparator();
                 HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(2, 2, 2, 2), new RectOffset(1, 1, 1, 1), () =>
                 {
                     // Match Type Filters Section
@@ -351,7 +344,7 @@ namespace Unity.VisualScripting.Community
                         EditorGUI.indentLevel--;
                     }
                 });
-
+                DrawSeparator();
                 HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(2, 2, 2, 2), new RectOffset(1, 1, 1, 1), () =>
                 {
                     // Special Filters Section
@@ -372,6 +365,15 @@ namespace Unity.VisualScripting.Community
                 });
             });
         }
+
+        private void DrawSeparator()
+        {
+            GUILayout.Space(4);
+            var rect = EditorGUILayout.GetControlRect(false, 1);
+            EditorGUI.DrawRect(rect, Color.gray);
+            GUILayout.Space(4);
+        }
+
 
         private void DrawFilterToggle(FilterOption filter)
         {
@@ -511,79 +513,22 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        string GetElementPath(GraphReference reference)
-        {
-            var nodePath = reference;
-            var pathNames = "";
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            while (nodePath != null)
-            {
-                var prefix = "::";
-                if (nodePath.graph != null)
-                {
-                    if (string.IsNullOrEmpty(nodePath.graph.title))
-                    {
-                        if (!nodePath.isRoot)
-                        {
-                            prefix = nodePath.graph.GetType().ToString().Split(".").Last();
-                        }
-                        else
-                        {
-                            if (reference.root is MethodDeclaration methodDeclaration)
-                                prefix = methodDeclaration.methodName;
-                            else if (reference.root is ConstructorDeclaration constructorDeclaration)
-                                prefix = constructorDeclaration.name;
-                            else if (reference.root is PropertyGetterMacro propertyGetterMacro)
-                                prefix = propertyGetterMacro.name;
-                            else if (reference.root is PropertySetterMacro propertySetterMacro)
-                                prefix = propertySetterMacro.name;
-                            else if (reference.IsWithin<SubgraphUnit>())
-                            {
-                                var parent = reference.GetParent<SubgraphUnit>();
-                                prefix = parent.nest.source == GraphSource.Macro ? parent.nest.macro.name : nodePath.graph.GetType().ToString().Split(".").Last();
-                            }
-                            else if (reference.isRoot && reference.root is Object asset && reference.root is not IEventMachine)
-                            {
-                                prefix = asset.name;
-                            }
-                            else if (reference.isRoot && reference.root is IEventMachine eventMachine)
-                            {
-                                prefix = eventMachine.GetType().ToString();
-                            }
-                            else
-                                prefix = nodePath.graph.GetType().ToString().Split(".").Last();
-                        }
-                    }
-                    else
-                    {
-                        prefix = nodePath.graph.title;
-                    }
-
-                    prefix += " -> ";
-                }
-
-                pathNames = prefix + pathNames;
-                nodePath = nodePath.ParentReference(false);
-            }
-
-            return pathNames;
-        }
-
         private void SearchForErrors()
         {
-            // Remove time-based cooldown
-            if (Time.realtimeSinceStartup - _lastErrorCheckTime < ErrorCheckInterval) return;
+            if (Time.realtimeSinceStartup - _lastSearchTime < SearchCooldown) return;
 
-            _lastErrorCheckTime = Time.realtimeSinceStartup;
+            _lastSearchTime = Time.realtimeSinceStartup;
 
-            // Search for errors in all enabled providers
+            var handler = _matchHandlers[typeof(ErrorMatchHandler)];
             foreach (var provider in _graphProviders.Values.Where(p => p.IsEnabled))
             {
-                foreach (var element in GetCachedElements(provider))
+                List<IGraphElement> elements = new();
+                foreach (var element in provider.GetElements())
                 {
-                    if (element.Item2 is not Unit unit) continue;
-
-                    var match = MatchUnit(unit, element.Item1);
+                    (handler as ErrorMatchHandler).graphPointer = element.Item1;
+                    if (!handler.CanHandle(element.Item2) || elements.Contains(element.Item2)) continue;
+                    elements.Add(element.Item2);
+                    var match = handler.HandleMatch(element.Item2, _pattern);
                     if (match != null)
                     {
                         match.Reference = element.Item1;
@@ -599,7 +544,6 @@ namespace Unity.VisualScripting.Community
 
             _lastSearchTime = Time.realtimeSinceStartup;
 
-            // Only clear matches, not the maps
             _matchObjects.Clear();
 
             foreach (var provider in _graphProviders.Values.Where(p => p.IsEnabled))
@@ -762,96 +706,6 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        IEnumerable<(List<SuperState>, FlowStateTransition, FlowGraph)> GetSubStates(
-            GraphElementCollection<IState> states,
-            GraphConnectionCollection<IStateTransition, IState, IState> transitions,
-            SuperState parent,
-            List<SuperState> nestParent)
-        {
-            nestParent = new List<SuperState>(nestParent)
-            {
-                parent
-            };
-            // var stateGraph = states.nest.graph;
-            // yield direct graphs first.
-            foreach (var state in states)
-            {
-                if (state is not FlowState flowState) continue;
-                // check flow graphs
-                FlowGraph graph = null;
-                graph = flowState.nest.embed ?? flowState.nest.graph;
-
-                if (graph == null) continue;
-                yield return (nestParent, null, graph);
-            }
-
-            // yield transitions.
-            foreach (var transition in transitions)
-            {
-                if (transition is not FlowStateTransition flowStateTransition) continue;
-                FlowGraph graph = null;
-                graph = flowStateTransition.nest.embed ?? flowStateTransition.nest.graph;
-
-                if (graph == null) continue;
-                yield return (nestParent, flowStateTransition, graph);
-            }
-
-            // traverse sub states.
-            foreach (var subState in states)
-            {
-                if (subState is not SuperState subSuperState) continue;
-                var subStateGraph = subSuperState.nest.graph;
-                var subTransitions = subStateGraph.transitions;
-                foreach (var item in GetSubStates(subStateGraph.states, subTransitions, subSuperState, nestParent))
-                {
-                    yield return item;
-                }
-            }
-        }
-
-        public IEnumerable<(GraphReference, IGraphElement)> TraverseFlowGraph(GraphReference graphReference)
-        {
-            var flowGraph = graphReference.graph as FlowGraph;
-            if (flowGraph == null) yield break;
-            var units = flowGraph.elements;
-            foreach (var element in units)
-            {
-                switch (element)
-                {
-                    // going deep
-                    case SubgraphUnit subgraphUnit:
-                        {
-                            var subGraph = subgraphUnit.nest.embed ?? subgraphUnit.nest.graph;
-                            if (subGraph == null) continue;
-                            yield return (graphReference, subgraphUnit);
-                            // find sub graph.
-                            var childReference = graphReference.ChildReference(subgraphUnit, false);
-                            foreach (var item in TraverseFlowGraph(childReference))
-                            {
-                                yield return item;
-                            }
-
-                            break;
-                        }
-                    case StateUnit stateUnit:
-                        {
-                            var stateGraph = stateUnit.nest.embed ?? stateUnit.nest.graph;
-                            if (stateGraph == null) continue;
-                            // find state graph.
-                            var childReference = graphReference.ChildReference(stateUnit, false);
-                            foreach (var item in TraverseStateGraph(childReference))
-                            {
-                                yield return item;
-                            }
-
-                            break;
-                        }
-                    default:
-                        yield return (graphReference, element);
-                        break;
-                }
-            }
-        }
         private bool HandleUnitSearch(IUnit unit, out string name)
         {
             if (unit is null) { name = ""; return false; }
@@ -888,64 +742,6 @@ namespace Unity.VisualScripting.Community
             name = _name;
             return SearchUtility.Matches(SearchUtility.Relevance(_pattern, _name));
         }
-
-        internal IEnumerable<(GraphReference, IGraphElement)> TraverseStateGraph(GraphReference graphReference)
-        {
-            var stateGraph = graphReference.graph as StateGraph;
-            if (stateGraph == null) yield break;
-
-            // var stateGraph = states.nest.graph;
-            // yield direct graphs first.
-            foreach (var state in stateGraph.states)
-            {
-                switch (state)
-                {
-                    case FlowState flowState:
-                        {
-                            // check flow graphs, which is the base of a state.
-                            var graph = flowState.nest.embed ?? flowState.nest.graph;
-
-                            if (graph == null) continue;
-                            var childReference = graphReference.ChildReference(flowState, false);
-                            foreach (var item in TraverseFlowGraph(childReference))
-                            {
-                                yield return item;
-                            }
-
-                            break;
-                        }
-                    case SuperState superState:
-                        {
-                            // check state graphs
-                            var subStateGraph = superState.nest.embed ?? superState.nest.graph;
-                            if (subStateGraph == null) continue;
-                            var childReference = graphReference.ChildReference(superState, false);
-                            foreach (var item in TraverseStateGraph(childReference))
-                            {
-                                yield return item;
-                            }
-
-                            break;
-                        }
-                    case AnyState:
-                        continue;
-                }
-            }
-
-            // don't forget transition nodes.
-            foreach (var transition in stateGraph.transitions)
-            {
-                if (transition is not FlowStateTransition flowStateTransition) continue;
-                var graph = flowStateTransition.nest.embed ?? flowStateTransition.nest.graph;
-                if (graph == null) continue;
-                var childReference = graphReference.ChildReference(flowStateTransition, false);
-                foreach (var item in TraverseFlowGraph(childReference))
-                {
-                    yield return item;
-                }
-            }
-        }
-
 
         private MatchObject MatchUnit(Regex matchWord, IGraphElement element)
         {
@@ -988,7 +784,6 @@ namespace Unity.VisualScripting.Community
                 };
                 CheckMemberUnit(matchWord, unit, matchRecord);
                 CheckLiteralUnit(unit, matchRecord);
-                CheckFields(matchWord, unit, matchRecord);
                 CheckDefaultValues(matchWord, unit, matchRecord);
                 if (HandleUnitSearch(unit, out string name))
                 {
@@ -1137,23 +932,6 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private void CheckFields(Regex matchWord, Unit unit, MatchObject matchRecord)
-        {
-            if (unit is null) return;
-            var fields = unit.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-
-            foreach (var field in fields)
-            {
-                var value = field.GetValue(unit);
-                if (value == null) continue;
-                if (matchWord.IsMatch(value.ToString()))
-                {
-                    matchRecord.Matches.Add(MatchType.Unit);
-                    break;
-                }
-            }
-        }
-
         private void CheckDefaultValues(Regex matchWord, Unit unit, MatchObject matchRecord)
         {
             if (unit is null) return;
@@ -1198,23 +976,15 @@ namespace Unity.VisualScripting.Community
 
         private string GetValue(ValueInput valueInput)
         {
-            if (valueInput.hasDefaultValue)
+            if (valueInput.hasDefaultValue && !valueInput.hasAnyConnection)
             {
-                return $"{valueInput.key.LegalMemberName().Prettify()} : " + (!valueInput.nullMeansSelf ? valueInput.unit.defaultValues[valueInput.key] is Type type ? type.HumanName() : (valueInput.unit.defaultValues[valueInput.key] is Object obj ? obj.name : valueInput.unit.defaultValues[valueInput.key]?.ToString()) ?? "null" : "This");
+                return $"{valueInput.key.LegalMemberName().Prettify()} : " + (!valueInput.nullMeansSelf && !(typeof(Component).IsAssignableFrom(valueInput.type) || valueInput.type == typeof(GameObject)) ? valueInput.unit.defaultValues[valueInput.key] is Type type ? type.HumanName() : (valueInput.unit.defaultValues[valueInput.key] is Object obj ? obj.name : valueInput.unit.defaultValues[valueInput.key]?.ToString()) ?? "null" : "This");
             }
             else if (valueInput.hasAnyConnection)
             {
-                if (valueInput.hasValidConnection)
-                {
-                    return $"{valueInput.key.LegalMemberName().Prettify()} : Connected To : " + GetUnitName(valueInput.connection.source.unit as Unit);
-                }
-                else if (valueInput.hasInvalidConnection)
-                {
-                    return $"{valueInput.key.LegalMemberName().Prettify()} : Invalid Connection";
-                }
+                return valueInput.key.LegalMemberName().Prettify() + " : " + "Connected";
             }
-
-            return $"{valueInput.key.LegalMemberName().Prettify()} : No Value";
+            return valueInput.key.LegalMemberName().Prettify() + " : " + "No Value";
         }
 
         bool ShouldShowItem(IEnumerable<MatchObject> list)
@@ -1299,21 +1069,9 @@ namespace Unity.VisualScripting.Community
             context.EndEdit();
         }
 
-        List<(GraphReference, SubgraphUnit)> GetUnitPathReference(GraphReference reference)
-        {
-            List<(GraphReference, SubgraphUnit)> nodePath = new List<(GraphReference, SubgraphUnit)>() { (reference, !reference.isRoot ? reference.GetParent<SubgraphUnit>() : null) };
-            while (reference.ParentReference(false) != null)
-            {
-                reference = reference.ParentReference(false);
-                nodePath.Add((reference, !reference.isRoot ? reference.GetParent<SubgraphUnit>() : null));
-            }
-            nodePath.Reverse();
-            return nodePath;
-        }
-
         GraphReference OpenReferencePath(GraphReference graphReference)
         {
-            var path = GetUnitPathReference(graphReference);
+            var path = GraphTraversal.GetReferencePath(graphReference);
             GraphReference targetReference = graphReference.root.GetReference().AsReference();
             foreach (var item in path)
             {
@@ -1329,7 +1087,6 @@ namespace Unity.VisualScripting.Community
             return targetReference;
         }
 
-        // Match type enum for categorizing different types of matches
         public enum MatchType
         {
             Unit,
@@ -1341,7 +1098,6 @@ namespace Unity.VisualScripting.Community
             Error
         }
 
-        // Class to store match information
         public class MatchObject
         {
             public List<MatchType> Matches { get; set; } = new List<MatchType>();
@@ -1396,7 +1152,7 @@ namespace Unity.VisualScripting.Community
 
         private void DrawMatchItem(MatchObject match, ref bool isShowingErrors, bool errorsOnly = false)
         {
-            var pathNames = GetElementPath(match.Reference);
+            var pathNames = GraphTraversal.GetElementPath(match.Reference);
             var isError = match.Matches.Contains(MatchType.Error) && _matchError;
 
             if (isError)
@@ -1413,15 +1169,21 @@ namespace Unity.VisualScripting.Community
                 alignment = TextAnchor.MiddleLeft,
                 richText = true
             };
+
             if (match.Matches.Contains(MatchType.Error) && !_matchError) return;
+
             IGraphElement element = match.Unit;
 #if VISUAL_SCRIPTING_1_8_0_OR_GREATER
             if (match.stickyNote != null) element = match.stickyNote;
 #endif
             if (match.group != null) element = match.group;
-
             if (match.comment != null) element = match.comment;
-            if (GUILayout.Button(new GUIContent(label, GetUnitIcon(element)), pathStyle))
+
+            EditorGUILayout.BeginHorizontal();
+            bool buttonClicked = GUILayout.Button(new GUIContent(label, GetUnitIcon(element)), pathStyle);
+            EditorGUILayout.EndHorizontal();
+
+            if (buttonClicked)
             {
                 FocusMatchObject(match);
             }
@@ -1442,7 +1204,7 @@ namespace Unity.VisualScripting.Community
                 if (machine?.GetReference().graph is not FlowGraph) continue;
 
                 var baseRef = machine.GetReference().AsReference();
-                foreach (var element in _window.TraverseFlowGraph(baseRef))
+                foreach (var element in GraphTraversal.TraverseFlowGraph(baseRef))
                 {
                     yield return element;
                 }
@@ -1506,7 +1268,7 @@ namespace Unity.VisualScripting.Community
                 if (asset?.GetReference().graph is not FlowGraph) continue;
 
                 var baseRef = asset.GetReference().AsReference();
-                foreach (var element in _window.TraverseFlowGraph(baseRef))
+                foreach (var element in GraphTraversal.TraverseFlowGraph(baseRef))
                 {
                     yield return element;
                 }
@@ -1546,7 +1308,7 @@ namespace Unity.VisualScripting.Community
                 if (asset?.GetReference().graph is not StateGraph) continue;
 
                 var baseRef = asset.GetReference().AsReference();
-                foreach (var element in _window.TraverseStateGraph(baseRef))
+                foreach (var element in GraphTraversal.TraverseStateGraph(baseRef))
                 {
                     yield return element;
                 }
@@ -1583,7 +1345,7 @@ namespace Unity.VisualScripting.Community
                 if (machine?.GetReference().graph is not FlowGraph) continue;
 
                 var baseRef = machine.GetReference().AsReference();
-                foreach (var element in _window.TraverseFlowGraph(baseRef))
+                foreach (var element in GraphTraversal.TraverseFlowGraph(baseRef))
                 {
                     yield return element;
                 }
@@ -1624,7 +1386,7 @@ namespace Unity.VisualScripting.Community
 
                 foreach (var reference in _window.GetReferences(asset))
                 {
-                    foreach (var element in _window.TraverseFlowGraph(reference))
+                    foreach (var element in GraphTraversal.TraverseFlowGraph(reference))
                     {
                         yield return element;
                     }
@@ -1661,7 +1423,7 @@ namespace Unity.VisualScripting.Community
 
                 foreach (var reference in _window.GetReferences(asset))
                 {
-                    foreach (var element in _window.TraverseFlowGraph(reference))
+                    foreach (var element in GraphTraversal.TraverseFlowGraph(reference))
                     {
                         yield return element;
                     }
@@ -1679,7 +1441,7 @@ namespace Unity.VisualScripting.Community
         }
     }
 
-    public class UnitMatchHandler : NodeFinderWindow.IMatchHandler
+    public class UnitMatchHandler : IMatchHandler
     {
         public bool CanHandle(IGraphElement element)
         {
@@ -1737,23 +1499,15 @@ namespace Unity.VisualScripting.Community
 
         private string GetValue(ValueInput valueInput)
         {
-            if (valueInput.hasAnyConnection)
+            if (valueInput.hasDefaultValue && !valueInput.hasAnyConnection)
             {
-                if (valueInput.hasValidConnection)
-                {
-                    return $"{valueInput.key.LegalMemberName().Prettify()} : Connected To : " + GetUnitName(valueInput.connection.source.unit as Unit);
-                }
-                else if (valueInput.hasInvalidConnection)
-                {
-                    return $"{valueInput.key.LegalMemberName().Prettify()} : Invalid Connection";
-                }
+                return $"{valueInput.key.LegalMemberName().Prettify()} : " + (!valueInput.nullMeansSelf && !(typeof(Component).IsAssignableFrom(valueInput.type) || valueInput.type == typeof(GameObject)) ? valueInput.unit.defaultValues[valueInput.key] is Type type ? type.HumanName() : (valueInput.unit.defaultValues[valueInput.key] is Object obj ? obj.name : valueInput.unit.defaultValues[valueInput.key]?.ToString()) ?? "null" : "This");
             }
-            if (valueInput.hasDefaultValue)
+            else if (valueInput.hasAnyConnection)
             {
-                return $"{valueInput.key.LegalMemberName().Prettify()} : " + (!valueInput.nullMeansSelf ? valueInput.unit.defaultValues[valueInput.key] is Type type ? type.HumanName() : (valueInput.unit.defaultValues[valueInput.key] is Object obj ? obj.name : valueInput.unit.defaultValues[valueInput.key]?.ToString()) ?? "null" : "Self");
+                return valueInput.key.LegalMemberName().Prettify() + " : " + "Connected";
             }
-
-            return $"{valueInput.key.LegalMemberName().Prettify()} : No Value";
+            return valueInput.key.LegalMemberName().Prettify() + " : " + "No Value";
         }
 
         private string GetUnitFullName(Unit unit)
@@ -1772,6 +1526,10 @@ namespace Unity.VisualScripting.Community
         {
             if (element is Unit unit)
             {
+                if (unit is GraphOutput or GraphInput)
+                {
+                    return unit.GetType().HumanName();
+                }
                 if (unit is SubgraphUnit subgraphUnit)
                 {
                     if (subgraphUnit.nest.source == GraphSource.Embed)
@@ -1786,7 +1544,7 @@ namespace Unity.VisualScripting.Community
                 return BoltFlowNameUtility.UnitTitle(unit.GetType(), false, false);
             }
             else if (element is not null) return element.Descriptor().description.title;
-            return "Null Element";
+            return "Invalid Element";
         }
 
         private string GetFullNameWithInputs(Unit unit, string baseName)
@@ -1808,7 +1566,7 @@ namespace Unity.VisualScripting.Community
         }
     }
 
-    public class GroupMatchHandler : NodeFinderWindow.IMatchHandler
+    public class GroupMatchHandler : IMatchHandler
     {
         public bool CanHandle(IGraphElement element)
         {
@@ -1854,7 +1612,7 @@ namespace Unity.VisualScripting.Community
     }
 
 #if VISUAL_SCRIPTING_1_8_0_OR_GREATER
-    public class StickyNoteMatchHandler : NodeFinderWindow.IMatchHandler
+    public class StickyNoteMatchHandler : IMatchHandler
     {
         public bool CanHandle(IGraphElement element)
         {
@@ -1901,7 +1659,7 @@ namespace Unity.VisualScripting.Community
     }
 #endif
 
-    public class CommentsMatchHandler : NodeFinderWindow.IMatchHandler
+    public class CommentsMatchHandler : IMatchHandler
     {
         public bool CanHandle(IGraphElement element)
         {
@@ -1943,6 +1701,90 @@ namespace Unity.VisualScripting.Community
                 return "Comment : " + note.comment;
             }
             return "Empty Comment";
+        }
+    }
+
+    public class ErrorMatchHandler : IMatchHandler
+    {
+        public GraphPointer graphPointer;
+        public bool CanHandle(IGraphElement element)
+        {
+            return graphPointer != null && element is Unit unit && IsErrorUnit(unit);
+        }
+        private bool IsErrorUnit(Unit unit)
+        {
+            if (unit.GetException(graphPointer) != null)
+                return true;
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+            if (unit is MissingType)
+                return true;
+#endif
+            return false;
+        }
+        public NodeFinderWindow.MatchObject HandleMatch(IGraphElement element, string pattern)
+        {
+            if (element is Unit unit)
+            {
+                var matchRecord = new NodeFinderWindow.MatchObject
+                {
+                    Matches = new List<NodeFinderWindow.MatchType>(),
+                    Unit = unit,
+                    FullTypeName = GetUnitFullName(unit)
+                };
+
+                if (IsErrorUnit(unit))
+                {
+                    matchRecord.Matches.Add(NodeFinderWindow.MatchType.Error);
+                    return matchRecord;
+                }
+            }
+            return null;
+        }
+
+        private string GetUnitFullName(Unit unit)
+        {
+            var typeName = GetUnitName(unit);
+
+            if (unit is MemberUnit member && member.member.targetType != null)
+            {
+                typeName = member.member.ToPseudoDeclarer().ToString();
+            }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+            if (unit is MissingType missingType)
+            {
+                typeName = string.IsNullOrEmpty(missingType.formerType) ? "Missing Type" : "Missing Type : " + missingType.formerType;
+            }
+#endif
+            if (unit.GetException(graphPointer) != null)
+            {
+                typeName += " Error : " + unit.GetException(graphPointer).Message;
+            }
+            return typeName;
+        }
+
+        private string GetUnitName(IGraphElement element)
+        {
+            if (element is Unit unit)
+            {
+                if (unit is GraphOutput or GraphInput)
+                {
+                    return unit.GetType().HumanName();
+                }
+                if (unit is SubgraphUnit subgraphUnit)
+                {
+                    if (subgraphUnit.nest.source == GraphSource.Embed)
+                    {
+                        return !string.IsNullOrEmpty(subgraphUnit.nest.graph.title) ? subgraphUnit.nest.graph.title : "Unnamed Subgraph";
+                    }
+                    else
+                    {
+                        return !string.IsNullOrEmpty(subgraphUnit.nest.graph.title) ? subgraphUnit.nest.graph.title : !string.IsNullOrEmpty(subgraphUnit.nest.macro.name) ? subgraphUnit.nest.macro.name : "Unnamed Subgraph";
+                    }
+                }
+                return BoltFlowNameUtility.UnitTitle(unit.GetType(), false, false);
+            }
+
+            return "Invalid Element";
         }
     }
 }

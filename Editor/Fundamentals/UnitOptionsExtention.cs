@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using NUnit.Framework;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.Humility;
@@ -12,6 +13,9 @@ namespace Unity.VisualScripting.Community
     [FuzzyOptionTreeExtension(typeof(UnitOptionTree))]
     public class UnitOptionsExtension : FuzzyOptionTree
     {
+        private class Generic { }
+        [TypeIcon(typeof(Generic))]
+        private class Empty { }
         private HashSet<IUnitOption> options;
         private UnitOptionTree unitOptionTree;
 
@@ -31,6 +35,7 @@ namespace Unity.VisualScripting.Community
 
         #region Asset
         private FuzzyGroup assetMembersGroup = new FuzzyGroup("Asset", typeof(ClassAsset).Icon());
+        private FuzzyGroup genericsGroup = new FuzzyGroup("Generics", typeof(Empty).Icon());
         private FuzzyGroup assetFuncsGroup = new FuzzyGroup("Funcs", typeof(Method).Icon());
         private FuzzyGroup assetActionsGroup = new FuzzyGroup("Actions", typeof(Method).Icon());
         private FuzzyGroup assetVariableMembersGroup = new FuzzyGroup("Variables", typeof(Field).Icon());
@@ -129,6 +134,13 @@ namespace Unity.VisualScripting.Community
                     yield return assetFuncsGroup;
                 if (HasOptionsOfType<AssetActionUnit, AssetActionUnitOption>(o => o.unit.method != null))
                     yield return assetActionsGroup;
+                if (HasOptionsOfType<GenericNode, GenericNodeOption>(o => o.unit.genericParameter != null))
+                    yield return genericsGroup;
+            }
+            else if (parent == genericsGroup)
+            {
+                foreach (var option in GetOptionsOfType<GenericNode, GenericNodeOption>(o => o.unit.genericParameter != null))
+                    yield return option;
             }
             else if (parent == assetFuncsGroup)
             {

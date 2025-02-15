@@ -23,8 +23,7 @@
             if (target.functionType == FunctionType.Setter && target.fieldDeclaration != null) return "Set";
             if (target.functionType == FunctionType.Constructor && target.constructorDeclaration != null)
             {
-                if (target.constructorDeclaration.structAsset != null) return target.constructorDeclaration.structAsset.title;
-                return target.constructorDeclaration.classAsset?.title;
+                if (target.constructorDeclaration.parentAsset != null) return target.constructorDeclaration.parentAsset.title;
             }
             return base.DefinedSubtitle();
         }

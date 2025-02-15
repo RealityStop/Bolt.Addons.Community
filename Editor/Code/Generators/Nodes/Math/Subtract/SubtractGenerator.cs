@@ -21,7 +21,10 @@ namespace Unity.VisualScripting.Community
         {
             if (input.hasValidConnection)
             {
-                return GetNextValueUnit(input, data);
+                data.SetExpectedType(input.type);
+                var code = GetNextValueUnit(input, data);
+                data.RemoveExpectedType();
+                return code;
             }
             else if (input.hasDefaultValue)
             {

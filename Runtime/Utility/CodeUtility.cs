@@ -60,23 +60,31 @@ namespace Unity.VisualScripting.Community
             }
             return value;
         }
-
         public static string RemoveAllSelectableTags(string code)
         {
             if (RemoveAllCache.TryGetValue(code, out string result))
             {
                 return result;
             }
-            result = RemoveStartTagsRegex.Replace(RemoveAllTagsRegex.Replace(code, "$1"), string.Empty);
+
+            var lines = code.Split('\n');
+            var processedLines = lines.AsParallel().Select(line =>
+            {
+                line = RemoveStartTagsRegex.Replace(line, string.Empty);
+                return RemoveAllTagsRegex.Replace(line, "$1");
+            });
+
+            result = string.Join("\n", processedLines);
             RemoveAllCache[code] = result;
             return result;
         }
+
         public static string RemovePattern(string input, string startPattern, string endPattern)
         {
             if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(startPattern) || string.IsNullOrEmpty(endPattern))
                 return input;
 
-            StringBuilder result = new StringBuilder();
+            StringBuilder result = new();
             int index = 0;
 
             while (index < input.Length)
@@ -85,19 +93,19 @@ namespace Unity.VisualScripting.Community
                 if (startIndex == -1)
                 {
                     // No more patterns, append the rest of the string
-                    result.Append(input.Substring(index));
+                    result.Append(input[index..]);
                     break;
                 }
 
                 // Append text before the pattern
-                result.Append(input.Substring(index, startIndex - index));
+                result.Append(input[index..startIndex]);
 
                 // Find the end of the pattern
                 int endIndex = input.IndexOf(endPattern, startIndex + startPattern.Length);
                 if (endIndex == -1)
                 {
                     // If end pattern not found, treat it as invalid and append the rest of the string
-                    result.Append(input.Substring(startIndex));
+                    result.Append(input[startIndex..]);
                     break;
                 }
 
@@ -178,7 +186,7 @@ namespace Unity.VisualScripting.Community
             return RemoveAllSelectableTags(RemoveAllToolTipTagsEntirely(RemoveRecommendations(RemoveCustomHighlights(code))));
         }
 
-        private static readonly Regex SelectableRegex = new Regex(@"\[CommunityAddonsCodeSelectable\((.*?)\)\]|\[CommunityAddonsCodeSelectableEnd\((.*?)\)\]", RegexOptions.Compiled);
+        private static readonly Regex SelectableRegex = new(@"\[CommunityAddonsCodeSelectable\((.*?)\)\]|\[CommunityAddonsCodeSelectableEnd\((.*?)\)\]", RegexOptions.Compiled);
 
         private static readonly Dictionary<string, List<ClickableRegion>> clickableRegionsCache = new();
 
@@ -203,7 +211,7 @@ namespace Unity.VisualScripting.Community
                 int startSelectableEnd = input.IndexOf($"[CommunityAddonsCodeSelectableEnd({unitId})]", endSelectable);
                 if (startSelectableEnd == -1) break;
                 int innerContentStart = endSelectable + 2;
-                string code = input.Substring(innerContentStart, startSelectableEnd - innerContentStart);
+                string code = input[innerContentStart..startSelectableEnd];
 
                 int startLine = GetLineNumber(lineBreaks, startSelectable);
                 int endLine = GetLineNumber(lineBreaks, startSelectableEnd);
@@ -237,18 +245,6 @@ namespace Unity.VisualScripting.Community
 
             clickableRegionsCache[input] = clickableRegions;
             return clickableRegions;
-        }
-
-        private static int GetLineNumber(string[] lines, int charIndex)
-        {
-            int currentCharCount = 0;
-            for (int i = 0; i < lines.Length; i++)
-            {
-                currentCharCount += lines[i].Length + 1; // Include the newline character
-                if (charIndex < currentCharCount)
-                    return i + 1; // Line numbers are 1-based
-            }
-            return lines.Length; // Default to the last line if index is beyond bounds
         }
 
         private static List<int> PrecomputeLineBreaks(ReadOnlySpan<char> span)

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -171,6 +173,82 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                     contents?.Invoke();
                 });
             }, options);
+        }
+
+        public static T EnumFlagsField<T>(
+            this HUMEditor.Data.Horizontal horizontal,
+            T contents, // No ref, working with a copy
+            Color backgroundColor,
+            Color borderColor,
+            RectOffset padding,
+            RectOffset border,
+            string separator = ", ",
+            GUIContent label = null,
+            params GUILayoutOption[] options) where T : Enum
+        {
+            var style = new GUIStyle { padding = padding };
+            var borderStyle = new GUIStyle { padding = border };
+
+            style.normal.background = HUMColor.CacheTexture(backgroundColor);
+            borderStyle.normal.background = HUMColor.CacheTexture(borderColor);
+
+            HUMEditor.Horizontal(borderStyle, () =>
+            {
+                HUMEditor.Horizontal(style, () =>
+                {
+                    if (!Enum.GetNames(typeof(T)).Contains("None"))
+                        throw new InvalidOperationException($"Enum of type {typeof(T)} requires a 'None' value.");
+
+                    if (label != null)
+                        GUILayout.Label(label);
+
+                    if (GUILayout.Button(GetSelected(contents, separator), EditorStyles.popup, options))
+                    {
+                        GenericMenu menu = new GenericMenu();
+
+                        menu.AddItem(new GUIContent("None"), contents.Equals(default(T)), () =>
+                        {
+                            contents = default;
+                            GUI.changed = true; // Force GUI update
+                        });
+
+                        foreach (T value in Enum.GetValues(typeof(T)))
+                        {
+                            if (value.Equals(default(T))) continue;
+
+                            bool isSelected = contents.HasFlag(value);
+
+                            menu.AddItem(new GUIContent(value.ToString()), isSelected, () =>
+                            {
+                                int intValue = (int)(object)contents; // Get int representation
+
+                                if (isSelected)
+                                    intValue &= ~(int)(object)value; // Remove flag
+                                else
+                                    intValue |= (int)(object)value;  // Add flag
+
+                                contents = (T)(object)intValue; // Cast back to enum
+                                GUI.changed = true; // Force GUI update
+                            });
+                        }
+
+                        menu.ShowAsContext();
+                    }
+                });
+            }, options);
+
+            return contents; // Return modified value
+        }
+
+        private static string GetSelected<T>(T contents, string separator) where T : Enum
+        {
+            if (EqualityComparer<T>.Default.Equals(contents, default))
+                return "None";
+
+            return string.Join(separator, Enum.GetValues(typeof(T))
+                .Cast<T>()
+                .Where(value => !value.Equals(default(T)) && contents.HasFlag(value))
+                .Select(value => value.ToString()));
         }
     }
 }

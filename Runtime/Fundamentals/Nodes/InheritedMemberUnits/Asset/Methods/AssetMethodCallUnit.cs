@@ -29,6 +29,7 @@ namespace Unity.VisualScripting.Community
         [PortLabelHidden]
         public ValueOutput result;
 
+        [Serialize]
         public MethodType methodType;
 
         public string parameterCode;
@@ -46,9 +47,14 @@ namespace Unity.VisualScripting.Community
             method = _method;
             this.methodType = methodType;
         }
-
+        private bool isRegistered;
         protected override void Definition()
         {
+            if(method != null && !isRegistered)
+            {
+                method.OnSerialized += Define;
+                isRegistered = true;
+            }
             InputParameters = new Dictionary<int, ValueInput>();
             OutputParameters = new Dictionary<int, ValueOutput>();
 
@@ -62,14 +68,14 @@ namespace Unity.VisualScripting.Community
                 exit = ControlOutput(nameof(exit));
                 Succession(enter, exit);
             }
-
             if (methodType == MethodType.ReturnValue && method.returnType != typeof(void) && method.returnType != typeof(Libraries.CSharp.Void))
+            {
                 result = ValueOutput(method.returnType, nameof(result), (flow) =>
                 {
                     Debug.Log("This node is for the code generators only it does not work inside normal graphs");
                     return method.returnType.PseudoDefault();
                 });
-
+            }
             var parameterInfos = method.parameters.ToArray();
 
             var parameterCount = parameterInfos.Length;
