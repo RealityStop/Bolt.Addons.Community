@@ -16,7 +16,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public List<ParameterGenerator> parameters = new List<ParameterGenerator>();
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
         public List<GenericDeclaration> generics = new List<GenericDeclaration>();
-        public string body;
+        public string body = "";
         public string beforeBody;
         public string warning;
 
@@ -102,6 +102,13 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             this.body = body;
             return this;
         }
+
+        public MethodGenerator AddToBody(string body)
+        {
+            this.body += body;
+            return this;
+        }
+
 
         public MethodGenerator AddGeneric()
         {

@@ -235,6 +235,7 @@ namespace Unity.VisualScripting.Community
 
             if (InterfaceConstraints.Count > 0)
             {
+                list.AddRange(InterfaceConstraints);
                 list.AddRange(InterfaceConstraints.SelectMany(t => t.GetInterfaces()));
             }
             return list.ToArray();

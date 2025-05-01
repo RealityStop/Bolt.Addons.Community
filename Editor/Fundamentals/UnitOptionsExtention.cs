@@ -13,9 +13,6 @@ namespace Unity.VisualScripting.Community
     [FuzzyOptionTreeExtension(typeof(UnitOptionTree))]
     public class UnitOptionsExtension : FuzzyOptionTree
     {
-        private class Generic { }
-        [TypeIcon(typeof(Generic))]
-        private class Empty { }
         private HashSet<IUnitOption> options;
         private UnitOptionTree unitOptionTree;
 
@@ -35,7 +32,7 @@ namespace Unity.VisualScripting.Community
 
         #region Asset
         private FuzzyGroup assetMembersGroup = new FuzzyGroup("Asset", typeof(ClassAsset).Icon());
-        private FuzzyGroup genericsGroup = new FuzzyGroup("Generics", typeof(Empty).Icon());
+        private FuzzyGroup genericsGroup = new FuzzyGroup("Generics", typeof(Generic).Icon());
         private FuzzyGroup assetFuncsGroup = new FuzzyGroup("Funcs", typeof(Method).Icon());
         private FuzzyGroup assetActionsGroup = new FuzzyGroup("Actions", typeof(Method).Icon());
         private FuzzyGroup assetVariableMembersGroup = new FuzzyGroup("Variables", typeof(Field).Icon());
@@ -312,4 +309,13 @@ namespace Unity.VisualScripting.Community
             return options.OfType<TOption>().FirstOrDefault(option => option.UnitIs<TUnit>());
         }
     }
+
+    /// <summary>
+    /// These are empty classes used for the typeIcon
+    /// they do not have any functionality
+    /// </summary>
+    internal class Method { }
+    internal class Property { }
+    internal class Field { }
+    internal class Generic { }
 }

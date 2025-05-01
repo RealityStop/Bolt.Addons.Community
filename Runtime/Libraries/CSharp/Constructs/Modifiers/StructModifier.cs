@@ -5,6 +5,5 @@
     {
         None,
         Partial,
-        Static
     }
 }

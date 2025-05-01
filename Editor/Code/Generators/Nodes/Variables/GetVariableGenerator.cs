@@ -43,7 +43,7 @@ namespace Unity.VisualScripting.Community
 
         private string GenerateConnectedVariableCode(ControlGenerationData data)
         {
-            variableType = GetVariableType(data.TryGetGraphPointer(out var graphPointer) ? Flow.Predict<string>(Unit.name, graphPointer.AsReference()) : "", data, false);
+            variableType = GetVariableType(data.TryGetGraphPointer(out var graphPointer) && CanPredictConnection(Unit.name, data) ? Flow.Predict<string>(Unit.name, graphPointer.AsReference()) : "", data, false);
             if (data.GetExpectedType() == variableType)
                 data.SetCurrentExpectedTypeMet(true, variableType);
             else
@@ -140,7 +140,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (data.TryGetGraphPointer(out var graphPointer))
                 {
-                    if (Unit.@object.hasValidConnection)
+                    if (Unit.@object.hasValidConnection && CanPredictConnection(Unit.@object, data))
                     {
                         try
                         {

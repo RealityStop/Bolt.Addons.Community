@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public string fileName, menuName;
         public bool inheritsType;
-
+        public ClassModifier classModifier;
         public SystemType inherits = new SystemType(null);
 
         [DoNotSerialize]
@@ -74,8 +74,12 @@ namespace Unity.VisualScripting.Community
                     return baseType;
                 }
             }
-
             return baseType;
         }
+    }
+
+    public partial struct SClassAsset
+    {
+        
     }
 }

@@ -25,32 +25,34 @@ namespace Unity.VisualScripting.Community
             inheritTypes = GetAllInheritableTypes();
         }
 
+        protected override void OnExtendedVerticalHeaderGUI()
+        {
+            GUILayout.Space(2);
+            HUMEditor.Vertical().Box(
+                    HUMEditorColor.DefaultEditorBackground,
+                    Color.black,
+                    new RectOffset(4, 4, 4, 4),
+                    new RectOffset(1, 1, 0, 1),
+                    () =>
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label("Class Modifier");
+                        Target.classModifier = (ClassModifier)EditorGUILayout.EnumPopup(Target.classModifier);
+                        GUILayout.EndHorizontal();
+                    });
+        }
+
         private Type[] GetAllInheritableTypes()
         {
             List<Type> inheritableTypes = new List<Type>();
 
             var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).Where(t =>
                 t.Is().Inheritable() &&
-                !TypeHasSpecialName(t)
+                !NameUtility.TypeHasSpecialName(t)
             ).ToArray();
 
             inheritableTypes.AddRange(types);
-
-            // inheritableTypes.Add(typeof(MonoBehaviour));
-
-            // var editorTypes = Codebase.editorTypes.Where(t =>
-            //     t.Is().Inheritable() &&
-            //     !TypeHasSpecialName(t)
-            // ).ToArray();
-
-            // inheritableTypes.AddRange(editorTypes);
-
             return inheritableTypes.ToArray();
-        }
-
-        private bool TypeHasSpecialName(Type t)
-        {
-            return t.IsSpecialName || t.IsDefined(typeof(CompilerGeneratedAttribute));
         }
 
         protected override void OnExtendedOptionsGUI()
@@ -100,37 +102,40 @@ namespace Unity.VisualScripting.Community
             if (Target.scriptableObject)
                 return;
 
-            EditorGUI.BeginChangeCheck();
-            var inheritsType = GUILayout.Toggle(Target.inheritsType, "Inherits Type");
-            if (EditorGUI.EndChangeCheck())
+            if (Target.classModifier != ClassModifier.Static && Target.classModifier != ClassModifier.StaticPartial)
             {
-                Undo.RegisterCompleteObjectUndo(Target, "Toggled Asset Option 'inheritsType'");
-                Target.inheritsType = inheritsType;
-                EditorUtility.SetDirty(Target);
-                shouldUpdate = true;
-            }
-
-            if (Target.inheritsType)
-            {
-                GUIContent InheritButtonContent = new GUIContent(
-                    Target.inherits?.type?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
-                    Target.inherits?.type?.Icon()?[IconSize.Small]
-                );
-
-                lastRect = GUILayoutUtility.GetLastRect();
-                if (GUILayout.Button(InheritButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
+                EditorGUI.BeginChangeCheck();
+                var inheritsType = GUILayout.Toggle(Target.inheritsType, "Inherits Type");
+                if (EditorGUI.EndChangeCheck())
                 {
-                    TypeBuilderWindow.ShowWindow(lastRect, inheritsTypeMeta["type"], false, inheritTypes, () =>
+                    Undo.RegisterCompleteObjectUndo(Target, "Toggled Asset Option 'inheritsType'");
+                    Target.inheritsType = inheritsType;
+                    EditorUtility.SetDirty(Target);
+                    shouldUpdate = true;
+                }
+
+                if (Target.inheritsType)
+                {
+                    GUIContent InheritButtonContent = new GUIContent(
+                        Target.inherits?.type?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                        Target.inherits?.type?.Icon()?[IconSize.Small]
+                    );
+
+                    lastRect = GUILayoutUtility.GetLastRect();
+                    if (GUILayout.Button(InheritButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                     {
-                        Undo.RegisterCompleteObjectUndo(Target, "Changed Asset Inherited Type");
-                        if (CSharpPreviewWindow.instance != null)
+                        TypeBuilderWindow.ShowWindow(lastRect, inheritsTypeMeta["type"], false, inheritTypes, () =>
                         {
-                            if (CSharpPreviewWindow.instance.showCodeWindow)
+                            Undo.RegisterCompleteObjectUndo(Target, "Changed Asset Inherited Type");
+                            if (CSharpPreviewWindow.instance != null)
                             {
-                                CSharpPreviewWindow.instance.UpdateCodeDisplay();
+                                if (CSharpPreviewWindow.instance.showCodeWindow)
+                                {
+                                    CSharpPreviewWindow.instance.UpdateCodeDisplay();
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         }

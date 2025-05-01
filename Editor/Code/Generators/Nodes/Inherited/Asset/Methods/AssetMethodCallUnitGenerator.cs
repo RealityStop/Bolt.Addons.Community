@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community
         {
             var output = string.Empty;
             controlGenerationData = data;
-            output += MakeSelectableForThisUnit(Unit.method.methodName + "(") + GenerateArguments(Unit.InputParameters.Values.ToList(), data) + MakeSelectableForThisUnit(";");
+            output += MakeSelectableForThisUnit(Unit.method.methodName + "(") + GenerateArguments(Unit.InputParameters.Values.ToList(), data) + MakeSelectableForThisUnit(");");
             output += "\n" + GetNextUnit(Unit.exit, data, indent);
             return output;
         }

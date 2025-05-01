@@ -108,8 +108,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             var canShowInherits = !(inherits == null && string.IsNullOrEmpty(assemblyQualifiedInheritanceType) || inherits == typeof(object) && inherits.BaseType == null);
             output += CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + (modifier == ClassModifier.None ? string.Empty : " " + modifier.AsString().ConstructHighlight()) + " class ".ConstructHighlight() + name.LegalMemberName().TypeHighlight();
-            output += !canShowInherits && interfaces.Count == 0 ? string.Empty : " : ";
-            output += canShowInherits ? (inherits == null ? assemblyQualifiedInheritanceType : inherits != typeof(object) ? inherits.As().CSharpName() : string.Empty) + (interfaces.Count > 0 ? ", " : string.Empty) : string.Empty;
+            output += (canShowInherits || interfaces.Count > 0) && SupportsInheritance() ? " : " : string.Empty;
+            output += (canShowInherits || interfaces.Count > 0) && SupportsInheritance() ? (inherits == null ? assemblyQualifiedInheritanceType : inherits != typeof(object) ? inherits.As().CSharpName() : string.Empty) + (interfaces.Count > 0 ? ", " : string.Empty) : string.Empty;
 
             for (int i = 0; i < interfaces.Count; i++)
             {
@@ -118,6 +118,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
 
             return output;
+        }
+
+        public bool SupportsInheritance()
+        {
+            return modifier != ClassModifier.Static && modifier != ClassModifier.StaticPartial;
         }
 
         protected override string GenerateBody(int indent)

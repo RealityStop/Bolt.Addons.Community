@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
     [Inspectable]
     [Serializable]
     [RenamedFrom("Bolt.Addons.Community.Code.AttributeDeclaration")]
-    public class AttributeDeclaration
+    public class AttributeDeclaration : ISerializationCallbackReceiver
     {
         [Inspectable]
         [SerializeField]
@@ -20,6 +20,8 @@ namespace Unity.VisualScripting.Community
         public List<TypeParam> parameters = new List<TypeParam>();
         [Serialize]
         public Dictionary<string, object> fields = new Dictionary<string, object>();
+        [Serialize]
+        private SerializationData fieldsSerialization;
         public int constructor = 0;
         public int selectedconstructor;
 
@@ -58,6 +60,12 @@ namespace Unity.VisualScripting.Community
             fields[name] = value;
         }
 
+        public void RemoveField(string name)
+        {
+            fields.Remove(name);
+        }
+
+
         public void AddParameter(string name, Type type, object value)
         {
             TypeParam matchingParam = parameters.FirstOrDefault(param => param.name == name);
@@ -91,6 +99,16 @@ namespace Unity.VisualScripting.Community
             }
 
             return usings;
+        }
+
+        public void OnBeforeSerialize()
+        {
+            fieldsSerialization = fields.Serialize();
+        }
+
+        public void OnAfterDeserialize()
+        {
+            fields = (Dictionary<string, object>)(fieldsSerialization.Deserialize() ?? new Dictionary<string, object>());
         }
     }
 }

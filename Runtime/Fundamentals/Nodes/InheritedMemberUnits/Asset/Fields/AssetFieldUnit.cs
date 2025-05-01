@@ -49,7 +49,7 @@ namespace Unity.VisualScripting.Community
         {
             // Insures that the type is correct if the Field Type is changed
             if (field != null)
-                field.OnSerialized += UpdateFieldType;
+                field.OnChanged += UpdateFieldType;
             if (fieldType == null) UpdateFieldType();
             switch (actionDirection)
             {
@@ -75,10 +75,16 @@ namespace Unity.VisualScripting.Community
                     break;
             }
         }
-
+        Recursion recursion;
         private void UpdateFieldType()
         {
-            fieldType = field.type;
+            recursion ??= Recursion.New();
+            if (recursion?.TryEnter(field) == true)
+            {
+                fieldType = field.type;
+                Define();
+            }
+            recursion?.Exit(field);
         }
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Linq;
+using System.Diagnostics;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -87,6 +88,23 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
 
             return output;
+        }
+
+        public static string ToMultipleEnumString(this Enum value, bool highlight, string separator = ", ")
+        {
+            Type type = value.GetType();
+            if (!type.IsDefined(typeof(FlagsAttribute), false))
+                return highlight ? type.Name.TypeHighlight() + "." + value.ToString().EnumHighlight() : type.Name + "." + value.ToString();
+
+            List<string> values = new List<string>();
+            foreach (Enum enumValue in Enum.GetValues(type))
+            {
+                if (enumValue.Equals(Enum.ToObject(type, 0))) continue;
+                if (value.HasFlag(enumValue))
+                    values.Add(highlight ? $"{type.Name.TypeHighlight()}.{enumValue.ToString().EnumHighlight()}" : $"{type.Name}.{enumValue}");
+            }
+
+            return values.Count > 0 ? string.Join(separator, values) : highlight ? $"{type.Name.TypeHighlight()}.{Enum.GetValues(type).GetValue(0).ToString().EnumHighlight()}" : $"{type.Name}.{Enum.GetValues(type).GetValue(0)}";
         }
 
         private static Dictionary<int, string> indentCache = new Dictionary<int, string>();

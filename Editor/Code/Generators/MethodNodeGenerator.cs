@@ -13,7 +13,7 @@ namespace Unity.VisualScripting.Community
     /// Abstract base class for generating nodes that require a method To Function.
     /// </summary>
     /// <typeparam name="T">The type of Unit to decorate.</typeparam>
-    public abstract class MethodNodeGenerator : NodeGenerator
+    public abstract class MethodNodeGenerator : CountGenerator
     {
         public abstract ControlOutput OutputPort { get; }
         public abstract List<ValueOutput> OutputValues { get; }
@@ -25,7 +25,6 @@ namespace Unity.VisualScripting.Community
         public abstract List<TypeParam> Parameters { get; }
         public virtual string MethodBody { get; }
         public ControlGenerationData Data;
-        public int count;
 
         protected MethodNodeGenerator(Unit unit) : base(unit)
         {

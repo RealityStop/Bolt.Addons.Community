@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
             {
                 type = Type.GetType(typeHandle.Identification);
             }
-            OnSerialized?.Invoke();
+            OnChanged?.Invoke();
         }
 
         public void OnBeforeSerialize()

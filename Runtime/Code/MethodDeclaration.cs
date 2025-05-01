@@ -97,6 +97,7 @@ namespace Unity.VisualScripting.Community
                 }
             }
         }
+
         public override FlowGraph DefaultGraph()
         {
             return new FlowGraph();
@@ -135,7 +136,7 @@ namespace Unity.VisualScripting.Community
     /// This is a empty class used for the typeIcon
     /// it does not have any functionality
     /// </summary>
-    public class Method
+    internal class Method
     {
     }
 }

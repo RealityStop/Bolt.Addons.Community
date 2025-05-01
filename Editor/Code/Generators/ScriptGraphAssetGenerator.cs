@@ -75,7 +75,7 @@ namespace Unity.VisualScripting.Community
             var script = GenerateScriptHeader();
             script += GenerateClassDefinition();
             script += GenerateVariableDeclarations();
-            script += GenerateCustomEventHandlers();
+            script += GenerateAwakeHandlers();
             script += GenerateEventMethods();
             script += GenerateSpecialUnits();
             script += GenerateMethodDeclarations();
@@ -240,20 +240,23 @@ namespace Unity.VisualScripting.Community
         }
 #endif
 
-        private string GenerateCustomEventHandlers()
+        private string GenerateAwakeHandlers()
         {
             var script = string.Empty;
-            if (Data.graph.units.Any(unit => unit is CustomEvent))
+            var customEvents = Data.graph.units.OfType<CustomEvent>();
+            var awakeRequiredGenerators = Data.graph.GetUnitsRecursive(Recursion.New()).Where(unit => (unit as Unit).GetGenerator() is AwakeMethodNodeGenerator).Select(unit => (unit as Unit).GetGenerator()).Cast<AwakeMethodNodeGenerator>().ToList();
+            if (customEvents.Any() || awakeRequiredGenerators.Any())
             {
-                var customEvents = Data.graph.units.Where(unit => unit is CustomEvent);
                 script += $"\n" + CodeBuilder.Indent(1) + "private void".ConstructHighlight() + " Awake()";
                 script += "\n" + CodeBuilder.Indent(1) + "{\n";
                 int id = 0;
                 foreach (CustomEvent eventUnit in customEvents)
                 {
-                    var data = new ControlGenerationData(Data.GetReference());
-                    data.ScriptType = typeof(MonoBehaviour);
-                    data.returns = eventUnit.coroutine ? typeof(IEnumerator) : typeof(void);
+                    var data = new ControlGenerationData(Data.GetReference())
+                    {
+                        ScriptType = typeof(MonoBehaviour),
+                        returns = eventUnit.coroutine ? typeof(IEnumerator) : typeof(void)
+                    };
                     data.AddLocalNameInScope("args", typeof(CustomEventArgs));
                     foreach (VariableDeclaration variable in Data.graph.variables)
                     {
@@ -269,6 +272,31 @@ namespace Unity.VisualScripting.Community
                     var eventName = GetMethodName(eventUnit) + CodeUtility.MakeSelectable(eventUnit, "Runner");
                     string runnerCode = GetCustomEventRunnerCode(eventUnit, data);
                     AddNewMethod(eventUnit, eventName, GetMethodSignature(eventUnit, false, eventName, AccessModifier.Private), runnerCode, "CustomEventArgs ".TypeHighlight() + "args".VariableHighlight(), data);
+                }
+                var nodeIDs = new Dictionary<Type, int>();
+                foreach (var generator in awakeRequiredGenerators)
+                {
+                    if (generator.unit.controlOutputs.Count > 0 && generator.unit.controlOutputs[0].hasValidConnection)
+                    {
+                        var data = new ControlGenerationData(Data.GetReference())
+                        {
+                            ScriptType = typeof(MonoBehaviour),
+                            returns = generator.ReturnType
+                        };
+
+                        if (nodeIDs.ContainsKey(generator.unit.GetType()))
+                        {
+                            nodeIDs[generator.unit.GetType()]++;
+                            generator.count = nodeIDs[generator.unit.GetType()];
+                        }
+                        else
+                        {
+                            nodeIDs.Add(generator.unit.GetType(), 0);
+                            generator.count = nodeIDs[generator.unit.GetType()];
+                        }
+
+                        script += generator.GenerateAwakeCode(data, 2) + "\n";
+                    }
                 }
                 script += $"\n{CodeBuilder.Indent(1)}}}\n";
             }
@@ -297,8 +325,11 @@ namespace Unity.VisualScripting.Community
                             data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
                         }
 
-                        var parameters = GetMethodParameters(unit);
-                        data.AddLocalNameInScope(parameters.paramInfo.parameterName, parameters.paramInfo.parameterType);
+                        var parameterInfo = GetMethodParameters(unit);
+                        foreach (var (parameterType, parameterName) in parameterInfo.Item2)
+                        {
+                            data.AddLocalNameInScope(parameterName, parameterType);
+                        }
 
                         if (unit.controlOutputs.Any(output => output.key == "trigger"))
                         {
@@ -333,13 +364,13 @@ namespace Unity.VisualScripting.Community
                             {
                                 if (unit.controlOutputs["trigger"].hasValidConnection)
                                 {
-                                    AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit, false), specialUnitCode + CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit as Unit, $"StartCoroutine(") + GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine());"), parameters.parameterSignature, data);
-                                    AddNewMethod(unit as Unit, GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine"), GetMethodSignature(unit, GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine")), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                                    AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit, false), specialUnitCode + CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit as Unit, $"StartCoroutine(") + GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine());"), parameterInfo.parameterSignature, data);
+                                    AddNewMethod(unit as Unit, GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine"), GetMethodSignature(unit, GetMethodName(unit) + CodeUtility.MakeSelectable(unit as Unit, "_Coroutine")), GetMethodBody(unit, data), parameterInfo.parameterSignature, data);
                                 }
                             }
                             else if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection)
                             {
-                                AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                                AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameterInfo.parameterSignature, data);
                             }
                         }
                     }
@@ -359,9 +390,12 @@ namespace Unity.VisualScripting.Community
                         {
                             data.AddLocalNameInScope(variable.name, !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object));
                         }
-                        ;
-                        var parameters = GetMethodParameters(unit);
-                        data.AddLocalNameInScope(parameters.paramInfo.parameterName, parameters.paramInfo.parameterType);
+
+                        var parameterInfo = GetMethodParameters(unit);
+                        foreach (var (parameterType, parameterName) in parameterInfo.Item2)
+                        {
+                            data.AddLocalNameInScope(parameterName, parameterType);
+                        }
                         if (unit is Update update && !addedSpecialUpdateCode)
                         {
                             addedSpecialUpdateCode = true;
@@ -391,11 +425,11 @@ namespace Unity.VisualScripting.Community
 #endif
                         if (unit.controlOutputs.Any(output => output.key == "trigger"))
                         {
-                            if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), specialUnitCode + GetMethodBody(unit, data), parameters.parameterSignature, data);
+                            if (unit.controlOutputs.First(output => output.key == "trigger").hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), specialUnitCode + GetMethodBody(unit, data), parameterInfo.parameterSignature, data);
                         }
                         else
                         {
-                            if (unit.controlOutputs.Count > 0 && unit.controlOutputs[0].hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameters.parameterSignature, data);
+                            if (unit.controlOutputs.Count > 0 && unit.controlOutputs[0].hasValidConnection) AddNewMethod(unit as Unit, GetMethodName(unit), GetMethodSignature(unit), GetMethodBody(unit, data), parameterInfo.parameterSignature, data);
                         }
                     }
                     else if (_methods.TryGetValue(methodName, out var method))
@@ -551,12 +585,12 @@ namespace Unity.VisualScripting.Community
 
         private string GetMethodSignature(IEventUnit eventUnit, string methodName = null)
         {
-            return GetMethodSignature(eventUnit as Unit, eventUnit.coroutine, methodName == null ? GetMethodName(eventUnit) : methodName);
+            return GetMethodSignature(eventUnit as Unit, eventUnit.coroutine, methodName ?? GetMethodName(eventUnit), (eventUnit as Unit).GetGenerator() is MethodNodeGenerator generator ? generator.AccessModifier : AccessModifier.Public);
         }
 
         private string GetMethodSignature(IEventUnit eventUnit, bool isCoroutine)
         {
-            return GetMethodSignature(eventUnit as Unit, isCoroutine, GetMethodName(eventUnit));
+            return GetMethodSignature(eventUnit as Unit, isCoroutine, GetMethodName(eventUnit), (eventUnit as Unit).GetGenerator() is MethodNodeGenerator generator ? generator.AccessModifier : AccessModifier.Public);
         }
 
         private string GetMethodSignature(Unit unit, bool isCoroutine, string _methodName, AccessModifier accessModifier = AccessModifier.Public)
@@ -564,10 +598,10 @@ namespace Unity.VisualScripting.Community
             var returnType = isCoroutine ? "System.Collections".NamespaceHighlight() + "." + "IEnumerator".TypeHighlight() : "void".ConstructHighlight();
             var methodName = _methodName;
 
-            return $"\n" + CodeBuilder.Indent(1) + CodeUtility.MakeSelectable(unit, accessModifier.AsString().ConstructHighlight() + $" {returnType} ") + $"{methodName.Replace(" ", "")}";
+            return $"\n" + CodeBuilder.Indent(1) + CodeUtility.MakeSelectable(unit, accessModifier.AsString().ConstructHighlight() + $"{(accessModifier == AccessModifier.None ? "" : " ")}{returnType} ") + $"{methodName.Replace(" ", "")}";
         }
 
-        private (string parameterSignature, (Type parameterType, string parameterName) paramInfo) GetMethodParameters(IEventUnit eventUnit)
+        private (string parameterSignature, List<(Type parameterType, string parameterName)>) GetMethodParameters(IEventUnit eventUnit)
         {
             return MethodParameterMapper.GetParameters(eventUnit);
         }
@@ -576,8 +610,7 @@ namespace Unity.VisualScripting.Community
         #region Helper Classes
         private static class MethodParameterMapper
         {
-            private static readonly Dictionary<Type, (string signature, (Type type, string name) info)> _parameterMap
-                = new Dictionary<Type, (string, (Type, string))>
+            private static readonly Dictionary<Type, (string signature, (Type type, string name) info)> _parameterMap = new Dictionary<Type, (string, (Type, string))>
             {
 #if MODULE_PHYSICS_EXISTS
                 { typeof(OnCollisionEnter), ($"{"Collision".TypeHighlight()} {"collision".VariableHighlight()}", (typeof(Collision), "collision")) },
@@ -603,13 +636,30 @@ namespace Unity.VisualScripting.Community
                 { typeof(OnApplicationPause), ($"{"bool".ConstructHighlight()} {"pauseStatus".VariableHighlight()}", (typeof(bool), "pauseStatus")) },
                 { typeof(CustomEvent), ($"{"CustomEventArgs".TypeHighlight()} {"args".VariableHighlight()}", (typeof(CustomEventArgs), "args")) }
             };
-
-            public static (string parameterSignature, (Type parameterType, string parameterName) paramInfo)
-                GetParameters(IEventUnit eventUnit)
+            public static (string parameterSignature, List<(Type parameterType, string parameterName)>) GetParameters(IEventUnit eventUnit)
             {
-                return _parameterMap.TryGetValue(eventUnit.GetType(), out var parameterInfo)
-                    ? parameterInfo
-                    : (string.Empty, (null, string.Empty));
+                if (_parameterMap.TryGetValue(eventUnit.GetType(), out var parameterInfo))
+                {
+                    return (parameterInfo.signature, new List<(Type parameterType, string parameterName)>() { (parameterInfo.info.type, parameterInfo.info.name) });
+                }
+                else
+                {
+                    if ((eventUnit as Unit).GetGenerator() is MethodNodeGenerator generator)
+                    {
+                        var parameters = generator.Parameters;
+                        var parameterSignature = string.Join(", ", parameters.Select(p => $"{p.type.As().CSharpName(false, true)} {p.name.VariableHighlight()}"));
+                        var list = new List<(Type, string)>();
+                        foreach (var parameter in parameters)
+                        {
+                            list.Add((parameter.type, parameter.name));
+                        }
+                        return (parameterSignature, list);
+                    }
+                    else
+                    {
+                        return ("", new List<(Type, string)>());
+                    }
+                }
             }
         }
 
