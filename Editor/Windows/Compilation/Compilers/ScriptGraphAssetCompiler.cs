@@ -20,7 +20,7 @@ namespace Unity.VisualScripting.Community
         protected override string GenerateCode(UnityEngine.Object asset)
         {
             var graphAsset = (ScriptGraphAsset)asset;
-            var code = ScriptGraphAssetGenerator.GetSingleDecorator(graphAsset).GenerateClean(0);
+            var code = CodeUtility.CleanCode(ScriptGraphAssetGenerator.GetSingleDecorator(graphAsset).Generate(0).RemoveHighlights().RemoveMarkdown());
             return code;
         }
 

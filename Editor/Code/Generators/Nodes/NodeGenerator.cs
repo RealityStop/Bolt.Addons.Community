@@ -97,7 +97,7 @@ namespace Unity.VisualScripting.Community
 
         public Type GetSourceType(ValueInput valueInput, ControlGenerationData data)
         {
-            if(data == null)
+            if (data == null)
             {
                 return valueInput.type;
             }
@@ -215,6 +215,22 @@ namespace Unity.VisualScripting.Community
                 return CodeUtility.MakeSelectable(unit, code);
             else
                 return code;
+        }
+
+        protected bool CanPredictConnection(ValueInput target, ControlGenerationData data)
+        {
+            if (target.connection.source.unit is UnifiedVariableUnit variableUnit)
+            {
+                // This is one of the main problems so we check this first.
+                if (variableUnit.kind == VariableKind.Scene)
+                {
+                    if (data.TryGetGraphPointer(out var graphPointer) && graphPointer.scene != null)
+                        return Flow.CanPredict(target, graphPointer.AsReference());
+                    else return false;
+                }
+            }
+
+            return true;
         }
     }
 

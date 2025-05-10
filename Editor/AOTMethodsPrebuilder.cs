@@ -113,7 +113,7 @@ namespace Unity.VisualScripting.Community
 
             foreach (var type in AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes().Where(type => type.Inherits(typeof(UnityEventBase)))))
             {
-                if (type.BaseType.IsGenericType && !type.BaseType.GetGenericArguments().Any(arg => arg.IsGenericTypeParameter) && type.BaseType.GetGenericArguments().All(_type => _type.IsPublic && AllowedNameSpace(_type.Namespace)))
+                if (type.IsPublic && type.BaseType.IsGenericType && !type.BaseType.GetGenericArguments().Any(arg => arg.IsGenericTypeParameter) && type.BaseType.GetGenericArguments().All(_type => _type.IsPublic && AllowedNameSpace(_type.Namespace)))
                 {
                     types.Add(new TypeGroup(type.BaseType.GetGenericArguments()));
                 }

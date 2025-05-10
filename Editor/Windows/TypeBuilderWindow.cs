@@ -19,19 +19,20 @@ namespace Unity.VisualScripting.Community
         private Type[] settingAssemblyTypesLookup;
         private Type[] customTypeLookup;
         private Action<Type> result;
-        private Action onChanged;
+        private Action onBeforeChanged;
+        private Action<Type> onAfterChanged;
         List<FakeGenericParameterType> fakeGenericParameterTypes = new List<FakeGenericParameterType>();
         public static TypeBuilderWindow Window { get; private set; }
 
         private static Metadata targetMetadata;
 
         private bool canMakeArrayTypeForBaseType;
-        public static bool Button(Type type)
+        public static bool Button(Type type, string nullType = "Select Type", params GUILayoutOption[] options)
         {
-            GUIContent TypebuilderButtonContent = new(type?.As().CSharpName(false, false, false) ?? "Select Type", type.GetTypeIcon());
-            return GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f));
+            GUIContent TypebuilderButtonContent = new(type?.As().CSharpName(false, false, false) ?? nullType, type.GetTypeIcon());
+            return GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, options);
         }
-        public static void ShowWindow(Rect position, Metadata Meta, bool canMakeArray = true, Type[] types = null, Action onChanged = null)
+        public static void ShowWindow(Rect position, Metadata Meta, bool canMakeArray = true, Type[] types = null, Action onBeforeChanged = null, Action<Type> onAfterChanged = null)
         {
             if (Window == null)
             {
@@ -39,10 +40,10 @@ namespace Unity.VisualScripting.Community
             }
             targetMetadata = Meta;
             var type = Meta?.value as Type;
-            ConfigureWindow(Window, position, type, types, canMakeArray, onChanged);
+            ConfigureWindow(Window, position, type, types, canMakeArray, onBeforeChanged, onAfterChanged);
         }
 
-        public static void ShowWindow(Rect position, Metadata Meta, bool canMakeArray = true, List<FakeGenericParameterType> fakeGenericParameterTypes = null, Action onChanged = null)
+        public static void ShowWindow(Rect position, Metadata Meta, bool canMakeArray = true, List<FakeGenericParameterType> fakeGenericParameterTypes = null, Action onBeforeChanged = null, Action<Type> onAfterChanged = null)
         {
             if (Window == null)
             {
@@ -54,10 +55,10 @@ namespace Unity.VisualScripting.Community
             Window.settingAssemblyTypesLookup = Window.settingAssemblyTypesLookup.Concat(fakeGenericParameterTypes).ToArray();
             Window.baseTypeLookup = Window.settingAssemblyTypesLookup.Where(t => !NameUtility.TypeHasSpecialName(t) && t != null)
                 .ToArray();
-            ConfigureWindow(Window, position, type, new Type[0], canMakeArray, onChanged);
+            ConfigureWindow(Window, position, type, new Type[0], canMakeArray, onBeforeChanged, onAfterChanged);
         }
 
-        public static void ShowWindow(Rect position, Action<Type> result, Type currentType, bool canMakeArray = true, Type[] types = null, Action onChanged = null)
+        public static void ShowWindow(Rect position, Action<Type> result, Type currentType, bool canMakeArray = true, Type[] types = null, Action onBeforeChanged = null, Action<Type> onAfterChanged = null)
         {
             if (Window == null)
             {
@@ -65,10 +66,10 @@ namespace Unity.VisualScripting.Community
             }
             Window.result = result;
             targetMetadata = null;
-            ConfigureWindow(Window, position, currentType, types, canMakeArray, onChanged);
+            ConfigureWindow(Window, position, currentType, types, canMakeArray, onBeforeChanged, onAfterChanged);
         }
 
-        public static void ShowWindow(Rect position, Action<Type> result, Type currentType, bool canMakeArray = true, List<FakeGenericParameterType> fakeGenericParameterTypes = null, Action onChanged = null)
+        public static void ShowWindow(Rect position, Action<Type> result, Type currentType, bool canMakeArray = true, List<FakeGenericParameterType> fakeGenericParameterTypes = null, Action onBeforeChanged = null, Action<Type> onAfterChanged = null)
         {
             if (Window == null)
             {
@@ -80,15 +81,16 @@ namespace Unity.VisualScripting.Community
             Window.settingAssemblyTypesLookup = Window.settingAssemblyTypesLookup.Concat(fakeGenericParameterTypes).Where(t => t.IsPublic).ToArray();
             Window.baseTypeLookup = Window.settingAssemblyTypesLookup.Where(t => t != null && !NameUtility.TypeHasSpecialName(t))
                 .ToArray();
-            ConfigureWindow(Window, position, currentType, new Type[0], canMakeArray, onChanged);
+            ConfigureWindow(Window, position, currentType, new Type[0], canMakeArray, onBeforeChanged, onAfterChanged);
         }
         const float DefaultHeight = 320f;
         const float MinWidth = 300f;
         const float MaxWidth = 1000f;
         private bool triggerDropdownOnOpen = false;
-        private static void ConfigureWindow(TypeBuilderWindow window, Rect position, Type type, Type[] types, bool canMakeArray, Action onChanged)
+        private static void ConfigureWindow(TypeBuilderWindow window, Rect position, Type type, Type[] types, bool canMakeArray, Action onBeforeChanged, Action<Type> onAfterChanged)
         {
-            window.onChanged = onChanged;
+            window.onBeforeChanged = onBeforeChanged;
+            window.onAfterChanged = onAfterChanged;
             window.canMakeArrayTypeForBaseType = canMakeArray;
 
             if (type != null)
@@ -244,7 +246,7 @@ namespace Unity.VisualScripting.Community
                     if (baseType != null)
                         EditorGUILayout.HelpBox($"Can not create arrays of Open Generics, e.g {baseType.As().CSharpName(false, false, false).RemoveHighlights().RemoveMarkdown()} is invalid it has to have a types set for {string.Join(", ", GetInvalidParameters(baseType))}", MessageType.Error);
                 }
-                
+
                 if (GUILayout.Button("Create Type"))
                 {
                     if (targetMetadata != null)
@@ -277,7 +279,7 @@ namespace Unity.VisualScripting.Community
         {
             return position.Contains(GUIUtility.GUIToScreenPoint(Event.current.mousePosition));
         }
-     
+
         private Type GetArrayBase(Type type)
         {
             if (type.IsArray)
@@ -534,12 +536,14 @@ namespace Unity.VisualScripting.Community
         public static void ConstructType()
         {
             UndoUtility.RecordEditedObject("TypeBuilder Constructed Type");
-            Window.onChanged?.Invoke();
+            Window.onBeforeChanged?.Invoke();
             genericParameter ??= GenericParameter.Create(typeof(object), typeof(object).DisplayName());
+            Type constructedType;
             if (genericParameter.type.type.IsGenericType && genericParameter.type.type.IsConstructedGenericType)
             {
                 var newConstructedType = new GenericParameter(genericParameter, true);
-                Window.result?.Invoke(newConstructedType.ConstructType());
+                constructedType = newConstructedType.ConstructType();
+                Window.result?.Invoke(constructedType);
             }
             else if (genericParameter.type.type.IsArray)
             {
@@ -552,28 +556,34 @@ namespace Unity.VisualScripting.Community
                 if (tempType.IsGenericType && tempType.IsConstructedGenericType)
                 {
                     var newConstructedType = new GenericParameter(genericParameter, true);
-                    Window.result?.Invoke(newConstructedType.ConstructType());
+                    constructedType = newConstructedType.ConstructType();
+                    Window.result?.Invoke(constructedType);
                 }
                 else
                 {
-                    Window.result?.Invoke(genericParameter.ConstructType());
+                    constructedType = genericParameter.ConstructType();
+                    Window.result?.Invoke(constructedType);
                 }
             }
             else
             {
-                Window.result?.Invoke(genericParameter.ConstructType());
+                constructedType = genericParameter.ConstructType();
+                Window.result?.Invoke(constructedType);
             }
+            Window.onAfterChanged?.Invoke(constructedType);
         }
 
         public static void ConstructType(Metadata metadata)
         {
             metadata.RecordUndo();
-            Window.onChanged?.Invoke();
+            Window.onBeforeChanged?.Invoke();
             genericParameter ??= GenericParameter.Create(typeof(object), typeof(object).DisplayName());
+            Type constructedType;
             if (genericParameter.type.type.IsGenericType && genericParameter.type.type.IsConstructedGenericType)
             {
                 var newConstructedType = new GenericParameter(genericParameter, true);
-                metadata.value = newConstructedType.ConstructType();
+                constructedType = newConstructedType.ConstructType();
+                metadata.value = constructedType;
             }
             else if (genericParameter.type.type.IsArray)
             {
@@ -586,17 +596,21 @@ namespace Unity.VisualScripting.Community
                 if (tempType.IsGenericType && tempType.IsConstructedGenericType)
                 {
                     var newConstructedType = new GenericParameter(genericParameter, true);
-                    metadata.value = newConstructedType.ConstructType();
+                    constructedType = newConstructedType.ConstructType();
+                    metadata.value = constructedType;
                 }
                 else
                 {
-                    metadata.value = genericParameter.ConstructType();
+                    constructedType = genericParameter.ConstructType();
+                    metadata.value = constructedType;
                 }
             }
             else
             {
-                metadata.value = genericParameter.ConstructType();
+                constructedType = genericParameter.ConstructType();
+                metadata.value = constructedType;
             }
+            Window.onAfterChanged?.Invoke(constructedType);
         }
     }
 }

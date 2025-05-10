@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public CodeAsset parentAsset;
         [RenamedFrom("CallType")]
-        public ConstructorInitializer initalizerType = ConstructorInitializer.None;
+        public ConstructorInitializer initializerType = ConstructorInitializer.None;
 
         [InspectorWide]
         public List<TypeParam> parameters = new List<TypeParam>();
@@ -32,5 +32,5 @@ namespace Unity.VisualScripting.Community
     /// <summary>
     /// This is a empty class used for the typeIcon
     /// </summary>
-    public class Field { }
+    internal class Field { }
 }

@@ -42,7 +42,7 @@ namespace Unity.VisualScripting.Community
             {
                 var variables = typeof(Unity.VisualScripting.Variables).As().CSharpName(true, true);
                 var kind = string.Empty;
-                var name = data.TryGetGraphPointer(out var graphPointer) ? Flow.Predict<string>(Unit.name, graphPointer.AsReference()) : Unit.defaultValues[Unit.name.key] as string;
+                var name = data.TryGetGraphPointer(out var graphPointer) && CanPredictConnection(Unit.name, data) ? Flow.Predict<string>(Unit.name, graphPointer.AsReference()) : Unit.defaultValues[Unit.name.key] as string;
                 switch (Unit.kind)
                 {
                     case VariableKind.Flow:
@@ -210,7 +210,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (data.TryGetGraphPointer(out var graphPointer))
                 {
-                    if (Unit.@object.hasValidConnection)
+                    if (Unit.@object.hasValidConnection && CanPredictConnection(Unit.@object, data))
                     {
                         try
                         {

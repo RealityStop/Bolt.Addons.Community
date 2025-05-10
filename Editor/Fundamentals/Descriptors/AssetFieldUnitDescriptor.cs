@@ -5,33 +5,35 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    
+
     [Descriptor(typeof(AssetFieldUnit))]
     public class AssetFieldUnitDescriptor : UnitDescriptor<AssetFieldUnit>
     {
         public AssetFieldUnitDescriptor(AssetFieldUnit target) : base(target)
         {
+            if (target.field)
+                target.field.OnChanged += target.Describe;
         }
-    
+
         protected override string DefinedSurtitle()
         {
             return target.field.parentAsset.title;
         }
-    
+
         protected override EditorTexture DefinedIcon()
         {
             return target.field.type.Icon();
         }
-    
+
         protected override string DefinedTitle()
         {
             return target.field.parentAsset.title + "." + target.field.FieldName;
         }
-    
+
         protected override string DefinedShortTitle()
         {
             return target.field.FieldName;
         }
     }
-    
+
 }

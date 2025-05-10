@@ -34,8 +34,6 @@ namespace Unity.VisualScripting.Community
 
         public string parameterCode;
 
-        public List<string> parameterNames;
-
         [Obsolete(Serialization.ConstructorWarning)]
         public AssetMethodCallUnit()
         {
@@ -50,7 +48,7 @@ namespace Unity.VisualScripting.Community
         private bool isRegistered;
         protected override void Definition()
         {
-            if(method != null && !isRegistered)
+            if (method != null && !isRegistered)
             {
                 method.OnSerialized += Define;
                 isRegistered = true;
@@ -76,13 +74,10 @@ namespace Unity.VisualScripting.Community
                     return method.returnType.PseudoDefault();
                 });
             }
-            var parameterInfos = method.parameters.ToArray();
 
-            var parameterCount = parameterInfos.Length;
-
-            for (int parameterIndex = 0; parameterIndex < parameterCount; parameterIndex++)
+            for (int parameterIndex = 0; parameterIndex < method.parameters.Count; parameterIndex++)
             {
-                var parameterInfo = parameterInfos[parameterIndex];
+                var parameterInfo = method.parameters[parameterIndex];
 
                 var parameterType = parameterInfo.type;
 
@@ -90,16 +85,12 @@ namespace Unity.VisualScripting.Community
                 {
                     var inputParameterKey = "%" + parameterInfo.name;
 
-                    if (parameterNames != null && parameterNames[parameterIndex] != parameterInfo.name)
-                    {
-                        inputParameterKey = "%" + parameterNames[parameterIndex];
-                    }
-
-                    var inputParameter = ValueInput(parameterType, inputParameterKey);
+                    var isFakeGeneric = parameterInfo.type is FakeGenericParameterType;
+                    var inputParameter = ValueInput(isFakeGeneric ? (parameterInfo.type as FakeGenericParameterType).BaseType : parameterType, inputParameterKey).NullMeansSelf();
 
                     InputParameters.Add(parameterIndex, inputParameter);
 
-                    inputParameter.SetDefaultValue(parameterInfo.type.PseudoDefault());
+                    inputParameter.SetDefaultValue(isFakeGeneric ? (parameterInfo.type as FakeGenericParameterType).BaseType.PseudoDefault() : parameterType.PseudoDefault());
 
                     if (parameterInfo.hasDefault)
                     {
@@ -119,11 +110,6 @@ namespace Unity.VisualScripting.Community
                 {
                     var outputParameterKey = "&" + parameterInfo.name;
 
-                    if (parameterNames != null && parameterNames[parameterIndex] != parameterInfo.name)
-                    {
-                        outputParameterKey = "&" + parameterNames[parameterIndex];
-                    }
-
                     var outputParameter = ValueOutput(parameterType, outputParameterKey);
 
                     OutputParameters.Add(parameterIndex, outputParameter);
@@ -132,8 +118,6 @@ namespace Unity.VisualScripting.Community
                         Assignment(enter, outputParameter);
                 }
             }
-
-            parameterNames ??= parameterInfos.Select(pInfo => pInfo.name).ToList();
         }
     }
 }

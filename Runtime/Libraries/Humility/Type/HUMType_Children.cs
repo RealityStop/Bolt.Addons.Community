@@ -309,6 +309,14 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         }
 
         /// <summary>
+        /// Returns true if the type is a GameObject or a Component type.
+        /// </summary>
+        public static bool UnityObject(this HUMType.Data.Is isData)
+        {
+            return isData.type == typeof(GameObject) || typeof(Component).IsAssignableFrom(isData);
+        }
+
+        /// <summary>
         /// Finds all types with this attribute.
         /// </summary>
         public static Type[] Attribute<TAttribute>(this HUMType.Data.With with, Assembly _assembly = null, Func<TAttribute, bool> predicate = null) where TAttribute : Attribute
@@ -491,6 +499,8 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                     return "null";
                 }
             }
+
+            //Special Cases
             if (type == typeof(Vector2))
             {
                 var value = (Vector2)@as.value;
@@ -511,8 +521,9 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 var value = @as.value as AnimationCurve;
                 return Create("AnimationCurve", value.keys.Select(k => Create("Keyframe", k.time.As().Code(false, false, false), k.value.As().Code(false, false, false), k.inTangent.As().Code(false, false, false), k.outTangent.As().Code(false, false, false), k.inWeight.As().Code(false, false, false), k.outWeight.As().Code(false, false, false))).ToArray());
             }
+
             if (type.IsNumeric()) return @as.value.ToString();
-            if (type.IsEnum) return type.Name + "." + @as.value.ToString();
+            if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(false);
 
             if (isNew)
             {
@@ -561,6 +572,8 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                     return CodeUtility.MakeSelectable(unit, "null");
                 }
             }
+
+            //Special Cases
             if (type == typeof(Vector2))
             {
                 var value = (Vector2)@as.value;
@@ -582,7 +595,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 return CodeUtility.MakeSelectable(unit, Create("AnimationCurve", value.keys.Select(k => Create("Keyframe", k.time.As().Code(false, false, false), k.value.As().Code(false, false, false), k.inTangent.As().Code(false, false, false), k.outTangent.As().Code(false, false, false), k.inWeight.As().Code(false, false, false), k.outWeight.As().Code(false, false, false))).ToArray()));
             }
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString());
-            if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name + "." + @as.value.ToString());
+            if (type.IsEnum) return CodeUtility.MakeSelectable(unit, (@as.value as Enum).ToMultipleEnumString(false));
 
             if (isNew)
             {
@@ -630,6 +643,8 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                     return "null".ConstructHighlight();
                 }
             }
+
+            //Special Cases
             if (type == typeof(Vector2))
             {
                 var value = (Vector2)@as.value;
@@ -651,7 +666,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 return CreateHighlighted("AnimationCurve", value.keys.Select(k => CreateHighlighted("Keyframe", k.time.As().Code(false), k.value.As().Code(false), k.inTangent.As().Code(false), k.outTangent.As().Code(false), k.inWeight.As().Code(false), k.outWeight.As().Code(false))).ToArray());
             }
             if (type.IsNumeric()) return @as.value.ToString().NumericHighlight();
-            if (type.IsEnum) return type.Name.EnumHighlight() + "." + @as.value.ToString();
+            if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(true);
             if (isNew)
             {
                 if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)
@@ -699,6 +714,8 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                     return CodeUtility.MakeSelectable(unit, "null".ConstructHighlight());
                 }
             }
+
+            //Special Cases
             if (type == typeof(Vector2))
             {
                 var value = (Vector2)@as.value;
@@ -720,7 +737,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 return CodeUtility.MakeSelectable(unit, CreateHighlighted("AnimationCurve", value.keys.Select(k => CreateHighlighted("Keyframe", k.time.As().Code(false), k.value.As().Code(false), k.inTangent.As().Code(false), k.outTangent.As().Code(false), k.inWeight.As().Code(false), k.outWeight.As().Code(false))).ToArray()));
             }
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString().NumericHighlight());
-            if (type.IsEnum) return CodeUtility.MakeSelectable(unit, type.Name.EnumHighlight() + "." + @as.value.ToString());
+            if (type.IsEnum) return CodeUtility.MakeSelectable(unit, (@as.value as Enum).ToMultipleEnumString(true));
             if (isNew)
             {
                 if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)

@@ -130,7 +130,24 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            File.WriteAllText(SAVE_PATH, JsonUtility.ToJson(wrapper, true));
+            var json = JsonUtility.ToJson(wrapper, true);
+            for (int i = 0; i < 5; i++)
+            {
+                try
+                {
+                    using (var fs = new FileStream(SAVE_PATH, FileMode.Create, FileAccess.Write, FileShare.None))
+                    using (var writer = new StreamWriter(fs))
+                    {
+                        writer.Write(json);
+                    }
+                    break;
+                }
+                catch (IOException ex)
+                {
+                    Debug.LogWarning($"Failed to write file: {ex.Message}. Retrying...");
+                    System.Threading.Thread.Sleep(100);
+                }
+            }
         }
 
         private static void LoadValues()

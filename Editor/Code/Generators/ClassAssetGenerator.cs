@@ -37,7 +37,7 @@ namespace Unity.VisualScripting.Community
                 ? typeof(ScriptableObject)
                 : (Data.inheritsType && Data.inherits.type != null ? Data.GetInheritedType() : typeof(object));
 
-            var @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, className, baseType);
+            var @class = ClassGenerator.Class(RootAccessModifier.Public, Data.classModifier, className, baseType);
             @class.beforeUsings = "#pragma warning disable\n".ConstructHighlight();
 
             if (Data.definedEvent)
@@ -60,7 +60,7 @@ namespace Unity.VisualScripting.Community
                     .AddParameter("order", Data.order));
             }
 
-            if (Data.inheritsType && Data.inherits.type != null)
+            if (Data.inheritsType && Data.inherits.type != null && Data.classModifier != ClassModifier.Static && Data.classModifier != ClassModifier.StaticPartial)
             {
                 @class.AddUsings(new List<string> { Data.inherits.type.Namespace });
             }
@@ -89,6 +89,10 @@ namespace Unity.VisualScripting.Community
                         attrGenerator.AddParameter(param.defaultValue);
                     }
                 }
+                foreach (var item in attribute.fields)
+                {
+                    attrGenerator.AddParameter(item.Key, item.Value);
+                }
                 @class.AddAttribute(attrGenerator);
             }
 
@@ -105,7 +109,7 @@ namespace Unity.VisualScripting.Community
                     continue;
                 }
 
-                var constructor = ConstructorGenerator.Constructor(constructorData.scope, constructorData.modifier, constructorData.initalizerType, className);
+                var constructor = ConstructorGenerator.Constructor(constructorData.scope, constructorData.modifier, constructorData.initializerType, className);
 
                 if (constructorData.graph.units.Count > 0)
                 {
@@ -118,7 +122,7 @@ namespace Unity.VisualScripting.Community
                         param.showInitalizer = true;
                         if (!string.IsNullOrEmpty(param.name))
                         {
-                            constructor.AddParameter(param.useInInitalizer, CreateParameter(param));
+                            constructor.AddParameter(param.useInInitializer, CreateParameter(param));
                         }
                     }
 
@@ -191,7 +195,10 @@ namespace Unity.VisualScripting.Community
                     var method = @class.methods.First(m => m.name.Replace(" ", "") == "Update");
                     if (Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
                     {
-                        method.beforeBody += string.Join("", specialUnits.Select(unit => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, (unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();") + "\n"));
+                        if (!string.IsNullOrEmpty(method.body))
+                            method.beforeBody += string.Join("\n", specialUnits.Select(unit => CodeUtility.MakeSelectable(unit, (unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();")).ToArray());
+                            else
+                            method.AddToBody(string.Join("\n", specialUnits.Select(unit => CodeUtility.MakeSelectable(unit, (unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();")).ToArray()));
                     }
 #if PACKAGE_INPUT_SYSTEM_EXISTS
                     if (UnityEngine.InputSystem.InputSystem.settings.updateMode == InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
@@ -210,7 +217,7 @@ namespace Unity.VisualScripting.Community
                     var method = MethodGenerator.Method(AccessModifier.None, MethodModifier.None, typeof(void), "Update");
                     if (Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
                     {
-                        method.beforeBody += string.Join("", specialUnits.Select(unit => CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, (unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();")) + "\n");
+                        method.AddToBody(string.Join("\n", specialUnits.Select(unit => CodeUtility.MakeSelectable(unit, (unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();")).ToArray()));
                     }
 
 #if PACKAGE_INPUT_SYSTEM_EXISTS
@@ -219,7 +226,7 @@ namespace Unity.VisualScripting.Community
                         foreach (var unit in specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
                         {
                             if (!unit.trigger.hasValidConnection) continue;
-                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();") + "\n";
+                            method.AddToBody(CodeBuilder.Indent(2) + CodeUtility.MakeSelectable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();") + "\n");
                         }
                     }
 #endif
@@ -334,6 +341,7 @@ namespace Unity.VisualScripting.Community
             {
                 var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
                 AddParametersToAttribute(attrGenerator, attribute.parameters);
+                AddFieldParametersToAttribute(attrGenerator, attribute.fields);
                 property.AddAttribute(attrGenerator);
             }
         }
@@ -344,7 +352,16 @@ namespace Unity.VisualScripting.Community
             {
                 var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
                 AddParametersToAttribute(attrGenerator, attribute.parameters);
+                AddFieldParametersToAttribute(attrGenerator, attribute.fields);
                 field.AddAttribute(attrGenerator);
+            }
+        }
+
+        private void AddFieldParametersToAttribute(AttributeGenerator attrGenerator, Dictionary<string, object> fields)
+        {
+            foreach (var item in fields)
+            {
+                attrGenerator.AddParameter(item.Key, item.Value);
             }
         }
 
@@ -418,6 +435,7 @@ namespace Unity.VisualScripting.Community
                 {
                     attrGenerator.AddParameter(param.defaultValue);
                 }
+                AddFieldParametersToAttribute(attrGenerator, attribute.fields);
                 method.AddAttribute(attrGenerator);
             }
         }

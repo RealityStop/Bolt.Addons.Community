@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community
         {
             type = Type.GetType(typeHandle.Identification);
             defaultValue = serializedValue.Deserialize();
-            OnSerialized?.Invoke();
+            OnChanged?.Invoke();
         }
 
         public void OnBeforeSerialize()

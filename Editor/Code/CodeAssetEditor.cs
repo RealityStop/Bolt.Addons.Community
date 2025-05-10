@@ -56,7 +56,7 @@ namespace Unity.VisualScripting.Community
                 warningPresent = EditorPrefs.GetBool("Bolt.Addons.Community.Code.Warning_Present");
             }
             Undo.undoRedoPerformed += RefreshPreview;
-            shouldUpdate = true;
+            UpdatePreview();
         }
 
         void RefreshPreview()
@@ -97,7 +97,7 @@ namespace Unity.VisualScripting.Community
                         Undo.RegisterCompleteObjectUndo(Target, "Change Asset Title");
                         Target.title = newTitle;
                         EditorUtility.SetDirty(Target);
-                        shouldUpdate = true;
+                        UpdatePreview();
                     }
                 });
                 GraphWindow.active?.context?.EndEdit();
@@ -116,7 +116,7 @@ namespace Unity.VisualScripting.Community
                         Undo.RegisterCompleteObjectUndo(Target, "Change Asset Category");
                         Target.category = newCategory;
                         EditorUtility.SetDirty(Target);
-                        shouldUpdate = true;
+                        UpdatePreview();
                     }
                 });
             }
@@ -175,21 +175,20 @@ namespace Unity.VisualScripting.Community
 
                 }, () =>
                 {
-                    shouldUpdate = true;
+                    UpdatePreview();
                 });
 
             });
 
-            if (CSharpPreviewWindow.instance != null)
-            {
-                if (shouldUpdate && CSharpPreviewWindow.instance.showCodeWindow)
-                {
-                    CSharpPreviewWindow.instance.UpdateCodeDisplay();
-                }
-            }
-
-            shouldUpdate = false;
             serializedObject.ApplyModifiedProperties();
+        }
+
+        protected void UpdatePreview()
+        {
+            if (CSharpPreviewWindow.instance != null && CSharpPreviewWindow.instance.showCodeWindow)
+            {
+                CSharpPreviewWindow.instance.UpdateCodeDisplay();
+            }
         }
     }
 }

@@ -56,6 +56,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             field.stringType = typeName;
             field.name = name.LegalMemberName();
             field.highlightType = highlightType;
+            field.defaultValue = defaultValue;
             return field;
         }
 

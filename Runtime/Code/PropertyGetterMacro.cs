@@ -20,5 +20,5 @@ namespace Unity.VisualScripting.Community
     /// <summary>
     /// This is a empty class used for the typeIcon
     /// </summary>
-    public class Property { }
+    internal class Property { }
 }

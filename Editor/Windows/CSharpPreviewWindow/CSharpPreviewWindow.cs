@@ -19,13 +19,13 @@ namespace Unity.VisualScripting.Community
         public bool showCodeWindow = true;
         private List<(Label label, int)> labels = new List<(Label, int)>();
 
-        [SerializeField] private Object serializedAsset;
+        [SerializeField] private Object _asset;
         public Object asset
         {
-            get => serializedAsset;
+            get => _asset;
             set
             {
-                serializedAsset = value;
+                _asset = value;
             }
         }
 
@@ -80,10 +80,10 @@ namespace Unity.VisualScripting.Community
                 style = {
                     backgroundColor = new Color(0.15f, 0.15f, 0.15f),
                     flexGrow = 1,
-                    minWidth = 100 // Add minimum width
+                    minWidth = 100
                 },
                 horizontalScrollerVisibility = ScrollerVisibility.Auto,
-                mode = ScrollViewMode.VerticalAndHorizontal // Add this line
+                mode = ScrollViewMode.VerticalAndHorizontal
             };
 
             var settingsContainer = new ScrollView
@@ -167,8 +167,8 @@ namespace Unity.VisualScripting.Community
             searchField = new TextField
             {
                 style = {
-                    flexGrow = 1,    // Allow the textfield to grow within container
-                    flexShrink = 1   // Allow the textfield to shrink
+                    flexGrow = 1,
+                    flexShrink = 1
                 }
             };
             searchField.RegisterValueChangedCallback(evt =>
@@ -220,6 +220,46 @@ namespace Unity.VisualScripting.Community
                 if (rootVisualElement?.Q<VisualElement>("codeView") != null)
                 {
                     UpdateCodeDisplay();
+                }
+            };
+
+            AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
+            EditorApplication.update += OnEditorUpdate;
+        }
+
+        private void OnDisable()
+        {
+            AssemblyReloadEvents.afterAssemblyReload -= OnAfterAssemblyReload;
+            EditorApplication.update -= OnEditorUpdate;
+        }
+
+        private bool wasVisible;
+        private void OnEditorUpdate()
+        {
+            bool isVisible = this != null && this.hasFocus;
+            if (isVisible != wasVisible)
+            {
+                wasVisible = isVisible;
+                if (isVisible)
+                {
+                    EditorApplication.delayCall += () =>
+                    {
+                        if (this != null && rootVisualElement?.Q<VisualElement>("codeView") != null)
+                        {
+                            UpdateCodeDisplay();
+                        }
+                    };
+                }
+            }
+        }
+
+        private void OnAfterAssemblyReload()
+        {
+            EditorApplication.delayCall += () =>
+            {
+                if (this != null && rootVisualElement?.Q<VisualElement>("codeView") != null)
+                {
+                    ChangeSelection();
                 }
             };
         }
@@ -290,9 +330,9 @@ namespace Unity.VisualScripting.Community
 
                 var showSubgraphCommentToggle = new Toggle
                 {
-                    style = { marginLeft = 10 }
+                    style = { marginLeft = 10 },
+                    value = settings.showSubgraphComment
                 };
-                showSubgraphCommentToggle.value = settings.showSubgraphComment;
                 CSharpPreviewSettings.ShouldShowSubgraphComment = settings.showSubgraphComment;
 
                 showSubgraphCommentToggle.RegisterValueChangedCallback(evt =>
@@ -319,10 +359,9 @@ namespace Unity.VisualScripting.Community
 
                 var showRecommendationToggle = new Toggle
                 {
-                    style = { marginLeft = 10 }
+                    style = { marginLeft = 10 },
+                    value = settings.showRecommendations
                 };
-
-                showRecommendationToggle.value = settings.showRecommendations;
                 CSharpPreviewSettings.ShouldShowRecommendations = settings.showRecommendations;
                 showRecommendationToggle.RegisterValueChangedCallback(evt =>
                 {
@@ -348,10 +387,9 @@ namespace Unity.VisualScripting.Community
 
                 var showTooltipToggle = new Toggle
                 {
-                    style = { marginLeft = 10 }
+                    style = { marginLeft = 10 },
+                    value = settings.showTooltips
                 };
-
-                showTooltipToggle.value = settings.showTooltips;
                 CSharpPreviewSettings.ShouldGenerateTooltips = settings.showTooltips;
                 showTooltipToggle.RegisterValueChangedCallback(evt =>
                 {
@@ -377,10 +415,9 @@ namespace Unity.VisualScripting.Community
 
                 var recursionDepthField = new IntegerField
                 {
-                    style = { marginLeft = 10 }
+                    style = { marginLeft = 10 },
+                    value = settings.recursionDepth
                 };
-
-                recursionDepthField.value = settings.recursionDepth;
                 CSharpPreviewSettings.RecursionDepth = settings.recursionDepth;
                 recursionDepthField.RegisterValueChangedCallback(evt =>
                 {
@@ -645,7 +682,6 @@ namespace Unity.VisualScripting.Community
             nextButton = null;
         }
 
-        private string lastGeneratedCode;
         private Vector2 lastScrollPosition;
         private float lastLineNumbersScrollPosition;
 
@@ -667,12 +703,6 @@ namespace Unity.VisualScripting.Community
                 lastLineNumbersScrollPosition = lineNumbersScrollView.scrollOffset.y;
 
                 var loadedCode = LoadCode();
-                if (lastGeneratedCode == loadedCode)
-                {
-                    scrollView.scrollOffset = lastScrollPosition;
-                    lineNumbersScrollView.scrollOffset = new Vector2(0, lastLineNumbersScrollPosition);
-                    return;
-                }
                 DisplayCode(lineNumbersScrollView, scrollView, loadedCode);
 
                 EditorApplication.delayCall += () =>
@@ -687,14 +717,6 @@ namespace Unity.VisualScripting.Community
         Dictionary<string, List<(Label, int)>> unitIDRegions = new Dictionary<string, List<(Label, int)>>();
         private void DisplayCode(ScrollView lineNumbersScrollView, ScrollView scrollView, string code)
         {
-            if (lastGeneratedCode == code)
-            {
-                scrollView.scrollOffset = lastScrollPosition;
-                lineNumbersScrollView.scrollOffset = new Vector2(0, lastLineNumbersScrollPosition);
-                return;
-            }
-
-            lastGeneratedCode = code;
             scrollView.Clear();
             lineNumbersScrollView.Clear();
             labels.Clear();
@@ -1051,7 +1073,7 @@ namespace Unity.VisualScripting.Community
                 AddUnitsFromStructAsset(structAsset, units);
             }
         }
-        
+
         private void ProcessFieldDeclaration(FieldDeclaration fieldDeclaration, List<(GraphReference, Unit)> units)
         {
             if (fieldDeclaration.parentAsset is ClassAsset classAsset)
@@ -1106,7 +1128,6 @@ namespace Unity.VisualScripting.Community
 
         private List<(Label, int)> selectedLabels = new List<(Label, int)>();
         private List<Label> relatedLabels = new List<Label>();
-        private Label lastSelectedLabel = null;
 
         private Label CreateNonClickableLabel(string text, int currentLine)
         {
@@ -1141,8 +1162,7 @@ namespace Unity.VisualScripting.Community
 
         private Label CreateCodeLabel(ClickableRegion region, int currentLine)
         {
-            string tooltip;
-            var codeWithoutTooltip = CodeUtility.ExtractTooltip(region.code, out tooltip);
+            var codeWithoutTooltip = CodeUtility.ExtractTooltip(region.code, out string tooltip);
             var label = new Label(CodeUtility.RemoveAllSelectableTags(codeWithoutTooltip))
             {
                 tooltip = tooltip
@@ -1178,103 +1198,69 @@ namespace Unity.VisualScripting.Community
             return label;
         }
 
-        private double lastClickTime = 0f;
-        private const float doubleClickThreshold = 0.3f;
+        private int doubleClickCount = 0;
+        private double lastClickTime = 0;
+        private const double doubleClickThreshold = 0.3;
 
         private void SelectLabel(Label label, ClickEvent evt, string unitId, int currentLine)
         {
             double currentTime = EditorApplication.timeSinceStartup;
             double timeSinceLastClick = currentTime - lastClickTime;
+
             if (timeSinceLastClick <= doubleClickThreshold)
             {
+                doubleClickCount++;
                 ClearSelection();
-                HandleDoubleClick(label, unitId, currentLine, evt);
-                lastSelectedLabel = label;
+                HandleDoubleClick(unitId, currentLine);
             }
             else
             {
+                doubleClickCount = 0;
                 if (evt.ctrlKey)
                 {
                     if (selectedLabels.Contains((label, currentLine)))
-                    {
                         DeselectLabel(label, unitId, currentLine);
-                    }
                     else
-                    {
                         AddLabelToSelection(label, unitId, currentLine);
-                    }
-                }
-                else if (evt.shiftKey && lastSelectedLabel != null)
-                {
-                    SelectRange(label, unitId, currentLine);
                 }
                 else
                 {
                     ClearSelection();
                     AddLabelToSelection(label, unitId, currentLine);
                 }
-
-                lastSelectedLabel = label;
             }
 
             lastClickTime = currentTime;
         }
 
-        private void HandleDoubleClick(Label label, string unitId, int currentLine, ClickEvent evt)
+        private void HandleDoubleClick(string unitId, int currentLine)
         {
-            if (selectedLabels.Contains((label, currentLine)))
+            if (doubleClickCount == 1)
             {
-                DeselectAllLabels(label, unitId, currentLine);
+                SelectWholeLine(currentLine, unitId);
             }
-            else
+            // else if (doubleClickCount == 2)
+            // {
+            //     SelectAllCode();
+            //     doubleClickCount = 0;
+            // }
+        }
+
+        private void SelectWholeLine(int currentLine, string unitId)
+        {
+            foreach (var (label, line) in labels.FindAll(l => l.Item2 == currentLine))
             {
-                AddAllLabelsToSelection(label, unitId, currentLine, evt);
+                AddLabelToSelection(label, unitId, line);
             }
         }
 
-
-        private void AddAllLabelsToSelection(Label label, string unitId, int currentLine, ClickEvent evt)
-        {
-            if (unitIDRegions.ContainsKey(unitId))
-            {
-                AddLabelToSelection(label, unitId, currentLine);
-                foreach (var (targetLabel, line) in unitIDRegions[unitId])
-                {
-                    if (evt.shiftKey && targetLabel != label && !selectedLabels.Contains((targetLabel, line)))
-                    {
-                        targetLabel.style.backgroundColor = new Color(0.25f, 0.5f, 0.8f, 0.3f);
-                        selectedLabels.Add((targetLabel, line));
-                    }
-                    else if (line == currentLine && targetLabel != label && !selectedLabels.Contains((targetLabel, line)))
-                    {
-                        AddLabelToSelection(targetLabel, unitId, line);
-                    }
-                }
-            }
-            else
-            {
-                AddLabelToSelection(label, unitId, currentLine);
-            }
-        }
-
-        private void DeselectAllLabels(Label label, string unitId, int currentLine)
-        {
-            if (unitIDRegions.ContainsKey(unitId))
-            {
-                DeselectLabel(label, unitId, currentLine);
-                foreach (var (targetLabel, line) in unitIDRegions[unitId])
-                {
-                    if (targetLabel != label && selectedLabels.Contains((targetLabel, line)))
-                    {
-                        DeselectLabel(targetLabel, unitId, line);
-                    }
-                }
-            }
-            else
-            {
-                DeselectLabel(label, unitId, currentLine);
-            }
-        }
+        // private void SelectAllCode()
+        // {
+        //     foreach (var (label, line) in labels)
+        //     {
+        //         AddLabelToSelection(label, "unitId", line);
+        //     }
+        // }
 
         private void AddLabelToSelection(Label label, string unitId, int currentLine)
         {
@@ -1340,31 +1326,6 @@ namespace Unity.VisualScripting.Community
             selectedLabels.Clear();
             relatedLabels.Clear();
             UpdateScrollBarMarkers(rootVisualElement.Q<ScrollView>("codeContainer"), selectedLabels);
-        }
-
-        private void SelectRange(Label label, string unitID, int currentLine)
-        {
-            if (lastSelectedLabel == null) return;
-
-            int startIndex = labels.FindIndex(val => val.label == lastSelectedLabel);
-            int endIndex = labels.IndexOf((label, currentLine));
-
-            if (startIndex == -1 || endIndex == -1) return;
-
-            if (startIndex > endIndex)
-            {
-                (startIndex, endIndex) = (endIndex, startIndex);
-            }
-
-            for (int i = startIndex; i <= endIndex; i++)
-            {
-                var (labelInRange, labelLine) = labels[i];
-                if (!selectedLabels.Contains((labelInRange, labelLine)))
-                {
-                    AddLabelToSelection(labelInRange, unitID, labelLine);
-                }
-            }
-            lastSelectedLabel = labels[endIndex].label;
         }
 
         private VisualElement markerContainer;
@@ -1575,7 +1536,7 @@ namespace Unity.VisualScripting.Community
                 string line = CodeUtility.RemoveAllSelectableTags(cachedLines[i]);
                 line = RemoveColorTags(line);
                 int index = line.IndexOf(searchText, StringComparison.OrdinalIgnoreCase);
-                
+
                 while (index != -1)
                 {
                     searchResults.Add((i, index, searchText.Length));
@@ -1667,14 +1628,14 @@ namespace Unity.VisualScripting.Community
                             string before = highlighted.Substring(0, matchIndex + offset);
                             string match = highlighted.Substring(matchIndex + offset, matchLength);
                             string after = highlighted.Substring(matchIndex + offset + matchLength);
-                            
+
                             highlighted = before + $"<mark class=\"highlight\">{match}</mark>" + after;
                             offset += "<mark class=\"highlight\">".Length + "</mark>".Length;
                         }
 
                         current.label.text = highlighted;
-                        current.label.style.backgroundColor = matches.Any(m => m.index == startIndex) ? 
-                            new Color(1, 1, 0, 0.3f) : 
+                        current.label.style.backgroundColor = matches.Any(m => m.index == startIndex) ?
+                            new Color(1, 1, 0, 0.3f) :
                             new Color(1, 1, 0, 0.1f);
                     }
                 }

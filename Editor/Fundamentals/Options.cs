@@ -176,8 +176,7 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             if (IsClassAsset(reference.macro))
             {
                 var classAsset = GetClassAsset(reference.macro);
-                var inheritedType = classAsset.GetInheritedType();
-                if (classAsset != null && inheritedType != null)
+                if (classAsset != null)
                 {
                     yield return new AssetTypeOption(new AssetType(classAsset));
                     foreach (var method in classAsset.methods)
@@ -199,6 +198,9 @@ namespace Unity.VisualScripting.Community.Variables.Editor
                         yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Get));
                         yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Set));
                     }
+
+                    var inheritedType = classAsset.GetInheritedType();
+                    if (inheritedType == null) yield break;
 
                     foreach (var method in inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
                     {

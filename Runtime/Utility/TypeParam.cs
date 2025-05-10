@@ -28,7 +28,7 @@ namespace Unity.VisualScripting.Community.Utility
 
         [InspectableIf("showInitalizer")]
         [RenamedFrom("useInCall")]
-        public bool useInInitalizer;
+        public bool useInInitializer;
 
         public bool usesGeneric { get; }
 
