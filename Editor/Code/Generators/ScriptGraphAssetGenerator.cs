@@ -175,7 +175,7 @@ namespace Unity.VisualScripting.Community
         private string GenerateVariableDeclarations()
         {
             var script = string.Empty;
-            var values = CodeGeneratorValueUtility.GetAllValues(Data);
+            var values = CodeGeneratorValueUtility.GetAllValues(Data, false);
             var index = 0;
             foreach (var variable in values)
             {

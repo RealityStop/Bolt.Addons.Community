@@ -60,6 +60,7 @@ namespace Unity.VisualScripting.Community
             }
             return value;
         }
+
         public static string RemoveAllSelectableTags(string code)
         {
             if (RemoveAllCache.TryGetValue(code, out string result))
@@ -67,14 +68,7 @@ namespace Unity.VisualScripting.Community
                 return result;
             }
 
-            var lines = code.Split('\n');
-            var processedLines = lines.AsParallel().Select(line =>
-            {
-                line = RemoveStartTagsRegex.Replace(line, string.Empty);
-                return RemoveAllTagsRegex.Replace(line, "$1");
-            });
-
-            result = string.Join("\n", processedLines);
+            result = RemoveStartTagsRegex.Replace(RemoveAllTagsRegex.Replace(code, "$1"), string.Empty);
             RemoveAllCache[code] = result;
             return result;
         }
@@ -183,8 +177,14 @@ namespace Unity.VisualScripting.Community
 
         public static string CleanCode(string code)
         {
-            return RemoveAllSelectableTags(RemoveAllToolTipTagsEntirely(RemoveRecommendations(RemoveCustomHighlights(code))));
+            string result = code;
+            result = RemoveAllSelectableTags(result);
+            result = RemoveAllToolTipTags(result);
+            result = RemoveRecommendations(result);
+            result = RemoveCustomHighlights(result);
+            return result;
         }
+
 
         private static readonly Regex SelectableRegex = new(@"\[CommunityAddonsCodeSelectable\((.*?)\)\]|\[CommunityAddonsCodeSelectableEnd\((.*?)\)\]", RegexOptions.Compiled);
 
