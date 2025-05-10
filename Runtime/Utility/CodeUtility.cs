@@ -60,6 +60,7 @@ namespace Unity.VisualScripting.Community
             }
             return value;
         }
+
         public static string RemoveAllSelectableTags(string code)
         {
             if (RemoveAllCache.TryGetValue(code, out string result))
@@ -67,14 +68,7 @@ namespace Unity.VisualScripting.Community
                 return result;
             }
 
-            var lines = code.Split('\n');
-            var processedLines = lines.AsParallel().Select(line =>
-            {
-                line = RemoveStartTagsRegex.Replace(line, string.Empty);
-                return RemoveAllTagsRegex.Replace(line, "$1");
-            });
-
-            result = string.Join("\n", processedLines);
+            result = RemoveStartTagsRegex.Replace(RemoveAllTagsRegex.Replace(code, "$1"), string.Empty);
             RemoveAllCache[code] = result;
             return result;
         }
@@ -123,7 +117,7 @@ namespace Unity.VisualScripting.Community
         /// <summary>
         /// Used for the csharp preview to generate a tooltip
         /// </summary>
-        /// <returns>The string with the ToolTip tags</returns>
+        /// <returns></returns>
         public static string ToolTip(string ToolTip, string notifyString, string code, bool highlight = true)
         {
             return CSharpPreviewSettings.ShouldGenerateTooltips ? $"[CommunityAddonsCodeToolTip({ToolTip})]{(highlight ? $"/* {notifyString} (Hover for more info) */".WarningHighlight() : $"/* {notifyString} (Hover for more info) */")}[CommunityAddonsCodeToolTipEnd] {code}" : code;
@@ -183,81 +177,77 @@ namespace Unity.VisualScripting.Community
 
         public static string CleanCode(string code)
         {
-            return RemoveAllSelectableTags(RemoveAllToolTipTagsEntirely(RemoveRecommendations(RemoveCustomHighlights(code))));
+            string result = code;
+            result = RemoveAllSelectableTags(result);
+            result = RemoveAllToolTipTags(result);
+            result = RemoveRecommendations(result);
+            result = RemoveCustomHighlights(result);
+            return result;
         }
+
+
+        private static readonly Regex SelectableRegex = new(@"\[CommunityAddonsCodeSelectable\((.*?)\)\]|\[CommunityAddonsCodeSelectableEnd\((.*?)\)\]", RegexOptions.Compiled);
 
         private static readonly Dictionary<string, List<ClickableRegion>> clickableRegionsCache = new();
 
         public static List<ClickableRegion> ExtractAndPopulateClickableRegions(string input)
         {
             if (clickableRegionsCache.TryGetValue(input, out var cachedRegions))
-                return cachedRegions;
-
-            const string startTag = "[CommunityAddonsCodeSelectable(";
-            const string endTag = ")]";
-            const string endTagPrefix = "[CommunityAddonsCodeSelectableEnd(";
-
-            var regions = new List<ClickableRegion>();
-            ReadOnlySpan<char> span = input;
-            var lineBreaks = PrecomputeLineBreaks(span);
-
-            int index = 0;
-            while (index < span.Length)
             {
-                int startSelectable = span.Slice(index).IndexOf(startTag);
+                return cachedRegions;
+            }
+
+            var clickableRegions = new List<ClickableRegion>();
+            var lineBreaks = PrecomputeLineBreaks(input.AsSpan(0, input.Length));
+            int index = 0;
+
+            while (index < input.Length)
+            {
+                int startSelectable = input.IndexOf("[CommunityAddonsCodeSelectable(", index);
                 if (startSelectable == -1) break;
-                startSelectable += index;
-
-                int endSelectable = span.Slice(startSelectable + startTag.Length).IndexOf(endTag);
+                int endSelectable = input.IndexOf(")]", startSelectable);
                 if (endSelectable == -1) break;
-                endSelectable += startSelectable + startTag.Length;
-
-                var unitIdSpan = span.Slice(startSelectable + startTag.Length, endSelectable - (startSelectable + startTag.Length));
-                string unitId = unitIdSpan.ToString();
-
-                string endTagFull = $"{endTagPrefix}{unitId})]";
-                int startSelectableEnd = span.Slice(endSelectable + endTag.Length).IndexOf(endTagFull);
+                string unitId = input.Substring(startSelectable + "[CommunityAddonsCodeSelectable(".Length, endSelectable - (startSelectable + "[CommunityAddonsCodeSelectable(".Length));
+                int startSelectableEnd = input.IndexOf($"[CommunityAddonsCodeSelectableEnd({unitId})]", endSelectable);
                 if (startSelectableEnd == -1) break;
-                startSelectableEnd += endSelectable + endTag.Length;
-
-                int codeStart = endSelectable + endTag.Length;
-                int codeLength = startSelectableEnd - codeStart;
-
-                ReadOnlySpan<char> codeSpan = span.Slice(codeStart, codeLength);
-                string code = codeSpan.ToString();
+                int innerContentStart = endSelectable + 2;
+                string code = input[innerContentStart..startSelectableEnd];
 
                 int startLine = GetLineNumber(lineBreaks, startSelectable);
                 int endLine = GetLineNumber(lineBreaks, startSelectableEnd);
 
-                var newRegion = new ClickableRegion(unitId, code, startLine, endLine);
+                var clickableRegion = new ClickableRegion(unitId, code, startLine, endLine);
 
-                if (regions.Count > 0)
+                // If there's a previous region with the same unitId and it's adjacent, merge them
+                if (clickableRegions.Count > 0)
                 {
-                    var last = regions[^1];
-                    if (last.unitId == unitId && last.endLine == startLine)
+                    var lastRegion = clickableRegions[clickableRegions.Count - 1];
+                    if (lastRegion.unitId == unitId && lastRegion.endLine == startLine)
                     {
-                        last.code += code;
-                        last.endLine = endLine;
-                        regions[^1] = last;
+                        // Merge regions
+                        lastRegion.code += code;
+                        lastRegion.endLine = endLine;
+                        clickableRegions[clickableRegions.Count - 1] = lastRegion;
                     }
                     else
                     {
-                        regions.Add(newRegion);
+                        clickableRegions.Add(clickableRegion);
                     }
                 }
                 else
                 {
-                    regions.Add(newRegion);
+                    clickableRegions.Add(clickableRegion);
                 }
 
-                index = startSelectableEnd + endTagFull.Length;
+                // Move index forward
+                index = startSelectableEnd + $"[CommunityAddonsCodeSelectableEnd({unitId})]".Length;
             }
 
-            clickableRegionsCache[input] = regions;
-            return regions;
+            clickableRegionsCache[input] = clickableRegions;
+            return clickableRegions;
         }
 
-        public static List<int> PrecomputeLineBreaks(ReadOnlySpan<char> span)
+        private static List<int> PrecomputeLineBreaks(ReadOnlySpan<char> span)
         {
             var lineBreaks = new List<int> { 0 };
             int start = 0;
