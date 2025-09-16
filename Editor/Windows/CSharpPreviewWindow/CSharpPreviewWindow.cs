@@ -14,6 +14,7 @@ namespace Unity.VisualScripting.Community.CSharp
     {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         public static CSharpPreviewWindow instance;
         private float zoomFactor = 1.0f;
         public bool showCodeWindow = true;
@@ -21,11 +22,16 @@ namespace Unity.VisualScripting.Community.CSharp
 =======
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
         [SerializeField] private UnityEngine.Object _asset;
         private string manualCode;
         private Vector2 scrollPosition;
         private float visualZoom = 0.7f;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -46,6 +52,7 @@ namespace Unity.VisualScripting.Community.CSharp
         [MenuItem("Window/Community Addons/C# Preview")]
         public static void Open()
         {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
             CSharpPreviewWindow window = GetWindow<CSharpPreviewWindow>();
@@ -215,11 +222,16 @@ namespace Unity.VisualScripting.Community.CSharp
 =======
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
             var win = GetWindow<CSharpPreviewWindow>();
             win.titleContent = new GUIContent("C# Preview");
             win.minSize = new Vector2(400, 400);
             win.UpdateCodeDisplay();
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -241,6 +253,7 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             if (Selection.activeObject is ScriptGraphAsset or CodeAsset or GameObject)
             {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
                 wasVisible = isVisible;
@@ -597,6 +610,11 @@ namespace Unity.VisualScripting.Community.CSharp
                 canCompile = true;
                 manualCode = "";
 >>>>>>> Stashed changes
+=======
+                _asset = Selection.activeObject;
+                canCompile = true;
+                manualCode = "";
+>>>>>>> Stashed changes
                 UpdateCodeDisplay();
                 Repaint();
             }
@@ -890,6 +908,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         private const int BUFFER_LINES = 20;
         private Dictionary<int, (VisualElement lineNumber, VisualElement content)> virtualizedLines = new Dictionary<int, (VisualElement, VisualElement)>();
         private int firstVisibleLine = 0;
@@ -1014,6 +1033,20 @@ namespace Unity.VisualScripting.Community.CSharp
             if (!string.IsNullOrEmpty(searchQuery) && CleanLine(codeLines[index]).IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, rect.height), highlightColor);
+=======
+        private string CleanLine(string line)
+        {
+            var toolTipText = CodeUtility.ExtractTooltip(line, out _);
+            string cleanText = CodeUtility.CleanCode(toolTipText);
+            return RemoveColorTags(cleanText);
+        }
+        private float DrawLine(Rect rect, int index)
+        {
+            float x = rect.x - scrollPosition.x;
+
+            if (!string.IsNullOrEmpty(searchQuery) && CleanLine(codeLines[index]).IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, rect.height), highlightColor);
             }
 
             Color borderColor = new Color(0.20f, 0.20f, 0.20f, 0.1f);
@@ -1437,6 +1470,261 @@ namespace Unity.VisualScripting.Community.CSharp
                 return _noPaddingStyle;
 >>>>>>> Stashed changes
             }
+
+            Color borderColor = new Color(0.20f, 0.20f, 0.20f, 0.1f);
+            const float borderHeight = 1f;
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, borderHeight), borderColor);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y + rect.height - borderHeight, rect.width, borderHeight), borderColor);
+
+            string lineNumberText = $"{index + 1,4}: ";
+            Vector2 numberSize = baseStyle.CalcSize(new GUIContent(lineNumberText));
+            float lineNumberWidth = Mathf.Max(LineNumberWidth, numberSize.x);
+            Rect lineNumberRect = new Rect(x, rect.y, lineNumberWidth, rect.height);
+            GUI.Label(lineNumberRect, $"{index + 1,4}: ", baseStyle);
+            x += lineNumberWidth;
+
+            float lineHeight = LineHeight * visualZoom;
+
+            if (cachedRegions != null && cachedRegions.TryGetValue(index, out var regions) && regions.Count > 0)
+            {
+                AdjustLeadingWhitespacesForFirstRegion(codeLines[index], regions[0]);
+                bool isMatchingInLine = false;
+                foreach (var region in regions)
+                {
+
+                    if (!string.IsNullOrEmpty(searchQuery) && !isMatchingInLine)
+                    {
+                        isMatchingInLine = true;
+                        var cleanedCode = CleanLine(codeLines[index]);
+                        int matchIndex = cleanedCode.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase);
+                        if (matchIndex >= 0)
+                        {
+                            Vector2 startPos = noPaddingStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanedCode), matchIndex);
+                            Vector2 endPos = noPaddingStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanedCode), matchIndex + searchQuery.Length);
+                            Rect highlightRect = new Rect(x + startPos.x, rect.y, endPos.x - startPos.x, rect.height);
+                            EditorGUI.DrawRect(highlightRect, highlightColor.WithAlpha(0.3f));
+                        }
+                    }
+
+                    var toolTipText = CodeUtility.ExtractTooltip(region.code, out var tooltip);
+                    string cleanText = CodeUtility.CleanCode(toolTipText);
+
+                    Vector2 size = noPaddingStyle.CalcSize(Temp(cleanText));
+                    var content = string.IsNullOrEmpty(tooltip) ? Temp(cleanText) : Temp(cleanText, tooltip);
+                    Rect buttonRect = new Rect(x, rect.y, size.x, rect.height);
+
+                    if (allCodeSelected || selectedLines.Contains(index) || (region != null && selectedRegions.Contains(region)))
+                    {
+                        EditorGUI.DrawRect(buttonRect, new Color(0.25f, 0.5f, 0.8f, 0.3f));
+                    }
+                    else if (selectedUnitID == region.unitId)
+                    {
+                        EditorGUI.DrawRect(buttonRect, new Color(0.25f, 0.25f, 0.25f, 0.4f));
+                    }
+
+                    if (GUI.Button(buttonRect, content, noPaddingStyle))
+                    {
+                        selectedUnitID = region.unitId;
+                        HandleClick(index, region);
+                        HandleClickableRegionClick(region.unitId, index);
+                    }
+
+                    x += size.x;
+                }
+            }
+            else
+            {
+                string lineText = CodeUtility.ExtractTooltip(codeLines[index], out var tooltip);
+                string cleanText = CodeUtility.CleanCode(lineText);
+
+                if (!string.IsNullOrEmpty(searchQuery))
+                {
+                    int matchIndex = RemoveColorTags(cleanText).IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase);
+                    if (matchIndex >= 0)
+                    {
+                        Vector2 startPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), matchIndex);
+                        Vector2 endPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), matchIndex + searchQuery.Length);
+                        Rect highlightRect = new Rect(x + startPos.x, rect.y, endPos.x - startPos.x, rect.height);
+                        EditorGUI.DrawRect(highlightRect, highlightColor.WithAlpha(0.3f));
+                    }
+                }
+
+                Vector2 size = baseStyle.CalcSize(Temp(cleanText));
+                Rect labelRect = new Rect(x, rect.y, size.x, rect.height);
+                var content = string.IsNullOrEmpty(tooltip) ? Temp(cleanText) : Temp(cleanText, tooltip);
+
+                if (allCodeSelected || selectedLines.Contains(index))
+                {
+                    EditorGUI.DrawRect(labelRect, new Color(0.25f, 0.5f, 0.8f, 0.3f));
+                }
+
+                if (GUI.Button(labelRect, content, baseStyle))
+                {
+                    selectedUnitID = "";
+                    HandleClick(index, null);
+                }
+
+                x += size.x;
+            }
+
+            lineWidths[index] = x;
+            return x;
+        }
+
+        private int clickCount = 0;
+        private float lastClickTime = 0f;
+        private const float doubleClickThreshold = 0.3f;
+        private int lastClickedLine = -1;
+
+        private void HandleClick(int index, ClickableRegion region)
+        {
+            var e = Event.current;
+            bool isRegion = region != null;
+
+            if (e != null && e.button == 0)
+            {
+                float time = Time.realtimeSinceStartup;
+                if (index == lastClickedLine && time - lastClickTime <= doubleClickThreshold)
+                {
+                    clickCount++;
+                }
+                else
+                {
+                    clickCount = 1;
+                }
+
+                lastClickTime = time; lastClickedLine = index;
+                bool ctrl = e.control || e.command;
+
+                if (clickCount == 2)
+                {
+                    if (ctrl)
+                    {
+                        selectedLines.Add(index);
+                        if (selectedRegions.Contains(region))
+                            selectedRegions.Remove(region);
+                    }
+                    else
+                    {
+                        selectedLines.Clear();
+                        selectedRegions.Clear();
+                        selectedLines.Add(index);
+                    }
+                    allCodeSelected = false;
+                }
+                else if (clickCount == 1)
+                {
+                    if (ctrl)
+                    {
+                        if (isRegion)
+                        {
+                            if (selectedRegions.Contains(region))
+                                selectedRegions.Remove(region);
+                            else
+                                selectedRegions.Add(region);
+                        }
+                        else
+                        {
+                            if (selectedLines.Contains(index))
+                                selectedLines.Remove(index);
+                            else
+                                selectedLines.Add(index);
+                        }
+                    }
+                    else
+                    {
+                        selectedLines.Clear();
+                        selectedRegions.Clear();
+                        if (isRegion)
+                            selectedRegions.Add(region);
+                        else
+                            selectedLines.Add(index);
+                        allCodeSelected = false;
+                    }
+                }
+                else if (clickCount >= 3)
+                {
+                    allCodeSelected = true;
+                    selectedLines.Clear();
+                    selectedRegions.Clear();
+                    clickCount = 0;
+                }
+            }
+        }
+
+        const float Height = 16f;
+        private static GUIStyle _noPaddingStyle;
+        private GUIStyle noPaddingStyle
+        {
+            get
+            {
+                if (_noPaddingStyle == null)
+                {
+                    _noPaddingStyle = new GUIStyle(baseStyle)
+                    {
+                        padding = new RectOffset(0, 0, 0, 0),
+                        margin = new RectOffset(0, 0, 0, 0),
+                    };
+                    _noPaddingStyle.fontSize = Mathf.RoundToInt(Height * visualZoom);
+
+                    // prevent blue-on-click
+                    var c = Color.white;
+                    _noPaddingStyle.normal.textColor = c;
+                    _noPaddingStyle.hover.textColor = c;
+                    _noPaddingStyle.active.textColor = c;
+                    _noPaddingStyle.focused.textColor = c;
+                }
+                else
+                {
+                    _noPaddingStyle.fontSize = Mathf.RoundToInt(Height * visualZoom);
+                }
+                return _noPaddingStyle;
+>>>>>>> Stashed changes
+            }
+        }
+
+        private static GUIStyle _baseStyle;
+        private GUIStyle baseStyle
+        {
+            get
+            {
+                if (_baseStyle == null)
+                {
+                    _baseStyle = new GUIStyle(EditorStyles.label)
+                    {
+                        padding = new RectOffset(0, 0, 0, 0),
+                        margin = new RectOffset(0, 0, 0, 0),
+                        richText = true
+                    };
+                    _baseStyle.fontSize = Mathf.RoundToInt(Height * visualZoom);
+
+                    var c = Color.white;
+                    _baseStyle.normal.textColor = c;
+                    _baseStyle.hover.textColor = c;
+                    _baseStyle.active.textColor = c;
+                    _baseStyle.focused.textColor = c;
+                }
+                else
+                {
+                    _baseStyle.fontSize = Mathf.RoundToInt(Height * visualZoom);
+                }
+                return _baseStyle;
+            }
+        }
+
+        private static readonly GUIContent _temp = new GUIContent();
+        private static readonly GUIContent _tempTooltip = new GUIContent();
+        private GUIContent Temp(string text)
+        {
+            _temp.text = text;
+            return _temp;
+        }
+
+        private GUIContent Temp(string text, string tooltip)
+        {
+            _tempTooltip.text = text;
+            _tempTooltip.tooltip = tooltip;
+            return _tempTooltip;
         }
 
         private static GUIStyle _baseStyle;
@@ -1641,6 +1929,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     foreach (var fieldDeclaration in classAssetGenerator.Data.variables)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                     {
                         ProcessFieldDeclaration(fieldDeclaration, units);
                     }
@@ -1736,6 +2025,50 @@ namespace Unity.VisualScripting.Community.CSharp
                 {
                     List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
 >>>>>>> Stashed changes
+=======
+                    {
+                        ProcessFieldDeclaration(fieldDeclaration, units);
+                    }
+
+                    foreach (var methodDeclaration in classAssetGenerator.Data.methods)
+                    {
+                        ProcessMethodDeclaration(methodDeclaration, units);
+                    }
+                    var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
+                    GraphWindow.OpenActive(ordered.First().result.Item1);
+                    HandleClickableRegionClick(unitId, line);
+                }
+            }
+            else if (code is StructAssetGenerator structAssetGenerator)
+            {
+                if (structAssetGenerator.Data != null)
+                {
+                    List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
+                    foreach (var constructorDeclaration in structAssetGenerator.Data.constructors)
+                    {
+                        ProcessConstructorDeclaration(constructorDeclaration, units);
+                    }
+
+                    foreach (var fieldDeclaration in structAssetGenerator.Data.variables)
+                    {
+                        ProcessFieldDeclaration(fieldDeclaration, units);
+                    }
+
+                    foreach (var methodDeclaration in structAssetGenerator.Data.methods)
+                    {
+                        ProcessMethodDeclaration(methodDeclaration, units);
+                    }
+                    var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
+                    GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
+                    HandleClickableRegionClick(unitId, line);
+                }
+            }
+            else if (code is ScriptGraphAssetGenerator graphAssetGenerator)
+            {
+                if (graphAssetGenerator.Data != null)
+                {
+                    List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
+>>>>>>> Stashed changes
                     units = GraphTraversal.TraverseFlowGraph<Unit>(graphAssetGenerator.Data.GetReference() as GraphReference).ToList();
                     var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
                     GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
@@ -1752,6 +2085,9 @@ namespace Unity.VisualScripting.Community.CSharp
                     GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
                     HandleClickableRegionClick(unitId, line);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -1839,6 +2175,7 @@ namespace Unity.VisualScripting.Community.CSharp
         {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             string tooltip;
             var codeWithoutTooltip = CodeUtility.ExtractTooltip(text, out tooltip);
             var label = new Label(CodeUtility.RemoveAllSelectableTags(codeWithoutTooltip))
@@ -1866,6 +2203,10 @@ namespace Unity.VisualScripting.Community.CSharp
             searchMatches.Clear();
             currentMatchIndex = 0;
 >>>>>>> Stashed changes
+=======
+            searchMatches.Clear();
+            currentMatchIndex = 0;
+>>>>>>> Stashed changes
 
             if (string.IsNullOrEmpty(searchQuery) || codeLines == null) return;
 
@@ -1875,6 +2216,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     searchMatches.Add(i);
             }
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
             label.RegisterCallback<ClickEvent>(evt => SelectLabel(label, evt, "", currentLine));
@@ -1925,6 +2267,10 @@ namespace Unity.VisualScripting.Community.CSharp
             if (searchMatches.Count > 0)
                 ScrollToLine(searchMatches[currentMatchIndex]);
 >>>>>>> Stashed changes
+=======
+            if (searchMatches.Count > 0)
+                ScrollToLine(searchMatches[currentMatchIndex]);
+>>>>>>> Stashed changes
         }
 
         private void ScrollToLine(int line)
@@ -1940,6 +2286,7 @@ namespace Unity.VisualScripting.Community.CSharp
             if (window == null && open) window = GetWindow<CSharpPreviewWindow>();
             if (window != null)
             {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
                 SelectWholeLine(currentLine, unitId);
@@ -2377,6 +2724,8 @@ namespace Unity.VisualScripting.Community.CSharp
             scrollView.scrollOffset = new Vector2(scrollView.scrollOffset.x, targetPosition);
         }
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
                 window.UpdateCodeDisplay();

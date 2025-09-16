@@ -38,6 +38,7 @@ namespace Unity.VisualScripting.Community
             return Path.Combine(paths.ObjectsRelativePath, GetMachineName(machine).LegalMemberName() + ".cs");
         }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
         protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
         {
@@ -48,6 +49,8 @@ namespace Unity.VisualScripting.Community
                           machine.gameObject.AddComponent(type);
 
 =======
+=======
+>>>>>>> Stashed changes
 
         protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
         {
@@ -60,6 +63,9 @@ namespace Unity.VisualScripting.Community
                 component = machine.gameObject.AddComponent(type);
             }
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             var values = CodeGeneratorValueUtility.GetAllValues(machine, false);
             var variables = machine.graph.variables.Where(v =>
@@ -73,10 +79,14 @@ namespace Unity.VisualScripting.Community
             {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 type.GetFields()
                     .Where(f => f.IsPublic || f.HasAttribute<SerializeField>())
                     .FirstOrDefault(f => f.Name == names[i])
                     ?.SetValue(component, objects[i]);
+=======
+                type.GetFields().Where(f => f.IsPublic || f.HasAttribute<SerializeField>()).FirstOrDefault(f => f.Name == objects[i].Item1)?.SetValueOptimized(component, objects[i].Item2);
+>>>>>>> Stashed changes
 =======
                 type.GetFields().Where(f => f.IsPublic || f.HasAttribute<SerializeField>()).FirstOrDefault(f => f.Name == objects[i].Item1)?.SetValueOptimized(component, objects[i].Item2);
 >>>>>>> Stashed changes

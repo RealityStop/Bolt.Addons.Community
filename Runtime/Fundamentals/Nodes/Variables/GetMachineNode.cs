@@ -45,6 +45,7 @@ namespace Unity.VisualScripting.Community
             target.NullMeansSelf();
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             asset = ValueInput<ScriptGraphAsset>("asset", (ScriptGraphAsset)null);
             machine = ValueOutput<SMachine>("machine", (flow) =>
             {
@@ -55,6 +56,8 @@ namespace Unity.VisualScripting.Community
                 {
                     if (machines[i].nest.macro == flow.GetValue<ScriptGraphAsset>(asset)) return machines[i];
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
             asset = ValueInput(type == GraphSource.Embed ? typeof(string) : typeof(ScriptGraphAsset), type == GraphSource.Embed ? "name" : "asset");
@@ -85,6 +88,9 @@ namespace Unity.VisualScripting.Community
                             }
                     }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

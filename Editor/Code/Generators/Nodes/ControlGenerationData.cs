@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 using System.Linq;
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 using Unity.VisualScripting.Community.Libraries.Humility;
@@ -16,6 +19,7 @@ namespace Unity.VisualScripting.Community
 {
     public sealed class ControlGenerationData
     {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
         public Type returns { get; set; } = typeof(void);
@@ -32,6 +36,8 @@ namespace Unity.VisualScripting.Community
 =======
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
         private readonly Stack<GeneratorScope> scopes = new();
         private readonly Stack<GeneratorScope> preservedScopes = new();
         private readonly Stack<(Type type, bool isMet)> expectedTypes = new();
@@ -41,6 +47,9 @@ namespace Unity.VisualScripting.Community
         public Dictionary<object, object> scopeGeneratorData { get => PeekScope().generatorData; }
         public Dictionary<object, object> globalGeneratorData = new Dictionary<object, object>();
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -271,6 +280,9 @@ namespace Unity.VisualScripting.Community
         #region Variable Management
         public string GetVariableName(string name, bool errorIfNotFound = false, string error = "")
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -389,7 +401,11 @@ namespace Unity.VisualScripting.Community
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         public ControlGenerationData(ControlGenerationData data)
+=======
+        private sealed class GeneratorScope
+>>>>>>> Stashed changes
 =======
         private sealed class GeneratorScope
 >>>>>>> Stashed changes

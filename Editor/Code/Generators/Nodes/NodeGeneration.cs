@@ -84,7 +84,10 @@ namespace Unity.VisualScripting.Community
 
         private static string GetComment(CommentNode comment)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
         {
             var result = string.Empty;
 

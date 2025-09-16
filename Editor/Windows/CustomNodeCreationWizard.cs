@@ -237,8 +237,11 @@ namespace Unity.VisualScripting.Community
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 GUILayout.Space(10);
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
                     if (valueInput.type != null && ComponentHolderProtocol.IsComponentHolderType(valueInput.type))

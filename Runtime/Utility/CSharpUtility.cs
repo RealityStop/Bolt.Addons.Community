@@ -16,6 +16,9 @@ using UnityEngine;
 using static Unity.VisualScripting.Round<float, float>;
 using System.Reflection;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -103,6 +106,7 @@ namespace Unity.VisualScripting.Community
         }
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     
         public static object ConvertType<T>(this T value, Type type)
         {
@@ -138,11 +142,23 @@ namespace Unity.VisualScripting.Community
         {
             var hook = new EventHook(EventHooks.Custom, target);
 >>>>>>> Stashed changes
+=======
+
+        private static readonly HashSet<(GameObject target, EventHook hook, string eventID)> registeredEvents
+            = new();
+
+        public static void RegisterCustomEvent(GameObject target, Action<CustomEventArgs> action, string eventID)
+        {
+            var hook = new EventHook(EventHooks.Custom, target);
+>>>>>>> Stashed changes
 
             var key = (target, hook, eventID);
 
             if (registeredEvents.Add(key))
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -180,8 +196,11 @@ namespace Unity.VisualScripting.Community
         }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
+=======
+>>>>>>> Stashed changes
         public static T CreateDefinedEventInstance<T>(params object[] parameters)
         {
             var info = ReflectedInfo.For(typeof(T));
@@ -202,6 +221,9 @@ namespace Unity.VisualScripting.Community
             return eventInstance;
         }
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         public static void Bind(this IDelegate @delegate, IDelegate delegateToBind)
         {
@@ -260,6 +282,9 @@ namespace Unity.VisualScripting.Community
         }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -370,8 +395,11 @@ namespace Unity.VisualScripting.Community
         }
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 

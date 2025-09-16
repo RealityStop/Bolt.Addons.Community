@@ -872,10 +872,14 @@ namespace Unity.VisualScripting.Community.CSharp
             var position = GUILayoutUtility.GetLastRect();
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
             Type[] types = new Type[] { };
 
             switch (usage)
+=======
+            List<Type> types = usage switch
+>>>>>>> Stashed changes
 =======
             List<Type> types = usage switch
 >>>>>>> Stashed changes

@@ -73,7 +73,10 @@ namespace Unity.VisualScripting.Community
                         var generator = unit.GetGenerator();
                         if (generator.GetType().IsDefined(typeof(RequiresVariablesAttribute), true))
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
                         {
                             if (generator is IRequireVariables variables)
                             {
@@ -234,6 +237,7 @@ namespace Unity.VisualScripting.Community
                             var usings = new List<string>();
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                             foreach (var _unit in Data.variables[i].getter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                             {
                                 if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces))
@@ -245,6 +249,8 @@ namespace Unity.VisualScripting.Community
 >>>>>>> Stashed changes
 
 =======
+=======
+>>>>>>> Stashed changes
 
                             GraphTraversal.TraverseFlowGraph(Data.variables[i].getter.graph, unit =>
                             {

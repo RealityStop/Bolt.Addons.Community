@@ -1,5 +1,6 @@
 fileFormatVersion: 2
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 <<<<<<<< Updated upstream:Runtime/Fundamentals/Nodes/Logic/Control/TriggerXTimes.cs.meta
 guid: e5740becbb1238d43825c5d0cde823f8
 =======
@@ -9,6 +10,9 @@ guid: 76757953826cd3c44bd26d83c675689f
 ========
 guid: eb6601c1b17ad594abec1d097b096e01
 >>>>>>>> Stashed changes:Runtime/Fundamentals/Nodes/Object Pooling/C#/PoolObject.cs.meta
+=======
+guid: eb6601c1b17ad594abec1d097b096e01
+>>>>>>> Stashed changes
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
