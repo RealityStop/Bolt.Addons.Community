@@ -1,20 +1,25 @@
 using UnityEngine;
-using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.ReturnObjectNode")]
+    [RenamedFrom("ReturnObjectNode")]
     [UnitCategory("Community\\ObjectPooling")]
     [UnitTitle("Return Object")]
+    [UnitSurtitle("Object Pool")]
     public class ReturnObjectNode : Unit
     {
         [DoNotSerialize]
+        [PortLabelHidden]
         public ControlInput Enter;
 
         [DoNotSerialize]
+        [PortLabelHidden]
         public ControlOutput Exit;
 
         [DoNotSerialize]
         [PortLabelHidden]
+        [NullMeansSelf]
         public ValueInput Pool;
 
         [DoNotSerialize]
@@ -26,22 +31,19 @@ namespace Unity.VisualScripting.Community
             Enter = ControlInput(nameof(Enter), OnEnter);
             Exit = ControlOutput(nameof(Exit));
 
-            Pool = ValueInput<CustomObjectPool>(nameof(Pool));
-            ObjectToReturn = ValueInput<GameObject>(nameof(ObjectToReturn));
+            Pool = ValueInput<ObjectPool>(nameof(Pool), null).NullMeansSelf();
+            ObjectToReturn = ValueInput<GameObject>(nameof(ObjectToReturn), null);
 
             Succession(Enter, Exit);
         }
 
         private ControlOutput OnEnter(Flow flow)
         {
-            var pool = flow.GetValue<CustomObjectPool>(Pool);
+            var pool = flow.GetValue<ObjectPool>(Pool);
             var obj = flow.GetValue<GameObject>(ObjectToReturn);
 
-            if (pool != null && obj != null)
-            {
-                pool.ReturnObjectToPool(obj);
-            }
-
+            ObjectPool.ReturnObject(pool, obj);
+            
             return Exit;
         }
     }

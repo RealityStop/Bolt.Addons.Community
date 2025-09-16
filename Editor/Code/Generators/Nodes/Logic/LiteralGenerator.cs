@@ -15,6 +15,10 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+            if (data.GetExpectedType()?.IsAssignableFrom(Unit.type) ?? false)
+            {
+                data.SetCurrentExpectedTypeMet(true, Unit.type);
+            }
             if (Unit.value != null)
                 NameSpaces = Unit.value.GetType().Namespace;
             return Unit.value.As().Code(true, Unit, true, true, "", false, true);

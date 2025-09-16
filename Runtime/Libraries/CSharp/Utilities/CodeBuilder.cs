@@ -191,7 +191,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string Using(List<string> namespaces)
         {
-            var output = string.Empty;
             var _namespaces = namespaces.ToArray();
             return Using(_namespaces);
         }
@@ -310,7 +309,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
             else return scope2;
         }
-
 
         public static AccessModifier GetScope(this MethodInfo method)
         {
@@ -547,11 +545,39 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         /// <returns>The method call as a string</returns>
         public static string CallCSharpUtilityMethod(Unit unit, string methodName, params string[] parameters)
         {
+<<<<<<< Updated upstream
             return CodeUtility.MakeSelectable(unit, $"{"CSharpUtility".TypeHighlight()}.") + methodName + CodeUtility.MakeSelectable(unit, "(") + string.Join(CodeUtility.MakeSelectable(unit, ", "), parameters) + CodeUtility.MakeSelectable(unit, ")");
         }
 
         /// <summary>
         /// Generate code for calling a extensition method in the CSharpUtilityClass
+=======
+            return CodeUtility.MakeClickable(unit, $"{typeof(CSharpUtility).As().CSharpName(false, true)}.") + methodName + CodeUtility.MakeClickable(unit, "(") + string.Join(CodeUtility.MakeClickable(unit, ", "), parameters) + CodeUtility.MakeClickable(unit, ")");
+        }
+
+        /// <summary>
+        /// Generate code for calling a generic method in the CSharpUtility class
+        /// </summary>
+        /// <param name="unit">Unit to make the code selectable for</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>The method call as a string</returns>
+        public static string CallCSharpUtilityGenericMethod(Unit unit, string methodName, string[] parameters, params Type[] genericTypes)
+        {
+            if (genericTypes.Length > 0)
+            {
+                string genericTypeString = CodeUtility.MakeClickable(unit, "<" + string.Join(", ", genericTypes.Select(t => t.As().CSharpName(false, true))) + ">");
+                return CodeUtility.MakeClickable(unit, $"{typeof(CSharpUtility).As().CSharpName(false, true)}.") + methodName + genericTypeString + CodeUtility.MakeClickable(unit, "(") + string.Join(CodeUtility.MakeClickable(unit, ", "), parameters) + CodeUtility.MakeClickable(unit, ")");
+            }
+            else
+            {
+                return CallCSharpUtilityMethod(unit, methodName, parameters);
+            }
+        }
+
+        /// <summary>
+        /// Generate code for calling a extensition method in the CSharpUtility class
+>>>>>>> Stashed changes
         /// </summary>
         /// <param name="unit">Unit to make the code selectable for</param>
         /// <param name="target">Target for the method This is not made selectable</param>

@@ -9,20 +9,20 @@ using UnityObject = UnityEngine.Object;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [CustomEditor(typeof(ClassAsset))]
     public sealed class ClassAssetEditor : MemberTypeAssetEditor<ClassAsset, ClassAssetGenerator, ClassFieldDeclaration, ClassMethodDeclaration, ClassConstructorDeclaration>
     {
         private Metadata inheritsTypeMeta;
-        private Type[] inheritTypes;
+        private static Type[] inheritTypes;
         private Rect lastRect;
 
         protected override void OnEnable()
         {
             base.OnEnable();
             inheritsTypeMeta ??= Metadata.FromProperty(serializedObject.FindProperty("inherits"));
-            inheritTypes = GetAllInheritableTypes();
+            GetAllInheritableTypes();
         }
 
         protected override void OnExtendedVerticalHeaderGUI()
@@ -42,17 +42,12 @@ namespace Unity.VisualScripting.Community
                     });
         }
 
-        private Type[] GetAllInheritableTypes()
+        private void GetAllInheritableTypes()
         {
-            List<Type> inheritableTypes = new List<Type>();
-
-            var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).Where(t =>
+            inheritTypes ??= AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).Where(t =>
                 t.Is().Inheritable() &&
                 !NameUtility.TypeHasSpecialName(t)
             ).ToArray();
-
-            inheritableTypes.AddRange(types);
-            return inheritableTypes.ToArray();
         }
 
         protected override void OnExtendedOptionsGUI()
@@ -127,13 +122,7 @@ namespace Unity.VisualScripting.Community
                         TypeBuilderWindow.ShowWindow(lastRect, inheritsTypeMeta["type"], false, inheritTypes, () =>
                         {
                             Undo.RegisterCompleteObjectUndo(Target, "Changed Asset Inherited Type");
-                            if (CSharpPreviewWindow.instance != null)
-                            {
-                                if (CSharpPreviewWindow.instance.showCodeWindow)
-                                {
-                                    CSharpPreviewWindow.instance.UpdateCodeDisplay();
-                                }
-                            }
+                            CSharpPreviewWindow.RefreshPreview();
                         });
                     }
                 }

@@ -3,7 +3,7 @@ using UnityEditor;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class CodeAssetEditor<TAsset, TAssetGenerator> : UnityEditor.Editor
         where TAsset : CodeAsset
@@ -55,24 +55,13 @@ namespace Unity.VisualScripting.Community
             {
                 warningPresent = EditorPrefs.GetBool("Bolt.Addons.Community.Code.Warning_Present");
             }
-            Undo.undoRedoPerformed += RefreshPreview;
+            Undo.undoRedoPerformed += UpdatePreview;
             UpdatePreview();
-        }
-
-        void RefreshPreview()
-        {
-            if (CSharpPreviewWindow.instance != null)
-            {
-                if (CSharpPreviewWindow.instance.showCodeWindow)
-                {
-                    CSharpPreviewWindow.instance.UpdateCodeDisplay();
-                }
-            }
         }
 
         void OnDisable()
         {
-            Undo.undoRedoPerformed -= RefreshPreview;
+            Undo.undoRedoPerformed -= UpdatePreview;
         }
 
         protected virtual void AfterCategoryGUI() { }
@@ -185,10 +174,7 @@ namespace Unity.VisualScripting.Community
 
         protected void UpdatePreview()
         {
-            if (CSharpPreviewWindow.instance != null && CSharpPreviewWindow.instance.showCodeWindow)
-            {
-                CSharpPreviewWindow.instance.UpdateCodeDisplay();
-            }
+            CSharpPreviewWindow.RefreshPreview();
         }
     }
 }

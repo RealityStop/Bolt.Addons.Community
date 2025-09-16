@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
 
 namespace Unity.VisualScripting.Community
 {
@@ -32,9 +36,9 @@ namespace Unity.VisualScripting.Community
 
         private IEnumerable<string> GetNameSuggestions()
         {
-            if (unit.asset != null)
+            if (Flow.CanPredict(unit.target, reference))
             {
-                var variables = unit.asset.graph.variables.ToArrayPooled();
+                var variables = Flow.Predict<SMachine>(unit.target, reference).graph.variables.ToArrayPooled();
                 for (int i = 0; i < variables.Length; i++)
                 {
                     yield return variables[i].name;

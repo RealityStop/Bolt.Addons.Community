@@ -6,19 +6,22 @@ namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.TriggerChannelEvent")]
     [UnitCategory("Events\\Community")]
-    [UnitTitle("TriggerChannelEvent")]
+    [UnitTitle("Trigger Channel")]
     [TypeIcon(typeof(CustomEvent))]
     public class TriggerChannelEvent : Unit
     {
         [DoNotSerialize]
         [PortLabelHidden]
+        [InspectorLabel("Enter")]
         public ControlInput InputTrigger { get; private set; }
 
         [DoNotSerialize]
         [PortLabelHidden]
+        [InspectorLabel("Exit")]
         public ControlOutput OutputTrigger { get; private set; }
 
         [DoNotSerialize]
+        [PortLabelHidden]
         public ValueInput channel;
 
         protected override void Definition()
@@ -35,42 +38,7 @@ namespace Unity.VisualScripting.Community
             {
                 var channelValue = flow.GetValue<Channel>(channel);
 
-                switch (channelValue)
-                {
-                    case Channel.Channel1:
-                        EventBus.Trigger(CommunityEvents.ChannelEvent1);
-                        break;
-                    case Channel.Channel2:
-                        EventBus.Trigger(CommunityEvents.ChannelEvent2);
-                        break;
-                    case Channel.Channel3:
-                        EventBus.Trigger(CommunityEvents.ChannelEvent3);
-                        break;
-                    case Channel.Channel4:
-                        EventBus.Trigger(CommunityEvents.ChannelEvent4);
-                        break;
-                    case Channel.Channel5:
-                        EventBus.Trigger(CommunityEvents.ChannelEvent5);
-                        break;
-                    case Channel.Channel6:
-                        EventBus.Trigger(CommunityEvents.ChannelEvent6);
-                        break;
-                    case Channel.Channel7:
-                        EventBus.Trigger(CommunityEvents.ChannelEvent7);
-                        break;
-                    case Channel.Channel8:
-                        EventBus.Trigger(CommunityEvents.ChannelEvent8);
-                        break;
-                    case Channel.Channel9:
-                        EventBus.Trigger(CommunityEvents.ChannelEvent9);
-                        break;
-                    case Channel.Channel10:
-                        EventBus.Trigger(CommunityEvents.ChannelEvent10);
-                        break;
-                    default:
-                        Debug.LogWarning("Unknown channel value: " + channelValue);
-                        break;
-                }
+                EventBus.Trigger(CommunityEvents.ChannelEvent, channelValue);
             }
             catch (Exception ex)
             {

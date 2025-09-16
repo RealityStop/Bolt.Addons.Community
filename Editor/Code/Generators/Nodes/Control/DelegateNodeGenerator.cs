@@ -56,7 +56,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return GetNextUnit(Unit.invoke, data, indent + 1);
+            return GetNextUnit(Unit.invoke, data, indent + 1).TrimEnd();
         }
     }
 }

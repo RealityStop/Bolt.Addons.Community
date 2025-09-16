@@ -482,7 +482,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 if (variableForObject)
                 {
                     var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
-                    var variable = hasVariable ? current : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
+                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString()[..3]}";
 
                     if (!hasVariable)
                     {
@@ -521,7 +521,20 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 var value = @as.value as AnimationCurve;
                 return Create("AnimationCurve", value.keys.Select(k => Create("Keyframe", k.time.As().Code(false, false, false), k.value.As().Code(false, false, false), k.inTangent.As().Code(false, false, false), k.outTangent.As().Code(false, false, false), k.inWeight.As().Code(false, false, false), k.outWeight.As().Code(false, false, false))).ToArray());
             }
+<<<<<<< Updated upstream
 
+=======
+            if (type == typeof(Color))
+            {
+                var value = (Color)@as.value;
+                return Create("Color", value.r.As().Code(false, false, false), value.g.As().Code(false, false, false), value.b.As().Code(false, false, false), value.a.As().Code(false, false, false));
+            }
+            if (type == typeof(WaitForFlowLogic))
+            {
+                var value = (WaitForFlowLogic)@as.value;
+                return Create("WaitForFlowLogic", value.InputCount.As().Code(false, false, false), value.ResetOnExit.As().Code(false, false, false));
+            }
+>>>>>>> Stashed changes
             if (type.IsNumeric()) return @as.value.ToString();
             if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(false);
 
@@ -559,7 +572,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 if (variableForObject)
                 {
                     var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
-                    var variable = hasVariable ? current : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
+                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString()[..3]}";
 
                     if (!hasVariable)
                         CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
@@ -594,8 +607,23 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 var value = @as.value as AnimationCurve;
                 return CodeUtility.MakeSelectable(unit, Create("AnimationCurve", value.keys.Select(k => Create("Keyframe", k.time.As().Code(false, false, false), k.value.As().Code(false, false, false), k.inTangent.As().Code(false, false, false), k.outTangent.As().Code(false, false, false), k.inWeight.As().Code(false, false, false), k.outWeight.As().Code(false, false, false))).ToArray()));
             }
+<<<<<<< Updated upstream
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, (@as.value as Enum).ToMultipleEnumString(false));
+=======
+            if (type == typeof(Color))
+            {
+                var value = (Color)@as.value;
+                return CodeUtility.MakeClickable(unit, Create("Color", value.r.As().Code(false, false, false), value.g.As().Code(false, false, false), value.b.As().Code(false, false, false), value.a.As().Code(false, false, false)));
+            }
+            if (type == typeof(WaitForFlowLogic))
+            {
+                var value = (WaitForFlowLogic)@as.value;
+                return CodeUtility.MakeClickable(unit, Create("WaitForFlowLogic", value.InputCount.As().Code(false, false, false), value.ResetOnExit.As().Code(false, false, false)));
+            }
+            if (type.IsNumeric()) return CodeUtility.MakeClickable(unit, @as.value.ToString());
+            if (type.IsEnum) return CodeUtility.MakeClickable(unit, (@as.value as Enum).ToMultipleEnumString(false));
+>>>>>>> Stashed changes
 
             if (isNew)
             {
@@ -630,7 +658,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 if (variableForObject)
                 {
                     var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
-                    var variable = hasVariable ? current : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
+                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString()[..3]}";
 
                     if (!hasVariable)
                         CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
@@ -665,6 +693,19 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 var value = @as.value as AnimationCurve;
                 return CreateHighlighted("AnimationCurve", value.keys.Select(k => CreateHighlighted("Keyframe", k.time.As().Code(false), k.value.As().Code(false), k.inTangent.As().Code(false), k.outTangent.As().Code(false), k.inWeight.As().Code(false), k.outWeight.As().Code(false))).ToArray());
             }
+<<<<<<< Updated upstream
+=======
+            if (type == typeof(Color))
+            {
+                var value = (Color)@as.value;
+                return CreateHighlighted("Color", value.r.As().Code(false), value.g.As().Code(false), value.b.As().Code(false), value.a.As().Code(false));
+            }
+            if (type == typeof(WaitForFlowLogic))
+            {
+                var value = (WaitForFlowLogic)@as.value;
+                return CreateHighlighted("WaitForFlowLogic", value.InputCount.As().Code(false), value.ResetOnExit.As().Code(false));
+            }
+>>>>>>> Stashed changes
             if (type.IsNumeric()) return @as.value.ToString().NumericHighlight();
             if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(true);
             if (isNew)
@@ -700,7 +741,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 if (variableForObject)
                 {
                     var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
-                    var variable = hasVariable ? current : $"ObjectVariable_{Guid.NewGuid().ToString()[..6]}";
+                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString()[..3]}";
 
                     if (!hasVariable)
                         CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
@@ -736,8 +777,24 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 var value = @as.value as AnimationCurve;
                 return CodeUtility.MakeSelectable(unit, CreateHighlighted("AnimationCurve", value.keys.Select(k => CreateHighlighted("Keyframe", k.time.As().Code(false), k.value.As().Code(false), k.inTangent.As().Code(false), k.outTangent.As().Code(false), k.inWeight.As().Code(false), k.outWeight.As().Code(false))).ToArray()));
             }
+<<<<<<< Updated upstream
             if (type.IsNumeric()) return CodeUtility.MakeSelectable(unit, @as.value.ToString().NumericHighlight());
             if (type.IsEnum) return CodeUtility.MakeSelectable(unit, (@as.value as Enum).ToMultipleEnumString(true));
+=======
+            if (type == typeof(Color))
+            {
+                var value = (Color)@as.value;
+                return CodeUtility.MakeClickable(unit, CreateHighlighted("Color", value.r.As().Code(false), value.g.As().Code(false), value.b.As().Code(false), value.a.As().Code(false)));
+            }
+            if (type == typeof(WaitForFlowLogic))
+            {
+                var value = (WaitForFlowLogic)@as.value;
+                return CodeUtility.MakeClickable(unit, CreateHighlighted("WaitForFlowLogic", value.InputCount.As().Code(false), value.ResetOnExit.As().Code(false)));
+            }
+
+            if (type.IsNumeric()) return CodeUtility.MakeClickable(unit, @as.value.ToString().NumericHighlight());
+            if (type.IsEnum) return CodeUtility.MakeClickable(unit, (@as.value as Enum).ToMultipleEnumString(true));
+>>>>>>> Stashed changes
             if (isNew)
             {
                 if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)
@@ -1501,7 +1558,7 @@ namespace Unity.VisualScripting.Community
             {
                 var nonNullable = Nullable.GetUnderlyingType(type);
 
-                var underlyingName = nonNullable.CSharpName(qualifier, includeGenericParameters);
+                var underlyingName = nonNullable?.CSharpName(qualifier, includeGenericParameters) ?? "Unknown";
 
                 return underlyingName + "?";
             }

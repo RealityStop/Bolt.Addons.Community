@@ -72,12 +72,43 @@ namespace Unity.VisualScripting.Community
 
             try
             {
-                return generator.GenerateControl(input, data, indent);
+                var commentNode = node.graph.units.FirstOrDefault(u => u is CommentNode commentNode && commentNode.connectedElements.Any(c => c == node));
+                string comment = commentNode != null ? GetComment(commentNode as CommentNode) + "\n" : "";
+                return comment + generator.GenerateControl(input, data, indent);
             }
             finally
             {
                 generator.recursion?.Exit(node);
             }
+        }
+
+        private static string GetComment(CommentNode comment)
+        {
+            var result = string.Empty;
+
+            if (comment.hasTitle && !string.IsNullOrEmpty(comment.title))
+            {
+                result += ("// " + comment.title).CommentHighlight();
+
+                if (!string.IsNullOrEmpty(comment.comment))
+                    result += " :".CommentHighlight();
+                result += "\n";
+            }
+
+            if (!string.IsNullOrEmpty(comment.comment))
+            {
+                var lines = comment.comment.Split(
+                    new[] { '\r', '\n' },
+                    StringSplitOptions.RemoveEmptyEntries
+                );
+
+                foreach (var line in lines)
+                {
+                    result += ("// " + line.TrimEnd()).CommentHighlight() + "\n";
+                }
+            }
+
+            return result.TrimEnd();
         }
 
         private static readonly Dictionary<Unit, NodeGenerator> generatorCache = new();

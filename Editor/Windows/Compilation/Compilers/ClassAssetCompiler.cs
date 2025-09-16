@@ -25,10 +25,18 @@ namespace Unity.VisualScripting.Community
             return code;
         }
 
-        protected override void PostProcess(UnityEngine.Object asset, string relativePath)
+        private string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
         {
             var classAsset = (ClassAsset)asset;
-            var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
+            if (classAsset.inheritsType && IsEditorAssembly(classAsset.GetInheritedType().Assembly, new HashSet<string>()))
+                return Path.Combine(paths.EditorRelativePath, classAsset.title.LegalMemberName() + ".cs");
+            return Path.Combine(paths.ObjectsRelativePath, classAsset.title.LegalMemberName() + ".cs");
+        }
+
+        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
+        {
+            var classAsset = (ClassAsset)asset;
+            var scriptImporter = AssetImporter.GetAtPath(GetRelativeFilePath(asset, paths)) as MonoImporter;
             var values = CodeGeneratorValueUtility.GetAllValues(classAsset);
             var variables = classAsset.variables.Where(v => typeof(UnityEngine.Object).IsAssignableFrom(v.type));
 
@@ -42,6 +50,8 @@ namespace Unity.VisualScripting.Community
 
             scriptImporter.SetIcon(classAsset.icon);
             scriptImporter.SetDefaultReferences(names, objects);
+            if (!classAsset.lastCompiledNames.Contains(classAsset.GetFullTypeName()))
+                classAsset.lastCompiledNames.Add(classAsset.GetFullTypeName());
         }
     }
 }

@@ -1,52 +1,46 @@
+using UnityEditor;
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using Unity.VisualScripting.Community.Libraries.Humility;
-using UnityEditor;
-using UnityEditor.UIElements;
-using UnityEngine;
-using UnityEngine.UIElements;
-using Object = UnityEngine.Object;
-namespace Unity.VisualScripting.Community
+using Unity.VisualScripting.Community;
+using Unity.VisualScripting;
+using System.Text.RegularExpressions;
+
+namespace Unity.VisualScripting.Community.CSharp
 {
-    [Serializable]
-    public sealed class CSharpPreviewWindow : EditorWindow
+    public class CSharpPreviewWindow : EditorWindow
     {
+<<<<<<< Updated upstream
         public static CSharpPreviewWindow instance;
         private float zoomFactor = 1.0f;
         public bool showCodeWindow = true;
         private List<(Label label, int)> labels = new List<(Label, int)>();
+=======
+        [SerializeField] private UnityEngine.Object _asset;
+        private string manualCode;
+        private Vector2 scrollPosition;
+        private float visualZoom = 0.7f;
+>>>>>>> Stashed changes
 
-        [SerializeField] private Object _asset;
-        public Object asset
-        {
-            get => _asset;
-            set
-            {
-                _asset = value;
-            }
-        }
+        private bool canCompile = true;
 
-        [SerializeField] private int currentComponentIndex = 0;
+        private string[] codeLines;
+        private Dictionary<int, List<ClickableRegion>> cachedRegions;
 
-        private GameObjectGenerator currentGameObjectGenerator;
-        private Button previousButton;
-        private Button nextButton;
-        private Label componentCountLabel;
-        private Toolbar toolbar;
+        private string searchQuery = "";
+        private List<int> searchMatches = new();
+        private int currentMatchIndex = 0;
+        private Color highlightColor = new Color(1f, 0.8f, 0f, 0.1f);
 
-        private CSharpPreviewSettingsManager settingsManager = new CSharpPreviewSettingsManager();
-
-        private List<(int line, int index, int length)> searchResults = new List<(int, int, int)>();
-        private int currentSearchIndex = -1;
-        private string searchText = "";
-        private TextField searchField;
+        private const int LineHeight = 18;
+        private const int BufferLines = 20;
 
         [MenuItem("Window/Community Addons/C# Preview")]
         public static void Open()
         {
+<<<<<<< Updated upstream
             CSharpPreviewWindow window = GetWindow<CSharpPreviewWindow>();
             window.titleContent = new GUIContent("C# Preview");
             instance = window;
@@ -211,34 +205,31 @@ namespace Unity.VisualScripting.Community
 
             codeView.style.display = showCodeWindow ? DisplayStyle.Flex : DisplayStyle.None;
             settingsContainer.style.display = showCodeWindow ? DisplayStyle.None : DisplayStyle.Flex;
+=======
+            var win = GetWindow<CSharpPreviewWindow>();
+            win.titleContent = new GUIContent("C# Preview");
+            win.minSize = new Vector2(400, 400);
+            win.UpdateCodeDisplay();
+>>>>>>> Stashed changes
         }
 
         private void OnEnable()
         {
-            EditorApplication.delayCall += () =>
-            {
-                if (rootVisualElement?.Q<VisualElement>("codeView") != null)
-                {
-                    UpdateCodeDisplay();
-                }
-            };
-
-            AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
-            EditorApplication.update += OnEditorUpdate;
+            Selection.selectionChanged += OnSelectionChanged;
+            OnSelectionChanged();
+            UpdateCodeDisplay();
         }
 
         private void OnDisable()
         {
-            AssemblyReloadEvents.afterAssemblyReload -= OnAfterAssemblyReload;
-            EditorApplication.update -= OnEditorUpdate;
+            Selection.selectionChanged -= OnSelectionChanged;
         }
 
-        private bool wasVisible;
-        private void OnEditorUpdate()
+        private void OnSelectionChanged()
         {
-            bool isVisible = this != null && this.hasFocus;
-            if (isVisible != wasVisible)
+            if (Selection.activeObject is ScriptGraphAsset or CodeAsset or GameObject)
             {
+<<<<<<< Updated upstream
                 wasVisible = isVisible;
                 if (isVisible)
                 {
@@ -583,59 +574,271 @@ namespace Unity.VisualScripting.Community
                 {
                     ClearComponentNavigationUI();
                 }
+=======
+                _asset = Selection.activeObject;
+                canCompile = true;
+                manualCode = "";
+>>>>>>> Stashed changes
                 UpdateCodeDisplay();
+                Repaint();
             }
         }
 
-        private void UpdateComponentSelectionUI(GameObject obj)
+        /// <summary>
+        /// Opens the preview window with specific code, no asset required.
+        /// </summary>
+        public static void OpenWithCode(string code, bool canCompile)
         {
-            if (obj == null || toolbar == null) return;
+            var win = GetWindow<CSharpPreviewWindow>();
+            win.titleContent = new GUIContent("C# Preview");
+            win.minSize = new Vector2(400, 400);
+            win.manualCode = code;
+            win.canCompile = canCompile;
+            win.UpdateCodeDisplay();
+            win.Show();
+        }
 
-            currentGameObjectGenerator = CodeGenerator.GetSingleDecorator(obj) as GameObjectGenerator;
-            if (currentGameObjectGenerator == null) return;
+        private void UpdateCodeDisplay()
+        {
+            string code = string.Empty;
 
-            var components = obj.GetComponents<ScriptMachine>();
-
-            ClearComponentNavigationUI();
-
-            if (components == null || components.Length <= 1)
+            if (!string.IsNullOrEmpty(manualCode))
             {
-                currentComponentIndex = 0;
+                code = manualCode;
+            }
+            else if (_asset != null)
+            {
+                code = LoadCode();
+            }
+
+            codeLines = string.IsNullOrEmpty(code)
+                ? Array.Empty<string>()
+                : code.Split(new[] { '\n' }, StringSplitOptions.None);
+
+            var clickableRegions = CodeUtility.ExtractAndPopulateClickableRegions(code ?? "");
+            cachedRegions = clickableRegions
+                .GroupBy(r => r.startLine)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            lineWidths = new float[codeLines.Length];
+        }
+
+        private string LoadCode()
+        {
+            if (_asset == null) return string.Empty;
+            var generator = CodeGenerator.GetSingleDecorator(_asset);
+            if (generator == null) return string.Empty;
+
+            var code = generator.Generate(0);
+            return code.RemoveMarkdown();
+        }
+        private float[] lineWidths;
+        float contentWidth;
+        private void OnGUI()
+        {
+            if (CodeGeneratorValueUtility.currentAsset == null && _asset != null)
+                CodeGeneratorValueUtility.currentAsset = _asset;
+
+            DrawToolbar();
+
+            if (showSettings)
+            {
+                EditorGUILayout.Space();
+                settingsScroll = EditorGUILayout.BeginScrollView(settingsScroll, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                settingsManager.InitializeSettings();
+                settingsManager.UpdateSettings(settings => UIBuilder.DrawCSharpPreviewSettings(settings, () => RefreshPreview()));
+                EditorGUILayout.EndScrollView();
                 return;
             }
 
-            currentComponentIndex = Mathf.Clamp(currentComponentIndex, 0, components.Length - 1);
-            currentGameObjectGenerator.current = components[currentComponentIndex];
-            CodeGeneratorValueUtility.currentAsset = components[currentComponentIndex];
-
-            previousButton = new Button(() => NavigateComponents(-1, obj))
+            if (codeLines == null || codeLines.Length == 0)
             {
-                name = "Toolbar-Previous-Component",
-                text = "<",
-                style = { marginLeft = 5 }
-            };
+                GUILayout.Label("No code to display.");
+                return;
+            }
 
-            componentCountLabel = new Label($"{currentComponentIndex + 1}/{components.Length}")
+            float lineHeight = LineHeight * visualZoom;
+            float totalHeight = codeLines.Length * lineHeight;
+
+            contentWidth = position.width;
+            if (lineWidths != null && lineWidths.Length > 0)
             {
-                name = "Toolbar-Components-Display",
-                style = { marginLeft = 5, marginRight = 5, alignSelf = Align.Center }
-            };
+                contentWidth = Mathf.Max(position.width, lineWidths.Max()) + 20f;
+            }
 
-            nextButton = new Button(() => NavigateComponents(1, obj))
+            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, true, true);
+
+            Rect scrollRect = GUILayoutUtility.GetRect(contentWidth, totalHeight);
+
+            float bgWidth = Mathf.Max(contentWidth, position.width);
+            float bgHeight = Mathf.Max(totalHeight, position.height);
+
+            EditorGUI.DrawRect(new Rect(0, 0, bgWidth, bgHeight), new Color(0.15f, 0.15f, 0.15f));
+
+            int firstVisible = Mathf.Max(0, Mathf.FloorToInt(scrollPosition.y / lineHeight) - BufferLines);
+            int lastVisible = Mathf.Min(codeLines.Length - 1,
+                Mathf.CeilToInt((scrollPosition.y + position.height) / lineHeight) + BufferLines);
+
+            float maxLineWidth = 0f;
+
+            for (int i = firstVisible; i <= lastVisible; i++)
             {
-                name = "Toolbar-Next-Component",
-                text = ">",
-                style = { marginRight = 10 }
-            };
+                Rect lineRect = new Rect(0, i * lineHeight, contentWidth, lineHeight);
+                float lineWidth = DrawLine(lineRect, i);
+                maxLineWidth = Mathf.Max(maxLineWidth, lineWidth);
+            }
 
-            toolbar.Add(previousButton);
-            toolbar.Add(componentCountLabel);
-            toolbar.Add(nextButton);
+            if (lineWidths != null && lineWidths.Length > 0)
+            {
+                contentWidth = Mathf.Max(position.width, maxLineWidth) + 20f;
+            }
 
-            UpdateComponentNavigationState(obj);
+            EditorGUILayout.EndScrollView();
         }
 
-        private void NavigateComponents(int direction, GameObject obj)
+        private bool showSettings = false;
+        private readonly CSharpPreviewSettingsManager settingsManager = new CSharpPreviewSettingsManager();
+        private Vector2 settingsScroll;
+
+        int currentComponentIndex;
+
+        private float sliderValue = 0.15f;
+        private void DrawToolbar()
+        {
+            GUILayout.BeginHorizontal(EditorStyles.toolbar);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Zoom", GUILayout.Width(40));
+            var newSliderValue = GUILayout.HorizontalSlider(sliderValue, 0f, 1f, GUILayout.Width(150));
+            if (Math.Abs(newSliderValue - sliderValue) > 0.001f)
+            {
+                sliderValue = newSliderValue;
+                visualZoom = Mathf.Lerp(0.5f, 1.5f, sliderValue);
+            }
+            GUILayout.Label($"{visualZoom * 100f:0}%", GUILayout.Width(40));
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(10);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Search:");
+            if (GUILayout.Button("<", EditorStyles.toolbarButton))
+            {
+                if (searchMatches.Count > 0)
+                {
+                    currentMatchIndex = (currentMatchIndex - 1 + searchMatches.Count) % searchMatches.Count;
+                    ScrollToLine(searchMatches[currentMatchIndex]);
+                }
+            }
+
+            string newSearchQuery = GUILayout.TextField(searchQuery, EditorStyles.toolbarTextField, GUILayout.Width(150));
+            if (newSearchQuery != searchQuery)
+            {
+                searchQuery = newSearchQuery;
+                UpdateSearchMatches();
+            }
+
+            if (GUILayout.Button(">", EditorStyles.toolbarButton))
+            {
+                if (searchMatches.Count > 0)
+                {
+                    currentMatchIndex = (currentMatchIndex + 1) % searchMatches.Count;
+                    ScrollToLine(searchMatches[currentMatchIndex]);
+                }
+            }
+            if (searchMatches.Count > 0)
+                GUILayout.Label($"{currentMatchIndex + 1}/{searchMatches.Count}");
+            GUILayout.EndHorizontal();
+
+            GUILayout.FlexibleSpace();
+
+            EditorGUI.BeginDisabledGroup(!canCompile);
+            if (GUILayout.Button("Compile", EditorStyles.toolbarButton, GUILayout.Width(70)))
+            {
+                CompileCode();
+            }
+            EditorGUI.EndDisabledGroup();
+
+            if (GUILayout.Button("Copy To Clipboard", EditorStyles.toolbarButton, GUILayout.Width(120)))
+            {
+                if (allCodeSelected || (selectedLines.Count == 0 && selectedRegions.Count == 0))
+                {
+                    GUIUtility.systemCopyBuffer = string.Join("\n", codeLines.Select(l => CodeUtility.CleanCode(RemoveColorTags(l))));
+                }
+                else
+                {
+                    var lineSelections = new Dictionary<int, List<string>>();
+
+                    foreach (var line in selectedLines)
+                    {
+                        if (line >= 0 && line < codeLines.Length)
+                        {
+                            if (!lineSelections.ContainsKey(line))
+                                lineSelections[line] = new List<string>();
+
+                            lineSelections[line].Add(CodeUtility.CleanCode(RemoveColorTags(codeLines[line])));
+                        }
+                    }
+
+                    foreach (var region in selectedRegions.OrderBy(c => c.startLine).ThenBy(c => c.startIndex))
+                    {
+                        int lineIndex = region.startLine;
+                        if (!lineSelections.ContainsKey(lineIndex))
+                            lineSelections[lineIndex] = new List<string>();
+
+                        lineSelections[lineIndex].Add(CodeUtility.CleanCode(RemoveColorTags(region.code)));
+                    }
+
+                    var finalLines = lineSelections.OrderBy(kv => kv.Key).Select(v => string.Join("", v.Value));
+
+                    GUIUtility.systemCopyBuffer = string.Join("\n", finalLines);
+                }
+            }
+
+            if (GUILayout.Button("Refresh", EditorStyles.toolbarButton, GUILayout.Width(70)))
+            {
+                UpdateCodeDisplay();
+                Repaint();
+            }
+
+            if (GUILayout.Button("Settings", EditorStyles.toolbarButton, GUILayout.Width(70)))
+            {
+                showSettings = !showSettings;
+            }
+
+            if (_asset is GameObject @object)
+            {
+                var components = @object.GetComponents<ScriptMachine>();
+                var generator = CodeGenerator.GetSingleDecorator(@object) as GameObjectGenerator;
+
+                if (components == null || components.Length <= 1)
+                {
+                    currentComponentIndex = 0;
+                    GUILayout.EndHorizontal();
+                    return;
+                }
+
+                if (currentComponentIndex < 0 || currentComponentIndex >= components.Length)
+                    currentComponentIndex = 0;
+
+                generator.current = components[currentComponentIndex];
+                CodeGeneratorValueUtility.currentAsset = components[currentComponentIndex];
+
+                if (GUILayout.Button("<", EditorStyles.toolbarButton))
+                {
+                    NavigateComponents(-1, generator);
+                }
+                GUILayout.Label($"{currentComponentIndex + 1}/{components.Length}");
+                if (GUILayout.Button(">", EditorStyles.toolbarButton))
+                {
+                    NavigateComponents(1, generator);
+                }
+            }
+
+
+            GUILayout.EndHorizontal();
+        }
+
+        private void NavigateComponents(int direction, GameObjectGenerator currentGameObjectGenerator)
         {
             if (currentGameObjectGenerator?.components == null) return;
 
@@ -646,45 +849,28 @@ namespace Unity.VisualScripting.Community
             {
                 currentComponentIndex = newIndex;
                 currentGameObjectGenerator.current = components[currentComponentIndex];
-                UpdateComponentNavigationState(obj);
                 UpdateCodeDisplay();
             }
         }
 
-        private void UpdateComponentNavigationState(GameObject obj)
+        private void CompileCode()
         {
-            var components = obj.GetComponents<ScriptMachine>();
-            if (components == null || components.Length <= 1) return;
-
-            if (componentCountLabel != null)
-                componentCountLabel.text = $"{currentComponentIndex + 1}/{components.Length}";
-
-            previousButton?.SetEnabled(currentComponentIndex > 0);
-
-            nextButton?.SetEnabled(currentComponentIndex < components.Length - 1);
+            if (_asset != null)
+                AssetCompiler.CompileAsset(_asset);
         }
 
-        private void ClearComponentNavigationUI()
+        private string RemoveColorTags(string input)
         {
-            if (toolbar == null) return;
-
-            if (previousButton != null)
-                toolbar.Remove(previousButton);
-
-            if (componentCountLabel != null)
-                toolbar.Remove(componentCountLabel);
-
-            if (nextButton != null)
-                toolbar.Remove(nextButton);
-
-            previousButton = null;
-            componentCountLabel = null;
-            nextButton = null;
+            return Regex.Replace(input, @"<color=#[0-9a-fA-F]{6,8}>|</color>", string.Empty, RegexOptions.Compiled);
         }
 
-        private Vector2 lastScrollPosition;
-        private float lastLineNumbersScrollPosition;
+        private const float LineNumberWidth = 35f;
+        private HashSet<int> selectedLines = new();
+        private HashSet<ClickableRegion> selectedRegions = new();
+        private string selectedUnitID;
+        private bool allCodeSelected = false;
 
+<<<<<<< Updated upstream
         private const int BUFFER_LINES = 20;
         private Dictionary<int, (VisualElement lineNumber, VisualElement content)> virtualizedLines = new Dictionary<int, (VisualElement, VisualElement)>();
         private int firstVisibleLine = 0;
@@ -781,7 +967,276 @@ namespace Unity.VisualScripting.Community
                 firstVisibleLine = firstVisible;
                 lastVisibleLine = lastVisible;
                 RenderVisibleLines(scrollView, lineNumbersScrollView, firstVisible, lastVisible);
+=======
+        private string CleanLine(string line)
+        {
+            var toolTipText = CodeUtility.ExtractTooltip(line, out _);
+            string cleanText = CodeUtility.CleanCode(toolTipText);
+            return RemoveColorTags(cleanText);
+        }
+        private float DrawLine(Rect rect, int index)
+        {
+            float x = rect.x - scrollPosition.x;
+
+            if (!string.IsNullOrEmpty(searchQuery) && CleanLine(codeLines[index]).IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, rect.height), highlightColor);
             }
+
+            Color borderColor = new Color(0.20f, 0.20f, 0.20f, 0.1f);
+            const float borderHeight = 1f;
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, borderHeight), borderColor);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y + rect.height - borderHeight, rect.width, borderHeight), borderColor);
+
+            string lineNumberText = $"{index + 1,4}: ";
+            Vector2 numberSize = baseStyle.CalcSize(new GUIContent(lineNumberText));
+            float lineNumberWidth = Mathf.Max(LineNumberWidth, numberSize.x);
+            Rect lineNumberRect = new Rect(x, rect.y, lineNumberWidth, rect.height);
+            GUI.Label(lineNumberRect, $"{index + 1,4}: ", baseStyle);
+            x += lineNumberWidth;
+
+            float lineHeight = LineHeight * visualZoom;
+
+            if (cachedRegions != null && cachedRegions.TryGetValue(index, out var regions) && regions.Count > 0)
+            {
+                AdjustLeadingWhitespacesForFirstRegion(codeLines[index], regions[0]);
+                bool isMatchingInLine = false;
+                foreach (var region in regions)
+                {
+
+                    if (!string.IsNullOrEmpty(searchQuery) && !isMatchingInLine)
+                    {
+                        isMatchingInLine = true;
+                        var cleanedCode = CleanLine(codeLines[index]);
+                        int matchIndex = cleanedCode.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase);
+                        if (matchIndex >= 0)
+                        {
+                            Vector2 startPos = noPaddingStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanedCode), matchIndex);
+                            Vector2 endPos = noPaddingStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanedCode), matchIndex + searchQuery.Length);
+                            Rect highlightRect = new Rect(x + startPos.x, rect.y, endPos.x - startPos.x, rect.height);
+                            EditorGUI.DrawRect(highlightRect, highlightColor.WithAlpha(0.3f));
+                        }
+                    }
+
+                    var toolTipText = CodeUtility.ExtractTooltip(region.code, out var tooltip);
+                    string cleanText = CodeUtility.CleanCode(toolTipText);
+
+                    Vector2 size = noPaddingStyle.CalcSize(Temp(cleanText));
+                    var content = string.IsNullOrEmpty(tooltip) ? Temp(cleanText) : Temp(cleanText, tooltip);
+                    Rect buttonRect = new Rect(x, rect.y, size.x, rect.height);
+
+                    if (allCodeSelected || selectedLines.Contains(index) || (region != null && selectedRegions.Contains(region)))
+                    {
+                        EditorGUI.DrawRect(buttonRect, new Color(0.25f, 0.5f, 0.8f, 0.3f));
+                    }
+                    else if (selectedUnitID == region.unitId)
+                    {
+                        EditorGUI.DrawRect(buttonRect, new Color(0.25f, 0.25f, 0.25f, 0.4f));
+                    }
+
+                    if (GUI.Button(buttonRect, content, noPaddingStyle))
+                    {
+                        selectedUnitID = region.unitId;
+                        HandleClick(index, region);
+                        HandleClickableRegionClick(region.unitId, index);
+                    }
+
+                    x += size.x;
+                }
+            }
+            else
+            {
+                string lineText = CodeUtility.ExtractTooltip(codeLines[index], out var tooltip);
+                string cleanText = CodeUtility.CleanCode(lineText);
+
+                if (!string.IsNullOrEmpty(searchQuery))
+                {
+                    int matchIndex = RemoveColorTags(cleanText).IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase);
+                    if (matchIndex >= 0)
+                    {
+                        Vector2 startPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), matchIndex);
+                        Vector2 endPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), matchIndex + searchQuery.Length);
+                        Rect highlightRect = new Rect(x + startPos.x, rect.y, endPos.x - startPos.x, rect.height);
+                        EditorGUI.DrawRect(highlightRect, highlightColor.WithAlpha(0.3f));
+                    }
+                }
+
+                Vector2 size = baseStyle.CalcSize(Temp(cleanText));
+                Rect labelRect = new Rect(x, rect.y, size.x, rect.height);
+                var content = string.IsNullOrEmpty(tooltip) ? Temp(cleanText) : Temp(cleanText, tooltip);
+
+                if (allCodeSelected || selectedLines.Contains(index))
+                {
+                    EditorGUI.DrawRect(labelRect, new Color(0.25f, 0.5f, 0.8f, 0.3f));
+                }
+
+                if (GUI.Button(labelRect, content, baseStyle))
+                {
+                    selectedUnitID = "";
+                    HandleClick(index, null);
+                }
+
+                x += size.x;
+            }
+
+            lineWidths[index] = x;
+            return x;
+        }
+
+        private int clickCount = 0;
+        private float lastClickTime = 0f;
+        private const float doubleClickThreshold = 0.3f;
+        private int lastClickedLine = -1;
+
+        private void HandleClick(int index, ClickableRegion region)
+        {
+            var e = Event.current;
+            bool isRegion = region != null;
+
+            if (e != null && e.button == 0)
+            {
+                float time = Time.realtimeSinceStartup;
+                if (index == lastClickedLine && time - lastClickTime <= doubleClickThreshold)
+                {
+                    clickCount++;
+                }
+                else
+                {
+                    clickCount = 1;
+                }
+
+                lastClickTime = time; lastClickedLine = index;
+                bool ctrl = e.control || e.command;
+
+                if (clickCount == 2)
+                {
+                    if (ctrl)
+                    {
+                        selectedLines.Add(index);
+                        if (selectedRegions.Contains(region))
+                            selectedRegions.Remove(region);
+                    }
+                    else
+                    {
+                        selectedLines.Clear();
+                        selectedRegions.Clear();
+                        selectedLines.Add(index);
+                    }
+                    allCodeSelected = false;
+                }
+                else if (clickCount == 1)
+                {
+                    if (ctrl)
+                    {
+                        if (isRegion)
+                        {
+                            if (selectedRegions.Contains(region))
+                                selectedRegions.Remove(region);
+                            else
+                                selectedRegions.Add(region);
+                        }
+                        else
+                        {
+                            if (selectedLines.Contains(index))
+                                selectedLines.Remove(index);
+                            else
+                                selectedLines.Add(index);
+                        }
+                    }
+                    else
+                    {
+                        selectedLines.Clear();
+                        selectedRegions.Clear();
+                        if (isRegion)
+                            selectedRegions.Add(region);
+                        else
+                            selectedLines.Add(index);
+                        allCodeSelected = false;
+                    }
+                }
+                else if (clickCount >= 3)
+                {
+                    allCodeSelected = true;
+                    selectedLines.Clear();
+                    selectedRegions.Clear();
+                    clickCount = 0;
+                }
+            }
+        }
+
+        const float Height = 16f;
+        private static GUIStyle _noPaddingStyle;
+        private GUIStyle noPaddingStyle
+        {
+            get
+            {
+                if (_noPaddingStyle == null)
+                {
+                    _noPaddingStyle = new GUIStyle(baseStyle)
+                    {
+                        padding = new RectOffset(0, 0, 0, 0),
+                        margin = new RectOffset(0, 0, 0, 0),
+                    };
+                    _noPaddingStyle.fontSize = Mathf.RoundToInt(Height * visualZoom);
+
+                    // prevent blue-on-click
+                    var c = Color.white;
+                    _noPaddingStyle.normal.textColor = c;
+                    _noPaddingStyle.hover.textColor = c;
+                    _noPaddingStyle.active.textColor = c;
+                    _noPaddingStyle.focused.textColor = c;
+                }
+                else
+                {
+                    _noPaddingStyle.fontSize = Mathf.RoundToInt(Height * visualZoom);
+                }
+                return _noPaddingStyle;
+>>>>>>> Stashed changes
+            }
+        }
+
+        private static GUIStyle _baseStyle;
+        private GUIStyle baseStyle
+        {
+            get
+            {
+                if (_baseStyle == null)
+                {
+                    _baseStyle = new GUIStyle(EditorStyles.label)
+                    {
+                        padding = new RectOffset(0, 0, 0, 0),
+                        margin = new RectOffset(0, 0, 0, 0),
+                        richText = true
+                    };
+                    _baseStyle.fontSize = Mathf.RoundToInt(Height * visualZoom);
+
+                    var c = Color.white;
+                    _baseStyle.normal.textColor = c;
+                    _baseStyle.hover.textColor = c;
+                    _baseStyle.active.textColor = c;
+                    _baseStyle.focused.textColor = c;
+                }
+                else
+                {
+                    _baseStyle.fontSize = Mathf.RoundToInt(Height * visualZoom);
+                }
+                return _baseStyle;
+            }
+        }
+
+        private static readonly GUIContent _temp = new GUIContent();
+        private static readonly GUIContent _tempTooltip = new GUIContent();
+        private GUIContent Temp(string text)
+        {
+            _temp.text = text;
+            return _temp;
+        }
+
+        private GUIContent Temp(string text, string tooltip)
+        {
+            _tempTooltip.text = text;
+            _tempTooltip.tooltip = tooltip;
+            return _tempTooltip;
         }
 
         private void AdjustLeadingWhitespacesForFirstRegion(string line, ClickableRegion firstRegion)
@@ -792,130 +1247,33 @@ namespace Unity.VisualScripting.Community
                 leadingWhitespaceLength++;
             }
 
-            string whitespace = line.Substring(0, leadingWhitespaceLength);
+            string whitespace = line[..leadingWhitespaceLength];
             if (!firstRegion.code.StartsWith(whitespace))
             {
                 firstRegion.code = whitespace + firstRegion.code.TrimStart();
             }
         }
 
-        private void RenderVisibleLines(ScrollView scrollView, ScrollView lineNumbersScrollView, int startLine, int endLine)
+        private UnityEngine.Object GetRootObject(GraphReference reference)
         {
-            var content = scrollView.Q("content");
-            var lineNumbers = lineNumbersScrollView.Q("lineNumbers");
-
-            if (content == null || lineNumbers == null) return;
-
-            float lineHeight = 15 * zoomFactor;
-            content.style.height = cachedLines.Length * lineHeight;
-            lineNumbers.style.height = content.style.height;
-
-            foreach (var kvp in virtualizedLines.ToList())
-            {
-                if (kvp.Key < startLine || kvp.Key > endLine)
-                {
-                    if (kvp.Value.content.parent != null) content.Remove(kvp.Value.content);
-                    if (kvp.Value.lineNumber.parent != null) lineNumbers.Remove(kvp.Value.lineNumber);
-                    virtualizedLines.Remove(kvp.Key);
-                }
-            }
-
-            float maxWidth = 0;
-            for (int i = startLine; i <= endLine && i < cachedLines.Length; i++)
-            {
-                if (!virtualizedLines.ContainsKey(i))
-                {
-                    var lineContent = CreateLineContent(i);
-                    var lineNumber = CreateLineNumber(i);
-
-                    lineContent.style.top = i * lineHeight;
-                    lineContent.style.height = lineHeight;
-                    lineNumber.style.top = i * lineHeight;
-                    lineNumber.style.height = lineHeight;
-
-                    content.Add(lineContent);
-                    lineNumbers.Add(lineNumber);
-                    virtualizedLines[i] = (lineNumber, lineContent);
-
-                    lineContent.RegisterCallback<GeometryChangedEvent>(evt =>
-                    {
-                        float contentWidth = evt.newRect.width + (20 * zoomFactor);
-                        if (contentWidth > maxWidth)
-                        {
-                            maxWidth = contentWidth;
-                            content.style.width = maxWidth;
-                            scrollView.contentContainer.style.width = maxWidth;
-                        }
-                    });
-                }
-            }
-        }
-
-        private void CompileCode()
-        {
-            if (asset != null)
-                AssetCompiler.CompileAsset(asset);
-        }
-
-        private void CopyToClipboard()
-        {
-            string outputToCopy = string.Empty;
-
-            if (selectedLabels.Count > 0)
-            {
-                var sortedLabels = selectedLabels.OrderBy(value => value.Item2).ToList();
-
-                int? previousLine = null;
-                foreach (var (label, line) in sortedLabels)
-                {
-                    if (previousLine != null && line != previousLine)
-                    {
-                        outputToCopy += "\n";
-                    }
-
-                    outputToCopy += CodeUtility.CleanCode(RemoveColorTags(label.text));
-                    previousLine = line;
-                }
-            }
-            else
-            {
-                outputToCopy = CodeUtility.CleanCode(RemoveColorTags(LoadCode()));
-            }
-
-            EditorGUIUtility.systemCopyBuffer = outputToCopy;
-        }
-
-        private string RemoveColorTags(string input)
-        {
-            return Regex.Replace(input, @"<color=#[0-9a-fA-F]{6,8}>|</color>", string.Empty, RegexOptions.Compiled);
-        }
-
-        private void ToggleWindowMode()
-        {
-            showCodeWindow = !showCodeWindow;
-            var toggleButton = rootVisualElement.Q<Toolbar>("Toolbar").Q<Button>("toggleButton");
-            toggleButton.text = showCodeWindow ? "Settings" : "Preview";
-
-            var codeView = rootVisualElement.Q<VisualElement>("codeView");
-            var settingsContainer = rootVisualElement.Q<ScrollView>("settingsContainer");
-
-            codeView.style.display = showCodeWindow ? DisplayStyle.Flex : DisplayStyle.None;
-            settingsContainer.style.display = showCodeWindow ? DisplayStyle.None : DisplayStyle.Flex;
-
-            if (showCodeWindow) UpdateCodeDisplay();
-        }
-
-        private void OnCodeRegionClicked(ClickableRegion region, int currentLine)
-        {
-            HandleClickableRegionClick(region.unitId, currentLine);
+            var root = reference.rootObject;
+            if (root is MethodDeclaration method) return method.parentAsset;
+            if (root is ConstructorDeclaration constructor) return constructor.parentAsset;
+            if (root is PropertyGetterMacro getter) return getter.parentAsset;
+            if (root is PropertySetterMacro setter) return setter.parentAsset;
+            return root;
         }
 
         private void HandleClickableRegionClick(string unitId, int line)
         {
-            var code = CodeGenerator.GetSingleDecorator(asset);
+            var code = CodeGenerator.GetSingleDecorator(_asset);
 
-            if (GraphWindow.active?.reference != null && GraphWindow.active.context.graph is FlowGraph)
+            if (GraphWindow.active != null && GraphWindow.active.reference != null && GraphWindow.active.context.graph is FlowGraph)
             {
+                if (GetRootObject(GraphWindow.active.reference) != (_asset is GameObject ? (code as GameObjectGenerator).current : _asset))
+                {
+                    OpenInitial(unitId, line, code);
+                }
                 var reference = GraphWindow.active.reference.isRoot ? GraphWindow.active.reference : GraphWindow.active.reference.root.GetReference() as GraphReference;
                 GraphWindow.active.Focus();
 
@@ -937,7 +1295,7 @@ namespace Unity.VisualScripting.Community
                 }
                 else
                 {
-                    units = GraphTraversal.TraverseFlowGraph(reference).ToList();
+                    units = GraphTraversal.TraverseFlowGraph<Unit>(reference).ToList();
                 }
                 var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
                 if (ordered.Count() > 0 && ordered.Any(selectable => selectable.result.Item2 != null))
@@ -977,67 +1335,65 @@ namespace Unity.VisualScripting.Community
             }
             else
             {
-                if (code is ClassAssetGenerator classAssetGenerator)
+                OpenInitial(unitId, line, code);
+            }
+        }
+
+        private void OpenInitial(string unitId, int line, CodeGenerator code)
+        {
+            if (code is ClassAssetGenerator classAssetGenerator)
+            {
+                if (classAssetGenerator.Data != null)
                 {
-                    if (classAssetGenerator.Data != null)
+                    List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
+                    foreach (var constructorDeclaration in classAssetGenerator.Data.constructors)
                     {
-                        List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
-                        foreach (var constructorDeclaration in classAssetGenerator.Data.constructors)
-                        {
-                            ProcessConstructorDeclaration(constructorDeclaration, units);
-                        }
-
-                        foreach (var fieldDeclaration in classAssetGenerator.Data.variables)
-                        {
-                            ProcessFieldDeclaration(fieldDeclaration, units);
-                        }
-
-                        foreach (var methodDeclaration in classAssetGenerator.Data.methods)
-                        {
-                            ProcessMethodDeclaration(methodDeclaration, units);
-                        }
-                        var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
-                        GraphWindow.OpenActive(ordered.First().result.Item1);
-                        HandleClickableRegionClick(unitId, line);
+                        ProcessConstructorDeclaration(constructorDeclaration, units);
                     }
-                }
-                else if (code is StructAssetGenerator structAssetGenerator)
-                {
-                    if (structAssetGenerator.Data != null)
+
+                    foreach (var fieldDeclaration in classAssetGenerator.Data.variables)
                     {
-                        List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
-                        foreach (var constructorDeclaration in structAssetGenerator.Data.constructors)
-                        {
-                            ProcessConstructorDeclaration(constructorDeclaration, units);
-                        }
-
-                        foreach (var fieldDeclaration in structAssetGenerator.Data.variables)
-                        {
-                            ProcessFieldDeclaration(fieldDeclaration, units);
-                        }
-
-                        foreach (var methodDeclaration in structAssetGenerator.Data.methods)
-                        {
-                            ProcessMethodDeclaration(methodDeclaration, units);
-                        }
-                        var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
-                        GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
-                        HandleClickableRegionClick(unitId, line);
+                        ProcessFieldDeclaration(fieldDeclaration, units);
                     }
-                }
-                else if (code is ScriptGraphAssetGenerator graphAssetGenerator)
-                {
-                    if (graphAssetGenerator.Data != null)
+
+                    foreach (var methodDeclaration in classAssetGenerator.Data.methods)
                     {
-                        List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
-                        units = GraphTraversal.TraverseFlowGraph(graphAssetGenerator.Data.GetReference() as GraphReference).ToList();
-                        var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
-                        GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
-                        HandleClickableRegionClick(unitId, line);
+                        ProcessMethodDeclaration(methodDeclaration, units);
                     }
+                    var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
+                    GraphWindow.OpenActive(ordered.First().result.Item1);
+                    HandleClickableRegionClick(unitId, line);
                 }
-                else if (code is GameObjectGenerator gameObjectGenerator)
+            }
+            else if (code is StructAssetGenerator structAssetGenerator)
+            {
+                if (structAssetGenerator.Data != null)
                 {
+                    List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
+                    foreach (var constructorDeclaration in structAssetGenerator.Data.constructors)
+                    {
+                        ProcessConstructorDeclaration(constructorDeclaration, units);
+                    }
+
+                    foreach (var fieldDeclaration in structAssetGenerator.Data.variables)
+                    {
+                        ProcessFieldDeclaration(fieldDeclaration, units);
+                    }
+
+                    foreach (var methodDeclaration in structAssetGenerator.Data.methods)
+                    {
+                        ProcessMethodDeclaration(methodDeclaration, units);
+                    }
+                    var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
+                    GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
+                    HandleClickableRegionClick(unitId, line);
+                }
+            }
+            else if (code is ScriptGraphAssetGenerator graphAssetGenerator)
+            {
+                if (graphAssetGenerator.Data != null)
+                {
+<<<<<<< Updated upstream
                     if (gameObjectGenerator.Data != null)
                     {
                         List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
@@ -1046,6 +1402,24 @@ namespace Unity.VisualScripting.Community
                         GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
                         HandleClickableRegionClick(unitId, line);
                     }
+=======
+                    List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
+                    units = GraphTraversal.TraverseFlowGraph<Unit>(graphAssetGenerator.Data.GetReference() as GraphReference).ToList();
+                    var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
+                    GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
+                    HandleClickableRegionClick(unitId, line);
+                }
+            }
+            else if (code is GameObjectGenerator gameObjectGenerator)
+            {
+                if (gameObjectGenerator.Data != null)
+                {
+                    List<(GraphReference, Unit)> units = new();
+                    units = GraphTraversal.TraverseFlowGraph<Unit>(gameObjectGenerator.current.GetReference() as GraphReference).ToList();
+                    var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
+                    GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
+                    HandleClickableRegionClick(unitId, line);
+>>>>>>> Stashed changes
                 }
             }
         }
@@ -1089,19 +1463,19 @@ namespace Unity.VisualScripting.Community
         private void AddUnitsFromClassAsset(ClassAsset classAsset, List<(GraphReference, Unit)> units)
         {
             foreach (var method in classAsset.methods)
-                units.AddRange(GraphTraversal.TraverseFlowGraph(method.GetReference() as GraphReference));
+                units.AddRange(GraphTraversal.TraverseFlowGraph<Unit>(method.GetReference() as GraphReference));
 
             foreach (var constructor in classAsset.constructors)
-                units.AddRange(GraphTraversal.TraverseFlowGraph(constructor.GetReference() as GraphReference));
+                units.AddRange(GraphTraversal.TraverseFlowGraph<Unit>(constructor.GetReference() as GraphReference));
 
             foreach (var variable in classAsset.variables)
             {
                 if (variable.isProperty)
                 {
                     if (variable.get)
-                        units.AddRange(GraphTraversal.TraverseFlowGraph(variable.getter.GetReference() as GraphReference));
+                        units.AddRange(GraphTraversal.TraverseFlowGraph<Unit>(variable.getter.GetReference() as GraphReference));
                     if (variable.set)
-                        units.AddRange(GraphTraversal.TraverseFlowGraph(variable.setter.GetReference() as GraphReference));
+                        units.AddRange(GraphTraversal.TraverseFlowGraph<Unit>(variable.setter.GetReference() as GraphReference));
                 }
             }
         }
@@ -1109,28 +1483,26 @@ namespace Unity.VisualScripting.Community
         private void AddUnitsFromStructAsset(StructAsset structAsset, List<(GraphReference, Unit)> units)
         {
             foreach (var method in structAsset.methods)
-                units.AddRange(GraphTraversal.TraverseFlowGraph(method.GetReference() as GraphReference));
+                units.AddRange(GraphTraversal.TraverseFlowGraph<Unit>(method.GetReference() as GraphReference));
 
             foreach (var constructor in structAsset.constructors)
-                units.AddRange(GraphTraversal.TraverseFlowGraph(constructor.GetReference() as GraphReference));
+                units.AddRange(GraphTraversal.TraverseFlowGraph<Unit>(constructor.GetReference() as GraphReference));
 
             foreach (var variable in structAsset.variables)
             {
                 if (variable.isProperty)
                 {
                     if (variable.get)
-                        units.AddRange(GraphTraversal.TraverseFlowGraph(variable.getter.GetReference() as GraphReference));
+                        units.AddRange(GraphTraversal.TraverseFlowGraph<Unit>(variable.getter.GetReference() as GraphReference));
                     if (variable.set)
-                        units.AddRange(GraphTraversal.TraverseFlowGraph(variable.setter.GetReference() as GraphReference));
+                        units.AddRange(GraphTraversal.TraverseFlowGraph<Unit>(variable.setter.GetReference() as GraphReference));
                 }
             }
         }
 
-        private List<(Label, int)> selectedLabels = new List<(Label, int)>();
-        private List<Label> relatedLabels = new List<Label>();
-
-        private Label CreateNonClickableLabel(string text, int currentLine)
+        private void UpdateSearchMatches()
         {
+<<<<<<< Updated upstream
             string tooltip;
             var codeWithoutTooltip = CodeUtility.ExtractTooltip(text, out tooltip);
             var label = new Label(CodeUtility.RemoveAllSelectableTags(codeWithoutTooltip))
@@ -1150,12 +1522,20 @@ namespace Unity.VisualScripting.Community
             label.style.marginRight = 0;
             label.style.marginTop = 0;
             label.style.marginBottom = 0;
+=======
+            searchMatches.Clear();
+            currentMatchIndex = 0;
+>>>>>>> Stashed changes
 
-            if (selectedLabels.Any(sl => sl.Item2 == currentLine && sl.Item1.text == label.text))
+            if (string.IsNullOrEmpty(searchQuery) || codeLines == null) return;
+
+            for (int i = 0; i < codeLines.Length; i++)
             {
-                label.style.backgroundColor = new Color(0.25f, 0.5f, 0.8f, 0.3f);
+                if (CleanLine(codeLines[i]).IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
+                    searchMatches.Add(i);
             }
 
+<<<<<<< Updated upstream
             label.RegisterCallback<ClickEvent>(evt => SelectLabel(label, evt, "", currentLine));
             return label;
         }
@@ -1196,47 +1576,26 @@ namespace Unity.VisualScripting.Community
                 OnCodeRegionClicked(region, currentLine);
             });
             return label;
+=======
+            if (searchMatches.Count > 0)
+                ScrollToLine(searchMatches[currentMatchIndex]);
+>>>>>>> Stashed changes
         }
 
-        private int doubleClickCount = 0;
-        private double lastClickTime = 0;
-        private const double doubleClickThreshold = 0.3;
-
-        private void SelectLabel(Label label, ClickEvent evt, string unitId, int currentLine)
+        private void ScrollToLine(int line)
         {
-            double currentTime = EditorApplication.timeSinceStartup;
-            double timeSinceLastClick = currentTime - lastClickTime;
-
-            if (timeSinceLastClick <= doubleClickThreshold)
-            {
-                doubleClickCount++;
-                ClearSelection();
-                HandleDoubleClick(unitId, currentLine);
-            }
-            else
-            {
-                doubleClickCount = 0;
-                if (evt.ctrlKey)
-                {
-                    if (selectedLabels.Contains((label, currentLine)))
-                        DeselectLabel(label, unitId, currentLine);
-                    else
-                        AddLabelToSelection(label, unitId, currentLine);
-                }
-                else
-                {
-                    ClearSelection();
-                    AddLabelToSelection(label, unitId, currentLine);
-                }
-            }
-
-            lastClickTime = currentTime;
+            float lineHeight = LineHeight * visualZoom;
+            scrollPosition.y = line * lineHeight;
         }
 
-        private void HandleDoubleClick(string unitId, int currentLine)
+        [SerializeField]
+        private static CSharpPreviewWindow window;
+        public static void RefreshPreview(bool open = false)
         {
-            if (doubleClickCount == 1)
+            if (window == null && open) window = GetWindow<CSharpPreviewWindow>();
+            if (window != null)
             {
+<<<<<<< Updated upstream
                 SelectWholeLine(currentLine, unitId);
             }
             // else if (doubleClickCount == 2)
@@ -1671,5 +2030,11 @@ namespace Unity.VisualScripting.Community
             float targetPosition = (lineNumber - 1) * lineHeight;
             scrollView.scrollOffset = new Vector2(scrollView.scrollOffset.x, targetPosition);
         }
+=======
+                window.UpdateCodeDisplay();
+                window.Repaint();
+            }
+        }
+>>>>>>> Stashed changes
     }
 }

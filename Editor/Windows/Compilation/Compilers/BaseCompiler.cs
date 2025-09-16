@@ -15,7 +15,7 @@ namespace Unity.VisualScripting.Community
 
         protected abstract string GetFilePath(UnityEngine.Object asset, PathConfig paths);
         protected abstract string GenerateCode(UnityEngine.Object asset);
-        protected abstract void PostProcess(UnityEngine.Object asset, string relativePath);
+        protected abstract void PostProcess(UnityEngine.Object asset, PathConfig paths);
 
         public void Compile(UnityEngine.Object asset, PathConfig paths)
         {
@@ -26,10 +26,9 @@ namespace Unity.VisualScripting.Community
             string code = GenerateCode(asset);
             HUMIO.Save(code).Custom(fullPath).Text(false);
 
-            string relativePath = fullPath.Replace(Application.dataPath, "Assets");
             CompilationPipeline.compilationFinished += (v) =>
             {
-                PostProcess(asset, relativePath);
+                PostProcess(asset, paths);
             };
         }
 

@@ -1,3 +1,4 @@
+using System;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -10,6 +11,7 @@ namespace Unity.VisualScripting.Community
     [UnitTitle("SendTaskEvent")]
     [UnitCategory("Events\\Community")]
     [TypeIcon(typeof(EventUnit<EmptyEventArgs>))]
+    [Obsolete]
     public class TriggerNextTask : Unit
     {
         [DoNotSerialize]

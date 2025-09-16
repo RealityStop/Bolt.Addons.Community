@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(Cooldown))]
-    public class CooldownGenerator : VariableNodeGenerator
+    public class CooldownGenerator : UpdateVariableNodeGenerator
     {
         public CooldownGenerator(Cooldown unit) : base(unit)
         {
@@ -29,7 +29,7 @@ namespace Unity.VisualScripting.Community
 
         public override bool HasDefaultValue => true;
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
         {
             variableName = Name;
             if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
@@ -38,6 +38,34 @@ namespace Unity.VisualScripting.Community
             }
 
             var output = string.Empty;
+<<<<<<< Updated upstream
+=======
+            if (!data.scopeGeneratorData.TryGetValue(Unit.enter, out _))
+            {
+                data.scopeGeneratorData.Add(Unit.enter, true);
+
+                string readyCallback = Unit.exitReady.hasValidConnection ? GetAction(Unit.exitReady, data) : null;
+                string notReadyCallback = Unit.exitNotReady.hasValidConnection ? GetAction(Unit.exitNotReady, data) : null;
+                string onTickCallback = Unit.tick.hasValidConnection ? GetAction(Unit.tick, data) : null;
+                string onCompleteCallback = Unit.becameReady.hasValidConnection ? GetAction(Unit.becameReady, data) : null;
+
+                var parameters = new[]
+                {
+                    readyCallback ?? MakeClickableForThisUnit("null".ConstructHighlight()),
+                    notReadyCallback ?? MakeClickableForThisUnit("null".ConstructHighlight()),
+                    onTickCallback ?? MakeClickableForThisUnit("null".ConstructHighlight()),
+                    onCompleteCallback ?? MakeClickableForThisUnit("null".ConstructHighlight())
+                };
+
+                string paramList = string.Join(MakeClickableForThisUnit(", "), parameters);
+
+                output += CodeBuilder.Indent(indent)
+                    + MakeClickableForThisUnit(variableName.VariableHighlight() + ".Initialize(")
+                    + paramList
+                    + MakeClickableForThisUnit(");")
+                    + "\n";
+            }
+>>>>>>> Stashed changes
 
             if (input == Unit.enter)
             {
@@ -50,6 +78,7 @@ namespace Unity.VisualScripting.Community
 
             if (Unit.exitReady.hasValidConnection && !data.generatorData.TryGetValue(Unit.exitReady, out var readyGenerated))
             {
+<<<<<<< Updated upstream
                 data.generatorData.Add(Unit.exitReady, true);
                 output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnReady".VariableHighlight() + " += ") + GetAction(Unit.exitReady, indent, data) + MakeSelectableForThisUnit(";") + "\n";
             }
@@ -70,6 +99,16 @@ namespace Unity.VisualScripting.Community
             {
                 data.generatorData.Add(Unit.becameReady, true);
                 output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnCompleteAction".VariableHighlight() + " += ") + GetAction(Unit.becameReady, indent, data) + MakeSelectableForThisUnit(";") + "\n";
+=======
+                if (port.hasValidConnection && !data.scopeGeneratorData.TryGetValue(port, out _))
+                {
+                    data.scopeGeneratorData.Add(port, true);
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("void ".ConstructHighlight()) + GetAction(port, data) + MakeClickableForThisUnit("()") + "\n";
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
+                    output += GetNextUnit(port, data, indent + 1);
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
+                }
+>>>>>>> Stashed changes
             }
 
             return output;
@@ -101,6 +140,11 @@ namespace Unity.VisualScripting.Community
                 return MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "RemainingPercentage".VariableHighlight());
             }
             return base.GenerateValue(output, data);
+        }
+
+        public override string GenerateUpdateCode(ControlGenerationData data, int indent)
+        {
+            return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".Update();");
         }
     }
 }

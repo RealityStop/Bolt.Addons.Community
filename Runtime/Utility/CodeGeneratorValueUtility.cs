@@ -135,17 +135,14 @@ namespace Unity.VisualScripting.Community
             {
                 try
                 {
-                    using (var fs = new FileStream(SAVE_PATH, FileMode.Create, FileAccess.Write, FileShare.None))
-                    using (var writer = new StreamWriter(fs))
-                    {
-                        writer.Write(json);
-                    }
+                    using var fs = new FileStream(SAVE_PATH, FileMode.Create, FileAccess.Write, FileShare.None);
+                    using var writer = new StreamWriter(fs);
+                    writer.Write(json);
                     break;
                 }
                 catch (IOException ex)
                 {
-                    Debug.LogWarning($"Failed to write file: {ex.Message}. Retrying...");
-                    System.Threading.Thread.Sleep(100);
+                    Debug.LogWarning($"Failed to write file: {ex.Message}.");
                 }
             }
         }
@@ -236,6 +233,9 @@ namespace Unity.VisualScripting.Community
         private static Object EnsureCurrentAsset()
         {
 #if UNITY_EDITOR
+
+            if (currentAsset != null) return currentAsset;
+            
             if (Selection.activeGameObject != null)
             {
                 currentAsset = requestMachine?.Invoke(Selection.activeGameObject);
@@ -299,7 +299,6 @@ namespace Unity.VisualScripting.Community
                 return false;
             }
 
-            // Only look for variables in the current ScriptMachine's context
             if (target is ScriptMachine scriptMachine)
             {
                 if (ObjectValueHandlers.TryGetValue(scriptMachine, out var values) &&

@@ -6,6 +6,7 @@ namespace Unity.VisualScripting.Community
     [RenamedFrom("Bolt.Addons.Community.Utility.IDelegate")]
     public interface IDelegate
     {
+        Unit Unit { get; set; }
         string DisplayName { get; }
         object GetDelegate();
         Type GetDelegateType();

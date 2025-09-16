@@ -40,7 +40,7 @@ namespace Unity.VisualScripting.Community
         /// event, essentially cancelling the call to RegisterListener.</returns>
         public static IDisposable RegisterListener<T>(GameObject target, Action<T> onEvent)
         {
-            return DefinedEventNode.RegisterListener<T>(target, onEvent);
+            return DefinedEventNode.RegisterListener(target, onEvent);
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace Unity.VisualScripting.Community
         /// event, essentially cancelling the call to RegisterListener.</returns>
         public static IDisposable RegisterGlobalListener<T>(Action<T> onEvent)
         {
-            return GlobalDefinedEventNode.RegisterListener<T>(onEvent);
+            return GlobalDefinedEventNode.RegisterListener(onEvent);
         }
     }
 }

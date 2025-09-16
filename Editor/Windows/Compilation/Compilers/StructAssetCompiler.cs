@@ -19,11 +19,19 @@ namespace Unity.VisualScripting.Community
             return StructAssetGenerator.GetSingleDecorator(structAsset).GenerateClean(0);
         }
 
-        protected override void PostProcess(UnityEngine.Object asset, string relativePath)
+        private string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
         {
             var structAsset = (StructAsset)asset;
-            var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(relativePath);
+            return Path.Combine(paths.ObjectsRelativePath, structAsset.title.LegalMemberName() + ".cs");
+        }
+
+        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
+        {
+            var structAsset = (StructAsset)asset;
+            var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(GetRelativeFilePath(asset, paths));
             scriptImporter.SetIcon(structAsset.icon);
+            if (!structAsset.lastCompiledNames.Contains(structAsset.GetFullTypeName()))
+                structAsset.lastCompiledNames.Add(structAsset.GetFullTypeName());
         }
     }
 }

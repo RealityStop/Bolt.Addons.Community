@@ -235,7 +235,19 @@ namespace Unity.VisualScripting.Community
 
                 EditorGUI.indentLevel--;
 
+<<<<<<< Updated upstream
                 GUILayout.Space(10);
+=======
+                    if (valueInput.type != null && ComponentHolderProtocol.IsComponentHolderType(valueInput.type))
+                    {
+                        valueInput.nullMeansSelf = EditorGUILayout.Toggle("Null Means Self", valueInput.nullMeansSelf);
+                    }
+
+                    EditorGUI.indentLevel--;
+
+                });
+                GUILayout.Space(2);
+>>>>>>> Stashed changes
             }
 
             foreach (int index in indicesToRemove)

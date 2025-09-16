@@ -36,6 +36,11 @@ namespace Unity.VisualScripting.Community
             }
         }
 
+        private string GetSceneKind(ControlGenerationData data, string variables)
+        {
+            return typeof(Component).IsAssignableFrom(data.ScriptType) ? variables + ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")" : variables + "." + "Application".VariableHighlight();
+        }
+
         private void SetNamespaceBasedOnVariableKind()
         {
             NameSpaces = Unit.kind == VariableKind.Scene ? "UnityEngine.SceneManagement" : string.Empty;
@@ -60,10 +65,17 @@ namespace Unity.VisualScripting.Community
             var variables = typeof(VisualScripting.Variables).As().CSharpName(true, true);
             return Unit.kind switch
             {
+<<<<<<< Updated upstream
                 VariableKind.Object => MakeSelectableForThisUnit(variables + $".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeSelectableForThisUnit($").Get{typeString}(")}",
                 VariableKind.Scene => MakeSelectableForThisUnit(variables + $"." + "ActiveScene".VariableHighlight() + $".Get{typeString}("),
                 VariableKind.Application => MakeSelectableForThisUnit(variables + "." + "Application".VariableHighlight() + $".Get{typeString}("),
                 VariableKind.Saved => MakeSelectableForThisUnit(variables + "." + "Saved".VariableHighlight()) + $".Get{typeString}(",
+=======
+                VariableKind.Object => MakeClickableForThisUnit(variables + $".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeClickableForThisUnit($").Get{typeString}(")}",
+                VariableKind.Scene => MakeClickableForThisUnit(GetSceneKind(data, variables) + $".Get{typeString}("),
+                VariableKind.Application => MakeClickableForThisUnit(variables + "." + "Application".VariableHighlight() + $".Get{typeString}("),
+                VariableKind.Saved => MakeClickableForThisUnit(variables + "." + "Saved".VariableHighlight() + $".Get{typeString}("),
+>>>>>>> Stashed changes
                 _ => string.Empty,
             };
         }

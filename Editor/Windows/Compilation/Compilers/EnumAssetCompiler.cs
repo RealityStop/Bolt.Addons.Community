@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
             return EnumAssetGenerator.GetSingleDecorator(enumAsset).GenerateClean(0);
         }
 
-        protected override void PostProcess(UnityEngine.Object asset, string relativePath)
+        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
         {
             var enumAsset = (EnumAsset)asset;
             var name = enumAsset.category + (string.IsNullOrEmpty(enumAsset.category) ? string.Empty : ".") + enumAsset.title.LegalMemberName();

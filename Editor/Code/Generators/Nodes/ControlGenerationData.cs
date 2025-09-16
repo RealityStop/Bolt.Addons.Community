@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+<<<<<<< Updated upstream
 using System.Linq;
+=======
+using Unity.VisualScripting.Community.Libraries.Humility;
+>>>>>>> Stashed changes
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Void = Unity.VisualScripting.Community.Libraries.CSharp.Void;
@@ -9,6 +13,7 @@ namespace Unity.VisualScripting.Community
 {
     public sealed class ControlGenerationData
     {
+<<<<<<< Updated upstream
         public Type returns { get; set; } = typeof(void);
         public bool mustBreak { get; set; }
         public bool hasBroke { get; set; }
@@ -20,6 +25,16 @@ namespace Unity.VisualScripting.Community
         private readonly Stack<GeneratorScope> preservedScopes = new();
         private readonly Stack<(Type type, bool isMet)> expectedTypes = new();
         public readonly Dictionary<object, object> generatorData = new();
+=======
+        private readonly Stack<GeneratorScope> scopes = new();
+        private readonly Stack<GeneratorScope> preservedScopes = new();
+        private readonly Stack<(Type type, bool isMet)> expectedTypes = new();
+        /// <summary>
+        /// Store any extra info
+        /// </summary>
+        public Dictionary<object, object> scopeGeneratorData { get => PeekScope().generatorData; }
+        public Dictionary<object, object> globalGeneratorData = new Dictionary<object, object>();
+>>>>>>> Stashed changes
         private readonly Dictionary<Unit, UnitSymbol> unitSymbols = new();
         
         private int scopeIdCounter;
@@ -125,6 +140,105 @@ namespace Unity.VisualScripting.Community
                 return AddLocalNameInScope(name, type);
             }
         }
+<<<<<<< Updated upstream
+=======
+        #region Scope Management
+
+        Dictionary<string, int> methodIndex = new Dictionary<string, int>();
+
+        public string AddMethodName(string originalName)
+        {
+            if (!methodIndex.TryGetValue(originalName, out var index))
+            {
+                methodIndex[originalName] = 0;
+            }
+            else
+            {
+                index++;
+                methodIndex[originalName] = index;
+                originalName += index;
+            }
+            return originalName;
+        }
+
+        int methodId;
+        public void EnterMethod()
+        {
+            methodId++;
+            NewScope();
+        }
+        public void ExitMethod()
+        {
+            while (preservedScopes.TryPeek(out var result) && result.methodId == methodId)
+            {
+                preservedScopes.Pop();
+            }
+            methodId--;
+            ExitScope(true);
+        }
+        public void NewScope()
+        {
+            var parent = PeekScope();
+            var newScope = new GeneratorScope(parent, methodId);
+
+            if (parent != null)
+            {
+                newScope.MustBreak = parent.MustBreak;
+                newScope.Returns = parent.Returns;
+            }
+
+            scopes.Push(newScope);
+        }
+
+
+        public void ExitScope(bool exitingMethod = false)
+        {
+            var exitingScope = scopes.Pop();
+            if (!exitingMethod)
+                preservedScopes.Push(exitingScope);
+
+            if (exitingScope.ParentScope != null)
+            {
+                exitingScope.ParentScope.HasReturned = exitingScope.HasReturned;
+                exitingScope.ParentScope.HasBroke = exitingScope.HasBroke;
+            }
+        }
+
+        private GeneratorScope PeekScope()
+        {
+            if (scopes.Count > 0)
+                return scopes.Peek();
+            else
+                return null;
+        }
+
+        public Type Returns => PeekScope()?.Returns ?? typeof(void);
+        public bool MustReturn => PeekScope()?.MustReturn ?? false;
+        public bool HasReturned => PeekScope()?.HasReturned ?? false;
+        public bool MustBreak => PeekScope()?.MustBreak ?? false;
+        public bool HasBroke => PeekScope()?.HasBroke ?? false;
+
+        public void SetHasReturned(bool value)
+        {
+            var scope = PeekScope();
+            if (scope != null) scope.HasReturned = value;
+        }
+        public void SetMustBreak(bool value)
+        {
+            var scope = PeekScope();
+            if (scope != null) scope.MustBreak = value;
+        }
+        public void SetHasBroke(bool value)
+        {
+            var scope = PeekScope();
+            if (scope != null) scope.HasBroke = value;
+        }
+        public void SetReturns(Type type)
+        {
+            var scope = PeekScope();
+            if (scope != null) scope.Returns = type;
+        }
+>>>>>>> Stashed changes
 
         public bool ContainsNameInAnyScope(string name)
         {
@@ -140,12 +254,21 @@ namespace Unity.VisualScripting.Community
             return false;
         }
 
+<<<<<<< Updated upstream
         public string GetVariableName(string name)
+=======
+        #endregion
+
+        #region Variable Management
+        public string GetVariableName(string name, bool errorIfNotFound = false, string error = "")
+>>>>>>> Stashed changes
         {
+            bool exists = false;
             foreach (var scope in scopes)
             {
                 if (scope.nameMapping.TryGetValue(name, out string variableName))
                 {
+                    exists = true;
                     return variableName;
                 }
             }
@@ -154,8 +277,14 @@ namespace Unity.VisualScripting.Community
             {
                 if (preservedScope.nameMapping.TryGetValue(name, out string variableName))
                 {
+                    exists = true;
                     return variableName;
                 }
+            }
+
+            if (errorIfNotFound && !exists)
+            {
+                return error;
             }
 
             return name;
@@ -246,6 +375,7 @@ namespace Unity.VisualScripting.Community
             this.graphPointer = graphPointer;
         }
 
+<<<<<<< Updated upstream
         public ControlGenerationData(ControlGenerationData data)
         {
             returns = data.returns ?? typeof(Void);
@@ -262,13 +392,28 @@ namespace Unity.VisualScripting.Community
         }
 
         public sealed class GeneratorScope
+=======
+        private sealed class GeneratorScope
+>>>>>>> Stashed changes
         {
             public string Id { get; private set; } = string.Empty;
             public Dictionary<string, Type> scopeVariables { get; private set; }
             public Dictionary<string, string> nameMapping { get; private set; }
             public GeneratorScope ParentScope { get; private set; }
 
+<<<<<<< Updated upstream
             public GeneratorScope(string id, Dictionary<string, Type> scopeVariables, Dictionary<string, string> nameMapping, GeneratorScope parentScope)
+=======
+            public Type Returns { get; set; } = typeof(void);
+            public bool MustBreak { get; set; }
+            public bool HasBroke { get; set; }
+            public bool MustReturn { get => !Returns.Is().Void(); }
+            public bool HasReturned { get; set; }
+
+            public int methodId { get; private set; }
+
+            public GeneratorScope(GeneratorScope parentScope, int methodId)
+>>>>>>> Stashed changes
             {
                 Id = id;
                 this.scopeVariables = scopeVariables;

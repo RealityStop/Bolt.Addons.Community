@@ -10,14 +10,22 @@ namespace Unity.VisualScripting.Community
     {
         public Member member;
         public MemberType memberType;
+
+        public override IEnumerable<object> GetAotStubs(HashSet<object> visited)
+        {
+            if (member != null && member.isReflected)
+            {
+                yield return member.info;
+            }
+        }
     }
-    
+
     public enum MethodType
     {
         Invoke,
         ReturnValue
     }
-    
+
     public enum MemberType
     {
         Property,

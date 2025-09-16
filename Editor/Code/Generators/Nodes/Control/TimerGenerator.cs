@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community 
 {
     [NodeGenerator(typeof(Timer))]
-    public class TimerGenerator : VariableNodeGenerator
+    public class TimerGenerator : UpdateVariableNodeGenerator
     {
         public TimerGenerator(Timer unit) : base(unit)
         {
@@ -26,6 +26,7 @@ namespace Unity.VisualScripting.Community
         public override object DefaultValue => new TimerLogic();
     
         public override bool HasDefaultValue => true;
+<<<<<<< Updated upstream
     
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
@@ -37,6 +38,38 @@ namespace Unity.VisualScripting.Community
     
             var output = string.Empty;
     
+=======
+
+        public override bool Literal => false;
+
+        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
+        {
+            variableName = Name;
+            var output = string.Empty;
+            if (Unit.start.hasValidConnection && !data.scopeGeneratorData.TryGetValue(Unit.start, out _))
+            {
+                data.scopeGeneratorData.Add(Unit.start, true);
+                string turnedOnCallback = Unit.completed.hasValidConnection ? GetAction(Unit.completed, data) : null;
+                string turnedOffCallback = Unit.tick.hasValidConnection ? GetAction(Unit.tick, data) : null;
+
+                var parameters = new List<string>();
+                if (turnedOnCallback != null)
+                    parameters.Add(turnedOnCallback);
+                else if (turnedOffCallback != null)
+                    parameters.Add(MakeClickableForThisUnit("null".ConstructHighlight()));
+
+                if (turnedOffCallback != null)
+                    parameters.Add(turnedOffCallback);
+
+                string paramList = string.Join(MakeClickableForThisUnit(", "), parameters);
+
+                output += CodeBuilder.Indent(indent)
+                    + MakeClickableForThisUnit(variableName.VariableHighlight() + ".Initialize(")
+                    + paramList
+                    + MakeClickableForThisUnit(");") + "\n";
+            }
+
+>>>>>>> Stashed changes
             if (input == Unit.start)
             {
                 var action = GetAction(Unit.started, indent, data);
@@ -57,8 +90,19 @@ namespace Unity.VisualScripting.Community
     
             if (Unit.tick.hasValidConnection && !data.generatorData.TryGetValue(Unit.tick, out var tickGenerated))
             {
+<<<<<<< Updated upstream
                 data.generatorData.Add(Unit.tick, true);
                 output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnTick".VariableHighlight() + " += ") + GetAction(Unit.tick, indent, data) + MakeSelectableForThisUnit(";") + "\n";
+=======
+                if (port.hasValidConnection && !data.scopeGeneratorData.TryGetValue(port, out _))
+                {
+                    data.scopeGeneratorData.Add(port, true);
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("void ".ConstructHighlight()) + GetAction(port, data) + MakeClickableForThisUnit("()") + "\n";
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
+                    output += GetNextUnit(port, data, indent + 1);
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
+                }
+>>>>>>> Stashed changes
             }
     
             if (Unit.completed.hasValidConnection && !data.generatorData.TryGetValue(Unit.completed, out var completedGenerated))
@@ -104,5 +148,14 @@ namespace Unity.VisualScripting.Community
             }
             return base.GenerateValue(output, data);
         }
+<<<<<<< Updated upstream
     } 
+=======
+
+        public override string GenerateUpdateCode(ControlGenerationData data, int indent)
+        {
+            return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".Update();");
+        }
+    }
+>>>>>>> Stashed changes
 }

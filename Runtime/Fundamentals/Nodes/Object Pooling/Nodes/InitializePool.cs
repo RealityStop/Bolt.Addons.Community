@@ -3,17 +3,26 @@ using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community
 {
-
     [UnitCategory("Community\\ObjectPooling")]
     [UnitTitle("Initialize Pool")]
+    [UnitSurtitle("Object Pool")]
+    [RenamedFrom("InitializePoolNode")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.InitializePoolNode")]
     public class InitializePoolNode : Unit
     {
-        [UnitHeaderInspectable("CustomParent")]
+        [Inspectable]
+        [InspectorLabel("Custom Parent", "If enabled, lets you specify a GameObject to act as the parent for the pool. If disabled, a new parent GameObject will be created automatically.")]
+        [InspectorExpandTooltip]
+        [InspectorWide(false)]
+        [InspectorToggleLeft]
         public bool CustomParent = true;
+
         [DoNotSerialize]
+        [PortLabelHidden]
         public ControlInput Enter;
 
         [DoNotSerialize]
+        [PortLabelHidden]
         public ControlOutput Initialized;
 
         [DoNotSerialize]
@@ -25,7 +34,7 @@ namespace Unity.VisualScripting.Community
         public ValueInput InitialPoolSize;
 
         [DoNotSerialize]
-        [PortLabelHidden]
+        [PortLabel("Pool")]
         public ValueOutput ObjectPool;
 
         [DoNotSerialize]
@@ -43,10 +52,10 @@ namespace Unity.VisualScripting.Community
                 parent = ValueInput<GameObject>(nameof(parent), default).NullMeansSelf();
             }
             Prefab = ValueInput<GameObject>(nameof(Prefab), null);
-            InitialPoolSize = ValueInput<int>(nameof(InitialPoolSize), 10);
+            InitialPoolSize = ValueInput(nameof(InitialPoolSize), 10);
 
 
-            ObjectPool = ValueOutput<CustomObjectPool>(nameof(ObjectPool));
+            ObjectPool = ValueOutput<ObjectPool>(nameof(ObjectPool));
 
             Succession(Enter, Initialized);
             Assignment(Enter, ObjectPool);
@@ -57,28 +66,7 @@ namespace Unity.VisualScripting.Community
             var prefab = flow.GetValue<GameObject>(Prefab);
             var initialPoolSize = flow.GetValue<int>(InitialPoolSize);
 
-            GameObject poolParentGO = null;
-            if (CustomParent)
-            {
-                poolParentGO = flow.GetValue<GameObject>(parent);
-            }
-            else
-            {
-                poolParentGO = new GameObject("ObjectPoolParent");
-            }
-            var customObjectPool = poolParentGO.AddComponent<CustomObjectPool>();
-            flow.SetValue(ObjectPool, poolParentGO.GetComponent<CustomObjectPool>());
-            customObjectPool.Initialize(prefab, initialPoolSize);
-
-            // Set all pooled objects as children of the pool's parent
-            var children = poolParentGO.GetComponentsInChildren<Transform>();
-            foreach (var child in children)
-            {
-                if (child != poolParentGO.transform)
-                {
-                    child.SetParent(poolParentGO.transform);
-                }
-            }
+            flow.SetValue(ObjectPool, Community.ObjectPool.CreatePool(initialPoolSize, prefab, CustomParent ? flow.GetValue<GameObject>(parent) : null));
 
             return Initialized;
         }

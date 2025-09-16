@@ -10,7 +10,7 @@
         {
 
         }
-
+        
         protected override EditorTexture DefaultIcon()
         {
             return PathUtil.Load("multi_array", CommunityEditorPath.Fundamentals);

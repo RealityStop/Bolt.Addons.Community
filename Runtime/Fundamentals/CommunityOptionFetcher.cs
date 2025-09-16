@@ -28,16 +28,18 @@ namespace Unity.VisualScripting.Community
                         return false;
                     }).ToList();
 
-                if (types.Count() > 1)
+                // Exclude DefaultCommunityOptions
+                var nonDefaultTypes = types.Where(t => t != typeof(DefaultCommunityOptions)).ToList();
+
+                if (nonDefaultTypes.Count > 1)
                 {
                     Debug.LogError("Multiple Community Options scripts found.");
                     return;
                 }
 
-                if (types.Count() == 1)
+                if (types.Count > 0)
                 {
-
-                    var options = Activator.CreateInstance(types.First());
+                    var options = Activator.CreateInstance(types.FirstOrDefault(t => t != typeof(DefaultCommunityOptions)) ?? types.FirstOrDefault());
                     if (options is CommunityOptions communityOptions)
                     {
                         DefinedEvent_ForceOptimizedInEditor = communityOptions.DefinedEvent_ForceOptimizedInEditor;
@@ -68,8 +70,6 @@ namespace Unity.VisualScripting.Community
         {
             return input ? "True" : "False";
         }
-
-
 
         public static bool DefinedEvent_ForceOptimizedInEditor { get; } = false;
         public static bool DefinedEvent_RestrictEventTypes { get; } = true;

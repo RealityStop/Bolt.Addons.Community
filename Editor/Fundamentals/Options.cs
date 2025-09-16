@@ -3,7 +3,12 @@ using System.Linq;
 using System;
 using UnityEditor;
 using System.Reflection;
-using UnityEngine;
+using UnityEngine.SceneManagement;
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
 
 namespace Unity.VisualScripting.Community.Variables.Editor
 {
@@ -36,7 +41,7 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             UnitBase.staticUnitsExtensions.Add(GetStaticOptions);
             UnitBase.staticUnitsExtensions.Add(StaticEditorOptions);
             UnitBase.dynamicUnitsExtensions.Add(DynamicEditorOptions);
-            UnitBase.dynamicUnitsExtensions.Add(MachineVariableOptions);
+            UnitBase.contextualUnitsExtensions.Add(MachineVariableOptions);
             UnitBase.contextualUnitsExtensions.Add(InheritedMembersOptions);
             UnitBase.contextualUnitsExtensions.Add(GenericOptions);
             UnitBase.dynamicUnitsExtensions.Add(GetDynamicOptions);
@@ -93,28 +98,34 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             }
         }
 
-        private static IEnumerable<IUnitOption> MachineVariableOptions()
+        private static IEnumerable<IUnitOption> MachineVariableOptions(GraphReference reference)
         {
-            List<IUnitOption> options = new List<IUnitOption>();
+            if (!reference.scene.HasValue || !reference.scene.Value.IsValid())
+                yield break;
+                
+            var scene = reference.scene.Value;
 
-            string[] scriptGraphAssetGuids = AssetDatabase.FindAssets($"t:{typeof(ScriptGraphAsset)}");
-            foreach (var scriptGraphAssetGuid in scriptGraphAssetGuids)
+            foreach (var root in scene.GetRootGameObjects())
             {
-                string assetPath = AssetDatabase.GUIDToAssetPath(scriptGraphAssetGuid);
-                ScriptGraphAsset scriptGraphAsset = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(assetPath);
-
-                var variables = scriptGraphAsset.graph.variables;
-
-                foreach (var variable in variables)
+                foreach (var machine in root.GetComponentsInChildren<SMachine>(true))
                 {
-                    options.Add(new SetMachineVariableNodeOption(new SetMachineVariableNode() { asset = scriptGraphAsset, defaultName = variable.name }));
-                    options.Add(new GetMachineVariableNodeOption(new GetMachineVariableNode() { asset = scriptGraphAsset, defaultName = variable.name }));
-                }
-            }
+                    if (machine == reference.machine as SMachine) continue;
+                    var graph = machine.graph;
+                    if (graph == null || graph.variables == null)
+                        continue;
 
-            foreach (var option in options)
-            {
-                yield return option;
+                    foreach (var variable in graph.variables)
+                    {
+                        if (string.IsNullOrEmpty(variable.name))
+                            continue;
+
+                        yield return new SetMachineVariableNodeOption(
+                            new SetMachineVariableNode { defaultName = variable.name, defaultTarget = machine });
+
+                        yield return new GetMachineVariableNodeOption(
+                            new GetMachineVariableNode { defaultName = variable.name, defaultTarget = machine });
+                    }
+                }
             }
         }
 

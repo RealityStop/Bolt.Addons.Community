@@ -14,7 +14,11 @@ namespace Unity.VisualScripting.Community
 
             var dividend = GenerateValue(Unit.dividend, data);
             var divisor = GenerateValue(Unit.divisor, data);
+<<<<<<< Updated upstream
             return dividend + MakeSelectableForThisUnit(" / ") + divisor;
+=======
+            return MakeClickableForThisUnit("(") + dividend + MakeClickableForThisUnit(" / ") + divisor + MakeClickableForThisUnit(")");
+>>>>>>> Stashed changes
         }
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)

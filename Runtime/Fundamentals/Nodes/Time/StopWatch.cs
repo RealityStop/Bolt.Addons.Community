@@ -1,5 +1,3 @@
-using UnityEngine;
-using Unity.VisualScripting;
 using System.Diagnostics;
 
 namespace Unity.VisualScripting.Community
@@ -54,10 +52,7 @@ namespace Unity.VisualScripting.Community
 
         private ControlOutput StopStopwatch(Flow flow)
         {
-            if (stopwatch != null)
-            {
-                stopwatch.Stop();
-            }
+            stopwatch?.Stop();
             return stopped;
         }
 

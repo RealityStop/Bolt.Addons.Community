@@ -24,6 +24,7 @@ namespace Unity.VisualScripting.Community
             {
                 @struct.ImplementInterface(@interface);
             }
+            Dictionary<string, int> methodIndex = new Dictionary<string, int>();
             foreach (var attribute in Data.attributes)
             {
                 var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
@@ -65,8 +66,57 @@ namespace Unity.VisualScripting.Community
                     var usings = new List<string>();
                     foreach (var _unit in Data.constructors[i].graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                     {
+<<<<<<< Updated upstream
                         if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces))
                             usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces);
+=======
+                        var generator = unit.GetGenerator();
+                        if (generator.GetType().IsDefined(typeof(RequiresVariablesAttribute), true))
+                        {
+                            if (generator is IRequireVariables variables)
+                            {
+                                foreach (var variable in variables.GetRequiredVariables(data))
+                                {
+                                    @struct.AddField(variable);
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogError(generator.GetType().DisplayName() + "Requires Variables does not implement IRequiresVariables");
+                            }
+                        }
+
+                        if (generator.GetType().IsDefined(typeof(RequiresMethodsAttribute), true))
+                        {
+                            if (generator is IRequireMethods methods)
+                            {
+                                foreach (var method in methods.GetRequiredMethods(data))
+                                {
+                                    var originalName = method.name;
+
+                                    if (!methodIndex.TryGetValue(originalName, out var index))
+                                    {
+                                        methodIndex[originalName] = 0;
+                                    }
+                                    else
+                                    {
+                                        index++;
+                                        methodIndex[originalName] = index;
+                                        method.name = originalName + index;
+                                    }
+
+                                    @struct.AddMethod(method);
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogError(generator.GetType().DisplayName() + "Requires Methods but does not implement IRequiresMethods");
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(generator.NameSpaces))
+                            usings.Add(generator.NameSpaces.Replace("`", ",").Trim());
+>>>>>>> Stashed changes
 
                         HandleOtherGenerators(@struct, _unit.GetGenerator(), Data.constructors[i].GetReference());
                     }
@@ -133,6 +183,7 @@ namespace Unity.VisualScripting.Community
                         if (Data.variables[i].get)
                         {
                             var usings = new List<string>();
+<<<<<<< Updated upstream
                             foreach (var _unit in Data.variables[i].getter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                             {
                                 if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces))
@@ -141,6 +192,68 @@ namespace Unity.VisualScripting.Community
                                 HandleOtherGenerators(@struct, _unit.GetGenerator(), Data.variables[i].getter.GetReference());
                             }
 
+=======
+
+                            GraphTraversal.TraverseFlowGraph(Data.variables[i].getter.graph, unit =>
+                            {
+                                var generator = unit.GetGenerator();
+                                if (generator.GetType().IsDefined(typeof(RequiresVariablesAttribute), true))
+                                {
+                                    if (generator is IRequireVariables variables)
+                                    {
+                                        foreach (var variable in variables.GetRequiredVariables(data))
+                                        {
+                                            @struct.AddField(variable);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Debug.LogError(generator.GetType().DisplayName() + "Requires Variables does not implement IRequiresVariables");
+                                    }
+                                }
+
+                                if (generator.GetType().IsDefined(typeof(RequiresMethodsAttribute), true))
+                                {
+                                    if (generator is IRequireMethods methods)
+                                    {
+                                        foreach (var method in methods.GetRequiredMethods(data))
+                                        {
+                                            var originalName = method.name;
+
+                                            if (!methodIndex.TryGetValue(originalName, out var index))
+                                            {
+                                                methodIndex[originalName] = 0;
+                                            }
+                                            else
+                                            {
+                                                index++;
+                                                methodIndex[originalName] = index;
+                                                method.name = originalName + index;
+                                            }
+
+                                            @struct.AddMethod(method);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Debug.LogError(generator.GetType().DisplayName() + "Requires Methods but does not implement IRequiresMethods");
+                                    }
+                                }
+                                if (!string.IsNullOrEmpty(generator.NameSpaces))
+                                    usings.Add(generator.NameSpaces.Replace("`", ",").Trim());
+
+                                if (generator is InterfaceNodeGenerator interfaceNodeGenerator)
+                                {
+                                    foreach (var interfaceType in interfaceNodeGenerator.InterfaceTypes)
+                                    {
+                                        @struct.ImplementInterface(interfaceType);
+                                    }
+                                }
+
+                                HandleOtherGenerators(@struct, unit.GetGenerator());
+                            });
+
+>>>>>>> Stashed changes
                             @struct.AddUsings(usings);
                             var data = new ControlGenerationData(Data.variables[i].getter.GetReference())
                             {
@@ -161,8 +274,69 @@ namespace Unity.VisualScripting.Community
                             var usings = new List<string>();
                             foreach (var _unit in Data.variables[i].setter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                             {
+<<<<<<< Updated upstream
                                 if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces))
                                     usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces);
+=======
+                                var generator = unit.GetGenerator();
+
+                                if (generator.GetType().IsDefined(typeof(RequiresVariablesAttribute), true))
+                                {
+                                    if (generator is IRequireVariables variables)
+                                    {
+                                        foreach (var variable in variables.GetRequiredVariables(data))
+                                        {
+                                            @struct.AddField(variable);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Debug.LogError(generator.GetType().DisplayName() + "Requires Variables does not implement IRequiresVariables");
+                                    }
+                                }
+
+                                if (generator.GetType().IsDefined(typeof(RequiresMethodsAttribute), true))
+                                {
+                                    if (generator is IRequireMethods methods)
+                                    {
+                                        foreach (var method in methods.GetRequiredMethods(data))
+                                        {
+                                            var originalName = method.name;
+
+                                            if (!methodIndex.TryGetValue(originalName, out var index))
+                                            {
+                                                methodIndex[originalName] = 0;
+                                            }
+                                            else
+                                            {
+                                                index++;
+                                                methodIndex[originalName] = index;
+                                                method.name = originalName + index;
+                                            }
+
+                                            @struct.AddMethod(method);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Debug.LogError(generator.GetType().DisplayName() + "Requires Methods but does not implement IRequiresMethods");
+                                    }
+                                }
+
+                                if (!string.IsNullOrEmpty(generator.NameSpaces))
+                                    usings.Add(generator.NameSpaces.Replace("`", ",").Trim());
+
+                                if (generator is InterfaceNodeGenerator interfaceNodeGenerator)
+                                {
+                                    foreach (var interfaceType in interfaceNodeGenerator.InterfaceTypes)
+                                    {
+                                        @struct.ImplementInterface(interfaceType);
+                                    }
+                                }
+
+                                HandleOtherGenerators(@struct, unit.GetGenerator());
+                            });
+>>>>>>> Stashed changes
 
                                 HandleOtherGenerators(@struct, _unit.GetGenerator(), Data.variables[i].setter.GetReference());
                             }
@@ -267,10 +441,71 @@ namespace Unity.VisualScripting.Community
                         var usings = new List<string>();
                         foreach (var _unit in Data.methods[i].graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                         {
+<<<<<<< Updated upstream
                             if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces))
                                 usings.Add(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces);
                             HandleOtherGenerators(@struct, _unit.GetGenerator(), Data.methods[i].GetReference());
                         }
+=======
+                            var generator = unit.GetGenerator();
+
+                            if (generator.GetType().IsDefined(typeof(RequiresVariablesAttribute), true))
+                            {
+                                if (generator is IRequireVariables variables)
+                                {
+                                    foreach (var variable in variables.GetRequiredVariables(data))
+                                    {
+                                        @struct.AddField(variable);
+                                    }
+                                }
+                                else
+                                {
+                                    Debug.LogError(generator.GetType().DisplayName() + "Requires Variables does not implement IRequiresVariables");
+                                }
+                            }
+
+                            if (generator.GetType().IsDefined(typeof(RequiresMethodsAttribute), true))
+                            {
+                                if (generator is IRequireMethods methods)
+                                {
+                                    foreach (var method in methods.GetRequiredMethods(data))
+                                    {
+                                        var originalName = method.name;
+
+                                        if (!methodIndex.TryGetValue(originalName, out var index))
+                                        {
+                                            methodIndex[originalName] = 0;
+                                        }
+                                        else
+                                        {
+                                            index++;
+                                            methodIndex[originalName] = index;
+                                            method.name = originalName + index;
+                                        }
+
+                                        @struct.AddMethod(method);
+                                    }
+                                }
+                                else
+                                {
+                                    Debug.LogError(generator.GetType().DisplayName() + "Requires Methods but does not implement IRequiresMethods");
+                                }
+                            }
+
+                            if (!string.IsNullOrEmpty(generator.NameSpaces))
+                                usings.Add(generator.NameSpaces.Replace("`", ",").Trim());
+
+                            if (generator is InterfaceNodeGenerator interfaceNodeGenerator)
+                            {
+                                foreach (var interfaceType in interfaceNodeGenerator.InterfaceTypes)
+                                {
+                                    @struct.ImplementInterface(interfaceType);
+                                }
+                            }
+
+                            HandleOtherGenerators(@struct, unit.GetGenerator());
+                        });
+>>>>>>> Stashed changes
 
                         @struct.AddUsings(usings);
                         var unit = Data.methods[i].graph.units[0] as FunctionNode;
@@ -296,21 +531,11 @@ namespace Unity.VisualScripting.Community
             foreach (var variable in values)
             {
                 var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, variable.Value != null ? variable.Value.GetType() : typeof(UnityEngine.Object), variable.Key.LegalMemberName());
-                if (index == 0)
-                {
-                    var attribute = AttributeGenerator.Attribute(typeof(FoldoutAttribute));
-                    attribute.AddParameter("ObjectReferences");
-                    field.AddAttribute(attribute);
-                }
-                else
-                {
-                    field.AddAttribute(AttributeGenerator.Attribute(typeof(HideInInspector)));
-                }
 
-                if (index == values.Count - 1)
-                {
-                    field.AddAttribute(AttributeGenerator.Attribute(typeof(FoldoutEndAttribute)));
-                }
+                var attribute = AttributeGenerator.Attribute(typeof(FoldoutAttribute));
+                attribute.AddParameter("ObjectReferences");
+                field.AddAttribute(attribute);
+
                 @struct.AddField(field);
                 index++;
             }

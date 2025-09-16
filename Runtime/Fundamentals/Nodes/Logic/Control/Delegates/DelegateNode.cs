@@ -43,6 +43,7 @@ namespace Unity.VisualScripting.Community
 
             if (_delegate != null)
             {
+                _delegate.Unit = this;
                 Callback = ValueOutput(_delegate.GetDelegateType(), nameof(Callback), (flow) =>
                 {
                     var _flow = Flow.New(flow.stack.AsReference());

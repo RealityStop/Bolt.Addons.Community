@@ -211,7 +211,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 }
                 body += "}";
 
-                // Add default value for auto-implemented properties if needed
                 if (hasDefault && defaultValue != null && modifier != PropertyModifier.Override)
                 {
                     body += " = " + defaultValue.As().Code(true, true, true, "", false, true, false) + ";";
@@ -219,10 +218,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
             else
             {
-                // Handle properties with implementations
                 body = "\n" + CodeBuilder.Indent(indent) + "{";
 
-                // Getter
                 if (hasGetter)
                 {
                     body += "\n" + CodeBuilder.Indent(indent + 1) + getterscope + "get".ConstructHighlight();
@@ -238,7 +235,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                     }
                 }
 
-                // Setter
                 if (hasSetter)
                 {
                     if (hasGetter) body += "\n";

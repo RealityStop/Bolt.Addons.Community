@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community
             xFieldRatio,
             tempFloat,
 #pragma warning disable 0414
-            guiScale = 1f;      // Unused at this stage
+            guiScale = 1f;      // Unused
 #pragma warning restore 0414
 
         static bool
@@ -46,7 +46,7 @@ namespace Unity.VisualScripting.Community
             copyContent,
 
             customAddColor,
-            scaleGUI;           // Unused at this stage
+            scaleGUI;           // Unused
 
 
         static readonly GUIStyle
@@ -60,7 +60,6 @@ namespace Unity.VisualScripting.Community
             copyUnit,
             unit;
 
-        // For palette calculations
         const int
             columns = 9,
             rows = 6;

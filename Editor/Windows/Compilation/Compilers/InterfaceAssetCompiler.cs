@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
             return InterfaceAssetGenerator.GetSingleDecorator(interfaceAsset).GenerateClean(0);
         }
 
-        protected override void PostProcess(UnityEngine.Object asset, string relativePath)
+        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
         {
             var interfaceAsset = (InterfaceAsset)asset;
             var name = interfaceAsset.title.LegalMemberName();

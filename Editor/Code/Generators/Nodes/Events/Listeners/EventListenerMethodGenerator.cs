@@ -26,7 +26,7 @@ namespace Unity.VisualScripting.Community
             if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeSelectableForThisUnit(CodeUtility.ToolTip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
             return CodeBuilder.Indent(indent) + (GetTargetValueInput() != null ? GenerateValue(GetTargetValueInput(), data) + MakeSelectableForThisUnit(GetListenerSetupCode()) : MakeSelectableForThisUnit(GetListenerSetupCode()));
         }
-        
+
         protected abstract ValueInput GetTargetValueInput();
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
@@ -44,6 +44,11 @@ namespace Unity.VisualScripting.Community
             {
                 return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
             }
+        }
+
+        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
+        {
+            return GetNextUnit(OutputPort, data, indent);
         }
     }
 }

@@ -4,15 +4,23 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community
 {
     public class CSharpPreviewSettingsManager
     {
         private CSharpPreviewSettings settings;
-    
+        bool isInitalized;
         public void InitializeSettings()
         {
+<<<<<<< Updated upstream
             var path = "Assets/Unity.VisualScripting.Community.Generated/";
+=======
+            if (isInitalized) return;
+
+            isInitalized = true;
+
+            const string path = "Assets/Unity.VisualScripting.Community.Generated/";
+>>>>>>> Stashed changes
             HUMIO.Ensure(path).Path();
             CSharpPreviewSettings settings = AssetDatabase.LoadAssetAtPath<CSharpPreviewSettings>(path + "CSharpPreviewSettings.asset");
             if (settings == null)
@@ -28,15 +36,15 @@ namespace Unity.VisualScripting.Community
             }
             this.settings = settings;
         }
-    
+
         public void SaveSettings()
         {
             settings.SaveAndDirty();
         }
-    
+
         public void UpdateSettings(Action<CSharpPreviewSettings> action)
         {
             action?.Invoke(settings);
         }
-    } 
+    }
 }

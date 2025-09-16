@@ -24,11 +24,24 @@ namespace Unity.VisualScripting.Community
             typeof(OnInputSystemEventButton), typeof(OnInputSystemEventVector2), typeof(OnInputSystemEventFloat)
 #endif
         };
+<<<<<<< Updated upstream
         private List<Unit> specialUnits = new List<Unit>();
         protected override TypeGenerator OnGenerateType(ref string output, NamespaceGenerator @namespace)
         {
             specialUnits.Clear();
 
+=======
+
+        private readonly HashSet<Unit> _specialUnits = new HashSet<Unit>();
+        private ControlGenerationData data;
+
+        Dictionary<string, int> methodIndex = new Dictionary<string, int>();
+
+        protected override TypeGenerator OnGenerateType(ref string output, NamespaceGenerator @namespace)
+        {
+            _specialUnits.Clear();
+            methodIndex.Clear();
+>>>>>>> Stashed changes
             if (Data == null)
                 return ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, "", null);
 
@@ -162,8 +175,21 @@ namespace Unity.VisualScripting.Community
                     var method = MethodGenerator.Method(methodData.scope, methodData.modifier, methodData.returnType, methodData.name);
                     method.AddGenerics(methodData.genericParameters.ToArray());
                     AddMethodAttributes(method, methodData);
+<<<<<<< Updated upstream
 
                     if (methodData.graph.units.Count > 0)
+=======
+                    data.EnterMethod();
+                    data.SetExpectedType(methodData.returnType);
+                    data.SetReturns(methodData.returnType);
+                    data.SetGraphPointer(methodData.GetReference().AsReference());
+                    @class.AddUsings(ProcessGraphUnits(methodData.graph, @class));
+                    var unit = methodData.graph.units[0] as FunctionNode;
+                    method.Body(unit.GenerateControl(null, data, 0));
+                    if (data.MustReturn && !data.HasReturned) method.SetWarning("Not all code paths return a value");
+                    data.ExitMethod();
+                    foreach (var param in methodData.parameters)
+>>>>>>> Stashed changes
                     {
                         var generationData = CreateGenerationData(methodData.GetReference(), methodData.returnType);
                         @class.AddUsings(ProcessGraphUnits(methodData.graph, @class, methodData.GetReference()));
@@ -258,42 +284,80 @@ namespace Unity.VisualScripting.Community
                     }
                 }
             }
+<<<<<<< Updated upstream
 #endif
             var values = CodeGeneratorValueUtility.GetAllValues(Data);
+=======
+            var values = CodeGeneratorValueUtility.GetAllValues(Data, true);
+>>>>>>> Stashed changes
             var index = 0;
             foreach (var variable in values)
             {
                 var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, variable.Value != null ? variable.Value.GetType() : typeof(UnityEngine.Object), variable.Key.LegalMemberName());
-                if (index == 0)
-                {
-                    var attribute = AttributeGenerator.Attribute(typeof(FoldoutAttribute));
-                    attribute.AddParameter("ObjectReferences");
-                    field.AddAttribute(attribute);
-                }
-                else
-                {
-                    field.AddAttribute(AttributeGenerator.Attribute(typeof(HideInInspector)));
-                }
+                
+                var attribute = AttributeGenerator.Attribute(typeof(FoldoutAttribute));
+                attribute.AddParameter("ObjectReferences");
+                field.AddAttribute(attribute);
 
-                if (index == values.Count - 1)
-                {
-                    field.AddAttribute(AttributeGenerator.Attribute(typeof(FoldoutEndAttribute)));
-                }
                 @class.AddField(field);
                 index++;
             }
             @namespace.AddClass(@class);
             return @class;
         }
+<<<<<<< Updated upstream
 
         private List<string> ProcessGraphUnits(FlowGraph graph, ClassGenerator @class, GraphPointer graphPointer)
+=======
+        
+        private HashSet<string> ProcessGraphUnits(FlowGraph graph, ClassGenerator @class)
+>>>>>>> Stashed changes
         {
             var usings = new List<string>();
             foreach (var _unit in graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
             {
+<<<<<<< Updated upstream
                 var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
                 HandleOtherGenerators(@class, generator, graphPointer);
                 if (specialUnitTypes.Contains(_unit.GetType()))
+=======
+                var type = unit.GetType();
+                var generator = unit.GetGenerator();
+
+                if (generator.GetType().IsDefined(typeof(RequiresVariablesAttribute), true))
+                {
+                    if (generator is IRequireVariables variables)
+                    {
+                        foreach (var variable in variables.GetRequiredVariables(data))
+                        {
+                            @class.AddField(variable);
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError(generator.GetType().DisplayName() + "Requires Variables does not implement IRequiresVariables");
+                    }
+                }
+
+                if (generator.GetType().IsDefined(typeof(RequiresMethodsAttribute), true))
+                {
+                    if (generator is IRequireMethods methods)
+                    {
+                        foreach (var method in methods.GetRequiredMethods(data))
+                        {
+                            @class.AddMethod(method);
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError(generator.GetType().DisplayName() + "Requires Methods but does not implement IRequiresMethods");
+                    }
+                }
+
+                HandleOtherGenerators(@class, generator);
+
+                if (_specialUnitTypes.Contains(type))
+>>>>>>> Stashed changes
                 {
                     specialUnits.Add(_unit);
                 }

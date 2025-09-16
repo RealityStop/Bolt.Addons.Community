@@ -63,7 +63,11 @@ namespace Unity.VisualScripting.Community
                             variableType = typeof(object);
                         break;
                     case VariableKind.Scene:
+<<<<<<< Updated upstream
                         kind = MakeSelectableForThisUnit(variables + "." + "ActiveScene".VariableHighlight());
+=======
+                        kind = MakeClickableForThisUnit(GetSceneKind(data, variables));
+>>>>>>> Stashed changes
                         if (VisualScripting.Variables.ActiveScene.IsDefined(name))
                         {
                             var identification = VisualScripting.Variables.ActiveScene.GetDeclaration(name).typeHandle.Identification;
@@ -140,7 +144,11 @@ namespace Unity.VisualScripting.Community
                         }
                         else
                             variableType = typeof(object);
+<<<<<<< Updated upstream
                         return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}" + "." + "ActiveScene".VariableHighlight() + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
+=======
+                        return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(GetSceneKind(data, variables) + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeClickableForThisUnit("null".ConstructHighlight()))}" + MakeClickableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
+>>>>>>> Stashed changes
                     case VariableKind.Application:
                         if (VisualScripting.Variables.Application.IsDefined(name))
                         {
@@ -174,7 +182,12 @@ namespace Unity.VisualScripting.Community
                     data.SetExpectedType(variableType);
                     var code = MakeSelectableForThisUnit($"{_name.VariableHighlight()} = ") + GenerateValue(Unit.input, data) + MakeSelectableForThisUnit(";");
                     data.RemoveExpectedType();
+<<<<<<< Updated upstream
                     data.CreateSymbol(Unit, variableType, code);
+=======
+                    var code = MakeClickableForThisUnit($"{_name.LegalMemberName().VariableHighlight()} = ") + inputCode + MakeClickableForThisUnit(";");
+                    data.CreateSymbol(Unit, variableType);
+>>>>>>> Stashed changes
                     output += CodeBuilder.Indent(indent) + code + "\n";
                     output += GetNextUnit(Unit.assigned, data, indent);
                     return output;
@@ -183,7 +196,7 @@ namespace Unity.VisualScripting.Community
                 {
                     var type = GetSourceType(Unit.input, data) ?? data.GetExpectedType() ?? typeof(object);
                     var inputType = type.As().CSharpName(false, true);
-                    variableType = Unit.input.hasValidConnection ? Unit.input.connection.source.type : typeof(object);
+                    variableType = type;
                     var newName = data.AddLocalNameInScope(_name, variableType);
                     data.SetExpectedType(variableType);
                     data.CreateSymbol(Unit, variableType, $"{inputType} {newName.VariableHighlight()} = {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())};");
@@ -194,6 +207,11 @@ namespace Unity.VisualScripting.Community
                     return output;
                 }
             }
+        }
+
+        private string GetSceneKind(ControlGenerationData data, string variables)
+        {
+            return typeof(Component).IsAssignableFrom(data.ScriptType) ? variables + ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")" : variables + "." + "Application".VariableHighlight();
         }
 
         private GameObject GetTarget(ControlGenerationData data)

@@ -57,7 +57,7 @@ namespace Unity.VisualScripting.Community
         /// <summary>
         /// Overrides the hook name that the Event Bus calls to decipher different event types.
         /// </summary>
-        protected override string hookName { get { return "Return"; } }
+        protected override string hookName => CommunityEvents.ReturnEvent;
 
         /// <summary>
         /// Defines the ports of this unit.
@@ -125,12 +125,12 @@ namespace Unity.VisualScripting.Community
         /// <param name="args">The arguments to send through.</param>
         public static void Trigger(TriggerReturnEvent trigger, GameObject target, string name, bool global = false, params object[] args)
         {
-            EventBus.Trigger<ReturnEventArg>("Return", new ReturnEventArg(trigger, target, name, global, args));
+            EventBus.Trigger<ReturnEventArg>(CommunityEvents.ReturnEvent, new ReturnEventArg(trigger, target, name, global, args));
         }
 
         public static void Trigger(GameObject target, string name, Action<object> callback = null, bool global = false, params object[] args)
         {
-            EventBus.Trigger<ReturnEventArg>("Return", new ReturnEventArg(callback, target, name, global, args));
+            EventBus.Trigger<ReturnEventArg>(CommunityEvents.ReturnEvent, new ReturnEventArg(callback, target, name, global, args));
         }
     }
 }

@@ -10,7 +10,7 @@ using UnityEditor;
 using UnityEngine;
 using ParameterModifier = Unity.VisualScripting.Community.Libraries.CSharp.ParameterModifier;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class MemberTypeAssetEditor<TMemberTypeAsset, TMemberTypeGenerator, TFieldDeclaration, TMethodDeclaration, TConstructorDeclaration> : CodeAssetEditor<TMemberTypeAsset, TMemberTypeGenerator>
         where TMemberTypeAsset : MemberTypeAsset<TFieldDeclaration, TMethodDeclaration, TConstructorDeclaration>
@@ -19,9 +19,6 @@ namespace Unity.VisualScripting.Community
         where TMethodDeclaration : MethodDeclaration
         where TConstructorDeclaration : ConstructorDeclaration
     {
-
-        public Dictionary<string, object> AttributeParameters;
-
         protected Metadata attributes;
         protected SerializedProperty attributesProp;
         protected Metadata constructors;
@@ -39,15 +36,14 @@ namespace Unity.VisualScripting.Community
         protected Metadata interfaces;
         protected SerializedProperty interfacesProp;
 
-        private Type[] attributeTypes = new Type[] { };
-        private Type[] classAttributeTypes = new Type[] { };
-        private Type[] enumAttributeTypes = new Type[] { };
-        private Type[] fieldAttributeTypes = new Type[] { };
-        private Type[] parameterAttributeTypes = new Type[] { };
-        private Type[] interfaceAttributeTypes = new Type[] { };
-        private Type[] methodAttributeTypes = new Type[] { };
-        private Type[] propertyAttributeTypes = new Type[] { };
-        private Type[] structAttributeTypes = new Type[] { };
+        private readonly List<Type> classAttributeTypes = new List<Type> { };
+        private readonly List<Type> enumAttributeTypes = new List<Type> { };
+        private readonly List<Type> fieldAttributeTypes = new List<Type> { };
+        private readonly List<Type> parameterAttributeTypes = new List<Type> { };
+        private readonly List<Type> interfaceAttributeTypes = new List<Type> { };
+        private readonly List<Type> methodAttributeTypes = new List<Type> { };
+        private readonly List<Type> propertyAttributeTypes = new List<Type> { };
+        private readonly List<Type> structAttributeTypes = new List<Type> { };
 
         private Type ValueInspectorType;
 
@@ -62,8 +58,6 @@ namespace Unity.VisualScripting.Community
             Method,
             Parameter
         }
-
-        private Color boxBackground => HUMColor.Grey(0.15f);
 
         protected override void BeforePreview()
         {
@@ -685,8 +679,6 @@ namespace Unity.VisualScripting.Community
             if (Target.icon == null) Target.icon = DefaultIcon();
 
             CacheConstrainedAttributes();
-
-            UpdatePreview();
         }
 
         protected virtual void OnExtendedHorizontalHeaderGUI()
@@ -878,10 +870,14 @@ namespace Unity.VisualScripting.Community
         {
             GUILayout.Label(" ", GUILayout.Height(20));
             var position = GUILayoutUtility.GetLastRect();
+<<<<<<< Updated upstream
 
             Type[] types = new Type[] { };
 
             switch (usage)
+=======
+            List<Type> types = usage switch
+>>>>>>> Stashed changes
             {
                 case AttributeUsageType.Class:
                     types = classAttributeTypes;
@@ -918,42 +914,44 @@ namespace Unity.VisualScripting.Community
         private void CacheConstrainedAttributes()
         {
             var allAttributeTypes = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(assembly => assembly.GetTypes())
-                .Where(t => (t.IsSubclassOf(typeof(Attribute)) || t == typeof(Attribute)) && t.IsPublic)
-                .ToArray();
+                .SelectMany(assembly =>
+                {
+                    try { return assembly.GetTypes(); }
+                    catch { return Type.EmptyTypes; }
+                })
+                .Where(t => (t.IsSubclassOf(typeof(Attribute)) || t == typeof(Attribute)) && t.IsPublic);
 
-            // Filter attributes based on valid targets
-            classAttributeTypes = allAttributeTypes
-                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Class) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                .ToArray();
-
-            structAttributeTypes = allAttributeTypes
-                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Struct) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                .ToArray();
-
-            enumAttributeTypes = allAttributeTypes
-                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Enum) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                .ToArray();
-
-            interfaceAttributeTypes = allAttributeTypes
-                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Interface) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                .ToArray();
-
-            fieldAttributeTypes = allAttributeTypes
-                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Field) || GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.All))
-                .ToArray();
-
-            propertyAttributeTypes = allAttributeTypes
-                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Property) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                .ToArray();
-
-            methodAttributeTypes = allAttributeTypes
-                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Method) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                .ToArray();
-
-            parameterAttributeTypes = allAttributeTypes
-                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Parameter) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                .ToArray();
+            foreach (var attr in allAttributeTypes)
+            {
+                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Struct) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                {
+                    structAttributeTypes.Add(attr);
+                }
+                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Enum) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                {
+                    enumAttributeTypes.Add(attr);
+                }
+                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Interface) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                {
+                    interfaceAttributeTypes.Add(attr);
+                }
+                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Field) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                {
+                    fieldAttributeTypes.Add(attr);
+                }
+                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Property) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                {
+                    propertyAttributeTypes.Add(attr);
+                }
+                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Method) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                {
+                    methodAttributeTypes.Add(attr);
+                }
+                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Parameter) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                {
+                    parameterAttributeTypes.Add(attr);
+                }
+            }
         }
 
         // Helper method to get AttributeUsageAttribute from a type
@@ -1402,7 +1400,7 @@ namespace Unity.VisualScripting.Community
             return null;
         }
 
-        Type[] GetConstrainedAttributeTypes(AttributeUsageType usage)
+        List<Type> GetConstrainedAttributeTypes(AttributeUsageType usage)
         {
             return usage switch
             {
@@ -1414,7 +1412,7 @@ namespace Unity.VisualScripting.Community
                 AttributeUsageType.Property => propertyAttributeTypes,
                 AttributeUsageType.Method => methodAttributeTypes,
                 AttributeUsageType.Parameter => parameterAttributeTypes,
-                _ => new Type[0],
+                _ => new List<Type>(0),
             };
         }
         Dictionary<Metadata, HashSet<int>> subscribedEvents = new Dictionary<Metadata, HashSet<int>>();

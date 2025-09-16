@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting.Community.Libraries.Humility;
-using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
@@ -14,76 +12,40 @@ namespace Unity.VisualScripting.Community
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.TriggerGlobalDefinedEvent")]
     public class TriggerGlobalDefinedEvent : Unit
     {
+        // Old field (kept only for migration)
+        [SerializeAs("eventType")]
+        [Obsolete]
+        private System.Type _legacyEventType;
 
-        #region Previous Event Type Handling (for backward compatibility)
-        [SerializeAs(nameof(eventType))]
-        private System.Type _eventType;
+        // New serialization
+        [SerializeAs("NeweventType")]
+        private DefinedEventType _eventType;
 
-
-        [DoNotSerialize]
-        //[InspectableIf(nameof(IsNotRestricted))]
-        public System.Type eventType
-        {
-            get
-            {
-                return _eventType;
-            }
-            set
-            {
-                _eventType = value;
-            }
-        }
-
-        [DoNotSerialize]
-        //[UnitHeaderInspectable]
-        //[InspectableIf(nameof(IsRestricted))]
-        public System.Type restrictedEventType
-        {
-            get
-            {
-                return _eventType;
-            }
-            set
-            {
-                _eventType = value;
-            }
-        }
-
-        #endregion
-
-        #region New Event Type Handling
-        [SerializeAs(nameof(NeweventType))]
-        private DefinedEventType New_eventType;
-
-        [DoNotSerialize]
+        [DoNotSerialize, InspectorLabel("Event Type")]
         [InspectableIf(nameof(IsNotRestricted))]
-        [InspectorLabel("EventType")]
-        public Type NeweventType
-        {
-            get { return New_eventType.type; }
-            set { New_eventType = value; }
-        }
-
-        [DoNotSerialize]
+#if !RESTRICT_EVENT_TYPES
         [UnitHeaderInspectable]
+#endif
+        public DefinedEventType EventType
+        {
+            get => _eventType;
+            set => _eventType = value;
+        }
+
+        [DoNotSerialize, InspectorLabel("Event Type")]
         [InspectableIf(nameof(IsRestricted))]
-        [InspectorLabel("EventType")]
-        public DefinedEventType NewrestrictedEventType
+        [TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+#if RESTRICT_EVENT_TYPES
+        [UnitHeaderInspectable]
+#endif
+        public DefinedEventType RestrictedEventType
         {
-            get { return New_eventType; }
-            set { New_eventType = value; }
+            get => _eventType;
+            set => _eventType = value;
         }
 
-        public bool IsRestricted
-        {
-            get { return CommunityOptionFetcher.DefinedEvent_RestrictEventTypes; }
-        }
-
-        public bool IsNotRestricted
-        {
-            get { return !IsRestricted; }
-        }
-        #endregion
+        public bool IsRestricted => CommunityOptionFetcher.DefinedEvent_RestrictEventTypes;
+        public bool IsNotRestricted => !IsRestricted;
 
 
         [DoNotSerialize]
@@ -105,22 +67,18 @@ namespace Unity.VisualScripting.Community
 
         protected override void Definition()
         {
-            // For backward compatibility, convert the Type to IDefinedEventType
-            if (restrictedEventType != null)
+            // One-time migration from old serialized Type to DefinedEventType
+#pragma warning disable
+            if (_legacyEventType != null)
             {
-                NewrestrictedEventType = new DefinedEventType(restrictedEventType);
-                restrictedEventType = null;
+                _eventType = new DefinedEventType(_legacyEventType);
+                _legacyEventType = null;
             }
-
-            if (NewrestrictedEventType == null)
-            {
-                NewrestrictedEventType = new DefinedEventType();
-            }
+#pragma warning restore
+            _eventType ??= new DefinedEventType();
 
             enter = ControlInput(nameof(enter), Trigger);
-
             exit = ControlOutput(nameof(exit));
-
 
             BuildFromInfo();
 
@@ -130,92 +88,61 @@ namespace Unity.VisualScripting.Community
         private void BuildFromInfo()
         {
             inputPorts.Clear();
-            if (New_eventType == null || New_eventType.type == null || IsNotRestricted)
-                return;
+            if (_eventType?.type == null) return;
 
             if (IsRestricted)
             {
-                Info = ReflectedInfo.For(New_eventType.type);
-                foreach (var field in Info.reflectedFields)
-                {
-                    if (field.Value.FieldType == typeof(bool))
-                        inputPorts.Add(ValueInput(field.Value.Name, false));
-                    else if (field.Value.FieldType == typeof(int))
-                        inputPorts.Add(ValueInput(field.Value.Name, 0));
-                    else if (field.Value.FieldType == typeof(float))
-                        inputPorts.Add(ValueInput(field.Value.Name, 0.0f));
-                    else if (field.Value.FieldType == typeof(string))
-                        inputPorts.Add(ValueInput(field.Value.Name, ""));
-                    else if (field.Value.FieldType == typeof(GameObject))
-                        inputPorts.Add(ValueInput<GameObject>(field.Value.Name, null).NullMeansSelf());
-                    else
-                        inputPorts.Add(ValueInput(field.Value.FieldType, field.Value.Name));
-                }
-
-
-                foreach (var property in Info.reflectedProperties)
-                {
-                    if (property.Value.PropertyType == typeof(bool))
-                        inputPorts.Add(ValueInput(property.Value.Name, false));
-                    else if (property.Value.PropertyType == typeof(int))
-                        inputPorts.Add(ValueInput(property.Value.Name, 0));
-                    else if (property.Value.PropertyType == typeof(float))
-                        inputPorts.Add(ValueInput(property.Value.Name, 0.0f));
-                    else if (property.Value.PropertyType == typeof(string))
-                        inputPorts.Add(ValueInput(property.Value.Name, ""));
-                    else if (property.Value.PropertyType == typeof(GameObject))
-                        inputPorts.Add(ValueInput<GameObject>(property.Value.Name, null).NullMeansSelf());
-                    else
-                        inputPorts.Add(ValueInput(property.Value.PropertyType, property.Value.Name));
-                }
+                Info = ReflectedInfo.For(_eventType);
+                foreach (var f in Info.reflectedFields.Values)
+                    AddInputForType(f.FieldType, f.Name);
+                foreach (var p in Info.reflectedProperties.Values)
+                    AddInputForType(p.PropertyType, p.Name);
             }
             else
             {
-                if (NeweventType == typeof(bool))
-                    inputPorts.Add(ValueInput(NeweventType.As().CSharpName(false, false, false), false));
-                else if (NeweventType == typeof(int))
-                    inputPorts.Add(ValueInput(NeweventType.As().CSharpName(false, false, false), 0));
-                else if (NeweventType == typeof(float))
-                    inputPorts.Add(ValueInput(NeweventType.As().CSharpName(false, false, false), 0.0f));
-                else if (NeweventType == typeof(string))
-                    inputPorts.Add(ValueInput(NeweventType.As().CSharpName(false, false, false), ""));
-                else if (NeweventType == typeof(GameObject))
-                    inputPorts.Add(ValueInput<GameObject>(NeweventType.As().CSharpName(false, false, false), null).NullMeansSelf());
-                else
-                    inputPorts.Add(ValueInput(NeweventType, NeweventType.As().CSharpName(false, false, false)));
+                var input = ValueInput(_eventType, "Value");
+                input.SetDefaultValue(_eventType.type.PseudoDefault());
+                inputPorts.Add(input);
             }
+        }
+
+        private void AddInputForType(System.Type type, string name)
+        {
+            if (type == typeof(bool)) inputPorts.Add(ValueInput(name, false));
+            else if (type == typeof(int)) inputPorts.Add(ValueInput(name, 0));
+            else if (type == typeof(float)) inputPorts.Add(ValueInput(name, 0f));
+            else if (type == typeof(string)) inputPorts.Add(ValueInput(name, ""));
+            else if (ComponentHolderProtocol.IsComponentHolderType(type))
+            {
+                var input = ValueInput(type, name);
+                input.SetDefaultValue(null);
+                inputPorts.Add(input);
+            }
+            else
+                inputPorts.Add(ValueInput(type, name));
         }
 
         private ControlOutput Trigger(Flow flow)
         {
-            if (New_eventType.type == null) return exit;
+            if (_eventType?.type == null) return exit;
 
             if (IsRestricted)
             {
-                var eventInstance = System.Activator.CreateInstance(New_eventType.type);
+                var instance = System.Activator.CreateInstance(_eventType);
 
-                for (var i = 0; i < inputPorts.Count; i++)
+                foreach (var port in inputPorts)
                 {
-                    var inputPort = inputPorts[i];
-                    var key = inputPort.key;
-                    var value = flow.GetValue(inputPort);
-                    if (Info.reflectedFields.ContainsKey(key))
-                    {
-                        var reflectedField = Info.reflectedFields[key];
-                        reflectedField.SetValue(eventInstance, value);
-                    }
-                    else if (Info.reflectedProperties.ContainsKey(key))
-                    {
-                        var reflectedProperty = Info.reflectedProperties[key];
-                        reflectedProperty.SetValue(eventInstance, value);
-                    }
+                    var key = port.key;
+                    var value = flow.GetValue(port);
+                    if (Info.reflectedFields.TryGetValue(key, out var f)) f.SetValue(instance, value);
+                    else if (Info.reflectedProperties.TryGetValue(key, out var p)) p.SetValue(instance, value);
                 }
 
-                GlobalDefinedEventNode.Trigger(eventInstance);
+                GlobalDefinedEventNode.Trigger(instance);
             }
             else
             {
-                GlobalDefinedEventNode.Trigger(flow.GetValue(inputPorts.Find(port => port.key == NeweventType.As().CSharpName(false, false, false))));
+                GlobalDefinedEventNode.Trigger(flow.GetValue(inputPorts[0]));
             }
 
             return exit;

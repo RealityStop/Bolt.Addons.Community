@@ -51,7 +51,7 @@ namespace Unity.VisualScripting.Community
 
         public static string SearchResultLabel(Type type, string query)
         {
-            string typeName = SearchUtility.HighlightQuery(type.DisplayName(), query);
+            string typeName = VisualScripting.SearchUtility.HighlightQuery(type.DisplayName(), query);
 
             if (type.IsGenericTypeDefinition)
             {

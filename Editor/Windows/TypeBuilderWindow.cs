@@ -216,7 +216,7 @@ namespace Unity.VisualScripting.Community
                 });
 
                 GUIContent inheritButtonContent = new GUIContent(
-                    baseType?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                    baseType?.As().CSharpName(false, false, false) ?? "Select Type",
                     baseType.GetTypeIcon()
                 );
 

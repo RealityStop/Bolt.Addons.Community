@@ -22,7 +22,7 @@ namespace Unity.VisualScripting.Community
             return DelegateAssetGenerator.GetSingleDecorator(delegateAsset).GenerateClean(0);
         }
 
-        protected override void PostProcess(UnityEngine.Object asset, string relativePath)
+        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
         {
             var delegateAsset = (DelegateAsset)asset;
             var name = delegateAsset.category +

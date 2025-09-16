@@ -43,6 +43,17 @@ namespace Unity.VisualScripting.Community
             }
             else if (input.hasDefaultValue)
             {
+                if (input.nullMeansSelf && input.unit.defaultValues[input.key] == null && ComponentHolderProtocol.IsComponentHolderType(input.type) && typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
+                {
+                    if (input.type == typeof(GameObject))
+                    {
+                        return MakeClickableForThisUnit("gameObject".VariableHighlight());
+                    }
+                    else if (typeof(Component).IsAssignableFrom(input.type))
+                    {
+                        return MakeClickableForThisUnit("gameObject".VariableHighlight() + "." + $"GetComponent<{input.type.As().CSharpName(false, true)}>()");
+                    }
+                }
                 return input.unit.defaultValues[input.key].As().Code(true, unit, true, true, "", true, true);
             }
             else

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting.Community.Utility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [CustomEditor(typeof(InterfaceAsset))]
     public class InterfaceAssetEditor : CodeAssetEditor<InterfaceAsset, InterfaceAssetGenerator>

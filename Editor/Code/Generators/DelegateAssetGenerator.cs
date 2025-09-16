@@ -101,6 +101,8 @@ namespace Unity.VisualScripting.Community
 
                 @class.AddField(FieldGenerator.Field(AccessModifier.Private, FieldModifier.None, typeof(bool), "_initialized"));
 
+                @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(Unit), "Unit", false).SingleStatementGetter(AccessModifier.Public, "").SingleStatementSetter(AccessModifier.Public, ""));
+
                 @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(TypeParam[]), "parameters", false).SingleStatementGetter(AccessModifier.Public, "new".ConstructHighlight() + " TypeParam".TypeHighlight() + "[] {" + properties.Replace("&", string.Empty) + "}"));
 
                 @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(string), "DisplayName", false).SingleStatementGetter(AccessModifier.Public, $@"""{type.RemoveHighlights().RemoveMarkdown().Replace("<", " (").Replace(">", ")")}""".StringHighlight()));
@@ -155,7 +157,7 @@ namespace Unity.VisualScripting.Community
                     AddParameter(ParameterGenerator.Parameter("other", typeof(Delegate), Libraries.CSharp.ParameterModifier.None))
                     .Body(
                         $"{"if".ControlHighlight()} ({"other".VariableHighlight()} {"is not".ConstructHighlight()} {type}) {"throw".ControlHighlight()} {"new".ConstructHighlight()} {"Exception".TypeHighlight()}(" + "$".StringHighlight() + warning + ");" + "\n" +
-                    $"{"callback".VariableHighlight()} = (" + type + $")Delegate.Combine({"callback".VariableHighlight()}, {"other".VariableHighlight()});"
+                    $"{"callback".VariableHighlight()} = (" + type + $"){"Delegate".TypeHighlight()}.Combine({"callback".VariableHighlight()}, {"other".VariableHighlight()});"
                     ));
 
                 @class.AddUsings(new List<string>() { Data.type.type.Namespace, "System" });

@@ -1,15 +1,38 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using Unity.VisualScripting.Community.Utility;
 
 namespace Unity.VisualScripting.Community 
 {
     [NodeGenerator(typeof(CustomEvent))]
-    public class CustomEventGenerator : NodeGenerator<CustomEvent>
+    public class CustomEventGenerator : MethodNodeGenerator
     {
         public CustomEventGenerator(Unit unit) : base(unit)
         {
         }
+<<<<<<< Updated upstream:Editor/Code/Generators/Nodes/Events/CustomEventGenerator.cs
     
+=======
+
+        private CustomEvent Unit => unit as CustomEvent;
+        public override ControlOutput OutputPort => Unit.trigger;
+
+        public override List<ValueOutput> OutputValues => Unit.argumentPorts;
+
+        public override AccessModifier AccessModifier => AccessModifier.Private;
+
+        public override MethodModifier MethodModifier => MethodModifier.None;
+
+        public override string Name => "CustomEvent" + count;
+
+        public override Type ReturnType => Unit.coroutine ? typeof(IEnumerator) : typeof(void);
+
+        public override List<TypeParam> Parameters => new() { new TypeParam(typeof(CustomEventArgs), "args") };
+
+>>>>>>> Stashed changes:Editor/Code/Generators/Nodes/Events/CustomEvent/CustomEventGenerator.cs
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             return GetNextUnit(Unit.trigger, data, indent);
@@ -25,10 +48,17 @@ namespace Unity.VisualScripting.Community
         {
             if (Unit.argumentPorts.Contains(output))
             {
+<<<<<<< Updated upstream:Editor/Code/Generators/Nodes/Events/CustomEventGenerator.cs
                 var callCode = "args".VariableHighlight() + "." + nameof(CSharpUtility.GetArgument) + "(" + Unit.argumentPorts.IndexOf(output).As().Code(false) + ", " + ((object)(data.GetExpectedType() ?? typeof(object))).As().Code(false, false, true, "", false, true) + ")";
                 var code = new ValueCode(callCode, data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != typeof(object));
                 data.CreateSymbol(Unit, typeof(object), code);
                 return MakeSelectableForThisUnit(code);
+=======
+                var callCode = CodeBuilder.CallCSharpUtilityExtensitionMethod(Unit, "args".VariableHighlight(), MakeClickableForThisUnit(nameof(CSharpUtility.GetArgument)), Unit.argumentPorts.IndexOf(output).As().Code(false, Unit), MakeClickableForThisUnit("typeof".ConstructHighlight() + "(" + (data.GetExpectedType() ?? typeof(object)).As().CSharpName(false, true) + ")"));
+                var code = Unit.CreateClickableString().Ignore(callCode).Cast(data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != typeof(object));
+                data.CreateSymbol(Unit, typeof(object));
+                return code;
+>>>>>>> Stashed changes:Editor/Code/Generators/Nodes/Events/CustomEvent/CustomEventGenerator.cs
             }
             return base.GenerateValue(output, data);
         }

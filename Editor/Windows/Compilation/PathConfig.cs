@@ -14,7 +14,9 @@ namespace Unity.VisualScripting.Community
         public readonly string EditorRelativePath;
         public readonly string ObjectsPath;
         public readonly string DelegatesPath;
+        public readonly string DelegatesRelativePath;
         public readonly string EnumsPath;
+        public readonly string EnumsRelativePath;
         public readonly string InterfacesPath;
         public readonly string ObjectsRelativePath;
         public readonly string InterfacesRelativePath;
@@ -30,7 +32,9 @@ namespace Unity.VisualScripting.Community
             ObjectsPath = Path.Combine(ScriptsPath, "Objects");
             ObjectsRelativePath = Path.Combine(ScriptsRelativePath, "Objects");
             DelegatesPath = Path.Combine(ScriptsPath, "Delegates");
+            DelegatesRelativePath = Path.Combine(ScriptsRelativePath, "Delegates");
             EnumsPath = Path.Combine(ScriptsPath, "Enums");
+            EnumsRelativePath = Path.Combine(ScriptsRelativePath, "Enums");
             InterfacesPath = Path.Combine(ScriptsPath, "Interfaces");
             InterfacesRelativePath = Path.Combine(ScriptsRelativePath, "Interfaces");
         }

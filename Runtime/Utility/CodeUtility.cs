@@ -218,8 +218,26 @@ namespace Unity.VisualScripting.Community
 
                 var clickableRegion = new ClickableRegion(unitId, code, startLine, endLine);
 
+<<<<<<< Updated upstream
                 // If there's a previous region with the same unitId and it's adjacent, merge them
                 if (clickableRegions.Count > 0)
+=======
+                ReadOnlySpan<char> codeSpan = span.Slice(codeStart, codeLength);
+                string code = codeSpan.ToString();
+
+                int startLine = GetLineNumber(lineBreaks, openIdx);
+                int endLine = GetLineNumber(lineBreaks, closeIdx);
+
+                int lineStartIdx = (startLine == 0) ? 0 : lineBreaks[startLine - 1] + 1;
+                int startIndex = openIdx - lineStartIdx;
+
+                int endLineStartIdx = (endLine == 0) ? 0 : lineBreaks[endLine - 1] + 1;
+                int endIndex = closeIdx - endLineStartIdx;
+
+                var newRegion = new ClickableRegion(unitId, code, startLine, endLine, startIndex, endIndex);
+
+                if (regions.Count > 0)
+>>>>>>> Stashed changes
                 {
                     var lastRegion = clickableRegions[clickableRegions.Count - 1];
                     if (lastRegion.unitId == unitId && lastRegion.endLine == startLine)

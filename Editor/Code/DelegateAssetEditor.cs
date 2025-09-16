@@ -7,7 +7,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Linq;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [CustomEditor(typeof(DelegateAsset))]
     public class DelegateAssetEditor : CodeAssetEditor<DelegateAsset, DelegateAssetGenerator>

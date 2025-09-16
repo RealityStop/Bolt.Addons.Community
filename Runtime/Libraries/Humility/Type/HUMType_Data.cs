@@ -13,9 +13,9 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             /// <summary>
             /// Type operation data for Is.
             /// </summary>
-            public struct Is
+            public readonly struct Is
             {
-                public System.Type type;
+                public readonly System.Type type;
 
                 public Is(System.Type type)
                 {
@@ -26,9 +26,9 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             /// <summary>
             /// Type operation data for As
             /// </summary>
-            public struct As
+            public readonly struct As
             {
-                public System.Type type;
+                public readonly System.Type type;
 
                 public As(System.Type type)
                 {

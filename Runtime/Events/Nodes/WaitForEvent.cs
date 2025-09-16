@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.VisualScripting;
+using System;
 
 namespace Unity.VisualScripting.Community
 {
@@ -7,6 +8,7 @@ namespace Unity.VisualScripting.Community
     [UnitCategory("Events\\Community")]
     [UnitTitle("Wait For Task Event")]
     [TypeIcon(typeof(CustomEvent))]
+    [Obsolete]
     public class WaitForNode : Unit
     {
         [DoNotSerialize]

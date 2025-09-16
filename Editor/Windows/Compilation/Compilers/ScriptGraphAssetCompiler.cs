@@ -24,10 +24,16 @@ namespace Unity.VisualScripting.Community
             return code;
         }
 
-        protected override void PostProcess(UnityEngine.Object asset, string relativePath)
+        private string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
         {
             var graphAsset = (ScriptGraphAsset)asset;
-            var scriptImporter = AssetImporter.GetAtPath(relativePath) as MonoImporter;
+            return Path.Combine(paths.ObjectsRelativePath, GetGraphName(graphAsset).LegalMemberName() + ".cs");
+        }
+
+        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
+        {
+            var graphAsset = (ScriptGraphAsset)asset;
+            var scriptImporter = AssetImporter.GetAtPath(GetRelativeFilePath(asset, paths)) as MonoImporter;
             var values = CodeGeneratorValueUtility.GetAllValues(graphAsset);
             var variables = graphAsset.graph.variables.Where(v =>
                             typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(v.typeHandle.Identification)));

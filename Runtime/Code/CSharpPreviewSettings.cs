@@ -15,6 +15,8 @@ namespace Unity.VisualScripting.Community
         public Color EnumColor = new Color(255, 255, 187, 255);
         public Color InterfaceColor = new Color(221, 255, 187, 255);
 
+        public float zoomValue = 1f;
+
         [HideInInspector]
         public bool isInitalized = false;
         public bool showSubgraphComment = true;

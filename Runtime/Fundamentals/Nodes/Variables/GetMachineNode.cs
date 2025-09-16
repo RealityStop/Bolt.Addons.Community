@@ -8,6 +8,12 @@ using SMachine = Unity.VisualScripting.FlowMachine;
 
 namespace Unity.VisualScripting.Community
 {
+<<<<<<< Updated upstream
+=======
+    /// <summary>
+    /// Used to get a machine from a game object that is using the ScriptGraphAsset or Name inputed
+    /// </summary>
+>>>>>>> Stashed changes
     [UnitTitle("Get Machine")]
     [TypeIcon(typeof(SMachine))]
     [UnitCategory("Community/Graphs")]
@@ -25,10 +31,19 @@ namespace Unity.VisualScripting.Community
         [PortLabelHidden]
         public ValueOutput machine;
 
+        [Inspectable]
+        public GraphSource type = GraphSource.Macro;
+
+        [Inspectable]
+        [InspectorLabel("Name", "If the type is Embed you can search with the name of the machine")]
+        [InspectorExpandTooltip]
+        public string name = "";
+
         protected override void Definition()
         {
             target = ValueInput<GameObject>("target", (GameObject)null);
             target.NullMeansSelf();
+<<<<<<< Updated upstream
             asset = ValueInput<ScriptGraphAsset>("asset", (ScriptGraphAsset)null);
             machine = ValueOutput<SMachine>("machine", (flow) =>
             {
@@ -38,6 +53,35 @@ namespace Unity.VisualScripting.Community
                 for (int i = 0; i < machines.Length; i++)
                 {
                     if (machines[i].nest.macro == flow.GetValue<ScriptGraphAsset>(asset)) return machines[i];
+=======
+            asset = ValueInput(type == GraphSource.Embed ? typeof(string) : typeof(ScriptGraphAsset), type == GraphSource.Embed ? "name" : "asset");
+
+            if (type == GraphSource.Embed)
+                asset.SetDefaultValue("");
+            else
+                asset.SetDefaultValue(null);
+
+            machine = ValueOutput("machine", (flow) =>
+            {
+                var machines = flow.GetValue<GameObject>(target).GetComponents<SMachine>();
+                SMachine _machine = null;
+                var targetAsset = flow.GetValue<ScriptGraphAsset>(asset);
+                for (int i = 0; i < machines.Length; i++)
+                {
+                    switch (type)
+                    {
+                        case GraphSource.Embed:
+                            {
+                                if (machines[i].nest.graph.title == name) return machines[i];
+                                break;
+                            }
+                        case GraphSource.Macro:
+                            {
+                                if (machines[i].nest.macro == targetAsset) return machines[i];
+                                break;
+                            }
+                    }
+>>>>>>> Stashed changes
                 }
 
                 return _machine;

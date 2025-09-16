@@ -23,11 +23,15 @@ namespace Unity.VisualScripting.Community
             {
                 expectsDefaultType = true;
             }
-            foreach (var item in this.Unit.multiInputs)
+            foreach (var item in Unit.multiInputs)
             {
                 values.Add(GenerateValue(item, data));
             }
+<<<<<<< Updated upstream
             return string.Join(MakeSelectableForThisUnit(" + "), values);
+=======
+            return MakeClickableForThisUnit("(") + string.Join(MakeClickableForThisUnit(" + "), values) + MakeClickableForThisUnit(")");
+>>>>>>> Stashed changes
         }
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)

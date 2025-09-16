@@ -12,11 +12,9 @@ namespace Unity.VisualScripting.Community
     public abstract class MachineVariableNode : Unit
     {
         [Serialize]
-        [Inspectable]
-        [UnitHeaderInspectable]
-        public ScriptGraphAsset asset;
-        [Serialize]
         public string defaultName = string.Empty;
+        [Serialize]
+        public SMachine defaultTarget;
         [DoNotSerialize]
         [PortLabelHidden]
         public ValueInput name;
@@ -27,7 +25,7 @@ namespace Unity.VisualScripting.Community
 
         protected override void Definition()
         {
-            target = ValueInput<SMachine>("target", (SMachine)null);
+            target = ValueInput("target", defaultTarget);
             target.NullMeansSelf();
             name = ValueInput<string>("name", defaultName);
         }

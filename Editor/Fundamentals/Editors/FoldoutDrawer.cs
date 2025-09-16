@@ -1,74 +1,86 @@
-using System;
 using UnityEditor;
 using UnityEngine;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Unity.VisualScripting.Community
 {
     [CustomPropertyDrawer(typeof(FoldoutAttribute))]
     public class FoldoutDrawer : PropertyDrawer
     {
-        private bool isExpanded = false;
-        const int space = 2;
+        private static Dictionary<string, bool> foldoutStates = new();
+
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            FoldoutAttribute foldout = (FoldoutAttribute)attribute;
+            var foldout = (FoldoutAttribute)attribute;
 
-            EditorGUI.indentLevel = 0;
-            isExpanded = EditorGUI.Foldout(
-                new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight),
-                isExpanded, foldout.header, true
-            );
+            if (!foldoutStates.ContainsKey(foldout.group))
+                foldoutStates[foldout.group] = foldout.startExpanded;
 
-            if (isExpanded)
+            bool expanded = foldoutStates[foldout.group];
+
+            if (IsFirstPropertyInGroup(property, out var groupProperties))
             {
-                EditorGUI.indentLevel++;
-                position.y += EditorGUIUtility.singleLineHeight + space;
-                EditorGUI.PropertyField(position, property, new GUIContent(property.name), true);
-                if (property.GetUnderlyingField().HasAttribute<FoldoutEndAttribute>())
-                {
-                    return;
-                }
-                while (property.Next(false) && !property.GetUnderlyingField().HasAttribute<FoldoutEndAttribute>())
-                {
-                    position.y += EditorGUIUtility.singleLineHeight + space;
-                    EditorGUI.PropertyField(position, property, new GUIContent(property.name), true);
-                }
-                try
-                {
-                    if (property.GetUnderlyingField().HasAttribute<FoldoutEndAttribute>())
-                    {
-                        position.y += EditorGUIUtility.singleLineHeight + space;
-                        EditorGUI.PropertyField(position, property, new GUIContent(property.name), true);
-                    }
-                }
-                catch (MissingMemberException)
-                {
-                }
+                Rect foldoutRect = new(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+                foldoutStates[foldout.group] = EditorGUI.Foldout(foldoutRect, expanded, foldout.group, true);
+                position.y += EditorGUIUtility.singleLineHeight;
+            }
+
+            if (expanded)
+            {
+                Rect labelRect = new(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+                EditorGUI.LabelField(labelRect, property.displayName);
+
+                float fieldHeight = EditorGUI.GetPropertyHeight(property, true);
+                Rect fieldRect = new(position.x, position.y + EditorGUIUtility.singleLineHeight + 2, position.width, fieldHeight);
+                EditorGUI.PropertyField(fieldRect, property, GUIContent.none, true);
             }
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            float expandedHight = EditorGUI.GetPropertyHeight(property, label, true) + (EditorGUIUtility.singleLineHeight + space);
-            if (property.GetUnderlyingField().HasAttribute<FoldoutEndAttribute>())
+            var foldout = (FoldoutAttribute)attribute;
+
+            if (!foldoutStates.TryGetValue(foldout.group, out var expanded))
+                expanded = foldout.startExpanded;
+
+            float height = 0;
+
+            if (IsFirstPropertyInGroup(property, out _))
             {
-                return isExpanded ? expandedHight : EditorGUIUtility.singleLineHeight;
+                height += EditorGUIUtility.singleLineHeight;
             }
-            while (property.Next(false) && !property.GetUnderlyingField().HasAttribute<FoldoutEndAttribute>())
+
+            if (expanded)
             {
-                expandedHight += EditorGUI.GetPropertyHeight(property, new GUIContent(property.name), true) + space;
+                height += EditorGUIUtility.singleLineHeight;
+                height += EditorGUI.GetPropertyHeight(property, true) + 2;
             }
-            try
+
+            return height;
+        }
+
+        private bool IsFirstPropertyInGroup(SerializedProperty property, out List<FieldInfo> groupFields)
+        {
+            groupFields = new List<FieldInfo>();
+
+            var fields = property.serializedObject.targetObject
+                .GetType()
+                .GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            foreach (var field in fields)
             {
-                if (property.GetUnderlyingField().HasAttribute<FoldoutEndAttribute>())
+                var attrs = (FoldoutAttribute[])field.GetCustomAttributes(typeof(FoldoutAttribute), false);
+                if (attrs.Length > 0 && attrs[0].group == ((FoldoutAttribute)attribute).group)
                 {
-                    expandedHight += EditorGUI.GetPropertyHeight(property, new GUIContent(property.name), true) + space;
+                    groupFields.Add(field);
                 }
             }
-            catch (MissingMemberException)
-            {
-            }
-            return isExpanded ? expandedHight : EditorGUIUtility.singleLineHeight;
+
+            if (groupFields.Count > 0)
+                return groupFields[0].Name == property.name;
+
+            return false;
         }
     }
 }

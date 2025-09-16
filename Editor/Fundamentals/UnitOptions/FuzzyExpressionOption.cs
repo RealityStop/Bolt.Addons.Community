@@ -180,7 +180,7 @@ namespace Unity.VisualScripting.Community
         {
             List<List<(string token, Unit unit)>> calculations = SplitIntoCalculations(unit.tokens);
             var result = HandleExpressionResult(calculations);
-            return $"{SearchUtility.HighlightQuery(Haystack(false), query)} <color=#{ColorPalette.unityForegroundDim.ToHexString()}>= {result}</color>";
+            return $"{VisualScripting.SearchUtility.HighlightQuery(Haystack(false), query)} <color=#{ColorPalette.unityForegroundDim.ToHexString()}>= {result}</color>";
         }
     } 
 }
