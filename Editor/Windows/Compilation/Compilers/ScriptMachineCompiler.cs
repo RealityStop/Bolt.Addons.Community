@@ -39,6 +39,7 @@ namespace Unity.VisualScripting.Community
         }
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
         protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
         {
@@ -49,6 +50,8 @@ namespace Unity.VisualScripting.Community
                           machine.gameObject.AddComponent(type);
 
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 
@@ -64,6 +67,9 @@ namespace Unity.VisualScripting.Community
             }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -80,10 +86,14 @@ namespace Unity.VisualScripting.Community
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 type.GetFields()
                     .Where(f => f.IsPublic || f.HasAttribute<SerializeField>())
                     .FirstOrDefault(f => f.Name == names[i])
                     ?.SetValue(component, objects[i]);
+=======
+                type.GetFields().Where(f => f.IsPublic || f.HasAttribute<SerializeField>()).FirstOrDefault(f => f.Name == objects[i].Item1)?.SetValueOptimized(component, objects[i].Item2);
+>>>>>>> Stashed changes
 =======
                 type.GetFields().Where(f => f.IsPublic || f.HasAttribute<SerializeField>()).FirstOrDefault(f => f.Name == objects[i].Item1)?.SetValueOptimized(component, objects[i].Item2);
 >>>>>>> Stashed changes

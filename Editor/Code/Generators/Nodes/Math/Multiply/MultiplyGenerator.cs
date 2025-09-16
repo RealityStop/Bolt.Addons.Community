@@ -17,7 +17,11 @@ namespace Unity.VisualScripting.Community
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             return a + MakeSelectableForThisUnit(" * ") + b;
+=======
+            return MakeClickableForThisUnit("(") + a + MakeClickableForThisUnit(" * ") + b + MakeClickableForThisUnit(")");
+>>>>>>> Stashed changes
 =======
             return MakeClickableForThisUnit("(") + a + MakeClickableForThisUnit(" * ") + b + MakeClickableForThisUnit(")");
 >>>>>>> Stashed changes

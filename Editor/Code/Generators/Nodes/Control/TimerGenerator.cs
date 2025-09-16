@@ -29,6 +29,7 @@ namespace Unity.VisualScripting.Community
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
@@ -48,6 +49,15 @@ namespace Unity.VisualScripting.Community
         {
             variableName = Name;
             var output = string.Empty;
+=======
+
+        public override bool Literal => false;
+
+        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
+        {
+            variableName = Name;
+            var output = string.Empty;
+>>>>>>> Stashed changes
 =======
 
         public override bool Literal => false;
@@ -113,9 +123,12 @@ namespace Unity.VisualScripting.Community
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 data.generatorData.Add(Unit.tick, true);
                 output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnTick".VariableHighlight() + " += ") + GetAction(Unit.tick, indent, data) + MakeSelectableForThisUnit(";") + "\n";
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -177,8 +190,11 @@ namespace Unity.VisualScripting.Community
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     } 
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======

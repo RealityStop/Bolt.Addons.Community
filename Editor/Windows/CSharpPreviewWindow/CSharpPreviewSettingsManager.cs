@@ -15,8 +15,11 @@ namespace Unity.VisualScripting.Community
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             var path = "Assets/Unity.VisualScripting.Community.Generated/";
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======

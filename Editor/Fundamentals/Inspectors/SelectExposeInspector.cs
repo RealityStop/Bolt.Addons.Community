@@ -35,8 +35,11 @@ namespace Unity.VisualScripting.Community
             var selectiveExpose = (SelectExpose)metadata.value;
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
             BeginBlock(metadata, position);
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======

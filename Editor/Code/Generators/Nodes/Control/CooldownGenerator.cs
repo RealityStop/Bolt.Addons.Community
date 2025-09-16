@@ -41,7 +41,10 @@ namespace Unity.VisualScripting.Community
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -87,6 +90,7 @@ namespace Unity.VisualScripting.Community
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 data.generatorData.Add(Unit.exitReady, true);
                 output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnReady".VariableHighlight() + " += ") + GetAction(Unit.exitReady, indent, data) + MakeSelectableForThisUnit(";") + "\n";
             }
@@ -108,6 +112,8 @@ namespace Unity.VisualScripting.Community
                 data.generatorData.Add(Unit.becameReady, true);
                 output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnCompleteAction".VariableHighlight() + " += ") + GetAction(Unit.becameReady, indent, data) + MakeSelectableForThisUnit(";") + "\n";
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======

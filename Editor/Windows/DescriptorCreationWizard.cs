@@ -15,6 +15,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 >>>>>>> Stashed changes:Editor/Windows/DescriptorCreationWizard.cs
 
 public class CustomScriptGeneratorWindow : EditorWindow
@@ -80,6 +81,8 @@ public class CustomScriptGeneratorWindow : EditorWindow
             return;
 =======
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 
@@ -201,6 +204,7 @@ namespace Unity.VisualScripting.Community
             return char.ToUpper(input[0]) + input[1..];
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 >>>>>>> Stashed changes:Editor/Windows/DescriptorCreationWizard.cs
         }
 
@@ -212,6 +216,8 @@ namespace Unity.VisualScripting.Community
         string descriptorContent = $@"using Unity.VisualScripting;
 =======
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
         }

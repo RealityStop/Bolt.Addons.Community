@@ -74,7 +74,10 @@ namespace Unity.VisualScripting.Community
                         if (generator.GetType().IsDefined(typeof(RequiresVariablesAttribute), true))
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
                         {
@@ -238,6 +241,7 @@ namespace Unity.VisualScripting.Community
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                             foreach (var _unit in Data.variables[i].getter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                             {
                                 if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces))
@@ -249,6 +253,8 @@ namespace Unity.VisualScripting.Community
 >>>>>>> Stashed changes
 
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 

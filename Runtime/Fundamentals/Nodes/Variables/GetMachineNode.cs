@@ -46,6 +46,7 @@ namespace Unity.VisualScripting.Community
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             asset = ValueInput<ScriptGraphAsset>("asset", (ScriptGraphAsset)null);
             machine = ValueOutput<SMachine>("machine", (flow) =>
             {
@@ -56,6 +57,8 @@ namespace Unity.VisualScripting.Community
                 {
                     if (machines[i].nest.macro == flow.GetValue<ScriptGraphAsset>(asset)) return machines[i];
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -89,6 +92,9 @@ namespace Unity.VisualScripting.Community
                     }
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
