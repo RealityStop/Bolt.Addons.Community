@@ -15,7 +15,11 @@ namespace Unity.VisualScripting.Community
             var a = GenerateValue(Unit.a, data);
             var b = GenerateValue(Unit.b, data);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             return a + MakeSelectableForThisUnit(" * ") + b;
+=======
+            return MakeClickableForThisUnit("(") + a + MakeClickableForThisUnit(" * ") + b + MakeClickableForThisUnit(")");
+>>>>>>> Stashed changes
 =======
             return MakeClickableForThisUnit("(") + a + MakeClickableForThisUnit(" * ") + b + MakeClickableForThisUnit(")");
 >>>>>>> Stashed changes

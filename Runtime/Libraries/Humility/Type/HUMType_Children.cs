@@ -534,6 +534,9 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 var value = (WaitForFlowLogic)@as.value;
                 return Create("WaitForFlowLogic", value.InputCount.As().Code(false, false, false), value.ResetOnExit.As().Code(false, false, false));
             }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             if (type.IsNumeric()) return @as.value.ToString();
             if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(false);
@@ -705,6 +708,9 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 var value = (WaitForFlowLogic)@as.value;
                 return CreateHighlighted("WaitForFlowLogic", value.InputCount.As().Code(false), value.ResetOnExit.As().Code(false));
             }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             if (type.IsNumeric()) return @as.value.ToString().NumericHighlight();
             if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(true);

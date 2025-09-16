@@ -546,12 +546,15 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static string CallCSharpUtilityMethod(Unit unit, string methodName, params string[] parameters)
         {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             return CodeUtility.MakeSelectable(unit, $"{"CSharpUtility".TypeHighlight()}.") + methodName + CodeUtility.MakeSelectable(unit, "(") + string.Join(CodeUtility.MakeSelectable(unit, ", "), parameters) + CodeUtility.MakeSelectable(unit, ")");
         }
 
         /// <summary>
         /// Generate code for calling a extensition method in the CSharpUtilityClass
 =======
+=======
+>>>>>>> Stashed changes
             return CodeUtility.MakeClickable(unit, $"{typeof(CSharpUtility).As().CSharpName(false, true)}.") + methodName + CodeUtility.MakeClickable(unit, "(") + string.Join(CodeUtility.MakeClickable(unit, ", "), parameters) + CodeUtility.MakeClickable(unit, ")");
         }
 

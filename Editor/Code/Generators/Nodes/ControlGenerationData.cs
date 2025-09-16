@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 using System.Linq;
 =======
+=======
+>>>>>>> Stashed changes
 using Unity.VisualScripting.Community.Libraries.Humility;
 >>>>>>> Stashed changes
 using UnityEngine;
@@ -13,6 +16,7 @@ namespace Unity.VisualScripting.Community
 {
     public sealed class ControlGenerationData
     {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
         public Type returns { get; set; } = typeof(void);
         public bool mustBreak { get; set; }
@@ -26,6 +30,8 @@ namespace Unity.VisualScripting.Community
         private readonly Stack<(Type type, bool isMet)> expectedTypes = new();
         public readonly Dictionary<object, object> generatorData = new();
 =======
+=======
+>>>>>>> Stashed changes
         private readonly Stack<GeneratorScope> scopes = new();
         private readonly Stack<GeneratorScope> preservedScopes = new();
         private readonly Stack<(Type type, bool isMet)> expectedTypes = new();
@@ -34,6 +40,9 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         public Dictionary<object, object> scopeGeneratorData { get => PeekScope().generatorData; }
         public Dictionary<object, object> globalGeneratorData = new Dictionary<object, object>();
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         private readonly Dictionary<Unit, UnitSymbol> unitSymbols = new();
         
@@ -261,6 +270,9 @@ namespace Unity.VisualScripting.Community
 
         #region Variable Management
         public string GetVariableName(string name, bool errorIfNotFound = false, string error = "")
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         {
             bool exists = false;
@@ -376,7 +388,11 @@ namespace Unity.VisualScripting.Community
         }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         public ControlGenerationData(ControlGenerationData data)
+=======
+        private sealed class GeneratorScope
+>>>>>>> Stashed changes
         {
             returns = data.returns ?? typeof(Void);
             mustBreak = data.mustBreak;

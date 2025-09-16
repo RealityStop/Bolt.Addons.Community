@@ -20,7 +20,11 @@ namespace Unity.VisualScripting.Community
                     data.SetSymbolType(Unit, type.GetGenericArguments()[1]);
             }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             return new ValueCode(dictionaryCode + code, data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !(data.TryGetSymbol(Unit, out var symbol) && data.GetExpectedType().IsAssignableFrom(symbol.Type)));
+=======
+            return Unit.CreateClickableString().Ignore(dictionaryCode + code).Cast(data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !(data.TryGetSymbol(Unit, out var symbol) && data.GetExpectedType().IsAssignableFrom(symbol.Type)));
+>>>>>>> Stashed changes
 =======
             return Unit.CreateClickableString().Ignore(dictionaryCode + code).Cast(data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !(data.TryGetSymbol(Unit, out var symbol) && data.GetExpectedType().IsAssignableFrom(symbol.Type)));
 >>>>>>> Stashed changes

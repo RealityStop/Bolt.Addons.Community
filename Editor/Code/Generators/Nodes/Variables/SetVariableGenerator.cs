@@ -64,7 +64,11 @@ namespace Unity.VisualScripting.Community
                         break;
                     case VariableKind.Scene:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                         kind = MakeSelectableForThisUnit(variables + "." + "ActiveScene".VariableHighlight());
+=======
+                        kind = MakeClickableForThisUnit(GetSceneKind(data, variables));
+>>>>>>> Stashed changes
 =======
                         kind = MakeClickableForThisUnit(GetSceneKind(data, variables));
 >>>>>>> Stashed changes
@@ -145,7 +149,11 @@ namespace Unity.VisualScripting.Community
                         else
                             variableType = typeof(object);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                         return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}" + "." + "ActiveScene".VariableHighlight() + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
+=======
+                        return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(GetSceneKind(data, variables) + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeClickableForThisUnit("null".ConstructHighlight()))}" + MakeClickableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
+>>>>>>> Stashed changes
 =======
                         return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(GetSceneKind(data, variables) + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeClickableForThisUnit("null".ConstructHighlight()))}" + MakeClickableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
 >>>>>>> Stashed changes
@@ -183,8 +191,11 @@ namespace Unity.VisualScripting.Community
                     var code = MakeSelectableForThisUnit($"{_name.VariableHighlight()} = ") + GenerateValue(Unit.input, data) + MakeSelectableForThisUnit(";");
                     data.RemoveExpectedType();
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                     data.CreateSymbol(Unit, variableType, code);
 =======
+=======
+>>>>>>> Stashed changes
                     var code = MakeClickableForThisUnit($"{_name.LegalMemberName().VariableHighlight()} = ") + inputCode + MakeClickableForThisUnit(";");
                     data.CreateSymbol(Unit, variableType);
 >>>>>>> Stashed changes

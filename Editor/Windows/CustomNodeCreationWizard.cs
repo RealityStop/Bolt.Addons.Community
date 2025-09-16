@@ -236,8 +236,11 @@ namespace Unity.VisualScripting.Community
                 EditorGUI.indentLevel--;
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 GUILayout.Space(10);
 =======
+=======
+>>>>>>> Stashed changes
                     if (valueInput.type != null && ComponentHolderProtocol.IsComponentHolderType(valueInput.type))
                     {
                         valueInput.nullMeansSelf = EditorGUILayout.Toggle("Null Means Self", valueInput.nullMeansSelf);

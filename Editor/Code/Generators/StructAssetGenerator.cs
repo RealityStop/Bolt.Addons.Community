@@ -72,6 +72,55 @@ namespace Unity.VisualScripting.Community
 =======
                         var generator = unit.GetGenerator();
                         if (generator.GetType().IsDefined(typeof(RequiresVariablesAttribute), true))
+<<<<<<< Updated upstream
+=======
+                        {
+                            if (generator is IRequireVariables variables)
+                            {
+                                foreach (var variable in variables.GetRequiredVariables(data))
+                                {
+                                    @struct.AddField(variable);
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogError(generator.GetType().DisplayName() + "Requires Variables does not implement IRequiresVariables");
+                            }
+                        }
+
+                        if (generator.GetType().IsDefined(typeof(RequiresMethodsAttribute), true))
+                        {
+                            if (generator is IRequireMethods methods)
+                            {
+                                foreach (var method in methods.GetRequiredMethods(data))
+                                {
+                                    var originalName = method.name;
+
+                                    if (!methodIndex.TryGetValue(originalName, out var index))
+                                    {
+                                        methodIndex[originalName] = 0;
+                                    }
+                                    else
+                                    {
+                                        index++;
+                                        methodIndex[originalName] = index;
+                                        method.name = originalName + index;
+                                    }
+
+                                    @struct.AddMethod(method);
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogError(generator.GetType().DisplayName() + "Requires Methods but does not implement IRequiresMethods");
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(generator.NameSpaces))
+                            usings.Add(generator.NameSpaces.Replace("`", ",").Trim());
+
+                        if (generator is InterfaceNodeGenerator interfaceNodeGenerator)
+>>>>>>> Stashed changes
                         {
                             if (generator is IRequireVariables variables)
                             {
@@ -184,6 +233,7 @@ namespace Unity.VisualScripting.Community
                         {
                             var usings = new List<string>();
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                             foreach (var _unit in Data.variables[i].getter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
                             {
                                 if (!string.IsNullOrEmpty(NodeGenerator.GetSingleDecorator(_unit, _unit).NameSpaces))
@@ -191,6 +241,8 @@ namespace Unity.VisualScripting.Community
 
                                 HandleOtherGenerators(@struct, _unit.GetGenerator(), Data.variables[i].getter.GetReference());
                             }
+=======
+>>>>>>> Stashed changes
 
 =======
 

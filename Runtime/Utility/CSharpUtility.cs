@@ -15,6 +15,9 @@ using UnityEngine;
 =======
 using static Unity.VisualScripting.Round<float, float>;
 using System.Reflection;
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 namespace Unity.VisualScripting.Community 
@@ -99,6 +102,7 @@ namespace Unity.VisualScripting.Community
             return mergedList;
         }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     
         public static object ConvertType<T>(this T value, Type type)
         {
@@ -125,10 +129,22 @@ namespace Unity.VisualScripting.Community
         public static void RegisterCustomEvent(GameObject target, Action<CustomEventArgs> action, string eventID)
         {
             var hook = new EventHook(EventHooks.Custom, target);
+=======
+
+        private static readonly HashSet<(GameObject target, EventHook hook, string eventID)> registeredEvents
+            = new();
+
+        public static void RegisterCustomEvent(GameObject target, Action<CustomEventArgs> action, string eventID)
+        {
+            var hook = new EventHook(EventHooks.Custom, target);
+>>>>>>> Stashed changes
 
             var key = (target, hook, eventID);
 
             if (registeredEvents.Add(key))
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             {
                 EventBus.Register(hook, action);
@@ -143,6 +159,29 @@ namespace Unity.VisualScripting.Community
     
 =======
 
+        public static T CreateDefinedEventInstance<T>(params object[] parameters)
+        {
+            var info = ReflectedInfo.For(typeof(T));
+            var eventInstance = (T)System.Activator.CreateInstance(typeof(T));
+            var members = info.reflectedFields.Select(v => v.Value).Cast<MemberInfo>().Concat(info.reflectedProperties.Select(v => v.Value)).ToListPooled();
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                var member = members[i];
+                if (member is FieldInfo fieldInfo)
+                {
+                    fieldInfo.SetValueOptimized(eventInstance, parameters[i].ConvertTo(fieldInfo.FieldType));
+                }
+                else if (member is PropertyInfo propertyInfo)
+                {
+                    propertyInfo.SetValueOptimized(eventInstance, parameters[i].ConvertTo(propertyInfo.PropertyType));
+                }
+            }
+            return eventInstance;
+        }
+
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
         public static T CreateDefinedEventInstance<T>(params object[] parameters)
         {
             var info = ReflectedInfo.For(typeof(T));
@@ -220,6 +259,9 @@ namespace Unity.VisualScripting.Community
             return dictionary;
         }
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         /// <summary>
         /// Merges two or more dictionaries together.
@@ -327,8 +369,11 @@ namespace Unity.VisualScripting.Community
             return mergedDictionary;
         }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     
 =======
+=======
+>>>>>>> Stashed changes
 
         public static float GetTime(bool unscaled)
         {

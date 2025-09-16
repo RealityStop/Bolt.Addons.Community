@@ -13,8 +13,11 @@ namespace Unity.VisualScripting.Community
         public void InitializeSettings()
         {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             var path = "Assets/Unity.VisualScripting.Community.Generated/";
 =======
+=======
+>>>>>>> Stashed changes
             if (isInitalized) return;
 
             isInitalized = true;

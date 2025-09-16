@@ -39,7 +39,10 @@ namespace Unity.VisualScripting.Community
 
             var output = string.Empty;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
             if (!data.scopeGeneratorData.TryGetValue(Unit.enter, out _))
             {
                 data.scopeGeneratorData.Add(Unit.enter, true);
@@ -79,6 +82,7 @@ namespace Unity.VisualScripting.Community
             if (Unit.exitReady.hasValidConnection && !data.generatorData.TryGetValue(Unit.exitReady, out var readyGenerated))
             {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 data.generatorData.Add(Unit.exitReady, true);
                 output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnReady".VariableHighlight() + " += ") + GetAction(Unit.exitReady, indent, data) + MakeSelectableForThisUnit(";") + "\n";
             }
@@ -100,6 +104,8 @@ namespace Unity.VisualScripting.Community
                 data.generatorData.Add(Unit.becameReady, true);
                 output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnCompleteAction".VariableHighlight() + " += ") + GetAction(Unit.becameReady, indent, data) + MakeSelectableForThisUnit(";") + "\n";
 =======
+=======
+>>>>>>> Stashed changes
                 if (port.hasValidConnection && !data.scopeGeneratorData.TryGetValue(port, out _))
                 {
                     data.scopeGeneratorData.Add(port, true);

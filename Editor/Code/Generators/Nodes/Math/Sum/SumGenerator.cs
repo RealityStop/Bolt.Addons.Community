@@ -28,7 +28,11 @@ namespace Unity.VisualScripting.Community
                 values.Add(GenerateValue(item, data));
             }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             return string.Join(MakeSelectableForThisUnit(" + "), values);
+=======
+            return MakeClickableForThisUnit("(") + string.Join(MakeClickableForThisUnit(" + "), values) + MakeClickableForThisUnit(")");
+>>>>>>> Stashed changes
 =======
             return MakeClickableForThisUnit("(") + string.Join(MakeClickableForThisUnit(" + "), values) + MakeClickableForThisUnit(")");
 >>>>>>> Stashed changes

@@ -37,6 +37,7 @@ namespace Unity.VisualScripting.Community
             var machine = (ScriptMachine)asset;
             return Path.Combine(paths.ObjectsRelativePath, GetMachineName(machine).LegalMemberName() + ".cs");
         }
+<<<<<<< Updated upstream
 
         protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
         {
@@ -46,6 +47,20 @@ namespace Unity.VisualScripting.Community
             var component = machine.gameObject.GetComponent(type) ??
                           machine.gameObject.AddComponent(type);
 
+=======
+
+        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
+        {
+            var machine = (ScriptMachine)asset;
+            var scriptImporter = AssetImporter.GetAtPath(GetRelativeFilePath(asset, paths)) as MonoImporter;
+            var type = scriptImporter.GetScript().GetClass();
+            var component = machine.gameObject.GetComponent(type);
+            if (component == null)
+            {
+                component = machine.gameObject.AddComponent(type);
+            }
+
+>>>>>>> Stashed changes
             var values = CodeGeneratorValueUtility.GetAllValues(machine, false);
             var variables = machine.graph.variables.Where(v =>
                 typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(v.typeHandle.Identification)));
@@ -57,10 +72,14 @@ namespace Unity.VisualScripting.Community
             for (int i = 0; i < objects.Length; i++)
             {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 type.GetFields()
                     .Where(f => f.IsPublic || f.HasAttribute<SerializeField>())
                     .FirstOrDefault(f => f.Name == names[i])
                     ?.SetValue(component, objects[i]);
+=======
+                type.GetFields().Where(f => f.IsPublic || f.HasAttribute<SerializeField>()).FirstOrDefault(f => f.Name == objects[i].Item1)?.SetValueOptimized(component, objects[i].Item2);
+>>>>>>> Stashed changes
 =======
                 type.GetFields().Where(f => f.IsPublic || f.HasAttribute<SerializeField>()).FirstOrDefault(f => f.Name == objects[i].Item1)?.SetValueOptimized(component, objects[i].Item2);
 >>>>>>> Stashed changes

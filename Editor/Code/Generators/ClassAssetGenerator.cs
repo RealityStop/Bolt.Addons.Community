@@ -41,6 +41,9 @@ namespace Unity.VisualScripting.Community
         {
             _specialUnits.Clear();
             methodIndex.Clear();
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             if (Data == null)
                 return ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, "", null);
@@ -285,8 +288,12 @@ namespace Unity.VisualScripting.Community
                 }
             }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 #endif
             var values = CodeGeneratorValueUtility.GetAllValues(Data);
+=======
+            var values = CodeGeneratorValueUtility.GetAllValues(Data, true);
+>>>>>>> Stashed changes
 =======
             var values = CodeGeneratorValueUtility.GetAllValues(Data, true);
 >>>>>>> Stashed changes
@@ -306,9 +313,12 @@ namespace Unity.VisualScripting.Community
             return @class;
         }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
         private List<string> ProcessGraphUnits(FlowGraph graph, ClassGenerator @class, GraphPointer graphPointer)
 =======
+=======
+>>>>>>> Stashed changes
         
         private HashSet<string> ProcessGraphUnits(FlowGraph graph, ClassGenerator @class)
 >>>>>>> Stashed changes

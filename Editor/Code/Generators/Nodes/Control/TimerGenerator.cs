@@ -27,6 +27,7 @@ namespace Unity.VisualScripting.Community
     
         public override bool HasDefaultValue => true;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
@@ -46,6 +47,15 @@ namespace Unity.VisualScripting.Community
         {
             variableName = Name;
             var output = string.Empty;
+=======
+
+        public override bool Literal => false;
+
+        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
+        {
+            variableName = Name;
+            var output = string.Empty;
+>>>>>>> Stashed changes
             if (Unit.start.hasValidConnection && !data.scopeGeneratorData.TryGetValue(Unit.start, out _))
             {
                 data.scopeGeneratorData.Add(Unit.start, true);
@@ -91,9 +101,12 @@ namespace Unity.VisualScripting.Community
             if (Unit.tick.hasValidConnection && !data.generatorData.TryGetValue(Unit.tick, out var tickGenerated))
             {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 data.generatorData.Add(Unit.tick, true);
                 output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(variableName.VariableHighlight() + "." + "OnTick".VariableHighlight() + " += ") + GetAction(Unit.tick, indent, data) + MakeSelectableForThisUnit(";") + "\n";
 =======
+=======
+>>>>>>> Stashed changes
                 if (port.hasValidConnection && !data.scopeGeneratorData.TryGetValue(port, out _))
                 {
                     data.scopeGeneratorData.Add(port, true);
@@ -149,8 +162,11 @@ namespace Unity.VisualScripting.Community
             return base.GenerateValue(output, data);
         }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     } 
 =======
+=======
+>>>>>>> Stashed changes
 
         public override string GenerateUpdateCode(ControlGenerationData data, int indent)
         {
