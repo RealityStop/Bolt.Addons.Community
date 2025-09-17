@@ -19,11 +19,11 @@ namespace Unity.VisualScripting.Community
             data.SetExpectedType(typeof(ICollection));
             if (type != null && type.IsArray)
             {
-                var code = GenerateValue(Unit.collection, data) + MakeSelectableForThisUnit("." + "Length".VariableHighlight());
+                var code = GenerateValue(Unit.collection, data) + MakeClickableForThisUnit("." + "Length".VariableHighlight());
                 data.RemoveExpectedType();
                 return code;
             }
-            var _code = GenerateValue(Unit.collection, data) + MakeSelectableForThisUnit("." + "Count".VariableHighlight());
+            var _code = GenerateValue(Unit.collection, data) + MakeClickableForThisUnit("." + "Count".VariableHighlight());
             data.RemoveExpectedType();
             return _code;
         }

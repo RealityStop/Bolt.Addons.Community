@@ -24,7 +24,7 @@ namespace Unity.VisualScripting.Community
         {
             var output = string.Empty;
             controlGenerationData = data;
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("base".ConstructHighlight() + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeSelectableForThisUnit(");") + (Unit.exit.hasValidConnection ? "\n" : string.Empty);
+            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("base".ConstructHighlight() + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeClickableForThisUnit(");") + (Unit.exit.hasValidConnection ? "\n" : string.Empty);
             output += GetNextUnit(Unit.exit, data, indent);
             return output;
         }
@@ -34,17 +34,17 @@ namespace Unity.VisualScripting.Community
 
             if (Unit.enter != null && !Unit.enter.hasValidConnection && Unit.OutputParameters.Count > 0)
             {
-                return MakeSelectableForThisUnit($"/* Control Port Enter requires a connection */".WarningHighlight());
+                return MakeClickableForThisUnit($"/* Control Port Enter requires a connection */".WarningHighlight());
             }
 
             if (Unit.OutputParameters.ContainsValue(output))
             {
                 var transformedKey = outputNames[output].Replace("&", "").Replace("%", "");
 
-                return MakeSelectableForThisUnit(transformedKey.VariableHighlight());
+                return MakeClickableForThisUnit(transformedKey.VariableHighlight());
             }
 
-            return MakeSelectableForThisUnit("base".ConstructHighlight() + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeSelectableForThisUnit(")");
+            return MakeClickableForThisUnit("base".ConstructHighlight() + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeClickableForThisUnit(")");
         }
 
 
@@ -84,7 +84,7 @@ namespace Unity.VisualScripting.Community
                     }
                     index++;
                 }
-                return string.Join(MakeSelectableForThisUnit(", "), output);
+                return string.Join(MakeClickableForThisUnit(", "), output);
             }
             else if (Unit.member.isMethod)
             {
@@ -102,12 +102,12 @@ namespace Unity.VisualScripting.Community
                     }
                     index++;
                 }
-                return string.Join(MakeSelectableForThisUnit(", "), output);
+                return string.Join(MakeClickableForThisUnit(", "), output);
             }
             else
             {
                 List<string> output = Unit.valueInputs.Select(input => GenerateValue(input, data)).ToList();
-                return string.Join(MakeSelectableForThisUnit(", "), output);
+                return string.Join(MakeClickableForThisUnit(", "), output);
             }
         }
     }

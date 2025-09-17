@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community
             }
 
             // Concatenate all segments into one final string expression.
-            return string.Join(MakeSelectableForThisUnit(" + "), codeSegments);
+            return string.Join(MakeClickableForThisUnit(" + "), codeSegments);
         }
 
         /// <summary>
@@ -36,49 +36,49 @@ namespace Unity.VisualScripting.Community
             switch (mode)
             {
                 case StringBuilderUnit.AppendMode.UpperCase:
-                    return inputValue + MakeSelectableForThisUnit(".ToUpper()");
+                    return inputValue + MakeClickableForThisUnit(".ToUpper()");
 
                 case StringBuilderUnit.AppendMode.LowerCase:
-                    return inputValue + MakeSelectableForThisUnit(".ToLower()");
+                    return inputValue + MakeClickableForThisUnit(".ToLower()");
                 case StringBuilderUnit.AppendMode.Quoted:
-                    return MakeSelectableForThisUnit($"{"\"\\\"\"".StringHighlight()} + ") + inputValue + MakeSelectableForThisUnit($" + {"\"\\\"\"".StringHighlight()}");
+                    return MakeClickableForThisUnit($"{"\"\\\"\"".StringHighlight()} + ") + inputValue + MakeClickableForThisUnit($" + {"\"\\\"\"".StringHighlight()}");
 
                 case StringBuilderUnit.AppendMode.Trimmed:
-                    return inputValue + MakeSelectableForThisUnit(".Trim()");
+                    return inputValue + MakeClickableForThisUnit(".Trim()");
 
                 case StringBuilderUnit.AppendMode.Prefixed:
                     string prefix = this.Unit.appendModes[index].prefix;
-                    return MakeSelectableForThisUnit($"\"{prefix}\"".StringHighlight()) + MakeSelectableForThisUnit(" + ") + inputValue;
+                    return MakeClickableForThisUnit($"\"{prefix}\"".StringHighlight()) + MakeClickableForThisUnit(" + ") + inputValue;
 
                 case StringBuilderUnit.AppendMode.Suffixed:
                     string suffix = this.Unit.appendModes[index].suffix;
-                    return inputValue + MakeSelectableForThisUnit(" + ") + MakeSelectableForThisUnit($"\"{suffix}\"".StringHighlight());
+                    return inputValue + MakeClickableForThisUnit(" + ") + MakeClickableForThisUnit($"\"{suffix}\"".StringHighlight());
 
                 case StringBuilderUnit.AppendMode.Repeated:
                     int repetitions = this.Unit.appendModes[index].repeatCount;
                     List<string> output = new List<string>();
                     for (int i = 0; i < repetitions; i++) output.Add(inputValue);
-                    return string.Join(MakeSelectableForThisUnit(" + "), output);
+                    return string.Join(MakeClickableForThisUnit(" + "), output);
                 case StringBuilderUnit.AppendMode.TabAfter:
-                    return inputValue + MakeSelectableForThisUnit($" + {"\"\\t\"".StringHighlight()}");
+                    return inputValue + MakeClickableForThisUnit($" + {"\"\\t\"".StringHighlight()}");
                 case StringBuilderUnit.AppendMode.TabBefore:
-                    return MakeSelectableForThisUnit($"{"\"\\t\"".StringHighlight()} + ") + inputValue;
+                    return MakeClickableForThisUnit($"{"\"\\t\"".StringHighlight()} + ") + inputValue;
                 case StringBuilderUnit.AppendMode.CommaSeparated:
                     if (index < totalCount - 1)
-                        return inputValue + MakeSelectableForThisUnit($" + {"\", \"".StringHighlight()}");
+                        return inputValue + MakeClickableForThisUnit($" + {"\", \"".StringHighlight()}");
                     return inputValue;
                 case StringBuilderUnit.AppendMode.SpaceAfter:
-                    return inputValue + MakeSelectableForThisUnit($" + {"\" \"".StringHighlight()}");
+                    return inputValue + MakeClickableForThisUnit($" + {"\" \"".StringHighlight()}");
                 case StringBuilderUnit.AppendMode.SpaceBefore:
-                    return MakeSelectableForThisUnit($"{"\" \"".StringHighlight()} + ") + inputValue;
+                    return MakeClickableForThisUnit($"{"\" \"".StringHighlight()} + ") + inputValue;
                 case StringBuilderUnit.AppendMode.NewLineBefore:
-                    return MakeSelectableForThisUnit($"{"\"\\n\"".StringHighlight()} + ") + inputValue;
+                    return MakeClickableForThisUnit($"{"\"\\n\"".StringHighlight()} + ") + inputValue;
                 case StringBuilderUnit.AppendMode.NewLineAfter:
-                    return inputValue + MakeSelectableForThisUnit($" + {"\"\\n\"".StringHighlight()}");
+                    return inputValue + MakeClickableForThisUnit($" + {"\"\\n\"".StringHighlight()}");
                 case StringBuilderUnit.AppendMode.Delimiter:
                     string delimiter = this.Unit.appendModes[index].delimiter;
                     if (index < totalCount - 1)
-                        return inputValue + MakeSelectableForThisUnit($" + {$"\"{delimiter}\"".StringHighlight()}");
+                        return inputValue + MakeClickableForThisUnit($" + {$"\"{delimiter}\"".StringHighlight()}");
                     return inputValue;
 
                 case StringBuilderUnit.AppendMode.Default:

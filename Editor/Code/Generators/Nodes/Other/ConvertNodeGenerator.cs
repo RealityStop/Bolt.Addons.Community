@@ -27,17 +27,17 @@ namespace Unity.VisualScripting.Community
                 NameSpaces = "";
                 if (Unit.type == typeof(object)) return GenerateValue(Unit.value, data);
                 NameSpaces = Unit.type.Namespace;
-                return MakeSelectableForThisUnit($"({Unit.type.As().CSharpName(true, true)})") + GenerateValue(Unit.value, data);
+                return MakeClickableForThisUnit($"({Unit.type.As().CSharpName(true, true)})") + GenerateValue(Unit.value, data);
             }
             else if (Unit.conversion == ConversionType.ToArrayOfObject)
             {
                 NameSpaces = "System.Linq";
-                return MakeSelectableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeSelectableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToArray()");
+                return MakeClickableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeClickableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToArray()");
             }
             else if (Unit.conversion == ConversionType.ToListOfObject)
             {
                 NameSpaces = "System.Linq";
-                return MakeSelectableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeSelectableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToList()");
+                return MakeClickableForThisUnit("(") + $"{new ValueCode(GenerateValue(Unit.value, data), typeof(IEnumerable), ShouldCast(Unit.value, data, true), true)}" + MakeClickableForThisUnit($").Cast<{"object".ConstructHighlight()}>().ToList()");
             }
             return base.GenerateValue(output, data);
         }

@@ -52,13 +52,13 @@ namespace Unity.VisualScripting.Community
             {
                 _name = "";
             }
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(Name + "(") + GenerateValue(Unit.branches[input], data) + MakeSelectableForThisUnit(");") + "\n";
+            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(Name + "(") + GenerateValue(Unit.branches[input], data) + MakeClickableForThisUnit(");") + "\n";
             return output;
         }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return MakeSelectableForThisUnit("value".VariableHighlight());
+            return MakeClickableForThisUnit("value".VariableHighlight());
         }
     }
 }

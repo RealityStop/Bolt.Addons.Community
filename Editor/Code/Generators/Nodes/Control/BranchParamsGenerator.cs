@@ -22,33 +22,29 @@ namespace Unity.VisualScripting.Community
             var output = new StringBuilder();
             string cachedIndent = CodeBuilder.Indent(indent);
 
-            var trueData = new ControlGenerationData(data);
-            var falseData = new ControlGenerationData(data);
             string trueCode;
 
             if (input == Unit.enter)
             {
-                // Construct "if" statement
                 output.Append(cachedIndent)
-                      .Append(MakeSelectableForThisUnit("if".ConstructHighlight() + " ("))
+                      .Append(MakeClickableForThisUnit("if".ConstructHighlight() + " ("))
                       .Append(GenerateArguments(data))
-                      .Append(MakeSelectableForThisUnit(")"))
+                      .Append(MakeClickableForThisUnit(")"))
                       .AppendLine()
-                      .Append(cachedIndent + MakeSelectableForThisUnit("{"))
+                      .Append(cachedIndent + MakeClickableForThisUnit("{"))
                       .AppendLine();
 
-                trueData.NewScope();
+                data.NewScope();
                 trueCode = GetNextUnit(Unit.exitTrue, data, indent + 1);
-                trueData.ExitScope();
+                data.ExitScope();
 
                 output.Append(trueCode).AppendLine();
 
-                output.Append(cachedIndent + MakeSelectableForThisUnit("}"));
+                output.Append(cachedIndent + MakeClickableForThisUnit("}"));
 
-                // Handle the "else" branch if present
                 if (Unit.exitFalse.hasAnyConnection)
                 {
-                    output.AppendLine().Append(cachedIndent).Append(MakeSelectableForThisUnit("else".ConstructHighlight()));
+                    output.AppendLine().Append(cachedIndent).Append(MakeClickableForThisUnit("else".ConstructHighlight()));
 
                     if (!Unit.exitTrue.hasValidConnection || string.IsNullOrEmpty(trueCode))
                     {
@@ -57,25 +53,21 @@ namespace Unity.VisualScripting.Community
                     }
 
                     output.AppendLine()
-                          .Append(cachedIndent + MakeSelectableForThisUnit("{"))
+                          .Append(cachedIndent + MakeClickableForThisUnit("{"))
                           .AppendLine();
 
-                    falseData.NewScope();
+                    data.NewScope();
                     output.Append(GetNextUnit(Unit.exitFalse, data, indent + 1)).AppendLine();
-                    falseData.ExitScope();
+                    data.ExitScope();
 
-                    output.Append(cachedIndent + MakeSelectableForThisUnit("}"));
+                    output.Append(cachedIndent + MakeClickableForThisUnit("}"));
                 }
 
-                // Handle the "finished" branch if present
                 if (Unit.exitNext != null && Unit.exitNext.hasAnyConnection)
                 {
                     output.AppendLine().Append(GetNextUnit(Unit.exitNext, data, indent));
                 }
             }
-
-            // Update break status in data
-            data.hasBroke = trueData.hasBroke && falseData.hasBroke;
 
             return output.ToString();
         }
@@ -134,7 +126,7 @@ namespace Unity.VisualScripting.Community
                         data.RemoveExpectedType();
                     break;
             }
-            return string.Join(MakeSelectableForThisUnit(op), values);
+            return string.Join(MakeClickableForThisUnit(op), values);
         }
     }
 }

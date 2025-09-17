@@ -27,11 +27,20 @@ namespace Unity.VisualScripting.Community
         private static Metadata targetMetadata;
 
         private bool canMakeArrayTypeForBaseType;
-        public static bool Button(Type type, string nullType = "Select Type", params GUILayoutOption[] options)
+        public static bool Button(Type type, string nullType = "Select Type", TextAnchor textAnchor = TextAnchor.MiddleLeft, params GUILayoutOption[] options)
         {
-            GUIContent TypebuilderButtonContent = new(type?.As().CSharpName(false, false, false) ?? nullType, type.GetTypeIcon());
-            return GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, options);
+            GUIContent buttonContent = new(
+                type?.As().CSharpName(false, false, false) ?? nullType,
+                type.GetTypeIcon()
+            );
+
+            GUIStyle style = new GUIStyle(EditorStyles.popup);
+
+            style.alignment = textAnchor;
+
+            return GUILayout.Button(buttonContent, style, options);
         }
+
         public static void ShowWindow(Rect position, Metadata Meta, bool canMakeArray = true, Type[] types = null, Action onBeforeChanged = null, Action<Type> onAfterChanged = null)
         {
             if (Window == null)

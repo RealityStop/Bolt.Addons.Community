@@ -13,5 +13,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             this.usings.MergeUnique(usings);
             return this;
         }
+
+        public virtual TypeGenerator AddUsings(HashSet<string> usings)
+        {
+            this.usings.MergeUnique(usings);
+            return this;
+        }
     }
 }

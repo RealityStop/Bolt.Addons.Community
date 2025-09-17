@@ -28,6 +28,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         private bool hasBackingField;
         private bool hasIndexer;
         private string indexerBody;
+        private string warning;
 
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
 #pragma warning restore 0649
@@ -135,7 +136,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             var scopeStr = scope != AccessModifier.None ? scope.AsString().ConstructHighlight() + " " : string.Empty;
             var typeStr = useAssemblyQualifiedReturnType ? assemblyQualifiedReturnType : returnType.As().CSharpName();
 
-            // Generate attributes
             var attributesStr = string.Empty;
             foreach (AttributeGenerator attr in attributes)
             {
@@ -166,6 +166,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             // Property body
             var body = string.Empty;
             var warnings = new List<string>();
+
+            if (!string.IsNullOrEmpty(warning)) warnings.Add(warning);
 
             // Validate accessibility modifiers
             if (hasGetter && hasSetter && getterScope != scope && setterScope != scope && getterScope != AccessModifier.None && setterScope != AccessModifier.None)
@@ -271,11 +273,18 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                    (modifier == PropertyModifier.Abstract);
         }
 
+        public PropertyGenerator SetWarning(string warning)
+        {
+            this.warning = warning;
+            return this;
+        }
+
         public override List<string> Usings()
         {
-            var usings = new List<string>();
-
-            usings.Add(useAssemblyQualifiedReturnType ? (Type.GetType(assemblyQualifiedReturnType).IsPrimitive ? Type.GetType(assemblyQualifiedReturnType).Namespace : string.Empty) : (returnType.IsPrimitive ? string.Empty : returnType.Namespace));
+            var usings = new List<string>
+            {
+                useAssemblyQualifiedReturnType ? (Type.GetType(assemblyQualifiedReturnType).IsPrimitive ?  string.Empty : Type.GetType(assemblyQualifiedReturnType).Namespace) : (returnType.IsPrimitive ? string.Empty : returnType.Namespace)
+            };
 
             for (int i = 0; i < attributes.Count; i++)
             {

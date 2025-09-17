@@ -29,11 +29,11 @@ namespace Unity.VisualScripting.Community
                 {
                     var targetValue = GenerateValue(Unit.target, data);
 
-                    output += CodeBuilder.Indent(indent) + targetValue + MakeSelectableForThisUnit($".{memberName} = ") + $"{inputValue}{MakeSelectableForThisUnit(";")}\n";
+                    output += CodeBuilder.Indent(indent) + targetValue + MakeClickableForThisUnit($".{memberName} = ") + $"{inputValue}{MakeClickableForThisUnit(";")}\n";
                 }
                 else
                 {
-                    output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + $".{memberName} = " + $"{inputValue}{MakeSelectableForThisUnit(";")}\n");
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + $".{memberName} = " + $"{inputValue}{MakeClickableForThisUnit(";")}\n");
                 }
                 output += GetNextUnit(Unit.assigned, data, indent);
 
@@ -45,7 +45,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return new ValueCode($"{GenerateValue(Unit.target, data)}", Unit.target.type, ShouldCast(Unit.target, data)) + MakeSelectableForThisUnit(new ValueCode($".{Unit.member.name}"));
+            return new ValueCode($"{GenerateValue(Unit.target, data)}", Unit.target.type, ShouldCast(Unit.target, data)) + MakeClickableForThisUnit(new ValueCode($".{Unit.member.name}"));
         }
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
@@ -65,7 +65,7 @@ namespace Unity.VisualScripting.Community
                 }
                 else
                 {
-                    return MakeSelectableForThisUnit($"/* {input.key} requires input */".WarningHighlight());
+                    return MakeClickableForThisUnit($"/* {input.key} requires input */".WarningHighlight());
                 }
             }
             else
@@ -75,7 +75,7 @@ namespace Unity.VisualScripting.Community
                     if (typeof(Component).IsAssignableFrom(input.type) || input.type == typeof(GameObject))
                     {
                         var inputCode = GetNextValueUnit(input, data);
-                        return new ValueCode(inputCode, typeof(GameObject), ShouldCast(input, data)) + MakeSelectableForThisUnit($"{GetComponent(Unit.target, data)}");
+                        return new ValueCode(inputCode, typeof(GameObject), ShouldCast(input, data)) + MakeClickableForThisUnit($"{GetComponent(Unit.target, data)}");
                     }
                     return GetNextValueUnit(input, data);
                 }
@@ -85,11 +85,11 @@ namespace Unity.VisualScripting.Community
                     {
                         if (input.type.IsSubclassOf(typeof(Component)))
                         {
-                            return MakeSelectableForThisUnit("gameObject".VariableHighlight() + new ValueCode($"{GetComponent(Unit.target, data)}"));
+                            return MakeClickableForThisUnit("gameObject".VariableHighlight() + new ValueCode($"{GetComponent(Unit.target, data)}"));
                         }
                         else
                         {
-                            return MakeSelectableForThisUnit("gameObject".VariableHighlight());
+                            return MakeClickableForThisUnit("gameObject".VariableHighlight());
                         }
                     }
                     else

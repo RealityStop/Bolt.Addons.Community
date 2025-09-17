@@ -19,7 +19,7 @@ public class TriggerCustomEventGenerator : NodeGenerator<TriggerCustomEvent>
         var output = string.Empty;
         var customEvent = typeof(CustomEvent).As().CSharpName(false, true);
 
-        output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(customEvent + ".Trigger(") + GenerateValue(Unit.target, data) + MakeSelectableForThisUnit(", ") + $"{GenerateValue(Unit.name, data)}{(Unit.argumentCount > 0 ? MakeSelectableForThisUnit(", ") : "")}{string.Join(MakeSelectableForThisUnit(", "), Unit.arguments.Select(arg => GenerateValue(arg, data)))}" + MakeSelectableForThisUnit(");") + "\n";
+        output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(customEvent + ".Trigger(") + GenerateValue(Unit.target, data) + MakeClickableForThisUnit(", ") + $"{GenerateValue(Unit.name, data)}{(Unit.argumentCount > 0 ? MakeClickableForThisUnit(", ") : "")}{string.Join(MakeClickableForThisUnit(", "), Unit.arguments.Select(arg => GenerateValue(arg, data)))}" + MakeClickableForThisUnit(");") + "\n";
         output += GetNextUnit(Unit.exit, data, indent);
         return output;
     }
@@ -28,7 +28,7 @@ public class TriggerCustomEventGenerator : NodeGenerator<TriggerCustomEvent>
     {
         if (input == Unit.target && !Unit.target.hasValidConnection)
         {
-            return MakeSelectableForThisUnit("gameObject".VariableHighlight());
+            return MakeClickableForThisUnit("gameObject".VariableHighlight());
         }
 
         if (input == Unit.target)
@@ -37,7 +37,7 @@ public class TriggerCustomEventGenerator : NodeGenerator<TriggerCustomEvent>
             var sourceIsComponent = typeof(Component).IsAssignableFrom(sourceType);
             if (sourceIsComponent)
             {
-                return base.GenerateValue(Unit.target, data) + MakeSelectableForThisUnit("." + "gameObject".VariableHighlight());
+                return base.GenerateValue(Unit.target, data) + MakeClickableForThisUnit("." + "gameObject".VariableHighlight());
             }
             else
             {

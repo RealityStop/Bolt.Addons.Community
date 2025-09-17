@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community
 {
@@ -17,9 +18,13 @@ namespace Unity.VisualScripting.Community
             string output = string.Empty;
             if (input == Unit.enter)
             {
-                data.hasReturned = true;
-                var yield = SupportsYieldReturn(data.returns) ? "yield ".ControlHighlight() : "";
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(yield + "return".ControlHighlight()) + (data.returns != typeof(void) && data.returns != typeof(Libraries.CSharp.Void) ? MakeSelectableForThisUnit(" ") + GenerateValue(Unit.value, data) : "") + MakeSelectableForThisUnit(";");
+                if (data.MustReturn)
+                {
+                    var sourceType = GetSourceType(Unit.value, data) ?? typeof(object);
+                    data.SetHasReturned(data.Returns == sourceType || data.Returns.IsAssignableFrom(sourceType));
+                }
+                var yield = SupportsYieldReturn(data.Returns) ? "yield ".ControlHighlight() : "";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(yield + "return".ControlHighlight()) + (!data.Returns.Is().Void() ? MakeClickableForThisUnit(" ") + GenerateValue(Unit.value, data) : "") + MakeClickableForThisUnit(";");
                 return output;
             }
             return base.GenerateControl(input, data, indent);

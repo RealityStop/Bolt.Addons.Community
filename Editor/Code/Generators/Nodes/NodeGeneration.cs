@@ -1,17 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
     public static class NodeGeneration
     {
-        /// <summary>
-        /// Generates a value for a specified ValueInput node.
-        /// Handles infinite recursion detection.
-        /// </summary>
         public static string GenerateValue<T>(this T node, ValueInput input, ControlGenerationData data = null) where T : Unit
         {
             var generator = GetGenerator(node);
@@ -19,7 +15,7 @@ namespace Unity.VisualScripting.Community
 
             if (!generator.recursion?.TryEnter(node) ?? false)
             {
-                return generator.MakeSelectableForThisUnit(CodeUtility.ToolTip($"{input.key} is infinitely generating itself. Consider reviewing your graph logic.", "Infinite recursion detected!", ""));
+                return generator.MakeClickableForThisUnit(CodeUtility.ToolTip($"{input.key} is infinitely generating itself. Consider reviewing your graph logic or Increasing recursion depth in preview Settings.", "Infinite recursion detected!", ""));
             }
 
             try
@@ -32,10 +28,6 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        /// <summary>
-        /// Generates a value for a specified ValueOutput node.
-        /// Handles infinite recursion detection.
-        /// </summary>
         public static string GenerateValue<T>(this T node, ValueOutput output, ControlGenerationData data = null) where T : Unit
         {
             var generator = GetGenerator(node);
@@ -43,7 +35,7 @@ namespace Unity.VisualScripting.Community
 
             if (!generator.recursion?.TryEnter(node) ?? false)
             {
-                return generator.MakeSelectableForThisUnit(CodeUtility.ToolTip($"{output.key} is infinitely generating itself. Consider reviewing your graph logic.", "Infinite recursion detected!", ""));
+                return generator.MakeClickableForThisUnit(CodeUtility.ToolTip($"{output.key} is infinitely generating itself. Consider reviewing your graph logic or Increasing recursion depth in preview Settings.", "Infinite recursion detected!", ""));
             }
 
             try
@@ -56,10 +48,6 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        /// <summary>
-        /// Generates control flow logic for a specified ControlInput node.
-        /// Handles infinite recursion detection.
-        /// </summary>
         public static string GenerateControl<T>(this T node, ControlInput input, ControlGenerationData data, int indent) where T : Unit
         {
             var generator = GetGenerator(node);
@@ -67,7 +55,7 @@ namespace Unity.VisualScripting.Community
 
             if (!generator.recursion?.TryEnter(node) ?? false)
             {
-                return CodeBuilder.Indent(indent) + generator.MakeSelectableForThisUnit(CodeUtility.ToolTip("This node appears to cause infinite recursion(The flow is leading back to this node). Consider using a While loop instead.", "Infinite recursion detected!", ""));
+                return CodeBuilder.Indent(indent) + generator.MakeClickableForThisUnit(CodeUtility.ToolTip("This node appears to cause infinite recursion(The flow is leading back to this node). Consider using a While loop instead or Increasing recursion depth in preview Settings.", "Infinite recursion detected!", ""));
             }
 
             try
@@ -153,68 +141,47 @@ namespace Unity.VisualScripting.Community
 
         private static readonly Dictionary<Unit, NodeGenerator> generatorCache = new();
 
-        /// <summary>
-        /// Retrieves or creates a NodeGenerator for a specified node.
-        /// </summary>
         public static NodeGenerator GetGenerator(this Unit node)
         {
-            if (generatorCache.ContainsKey(node))
+            if (!generatorCache.TryGetValue(node, out var generator))
             {
-                return generatorCache[node];
+                generator = NodeGenerator.GetSingleDecorator(node, node);
+                generatorCache[node] = generator;
             }
 
-            generatorCache[node] = NodeGenerator.GetSingleDecorator(node, node);
-            return generatorCache[node];
+            return generator;
         }
 
-        /// <summary>
-        /// Retrieves the MethodNodeGenerator for a specified node, if applicable.
-        /// </summary>
-        public static MethodNodeGenerator GetMethodGenerator<T>(this T node) where T : Unit
+        public static MethodNodeGenerator GetMethodGenerator<T>(this T node, bool throwError = true) where T : Unit
         {
-            var generator = GetGenerator(node);
-
-            if (generator is MethodNodeGenerator methodNodeGenerator)
-            {
+            if (GetGenerator(node) is MethodNodeGenerator methodNodeGenerator)
                 return methodNodeGenerator;
-            }
-
-            throw new InvalidOperationException($"{node.GetType()} is not a method generator.");
+            if (throwError)
+                throw new InvalidOperationException($"{node.GetType()} is not a method generator.");
+            else
+                return null;
         }
 
-        /// <summary>
-        /// Retrieves the VariableNodeGenerator for a specified node, if applicable.
-        /// </summary>
-        public static VariableNodeGenerator GetVariableGenerator<T>(this T node) where T : Unit
+        public static VariableNodeGenerator GetVariableGenerator<T>(this T node, bool throwError = true) where T : Unit
         {
-            var generator = GetGenerator(node);
-
-            if (generator is VariableNodeGenerator variableNodeGenerator)
-            {
+            if (GetGenerator(node) is VariableNodeGenerator variableNodeGenerator)
                 return variableNodeGenerator;
-            }
-
-            throw new InvalidOperationException($"{node.GetType()} is not a variable generator.");
+            if (throwError)
+                throw new InvalidOperationException($"{node.GetType()} is not a variable generator.");
+            else
+                return null;
         }
 
-        /// <summary>
-        /// Retrieves the LocalVariableGenerator for a specified node, if applicable.
-        /// </summary>
-        public static LocalVariableGenerator GetLocalVariableGenerator<T>(this T node) where T : Unit
+        public static LocalVariableGenerator GetLocalVariableGenerator<T>(this T node, bool throwError = true) where T : Unit
         {
-            var generator = GetGenerator(node);
-
-            if (generator is LocalVariableGenerator localVariableGenerator)
-            {
+            if (GetGenerator(node) is LocalVariableGenerator localVariableGenerator)
                 return localVariableGenerator;
-            }
-
-            throw new InvalidOperationException($"{node.GetType()} is not a local variable generator.");
+            if (throwError)
+                throw new InvalidOperationException($"{node.GetType()} is not a local variable generator.");
+            else
+                return null;
         }
 
-        /// <summary>
-        /// Gets the connected of port the GraphInput/Subgraph instead of giving the GraphInput/Subgraph port directly.
-        /// </summary>
         public static IUnitValuePort GetPesudoSource(this ValueInput input)
         {
             if (!input.hasValidConnection)
@@ -222,41 +189,52 @@ namespace Unity.VisualScripting.Community
 
             var source = input.connection.source;
 
-            if (source.unit is GraphInput graphInput)
+            return source.unit switch
             {
-                var generator = GetGenerator(graphInput);
+                GraphInput graphInput => FindConnectedInput(GetGenerator(graphInput), source.key),
+                SubgraphUnit subgraph => FindConnectedSubgraphOutput(subgraph, source.key),
+                _ => source
+            };
+        }
 
-                foreach (var valueInput in generator.connectedValueInputs)
+        private static IUnitValuePort FindConnectedInput(NodeGenerator generator, string key)
+        {
+            foreach (var valueInput in generator.connectedValueInputs)
+            {
+                if (valueInput.key == key)
                 {
-                    if (valueInput.key == source.key)
-                    {
-                        if (valueInput.hasValidConnection)
-                            return valueInput.connection.source;
+                    if (valueInput.hasValidConnection)
+                        return valueInput.connection.source;
 
-                        if (valueInput.hasDefaultValue)
-                            return valueInput;
-                    }
+                    if (valueInput.hasDefaultValue)
+                        return valueInput;
                 }
             }
-            else if (source.unit is SubgraphUnit subgraph)
+            return null;
+        }
+
+        private static IUnitValuePort FindConnectedSubgraphOutput(SubgraphUnit subgraph, string key)
+        {
+            var graph = subgraph.nest?.graph;
+            if (graph?.units.FirstOrDefault(u => u is GraphOutput) is not GraphOutput output)
+                return null;
+
+            foreach (var valueInput in output.valueInputs)
             {
-                if (subgraph.nest?.graph.units.FirstOrDefault(unit => unit is GraphOutput) is GraphOutput graphOutput)
-                {
-                    foreach (var valueInput in graphOutput.valueInputs)
-                    {
-                        if (valueInput.key == source.key && valueInput.hasValidConnection)
-                        {
-                            return valueInput.connection.source;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                return source;
+                if (valueInput.key == key && valueInput.hasValidConnection)
+                    return valueInput.connection.source;
             }
 
             return null;
+        }
+
+        public static bool IsValidRefUnit(this Unit unit)
+        {
+            return unit is GetVariable || (unit is AssetFieldUnit fieldUnit && fieldUnit.actionDirection == ActionDirection.Get) || (unit is InheritedFieldUnit inheritedField && inheritedField.actionDirection == ActionDirection.Get);
+        }
+        public static bool IsValidRefUnit(this IUnit unit)
+        {
+            return IsValidRefUnit(unit as Unit);
         }
     }
 }

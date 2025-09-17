@@ -23,6 +23,7 @@ namespace Unity.VisualScripting.Community
                 return Object;
             }
         }
+        public List<MatchObject> SubMatches { get; set; } = new();
 
         public bool IsErrorUnit { get; set; }
 
@@ -60,6 +61,11 @@ namespace Unity.VisualScripting.Community
                 var unitQuery = Normalize(parts[0].Trim());
                 string portQuery = parts.Length > 1 ? Normalize(parts[1].Trim()) : null;
 
+                foreach (var match in SubMatches)
+                {
+                    match.DisplayName = match.MatchString(portQuery, searchMode);
+                }
+
                 string portTag = null;
                 if (unitQuery.EndsWith("@CI", StringComparison.OrdinalIgnoreCase)) { portTag = "CI"; unitQuery = unitQuery[..^3]; }
                 else if (unitQuery.EndsWith("@CO", StringComparison.OrdinalIgnoreCase)) { portTag = "CO"; unitQuery = unitQuery[..^3]; }
@@ -80,7 +86,7 @@ namespace Unity.VisualScripting.Community
 
                 if (portQuery != null && unit != null)
                 {
-                    List<IUnitPort> ports = null;
+                    List<SearchUtility.MatchNode> ports = null;
                     var matchingPorts = unit.validPorts
                         .Where(p => p.hasValidConnection)
                         .Where(p => SearchUtility.PortTagMatches(p, portTag))
@@ -90,7 +96,7 @@ namespace Unity.VisualScripting.Community
                     if (matchingPorts.Count == 0)
                         continue;
                     ports?.Reverse();
-                    name += $" <color=grey>{string.Join(", ", matchingPorts.Select(p => p.Description<UnitPortDescription>()?.label ?? p.key))}>{string.Join(">", ports.Select(p => p.Description<UnitPortDescription>()?.label ?? p.key))}</color>";
+                    name += $" <color=grey>{string.Join(", ", matchingPorts.Select(p => p.Description<UnitPortDescription>()?.label ?? p.key))}>{string.Join(">", ports.Select(p => p.Port.Description<UnitPortDescription>()?.label ?? p.Port.key))}</color>";
                 }
 
                 if (unitQuery == "*")

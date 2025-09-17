@@ -17,7 +17,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return MakeSelectableForThisUnit(output.key.LegalMemberName().VariableHighlight());
+            return MakeClickableForThisUnit(output.key.LegalMemberName().VariableHighlight());
         }
     }
 }

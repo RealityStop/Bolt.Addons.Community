@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             var output = string.Empty;
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("this".ConstructHighlight() + "." + Unit.member.name.VariableHighlight() + " = ") + GenerateValue(Unit.value, data) + MakeSelectableForThisUnit(";");
+            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("this".ConstructHighlight() + "." + Unit.member.name.VariableHighlight() + " = ") + GenerateValue(Unit.value, data) + MakeClickableForThisUnit(";");
             output += "\n" + GetNextUnit(Unit.exit, data, indent);
             return output;
         }
@@ -27,7 +27,7 @@ namespace Unity.VisualScripting.Community
         {
             if (Unit.actionDirection == ActionDirection.Get)
             {
-                return MakeSelectableForThisUnit("this".ConstructHighlight() + "." + Unit.member.name.VariableHighlight());
+                return MakeClickableForThisUnit("this".ConstructHighlight() + "." + Unit.member.name.VariableHighlight());
             }
 
             return base.GenerateValue(output, data);
@@ -45,7 +45,7 @@ namespace Unity.VisualScripting.Community
             }
             else
             {
-                return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
+                return MakeClickableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
             }
         }
     }

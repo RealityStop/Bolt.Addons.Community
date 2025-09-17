@@ -22,21 +22,12 @@ namespace Unity.VisualScripting.Community
 
         public override MethodModifier MethodModifier => MethodModifier.None;
         public override AccessModifier AccessModifier => AccessModifier.Private;
-<<<<<<< Updated upstream:Editor/Code/Generators/Nodes/Events/AwakeMethodNodeGenerator.cs
-        public override Type ReturnType => typeof(void);
-        public override string Name => unit.GetType().DisplayName() + count;
-=======
         public override string Name => unit.GetType().DisplayName().Replace(" ", "") + count;
         public override Type ReturnType => unit is IEventUnit @event ? @event.coroutine ? typeof(IEnumerator) : typeof(void) : typeof(void);
->>>>>>> Stashed changes:Editor/Code/Generators/Nodes/Events/UnityEvents/AwakeMethodNodeGenerator.cs
         public abstract string GenerateAwakeCode(ControlGenerationData data, int indent);
         public override sealed string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-<<<<<<< Updated upstream:Editor/Code/Generators/Nodes/Events/AwakeMethodNodeGenerator.cs
-            if(!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeSelectableForThisUnit(CodeUtility.ToolTip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
-=======
             if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeUtility.ToolTip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
->>>>>>> Stashed changes:Editor/Code/Generators/Nodes/Events/UnityEvents/AwakeMethodNodeGenerator.cs
             foreach (var param in Parameters)
             {
                 data.AddLocalNameInScope(param.name, param.type);

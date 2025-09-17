@@ -15,10 +15,10 @@ public class WhileGenerator : NodeGenerator<While>
     public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
     {
         var output = "";
-        output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("while".ControlHighlight() + " (") + GenerateValue(Unit.condition, data) + MakeSelectableForThisUnit(")") + "\n";
-        output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
+        output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("while".ControlHighlight() + " (") + GenerateValue(Unit.condition, data) + MakeClickableForThisUnit(")") + "\n";
+        output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
         output += GetNextUnit(Unit.body, data, indent + 1);
-        output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
+        output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
         output += GetNextUnit(Unit.exit, data, indent);
         return output;
     }

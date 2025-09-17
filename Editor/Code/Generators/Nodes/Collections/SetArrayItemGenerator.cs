@@ -16,8 +16,8 @@ namespace Unity.VisualScripting.Community
             string indexExpression = GenerateIndex(Unit.indexes, data);
             string valueExpression = GenerateValue(Unit.value, data);
 
-            var indexString = MakeSelectableForThisUnit("[") + indexExpression + MakeSelectableForThisUnit("]");
-            string assignment = $"{arrayName}{indexString}{MakeSelectableForThisUnit(" = ")}{valueExpression}{MakeSelectableForThisUnit(";")}";
+            var indexString = MakeClickableForThisUnit("[") + indexExpression + MakeClickableForThisUnit("]");
+            string assignment = $"{arrayName}{indexString}{MakeClickableForThisUnit(" = ")}{valueExpression}{MakeClickableForThisUnit(";")}";
 
             return assignment;
         }
@@ -31,7 +31,7 @@ namespace Unity.VisualScripting.Community
                 indexStrings.Add(GenerateValue(index, data));
             }
 
-            return string.Join(MakeSelectableForThisUnit(", "), indexStrings);
+            return string.Join(MakeClickableForThisUnit(", "), indexStrings);
         }
     }
 }

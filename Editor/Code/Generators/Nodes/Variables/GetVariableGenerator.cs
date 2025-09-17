@@ -48,16 +48,16 @@ namespace Unity.VisualScripting.Community
 
         private string GenerateConnectedVariableCode(ControlGenerationData data)
         {
-            variableType = GetVariableType(data.TryGetGraphPointer(out var graphPointer) && CanPredictConnection(Unit.name, data) ? Flow.Predict<string>(Unit.name, graphPointer.AsReference()) : "", data, false);
-            if (data.GetExpectedType() == variableType)
+            variableType = GetVariableType(data.TryGetGraphPointer(out var graphPointer) && CanPredictConnection(Unit.name, data) ? Flow.Predict<string>(Unit.name, graphPointer.AsReference()) : "", data, true);
+            if (data.GetExpectedType().IsAssignableFrom(variableType))
                 data.SetCurrentExpectedTypeMet(true, variableType);
             else
                 data.SetCurrentExpectedTypeMet(false, variableType);
             var typeString = variableType != null ? $"<{variableType.As().CSharpName(false, true)}>" : string.Empty;
             var kind = GetKind(data, typeString);
 
-            data.CreateSymbol(Unit, variableType ?? typeof(object), $"{kind}.Get{typeString}({GenerateValue(Unit.name, data)})");
-            return kind + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(")")}";
+            data.CreateSymbol(Unit, variableType ?? typeof(object));
+            return kind + $"{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(")")}";
         }
 
         private string GetKind(ControlGenerationData data, string typeString)
@@ -65,37 +65,36 @@ namespace Unity.VisualScripting.Community
             var variables = typeof(VisualScripting.Variables).As().CSharpName(true, true);
             return Unit.kind switch
             {
-<<<<<<< Updated upstream
-                VariableKind.Object => MakeSelectableForThisUnit(variables + $".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeSelectableForThisUnit($").Get{typeString}(")}",
-                VariableKind.Scene => MakeSelectableForThisUnit(variables + $"." + "ActiveScene".VariableHighlight() + $".Get{typeString}("),
-                VariableKind.Application => MakeSelectableForThisUnit(variables + "." + "Application".VariableHighlight() + $".Get{typeString}("),
-                VariableKind.Saved => MakeSelectableForThisUnit(variables + "." + "Saved".VariableHighlight()) + $".Get{typeString}(",
-=======
                 VariableKind.Object => MakeClickableForThisUnit(variables + $".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeClickableForThisUnit($").Get{typeString}(")}",
                 VariableKind.Scene => MakeClickableForThisUnit(GetSceneKind(data, variables) + $".Get{typeString}("),
                 VariableKind.Application => MakeClickableForThisUnit(variables + "." + "Application".VariableHighlight() + $".Get{typeString}("),
                 VariableKind.Saved => MakeClickableForThisUnit(variables + "." + "Saved".VariableHighlight() + $".Get{typeString}("),
->>>>>>> Stashed changes
                 _ => string.Empty,
             };
         }
 
         private string GenerateDisconnectedVariableCode(ControlGenerationData data)
         {
-            var name = Unit.defaultValues[Unit.name.key] as string;
+            var name = (Unit.defaultValues[Unit.name.key] as string).LegalMemberName();
             variableType = GetVariableType(name, data, true);
             if (Unit.kind == VariableKind.Object || Unit.kind == VariableKind.Scene || Unit.kind == VariableKind.Application || Unit.kind == VariableKind.Saved)
             {
                 var typeString = variableType != null ? $"<{variableType.As().CSharpName(false, true)}>" : string.Empty;
-                var isExpectedType = data.GetExpectedType() == null || (variableType != null && data.GetExpectedType().IsAssignableFrom(variableType)) || (IsVariableDefined(data, name) && !string.IsNullOrEmpty(GetVariableDeclaration(data, name).typeHandle.Identification) && Type.GetType(GetVariableDeclaration(data, name).typeHandle.Identification) == data.GetExpectedType()) || (data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && targetType == data.GetExpectedType());
+                var expectedType = data.GetExpectedType();
+                var hasExpectedType = expectedType != null;
+                var isExpectedType = (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType)) || (hasExpectedType && IsVariableDefined(data, name) && !string.IsNullOrEmpty(GetVariableDeclaration(data, name).typeHandle.Identification) && expectedType.IsAssignableFrom(Type.GetType(GetVariableDeclaration(data, name).typeHandle.Identification))) || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && expectedType.IsAssignableFrom(targetType));
                 data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
-                var code = GetKind(data, typeString) + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(")")}";
-                return new ValueCode(code, variableType, !isExpectedType);
+                var code = GetKind(data, typeString) + $"{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(")")}";
+                return code;
             }
             else
             {
-                data.CreateSymbol(Unit, variableType, name);
-                return MakeSelectableForThisUnit(data.GetVariableName(name).VariableHighlight());
+                data.CreateSymbol(Unit, variableType);
+                var expectedType = data.GetExpectedType();
+                var hasExpectedType = expectedType != null;
+                var isExpectedType = (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType)) || (hasExpectedType && IsVariableDefined(data, name) && !string.IsNullOrEmpty(GetVariableDeclaration(data, name).typeHandle.Identification) && expectedType.IsAssignableFrom(Type.GetType(GetVariableDeclaration(data, name).typeHandle.Identification))) || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && expectedType.IsAssignableFrom(targetType));
+                data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
+                return MakeClickableForThisUnit(data.GetVariableName(name).VariableHighlight());
             }
         }
 
@@ -107,7 +106,7 @@ namespace Unity.VisualScripting.Community
                 if (isDefined)
                 {
                     var declaration = GetVariableDeclaration(data, name);
-                    return declaration.typeHandle.Identification != null ? Type.GetType(declaration.typeHandle.Identification) : null;
+                    return declaration?.typeHandle.Identification != null ? Type.GetType(declaration.typeHandle.Identification) : null;
                 }
             }
             return data.TryGetVariableType(data.GetVariableName(name), out Type targetType) ? targetType : data.GetExpectedType() ?? typeof(object);
@@ -131,6 +130,7 @@ namespace Unity.VisualScripting.Community
             var target = Unit.kind == VariableKind.Object ? GetTarget(data) : null;
             return Unit.kind switch
             {
+                VariableKind.Graph => unit.graph.variables.GetDeclaration(name),
                 VariableKind.Object => target != null ? VisualScripting.Variables.Object(target).GetDeclaration(name) : null,
                 VariableKind.Scene => VisualScripting.Variables.ActiveScene.GetDeclaration(name),
                 VariableKind.Application => VisualScripting.Variables.Application.GetDeclaration(name),
@@ -176,7 +176,7 @@ namespace Unity.VisualScripting.Community
         {
             if (input == Unit.@object && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
             {
-                return MakeSelectableForThisUnit("gameObject".VariableHighlight());
+                return MakeClickableForThisUnit("gameObject".VariableHighlight());
             }
 
             if (input == Unit.@object)

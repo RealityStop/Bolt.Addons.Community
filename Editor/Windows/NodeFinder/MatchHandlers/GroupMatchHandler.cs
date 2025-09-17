@@ -20,7 +20,7 @@ namespace Unity.VisualScripting.Community
             if (element is GraphGroup group)
             {
                 var name = GetGroupFullName(group);
-                if (SearchUtility.SearchMatches(pattern, name, searchMode))
+                if (SearchUtility.SearchMatches(pattern, name, searchMode, out _))
                 {
                     var matchRecord = new MatchObject(group, name);
                     return matchRecord;

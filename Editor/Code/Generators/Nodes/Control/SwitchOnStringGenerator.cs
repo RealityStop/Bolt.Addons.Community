@@ -23,59 +23,49 @@ namespace Unity.VisualScripting.Community
                 var isLiteral = Unit.selector.hasValidConnection && Unit.selector.connection.source.unit is Literal;
                 var localName = string.Empty;
                 if (isLiteral) localName = data.AddLocalNameInScope("str", typeof(string));
-                var newLiteral = isLiteral ? CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("var ".ConstructHighlight() + $"{localName} = ") + ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source, data) + MakeSelectableForThisUnit(";") : string.Empty;
-                var @enum = Unit.selector.hasValidConnection ? isLiteral ? MakeSelectableForThisUnit(localName) : ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source, data) : base.GenerateControl(input, data, indent);
+                var newLiteral = isLiteral ? CodeBuilder.Indent(indent) + MakeClickableForThisUnit("var ".ConstructHighlight() + $"{localName} = ") + ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source, data) + MakeClickableForThisUnit(";") : string.Empty;
+                var @enum = Unit.selector.hasValidConnection ? isLiteral ? MakeClickableForThisUnit(localName) : ((Unit)Unit.selector.connection.source.unit).GenerateValue(Unit.selector.connection.source, data) : base.GenerateControl(input, data, indent);
 
-                if (isLiteral) output += MakeSelectableForThisUnit(newLiteral) + "\n";
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("switch".ConstructHighlight() + $" ({@enum})");
+                if (isLiteral) output += MakeClickableForThisUnit(newLiteral) + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("switch".ConstructHighlight() + $" ({@enum})");
                 output += "\n";
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{");
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{");
                 output += "\n";
 
                 for (int i = 0; i < values.Count; i++)
                 {
                     var _connection = ((ControlOutput)outputs[i])?.connection;
 
-                    output += CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit("case ".ConstructHighlight() + $@" ""{values[i].Key}""".StringHighlight() + ":");
+                    output += CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit("case ".ConstructHighlight() + $@" ""{values[i].Key}""".StringHighlight() + ":");
+                    output += "\n";
                     output += "\n";
 
-                    var _controlData = new ControlGenerationData(data);
-                    _controlData.mustBreak = _controlData.returns == typeof(Void);
-                    _controlData.mustReturn = !_controlData.mustBreak;
-
-                    if (((ControlOutput)outputs[i]).hasValidConnection)
+                    if (values[i].Value.hasValidConnection)
                     {
-                        _controlData.NewScope();
-                        output += ((Unit)_connection.destination.unit).GenerateControl(_connection.destination as ControlInput, _controlData, indent + 2);
+                        data.NewScope();
+                        data.SetMustBreak(true);
+                        output += GetNextUnit(values[i].Value, data, indent + 2);
                         output += "\n";
-                        _controlData.ExitScope();
+                        data.ExitScope();
                     }
 
-                    if (_controlData.mustBreak && !_controlData.hasBroke) output += CodeBuilder.Indent(indent + 2) + MakeSelectableForThisUnit("break".ControlHighlight() + ";\n");
-                    if (_controlData.mustReturn && !_controlData.hasReturned) output += CodeBuilder.Indent(indent + 2) + MakeSelectableForThisUnit("break".ControlHighlight() + ";\n");
+                    if ((data.MustBreak && !data.HasBroke) || (data.MustReturn && !data.HasReturned)) output += CodeBuilder.Indent(indent + 2) + MakeClickableForThisUnit("break".ControlHighlight() + ";") + "\n";
                 }
-
-                var connection = Unit.@default.connection;
-
-                output += CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit("default ".ConstructHighlight() + ":");
+                output += CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit("default".ConstructHighlight() + ":");
                 output += "\n";
-
-                var controlData = new ControlGenerationData(data);
-                controlData.mustBreak = controlData.returns == typeof(Void);
-                controlData.mustReturn = !controlData.mustBreak;
 
                 if (Unit.@default.hasValidConnection)
                 {
-                    controlData.NewScope();
-                    output += ((Unit)connection.destination.unit).GenerateControl(connection.destination as ControlInput, controlData, indent + 2);
+                    data.NewScope();
+                    data.SetMustBreak(true);
+                    output += GetNextUnit(Unit.@default, data, indent + 2);
                     output += "\n";
-                    controlData.ExitScope();
+                    data.ExitScope();
                 }
 
-                if (controlData.mustBreak && !controlData.hasBroke) output += CodeBuilder.Indent(indent + 2) + MakeSelectableForThisUnit("break".ControlHighlight() + ";\n");
-                if (controlData.mustReturn && !controlData.hasReturned) output += CodeBuilder.Indent(indent + 2) + MakeSelectableForThisUnit("break".ControlHighlight() + ";\n");
+                if ((data.MustBreak && !data.HasBroke) || (data.MustReturn && !data.HasReturned)) output += CodeBuilder.Indent(indent + 2) + MakeClickableForThisUnit("break".ControlHighlight() + ";") + "\n";
 
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}");
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
                 output += "\n";
 
                 return output;

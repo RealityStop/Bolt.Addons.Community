@@ -17,7 +17,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return MakeSelectableForThisUnit("yield return".ControlHighlight() + " new ".ConstructHighlight() + "WaitForEndOfFrame".TypeHighlight() + "();");
+            return MakeClickableForThisUnit("yield return".ControlHighlight() + " new ".ConstructHighlight() + "WaitForEndOfFrame".TypeHighlight() + "();");
         }
     }
 }

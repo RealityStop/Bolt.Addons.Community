@@ -14,34 +14,31 @@ namespace Unity.VisualScripting.Community
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             var output = "";
-            var trueData = new ControlGenerationData(data);
-            var falseData = new ControlGenerationData(data);
             if (Unit.trueOutput.hasValidConnection)
             {
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("if".ControlHighlight() + " (" + "CSharpUtility".TypeHighlight() + $".Chance(") + GenerateValue(Unit.value, data) + MakeSelectableForThisUnit("))");
-                output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
-                output += GetNextUnit(Unit.trueOutput, trueData, indent + 1);
-                output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("else".ControlHighlight());
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
-                output += GetNextUnit(Unit.falseOutput, falseData, indent + 1);
-                output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ControlHighlight() + " (" + "CSharpUtility".TypeHighlight() + $".Chance(") + GenerateValue(Unit.value, data) + MakeClickableForThisUnit("))");
+                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
+                data.NewScope();
+                output += GetNextUnit(Unit.trueOutput, data, indent + 1);
+                data.ExitScope();
+                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("else".ControlHighlight());
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
+                data.NewScope();
+                output += GetNextUnit(Unit.falseOutput, data, indent + 1);
+                data.ExitScope();
+                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
             }
             else if (!Unit.trueOutput.hasValidConnection && Unit.falseOutput.hasValidConnection)
             {
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("if".ControlHighlight() + " (!" + "CSharpUtility".TypeHighlight() + $".Chance(") + GenerateValue(Unit.value, data) + MakeSelectableForThisUnit("))");
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{");
-                output += GetNextUnit(Unit.falseOutput, falseData, indent + 1);
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}");
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ControlHighlight() + " (!" + "CSharpUtility".TypeHighlight() + $".Chance(") + GenerateValue(Unit.value, data) + MakeClickableForThisUnit("))");
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{");
+                data.NewScope();
+                output += GetNextUnit(Unit.falseOutput, data, indent + 1);
+                data.ExitScope();
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
             }
 
-            if (data.mustReturn)
-            {
-                if (trueData.hasReturned)
-                    data.hasReturned = true;
-                else if (falseData.hasReturned)
-                    data.hasReturned = true;
-            }
             return output;
         }
     }

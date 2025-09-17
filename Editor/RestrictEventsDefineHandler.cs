@@ -7,11 +7,11 @@ using UnityEditor.Build;
 namespace Unity.VisualScripting.Community
 {
     [InitializeOnLoad]
-    public static class RestrictEventDefineHandler
+    public static class ScriptingDefinesHandler
     {
         private const string DEFINE_SYMBOL = "RESTRICT_EVENT_TYPES";
 
-        static RestrictEventDefineHandler()
+        static ScriptingDefinesHandler()
         {
             UpdateDefineSymbol();
         }

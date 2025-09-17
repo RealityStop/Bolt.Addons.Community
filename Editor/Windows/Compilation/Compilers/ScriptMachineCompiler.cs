@@ -37,23 +37,6 @@ namespace Unity.VisualScripting.Community
             var machine = (ScriptMachine)asset;
             return Path.Combine(paths.ObjectsRelativePath, GetMachineName(machine).LegalMemberName() + ".cs");
         }
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
-        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
-        {
-            var machine = (ScriptMachine)asset;
-            var scriptImporter = AssetImporter.GetAtPath(GetRelativeFilePath(asset, paths)) as MonoImporter;
-            var type = scriptImporter.GetScript().GetClass();
-            var component = machine.gameObject.GetComponent(type) ??
-                          machine.gameObject.AddComponent(type);
-
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
         protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
         {
@@ -66,13 +49,6 @@ namespace Unity.VisualScripting.Community
                 component = machine.gameObject.AddComponent(type);
             }
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             var values = CodeGeneratorValueUtility.GetAllValues(machine, false);
             var variables = machine.graph.variables.Where(v =>
                 typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(v.typeHandle.Identification)));
@@ -83,26 +59,7 @@ namespace Unity.VisualScripting.Community
 
             for (int i = 0; i < objects.Length; i++)
             {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                type.GetFields()
-                    .Where(f => f.IsPublic || f.HasAttribute<SerializeField>())
-                    .FirstOrDefault(f => f.Name == names[i])
-                    ?.SetValue(component, objects[i]);
-=======
                 type.GetFields().Where(f => f.IsPublic || f.HasAttribute<SerializeField>()).FirstOrDefault(f => f.Name == objects[i].Item1)?.SetValueOptimized(component, objects[i].Item2);
->>>>>>> Stashed changes
-=======
-                type.GetFields().Where(f => f.IsPublic || f.HasAttribute<SerializeField>()).FirstOrDefault(f => f.Name == objects[i].Item1)?.SetValueOptimized(component, objects[i].Item2);
->>>>>>> Stashed changes
-=======
-                type.GetFields().Where(f => f.IsPublic || f.HasAttribute<SerializeField>()).FirstOrDefault(f => f.Name == objects[i].Item1)?.SetValueOptimized(component, objects[i].Item2);
->>>>>>> Stashed changes
-=======
-                type.GetFields().Where(f => f.IsPublic || f.HasAttribute<SerializeField>()).FirstOrDefault(f => f.Name == objects[i].Item1)?.SetValueOptimized(component, objects[i].Item2);
->>>>>>> Stashed changes
             }
 
             if (!objects.Any(o => !EditorUnityObjectUtility.IsSceneBound(o.Item2))) return;
@@ -124,7 +81,7 @@ namespace Unity.VisualScripting.Community
 
             return machine.nest?.graph.title?.Length > 0
                 ? machine.nest.graph.title.LegalMemberName()
-                : machine.gameObject.name + "_ScriptMachine" + machineIndex++;
+                : machine.gameObject.name.Capitalize().First().Letter() + "_ScriptMachine_" + machineIndex++;
         }
     }
 }

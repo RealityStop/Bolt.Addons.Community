@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community
             var output = string.Empty;
             controlGenerationData = data;
             var thisKeyword = Unit.showThisKeyword ? "this".ConstructHighlight() + "." : string.Empty;
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit(thisKeyword + Unit.member.name + "(") + $"{GenerateArguments(data)}{MakeSelectableForThisUnit(");")}" + "\n";
+            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(thisKeyword + Unit.member.name + "(") + $"{GenerateArguments(data)}{MakeClickableForThisUnit(");")}" + "\n";
             output += GetNextUnit(Unit.exit, data, indent);
             return output;
         }
@@ -41,10 +41,10 @@ namespace Unity.VisualScripting.Community
             {
                 var transformedKey = outputNames[output].Replace("&", "").Replace("%", "");
 
-                return MakeSelectableForThisUnit(transformedKey.VariableHighlight());
+                return MakeClickableForThisUnit(transformedKey.VariableHighlight());
             }
             var thisKeyword = Unit.showThisKeyword ? "this".ConstructHighlight() + "." : string.Empty;
-            return MakeSelectableForThisUnit(thisKeyword + Unit.member.name + "(") + GenerateArguments(data) + MakeSelectableForThisUnit(")");
+            return MakeClickableForThisUnit(thisKeyword + Unit.member.name + "(") + GenerateArguments(data) + MakeClickableForThisUnit(")");
         }
 
 
@@ -84,7 +84,7 @@ namespace Unity.VisualScripting.Community
                     }
                     index++;
                 }
-                return string.Join(MakeSelectableForThisUnit(", "), output);
+                return string.Join(MakeClickableForThisUnit(", "), output);
             }
             else if (Unit.member.isMethod)
             {
@@ -102,12 +102,12 @@ namespace Unity.VisualScripting.Community
                     }
                     index++;
                 }
-                return string.Join(MakeSelectableForThisUnit(", "), output);
+                return string.Join(MakeClickableForThisUnit(", "), output);
             }
             else
             {
                 List<string> output = Unit.valueInputs.Select(input => GenerateValue(input, data)).ToList();
-                return string.Join(MakeSelectableForThisUnit(", "), output);
+                return string.Join(MakeClickableForThisUnit(", "), output);
             }
         }
     }

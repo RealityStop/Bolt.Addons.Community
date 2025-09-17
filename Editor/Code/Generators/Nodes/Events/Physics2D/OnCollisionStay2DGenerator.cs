@@ -21,23 +21,23 @@ namespace Unity.VisualScripting.Community
         {
             if (output == Unit.collider)
             {
-                return MakeSelectableForThisUnit("other".VariableHighlight() + "." + "collider".VariableHighlight());
+                return MakeClickableForThisUnit("other".VariableHighlight() + "." + "collider".VariableHighlight());
             }
             else if (output == Unit.contacts)
             {
-                return MakeSelectableForThisUnit("other".VariableHighlight() + "." + "contacts".VariableHighlight());
+                return MakeClickableForThisUnit("other".VariableHighlight() + "." + "contacts".VariableHighlight());
             }
             else if (output == Unit.relativeVelocity)
             {
-                return MakeSelectableForThisUnit("other".VariableHighlight() + "." + "relativeVelocity".VariableHighlight());
+                return MakeClickableForThisUnit("other".VariableHighlight() + "." + "relativeVelocity".VariableHighlight());
             }
             else if (output == Unit.enabled)
             {
-                return MakeSelectableForThisUnit("other".VariableHighlight() + "." + "enabled".VariableHighlight());
+                return MakeClickableForThisUnit("other".VariableHighlight() + "." + "enabled".VariableHighlight());
             }
             else
             {
-                return MakeSelectableForThisUnit("other".VariableHighlight());
+                return MakeClickableForThisUnit("other".VariableHighlight());
             }
         }
     }

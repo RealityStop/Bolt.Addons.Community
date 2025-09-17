@@ -9,8 +9,8 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            var code = MakeSelectableForThisUnit($"[") + GenerateValue(Unit.key, data) + MakeSelectableForThisUnit("]");
-            data.CreateSymbol(Unit, typeof(object), code);
+            var code = MakeClickableForThisUnit($"[") + GenerateValue(Unit.key, data) + MakeClickableForThisUnit("]");
+            data.CreateSymbol(Unit, typeof(object));
             data.SetExpectedType(Unit.dictionary.type);
             var dictionaryCode = GenerateValue(Unit.dictionary, data);
             var (type, isMet) = data.RemoveExpectedType();
@@ -19,23 +19,7 @@ namespace Unity.VisualScripting.Community
                 if (type.IsGenericType && typeof(IDictionary).IsAssignableFrom(type))
                     data.SetSymbolType(Unit, type.GetGenericArguments()[1]);
             }
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-            return new ValueCode(dictionaryCode + code, data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !(data.TryGetSymbol(Unit, out var symbol) && data.GetExpectedType().IsAssignableFrom(symbol.Type)));
-=======
             return Unit.CreateClickableString().Ignore(dictionaryCode + code).Cast(data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !(data.TryGetSymbol(Unit, out var symbol) && data.GetExpectedType().IsAssignableFrom(symbol.Type)));
->>>>>>> Stashed changes
-=======
-            return Unit.CreateClickableString().Ignore(dictionaryCode + code).Cast(data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !(data.TryGetSymbol(Unit, out var symbol) && data.GetExpectedType().IsAssignableFrom(symbol.Type)));
->>>>>>> Stashed changes
-=======
-            return Unit.CreateClickableString().Ignore(dictionaryCode + code).Cast(data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !(data.TryGetSymbol(Unit, out var symbol) && data.GetExpectedType().IsAssignableFrom(symbol.Type)));
->>>>>>> Stashed changes
-=======
-            return Unit.CreateClickableString().Ignore(dictionaryCode + code).Cast(data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !(data.TryGetSymbol(Unit, out var symbol) && data.GetExpectedType().IsAssignableFrom(symbol.Type)));
->>>>>>> Stashed changes
         }
     }
 }

@@ -11,22 +11,10 @@ using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
-<<<<<<< Updated upstream
-=======
 using static Unity.VisualScripting.Round<float, float>;
 using System.Reflection;
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community
 {
     public static class CSharpUtility
     {
@@ -74,7 +62,7 @@ namespace Unity.VisualScripting.Community
         public static IList MergeLists(params IList[] lists)
         {
             List<object> mergedList = new();
-    
+
             foreach (System.Collections.IList list in lists)
             {
                 foreach (var item in list)
@@ -82,14 +70,14 @@ namespace Unity.VisualScripting.Community
                     mergedList.Add(item);
                 }
             }
-    
+
             return mergedList;
         }
-    
+
         public static List<T> MergeLists<T>(params IEnumerable<object>[] lists)
         {
             var mergedList = new List<T>();
-    
+
             foreach (var list in lists)
             {
                 foreach (var item in list)
@@ -104,32 +92,9 @@ namespace Unity.VisualScripting.Community
                     }
                 }
             }
-    
+
             return mergedList;
         }
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    
-        public static object ConvertType<T>(this T value, Type type)
-        {
-            if (value.IsConvertibleTo(type, true))
-            {
-                return value.ConvertTo(type);
-            }
-            else return value;
-        }
-    
-        private static readonly HashSet<(GameObject, EventHook, System.Action<CustomEventArgs>)> registeredEvents = new HashSet<(GameObject, EventHook, System.Action<CustomEventArgs>)>();
-    
-        public static void RegisterCustomEvent(GameObject target, System.Action<CustomEventArgs> action)
-        {
-            var hook = new EventHook(EventHooks.Custom, target);
-            var eventKey = (target, hook, action);
-    
-            if (!registeredEvents.Contains(eventKey))
-=======
 
         private static readonly HashSet<(GameObject target, EventHook hook, string eventID)> registeredEvents
             = new();
@@ -137,59 +102,61 @@ namespace Unity.VisualScripting.Community
         public static void RegisterCustomEvent(GameObject target, Action<CustomEventArgs> action, string eventID)
         {
             var hook = new EventHook(EventHooks.Custom, target);
-=======
-
-        private static readonly HashSet<(GameObject target, EventHook hook, string eventID)> registeredEvents
-            = new();
-
-        public static void RegisterCustomEvent(GameObject target, Action<CustomEventArgs> action, string eventID)
-        {
-            var hook = new EventHook(EventHooks.Custom, target);
->>>>>>> Stashed changes
-=======
-
-        private static readonly HashSet<(GameObject target, EventHook hook, string eventID)> registeredEvents
-            = new();
-
-        public static void RegisterCustomEvent(GameObject target, Action<CustomEventArgs> action, string eventID)
-        {
-            var hook = new EventHook(EventHooks.Custom, target);
->>>>>>> Stashed changes
-=======
-
-        private static readonly HashSet<(GameObject target, EventHook hook, string eventID)> registeredEvents
-            = new();
-
-        public static void RegisterCustomEvent(GameObject target, Action<CustomEventArgs> action, string eventID)
-        {
-            var hook = new EventHook(EventHooks.Custom, target);
->>>>>>> Stashed changes
 
             var key = (target, hook, eventID);
 
             if (registeredEvents.Add(key))
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             {
                 EventBus.Register(hook, action);
             }
         }
-    
+
+        public static void ClearSavedVariables()
+        {
+            SavedVariables.saved.Clear();
+            SavedVariables.SaveDeclarations(SavedVariables.saved);
+        }
+
+        public static void ResetSavedVariable(string key)
+        {
+            var initalvariable = SavedVariables.initial.GetDeclaration(key).CloneViaFakeSerialization();
+            SavedVariables.saved[key] = initalvariable.value;
+
+            if (SavedVariables.current != SavedVariables.initial) SavedVariables.current[key] = initalvariable.value;
+        }
+
+        public static (float pre, float post) Increment(float value)
+        {
+            float pre = value;
+            float post = value + 1;
+            return (pre, post);
+        }
+
+        public static (int pre, int post) Increment(int value)
+        {
+            int pre = value;
+            int post = value + 1;
+            return (pre, post);
+        }
+
+        public static (float pre, float post) Decrement(float value)
+        {
+            float pre = value;
+            float post = value - 1;
+            return (pre, post);
+        }
+
+        public static (int pre, int post) Decrement(int value)
+        {
+            int pre = value;
+            int post = value - 1;
+            return (pre, post);
+        }
+
         public static object GetArgument(this CustomEventArgs args, int index, Type targetType)
         {
-            return args.arguments[index].ConvertType(targetType);
+            return args.arguments[index].ConvertTo(targetType);
         }
-<<<<<<< Updated upstream
-    
-=======
 
         public static T CreateDefinedEventInstance<T>(params object[] parameters)
         {
@@ -211,65 +178,26 @@ namespace Unity.VisualScripting.Community
             return eventInstance;
         }
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-        public static T CreateDefinedEventInstance<T>(params object[] parameters)
-        {
-            var info = ReflectedInfo.For(typeof(T));
-            var eventInstance = (T)System.Activator.CreateInstance(typeof(T));
-            var members = info.reflectedFields.Select(v => v.Value).Cast<MemberInfo>().Concat(info.reflectedProperties.Select(v => v.Value)).ToListPooled();
-            for (var i = 0; i < parameters.Length; i++)
-            {
-                var member = members[i];
-                if (member is FieldInfo fieldInfo)
-                {
-                    fieldInfo.SetValueOptimized(eventInstance, parameters[i].ConvertTo(fieldInfo.FieldType));
-                }
-                else if (member is PropertyInfo propertyInfo)
-                {
-                    propertyInfo.SetValueOptimized(eventInstance, parameters[i].ConvertTo(propertyInfo.PropertyType));
-                }
-            }
-            return eventInstance;
-        }
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         public static void Bind(this IDelegate @delegate, IDelegate delegateToBind)
         {
             @delegate.Bind(delegateToBind);
         }
-    
+
         public static void Bind(this IDelegate @delegate, Delegate delegateToBind)
         {
             @delegate.Combine(delegateToBind);
         }
-    
+
         public static object CreateWaitForSeconds(float time, bool unscaled)
         {
             return unscaled ? new WaitForSecondsRealtime(time) : new WaitForSeconds(time);
         }
-    
+
         public static bool Chance(float probability)
         {
             probability = Mathf.Clamp01(probability / 100f);
             return UnityEngine.Random.value <= probability;
         }
-<<<<<<< Updated upstream
-    
-=======
 
         public static bool GetKeyAction(KeyCode key, PressState pressState)
         {
@@ -303,16 +231,6 @@ namespace Unity.VisualScripting.Community
             return dictionary;
         }
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         /// <summary>
         /// Merges two or more dictionaries together.
         /// </summary>
@@ -323,7 +241,7 @@ namespace Unity.VisualScripting.Community
         public static AotDictionary MergeDictionaries(params IDictionary[] dictionaries)
         {
             AotDictionary mergedDictionary = new();
-    
+
             foreach (var dictionary in dictionaries)
             {
                 foreach (var key in dictionary.Keys)
@@ -336,7 +254,7 @@ namespace Unity.VisualScripting.Community
             }
             return mergedDictionary;
         }
-    
+
         /// <summary>
         /// Merges two or more dictionaries together.
         /// </summary>
@@ -347,7 +265,7 @@ namespace Unity.VisualScripting.Community
         public static Dictionary<TKey, TValue> MergeDictionaries<TKey, TValue>(params IDictionary[] dictionaries)
         {
             Dictionary<TKey, TValue> mergedDictionary = new();
-    
+
             foreach (var dictionary in dictionaries)
             {
                 foreach (var key in dictionary.Keys)
@@ -374,7 +292,7 @@ namespace Unity.VisualScripting.Community
             }
             return mergedDictionary;
         }
-    
+
         /// <summary>
         /// Merges two or more dictionaries together.
         /// </summary>
@@ -385,7 +303,7 @@ namespace Unity.VisualScripting.Community
         public static Dictionary<Tkey, TValue> MergeDictionariesReplace<Tkey, TValue>(params Dictionary<Tkey, TValue>[] dictionaries)
         {
             Dictionary<Tkey, TValue> mergedDictionary = new();
-    
+
             foreach (var dictionary in dictionaries)
             {
                 foreach (var key in dictionary.Keys)
@@ -393,10 +311,10 @@ namespace Unity.VisualScripting.Community
                     mergedDictionary[key] = dictionary[key];
                 }
             }
-    
+
             return mergedDictionary;
         }
-    
+
         /// <summary>
         /// Merges two or more dictionaries together.
         /// </summary>
@@ -407,7 +325,7 @@ namespace Unity.VisualScripting.Community
         public static IDictionary MergeDictionariesReplace(params IDictionary[] dictionaries)
         {
             IDictionary mergedDictionary = new Dictionary<object, object>();
-    
+
             foreach (var dictionary in dictionaries)
             {
                 foreach (var key in dictionary.Keys)
@@ -415,21 +333,9 @@ namespace Unity.VisualScripting.Community
                     mergedDictionary[key] = dictionary[key];
                 }
             }
-    
+
             return mergedDictionary;
         }
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
         public static float GetTime(bool unscaled)
         {
@@ -487,59 +393,328 @@ namespace Unity.VisualScripting.Community
         // Using these methods because its cleaner for the Generator
 
         #region Average
->>>>>>> Stashed changes
         public static float CalculateAverage(params float[] values)
         {
             if (values.Length == 0)
             {
                 return 0f;
             }
-    
+
             float sum = 0f;
             foreach (float value in values)
             {
                 sum += value;
             }
-    
+
             return sum / values.Length;
         }
-    
+
+        public static Vector2 CalculateAverage(params Vector2[] values)
+        {
+            if (values.Length == 0)
+            {
+                return new();
+            }
+
+            Vector2 sum = new();
+            foreach (Vector2 value in values)
+            {
+                sum += value;
+            }
+
+            return sum / values.Length;
+        }
+
+        public static Vector3 CalculateAverage(params Vector3[] values)
+        {
+            if (values.Length == 0)
+            {
+                return new();
+            }
+
+            Vector3 sum = new();
+            foreach (Vector3 value in values)
+            {
+                sum += value;
+            }
+
+            return sum / values.Length;
+        }
+
+        public static Vector4 CalculateAverage(params Vector4[] values)
+        {
+            if (values.Length == 0)
+            {
+                return new();
+            }
+
+            Vector4 sum = new();
+            foreach (Vector4 value in values)
+            {
+                sum += value;
+            }
+
+            return sum / values.Length;
+        }
+        #endregion
+
+        #region ListAverage
+        public static float CalculateListAverage(List<float> values)
+        {
+            if (values.Count == 0)
+            {
+                return 0f;
+            }
+
+            float sum = 0f;
+            foreach (float value in values)
+            {
+                sum += value;
+            }
+
+            return sum / values.Count;
+        }
+
+        public static Vector2 CalculateListAverage(List<Vector2> values)
+        {
+            if (values.Count == 0)
+            {
+                return new();
+            }
+
+            Vector2 sum = new();
+            foreach (Vector2 value in values)
+            {
+                sum += value;
+            }
+
+            return sum / values.Count;
+        }
+
+        public static Vector3 CalculateListAverage(List<Vector3> values)
+        {
+            if (values.Count == 0)
+            {
+                return new();
+            }
+
+            Vector3 sum = new();
+            foreach (Vector3 value in values)
+            {
+                sum += value;
+            }
+
+            return sum / values.Count;
+        }
+
+        public static Vector4 CalculateListAverage(List<Vector4> values)
+        {
+            if (values.Count == 0)
+            {
+                return new();
+            }
+
+            Vector4 sum = new();
+            foreach (Vector4 value in values)
+            {
+                sum += value;
+            }
+
+            return sum / values.Count;
+        }
+        #endregion
+
+        #region Maximum
         public static float CalculateMax(params float[] values)
         {
-            if (values.Length == 0)
-            {
-                return 0f;
-            }
-    
-            var value = values.Max();
-    
-            return value;
+            return values.Length == 0 ? 0f : values.Max();
         }
-    
+        public static Vector2 CalculateMax(params Vector2[] values)
+        {
+            Vector2? maximum = null;
+
+            foreach (var value in values)
+            {
+                maximum = maximum.HasValue ? Vector2.Max(maximum.Value, value) : value;
+            }
+
+            return maximum ?? Vector2.zero;
+        }
+        public static Vector3 CalculateMax(params Vector3[] values)
+        {
+            Vector3? maximum = null;
+
+            foreach (var value in values)
+            {
+                maximum = maximum.HasValue ? Vector3.Max(maximum.Value, value) : value;
+            }
+
+            return maximum ?? Vector3.zero;
+        }
+        public static Vector4 CalculateMax(params Vector4[] values)
+        {
+            Vector4? maximum = null;
+
+            foreach (var value in values)
+            {
+                maximum = maximum.HasValue ? Vector4.Max(maximum.Value, value) : value;
+            }
+
+            return maximum ?? Vector4.zero;
+        }
+        #endregion
+
+        #region Minimum
         public static float CalculateMin(params float[] values)
         {
-            if (values.Length == 0)
-            {
-                return 0f;
-            }
-    
-            var value = values.Min();
-    
-            return value;
+            return values.Length == 0 ? 0f : values.Min();
         }
-    
+        public static Vector2 CalculateMin(params Vector2[] values)
+        {
+            Vector2? minimum = null;
+
+            foreach (var value in values)
+            {
+                minimum = minimum.HasValue ? Vector2.Min(minimum.Value, value) : value;
+            }
+
+            return minimum ?? Vector2.zero;
+        }
+        public static Vector3 CalculateMin(params Vector3[] values)
+        {
+            Vector3? minimum = null;
+
+            foreach (var value in values)
+            {
+                minimum = minimum.HasValue ? Vector3.Min(minimum.Value, value) : value;
+            }
+
+            return minimum ?? Vector3.zero;
+        }
+        public static Vector4 CalculateMin(params Vector4[] values)
+        {
+            Vector4? minimum = null;
+
+            foreach (var value in values)
+            {
+                minimum = minimum.HasValue ? Vector4.Min(minimum.Value, value) : value;
+            }
+
+            return minimum ?? Vector4.zero;
+        }
+        #endregion
+
+        #region Absolute
+        public static float Absolute(float value)
+        {
+            return Mathf.Abs(value);
+        }
+        public static Vector2 Absolute(Vector2 value)
+        {
+            return new Vector2(Mathf.Abs(value.x), Mathf.Abs(value.y));
+        }
+        public static Vector3 Absolute(Vector3 value)
+        {
+            return new Vector3(Mathf.Abs(value.x), Mathf.Abs(value.y), Mathf.Abs(value.z));
+        }
+        public static Vector4 Absolute(Vector4 value)
+        {
+            return new Vector4(Mathf.Abs(value.x), Mathf.Abs(value.y), Mathf.Abs(value.z), Mathf.Abs(value.w));
+        }
+        #endregion
+
+        #region Round
+        public static float Round(float value, Rounding rounding)
+        {
+            return rounding switch
+            {
+                Rounding.Floor => Mathf.Floor(value),
+                Rounding.Ceiling => Mathf.Ceil(value),
+                Rounding.AwayFromZero => Mathf.Round(value),
+                _ => value,
+            };
+        }
+
+        public static Vector2 Round(Vector2 value, Rounding rounding)
+        {
+            return rounding switch
+            {
+                Rounding.Floor => new Vector2(Mathf.Floor(value.x), Mathf.Floor(value.y)),
+                Rounding.Ceiling => new Vector2(Mathf.Ceil(value.x), Mathf.Ceil(value.y)),
+                Rounding.AwayFromZero => new Vector2(Mathf.Round(value.x), Mathf.Round(value.y)),
+                _ => value,
+            };
+        }
+
+        public static Vector3 Round(Vector3 value, Rounding rounding)
+        {
+            return rounding switch
+            {
+                Rounding.Floor => new Vector3(Mathf.Floor(value.x), Mathf.Floor(value.y), Mathf.Floor(value.z)),
+                Rounding.Ceiling => new Vector3(Mathf.Ceil(value.x), Mathf.Ceil(value.y), Mathf.Ceil(value.z)),
+                Rounding.AwayFromZero => new Vector3(Mathf.Round(value.x), Mathf.Round(value.y), Mathf.Round(value.z)),
+                _ => value,
+            };
+        }
+
+        public static Vector4 Round(Vector4 value, Rounding rounding)
+        {
+            return rounding switch
+            {
+                Rounding.Floor => new Vector4(Mathf.Floor(value.x), Mathf.Floor(value.y), Mathf.Floor(value.z), Mathf.Floor(value.w)),
+                Rounding.Ceiling => new Vector4(Mathf.Ceil(value.x), Mathf.Ceil(value.y), Mathf.Ceil(value.z), Mathf.Ceil(value.w)),
+                Rounding.AwayFromZero => new Vector4(Mathf.Round(value.x), Mathf.Round(value.y), Mathf.Round(value.z), Mathf.Round(value.w)),
+                _ => value,
+            };
+        }
+        #endregion
+
+        #region Normalize
         public static float Normalize(float value)
         {
-            if (value == 0)
-            {
-                return 0f;
-            }
-    
-            return value / Mathf.Abs(value);
+            return value == 0f ? 0f : value / Mathf.Abs(value);
         }
-<<<<<<< Updated upstream
-    } 
-=======
+
+        public static Vector2 Normalize(Vector2 value)
+        {
+            return value.normalized;
+        }
+
+        public static Vector3 Normalize(Vector3 value)
+        {
+            return Vector3.Normalize(value);
+        }
+
+        public static Vector4 Normalize(Vector4 value)
+        {
+            return Vector4.Normalize(value);
+        }
+        #endregion
+
+        #region Project
+        public static Vector2 Project(Vector2 a, Vector2 b)
+        {
+            return Vector2.Dot(a, b) * b.normalized;
+        }
+
+        public static Vector3 Project(Vector3 a, Vector3 b)
+        {
+            return Vector3.Project(a, b);
+        }
+        #endregion
+
+        #region Root
+        public static float Root(float radicand, float degree)
+        {
+            if (degree == 2)
+            {
+                return Mathf.Sqrt(radicand);
+            }
+            else
+            {
+                return Mathf.Pow(radicand, 1 / degree);
+            }
+        }
         #endregion
 
         #region String
@@ -675,5 +850,4 @@ namespace Unity.VisualScripting.Community
             return true;
         }
     }
->>>>>>> Stashed changes
 }

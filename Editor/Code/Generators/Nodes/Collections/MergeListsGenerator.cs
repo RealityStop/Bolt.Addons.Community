@@ -20,10 +20,10 @@ namespace Unity.VisualScripting.Community
 
             if (data.GetExpectedType() != null && GetExpectedType(data.GetExpectedType()) != null)
             {
-                return MakeSelectableForThisUnit("CSharpUtility".TypeHighlight() + $".MergeLists<{GetExpectedType(data.GetExpectedType()).As().CSharpName(false, true)}>(") + $"{string.Join(MakeSelectableForThisUnit(", "), Unit.multiInputs.Select(input => GenerateValue(input, data)))}{MakeSelectableForThisUnit(")")}";
+                return MakeClickableForThisUnit("CSharpUtility".TypeHighlight() + $".MergeLists<{GetExpectedType(data.GetExpectedType()).As().CSharpName(false, true)}>(") + $"{string.Join(MakeClickableForThisUnit(", "), Unit.multiInputs.Select(input => GenerateValue(input, data)))}{MakeClickableForThisUnit(")")}";
             }
             else
-                return MakeSelectableForThisUnit("CSharpUtility".TypeHighlight() + $".MergeLists(") + $"{string.Join(MakeSelectableForThisUnit(", "), Unit.multiInputs.Select(input => GenerateValue(input, data)))}{MakeSelectableForThisUnit(")")}";
+                return MakeClickableForThisUnit("CSharpUtility".TypeHighlight() + $".MergeLists(") + $"{string.Join(MakeClickableForThisUnit(", "), Unit.multiInputs.Select(input => GenerateValue(input, data)))}{MakeClickableForThisUnit(")")}";
         }
 
         private Type GetExpectedType(Type type)

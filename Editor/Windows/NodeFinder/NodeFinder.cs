@@ -131,8 +131,10 @@ namespace Unity.VisualScripting.Community
             public GUIContent RowContent;
             public GUIContent GroupContent;
             public GUIContent PathContent;
-            public bool MatchIsInGroup;
+            public int Depth;
             public GraphGroup Group;
+
+            public bool MatchIsInGroup => Group != null;
         }
 
         private readonly List<CachedMatchGUI> _cachedGUI = new();
@@ -304,10 +306,12 @@ namespace Unity.VisualScripting.Community
 
             HashSet<CachedMatchGUI> invalidElements = new HashSet<CachedMatchGUI>();
 
+            const float indentPerLevel = 15f;
+
             for (int i = firstVisible; i <= lastVisible; i++)
             {
                 var cached = _cachedGUI[i];
-                if (!cached.Match.Reference.isValid || cached.Match.Reference.Context().canvas.widgetProvider.IsValid(cached.Match.Element))
+                if (!cached.Match.Reference.isValid || !cached.Match.Reference.Context().canvas.widgetProvider.IsValid(cached.Match.Element))
                 {
                     invalidElements.Add(cached);
                     continue;
@@ -324,20 +328,22 @@ namespace Unity.VisualScripting.Community
                 GUI.Box(rowRect, GUIContent.none);
                 GUI.backgroundColor = oldColor;
 
-                Rect elementRect = new Rect(rowRect.x, rowRect.y, columnWidth, lineHeight);
+                float xOffset = indentPerLevel * cached.Depth;
+                Rect elementRect = new Rect(rowRect.x + xOffset, rowRect.y, columnWidth - xOffset, lineHeight);
 
                 _buttonStyle.alignment = TextAnchor.MiddleLeft;
                 _buttonStyle.normal.textColor = Color.white;
-
                 _buttonStyle.clipping = TextClipping.Overflow;
 
                 string fullText = cached.RowContent.text;
-
                 float textWidth = _buttonStyle.CalcSize(Temp(fullText, null)).x;
 
                 _buttonStyle.clipping = TextClipping.Ellipsis;
 
-                GUIContent elementContent = Temp(fullText, cached.RowContent.image, cached.RowContent.tooltip + (textWidth > elementRect.width ? "\n\nFullText: " + fullText.Replace("<b>", string.Empty).Replace("</b>", string.Empty) : ""));
+                GUIContent elementContent = Temp(fullText, cached.RowContent.image,
+                    cached.RowContent.tooltip + (textWidth > elementRect.width
+                        ? "\n\nFullText: " + fullText.Replace("<b>", string.Empty).Replace("</b>", string.Empty)
+                        : ""));
 
                 if (GUI.Button(elementRect, elementContent, _buttonStyle))
                 {
@@ -445,6 +451,25 @@ namespace Unity.VisualScripting.Community
         private void Search()
         {
             _cachedGUI.Clear();
+            var visited = new HashSet<IGraphElement>();
+
+            void AddMatchRecursive(IGraphElement element, MatchObject match, GraphReference reference, int depth = 0)
+            {
+                if (element == null || match == null || visited.Contains(element))
+                    return;
+
+                visited.Add(element);
+                match.Initialize(reference);
+                CacheMatchObject(element, match, depth);
+
+                if (match.SubMatches != null)
+                {
+                    foreach (var sub in match.SubMatches)
+                    {
+                        AddMatchRecursive(sub.Element, sub, reference, depth + 1);
+                    }
+                }
+            }
 
             if (_graphProviders.TryGetValue(typeof(CurrentGraphProvider), out var graphProvider) && graphProvider.IsEnabled)
             {
@@ -452,79 +477,59 @@ namespace Unity.VisualScripting.Community
                 {
                     if (TryGetHandlerForElement(element, reference, out IMatchHandler handler))
                     {
-                        if (!handler.IsEnabled)
-                            continue;
+                        if (!handler.IsEnabled) continue;
 
-                        // Special case: errors always appear
                         if (handler is ErrorMatchHandler errorHandler)
                         {
                             errorHandler.graphPointer = reference;
-
                             var errorMatch = errorHandler.HandleMatch(element, _searchQuery, _searchMode);
                             if (errorMatch != null)
                             {
-                                errorMatch.Initialize(reference);
-                                CacheMatchObject(element, errorMatch);
+                                AddMatchRecursive(element, errorMatch, reference);
                             }
-
                             continue;
                         }
 
-                        if (string.IsNullOrEmpty(_searchQuery))
-                            continue;
-
-                        if (!handler.CanHandle(element))
-                            continue;
+                        if (string.IsNullOrEmpty(_searchQuery)) continue;
+                        if (!handler.CanHandle(element)) continue;
 
                         var match = handler.HandleMatch(element, _searchQuery, _searchMode);
                         if (match != null)
                         {
-                            match.Initialize(reference);
-                            CacheMatchObject(element, match);
+                            AddMatchRecursive(element, match, reference);
                         }
                     }
                 }
-                return;
             }
 
             foreach (var provider in _graphProviders.Values)
             {
-                if (provider is CurrentGraphProvider || !provider.IsEnabled)
-                    continue;
+                if (provider is CurrentGraphProvider || !provider.IsEnabled) continue;
 
                 foreach (var (reference, element) in provider.GetElements())
                 {
                     if (TryGetHandlerForElement(element, reference, out IMatchHandler handler))
                     {
-                        if (!handler.IsEnabled)
-                            continue;
+                        if (!handler.IsEnabled) continue;
 
-                        // Special case: errors always appear
                         if (handler is ErrorMatchHandler errorHandler)
                         {
                             errorHandler.graphPointer = reference;
-
                             var errorMatch = errorHandler.HandleMatch(element, _searchQuery, _searchMode);
                             if (errorMatch != null)
                             {
-                                errorMatch.Initialize(reference);
-                                CacheMatchObject(element, errorMatch);
+                                AddMatchRecursive(element, errorMatch, reference);
                             }
-
                             continue;
                         }
 
-                        if (string.IsNullOrEmpty(_searchQuery))
-                            continue;
-
-                        if (!handler.CanHandle(element))
-                            continue;
+                        if (string.IsNullOrEmpty(_searchQuery)) continue;
+                        if (!handler.CanHandle(element)) continue;
 
                         var match = handler.HandleMatch(element, _searchQuery, _searchMode);
                         if (match != null)
                         {
-                            match.Initialize(reference);
-                            CacheMatchObject(element, match);
+                            AddMatchRecursive(element, match, reference);
                         }
                     }
                 }
@@ -533,7 +538,7 @@ namespace Unity.VisualScripting.Community
             Repaint();
         }
 
-        private void CacheMatchObject(IGraphElement element, MatchObject match)
+        private void CacheMatchObject(IGraphElement element, MatchObject match, int depth)
         {
             GraphElementCollection<GraphGroup> groups = element.graph is FlowGraph fgraph ? fgraph.groups : element.graph is StateGraph sgraph ? sgraph.groups : null;
             GraphGroup group = groups?.FirstOrDefault(gr => element != gr && gr.position.Contains(ExtractElementPosition(element)));
@@ -553,7 +558,8 @@ namespace Unity.VisualScripting.Community
                 RowContent = rowContent,
                 GroupContent = groupContent,
                 PathContent = pathContent,
-                Group = group
+                Group = group,
+                Depth = depth
             });
         }
 

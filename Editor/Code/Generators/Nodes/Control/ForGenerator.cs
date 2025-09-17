@@ -26,11 +26,11 @@ namespace Unity.VisualScripting.Community
                 variableName = data.AddLocalNameInScope("i", typeof(int));
                 variableType = typeof(int);
     
-                string varName = MakeSelectableForThisUnit(variableName.VariableHighlight());
-                string iteratorCode = !Unit.step.hasValidConnection && (int)Unit.defaultValues[Unit.step.key] == 1 ? varName.VariableHighlight() + MakeSelectableForThisUnit("++") : varName.VariableHighlight() + MakeSelectableForThisUnit(" += ") + iterator;
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"for".ControlHighlight() + "(" + "int ".ConstructHighlight()) + $"{varName}".VariableHighlight() + MakeSelectableForThisUnit(" = ") + initialization + MakeSelectableForThisUnit("; ") + varName.VariableHighlight() + $"{MakeSelectableForThisUnit(" < ")}{condition}{MakeSelectableForThisUnit("; ")}" + $"{iteratorCode}{MakeSelectableForThisUnit(")")}";
+                string varName = MakeClickableForThisUnit(variableName.VariableHighlight());
+                string iteratorCode = !Unit.step.hasValidConnection && (int)Unit.defaultValues[Unit.step.key] == 1 ? varName.VariableHighlight() + MakeClickableForThisUnit("++") : varName.VariableHighlight() + MakeClickableForThisUnit(" += ") + iterator;
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"for".ControlHighlight() + "(" + "int ".ConstructHighlight()) + $"{varName}".VariableHighlight() + MakeClickableForThisUnit(" = ") + initialization + MakeClickableForThisUnit("; ") + varName.VariableHighlight() + $"{MakeClickableForThisUnit(" < ")}{condition}{MakeClickableForThisUnit("; ")}" + $"{iteratorCode}{MakeClickableForThisUnit(")")}";
                 output += "\n";
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{");
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{");
                 output += "\n";
     
                 if (Unit.body.hasAnyConnection)
@@ -41,7 +41,7 @@ namespace Unity.VisualScripting.Community
                 }
     
                 output += "\n";
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}");
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
                 output += "\n";
             }
     
@@ -57,7 +57,7 @@ namespace Unity.VisualScripting.Community
     
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return MakeSelectableForThisUnit(variableName.VariableHighlight());
+            return MakeClickableForThisUnit(variableName.VariableHighlight());
         }
     
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
@@ -67,7 +67,7 @@ namespace Unity.VisualScripting.Community
                 data.SetExpectedType(input.type);
                 var connectedCode = GetNextValueUnit(input, data);
                 data.RemoveExpectedType();
-                return new ValueCode(connectedCode, input.type, ShouldCast(input, data, false));
+                return connectedCode.CastAs(input.type, Unit, ShouldCast(input, data, false));
             }
             else
             {

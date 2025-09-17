@@ -15,7 +15,7 @@ namespace Unity.VisualScripting.Community
             string arrayName = GenerateValue(Unit.array, data);
             string index = GenerateIndex(Unit.indexes, data);
 
-            return arrayName + MakeSelectableForThisUnit("[") + index + MakeSelectableForThisUnit("]");
+            return arrayName + MakeClickableForThisUnit("[") + index + MakeClickableForThisUnit("]");
         }
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace Unity.VisualScripting.Community
                 indexStrings.Add(GenerateValue(index, data));
             }
 
-            return string.Join(MakeSelectableForThisUnit(", "), indexStrings);
+            return string.Join(MakeClickableForThisUnit(", "), indexStrings);
         }
     }
 }

@@ -20,9 +20,9 @@ namespace Unity.VisualScripting.Community
             }
             string typeName = Unit.type.As().CSharpName(false, true);
             string dimensionString = GenerateDimensions(Unit.dimensions, data);
-            data.CreateSymbol(Unit, Unit.type, "new " + $"{Unit.type.As().CSharpName(false, true, false)}" + dimensionString);
+            data.CreateSymbol(Unit, Unit.type);
 
-            return MakeSelectableForThisUnit("new ".ConstructHighlight() + $"{typeName}") + dimensionString;
+            return MakeClickableForThisUnit("new ".ConstructHighlight() + $"{typeName}") + dimensionString;
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace Unity.VisualScripting.Community
                 lengthInputs.Add(GenerateValue(Unit.indexes[i], data));
             }
 
-            return MakeSelectableForThisUnit("[") + $"{string.Join(MakeSelectableForThisUnit(", "), lengthInputs)}" + MakeSelectableForThisUnit("]");
+            return MakeClickableForThisUnit("[") + $"{string.Join(MakeClickableForThisUnit(", "), lengthInputs)}" + MakeClickableForThisUnit("]");
         }
     }
 }

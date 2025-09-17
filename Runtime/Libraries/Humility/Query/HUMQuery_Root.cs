@@ -149,6 +149,14 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             }
         }
 
+        public static void MergeUnique<T>(this List<T> list, HashSet<T> other)
+        {
+            foreach (var item in other)
+            {
+                if (!list.Contains(item)) list.Add(item);
+            }
+        }
+
         public static void MergeUnique<T>(this HashSet<T> list, List<T> other)
         {
             for (int i = 0; i < other?.Count; i++)

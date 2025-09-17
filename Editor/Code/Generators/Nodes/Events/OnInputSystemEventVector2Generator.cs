@@ -38,18 +38,18 @@ namespace Unity.VisualScripting.Community
         {
             if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
             {
-                return CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit(CodeUtility.ToolTip("OnInputSystemEvents only work with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate OnInputSystemEvent", ""));
+                return CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ToolTip("OnInputSystemEvents only work with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate OnInputSystemEvent", ""));
             }
             var output = new StringBuilder();
             var inputVariable = data.AddLocalNameInScope("playerInput", typeof(PlayerInput));
             var actionVariable = data.AddLocalNameInScope("action", typeof(InputAction));
-            output.Append(CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("var ".ConstructHighlight() + inputVariable.VariableHighlight() + " = ") + GenerateValue(Unit.Target, data) + MakeSelectableForThisUnit(";") + "\n");
-            output.Append(CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("var ".ConstructHighlight() + actionVariable.VariableHighlight() + " = " + inputVariable.VariableHighlight() + "." + "actions".VariableHighlight() + $".FindAction(") + GenerateValue(Unit.InputAction, data) + MakeSelectableForThisUnit(");") + "\n");
-            output.Append(CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("if".ControlHighlight() + " (" + GetState(actionVariable.VariableHighlight()) + ")"));
+            output.Append(CodeBuilder.Indent(indent) + MakeClickableForThisUnit("var ".ConstructHighlight() + inputVariable.VariableHighlight() + " = ") + GenerateValue(Unit.Target, data) + MakeClickableForThisUnit(";") + "\n");
+            output.Append(CodeBuilder.Indent(indent) + MakeClickableForThisUnit("var ".ConstructHighlight() + actionVariable.VariableHighlight() + " = " + inputVariable.VariableHighlight() + "." + "actions".VariableHighlight() + $".FindAction(") + GenerateValue(Unit.InputAction, data) + MakeClickableForThisUnit(");") + "\n");
+            output.Append(CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ControlHighlight() + " (" + GetState(actionVariable.VariableHighlight()) + ")"));
             output.AppendLine();
-            output.AppendLine(CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{"));
+            output.AppendLine(CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{"));
             output.Append(GetNextUnit(Unit.trigger, data, indent + 1));
-            output.AppendLine(CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}"));
+            output.AppendLine(CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}"));
 #if !PACKAGE_INPUT_SYSTEM_1_2_0_OR_NEWER_EXISTS
             output.AppendLine(CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{$"vector2{count}_wasRunning".VariableHighlight()} = {actionVariable.VariableHighlight()}.{"phase".VariableHighlight()} == {InputActionPhase.Started.As().Code(false)};"));
 #endif
@@ -103,7 +103,7 @@ namespace Unity.VisualScripting.Community
                     var value = input.unit.defaultValues[input.key];
                     if (value == null)
                     {
-                        return MakeSelectableForThisUnit("gameObject".VariableHighlight() + "." + $"GetComponent<{typeof(PlayerInput).As().CSharpName(false, true, true)}>()");
+                        return MakeClickableForThisUnit("gameObject".VariableHighlight() + "." + $"GetComponent<{typeof(PlayerInput).As().CSharpName(false, true, true)}>()");
                     }
                     else
                     {
@@ -124,11 +124,11 @@ namespace Unity.VisualScripting.Community
                 {
                     if (input.unit.defaultValues[input.key] is not InputAction value)
                     {
-                        return MakeSelectableForThisUnit(CodeUtility.ToolTip("The problem could be that the player input component could not be found.", "Could not generate Input Action", "null".ConstructHighlight()));
+                        return MakeClickableForThisUnit(CodeUtility.ToolTip("The problem could be that the player input component could not be found.", "Could not generate Input Action", "null".ConstructHighlight()));
                     }
                     else
                     {
-                        return MakeSelectableForThisUnit(value.name.As().Code(false));
+                        return MakeClickableForThisUnit(value.name.As().Code(false));
                     }
                 }
             }

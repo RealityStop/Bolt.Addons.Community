@@ -1,49 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-using System.Linq;
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 using Unity.VisualScripting.Community.Libraries.Humility;
->>>>>>> Stashed changes
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Void = Unity.VisualScripting.Community.Libraries.CSharp.Void;
 
 namespace Unity.VisualScripting.Community
 {
     public sealed class ControlGenerationData
     {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        public Type returns { get; set; } = typeof(void);
-        public bool mustBreak { get; set; }
-        public bool hasBroke { get; set; }
-        public bool mustReturn { get; set; }
-        public bool hasReturned { get; set; }
-        
-        private readonly List<string> localNames = new();
-        private readonly Stack<GeneratorScope> scopes = new();
-        private readonly Stack<GeneratorScope> preservedScopes = new();
-        private readonly Stack<(Type type, bool isMet)> expectedTypes = new();
-        public readonly Dictionary<object, object> generatorData = new();
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         private readonly Stack<GeneratorScope> scopes = new();
         private readonly Stack<GeneratorScope> preservedScopes = new();
         private readonly Stack<(Type type, bool isMet)> expectedTypes = new();
@@ -52,37 +16,12 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         public Dictionary<object, object> scopeGeneratorData { get => PeekScope().generatorData; }
         public Dictionary<object, object> globalGeneratorData = new Dictionary<object, object>();
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         private readonly Dictionary<Unit, UnitSymbol> unitSymbols = new();
-        
-        private int scopeIdCounter;
+
         private GraphPointer graphPointer;
         public GameObject gameObject { get; set; }
-        public Type ScriptType { get; set; } = typeof(object);
-
-        public void NewScope()
-        {
-            scopeIdCounter++;
-            string uniqueId = $"scope_{scopeIdCounter}";
-            scopes.Push(new GeneratorScope(uniqueId, new Dictionary<string, Type>(), new Dictionary<string, string>(), PeekScope()));
-        }
-
-        public GeneratorScope ExitScope()
-        {
-            var exitingScope = scopes.Pop();
-            preservedScopes.Push(exitingScope);
-            return exitingScope;
-        }
-
+        public Type ScriptType { get; private set; } = typeof(object);
+        #region Expected Types
         public Type GetExpectedType()
         {
             if (expectedTypes.Count > 0)
@@ -132,14 +71,7 @@ namespace Unity.VisualScripting.Community
                 return expectedTypes.Pop();
             return (typeof(object), false);
         }
-
-        public GeneratorScope PeekScope()
-        {
-            if (scopes.Count > 0)
-                return scopes.Peek();
-            else
-                return null;
-        }
+        #endregion
 
         public string AddLocalNameInScope(string name, Type type = null)
         {
@@ -167,8 +99,6 @@ namespace Unity.VisualScripting.Community
                 return AddLocalNameInScope(name, type);
             }
         }
-<<<<<<< Updated upstream
-=======
         #region Scope Management
 
         Dictionary<string, int> methodIndex = new Dictionary<string, int>();
@@ -265,7 +195,6 @@ namespace Unity.VisualScripting.Community
             var scope = PeekScope();
             if (scope != null) scope.Returns = type;
         }
->>>>>>> Stashed changes
 
         public bool ContainsNameInAnyScope(string name)
         {
@@ -281,23 +210,10 @@ namespace Unity.VisualScripting.Community
             return false;
         }
 
-<<<<<<< Updated upstream
-        public string GetVariableName(string name)
-=======
         #endregion
 
         #region Variable Management
         public string GetVariableName(string name, bool errorIfNotFound = false, string error = "")
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         {
             bool exists = false;
             foreach (var scope in scopes)
@@ -350,17 +266,24 @@ namespace Unity.VisualScripting.Community
             type = GetVariableType(name);
             return true;
         }
+        #endregion
 
-        public void CreateSymbol(Unit unit, Type Type, string CodeRepresentation, Dictionary<string, object> Metadata = null)
+        #region Symbol Management
+        public void CreateSymbol(Unit unit, Type Type, Dictionary<string, object> Metadata = null)
         {
             if (!unitSymbols.ContainsKey(unit))
             {
-                unitSymbols.Add(unit, new UnitSymbol(unit, Type, CodeRepresentation, Metadata));
+                unitSymbols.Add(unit, new UnitSymbol(unit, Type, Metadata));
             }
         }
 
         public bool TryGetSymbol(Unit unit, out UnitSymbol symbol)
         {
+            if (unit == null)
+            {
+                symbol = null;
+                return false;
+            }
             return unitSymbols.TryGetValue(unit, out symbol);
         }
 
@@ -373,6 +296,7 @@ namespace Unity.VisualScripting.Community
             else
                 throw new MissingReferenceException($"No symbol found for {unit}");
         }
+        #endregion
 
         public bool TryGetGameObject(out GameObject gameObject)
         {
@@ -398,60 +322,31 @@ namespace Unity.VisualScripting.Community
 
         public void SetGraphPointer(GraphReference graphReference)
         {
-            if(gameObject == null && graphReference != null && graphReference.gameObject == null)
+            // This should only happen if this is not a scriptmachine
+            // It's set so that Scene variables are predicatable in assets
+            // because GraphPointer.scene uses GameObject.scene
+            if (gameObject == null && graphReference != null && graphReference.gameObject == null)
             {
-                var target = SceneManager.GetActiveScene().GetRootGameObjects()[0] ?? new GameObject("C# Preview Placeholder");
+                var firstObject = SceneManager.GetActiveScene().GetRootGameObjects()[0];
+                var target = firstObject.IsUnityNull() ? new GameObject("C# Preview Placeholder") : firstObject;
                 typeof(GraphPointer).GetProperty("gameObject").SetValue(graphReference, target);
             }
             graphPointer = graphReference;
         }
 
-        public ControlGenerationData(GraphPointer graphPointer)
+        public ControlGenerationData(Type ScriptType, GraphPointer graphPointer)
         {
+            this.ScriptType = ScriptType;
             this.graphPointer = graphPointer;
         }
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        public ControlGenerationData(ControlGenerationData data)
-=======
         private sealed class GeneratorScope
->>>>>>> Stashed changes
-=======
-        private sealed class GeneratorScope
->>>>>>> Stashed changes
-=======
-        private sealed class GeneratorScope
->>>>>>> Stashed changes
         {
-            returns = data.returns ?? typeof(Void);
-            mustBreak = data.mustBreak;
-            hasBroke = data.hasBroke;
-            mustReturn = data.mustReturn;
-            hasReturned = data.hasReturned;
-            localNames = new List<string>(data.localNames);
-            scopes = new Stack<GeneratorScope>(data.scopes.Select(scope => new GeneratorScope(scope.Id, new Dictionary<string, Type>(scope.scopeVariables), new Dictionary<string, string>(scope.nameMapping), PeekScope()?.ParentScope)));
-            expectedTypes = data.expectedTypes;
-            ScriptType = data.ScriptType;
-            gameObject = data.gameObject;
-            graphPointer = data.graphPointer;
-        }
-
-        public sealed class GeneratorScope
-=======
-        private sealed class GeneratorScope
->>>>>>> Stashed changes
-        {
-            public string Id { get; private set; } = string.Empty;
             public Dictionary<string, Type> scopeVariables { get; private set; }
             public Dictionary<string, string> nameMapping { get; private set; }
             public GeneratorScope ParentScope { get; private set; }
+            public readonly Dictionary<object, object> generatorData = new();
 
-<<<<<<< Updated upstream
-            public GeneratorScope(string id, Dictionary<string, Type> scopeVariables, Dictionary<string, string> nameMapping, GeneratorScope parentScope)
-=======
             public Type Returns { get; set; } = typeof(void);
             public bool MustBreak { get; set; }
             public bool HasBroke { get; set; }
@@ -461,12 +356,11 @@ namespace Unity.VisualScripting.Community
             public int methodId { get; private set; }
 
             public GeneratorScope(GeneratorScope parentScope, int methodId)
->>>>>>> Stashed changes
             {
-                Id = id;
-                this.scopeVariables = scopeVariables;
-                this.nameMapping = nameMapping;
+                scopeVariables = new();
+                nameMapping = new();
                 ParentScope = parentScope;
+                this.methodId = methodId;
             }
         }
     }

@@ -21,7 +21,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return MakeSelectableForThisUnit("// Stuff happens".CommentHighlight()) + "\n " + GetNextUnit(Unit.exit, data, indent);
+            return MakeClickableForThisUnit("// Stuff happens".CommentHighlight()) + "\n " + GetNextUnit(Unit.exit, data, indent);
         }
     }
 }

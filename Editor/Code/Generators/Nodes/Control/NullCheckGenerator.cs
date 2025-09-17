@@ -20,30 +20,30 @@ namespace Unity.VisualScripting.Community
             var _input = GenerateValue(Unit.input, data);
             if (Unit.ifNotNull.hasValidConnection)
             {
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("if".ConstructHighlight() + "(") + $"{_input}" + MakeSelectableForThisUnit($" != {"null".ConstructHighlight()})") + "\n";
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ConstructHighlight() + "(") + $"{_input}" + MakeClickableForThisUnit($" != {"null".ConstructHighlight()})") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
                 data.NewScope();
                 output += GetNextUnit(Unit.ifNotNull, data, indent + 1);
                 data.ExitScope();
-                output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
+                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
                 if (Unit.ifNull.hasValidConnection)
                 {
-                    output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"else".ConstructHighlight()) + "\n";
-                    output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"else".ConstructHighlight()) + "\n";
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
                     data.NewScope();
                     output += GetNextUnit(Unit.ifNull, data, indent + 1);
                     data.ExitScope();
-                    output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
+                    output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
                 }
             }
             else if (Unit.ifNull.hasValidConnection)
             {
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("if".ConstructHighlight() + "(") + $"{_input}" + MakeSelectableForThisUnit($" == {"null".ConstructHighlight()})") + "\n";
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ConstructHighlight() + "(") + $"{_input}" + MakeClickableForThisUnit($" == {"null".ConstructHighlight()})") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
                 data.NewScope();
                 output += GetNextUnit(Unit.ifNull, data, indent + 1);
                 data.ExitScope();
-                output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
+                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
             }
 
             return output;

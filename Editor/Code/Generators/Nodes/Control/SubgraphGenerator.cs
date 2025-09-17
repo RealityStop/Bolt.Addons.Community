@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
@@ -12,9 +13,6 @@ using UnityEngine;
 [RequiresVariables]
 public class SubgraphGenerator : NodeGenerator<SubgraphUnit>, IRequireVariables
 {
-<<<<<<< Updated upstream
-    public SubgraphGenerator(Unity.VisualScripting.SubgraphUnit unit) : base(unit)
-=======
     private static readonly Dictionary<string, Type> typeCache = new();
     private readonly Dictionary<CustomEvent, int> customEventIds = new();
     private Unit graphInput;
@@ -23,13 +21,11 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>, IRequireVariables
 
     bool hasEventUnit;
     public SubgraphGenerator(SubgraphUnit unit) : base(unit)
->>>>>>> Stashed changes
     {
+        SubscribeToGraphChanges();
+        InitializeInputOutputConnections();
     }
 
-<<<<<<< Updated upstream
-    private Dictionary<CustomEvent, int> customEventIds = new Dictionary<CustomEvent, int>();
-=======
     private void SubscribeToGraphChanges()
     {
         if (Unit.nest?.graph?.units != null)
@@ -103,52 +99,49 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>, IRequireVariables
             }
         }
     }
->>>>>>> Stashed changes
 
     public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
     {
+        if (!Unit.nest?.graph?.units?.Any() ?? true)
+            return base.GenerateControl(input, data, indent);
+
         if (data.TryGetGraphPointer(out var graphPointer))
         {
             data.SetGraphPointer(graphPointer.AsReference().ChildReference(Unit, false));
         }
-        var Units = Unit.nest.graph.units;
-        var customEvents = Units.Where(unit => unit is CustomEvent);
-        var _graphinput = Units.FirstOrDefault(unit => unit is GraphInput) as Unit;
-        var _graphOutput = Units.FirstOrDefault(unit => unit is GraphOutput) as Unit;
-        if (Unit.nest != null && Unit.nest.graph != null)
+
+        var sb = new StringBuilder();
+        if (graphOutput != null)
         {
-            if (Units.Any(unit => unit is GraphInput or GraphOutput))
+            var outputGen = graphOutput.GetGenerator();
+            if (outputGen != null)
             {
-                GetSingleDecorator(_graphinput, _graphinput).connectedValueInputs.Clear();
-                foreach (var item in Unit.valueInputs)
+                outputGen.connectedGraphOutputs.Clear();
+                foreach (var output in Unit.controlOutputs.Where(o => o.hasValidConnection))
                 {
-                    if ((item.hasDefaultValue || item.hasValidConnection) && !GetSingleDecorator(_graphinput, _graphinput).connectedValueInputs.Contains(item))
+                    if (!outputGen.connectedGraphOutputs.Contains(output))
                     {
-                        GetSingleDecorator(_graphinput, _graphinput).connectedValueInputs.Add(item);
+                        outputGen.connectedGraphOutputs.Add(output);
                     }
                 }
-                GetSingleDecorator(_graphOutput, _graphOutput).connectedGraphOutputs.Clear();
-                foreach (var connectedOutput in Unit.controlOutputs.Where(output => output.hasValidConnection))
+            }
+        }
+        if (graphInput != null)
+        {
+            var inputGen = graphInput.GetGenerator();
+            if (inputGen != null)
+            {
+                inputGen.connectedValueInputs.Clear();
+                foreach (var _input in Unit.valueInputs)
                 {
-                    if (!GetSingleDecorator(_graphOutput, _graphOutput).connectedGraphOutputs.Contains(connectedOutput))
-                        GetSingleDecorator(_graphOutput, _graphOutput).connectedGraphOutputs.Add(connectedOutput);
+                    if ((_input.hasDefaultValue || _input.hasValidConnection) && !inputGen.connectedValueInputs.Contains(_input))
+                    {
+                        inputGen.connectedValueInputs.Add(_input);
+                    }
                 }
             }
-            var output = string.Empty;
+        }
 
-<<<<<<< Updated upstream
-            var subgraphName = Unit.nest.graph.title?.Length > 0 ? Unit.nest.graph.title : Unit.nest.source == GraphSource.Macro ? Unit.nest.macro.name : "UnnamedSubgraph";
-            if (CSharpPreviewSettings.ShouldShowSubgraphComment)
-            {
-                if (_graphinput != null || _graphOutput != null)
-                {
-                    output += "\n" + CodeBuilder.Indent(indent) + $"//Subgraph: \"{subgraphName}\" Port({input.key}) \n".CommentHighlight();
-                }
-                else
-                {
-                    output += "\n" + CodeBuilder.Indent(indent) + $"/* Subgraph \"{subgraphName}\" is empty */ \n".WarningHighlight();
-                }
-=======
         var subgraphName = Unit.nest.graph.title?.Trim();
 
         if (string.IsNullOrWhiteSpace(subgraphName))
@@ -190,14 +183,14 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>, IRequireVariables
             {
                 sb.AppendLine(CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeUtility.ToolTip("/* Custom Event units only work on monobehaviours */", "Could not generate Custom Events", "")));
                 break;
->>>>>>> Stashed changes
             }
 
-            output += "\n";
+            var generator = customEvent.GetGenerator();
+            var methodName = GetMethodName(customEvent);
+            var action = customEvent.coroutine
+                ? $"({"args".VariableHighlight()}) => StartCoroutine({methodName}({"args".VariableHighlight()}))"
+                : methodName;
 
-<<<<<<< Updated upstream
-            foreach (var variable in Unit.nest.graph.variables)
-=======
             sb.AppendLine(CodeBuilder.Indent(indent) +
                           CodeBuilder.CallCSharpUtilityMethod(customEvent, CodeUtility.MakeClickable(customEvent, nameof(CSharpUtility.RegisterCustomEvent)),
                           generator.GenerateValue(customEvent.target, data), CodeUtility.MakeClickable(customEvent, action), CodeUtility.MakeClickable(customEvent, (action + "_" + customEvent.ToString().Replace(".", "")).As().Code(false))) +
@@ -221,56 +214,38 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>, IRequireVariables
         {
             var matchingOutput = graphInput.controlOutputs.FirstOrDefault(o => o.key.Equals(input.key, StringComparison.OrdinalIgnoreCase));
             if (matchingOutput != null)
->>>>>>> Stashed changes
             {
-                var type = Type.GetType(variable.typeHandle.Identification) ?? typeof(object);
-                var name = data.AddLocalNameInScope(variable.name, type);
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{type.As().CSharpName(false, true)} {name.VariableHighlight()} = ") + variable.value.As().Code(true, Unit, true, true, "", false, true) + MakeSelectableForThisUnit(";") + "\n";
+                sb.Append(GetNextUnit(matchingOutput, data, indent));
             }
-
-            var index = 0;
-            foreach (CustomEvent customEvent in customEvents)
-            {
-                index++;
-                customEventIds[customEvent] = index;
-                if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
-                {
-                    output += CodeUtility.ToolTip("/* Custom Event units only work on monobehaviours */", "Could not generate Custom Events", "");
-                    break;
-                }
-                var generator = GetSingleDecorator(customEvent, customEvent);
-                var action = CodeUtility.MakeSelectable(customEvent, customEvent.coroutine ? $"({"args".VariableHighlight()}) => StartCoroutine({GetMethodName(customEvent)}({"args".VariableHighlight()}))" : GetMethodName(customEvent));
-                output += CodeBuilder.Indent(indent) + CodeBuilder.CallCSharpUtilityMethod(customEvent, CodeUtility.MakeSelectable(customEvent, nameof(CSharpUtility.RegisterCustomEvent)), generator.GenerateValue(customEvent.target, data), action) + CodeUtility.MakeSelectable(customEvent, ";") + "\n";
-                var returnType = customEvent.coroutine ? typeof(IEnumerator) : typeof(void);
-                output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(customEvent, returnType.As().CSharpName(false, true) + " " + GetMethodName(customEvent) + "(" + "CustomEventArgs ".TypeHighlight() + "args".VariableHighlight() + ")") + "\n";
-                output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(customEvent, "{") + "\n";
-                output += CodeBuilder.Indent(indent + 1) + CodeUtility.MakeSelectable(customEvent, "if".ControlHighlight() + $" ({"args".VariableHighlight()}.name == ") + generator.GenerateValue(customEvent.name, data) + CodeUtility.MakeSelectable(customEvent, ")") + "\n";
-                output += CodeBuilder.Indent(indent + 1) + CodeUtility.MakeSelectable(customEvent, "{") + "\n";
-                var customEventData = new ControlGenerationData(data)
-                {
-                    returns = returnType
-                };
-                output += GetNextUnit(customEvent.trigger, customEventData, indent + 2);
-                output += "\n" + CodeBuilder.Indent(indent + 1) + CodeUtility.MakeSelectable(customEvent, "}") + "\n";
-                output += "\n" + CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(customEvent, "}") + "\n";
-            }
-
-            if (input.hasValidConnection)
-            {
-                if (_graphinput != null)
-                {
-                    var _output = _graphinput.controlOutputs.FirstOrDefault(output => output.key.Equals(input.key, StringComparison.OrdinalIgnoreCase));
-                    output += GetNextUnit(_output, data, indent);
-                }
-            }
-            if (data.TryGetGraphPointer(out var _graphPointer))
-            {
-                data.SetGraphPointer(graphPointer.AsReference().ParentReference(false));
-            }
-            return output;
         }
-        else
-            return base.GenerateControl(input, data, indent);
+
+        if (data.TryGetGraphPointer(out var _))
+        {
+            data.SetGraphPointer(graphPointer.AsReference().ParentReference(false));
+        }
+
+        return sb.ToString();
+    }
+
+    public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+    {
+        var graphOutput = Unit.nest.graph.units.FirstOrDefault(u => u is GraphOutput) as Unit;
+        if (graphOutput != null)
+        {
+            return graphOutput.GetGenerator().GenerateValue(output, data);
+        }
+
+        return "/* Subgraph missing GraphOutput unit */".WarningHighlight();
+    }
+
+    private static Type GetCachedType(string typeId)
+    {
+        if (!typeCache.TryGetValue(typeId, out var type))
+        {
+            type = Type.GetType(typeId) ?? typeof(object);
+            typeCache[typeId] = type;
+        }
+        return type;
     }
 
     private string GetMethodName(CustomEvent customEvent)
@@ -279,9 +254,6 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>, IRequireVariables
         {
             return (string)customEvent.defaultValues[customEvent.name.key];
         }
-<<<<<<< Updated upstream
-        else
-=======
         return "CustomEvent" + (customEventIds.TryGetValue(customEvent, out var id) ? id : 0);
     }
 
@@ -305,17 +277,8 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>, IRequireVariables
     ~SubgraphGenerator()
     {
         if (Unit.nest?.graph?.units != null)
->>>>>>> Stashed changes
         {
-            return "CustomEvent" + customEventIds[customEvent];
+            Unit.nest.graph.units.CollectionChanged -= OnUnitsChanged;
         }
-    }
-
-    public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-    {
-        if (Unit.nest.graph.units.FirstOrDefault(unit => unit is GraphOutput) is Unit graphOutput)
-            return GetSingleDecorator(graphOutput, graphOutput).GenerateValue(output, data);
-        else
-            return "/* Subgraph missing GraphOutput unit */".WarningHighlight();
     }
 }

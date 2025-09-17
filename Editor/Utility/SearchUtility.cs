@@ -17,11 +17,15 @@ namespace Unity.VisualScripting.Community
             return false;
         }
 
-        public static bool SearchMatches(string query, string haystack, SearchMode searchMode, Unit unit = null)
+        public static bool SearchMatches(string query, string haystack, SearchMode searchMode, out List<MatchNode> matches, Unit unit = null)
         {
-            if (!IsAdvanced(query)) return NormalSearch(query, haystack, searchMode);
+            if (!IsAdvanced(query))
+            {
+                matches = new();
+                return NormalSearch(query, haystack, searchMode);
+            }
 
-            return AdvancedSearch(query, haystack, searchMode, unit, out _);
+            return AdvancedSearch(query, haystack, searchMode, unit, out matches);
         }
 
         private static bool NormalSearch(string query, string haystack, SearchMode searchMode)
@@ -45,14 +49,74 @@ namespace Unity.VisualScripting.Community
             };
         }
 
-        public static bool AdvancedSearch(string query, string haystack, SearchMode searchMode, Unit unit, out List<IUnitPort> ports)
+        private static bool AdvancedSearchRecursive(Unit unit, List<string> pathParts, int index, SearchMode searchMode, out List<MatchNode> matches)
         {
+            matches = new List<MatchNode>();
+
+            if (unit == null || index >= pathParts.Count)
+                return false;
+
+            string currentQuery = pathParts[index];
+            string portTag = null;
+
+            if (currentQuery.EndsWith("@CI", StringComparison.OrdinalIgnoreCase)) { portTag = "CI"; currentQuery = currentQuery[..^3]; }
+            else if (currentQuery.EndsWith("@CO", StringComparison.OrdinalIgnoreCase)) { portTag = "CO"; currentQuery = currentQuery[..^3]; }
+            else if (currentQuery.EndsWith("@VI", StringComparison.OrdinalIgnoreCase)) { portTag = "VI"; currentQuery = currentQuery[..^3]; }
+            else if (currentQuery.EndsWith("@VO", StringComparison.OrdinalIgnoreCase)) { portTag = "VO"; currentQuery = currentQuery[..^3]; }
+            else if (currentQuery.EndsWith("@I", StringComparison.OrdinalIgnoreCase)) { portTag = "I"; currentQuery = currentQuery[..^2]; }
+            else if (currentQuery.EndsWith("@O", StringComparison.OrdinalIgnoreCase)) { portTag = "O"; currentQuery = currentQuery[..^2]; }
+
+            if (!(currentQuery == "*" || NormalSearch(currentQuery, SearchUtility.GetSearchName(unit), searchMode)))
+                return false;
+
+            if (index == pathParts.Count - 1)
+                return true;
+
+            foreach (var port in unit.validPorts)
+            {
+                if (!port.hasValidConnection || !PortTagMatches(port, portTag))
+                    continue;
+
+                if (port is ControlInput ci)
+                {
+                    foreach (var conn in ci.connections)
+                        if (AdvancedSearchRecursive(conn.source.unit as Unit, pathParts, index + 1, searchMode, out var childMatches))
+                            matches.Add(new MatchNode { Unit = conn.source.unit as Unit, Port = conn.source, Children = childMatches });
+                }
+                else if (port is ControlOutput co)
+                {
+                    var conn = co.connection.destination;
+                    if (AdvancedSearchRecursive(conn.unit as Unit, pathParts, index + 1, searchMode, out var childMatches))
+                        matches.Add(new MatchNode { Unit = conn.unit as Unit, Port = conn, Children = childMatches });
+                }
+                else if (port is ValueInput vi)
+                {
+                    var conn = vi.connection.source;
+                    if (AdvancedSearchRecursive(conn.unit as Unit, pathParts, index + 1, searchMode, out var childMatches))
+                        matches.Add(new MatchNode { Unit = conn.unit as Unit, Port = conn, Children = childMatches });
+                }
+                else if (port is ValueOutput vo)
+                {
+                    foreach (var conn in vo.connections)
+                    {
+                        if (AdvancedSearchRecursive(conn.destination.unit as Unit, pathParts, index + 1, searchMode, out var childMatches))
+                            matches.Add(new MatchNode { Unit = conn.destination.unit as Unit, Port = conn.destination, Children = childMatches });
+                    }
+                }
+            }
+
+            return matches.Count > 0;
+        }
+
+        public static bool AdvancedSearch(string query, string haystack, SearchMode searchMode, Unit unit, out List<MatchNode> ports)
+        {
+            ports = new List<MatchNode>();
+
             if (string.IsNullOrEmpty(query) || string.IsNullOrEmpty(haystack))
             {
                 ports = null;
                 return false;
             }
-            var normalizedHaystack = Normalize(haystack);
 
             var groups = query.Split('|', StringSplitOptions.RemoveEmptyEntries);
 
@@ -60,7 +124,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (!IsAdvanced(group))
                 {
-                    if (NormalSearch(group, normalizedHaystack, searchMode))
+                    if (NormalSearch(group, haystack, searchMode))
                     {
                         ports = null;
                         return true;
@@ -68,41 +132,15 @@ namespace Unity.VisualScripting.Community
                     continue;
                 }
 
-                var parts = group.Split('>', 2, StringSplitOptions.RemoveEmptyEntries);
+                var pathParts = group.Split('>', StringSplitOptions.RemoveEmptyEntries).Select(p => Normalize(p.Trim())).ToList();
 
-                string unitQuery = Normalize(parts[0].Trim());
-                string portQuery = parts.Length > 1 ? Normalize(parts[1].Trim()) : null;
-
-                string portTag = null;
-                if (unitQuery.EndsWith("@CI", StringComparison.OrdinalIgnoreCase)) { portTag = "CI"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@CO", StringComparison.OrdinalIgnoreCase)) { portTag = "CO"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@VI", StringComparison.OrdinalIgnoreCase)) { portTag = "VI"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@VO", StringComparison.OrdinalIgnoreCase)) { portTag = "VO"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@I", StringComparison.OrdinalIgnoreCase)) { portTag = "I"; unitQuery = unitQuery[..^2]; }
-                else if (unitQuery.EndsWith("@O", StringComparison.OrdinalIgnoreCase)) { portTag = "O"; unitQuery = unitQuery[..^2]; }
-
-                bool unitMatch = unit is not null && (unitQuery == "*" || searchMode switch
+                if (AdvancedSearchRecursive(unit, pathParts, 0, searchMode, out var matches) && matches.Count > 0)
                 {
-                    SearchMode.Contains => normalizedHaystack.IndexOf(unitQuery, StringComparison.OrdinalIgnoreCase) >= 0,
-                    SearchMode.StartsWith => normalizedHaystack.StartsWith(unitQuery, StringComparison.OrdinalIgnoreCase),
-                    // SearchMode.Exact => normalizedHaystack.Equals(unitQuery, StringComparison.OrdinalIgnoreCase),
-                    _ => throw new UnexpectedEnumValueException<SearchMode>(searchMode)
-                });
-
-                if (!unitMatch) continue;
-                List<IUnitPort> _ports = null;
-                if (portQuery != null && unit != null)
-                {
-                    bool portMatch = unit.validPorts
-                        .Where(p => p.hasValidConnection)
-                        .Where(p => PortTagMatches(p, portTag))
-                        .Any(p => PortMatches(p, portQuery, searchMode, out _ports));
-
-                    if (!portMatch) continue;
+                    ports = matches;
+                    return true;
                 }
-                ports = _ports;
-                return true;
             }
+
             ports = null;
             return false;
         }
@@ -124,15 +162,23 @@ namespace Unity.VisualScripting.Community
         }
 
 
+        private static readonly Dictionary<string, string> NormalizeCache = new();
+
         public static string Normalize(string input)
         {
-            return input.Replace(" ", string.Empty);
+            if (string.IsNullOrEmpty(input)) return string.Empty;
+
+            if (NormalizeCache.TryGetValue(input, out var normalized))
+                return normalized;
+
+            normalized = input.Replace(" ", string.Empty);
+            NormalizeCache[input] = normalized;
+            return normalized;
         }
 
-        public static bool PortMatches(IUnitPort unitPort, string portQuery, SearchMode searchMode, out List<IUnitPort> matchedPorts)
+        public static bool PortMatches(IUnitPort unitPort, string portQuery, SearchMode searchMode, out List<MatchNode> matches)
         {
-            matchedPorts = new List<IUnitPort>();
-
+            matches = new List<MatchNode>();
             if (IsAdvanced(portQuery))
             {
                 if (unitPort is ControlInput controlInput)
@@ -140,32 +186,41 @@ namespace Unity.VisualScripting.Community
                     foreach (var connection in controlInput.connections)
                     {
                         var connectedPort = connection.source;
-                        bool matches = AdvancedSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode, connectedPort.unit as Unit, out matchedPorts);
-
-                        if (matches)
+                        if (AdvancedSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode, connectedPort.unit as Unit, out var childNodes))
                         {
-                            matchedPorts.Add(connectedPort);
+                            matches.Add(new MatchNode
+                            {
+                                Port = connectedPort,
+                                Unit = connectedPort.unit as Unit,
+                                Children = childNodes
+                            });
                         }
                     }
                 }
                 else if (unitPort is ControlOutput controlOutput)
                 {
                     var connectedPort = controlOutput.connection.destination;
-                    bool matches = AdvancedSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode, connectedPort.unit as Unit, out matchedPorts);
-
-                    if (matches)
+                    if (AdvancedSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode, connectedPort.unit as Unit, out var childNodes))
                     {
-                        matchedPorts.Add(connectedPort);
+                        matches.Add(new MatchNode
+                        {
+                            Port = connectedPort,
+                            Unit = connectedPort.unit as Unit,
+                            Children = childNodes
+                        });
                     }
                 }
                 else if (unitPort is ValueInput valueInput)
                 {
                     var connectedPort = valueInput.connection.source;
-                    bool matches = AdvancedSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode, connectedPort.unit as Unit, out matchedPorts);
-
-                    if (matches)
+                    if (AdvancedSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode, connectedPort.unit as Unit, out var childNodes))
                     {
-                        matchedPorts.Add(connectedPort);
+                        matches.Add(new MatchNode
+                        {
+                            Port = connectedPort,
+                            Unit = connectedPort.unit as Unit,
+                            Children = childNodes
+                        });
                     }
                 }
                 else if (unitPort is ValueOutput valueOutput)
@@ -173,11 +228,14 @@ namespace Unity.VisualScripting.Community
                     foreach (var connection in valueOutput.connections)
                     {
                         var connectedPort = connection.destination;
-                        bool matches = AdvancedSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode, connectedPort.unit as Unit, out matchedPorts);
-
-                        if (matches)
+                        if (AdvancedSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode, connectedPort.unit as Unit, out var childNodes))
                         {
-                            matchedPorts.Add(connectedPort);
+                            matches.Add(new MatchNode
+                            {
+                                Port = connectedPort,
+                                Unit = connectedPort.unit as Unit,
+                                Children = childNodes
+                            });
                         }
                     }
                 }
@@ -189,32 +247,39 @@ namespace Unity.VisualScripting.Community
                     foreach (var connection in controlInput.connections)
                     {
                         var connectedPort = connection.source;
-                        bool matches = NormalSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode);
 
-                        if (matches)
+                        if (NormalSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode))
                         {
-                            matchedPorts.Add(connectedPort);
+                            matches.Add(new MatchNode
+                            {
+                                Port = connectedPort,
+                                Unit = connectedPort.unit as Unit
+                            });
                         }
                     }
                 }
                 else if (unitPort is ControlOutput controlOutput)
                 {
                     var connectedPort = controlOutput.connection.destination;
-                    bool matches = NormalSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode);
-
-                    if (matches)
+                    if (NormalSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode))
                     {
-                        matchedPorts.Add(connectedPort);
+                        matches.Add(new MatchNode
+                        {
+                            Port = connectedPort,
+                            Unit = connectedPort.unit as Unit
+                        });
                     }
                 }
                 else if (unitPort is ValueInput valueInput)
                 {
                     var connectedPort = valueInput.connection.source;
-                    bool matches = NormalSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode);
-
-                    if (matches)
+                    if (NormalSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode))
                     {
-                        matchedPorts.Add(connectedPort);
+                        matches.Add(new MatchNode
+                        {
+                            Port = connectedPort,
+                            Unit = connectedPort.unit as Unit
+                        });
                     }
                 }
                 else if (unitPort is ValueOutput valueOutput)
@@ -222,49 +287,83 @@ namespace Unity.VisualScripting.Community
                     foreach (var connection in valueOutput.connections)
                     {
                         var connectedPort = connection.destination;
-                        bool matches = NormalSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode);
-
-                        if (matches)
+                        if (NormalSearch(portQuery, GetSearchName(connectedPort.unit as Unit), searchMode))
                         {
-                            matchedPorts.Add(connectedPort);
+                            matches.Add(new MatchNode
+                            {
+                                Port = connectedPort,
+                                Unit = connectedPort.unit as Unit
+                            });
                         }
                     }
                 }
             }
 
-            return matchedPorts?.Count > 0;
+            return matches?.Count > 0;
         }
+
+        private static readonly Dictionary<Type, MemberInfo> NameMemberCache = new();
 
         public static string GetSearchName(Unit unit)
         {
-            // Do known types first then reflection
-            if (unit is TriggerCustomEvent trigger && !trigger.name.hasValidConnection) return GetDefaultValue(trigger.name) + " [TriggerCustomEvent]";
-            if (unit is CustomEvent customEvent && !customEvent.name.hasValidConnection) return GetDefaultValue(customEvent.name) as string + " [CustomEvent]";
-            if (unit is BoltUnityEvent unityEvent && !unityEvent.name.hasValidConnection) return GetDefaultValue(unityEvent.name) as string + " [UnityEvent]";
-            if (unit is BoltNamedAnimationEvent animationEvent && !animationEvent.name.hasValidConnection) return GetDefaultValue(animationEvent.name) as string + " [NamedAnimationEvent]";
-            if (unit is UnifiedVariableUnit v && !v.name.hasValidConnection) return GetDefaultValue(v.name) as string + $" [{GetElementDisplayName(unit)}: {v.kind}]";
-            if (unit is Literal l) return l.value + $" [{GetElementDisplayName(unit)}: {l.type?.SelectedName(BoltCore.Configuration.humanNaming) ?? l.value?.GetType().SelectedName(BoltCore.Configuration.humanNaming) ?? "Type Unknown"}]";
+            if (unit == null) return string.Empty;
 
-            ValueInput valueInput = null;
+            if (unit is TriggerCustomEvent trigger && !trigger.name.hasValidConnection)
+                return $"{GetDefaultValue(trigger.name)} [TriggerCustomEvent]";
 
-            var field = unit.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                .FirstOrDefault(f => f.FieldType == typeof(ValueInput) && string.Equals(f.Name, "name", StringComparison.OrdinalIgnoreCase));
+            if (unit is CustomEvent customEvent && !customEvent.name.hasValidConnection)
+                return $"{GetDefaultValue(customEvent.name)} [CustomEvent]";
 
-            if (field != null)
-                valueInput = field.GetValue(unit) as ValueInput;
+            if (unit is BoltUnityEvent unityEvent && !unityEvent.name.hasValidConnection)
+                return $"{GetDefaultValue(unityEvent.name)} [UnityEvent]";
 
-            if (valueInput == null)
+            if (unit is BoltNamedAnimationEvent animationEvent && !animationEvent.name.hasValidConnection)
+                return $"{GetDefaultValue(animationEvent.name)} [NamedAnimationEvent]";
+
+            if (unit is UnifiedVariableUnit v && !v.name.hasValidConnection)
+                return $"{GetDefaultValue(v.name)} [{GetElementDisplayName(unit)}: {v.kind}]";
+
+            if (unit is Literal l)
+                return $"{l.value} [{GetElementDisplayName(unit)}: {l.type?.SelectedName(BoltCore.Configuration.humanNaming) ?? l.value?.GetType().SelectedName(BoltCore.Configuration.humanNaming) ?? "Type Unknown"}]";
+
+            var type = unit.GetType();
+            if (!NameMemberCache.TryGetValue(type, out var member))
             {
-                var prop = unit.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    .FirstOrDefault(p => p.PropertyType == typeof(ValueInput) && string.Equals(p.Name, "name", StringComparison.OrdinalIgnoreCase));
+                foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                {
+                    if (field.FieldType == typeof(ValueInput) && string.Equals(field.Name, "name", StringComparison.OrdinalIgnoreCase))
+                    {
+                        member = field;
+                        break;
+                    }
+                }
 
-                if (prop != null)
-                    valueInput = prop.GetValue(unit) as ValueInput;
+                if (member == null)
+                {
+                    foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                    {
+                        if (prop.PropertyType == typeof(ValueInput) && string.Equals(prop.Name, "name", StringComparison.OrdinalIgnoreCase))
+                        {
+                            member = prop;
+                            break;
+                        }
+                    }
+                }
+
+                NameMemberCache[type] = member;
             }
 
-            if (valueInput != null && valueInput.hasDefaultValue && !valueInput.hasValidConnection)
+            if (member != null)
             {
-                return $"{GetDefaultValue(valueInput)} [{GetElementDisplayName(unit).Trim()}]";
+                ValueInput valueInput = member switch
+                {
+                    FieldInfo fi => fi.GetValue(unit) as ValueInput,
+                    PropertyInfo pi => pi.GetValue(unit) as ValueInput,
+                    _ => null
+                };
+
+                if (valueInput != null && valueInput.hasDefaultValue && !valueInput.hasValidConnection)
+                    return $"{GetDefaultValue(valueInput)} [{GetElementDisplayName(unit).Trim()}]";
             }
 
             return GetElementDisplayName(unit);
@@ -291,6 +390,13 @@ namespace Unity.VisualScripting.Community
             if (memberUnit is SetMember) return ActionDirection.Set;
             if (memberUnit is GetMember) return ActionDirection.Get;
             return ActionDirection.Any;
+        }
+
+        public class MatchNode
+        {
+            public IUnitPort Port { get; set; }
+            public Unit Unit { get; set; }
+            public List<MatchNode> Children { get; set; } = new();
         }
     }
 }

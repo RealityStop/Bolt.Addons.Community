@@ -28,29 +28,29 @@ namespace Unity.VisualScripting.Community
                 NameSpaces = string.Empty;
             }
 
-            var variables = MakeSelectableForThisUnit(typeof(VisualScripting.Variables).As().CSharpName(true, true));
+            var variables = MakeClickableForThisUnit(typeof(VisualScripting.Variables).As().CSharpName(true, true));
             var kind = string.Empty;
             switch (Unit.kind)
             {
                 case VariableKind.Flow:
-                    return MakeSelectableForThisUnit("/* Flow Variables are not supported */".WarningHighlight());
+                    return MakeClickableForThisUnit("/* Flow Variables are not supported */".WarningHighlight());
                 case VariableKind.Graph:
-                    return MakeSelectableForThisUnit("/* Graph Variables do not support connected names */".WarningHighlight());
+                    return MakeClickableForThisUnit("/* Graph Variables do not support connected names */".WarningHighlight());
                 case VariableKind.Object:
-                    kind = MakeSelectableForThisUnit($".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeSelectableForThisUnit(")")}";
+                    kind = MakeClickableForThisUnit($".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeClickableForThisUnit(")")}";
                     break;
                 case VariableKind.Scene:
-                    kind = MakeSelectableForThisUnit($".Scene({"SceneManager".TypeHighlight()}.GetActiveScene())");
+                    kind = MakeClickableForThisUnit($".Scene({"SceneManager".TypeHighlight()}.GetActiveScene())");
                     break;
                 case VariableKind.Application:
-                    kind = MakeSelectableForThisUnit("." + "Application".VariableHighlight());
+                    kind = MakeClickableForThisUnit("." + "Application".VariableHighlight());
                     break;
                 case VariableKind.Saved:
-                    kind = MakeSelectableForThisUnit("." + "Saved".VariableHighlight());
+                    kind = MakeClickableForThisUnit("." + "Saved".VariableHighlight());
                     break;
             }
 
-            return $"{variables}{kind}{MakeSelectableForThisUnit(".IsDefined(")}{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(")")}";
+            return $"{variables}{kind}{MakeClickableForThisUnit(".IsDefined(")}{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(")")}";
         }
 
 
@@ -58,7 +58,7 @@ namespace Unity.VisualScripting.Community
         {
             if (input == Unit.@object && !input.hasValidConnection)
             {
-                return MakeSelectableForThisUnit("gameObject".VariableHighlight());
+                return MakeClickableForThisUnit("gameObject".VariableHighlight());
             }
             return base.GenerateValue(input, data);
         }
