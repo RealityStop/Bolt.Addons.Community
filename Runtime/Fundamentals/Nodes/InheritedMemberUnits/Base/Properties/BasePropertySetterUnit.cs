@@ -28,7 +28,7 @@ namespace Unity.VisualScripting.Community
     
         [DoNotSerialize]
         [PortLabelHidden]
-        public ValueInput setter;
+        public ValueInput value;
     
         protected override void Definition()
         {
@@ -42,8 +42,8 @@ namespace Unity.VisualScripting.Community
             exit = ControlOutput(nameof(exit));
             Succession(enter, exit);
     
-            setter = ValueInput(propertyType, nameof(setter));
-            setter.SetDefaultValue(propertyType.PseudoDefault());
+            value = ValueInput(propertyType, nameof(value));
+            value.SetDefaultValue(propertyType.PseudoDefault());
         }
     }
 }

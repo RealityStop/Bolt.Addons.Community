@@ -2,36 +2,37 @@ using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community
 {
-[RenamedFrom("ClearSavedVars")]    
+    [RenamedFrom("ClearSavedVars")]
+    [RenamedFrom("Unity.VisualScripting.Community.ClearSavedVars")]
     [UnitCategory("Community/Variables")]
-    [UnitTitle("ClearSavedVars")]
+    [UnitTitle("Clear")]
+    [UnitSurtitle("Saved Variables")]
     [TypeIcon(typeof(FlowGraph))]
-    public class ClearSavedVars : Unit
+    public class ClearSavedVariables : Unit
     {
         [DoNotSerialize]
         [PortLabelHidden]
         public ControlInput In;
-    
+
         [DoNotSerialize]
         [PortLabelHidden]
         public ControlOutput Out;
-    
+
         [DoNotSerialize]
         public ValueInput Key;
-    
+
         protected override void Definition()
         {
-            In = ControlInput(nameof(In), _Enter_);
+            In = ControlInput(nameof(In), Enter);
             Out = ControlOutput(nameof(Out));
             Succession(In, Out);
         }
-    
-        public ControlOutput _Enter_(Flow flow)
+
+        public ControlOutput Enter(Flow flow)
         {
-            SavedVariables.saved.Clear();
-            SavedVariables.SaveDeclarations(SavedVariables.saved);
+            CSharpUtility.ClearSavedVariables();
             return Out;
         }
     }
-    
+
 }
