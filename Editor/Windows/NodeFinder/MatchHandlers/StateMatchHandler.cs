@@ -21,7 +21,7 @@ namespace Unity.VisualScripting.Community
             {
                 var displayName = SearchUtility.GetElementDisplayName(state);
 
-                if (SearchUtility.SearchMatches(pattern, displayName, searchMode))
+                if (SearchUtility.SearchMatches(pattern, displayName, searchMode, out _))
                 {
                     var matchRecord = new MatchObject(state, displayName);
                     return matchRecord;

@@ -2,6 +2,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using System;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
@@ -9,12 +10,14 @@ namespace Unity.VisualScripting.Community
     public class NodeGenerator : Decorator<NodeGenerator, NodeGeneratorAttribute, Unit>
     {
         public Unit unit;
-
+        /// <summary>
+        /// Seperate each namespace with ',' if ',' is required in the namespace it's self use '`'
+        /// </summary>
         public string NameSpaces = "";
 
         public string variableName = "";
         private int currentRecursionDepth = CSharpPreviewSettings.RecursionDepth;
-        public Recursion recursion = Recursion.New(CSharpPreviewSettings.RecursionDepth);
+        public Recursion recursion { get; private set; } = Recursion.New(CSharpPreviewSettings.RecursionDepth);
 
         #region Subgraphs
         public List<ControlOutput> connectedGraphOutputs = new List<ControlOutput>();
@@ -58,15 +61,15 @@ namespace Unity.VisualScripting.Community
             }
             else
             {
-                return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
+                return MakeClickableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
             }
         }
 
-        public virtual string GenerateValue(ValueOutput output, ControlGenerationData data) { return MakeSelectableForThisUnit($"/* Port '{output.key}' of '{output.unit.GetType().Name}' Missing Generator. */".WarningHighlight()); }
+        public virtual string GenerateValue(ValueOutput output, ControlGenerationData data) { return MakeClickableForThisUnit($"/* Port '{output.key}' of '{output.unit.GetType().Name}' Missing Generator. */".WarningHighlight()); }
 
         public virtual string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"/*{(input != null ? " Port '" + input.key + "' of " : "")}'{unit.GetType().Name}' Missing Generator. */".WarningHighlight());
+            return CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"/*{(input != null ? " Port '" + input.key + "' of " : "")}'{unit.GetType().Name}' Missing Generator. */".WarningHighlight());
         }
 
         public string GetNextUnit(ControlOutput controlOutput, ControlGenerationData data, int indent)
@@ -108,28 +111,34 @@ namespace Unity.VisualScripting.Community
 
         public Type GetSourceType(ValueInput valueInput, ControlGenerationData data)
         {
+            if (valueInput == null)
+            {
+                return null;
+            }
+
             if (data == null)
             {
                 return valueInput.type;
             }
-            if (valueInput.hasValidConnection && data.TryGetSymbol(valueInput.GetPesudoSource().unit as Unit, out var symbol))
+            var pseudoSource = valueInput.GetPesudoSource();
+            if (valueInput.hasValidConnection && data.TryGetSymbol(pseudoSource?.unit as Unit, out var symbol))
             {
                 return symbol.Type;
             }
 
-            if (data != null && valueInput.hasValidConnection && valueInput.GetPesudoSource() != null && data.TryGetVariableType(GetSingleDecorator(valueInput.GetPesudoSource().unit as Unit, valueInput.GetPesudoSource().unit as Unit).variableName, out Type type))
+            if (data != null && valueInput.hasValidConnection && pseudoSource != null && data.TryGetVariableType((pseudoSource.unit as Unit).GetGenerator().variableName, out Type type))
             {
                 return type;
             }
 
-            if (valueInput.hasValidConnection && valueInput.GetPesudoSource() != null && GetSingleDecorator(valueInput.GetPesudoSource().unit as Unit, valueInput.GetPesudoSource().unit as Unit) is LocalVariableGenerator localVariable && localVariable.variableType != null)
+            if (valueInput.hasValidConnection && pseudoSource != null && (pseudoSource.unit as Unit).GetGenerator() is LocalVariableGenerator localVariable && localVariable.variableType != null)
             {
                 return localVariable.variableType;
             }
 
-            if (valueInput.hasValidConnection && valueInput.GetPesudoSource() != null && valueInput.GetPesudoSource()?.type != typeof(object))
+            if (valueInput.hasValidConnection && pseudoSource != null && pseudoSource?.type != typeof(object))
             {
-                return valueInput.GetPesudoSource().type;
+                return pseudoSource.type;
             }
 
             if (valueInput.hasValidConnection)
@@ -220,28 +229,48 @@ namespace Unity.VisualScripting.Community
             return false;
         }
 
-        public string MakeSelectableForThisUnit(string code, bool condition = true)
+        public string MakeClickableForThisUnit(string code, bool condition = true)
         {
             if (condition)
-                return CodeUtility.MakeSelectable(unit, code);
+                return CodeUtility.MakeClickable(unit, code);
             else
                 return code;
         }
 
-        protected bool CanPredictConnection(ValueInput target, ControlGenerationData data)
+        public static bool CanPredictConnection(ValueInput target, ControlGenerationData data)
         {
-            if (target.connection.source.unit is UnifiedVariableUnit variableUnit)
+            if (data.TryGetGraphPointer(out var graphPointer) && target.GetPesudoSource()?.unit is UnifiedVariableUnit variableUnit)
             {
                 // This is one of the main problems so we check this first.
                 if (variableUnit.kind == VariableKind.Scene)
                 {
-                    if (data.TryGetGraphPointer(out var graphPointer) && graphPointer.scene != null)
+                    if (graphPointer.scene != null)
                         return Flow.CanPredict(target, graphPointer.AsReference());
                     else return false;
                 }
             }
 
-            return true;
+            return graphPointer != null;
+        }
+
+        protected bool IsSourceLiteral(ValueInput valueInput, out Type sourceType)
+        {
+            var source = valueInput.GetPesudoSource();
+            if (source != null)
+            {
+                if (source.unit is Literal literal)
+                {
+                    sourceType = literal.type;
+                    return true;
+                }
+                else if (source is ValueInput v && !v.hasValidConnection && v.hasDefaultValue)
+                {
+                    sourceType = v.type;
+                    return true;
+                }
+            }
+            sourceType = null;
+            return false;
         }
     }
 

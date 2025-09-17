@@ -14,11 +14,7 @@ namespace Unity.VisualScripting.Community
 
             var minuend = GenerateValue(Unit.minuend, data);
             var subtrahend = GenerateValue(Unit.subtrahend, data);
-<<<<<<< Updated upstream
-            return $"{minuend}{MakeSelectableForThisUnit(" - ")}{subtrahend}";
-=======
             return MakeClickableForThisUnit("(") + $"{minuend}{MakeClickableForThisUnit(" - ")}{subtrahend}" + MakeClickableForThisUnit(")");
->>>>>>> Stashed changes
         }
         
         public override string GenerateValue(ValueInput input, ControlGenerationData data)

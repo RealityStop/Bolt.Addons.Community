@@ -8,13 +8,11 @@ using SMachine = Unity.VisualScripting.FlowMachine;
 
 namespace Unity.VisualScripting.Community
 {
-<<<<<<< Updated upstream
-=======
     /// <summary>
     /// Used to get a machine from a game object that is using the ScriptGraphAsset or Name inputed
     /// </summary>
->>>>>>> Stashed changes
     [UnitTitle("Get Machine")]
+    [UnitSubtitle("With asset")]
     [TypeIcon(typeof(SMachine))]
     [UnitCategory("Community/Graphs")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.GetMachineUnit")]
@@ -41,19 +39,8 @@ namespace Unity.VisualScripting.Community
 
         protected override void Definition()
         {
-            target = ValueInput<GameObject>("target", (GameObject)null);
+            target = ValueInput("target", (GameObject)null);
             target.NullMeansSelf();
-<<<<<<< Updated upstream
-            asset = ValueInput<ScriptGraphAsset>("asset", (ScriptGraphAsset)null);
-            machine = ValueOutput<SMachine>("machine", (flow) =>
-            {
-                var machines = flow.GetValue<GameObject>(target).GetComponents<SMachine>();
-                SMachine _machine = null;
-
-                for (int i = 0; i < machines.Length; i++)
-                {
-                    if (machines[i].nest.macro == flow.GetValue<ScriptGraphAsset>(asset)) return machines[i];
-=======
             asset = ValueInput(type == GraphSource.Embed ? typeof(string) : typeof(ScriptGraphAsset), type == GraphSource.Embed ? "name" : "asset");
 
             if (type == GraphSource.Embed)
@@ -81,7 +68,6 @@ namespace Unity.VisualScripting.Community
                                 break;
                             }
                     }
->>>>>>> Stashed changes
                 }
 
                 return _machine;

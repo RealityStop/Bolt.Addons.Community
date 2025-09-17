@@ -21,13 +21,27 @@ namespace Unity.VisualScripting.Community
             {
                 var displayName = SearchUtility.GetSearchName(unit);
 
-                if (SearchUtility.SearchMatches(pattern, displayName, searchMode, unit))
+                if (SearchUtility.SearchMatches(pattern, displayName, searchMode, out var subMatches, unit))
                 {
                     var matchRecord = new MatchObject(unit, displayName);
+                    matchRecord.SubMatches = CreateChildrenRecursive(subMatches);
                     return matchRecord;
                 }
             }
             return null;
+        }
+
+        private List<MatchObject> CreateChildrenRecursive(List<SearchUtility.MatchNode> matches)
+        {
+            var list = ListPool<MatchObject>.New();
+            foreach (var match in matches)
+            {
+                if (match.Unit == null) continue;
+                var matchObject = new MatchObject(match.Unit, SearchUtility.GetSearchName(match.Unit));
+                matchObject.SubMatches = CreateChildrenRecursive(match.Children);
+                list.Add(matchObject);
+            }
+            return list;
         }
     }
 }

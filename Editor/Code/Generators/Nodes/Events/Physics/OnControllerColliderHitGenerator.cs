@@ -21,31 +21,31 @@ namespace Unity.VisualScripting.Community
         {
             if (output == Unit.collider)
             {
-                return MakeSelectableForThisUnit("hit".VariableHighlight() + "." + "collider".VariableHighlight());
+                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "collider".VariableHighlight());
             }
             else if (output == Unit.controller)
             {
-                return MakeSelectableForThisUnit("hit".VariableHighlight() + "." + "controller".VariableHighlight());
+                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "controller".VariableHighlight());
             }
             else if (output == Unit.moveDirection)
             {
-                return MakeSelectableForThisUnit("hit".VariableHighlight() + "." + "moveDirection".VariableHighlight());
+                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "moveDirection".VariableHighlight());
             }
             else if (output == Unit.moveLength)
             {
-                return MakeSelectableForThisUnit("hit".VariableHighlight() + "." + "moveLength".VariableHighlight());
+                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "moveLength".VariableHighlight());
             }
             else if (output == Unit.normal)
             {
-                return MakeSelectableForThisUnit("hit".VariableHighlight() + "." + "normal".VariableHighlight());
+                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "normal".VariableHighlight());
             }
             else if (output == Unit.point)
             {
-                return MakeSelectableForThisUnit("hit".VariableHighlight() + "." + "point".VariableHighlight());
+                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "point".VariableHighlight());
             }
             else
             {
-                return MakeSelectableForThisUnit("hit".VariableHighlight());
+                return MakeClickableForThisUnit("hit".VariableHighlight());
             }
         }
     }

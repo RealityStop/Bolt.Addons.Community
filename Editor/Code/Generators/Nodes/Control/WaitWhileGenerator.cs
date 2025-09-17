@@ -18,7 +18,7 @@ public class WaitWhileGenerator : NodeGenerator<WaitWhileUnit>
         data.SetExpectedType(typeof(bool));
         var condition = GenerateValue(Unit.condition, data);
         data.RemoveExpectedType();
-        output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("yield return ".ControlHighlight() + "new ".ConstructHighlight() + "WaitWhile".TypeHighlight() + "(() => ") + condition + MakeSelectableForThisUnit(");") + "\n";
+        output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("yield return ".ControlHighlight() + "new ".ConstructHighlight() + "WaitWhile".TypeHighlight() + "(() => ") + condition + MakeClickableForThisUnit(");") + "\n";
         output += GetNextUnit(Unit.exit, data, indent);
         return output;
     }

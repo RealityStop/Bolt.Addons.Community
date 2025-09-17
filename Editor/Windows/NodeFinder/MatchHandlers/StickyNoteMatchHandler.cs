@@ -21,7 +21,7 @@ namespace Unity.VisualScripting.Community
             if (element is StickyNote note)
             {
                 var name = GetStickyNoteFullName(note);
-                if (SearchUtility.SearchMatches(pattern, name, searchMode))
+                if (SearchUtility.SearchMatches(pattern, name, searchMode, out _))
                 {
                     var matchRecord = new MatchObject(note, name);
                     return matchRecord;

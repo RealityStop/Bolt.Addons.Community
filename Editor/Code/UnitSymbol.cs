@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 
 /// <summary>
-/// Represents a unique symbol or identifier for a visual scripting node,
-/// encapsulating the associated data and metadata needed for generating C# code
-/// from visual scripting elements.
+/// Represents a unique symbol or identifier for a visual scripting node
 /// </summary>
 public class UnitSymbol
 {
@@ -21,21 +19,15 @@ public class UnitSymbol
     public Type Type { get; set; }
 
     /// <summary>
-    /// Gets or sets the generated C# code representation for this node.
-    /// </summary>
-    public string CodeRepresentation { get; set; }
-
-    /// <summary>
     /// Gets or sets additional metadata specific to the generator that may be required.
     /// </summary>
     public Dictionary<string, object> Metadata { get; set; }
 
-    public UnitSymbol(Unit Unit, Type Type, string CodeRepresentation, Dictionary<string, object> Metadata = null)
+    public UnitSymbol(Unit Unit, Type Type, Dictionary<string, object> Metadata = null)
     {
         this.Unit = Unit;
         NodeId = Unit.GetHashCode().ToString();
         this.Type = Type;
-        this.CodeRepresentation = CodeRepresentation;
         this.Metadata = Metadata ?? new Dictionary<string, object>();
     }
 }

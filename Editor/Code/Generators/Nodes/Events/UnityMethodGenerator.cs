@@ -22,7 +22,7 @@ namespace Unity.VisualScripting.Community
         public override string Name => typeof(TEventUnit).DisplayName();
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            if(!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeSelectableForThisUnit(CodeUtility.ToolTip($"{typeof(TEventUnit).DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {typeof(TEventUnit).DisplayName()}", ""));
+            if(!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeClickableForThisUnit(CodeUtility.ToolTip($"{typeof(TEventUnit).DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {typeof(TEventUnit).DisplayName()}", ""));
             return GetNextUnit(Unit.trigger, data, indent);
         }
     } 

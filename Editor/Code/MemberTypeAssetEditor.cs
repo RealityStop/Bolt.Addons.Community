@@ -19,6 +19,9 @@ namespace Unity.VisualScripting.Community.CSharp
         where TMethodDeclaration : MethodDeclaration
         where TConstructorDeclaration : ConstructorDeclaration
     {
+
+        public Dictionary<string, object> AttributeParameters;
+
         protected Metadata attributes;
         protected SerializedProperty attributesProp;
         protected Metadata constructors;
@@ -36,14 +39,15 @@ namespace Unity.VisualScripting.Community.CSharp
         protected Metadata interfaces;
         protected SerializedProperty interfacesProp;
 
-        private readonly List<Type> classAttributeTypes = new List<Type> { };
-        private readonly List<Type> enumAttributeTypes = new List<Type> { };
-        private readonly List<Type> fieldAttributeTypes = new List<Type> { };
-        private readonly List<Type> parameterAttributeTypes = new List<Type> { };
-        private readonly List<Type> interfaceAttributeTypes = new List<Type> { };
-        private readonly List<Type> methodAttributeTypes = new List<Type> { };
-        private readonly List<Type> propertyAttributeTypes = new List<Type> { };
-        private readonly List<Type> structAttributeTypes = new List<Type> { };
+        private Type[] attributeTypes = new Type[] { };
+        private Type[] classAttributeTypes = new Type[] { };
+        private Type[] enumAttributeTypes = new Type[] { };
+        private Type[] fieldAttributeTypes = new Type[] { };
+        private Type[] parameterAttributeTypes = new Type[] { };
+        private Type[] interfaceAttributeTypes = new Type[] { };
+        private Type[] methodAttributeTypes = new Type[] { };
+        private Type[] propertyAttributeTypes = new Type[] { };
+        private Type[] structAttributeTypes = new Type[] { };
 
         private Type ValueInspectorType;
 
@@ -59,26 +63,32 @@ namespace Unity.VisualScripting.Community.CSharp
             Parameter
         }
 
+        private Color boxBackground => HUMColor.Grey(0.15f);
+
         protected override void BeforePreview()
         {
-            if (GraphWindow.active != null && GraphWindow.active.context != null)
-                GraphWindow.active.context.BeginEdit();
-            Constructors();
-            GUILayout.Space(4);
-            Variables();
-            GUILayout.Space(4);
-            Methods();
-
-            // Check if the target is a ClassAsset and if it has required information
-            if (typeof(TMemberTypeAsset) == typeof(ClassAsset) && (Target as ClassAsset).inheritsType)
+            var context = GraphWindow.active?.context;
+            try
             {
+                context?.BeginEdit();
+                Constructors();
                 GUILayout.Space(4);
-                RequiredInfo();
+                Variables();
                 GUILayout.Space(4);
-                OverridableMembersInfo();
+                Methods();
+
+                if (typeof(TMemberTypeAsset) == typeof(ClassAsset) && (Target as ClassAsset).inheritsType)
+                {
+                    GUILayout.Space(4);
+                    RequiredInfo();
+                    GUILayout.Space(4);
+                    OverridableMembersInfo();
+                }
             }
-            if (GraphWindow.active != null && GraphWindow.active.context != null)
-                GraphWindow.active.context.EndEdit();
+            finally
+            {
+                context?.EndEdit();
+            }
         }
 
         private bool RequiresInfo()
@@ -86,20 +96,15 @@ namespace Unity.VisualScripting.Community.CSharp
             var classAsset = Target as ClassAsset;
             var inheritedType = classAsset.inherits.type;
 
-            // Check for abstract methods
             if (inheritedType == null) return false;
             if (inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(m => !m.Name.Contains("get_") && !m.Name.Contains("set_")).Any(m => m.IsAbstract && !MethodExists(m)))
             {
                 return true;
             }
-
-            // Check for abstract properties
             if (inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Any(p => (p.GetMethod?.IsAbstract == true || p.SetMethod?.IsAbstract == true) && !PropertyExists(p)))
             {
                 return true;
             }
-
-            // Check if the inherited type is not abstract and is a class with parameterized constructors
             if (!inheritedType.IsAbstract && inheritedType.IsClass)
             {
                 if (inheritedType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
@@ -421,16 +426,14 @@ namespace Unity.VisualScripting.Community.CSharp
         private bool OverridableMembers()
         {
             var classAsset = Target as ClassAsset;
-            var inheritedType = classAsset.inherits.type;
+            var inheritedType = classAsset.GetInheritedType();
 
-            // Check for methods that can be overridden
             if (inheritedType == null) return false;
             if (inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(m => m.Overridable()).Any(m => !MethodExists(m)))
             {
                 return true;
             }
 
-            // Check for properties that can be overridden
             if (inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                 .Any(p => (p.GetMethod?.IsFinal == false || p.SetMethod?.IsFinal == false) && !PropertyExists(p)))
             {
@@ -645,7 +648,8 @@ namespace Unity.VisualScripting.Community.CSharp
         protected override void OnEnable()
         {
             base.OnEnable();
-            ValueInspectorType = typeof(SystemObjectInspector).Assembly.GetTypes().First(type => type.Namespace == "Unity.VisualScripting" && type.Name == "ValueInspector");
+            if (ValueInspectorType == null)
+                ValueInspectorType = typeof(SystemObjectInspector).Assembly.GetType("Unity.VisualScripting.ValueInspector", throwOnError: true);
             if (constructors == null || constructorsProp == null)
             {
                 constructors = Metadata.FromProperty(serializedObject.FindProperty("constructors"));
@@ -679,6 +683,8 @@ namespace Unity.VisualScripting.Community.CSharp
             if (Target.icon == null) Target.icon = DefaultIcon();
 
             CacheConstrainedAttributes();
+
+            UpdatePreview();
         }
 
         protected virtual void OnExtendedHorizontalHeaderGUI()
@@ -870,41 +876,17 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             GUILayout.Label(" ", GUILayout.Height(20));
             var position = GUILayoutUtility.GetLastRect();
-<<<<<<< Updated upstream
-
-            Type[] types = new Type[] { };
-
-            switch (usage)
-=======
-            List<Type> types = usage switch
->>>>>>> Stashed changes
+            Type[] types = usage switch
             {
-                case AttributeUsageType.Class:
-                    types = classAttributeTypes;
-                    break;
-                case AttributeUsageType.Struct:
-                    types = structAttributeTypes;
-                    break;
-                case AttributeUsageType.Enum:
-                    types = enumAttributeTypes;
-                    break;
-                case AttributeUsageType.Interface:
-                    types = interfaceAttributeTypes;
-                    break;
-                case AttributeUsageType.Field:
-                    types = fieldAttributeTypes;
-                    break;
-                case AttributeUsageType.Property:
-                    types = propertyAttributeTypes;
-                    break;
-                case AttributeUsageType.Method:
-                    types = methodAttributeTypes;
-                    break;
-                case AttributeUsageType.Parameter:
-                    types = parameterAttributeTypes;
-                    break;
-            }
-
+                AttributeUsageType.Struct => structAttributeTypes,
+                AttributeUsageType.Enum => enumAttributeTypes,
+                AttributeUsageType.Interface => interfaceAttributeTypes,
+                AttributeUsageType.Field => fieldAttributeTypes,
+                AttributeUsageType.Property => propertyAttributeTypes,
+                AttributeUsageType.Method => methodAttributeTypes,
+                AttributeUsageType.Parameter => parameterAttributeTypes,
+                _ => classAttributeTypes,
+            };
             return LudiqGUI.TypeField(position, GUIContent.none, attribute.GetAttributeType(), () =>
             {
                 return new TypeOptionTree(types);
@@ -914,44 +896,42 @@ namespace Unity.VisualScripting.Community.CSharp
         private void CacheConstrainedAttributes()
         {
             var allAttributeTypes = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(assembly =>
-                {
-                    try { return assembly.GetTypes(); }
-                    catch { return Type.EmptyTypes; }
-                })
-                .Where(t => (t.IsSubclassOf(typeof(Attribute)) || t == typeof(Attribute)) && t.IsPublic);
+                .SelectMany(assembly => assembly.GetTypes())
+                .Where(t => (t.IsSubclassOf(typeof(Attribute)) || t == typeof(Attribute)) && t.IsPublic)
+                .ToArray();
 
-            foreach (var attr in allAttributeTypes)
-            {
-                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Struct) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                {
-                    structAttributeTypes.Add(attr);
-                }
-                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Enum) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                {
-                    enumAttributeTypes.Add(attr);
-                }
-                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Interface) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                {
-                    interfaceAttributeTypes.Add(attr);
-                }
-                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Field) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                {
-                    fieldAttributeTypes.Add(attr);
-                }
-                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Property) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                {
-                    propertyAttributeTypes.Add(attr);
-                }
-                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Method) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                {
-                    methodAttributeTypes.Add(attr);
-                }
-                if (GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Parameter) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
-                {
-                    parameterAttributeTypes.Add(attr);
-                }
-            }
+            // Filter attributes based on valid targets
+            classAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Class) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            structAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Struct) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            enumAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Enum) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            interfaceAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Interface) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            fieldAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Field) || GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.All))
+                .ToArray();
+
+            propertyAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Property) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            methodAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Method) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
+
+            parameterAttributeTypes = allAttributeTypes
+                .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Parameter) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
+                .ToArray();
         }
 
         // Helper method to get AttributeUsageAttribute from a type
@@ -1122,6 +1102,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 attribute.constructor = 0;
                                 Undo.RegisterCompleteObjectUndo(target, undoName);
                                 attribute.SetType(type);
+                                InitializeAttribute(attribute, attrIndex);
                             },
                             false
                         );
@@ -1191,7 +1172,8 @@ namespace Unity.VisualScripting.Community.CSharp
                         HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
                         {
                             var attributeParamMeta = attributesMeta[attrIndex]["parameters"];
-                            string[] constructorNames = attribute?.GetAttributeType()?.GetConstructors()
+                            var constructors = attribute?.GetAttributeType()?.GetConstructors();
+                            string[] constructorNames = constructors
                             .Where(constructor => constructor.IsPublic && constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
                             .Select(constructor =>
                             {
@@ -1215,94 +1197,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 constructorNames
                             );
                             shouldUpdate = EditorGUI.EndChangeCheck();
-                            var selectedConstructor = attribute?.GetAttributeType()?.GetConstructors()
-                                .Where(constructor => constructor.IsPublic && constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
-                                .ToList()[attribute.constructor];
-                            if (selectedConstructor != null)
-                            {
-                                var paramIndex = 0;
-                                foreach (var parameter in selectedConstructor.GetParameters())
-                                {
-                                    TypeParam Param = attribute.parameters.FirstOrDefault(param => param.name == parameter.Name);
-                                    if (Param == null)
-                                    {
-                                        attribute.AddParameter(
-                                            parameter.Name,
-                                            parameter.ParameterType,
-                                            GetDefaultParameterValue(parameter.ParameterType)
-                                        );
-                                        Param = attribute.parameters.First(param => param.name == parameter.Name);
-                                    }
-                                    if (Param.defaultValue == null)
-                                    {
-                                        var value = Param.GetDefaultValue();
-                                        if (value == null)
-                                        {
-                                            Param.defaultValue = GetDefaultParameterValue(parameter.ParameterType);
-                                        }
-                                        else
-                                        {
-                                            Param.defaultValue = value;
-                                        }
-                                    }
-                                    var isParamsParameter = parameter.IsDefined(typeof(ParamArrayAttribute));
-                                    Param.modifier = ParameterModifier.Params;
-                                    Inspector.BeginBlock(
-                                        attributeParamMeta[paramIndex]["defaultValue"],
-                                        new Rect()
-                                    );
-                                    if (!isParamsParameter && Param.defaultValue is not ICollection)
-                                    {
-                                        if (attributeParamMeta[paramIndex]["defaultValue"].value is Type type)
-                                        {
-                                            GUIContent TypebuilderButtonContent = new(
-                                            (attributeParamMeta[paramIndex]["defaultValue"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
-                                            (attributeParamMeta[paramIndex]["defaultValue"].value as Type)?.Icon()?[IconSize.Small]
-                                            );
-                                            GUILayout.BeginHorizontal();
-                                            GUILayout.Label(parameter.Name + ":");
-                                            var lastRect = GUILayoutUtility.GetLastRect();
-                                            if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
-                                            {
-                                                TypeBuilderWindow.ShowWindow(lastRect, attributeParamMeta[paramIndex]["defaultValue"], true, new Type[0], () => shouldUpdate = true);
-                                            }
-                                            GUILayout.EndHorizontal();
-                                        }
-                                        else
-                                        {
-                                            if (attributeParamMeta[paramIndex]["defaultValue"].value is bool boolVal)
-                                            {
-                                                GUILayout.BeginHorizontal();
-                                                EditorGUILayout.PrefixLabel(Param.name + ":");
-                                                attributeParamMeta[paramIndex]["defaultValue"].value = GUILayout.Toggle(boolVal, GUIContent.none);
-                                                GUILayout.EndHorizontal();
-                                            }
-                                            else
-                                            {
-                                                LudiqGUI.InspectorLayout(
-                                                    attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType),
-                                                    new GUIContent(parameter.Name + ":")
-                                                );
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        attributeParamMeta[paramIndex]["defaultValue"].value = Param.defaultValue;
-                                        LudiqGUI.InspectorLayout(
-                                            attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType),
-                                            new GUIContent(parameter.Name + ":")
-                                        );
-                                    }
-                                    if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
-                                    {
-                                        attributeParamMeta[paramIndex]["defaultValue"].RecordUndo();
-                                        UpdatePreview();
-                                    }
-                                    paramIndex++;
-                                }
-                                paramIndex = 0;
-                            }
+                            InitializeAttribute(attribute, attrIndex);
                             var fields = attribute.GetAttributeType()?.GetFields().Cast<MemberInfo>().Concat(attribute.GetAttributeType()?.GetProperties()).ToArray();
                             for (int i = 0; i < attribute.fields?.Count; i++)
                             {
@@ -1343,6 +1238,9 @@ namespace Unity.VisualScripting.Community.CSharp
                             }
                             if (GUILayout.Button("+ Add Field"))
                             {
+                                var selectedConstructor = constructors
+                                    .Where(constructor => constructor.IsPublic && constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
+                                    .ToList()[attribute.constructor];
                                 GenericMenu menu = new GenericMenu();
                                 var allFields = attribute.GetAttributeType()?.GetFields(BindingFlags.Public | BindingFlags.Instance).Cast<MemberInfo>()
                                     .Concat(attribute.GetAttributeType()?.GetProperties(BindingFlags.Public | BindingFlags.Instance))?.ToArray();
@@ -1384,7 +1282,102 @@ namespace Unity.VisualScripting.Community.CSharp
                     attribute.SetType(GetConstrainedAttributeTypes(attributeUsageType)[0]);
                     Undo.RegisterCompleteObjectUndo(target, "Added Attribute");
                     attributeList.Add(attribute);
+                    InitializeAttribute(attribute, attributeList.Count - 1);
                     UpdatePreview();
+                }
+
+                void InitializeAttribute(AttributeDeclaration attribute, int attributeIndex)
+                {
+                    var attributeParamMeta = attributesMeta[attributeIndex]["parameters"];
+                    var constructors = attribute?.GetAttributeType()?.GetConstructors();
+                    var selectedConstructor = constructors
+                   .Where(constructor => constructor.IsPublic && constructor.GetParameters().All(param => param.ParameterType.HasInspector()))
+                   .ToList()[attribute.constructor];
+                    if (selectedConstructor != null)
+                    {
+                        var paramIndex = 0;
+                        foreach (var parameter in selectedConstructor.GetParameters())
+                        {
+                            TypeParam Param = attribute.parameters.FirstOrDefault(param => param.name == parameter.Name);
+                            if (Param == null)
+                            {
+                                attribute.AddParameter(
+                                    parameter.Name,
+                                    parameter.ParameterType,
+                                    GetDefaultParameterValue(parameter.ParameterType)
+                                );
+                                Param = attribute.parameters.First(param => param.name == parameter.Name);
+                            }
+                            if (Param.defaultValue == null)
+                            {
+                                var value = Param.GetDefaultValue();
+                                if (value == null)
+                                {
+                                    Param.defaultValue = GetDefaultParameterValue(parameter.ParameterType);
+                                }
+                                else
+                                {
+                                    Param.defaultValue = value;
+                                }
+                            }
+                            var isParamsParameter = parameter.IsDefined(typeof(ParamArrayAttribute));
+                            Param.modifier = ParameterModifier.Params;
+                            Inspector.BeginBlock(
+                                attributeParamMeta[paramIndex]["defaultValue"],
+                                new Rect()
+                            );
+                            if (!isParamsParameter && Param.defaultValue is not ICollection)
+                            {
+                                if (attributeParamMeta[paramIndex]["defaultValue"].value is Type type)
+                                {
+                                    GUIContent TypebuilderButtonContent = new(
+                                    (attributeParamMeta[paramIndex]["defaultValue"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                                    (attributeParamMeta[paramIndex]["defaultValue"].value as Type)?.Icon()?[IconSize.Small]
+                                    );
+                                    GUILayout.BeginHorizontal();
+                                    GUILayout.Label(parameter.Name + ":");
+                                    var lastRect = GUILayoutUtility.GetLastRect();
+                                    if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
+                                    {
+                                        TypeBuilderWindow.ShowWindow(lastRect, attributeParamMeta[paramIndex]["defaultValue"], true, new Type[0], () => shouldUpdate = true);
+                                    }
+                                    GUILayout.EndHorizontal();
+                                }
+                                else
+                                {
+                                    if (attributeParamMeta[paramIndex]["defaultValue"].value is bool boolVal)
+                                    {
+                                        GUILayout.BeginHorizontal();
+                                        EditorGUILayout.PrefixLabel(Param.name + ":");
+                                        attributeParamMeta[paramIndex]["defaultValue"].value = GUILayout.Toggle(boolVal, GUIContent.none);
+                                        GUILayout.EndHorizontal();
+                                    }
+                                    else
+                                    {
+                                        LudiqGUI.InspectorLayout(
+                                            attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType),
+                                            new GUIContent(parameter.Name + ":")
+                                        );
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                attributeParamMeta[paramIndex]["defaultValue"].value = Param.defaultValue;
+                                LudiqGUI.InspectorLayout(
+                                    attributeParamMeta[paramIndex]["defaultValue"].Cast(parameter.ParameterType),
+                                    new GUIContent(parameter.Name + ":")
+                                );
+                            }
+                            if (Inspector.EndBlock(attributeParamMeta[paramIndex]["defaultValue"]))
+                            {
+                                attributeParamMeta[paramIndex]["defaultValue"].RecordUndo();
+                                UpdatePreview();
+                            }
+                            paramIndex++;
+                        }
+                        paramIndex = 0;
+                    }
                 }
             });
         }
@@ -1400,7 +1393,7 @@ namespace Unity.VisualScripting.Community.CSharp
             return null;
         }
 
-        List<Type> GetConstrainedAttributeTypes(AttributeUsageType usage)
+        Type[] GetConstrainedAttributeTypes(AttributeUsageType usage)
         {
             return usage switch
             {
@@ -1412,7 +1405,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 AttributeUsageType.Property => propertyAttributeTypes,
                 AttributeUsageType.Method => methodAttributeTypes,
                 AttributeUsageType.Parameter => parameterAttributeTypes,
-                _ => new List<Type>(0),
+                _ => new Type[0],
             };
         }
         Dictionary<Metadata, HashSet<int>> subscribedEvents = new Dictionary<Metadata, HashSet<int>>();
@@ -1526,7 +1519,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             {
                                 param.modifier &= ~ParameterModifier.Params;
                             }
-                            if (GUILayout.Button(modifiers.GetEnumString(ParameterModifier.None), EditorStyles.popup, GUILayout.MaxHeight(19f)))
+                            if (GUILayout.Button(modifiers.GetEnumString(ParameterModifier.None, "None"), EditorStyles.popup, GUILayout.MaxHeight(19f)))
                             {
                                 GenericMenu menu = new GenericMenu();
                                 menu.AddItem(new GUIContent("None"), modifiers == ParameterModifier.None, (obj) =>
@@ -1893,7 +1886,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 {
                                     HUMEditor.Image(typeof(Type).Icon()[IconSize.Small], 16, 16);
 
-                                    GUILayout.Label("Generics");
+                                    GUILayout.Label(new GUIContent("Generics", "This feature is experimental and may cause issues in your graphs or behave unpredictably."));
                                 }, () =>
                                 {
                                     HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
@@ -2284,7 +2277,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                         if (typeChangedLookup.TryGetValue(variables[index]["type"], out var type))
                                         {
                                             Type currentType = variables[index]["type"].value as Type;
-                                            if (type != currentType || listOfVariables[i].value?.GetType() != currentType)
+                                            if (type != currentType)
                                             {
                                                 UpdateDefaultValueType(currentType, variables[index]);
                                                 typeChangedLookup[variables[index]["type"]] = currentType;
@@ -2296,7 +2289,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                         }
 
                                         var inspector = variables[index]["defaultValue"].Inspector();
-                                        typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(inspector, Activator.CreateInstance(ValueInspectorType, inspector));
+                                        typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValueOptimized(inspector, ValueInspectorType.Instantiate(true, inspector));
                                         Inspector.BeginBlock(variables[index]["defaultValue"], new Rect(10, 10, 10, 10));
                                         inspector.DrawLayout(new GUIContent("Value               "));
                                         if (Inspector.EndBlock(variables[index]["defaultValue"]))

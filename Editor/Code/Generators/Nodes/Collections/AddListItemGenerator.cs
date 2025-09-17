@@ -16,7 +16,7 @@ namespace Unity.VisualScripting.Community
             data.SetExpectedType(Unit.listInput.type);
             var listCode = GenerateValue(Unit.listInput, data);
             data.RemoveExpectedType();
-            return CodeBuilder.Indent(indent) + listCode + MakeSelectableForThisUnit(".Add(", true) + base.GenerateValue(this.Unit.item, data) + MakeSelectableForThisUnit(");", true) + "\n" + this.GetNextUnit(this.Unit.exit, data, indent);
+            return CodeBuilder.Indent(indent) + listCode + MakeClickableForThisUnit(".Add(", true) + base.GenerateValue(this.Unit.item, data) + MakeClickableForThisUnit(");", true) + "\n" + this.GetNextUnit(this.Unit.exit, data, indent);
         }
     }
 }

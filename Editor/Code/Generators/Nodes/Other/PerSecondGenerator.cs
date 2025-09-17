@@ -13,7 +13,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return GenerateValue(Unit.input, data) + MakeSelectableForThisUnit(" * " + "Time".TypeHighlight() + "." + "deltaTime".VariableHighlight());
+            return GenerateValue(Unit.input, data) + MakeClickableForThisUnit(" * " + "Time".TypeHighlight() + "." + "deltaTime".VariableHighlight());
         }
     }
 }

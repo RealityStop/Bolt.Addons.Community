@@ -42,23 +42,23 @@ namespace Unity.VisualScripting.Community
 
                     if (typeof(Component).IsAssignableFrom(Unit.member.pseudoDeclaringType))
                     {
-                        outputCode = new ValueCode($"{GenerateValue(Unit.target, data)}{MakeSelectableForThisUnit($"{GetComponent(Unit.target, data)}.{type.VariableHighlight()}")}");
+                        outputCode = new ValueCode($"{GenerateValue(Unit.target, data)}{MakeClickableForThisUnit($"{GetComponent(Unit.target, data)}.{type.VariableHighlight()}")}");
                     }
                     else
                     {
-                        outputCode = new ValueCode(GenerateValue(Unit.target, data) + MakeSelectableForThisUnit($".{type.VariableHighlight()}"));
+                        outputCode = new ValueCode(GenerateValue(Unit.target, data) + MakeClickableForThisUnit($".{type.VariableHighlight()}"));
                     }
 
                     return outputCode;
                 }
                 else
                 {
-                    return $"{GenerateValue(Unit.target, data)}{MakeSelectableForThisUnit($".{Unit.member.name.VariableHighlight()}")}";
+                    return $"{GenerateValue(Unit.target, data)}{MakeClickableForThisUnit($".{Unit.member.name.VariableHighlight()}")}";
                 }
             }
             else
             {
-                return MakeSelectableForThisUnit($"{Unit.member.targetType.As().CSharpName(false, true)}.{Unit.member.name.VariableHighlight()}");
+                return MakeClickableForThisUnit($"{Unit.member.targetType.As().CSharpName(false, true)}.{Unit.member.name.VariableHighlight()}");
             }
         }
 
@@ -86,17 +86,17 @@ namespace Unity.VisualScripting.Community
 
                         if (Unit.target.type == typeof(GameObject) || input.type.IsSubclassOf(typeof(Component)))
                         {
-                            return MakeSelectableForThisUnit("gameObject".VariableHighlight() + new ValueCode($"{GetComponent(Unit.target, data)}"));
+                            return MakeClickableForThisUnit("gameObject".VariableHighlight() + new ValueCode($"{GetComponent(Unit.target, data)}"));
                         }
                         else
                         {
-                            return MakeSelectableForThisUnit(defaultValue.As().Code(false, true, true));
+                            return MakeClickableForThisUnit(defaultValue.As().Code(false, true, true));
                         }
 
                     }
                     else
                     {
-                        return MakeSelectableForThisUnit("/* Target Requires Input */".WarningHighlight());
+                        return MakeClickableForThisUnit("/* Target Requires Input */".WarningHighlight());
                     }
                 }
             }

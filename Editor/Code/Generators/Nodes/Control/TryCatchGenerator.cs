@@ -19,12 +19,12 @@ public class TryCatchGenerator : LocalVariableGenerator
         var output = "";
         if (Unit.@try.hasValidConnection)
         {
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("try".ControlHighlight()) + "\n";
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
+            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("try".ControlHighlight()) + "\n";
+            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
             data.NewScope();
             output += GetNextUnit(Unit.@try, data, indent + 1);
             data.ExitScope();
-            output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
+            output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
 
             if (!Unit.@catch.hasValidConnection && !Unit.@finally.hasValidConnection)
             {
@@ -35,21 +35,21 @@ public class TryCatchGenerator : LocalVariableGenerator
             {
                 data.NewScope();
                 variableName = data.AddLocalNameInScope("ex", Unit.exceptionType);
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("catch".ControlHighlight() + " (" + Unit.exceptionType.As().CSharpName(false, true) + $" {variableName}".VariableHighlight() + ")") + "\n";
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("catch".ControlHighlight() + " (" + Unit.exceptionType.As().CSharpName(false, true) + $" {variableName}".VariableHighlight() + ")") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
                 output += GetNextUnit(Unit.@catch, data, indent + 1);
                 data.ExitScope();
-                output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
+                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
             }
 
             if (Unit.@finally.hasValidConnection)
             {
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("finally".ControlHighlight()) + "\n";
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("finally".ControlHighlight()) + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
                 data.NewScope();
                 output += GetNextUnit(Unit.@finally, data, indent + 1);
                 data.ExitScope();
-                output += "\n" + CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}") + "\n";
+                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
             }
         }
         return output;
@@ -58,8 +58,8 @@ public class TryCatchGenerator : LocalVariableGenerator
     public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
         if (data.ContainsNameInAnyScope(data.GetVariableName(variableName)))
-            return MakeSelectableForThisUnit(variableName.VariableHighlight());
+            return MakeClickableForThisUnit(variableName.VariableHighlight());
         else
-            return MakeSelectableForThisUnit($"/* {variableName} is only accessible from a catch scope */".WarningHighlight());
+            return MakeClickableForThisUnit($"/* {variableName} is only accessible from a catch scope */".WarningHighlight());
     }
 }

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community
 {
     public static class GraphTraversal
     {
@@ -19,85 +19,19 @@ namespace Unity.VisualScripting.Community
             nodePath.Reverse();
             return nodePath;
         }
-    
+
         public static string GetElementPath(GraphReference reference, string pathPrefix = " -> ")
         {
-<<<<<<< Updated upstream
-            var nodePath = reference;
-            var pathNames = "";
-            while (nodePath != null)
-=======
             string BuildPrefix(GraphReference nodePath, GraphReference rootRef)
->>>>>>> Stashed changes
             {
-                var prefix = "::";
-                if (nodePath.graph != null)
+                if (nodePath.graph == null)
+                    return "::";
+
+                // Named graph
+                if (!string.IsNullOrEmpty(nodePath.graph.title))
                 {
-                    if (string.IsNullOrEmpty(nodePath.graph.title))
+                    if (nodePath.isRoot)
                     {
-<<<<<<< Updated upstream
-                        if (!nodePath.isRoot)
-                        {
-                            prefix = nodePath.graph.GetType().ToString().Split(".").Last();
-                        }
-                        else
-                        {
-                            if (reference.root is MethodDeclaration methodDeclaration)
-                                prefix = methodDeclaration.methodName;
-                            else if (reference.root is ConstructorDeclaration constructorDeclaration)
-                                prefix = constructorDeclaration.name;
-                            else if (reference.root is PropertyGetterMacro propertyGetterMacro)
-                                prefix = propertyGetterMacro.name;
-                            else if (reference.root is PropertySetterMacro propertySetterMacro)
-                                prefix = propertySetterMacro.name;
-                            else if (reference.IsWithin<SubgraphUnit>())
-                            {
-                                var parent = reference.GetParent<SubgraphUnit>();
-                                prefix = parent.nest.source == GraphSource.Macro ? parent.nest.macro.name : nodePath.graph.GetType().ToString().Split(".").Last();
-                            }
-                            else if (reference.isRoot && reference.root is Object asset && reference.root is not IEventMachine)
-                            {
-                                prefix = asset.name;
-                            }
-                            else if (reference.isRoot && reference.root is IEventMachine eventMachine)
-                            {
-                                prefix = eventMachine.GetType().ToString();
-                            }
-                            else
-                                prefix = nodePath.graph.GetType().ToString().Split(".").Last();
-                        }
-                    }
-                    else
-                    {
-                        prefix = nodePath.graph.title;
-                    }
-    
-                    prefix += pathPrefix;
-                }
-    
-                pathNames = prefix + pathNames;
-                nodePath = nodePath.ParentReference(false);
-            }
-    
-            return pathNames;
-        }
-    
-    
-        private static readonly Dictionary<GraphReference, (int UnitCount, Dictionary<IGraphElement, List<(GraphReference, IGraphElement)>> UnitCache)> TraversalCache = new();
-    
-        public static IEnumerable<(GraphReference, Unit)> TraverseFlowGraph(GraphReference graphReference)
-        {
-            var flowGraph = graphReference.graph as FlowGraph;
-            if (flowGraph == null) yield break;
-    
-            if (!TraversalCache.TryGetValue(graphReference, out var graphCache))
-            {
-                graphCache = (flowGraph.units.Count, new Dictionary<IGraphElement, List<(GraphReference, IGraphElement)>>());
-                TraversalCache[graphReference] = graphCache;
-            }
-    
-            if (graphCache.UnitCount != flowGraph.units.Count)
-=======
                         if (rootRef.rootObject is IEventMachine eventMachine)
                         {
                             if (eventMachine.nest.source == GraphSource.Macro && eventMachine.nest.macro is Object @object)
@@ -180,85 +114,17 @@ namespace Unity.VisualScripting.Community
                 return GetNesterUnitName(parent);
             }
             else if (reference.IsWithin<INesterState>())
->>>>>>> Stashed changes
             {
                 var parent = reference.GetParent<INesterState>();
                 return GetNesterStateName(parent);
             }
-<<<<<<< Updated upstream
-    
-            foreach (var element in flowGraph.units)
-            {
-                var unit = element as Unit;
-                if (unit == null) continue;
-    
-                if (graphCache.UnitCache.TryGetValue(unit, out var cachedResult))
-                {
-                    foreach (var cachedItem in cachedResult)
-                    {
-                        yield return ((GraphReference, Unit))cachedItem;
-                    }
-                    continue;
-                }
-    
-                var unitResult = new List<(GraphReference, IGraphElement)>();
-                switch (unit)
-                {
-                    case SubgraphUnit subgraphUnit:
-                        {
-                            var subGraph = subgraphUnit.nest.embed ?? subgraphUnit.nest.graph;
-                            if (subGraph == null) continue;
-                            var item = (graphReference, subgraphUnit);
-                            unitResult.Add(item);
-                            yield return item;
-    
-                            var childReference = graphReference.ChildReference(subgraphUnit, false);
-                            foreach (var childItem in TraverseFlowGraph(childReference))
-                            {
-                                unitResult.Add(childItem);
-                                yield return childItem;
-                            }
-                            break;
-                        }
-                    case StateUnit stateUnit:
-                        {
-                            var stateGraph = stateUnit.nest.embed ?? stateUnit.nest.graph;
-                            if (stateGraph == null) continue;
-                            var childReference = graphReference.ChildReference(stateUnit, false);
-                            foreach (var childItem in TraverseStateGraph(childReference))
-                            {
-                                unitResult.Add(childItem);
-                                yield return childItem;
-                            }
-                            break;
-                        }
-                    default:
-                        {
-                            var defaultItem = (graphReference, unit);
-                            unitResult.Add(defaultItem);
-                            yield return defaultItem;
-                            break;
-                        }
-                }
-    
-                graphCache.UnitCache[unit] = unitResult;
-=======
             else if (reference.IsWithin<INesterStateTransition>())
             {
                 var parent = reference.GetParent<INesterStateTransition>();
                 return GetNesterStateTransitionName(parent);
->>>>>>> Stashed changes
             }
             return "Embed " + reference.parent.GetType().Name;
         }
-<<<<<<< Updated upstream
-    
-        public static IEnumerable<(GraphReference, Unit)> TraverseStateGraph(GraphReference graphReference)
-        {
-            var stateGraph = graphReference.graph as StateGraph;
-            if (stateGraph == null) yield break;
-    
-=======
 
         public static string GetNesterUnitName(INesterUnit nester)
         {
@@ -428,32 +294,20 @@ namespace Unity.VisualScripting.Community
         {
             if (graphReference.graph is not StateGraph stateGraph) yield break;
 
->>>>>>> Stashed changes
             if (!TraversalCache.TryGetValue(graphReference, out var graphCache))
             {
-                graphCache = (stateGraph.states.Count + stateGraph.transitions.Count, new Dictionary<IGraphElement, List<(GraphReference, IGraphElement)>>());
+                graphCache = (stateGraph.states.Count + stateGraph.transitions.Count, new Dictionary<IGraphElement, HashSet<(GraphReference, IGraphElement)>>());
                 TraversalCache[graphReference] = graphCache;
             }
-<<<<<<< Updated upstream
-    
-            var totalUnits = stateGraph.states.Count + stateGraph.transitions.Count;
-            if (graphCache.UnitCount != totalUnits)
-=======
 
             var totalElements = stateGraph.elements.Count;
             if (graphCache.ElementCount != totalElements)
->>>>>>> Stashed changes
             {
                 graphCache.ElementCache.Clear();
                 graphCache.ElementCount = totalElements;
             }
-<<<<<<< Updated upstream
-    
-            foreach (var state in stateGraph.states)
-=======
 
             foreach (var element in stateGraph.states)
->>>>>>> Stashed changes
             {
                 if (element == null || element is not T) continue;
 
@@ -466,17 +320,10 @@ namespace Unity.VisualScripting.Community
                     }
                     continue;
                 }
-<<<<<<< Updated upstream
-    
-                var unitResult = new List<(GraphReference, IGraphElement)>();
-    
-                switch (state)
-=======
 
                 var unitResult = new HashSet<(GraphReference, IGraphElement)>();
 
                 switch (element)
->>>>>>> Stashed changes
                 {
                     case FlowState flowState:
                         {
@@ -528,25 +375,15 @@ namespace Unity.VisualScripting.Community
                             break;
                         }
                 }
-<<<<<<< Updated upstream
-    
-                graphCache.UnitCache[state] = unitResult;
-=======
 
                 graphCache.ElementCache[element] = unitResult;
->>>>>>> Stashed changes
             }
-    
+
             foreach (var transition in stateGraph.transitions)
             {
                 if (transition is not FlowStateTransition flowStateTransition) continue;
-<<<<<<< Updated upstream
-    
-                if (graphCache.UnitCache.TryGetValue(transition, out var cachedResult))
-=======
 
                 if (graphCache.ElementCache.TryGetValue(transition, out var cachedResult))
->>>>>>> Stashed changes
                 {
                     foreach (var cachedItem in cachedResult)
                     {
@@ -557,15 +394,9 @@ namespace Unity.VisualScripting.Community
                     }
                     continue;
                 }
-<<<<<<< Updated upstream
-    
-                var unitResult = new List<(GraphReference, IGraphElement)>();
-                var graph = flowStateTransition.nest.embed ?? flowStateTransition.nest.graph;
-=======
 
                 var unitResult = new HashSet<(GraphReference, IGraphElement)>();
                 var graph = flowStateTransition.nest.graph;
->>>>>>> Stashed changes
                 if (graph == null) continue;
 
                 if (flowStateTransition is T _stateTransition)
@@ -579,87 +410,9 @@ namespace Unity.VisualScripting.Community
                     unitResult.Add(childItem);
                     yield return childItem;
                 }
-<<<<<<< Updated upstream
-    
-                graphCache.UnitCache[transition] = unitResult;
-            }
-        }
-    
-        private static readonly Dictionary<(GraphElementCollection<IState>, GraphConnectionCollection<IStateTransition, IState, IState>, SuperState), (int UnitCount, List<(List<SuperState>, FlowStateTransition, FlowGraph)>)> SubStateCache = new();
-    
-        public static IEnumerable<(List<SuperState>, FlowStateTransition, FlowGraph)> GetSubStates(
-            GraphElementCollection<IState> states,
-            GraphConnectionCollection<IStateTransition, IState, IState> transitions,
-            SuperState parent,
-            List<SuperState> nestParent)
-        {
-            var cacheKey = (states, transitions, parent);
-    
-            if (SubStateCache.TryGetValue(cacheKey, out var cache))
-            {
-                var totalUnits = states.Count + transitions.Count;
-                if (cache.UnitCount != totalUnits)
-                {
-                    SubStateCache[cacheKey] = (totalUnits, new List<(List<SuperState>, FlowStateTransition, FlowGraph)>());
-                }
-                else
-                {
-                    foreach (var item in cache.Item2)
-                    {
-                        yield return item;
-                    }
-                    yield break;
-                }
-            }
-            else
-            {
-                SubStateCache[cacheKey] = (states.Count + transitions.Count, new List<(List<SuperState>, FlowStateTransition, FlowGraph)>());
-            }
-    
-            var result = SubStateCache[cacheKey].Item2;
-            nestParent = new List<SuperState>(nestParent) { parent };
-    
-            foreach (var state in states)
-            {
-                if (state is not FlowState flowState) continue;
-    
-                var graph = flowState.nest.embed ?? flowState.nest.graph;
-                if (graph == null) continue;
-    
-                (List<SuperState>, FlowStateTransition, FlowGraph) item = (nestParent, null, graph);
-                result.Add(item);
-                yield return item;
-            }
-    
-            foreach (var transition in transitions)
-            {
-                if (transition is not FlowStateTransition flowStateTransition) continue;
-    
-                var graph = flowStateTransition.nest.embed ?? flowStateTransition.nest.graph;
-                if (graph == null) continue;
-    
-                var item = (nestParent, flowStateTransition, graph);
-                result.Add(item);
-                yield return item;
-            }
-    
-            foreach (var subState in states)
-            {
-                if (subState is not SuperState subSuperState) continue;
-    
-                var subStateGraph = subSuperState.nest.graph;
-                var subTransitions = subStateGraph.transitions;
-    
-                foreach (var item in GetSubStates(subStateGraph.states, subTransitions, subSuperState, nestParent))
-                {
-                    result.Add(item);
-                    yield return item;
-                }
-=======
 
                 graphCache.ElementCache[transition] = unitResult;
->>>>>>> Stashed changes
             }
         }
-    } 
+    }
 }

@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return CodeBuilder.Indent(indent) + GenerateValue(Unit.listInput, data) + MakeSelectableForThisUnit(".Clear();") + "\n" + GetNextUnit(Unit.exit, data, indent);
+            return CodeBuilder.Indent(indent) + GenerateValue(Unit.listInput, data) + MakeClickableForThisUnit(".Clear();") + "\n" + GetNextUnit(Unit.exit, data, indent);
         }
     }
 }

@@ -23,8 +23,8 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateAwakeCode(ControlGenerationData data, int indent)
         {
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeSelectableForThisUnit(CodeUtility.ToolTip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
-            return CodeBuilder.Indent(indent) + (GetTargetValueInput() != null ? GenerateValue(GetTargetValueInput(), data) + MakeSelectableForThisUnit(GetListenerSetupCode()) : MakeSelectableForThisUnit(GetListenerSetupCode()));
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeClickableForThisUnit(CodeUtility.ToolTip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
+            return CodeBuilder.Indent(indent) + (GetTargetValueInput() != null ? GenerateValue(GetTargetValueInput(), data) + MakeClickableForThisUnit(GetListenerSetupCode()) : MakeClickableForThisUnit(GetListenerSetupCode()));
         }
 
         protected abstract ValueInput GetTargetValueInput();
@@ -37,12 +37,12 @@ namespace Unity.VisualScripting.Community
             }
             else if (input.hasDefaultValue)
             {
-                if (input.type.Is().UnityObject() && !input.hasValidConnection && input.unit.defaultValues[input.key] == null && input.nullMeansSelf) return MakeSelectableForThisUnit("gameObject".VariableHighlight());
+                if (input.type.Is().UnityObject() && !input.hasValidConnection && input.unit.defaultValues[input.key] == null && input.nullMeansSelf) return MakeClickableForThisUnit("gameObject".VariableHighlight());
                 return input.unit.defaultValues[input.key].As().Code(true, unit, true, true, "", true, true);
             }
             else
             {
-                return MakeSelectableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
+                return MakeClickableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
             }
         }
 

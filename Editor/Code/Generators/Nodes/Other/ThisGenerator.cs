@@ -20,6 +20,6 @@ public sealed class ThisGenerator : NodeGenerator<This>
 
     public override string GenerateValue(ValueOutput output, ControlGenerationData data)
     {
-        return MakeSelectableForThisUnit("gameObject".VariableHighlight());
+        return MakeClickableForThisUnit("gameObject".VariableHighlight());
     }
 }

@@ -10,10 +10,11 @@ using UnityEngine.SceneManagement;
 
 namespace Unity.VisualScripting.Community
 {
-
     [NodeGenerator(typeof(SetVariable))]
     public class SetVariableGenerator : LocalVariableGenerator
     {
+        private static readonly Dictionary<string, Type> typeCache = new();
+
         private SetVariable Unit => unit as SetVariable;
         public SetVariableGenerator(Unit unit) : base(unit)
         {
@@ -46,61 +47,41 @@ namespace Unity.VisualScripting.Community
                 switch (Unit.kind)
                 {
                     case VariableKind.Flow:
-                        return MakeSelectableForThisUnit(CodeUtility.ToolTip("Flow Variables do not support connected names", "Could not generate Flow Variable", ""));
+                        return MakeClickableForThisUnit(CodeUtility.ToolTip("Flow Variables do not support connected names", "Could not generate Flow Variable", ""));
                     case VariableKind.Graph:
-                        return MakeSelectableForThisUnit(CodeUtility.ToolTip("Graph Variables do not support connected names", "Could not generate Graph Variable", ""));
+                        return MakeClickableForThisUnit(CodeUtility.ToolTip("Graph Variables do not support connected names", "Could not generate Graph Variable", ""));
                     case VariableKind.Object:
-                        kind = MakeSelectableForThisUnit(variables + ".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeSelectableForThisUnit(")")}";
+                        kind = MakeClickableForThisUnit(variables + ".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeClickableForThisUnit(")")}";
                         if (VisualScripting.Variables.Object(GetTarget(data)).IsDefined(name))
                         {
-                            var identification = VisualScripting.Variables.Object(GetTarget(data)).GetDeclaration(name).typeHandle.Identification;
-                            if (string.IsNullOrEmpty(identification))
-                                variableType = typeof(object);
-                            else
-                                variableType = Type.GetType(identification);
+                            variableType = ResolveVariableType(VisualScripting.Variables.Object(GetTarget(data)), name);
                         }
                         else
                             variableType = typeof(object);
                         break;
                     case VariableKind.Scene:
-<<<<<<< Updated upstream
-                        kind = MakeSelectableForThisUnit(variables + "." + "ActiveScene".VariableHighlight());
-=======
                         kind = MakeClickableForThisUnit(GetSceneKind(data, variables));
->>>>>>> Stashed changes
                         if (VisualScripting.Variables.ActiveScene.IsDefined(name))
                         {
-                            var identification = VisualScripting.Variables.ActiveScene.GetDeclaration(name).typeHandle.Identification;
-                            if (string.IsNullOrEmpty(identification))
-                                variableType = typeof(object);
-                            else
-                                variableType = Type.GetType(identification);
+                            variableType = ResolveVariableType(VisualScripting.Variables.ActiveScene, name);
                         }
                         else
                             variableType = typeof(object);
                         break;
                     case VariableKind.Application:
-                        kind = MakeSelectableForThisUnit(variables + "." + "Application".VariableHighlight());
+                        kind = MakeClickableForThisUnit(variables + "." + "Application".VariableHighlight());
                         if (VisualScripting.Variables.Application.IsDefined(name))
                         {
-                            var identification = VisualScripting.Variables.Application.GetDeclaration(name).typeHandle.Identification;
-                            if (string.IsNullOrEmpty(identification))
-                                variableType = typeof(object);
-                            else
-                                variableType = Type.GetType(identification);
+                            variableType = ResolveVariableType(VisualScripting.Variables.Application, name);
                         }
                         else
                             variableType = typeof(object);
                         break;
                     case VariableKind.Saved:
-                        kind = MakeSelectableForThisUnit(variables + "." + "Saved".VariableHighlight());
+                        kind = MakeClickableForThisUnit(variables + "." + "Saved".VariableHighlight());
                         if (VisualScripting.Variables.Saved.IsDefined(name))
                         {
-                            var identification = VisualScripting.Variables.Saved.GetDeclaration(name).typeHandle.Identification;
-                            if (string.IsNullOrEmpty(identification))
-                                variableType = typeof(object);
-                            else
-                                variableType = Type.GetType(identification);
+                            variableType = ResolveVariableType(VisualScripting.Variables.Saved, name);
                         }
                         else
                             variableType = typeof(object);
@@ -108,7 +89,7 @@ namespace Unity.VisualScripting.Community
                 }
                 var nameCode = GenerateValue(Unit.name, data);
                 data.SetExpectedType(variableType);
-                var code = CodeBuilder.Indent(indent) + kind + MakeSelectableForThisUnit(".Set(") + nameCode + MakeSelectableForThisUnit(", ") + $"{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n";
+                var code = CodeBuilder.Indent(indent) + kind + MakeClickableForThisUnit(".Set(") + nameCode + MakeClickableForThisUnit(", ") + $"{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeClickableForThisUnit("null".ConstructHighlight()))}" + MakeClickableForThisUnit(");") + "\n";
                 output += code;
                 data.RemoveExpectedType();
                 output += GetNextUnit(Unit.assigned, data, indent);
@@ -124,70 +105,47 @@ namespace Unity.VisualScripting.Community
                         var target = GetTarget(data);
                         if (target != null && VisualScripting.Variables.Object(target).IsDefined(name))
                         {
-                            var identification = VisualScripting.Variables.Object(GetTarget(data)).GetDeclaration(name).typeHandle.Identification;
-                            if (string.IsNullOrEmpty(identification))
-                                variableType = typeof(object);
-                            else
-                                variableType = Type.GetType(identification);
+                            variableType = ResolveVariableType(VisualScripting.Variables.Object(target), name);
                         }
                         else
                             variableType = typeof(object);
-                        return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}" + "." + $"Object(") + GenerateValue(Unit.@object, data) + MakeSelectableForThisUnit(")" + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
+                        return CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{variables}" + "." + $"Object(") + GenerateValue(Unit.@object, data) + MakeClickableForThisUnit(")" + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeClickableForThisUnit("null".ConstructHighlight()))}" + MakeClickableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
                     case VariableKind.Scene:
                         if (VisualScripting.Variables.ActiveScene.IsDefined(name))
                         {
-                            var identification = VisualScripting.Variables.ActiveScene.GetDeclaration(name).typeHandle.Identification;
-                            if (string.IsNullOrEmpty(identification))
-                                variableType = typeof(object);
-                            else
-                                variableType = Type.GetType(identification);
+                            variableType = ResolveVariableType(VisualScripting.Variables.ActiveScene, name);
                         }
                         else
                             variableType = typeof(object);
-<<<<<<< Updated upstream
-                        return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}" + "." + "ActiveScene".VariableHighlight() + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
-=======
                         return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(GetSceneKind(data, variables) + ".Set(") + $"{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeClickableForThisUnit("null".ConstructHighlight()))}" + MakeClickableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
->>>>>>> Stashed changes
                     case VariableKind.Application:
                         if (VisualScripting.Variables.Application.IsDefined(name))
                         {
-                            var identification = VisualScripting.Variables.Application.GetDeclaration(name).typeHandle.Identification;
-                            if (string.IsNullOrEmpty(identification))
-                                variableType = typeof(object);
-                            else
-                                variableType = Type.GetType(identification);
+                            variableType = ResolveVariableType(VisualScripting.Variables.Application, name);
                         }
                         else
                             variableType = typeof(object);
-                        return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}{"." + "Application".VariableHighlight() + ".Set("}") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
+                        return CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{variables}{"." + "Application".VariableHighlight() + ".Set("}") + $"{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeClickableForThisUnit("null".ConstructHighlight()))}" + MakeClickableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
                     case VariableKind.Saved:
                         if (VisualScripting.Variables.Saved.IsDefined(name))
                         {
-                            var identification = VisualScripting.Variables.Saved.GetDeclaration(name).typeHandle.Identification;
-                            if (string.IsNullOrEmpty(identification))
-                                variableType = typeof(object);
-                            else
-                                variableType = Type.GetType(identification);
+                            variableType = ResolveVariableType(VisualScripting.Variables.Saved, name);
                         }
                         else
                             variableType = typeof(object);
-                        return CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{variables}{"." + "Saved".VariableHighlight() + ".Set("}") + $"{GenerateValue(Unit.name, data)}{MakeSelectableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight()))}" + MakeSelectableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
+                        return CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{variables}{"." + "Saved".VariableHighlight() + ".Set("}") + $"{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(", ")}{(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeClickableForThisUnit("null".ConstructHighlight()))}" + MakeClickableForThisUnit(");") + "\n" + GetNextUnit(Unit.assigned, data, indent);
                 }
-                var _name = data.GetVariableName(name);
+                var _name = data.GetVariableName(name.LegalMemberName());
+                CodeBuilder.Indent(indent); // To Ensure indentation is correct
                 if (data.ContainsNameInAnyScope(_name))
                 {
-                    variableName = _name;
+                    variableName = _name.LegalMemberName();
                     variableType = data.GetVariableType(_name);
                     data.SetExpectedType(variableType);
-                    var code = MakeSelectableForThisUnit($"{_name.VariableHighlight()} = ") + GenerateValue(Unit.input, data) + MakeSelectableForThisUnit(";");
+                    var inputCode = GenerateValue(Unit.input, data);
                     data.RemoveExpectedType();
-<<<<<<< Updated upstream
-                    data.CreateSymbol(Unit, variableType, code);
-=======
                     var code = MakeClickableForThisUnit($"{_name.LegalMemberName().VariableHighlight()} = ") + inputCode + MakeClickableForThisUnit(";");
                     data.CreateSymbol(Unit, variableType);
->>>>>>> Stashed changes
                     output += CodeBuilder.Indent(indent) + code + "\n";
                     output += GetNextUnit(Unit.assigned, data, indent);
                     return output;
@@ -199,10 +157,11 @@ namespace Unity.VisualScripting.Community
                     variableType = type;
                     var newName = data.AddLocalNameInScope(_name, variableType);
                     data.SetExpectedType(variableType);
-                    data.CreateSymbol(Unit, variableType, $"{inputType} {newName.VariableHighlight()} = {(Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : "null".ConstructHighlight())};");
-                    variableName = newName;
-                    output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{inputType} {newName.VariableHighlight()} = ") + (Unit.input.hasValidConnection ? GenerateValue(Unit.input, data) : MakeSelectableForThisUnit("null".ConstructHighlight())) + MakeSelectableForThisUnit(";") + "\n";
+                    var inputCode = GenerateValue(Unit.input, data);
                     data.RemoveExpectedType();
+                    data.CreateSymbol(Unit, variableType);
+                    variableName = newName.LegalMemberName();
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{inputType} {variableName.VariableHighlight()} = ") + (Unit.input.hasValidConnection ? inputCode : MakeClickableForThisUnit("null".ConstructHighlight())) + MakeClickableForThisUnit(";") + "\n";
                     output += GetNextUnit(Unit.assigned, data, indent);
                     return output;
                 }
@@ -251,14 +210,16 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            if (!Unit.assign.hasValidConnection) return $"/* ControlInput {Unit.assign.key} requires connection on {Unit.GetType()} with variable name ({GenerateValue(Unit.name, data)}) */".WarningHighlight();
+            if (!Unit.assign.hasValidConnection) return MakeClickableForThisUnit($"/* ControlInput {Unit.assign.key} requires connection on {Unit.GetType()} with variable name ({GenerateValue(Unit.name, data)}) */".WarningHighlight());
             if (output == Unit.output && (Unit.kind == VariableKind.Object || Unit.kind == VariableKind.Scene || Unit.kind == VariableKind.Application || Unit.kind == VariableKind.Saved))
             {
                 return GenerateValue(Unit.input, data);
             }
             else if (output == Unit.output && !Unit.name.hasValidConnection)
             {
-                return MakeSelectableForThisUnit(variableName.VariableHighlight());
+                if (data.ContainsNameInAnyScope(variableName))
+                    return MakeClickableForThisUnit(variableName.VariableHighlight());
+                else return MakeClickableForThisUnit($"/* Could not find variable with name \"{variableName}\" */".WarningHighlight());
             }
             else return GenerateValue(Unit.input, data);
         }
@@ -267,7 +228,7 @@ namespace Unity.VisualScripting.Community
         {
             if (input == Unit.@object && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
             {
-                return MakeSelectableForThisUnit("gameObject".VariableHighlight());
+                return MakeClickableForThisUnit("gameObject".VariableHighlight());
             }
             if (input == Unit.input)
             {
@@ -285,5 +246,26 @@ namespace Unity.VisualScripting.Community
             }
             return base.GenerateValue(input, data);
         }
+
+        private static Type GetCachedType(string typeId)
+        {
+            if (!typeCache.TryGetValue(typeId, out var type))
+            {
+                type = Type.GetType(typeId) ?? typeof(object);
+                typeCache[typeId] = type;
+            }
+            return type;
+        }
+
+        private Type ResolveVariableType(VariableDeclarations declarations, string name)
+        {
+            if (declarations.IsDefined(name))
+            {
+                var id = declarations.GetDeclaration(name).typeHandle.Identification;
+                return string.IsNullOrEmpty(id) ? typeof(object) : GetCachedType(id);
+            }
+            return typeof(object);
+        }
+
     }
 }

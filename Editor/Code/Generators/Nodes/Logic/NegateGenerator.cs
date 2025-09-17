@@ -27,7 +27,7 @@ namespace Unity.VisualScripting.Community
 
             if (output == Unit.output)
             {
-                return MakeSelectableForThisUnit("!(") + GenerateValue(Unit.input, data) + MakeSelectableForThisUnit(")");
+                return MakeClickableForThisUnit("!(") + GenerateValue(Unit.input, data) + MakeClickableForThisUnit(")");
             }
 
             return base.GenerateValue(output, data);

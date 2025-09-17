@@ -34,7 +34,7 @@ namespace Unity.VisualScripting.Community
                     @false = GenerateValue(Unit.ifFalse, data);
                 }
 
-                str = MakeSelectableForThisUnit("(") + condition + MakeSelectableForThisUnit(" ? ") + @true + MakeSelectableForThisUnit(" : ") + @false + MakeSelectableForThisUnit(")");
+                str = MakeClickableForThisUnit("(") + condition + MakeClickableForThisUnit(" ? ") + @true + MakeClickableForThisUnit(" : ") + @false + MakeClickableForThisUnit(")");
                 return str;
             }
 

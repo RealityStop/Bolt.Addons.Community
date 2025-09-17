@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("CustomNodeGeneratorWindow")]
     [RenamedFrom("Unity.VisualScripting.Community.CustomNodeGeneratorWindow")]
-    public class CustomNodeCreationWizard : EditorWindow
+    public class NodeCreationWizard : EditorWindow
     {
         private List<InputData> controlInputs = new List<InputData>();
         private List<InputData> controlOutputs = new List<InputData>();
@@ -33,15 +33,13 @@ namespace Unity.VisualScripting.Community
 
         private void OnEnable()
         {
-            alltypes = Codebase.settingsAssembliesTypes.Where(type => !type.IsGenericTypeDefinition).ToArray();
-
             unitTypes = Codebase.settingsAssembliesTypes.Where(type => typeof(Unit).IsAssignableFrom(type)).ToArray();
         }
 
-        [MenuItem("Window/Community Addons/Custom Node Generator")]
+        [MenuItem("Window/Community Addons/Node Creation Wizard")]
         public static void ShowWindow()
         {
-            var window = GetWindow<CustomNodeCreationWizard>("Custom Node Generator");
+            var window = GetWindow<NodeCreationWizard>("Node Creation Wizard");
             window.minSize = new Vector2(1000, 400);
         }
 
@@ -51,7 +49,7 @@ namespace Unity.VisualScripting.Community
         {
             HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, 1, () =>
             {
-                GUILayout.Label("Custom Node Generator", EditorStyles.boldLabel);
+                GUILayout.Label("Node Creation Wizard", EditorStyles.boldLabel);
 
                 GUILayout.Space(10);
 
@@ -78,18 +76,18 @@ namespace Unity.VisualScripting.Community
                 {
                     HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, 1, () =>
                     {
-                        DrawInputList(controlInputs, "Control Inputs", true, false);
+                        DrawControlList(controlInputs, "Control Inputs", true);
                     });
                 });
-                GUILayout.Space(10);
+                GUILayout.Space(2);
                 controlOutputsOpen = HUMEditor.Foldout(controlOutputsOpen, new GUIContent("Control Outputs"), HUMColor.Grey(0.15f), Color.black, 1, () =>
                 {
                     HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, 1, () =>
                     {
-                        DrawInputList(controlOutputs, "Control Outputs", false, false);
+                        DrawControlList(controlOutputs, "Control Outputs", false);
                     });
                 });
-                GUILayout.Space(10);
+                GUILayout.Space(2);
                 valueInputsOpen = HUMEditor.Foldout(valueInputsOpen, new GUIContent("Value Inputs"), HUMColor.Grey(0.15f), Color.black, 1, () =>
                 {
                     HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, 1, () =>
@@ -97,7 +95,7 @@ namespace Unity.VisualScripting.Community
                         DrawValueInputList(valueInputs, "Value Inputs");
                     });
                 });
-                GUILayout.Space(10);
+                GUILayout.Space(2);
                 valueOutputsOpen = HUMEditor.Foldout(valueOutputsOpen, new GUIContent("Value Outputs"), HUMColor.Grey(0.15f), Color.black, 1, () =>
                 {
                     HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, 1, () =>
@@ -112,7 +110,7 @@ namespace Unity.VisualScripting.Community
 
                 GUIStyle generateButtonStyle = new GUIStyle(GUI.skin.button) { fontSize = 16 };
 
-                if (GUILayout.Button("Generate Custom Node", generateButtonStyle, GUILayout.Height(30)))
+                if (GUILayout.Button("Create", generateButtonStyle, GUILayout.Height(30)))
                 {
                     ShowSaveFileDialog();
                 }
@@ -149,40 +147,30 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private void DrawInputList(List<InputData> inputs, string title, bool isControlInput, bool showTypeOptions = true)
+        private void DrawControlList(List<InputData> inputs, string title, bool isControlInput)
         {
             List<int> indicesToRemove = new List<int>();
 
             foreach (InputData input in inputs)
             {
-                GUILayout.BeginHorizontal();
-
-                GUILayout.Label($"Input {inputs.IndexOf(input) + 1}", EditorStyles.boldLabel);
-
-                if (GUILayout.Button("Remove", GUILayout.Width(60)))
+                HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, new RectOffset(6, 6, 6, 6), new RectOffset(1, 1, 1, 1), () =>
                 {
-                    indicesToRemove.Add(inputs.IndexOf(input));
-                }
-
-                GUILayout.EndHorizontal();
-
-                GUILayout.Space(5);
-
-                EditorGUI.indentLevel++;
-
-                input.name = EditorGUILayout.TextField("Name", input.name);
-                if (isControlInput)
-                    input.methodName = EditorGUILayout.TextField("Method Name", input.methodName);
-                input.HideLabel = EditorGUILayout.Toggle("Hide Label", input.HideLabel);
-
-                if (showTypeOptions)
-                {
-                    DrawTypeDropdown(input, input.type);
-                }
-
-                EditorGUI.indentLevel--;
-
-                GUILayout.Space(10);
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label($"{(isControlInput ? "Input" : "Output")} {inputs.IndexOf(input) + 1}", EditorStyles.boldLabel);
+                    if (GUILayout.Button("Remove", GUILayout.Width(60)))
+                    {
+                        indicesToRemove.Add(inputs.IndexOf(input));
+                    }
+                    GUILayout.EndHorizontal();
+                    GUILayout.Space(5);
+                    EditorGUI.indentLevel++;
+                    input.name = EditorGUILayout.TextField("Name", input.name);
+                    if (isControlInput)
+                        input.methodName = EditorGUILayout.TextField("Method Name", input.methodName);
+                    input.HideLabel = EditorGUILayout.Toggle("Hide Label", input.HideLabel);
+                    EditorGUI.indentLevel--;
+                });
+                GUILayout.Space(2);
             }
 
             foreach (int index in indicesToRemove)
@@ -193,51 +181,39 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
+            if (GUILayout.Button("Add " + title[..^1]))
             {
                 inputs.Add(new InputData());
             }
-
-            GUILayout.Space(10);
         }
 
         private void DrawValueInputList(List<ValueInputData> valueInputs, string title)
         {
-            GUILayout.Label(title, EditorStyles.boldLabel);
-
             List<int> indicesToRemove = new List<int>();
 
             foreach (ValueInputData valueInput in valueInputs)
             {
-                GUILayout.BeginHorizontal();
-
-                GUILayout.Label($"Value Input {valueInputs.IndexOf(valueInput) + 1}", EditorStyles.boldLabel);
-
-                if (GUILayout.Button("Remove", GUILayout.Width(60)))
+                HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, new RectOffset(6, 6, 6, 6), new RectOffset(1, 1, 1, 1), () =>
                 {
-                    indicesToRemove.Add(valueInputs.IndexOf(valueInput));
-                }
+                    GUILayout.BeginHorizontal();
 
-                GUILayout.EndHorizontal();
+                    GUILayout.Label($"Value Input {valueInputs.IndexOf(valueInput) + 1}", EditorStyles.boldLabel);
 
-                GUILayout.Space(5);
+                    if (GUILayout.Button("Remove", GUILayout.Width(60)))
+                    {
+                        indicesToRemove.Add(valueInputs.IndexOf(valueInput));
+                    }
 
-                EditorGUI.indentLevel++;
+                    GUILayout.EndHorizontal();
 
-                valueInput.name = EditorGUILayout.TextField("Name", valueInput.name);
-                DrawTypeDropdown(valueInput, valueInput.type);
-                valueInput.HideLabel = EditorGUILayout.Toggle("Hide Label", valueInput.HideLabel);
+                    GUILayout.Space(5);
 
-                if (valueInput.type == typeof(GameObject) || typeof(Component).IsAssignableFrom(valueInput.type))
-                {
-                    valueInput.nullMeansSelf = EditorGUILayout.Toggle("Null Means Self", valueInput.nullMeansSelf);
-                }
+                    EditorGUI.indentLevel++;
 
-                EditorGUI.indentLevel--;
+                    valueInput.name = EditorGUILayout.TextField("Name", valueInput.name);
+                    DrawTypeDropdown(valueInput, valueInput.type);
+                    valueInput.HideLabel = EditorGUILayout.Toggle("Hide Label", valueInput.HideLabel);
 
-<<<<<<< Updated upstream
-                GUILayout.Space(10);
-=======
                     if (valueInput.type != null && ComponentHolderProtocol.IsComponentHolderType(valueInput.type))
                     {
                         valueInput.nullMeansSelf = EditorGUILayout.Toggle("Null Means Self", valueInput.nullMeansSelf);
@@ -247,7 +223,6 @@ namespace Unity.VisualScripting.Community
 
                 });
                 GUILayout.Space(2);
->>>>>>> Stashed changes
             }
 
             foreach (int index in indicesToRemove)
@@ -258,49 +233,47 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
+            if (GUILayout.Button("Add " + title[..^1]))
             {
                 valueInputs.Add(new ValueInputData());
             }
-
-            GUILayout.Space(10);
         }
 
         private void DrawValueOutputList(List<ValueOutputData> valueOutputs, string title)
         {
-            GUILayout.Label(title, EditorStyles.boldLabel);
-
             List<int> indicesToRemove = new List<int>();
 
             foreach (ValueOutputData valueOutput in valueOutputs)
             {
-                GUILayout.BeginHorizontal();
-
-                GUILayout.Label($"Value Output {valueOutputs.IndexOf(valueOutput) + 1}", EditorStyles.boldLabel);
-
-                if (GUILayout.Button("Remove", GUILayout.Width(60)))
+                HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, new RectOffset(6, 6, 6, 6), new RectOffset(1, 1, 1, 1), () =>
                 {
-                    indicesToRemove.Add(valueOutputs.IndexOf(valueOutput));
-                }
+                    GUILayout.BeginHorizontal();
 
-                GUILayout.EndHorizontal();
+                    GUILayout.Label($"Value Output {valueOutputs.IndexOf(valueOutput) + 1}", EditorStyles.boldLabel);
 
-                GUILayout.Space(5);
+                    if (GUILayout.Button("Remove", GUILayout.Width(60)))
+                    {
+                        indicesToRemove.Add(valueOutputs.IndexOf(valueOutput));
+                    }
 
-                EditorGUI.indentLevel++;
+                    GUILayout.EndHorizontal();
 
-                valueOutput.name = EditorGUILayout.TextField("Name", valueOutput.name);
-                DrawTypeDropdown(valueOutput, valueOutput.type);
-                valueOutput.HideLabel = EditorGUILayout.Toggle("Hide Label", valueOutput.HideLabel);
-                valueOutput.triggersMethod = EditorGUILayout.Toggle("Triggers Method", valueOutput.triggersMethod);
+                    GUILayout.Space(5);
 
-                if (valueOutput.triggersMethod)
-                {
-                    valueOutput.methodName = EditorGUILayout.TextField("Method Name", valueOutput.methodName);
-                }
-                EditorGUI.indentLevel--;
+                    EditorGUI.indentLevel++;
 
-                GUILayout.Space(10);
+                    valueOutput.name = EditorGUILayout.TextField("Name", valueOutput.name);
+                    DrawTypeDropdown(valueOutput, valueOutput.type);
+                    valueOutput.HideLabel = EditorGUILayout.Toggle("Hide Label", valueOutput.HideLabel);
+                    valueOutput.triggersMethod = EditorGUILayout.Toggle("Triggers Method", valueOutput.triggersMethod);
+
+                    if (valueOutput.triggersMethod)
+                    {
+                        valueOutput.methodName = EditorGUILayout.TextField("Method Name", valueOutput.methodName);
+                    }
+                    EditorGUI.indentLevel--;
+                });
+                GUILayout.Space(2);
             }
 
             foreach (int index in indicesToRemove)
@@ -311,99 +284,55 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
+            if (GUILayout.Button("Add " + title[..^1]))
             {
                 valueOutputs.Add(new ValueOutputData());
             }
-
-            GUILayout.Space(10);
         }
 
 
         private void DrawTypeDropdown(object Input, Type selectedType)
         {
-            Type[] types = alltypes;
-
             ValueOutputData outputData = null;
             ValueInputData inputData = null;
             InputData inputDataInput = null;
             GUIContent buttonContent = new GUIContent();
 
-            var lastRect = GUILayoutUtility.GetLastRect();
-            if (Input is ValueOutputData)
+            if (Input is ValueOutputData data)
             {
-                outputData = (ValueOutputData)Input;
+                outputData = data;
             }
-            else if (Input is ValueInputData)
+            else if (Input is ValueInputData data1)
             {
-                inputData = (ValueInputData)Input;
+                inputData = data1;
             }
-            else if (Input is InputData)
+            else if (Input is InputData data2)
             {
-                inputDataInput = (InputData)Input;
-            }
-
-            int selectedIndex = Array.IndexOf(types, selectedType);
-            if (selectedIndex < 0)
-                selectedIndex = 0;
-
-            if (Input is ValueInputData)
-            {
-                if (inputData.type != null)
-                {
-                    buttonContent = new GUIContent(inputData.type.CSharpName(false).RemoveHighlights().RemoveMarkdown(), inputData.type.Icon()?[IconSize.Small]);
-                }
-                else
-                {
-                    buttonContent = new GUIContent("Choose Type");
-                }
-            }
-            else if (Input is ValueOutputData)
-            {
-                if (outputData.type != null)
-                {
-                    buttonContent = new GUIContent(outputData.type.CSharpName(false).RemoveHighlights().RemoveMarkdown(), outputData.type.Icon()?[IconSize.Small]);
-                }
-                else
-                {
-                    buttonContent = new GUIContent("Choose Type");
-                }
+                inputDataInput = data2;
             }
 
-            if (GUILayout.Button(buttonContent, GUILayout.MaxHeight(19f)))
+            if (TypeBuilderWindow.Button(selectedType, "Select Type", TextAnchor.MiddleCenter))
             {
-                LudiqGUI.FuzzyDropdown(lastRect, new TypeOptionTree(types), selectedIndex, (index) =>
+                var lastRect = GUILayoutUtility.GetLastRect();
+
+                TypeBuilderWindow.ShowWindow(lastRect, (type) =>
                 {
                     if (inputData != null)
                     {
-                        inputData.type = (Type)index;
+                        inputData.type = type;
                     }
 
                     if (outputData != null)
                     {
-                        outputData.type = (Type)index;
+                        outputData.type = type;
                     }
 
                     if (inputDataInput != null)
                     {
-                        inputDataInput.type = (Type)index;
+                        inputDataInput.type = type;
                     }
-                });
+                }, selectedOption, true, new Type[0]);
             }
-        }
-
-        private string[] GetReadableTypeNames(Type[] types)
-        {
-            return types.Select(type => GetShortTypeName(type)).ToArray();
-        }
-
-        private string GetShortTypeName(Type type)
-        {
-            if (type == typeof(bool)) return "bool";
-            if (type == typeof(int)) return "int";
-            if (type == typeof(float)) return "float";
-            if (type == typeof(string)) return "string";
-            return type.Name;
         }
 
         private string GetSelectedUnitType()
@@ -427,8 +356,8 @@ using UnityEngine;
             }
 
             template += $@"
-[UnitTitle(""{fileName}"")]//Unit title
-[TypeIcon(typeof(object))]//Unit icon
+[UnitTitle(""{fileName}"")]
+[TypeIcon(typeof({selectedOption.As().CSharpName(false, true, false)}))]
 public class {fileName.Replace(" ", "")} : {unitType}
 {{
 ";
@@ -633,6 +562,10 @@ public class {fileName.Replace(" ", "")} : {unitType}
 
             public void OnBeforeSerialize()
             {
+                if (type == null)
+                {
+                    type = typeof(object);
+                }
                 previousType = type.AssemblyQualifiedName;
             }
         }
@@ -656,10 +589,14 @@ public class {fileName.Replace(" ", "")} : {unitType}
 
             public void OnBeforeSerialize()
             {
+                if (type == null)
+                {
+                    type = typeof(object);
+                }
                 previousType = type.AssemblyQualifiedName;
             }
         }
-        
+
         [Serializable]
         private class ValueOutputData : ISerializationCallbackReceiver
         {

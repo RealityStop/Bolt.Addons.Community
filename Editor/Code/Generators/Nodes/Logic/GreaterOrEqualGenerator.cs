@@ -40,7 +40,7 @@ namespace Unity.VisualScripting.Community
 
             if (output == Unit.comparison)
             {
-                return GenerateValue(Unit.a, data) + MakeSelectableForThisUnit(" >= ") + GenerateValue(Unit.b, data);
+                return GenerateValue(Unit.a, data) + MakeClickableForThisUnit(" >= ") + GenerateValue(Unit.b, data);
             }
 
             return base.GenerateValue(output, data);

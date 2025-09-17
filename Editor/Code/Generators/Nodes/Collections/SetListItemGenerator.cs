@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            return string.Concat(base.GenerateValue(this.Unit.list, data), MakeSelectableForThisUnit("[", true), base.GenerateValue(this.Unit.index, data), MakeSelectableForThisUnit("] = ", true)) + base.GenerateValue(this.Unit.item, data) + MakeSelectableForThisUnit(";", true) + "\n" + GetNextUnit(this.Unit.exit, data, indent);
+            return string.Concat(base.GenerateValue(this.Unit.list, data), MakeClickableForThisUnit("[", true), base.GenerateValue(this.Unit.index, data), MakeClickableForThisUnit("] = ", true)) + base.GenerateValue(this.Unit.item, data) + MakeClickableForThisUnit(";", true) + "\n" + GetNextUnit(this.Unit.exit, data, indent);
         }
     }
 }

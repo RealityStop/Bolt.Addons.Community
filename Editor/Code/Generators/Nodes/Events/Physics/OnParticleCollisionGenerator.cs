@@ -20,8 +20,8 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeSelectableForThisUnit(CodeUtility.ToolTip($"{Community.NameUtility.DisplayName(typeof(OnParticleCollision))} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {Community.NameUtility.DisplayName(typeof(OnParticleCollision))}", ""));
-            var body = Unit.collisionEvents.hasValidConnection ? CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{"var".ConstructHighlight()} {"collisionEvents".VariableHighlight()} = {new List<ParticleCollisionEvent>().As().Code(true)};") + "\n" : "";
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeClickableForThisUnit(CodeUtility.ToolTip($"{Community.NameUtility.DisplayName(typeof(OnParticleCollision))} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {Community.NameUtility.DisplayName(typeof(OnParticleCollision))}", ""));
+            var body = Unit.collisionEvents.hasValidConnection ? CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{"var".ConstructHighlight()} {"collisionEvents".VariableHighlight()} = {new List<ParticleCollisionEvent>().As().Code(true)};") + "\n" : "";
             data.AddLocalNameInScope("collisionEvents", typeof(List<ParticleCollisionEvent>));
             body += GetNextUnit(Unit.trigger, data, indent);
             return body;
@@ -31,11 +31,11 @@ namespace Unity.VisualScripting.Community
         {
             if (output == Unit.other)
             {
-                return MakeSelectableForThisUnit("other".VariableHighlight());
+                return MakeClickableForThisUnit("other".VariableHighlight());
             }
             else
             {
-                return GenerateValue(Unit.target, data) + MakeSelectableForThisUnit($".GetComponent<{"ParticleSystem".TypeHighlight()}>().GetCollisionEvents({"other".VariableHighlight()}, {"collisionEvents".VariableHighlight()})");
+                return GenerateValue(Unit.target, data) + MakeClickableForThisUnit($".GetComponent<{"ParticleSystem".TypeHighlight()}>().GetCollisionEvents({"other".VariableHighlight()}, {"collisionEvents".VariableHighlight()})");
             }
         }
 
@@ -52,7 +52,7 @@ namespace Unity.VisualScripting.Community
                     var value = input.unit.defaultValues[input.key];
                     if (value == null)
                     {
-                        return MakeSelectableForThisUnit("gameObject".VariableHighlight());
+                        return MakeClickableForThisUnit("gameObject".VariableHighlight());
                     }
                     else
                     {

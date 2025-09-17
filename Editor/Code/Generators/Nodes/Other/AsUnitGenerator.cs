@@ -21,7 +21,7 @@ namespace Unity.VisualScripting.Community
             {
                 data.SetCurrentExpectedTypeMet(true, Unit.AsType);
             }
-            return MakeSelectableForThisUnit("(") + GenerateValue(Unit.Value, data) + MakeSelectableForThisUnit(" as ".ConstructHighlight() + Unit.AsType.As().CSharpName(false, true, true) + ")");
+            return MakeClickableForThisUnit("(") + GenerateValue(Unit.Value, data) + MakeClickableForThisUnit(" as ".ConstructHighlight() + Unit.AsType.As().CSharpName(false, true, true) + ")");
         }
     } 
 }

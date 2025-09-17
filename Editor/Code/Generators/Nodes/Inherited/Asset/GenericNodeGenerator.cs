@@ -15,9 +15,9 @@ namespace Unity.VisualScripting.Community
             var parameter = Unit.Method.genericParameters.FirstOrDefault(g => g == Unit.genericParameter);
             if(parameter != null)
             {
-                MakeSelectableForThisUnit("typeof".ConstructHighlight() + "(" + parameter.name.TypeHighlight() + ")");
+                MakeClickableForThisUnit("typeof".ConstructHighlight() + "(" + parameter.name.TypeHighlight() + ")");
             }
-            return MakeSelectableForThisUnit("typeof".ConstructHighlight() + "(" + Unit.genericParameter.name.TypeHighlight() + ")");
+            return MakeClickableForThisUnit("typeof".ConstructHighlight() + "(" + Unit.genericParameter.name.TypeHighlight() + ")");
         }
     } 
 }

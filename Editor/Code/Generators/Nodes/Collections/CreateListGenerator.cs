@@ -27,7 +27,7 @@ namespace Unity.VisualScripting.Community
             {
                 Type = data.GetExpectedType();
             }
-            return MakeSelectableForThisUnit("new ".ConstructHighlight() + Type.As().CSharpName(false, true) + (!Type.IsArray ? "()" : string.Empty) + " { ") + string.Join(MakeSelectableForThisUnit(", "), result) + MakeSelectableForThisUnit(" }");
+            return MakeClickableForThisUnit("new ".ConstructHighlight() + Type.As().CSharpName(false, true) + (!Type.IsArray ? "()" : string.Empty) + " { ") + string.Join(MakeClickableForThisUnit(", "), result) + MakeClickableForThisUnit(" }");
         }
     }
 }

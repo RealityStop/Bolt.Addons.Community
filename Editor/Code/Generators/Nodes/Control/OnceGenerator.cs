@@ -33,9 +33,9 @@ public sealed class OnceGenerator : VariableNodeGenerator
 
         if (input == Unit.enter)
         {
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"if".ConstructHighlight() + $"(!{Name.VariableHighlight()})");
+            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"if".ConstructHighlight() + $"(!{Name.VariableHighlight()})");
             output += "\n";
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("{");
+            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{");
             output += "\n";
 
             if (Unit.once.hasAnyConnection)
@@ -44,9 +44,9 @@ public sealed class OnceGenerator : VariableNodeGenerator
                 output += "\n";
             }
 
-            output += CodeBuilder.Indent(indent + 1) + MakeSelectableForThisUnit($"{Name.VariableHighlight()} = " + "true".ConstructHighlight() + ";");
+            output += CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit($"{Name.VariableHighlight()} = " + "true".ConstructHighlight() + ";");
             output += "\n";
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit("}");
+            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
             output += "\n";
 
             if (Unit.after.hasValidConnection)
@@ -57,7 +57,7 @@ public sealed class OnceGenerator : VariableNodeGenerator
 
         else if (input == Unit.reset)
         {
-            output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{Name.VariableHighlight()} = " + "false".ConstructHighlight() + ";") + "\n";
+            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{Name.VariableHighlight()} = " + "false".ConstructHighlight() + ";") + "\n";
         }
 
         return output;

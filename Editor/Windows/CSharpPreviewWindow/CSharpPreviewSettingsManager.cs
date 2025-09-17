@@ -12,15 +12,11 @@ namespace Unity.VisualScripting.Community
         bool isInitalized;
         public void InitializeSettings()
         {
-<<<<<<< Updated upstream
-            var path = "Assets/Unity.VisualScripting.Community.Generated/";
-=======
             if (isInitalized) return;
 
             isInitalized = true;
 
             const string path = "Assets/Unity.VisualScripting.Community.Generated/";
->>>>>>> Stashed changes
             HUMIO.Ensure(path).Path();
             CSharpPreviewSettings settings = AssetDatabase.LoadAssetAtPath<CSharpPreviewSettings>(path + "CSharpPreviewSettings.asset");
             if (settings == null)

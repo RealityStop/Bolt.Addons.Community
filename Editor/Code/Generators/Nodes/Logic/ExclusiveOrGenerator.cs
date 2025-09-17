@@ -35,7 +35,7 @@ namespace Unity.VisualScripting.Community
 
             if (output == Unit.result)
             {
-                return MakeSelectableForThisUnit("(") + GenerateValue(Unit.a, data) + MakeSelectableForThisUnit(" ^ ") + GenerateValue(Unit.b, data) + MakeSelectableForThisUnit(")");
+                return MakeClickableForThisUnit("(") + GenerateValue(Unit.a, data) + MakeClickableForThisUnit(" ^ ") + GenerateValue(Unit.b, data) + MakeClickableForThisUnit(")");
             }
 
             return base.GenerateValue(output, data);

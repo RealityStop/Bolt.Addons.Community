@@ -21,10 +21,10 @@ namespace Unity.VisualScripting.Community
             if (sourceIsDelgateNode)
             {
                 variable = data.AddLocalNameInScope("@delgate", Unit.a.connection.source.type).VariableHighlight();
-                output += CodeBuilder.Indent(indent) + MakeSelectableForThisUnit((Unit.a.connection.source.unit as DelegateNode)._delegate.GetDelegateType().As().CSharpName(false, true) + " " + variable + " = ") + GenerateValue(Unit.a, data) + MakeSelectableForThisUnit(";") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit((Unit.a.connection.source.unit as DelegateNode)._delegate.GetDelegateType().As().CSharpName(false, true) + " " + variable + " = ") + GenerateValue(Unit.a, data) + MakeClickableForThisUnit(";") + "\n";
             }
 
-            output += CodeBuilder.Indent(indent) + (sourceIsDelgateNode ? MakeSelectableForThisUnit(variable + " -= ") + GenerateValue(Unit.b, data) + MakeSelectableForThisUnit(";") + "\n" : GenerateValue(Unit.a, data) + MakeSelectableForThisUnit(" -= ") + GenerateValue(Unit.b, data) + MakeSelectableForThisUnit(";") + "\n");
+            output += CodeBuilder.Indent(indent) + (sourceIsDelgateNode ? MakeClickableForThisUnit(variable + " -= ") + GenerateValue(Unit.b, data) + MakeClickableForThisUnit(";") + "\n" : GenerateValue(Unit.a, data) + MakeClickableForThisUnit(" -= ") + GenerateValue(Unit.b, data) + MakeClickableForThisUnit(";") + "\n");
             output += GetNextUnit(Unit.exit, data, indent);
             return output;
         }

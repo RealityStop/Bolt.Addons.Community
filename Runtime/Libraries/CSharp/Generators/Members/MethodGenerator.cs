@@ -13,12 +13,15 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public MethodModifier modifier;
         public string name;
         public Type returnType;
+        public string stringReturnType;
+        public string stringReturnTypeNamespace;
         public List<ParameterGenerator> parameters = new List<ParameterGenerator>();
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
         public List<GenericDeclaration> generics = new List<GenericDeclaration>();
         public string body = "";
         public string beforeBody;
         public string warning;
+        public string summary;
 
         private MethodGenerator() { }
 
@@ -32,6 +35,16 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return method;
         }
 
+        public static MethodGenerator Method(AccessModifier scope, MethodModifier modifier, string returnType, string returnTypeNamespace, string name)
+        {
+            var method = new MethodGenerator();
+            method.scope = scope;
+            method.modifier = modifier;
+            method.name = name;
+            method.stringReturnType = returnType;
+            method.stringReturnTypeNamespace = returnTypeNamespace;
+            return method;
+        }
         protected override sealed string GenerateBefore(int indent)
         {
             var attributes = string.Empty;
@@ -40,6 +53,16 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 attributes += attr.Generate(indent) + "\n";
             }
             var _warning = !string.IsNullOrEmpty(warning) ? CodeBuilder.Indent(indent) + $"/* {warning} */\n".WarningHighlight() : string.Empty;
+            var _summary = string.Empty;
+            if (!string.IsNullOrEmpty(summary))
+            {
+                _summary = CodeBuilder.Indent(indent) + "/// <summary>".CommentHighlight();
+                foreach (var line in summary.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    _summary += "\n" + CodeBuilder.Indent(indent) + $"/// {line}".CommentHighlight();
+                }
+                _summary += "\n" + CodeBuilder.Indent(indent) + $"/// </summary>".CommentHighlight() + "\n";
+            }
             var modSpace = modifier == MethodModifier.None ? string.Empty : " ";
             var genericTypes = generics.Count > 0 ? $"<{string.Join(", ", generics.Select(g => g.name.TypeHighlight()))}>" : string.Empty;
             var constraints = generics.Count > 0 && generics.Any(g => g.baseTypeConstraint.type != typeof(object) || g.interfaceConstraints.Count > 0 || g.typeParameterConstraints != TypeParameterConstraints.None) ? $" {"where".ConstructHighlight()} " : "";
@@ -61,7 +84,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                     }
                 }
             }
-            return attributes + _warning + CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + returnType.As().CSharpName() + " " + name.LegalMemberName() + genericTypes + CodeBuilder.Parameters(this.parameters) + constraints;
+            return attributes + _warning + _summary + CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + (string.IsNullOrEmpty(stringReturnType) ? returnType.As().CSharpName(false, true) : stringReturnType) + " " + name.LegalMemberName() + genericTypes + CodeBuilder.Parameters(this.parameters) + constraints;
         }
 
         string GetSelectedConstraints(TypeParameterConstraints constraints)
@@ -150,11 +173,18 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return this;
         }
 
+        public MethodGenerator SetSummary(string summary)
+        {
+            this.summary = summary;
+            return this;
+        }
+
         public override List<string> Usings()
         {
             var usings = new List<string>();
-
-            if (!usings.Contains(returnType.Namespace) && !returnType.Is().PrimitiveStringOrVoid()) usings.Add(returnType.Namespace);
+            if (!string.IsNullOrEmpty(stringReturnType) && !string.IsNullOrEmpty(stringReturnTypeNamespace) && !usings.Contains(stringReturnTypeNamespace))
+                usings.Add(stringReturnTypeNamespace);
+            else if (returnType != null && !usings.Contains(returnType.Namespace) && !returnType.Is().PrimitiveStringOrVoid()) usings.Add(returnType.Namespace);
 
             for (int i = 0; i < attributes.Count; i++)
             {

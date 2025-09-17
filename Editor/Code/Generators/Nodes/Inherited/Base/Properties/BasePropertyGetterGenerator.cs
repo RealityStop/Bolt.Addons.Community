@@ -13,7 +13,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return MakeSelectableForThisUnit(string.Concat("base".ConstructHighlight(), ".", this.Unit.member.name));
+            return MakeClickableForThisUnit(string.Concat("base".ConstructHighlight(), ".", this.Unit.member.name));
         }
     }
 }

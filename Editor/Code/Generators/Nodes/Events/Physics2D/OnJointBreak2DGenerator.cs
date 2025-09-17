@@ -21,27 +21,27 @@ namespace Unity.VisualScripting.Community
         {
             if (output == Unit.breakForce)
             {
-                return MakeSelectableForThisUnit("brokenJoint".VariableHighlight() + "." + "breakForce".VariableHighlight());
+                return MakeClickableForThisUnit("brokenJoint".VariableHighlight() + "." + "breakForce".VariableHighlight());
             }
             else if (output == Unit.breakTorque)
             {
-                return MakeSelectableForThisUnit("brokenJoint".VariableHighlight() + "." + "breakTorque".VariableHighlight());
+                return MakeClickableForThisUnit("brokenJoint".VariableHighlight() + "." + "breakTorque".VariableHighlight());
             }
             else if (output == Unit.connectedBody)
             {
-                return MakeSelectableForThisUnit("brokenJoint".VariableHighlight() + "." + "connectedBody".VariableHighlight());
+                return MakeClickableForThisUnit("brokenJoint".VariableHighlight() + "." + "connectedBody".VariableHighlight());
             }
             else if (output == Unit.reactionForce)
             {
-                return MakeSelectableForThisUnit("brokenJoint".VariableHighlight() + "." + "reactionForce".VariableHighlight());
+                return MakeClickableForThisUnit("brokenJoint".VariableHighlight() + "." + "reactionForce".VariableHighlight());
             }
             else if (output == Unit.reactionTorque)
             {
-                return MakeSelectableForThisUnit("brokenJoint".VariableHighlight() + "." + "reactionTorque".VariableHighlight());
+                return MakeClickableForThisUnit("brokenJoint".VariableHighlight() + "." + "reactionTorque".VariableHighlight());
             }
             else
             {
-                return MakeSelectableForThisUnit("brokenJoint".VariableHighlight());
+                return MakeClickableForThisUnit("brokenJoint".VariableHighlight());
             }
         }
     }

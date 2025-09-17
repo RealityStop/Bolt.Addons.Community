@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community
         {
             var output = string.Empty;
             controlGenerationData = data;
-            output += MakeSelectableForThisUnit(Unit.method.methodName + "(") + GenerateArguments(Unit.InputParameters.Values.ToList(), data) + MakeSelectableForThisUnit(");");
+            output += MakeClickableForThisUnit(Unit.method.methodName + "(") + GenerateArguments(Unit.InputParameters.Values.ToList(), data) + MakeClickableForThisUnit(");");
             output += "\n" + GetNextUnit(Unit.exit, data, indent);
             return output;
         }
@@ -41,10 +41,10 @@ namespace Unity.VisualScripting.Community
 
                 var transformedKey = outputNames[output].Replace("&", "").Replace("%", "");
 
-                return MakeSelectableForThisUnit(transformedKey.VariableHighlight());
+                return MakeClickableForThisUnit(transformedKey.VariableHighlight());
             }
 
-            return MakeSelectableForThisUnit(Unit.method.methodName + "(") + GenerateArguments(Unit.InputParameters.Values.ToList(), data) + MakeSelectableForThisUnit(")");
+            return MakeClickableForThisUnit(Unit.method.methodName + "(") + GenerateArguments(Unit.InputParameters.Values.ToList(), data) + MakeClickableForThisUnit(")");
         }
 
         private string GenerateArguments(List<ValueInput> arguments, ControlGenerationData data)
@@ -80,12 +80,12 @@ namespace Unity.VisualScripting.Community
                     }
                     index++;
                 }
-                return string.Join(MakeSelectableForThisUnit(", "), output);
+                return string.Join(MakeClickableForThisUnit(", "), output);
             }
             else
             {
                 List<string> output = arguments.Select(arg => GenerateValue(arg, data)).ToList();
-                return string.Join(MakeSelectableForThisUnit(", "), output);
+                return string.Join(MakeClickableForThisUnit(", "), output);
             }
         }
     }

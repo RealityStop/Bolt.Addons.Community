@@ -24,7 +24,7 @@ namespace Unity.VisualScripting.Community
             {
                 var defaultValue = output.type.PseudoDefault();
                 if (defaultValue == null)
-                    _output += MakeSelectableForThisUnit($"/* Missing Value Input: {output.key} */".WarningHighlight());
+                    _output += MakeClickableForThisUnit($"/* Missing Value Input: {output.key} */".WarningHighlight());
                 else
                 {
                     _output += defaultValue.As().Code(true, unit, true, true, "", false, true);
