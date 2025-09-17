@@ -32,7 +32,7 @@ namespace Unity.VisualScripting.Community
                 {
                     output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ToolTip($"The code in the 'True' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.Condition, data))}).", $"Unreachable Code in 'True' Branch: {Unit.True.key}", "")));
                 }
-                trueCode = GetNextUnit(Unit.True, data, indent + 1);
+                trueCode = GetNextUnit(Unit.True, data, indent + 1).TrimEnd();
                 data.ExitScope();
     
                 output.Append(trueCode).AppendLine();
@@ -60,7 +60,7 @@ namespace Unity.VisualScripting.Community
                     {
                         output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ToolTip($"The code in the 'False' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.Condition, data))}).", $"Unreachable Code in 'False' Branch: {Unit.False.key}", "")));
                     }
-                    output.Append(GetNextUnit(Unit.False, data, indent + 1))
+                    output.Append(GetNextUnit(Unit.False, data, indent + 1).TrimEnd())
                           .AppendLine();
                     data.ExitScope();
     

@@ -41,6 +41,7 @@ namespace Unity.VisualScripting.Community
         [InspectableIf(nameof(IsRestricted))]
         [InspectorLabel("EventType")]
         [TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+        // Doing this instead because the UnitWidget for those node was just not working
 #if RESTRICT_EVENT_TYPES
         [UnitHeaderInspectable]
 #endif

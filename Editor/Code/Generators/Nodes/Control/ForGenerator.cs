@@ -36,7 +36,7 @@ namespace Unity.VisualScripting.Community
                 if (Unit.body.hasAnyConnection)
                 {
                     data.NewScope();
-                    output += GetNextUnit(Unit.body, data, indent + 1);
+                    output += GetNextUnit(Unit.body, data, indent + 1).TrimEnd();
                     data.ExitScope();
                 }
     
