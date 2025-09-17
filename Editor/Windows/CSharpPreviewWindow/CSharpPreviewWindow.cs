@@ -560,7 +560,6 @@ namespace Unity.VisualScripting.Community.CSharp
                     };
                     _noPaddingStyle.fontSize = Mathf.RoundToInt(Height * visualZoom);
 
-                    // prevent blue-on-click
                     var c = Color.white;
                     _noPaddingStyle.normal.textColor = c;
                     _noPaddingStyle.hover.textColor = c;

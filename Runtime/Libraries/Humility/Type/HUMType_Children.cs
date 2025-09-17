@@ -1,4 +1,4 @@
-﻿using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using System.Collections;
 using System.Collections.Generic;

@@ -33,8 +33,17 @@ namespace Unity.VisualScripting.Community
         protected override void OnGUI(Rect position, GUIContent label)
         {
             var selectiveExpose = (SelectExpose)metadata.value;
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
             BeginBlock(metadata, position);
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
             Rect labelRect = new Rect(position.x, position.y, 40, EditorGUIUtility.singleLineHeight);
             GUI.Label(labelRect, "Type:");
