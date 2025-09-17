@@ -33,22 +33,12 @@ namespace Unity.VisualScripting.Community
         protected override void OnGUI(Rect position, GUIContent label)
         {
             var selectiveExpose = (SelectExpose)metadata.value;
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
             BeginBlock(metadata, position);
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
             Rect labelRect = new Rect(position.x, position.y, 40, EditorGUIUtility.singleLineHeight);
             GUI.Label(labelRect, "Type:");
 
-            Rect buttonRect = new Rect(position.x + 45, position.y, position.width - 45, EditorGUIUtility.singleLineHeight);  // Adjust the width of the button as needed
+            Rect buttonRect = new Rect(position.x + 45, position.y, position.width - 45, EditorGUIUtility.singleLineHeight);
             if (GUI.Button(buttonRect, new GUIContent(((Type)metadata["type"].value).DisplayName(), ((Type)metadata["type"].value).Icon()[IconSize.Small])))
             {
                 TypeBuilderWindow.ShowWindow(labelRect, metadata["type"], true, new Type[0], () =>

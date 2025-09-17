@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -25,8 +26,14 @@ namespace Unity.VisualScripting.Community
                     yield return item;
                 }
 
-                yield return new GraphContextMenuItem(OpenCSharpPreview, "Open Utility Window");
+                yield return new GraphContextMenuItem(OpenUtilityWindow, "Open Utility Window");
+                yield return new GraphContextMenuItem(OpenKeyboardControlsWindow, "Open Keyboard Controls Window");
             }
+        }
+
+        private void OpenKeyboardControlsWindow(Vector2 vector)
+        {
+            GraphKeyboardControlsWindow.ShowWindow();
         }
 
         private void ConvertToEmbed(Vector2 pos)
@@ -39,7 +46,7 @@ namespace Unity.VisualScripting.Community
             NodeSelection.Convert(GraphSource.Macro);
         }
 
-        private void OpenCSharpPreview(Vector2 pos)
+        private void OpenUtilityWindow(Vector2 pos)
         {
             var window = UtilityWindow.Open();
             window.graphContext = context;

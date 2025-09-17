@@ -71,46 +71,6 @@ namespace Unity.VisualScripting.Community
         }
 
         private static string GetComment(CommentNode comment)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-        {
-            var result = string.Empty;
-
-            if (comment.hasTitle && !string.IsNullOrEmpty(comment.title))
-            {
-                result += ("// " + comment.title).CommentHighlight();
-
-                if (!string.IsNullOrEmpty(comment.comment))
-                    result += " :".CommentHighlight();
-                result += "\n";
-            }
-
-            if (!string.IsNullOrEmpty(comment.comment))
-            {
-                var lines = comment.comment.Split(
-                    new[] { '\r', '\n' },
-                    StringSplitOptions.RemoveEmptyEntries
-                );
-
-                foreach (var line in lines)
-                {
-                    result += ("// " + line.TrimEnd()).CommentHighlight() + "\n";
-                }
-            }
-
-            return result.TrimEnd();
-        }
-
-        private static readonly Dictionary<Unit, NodeGenerator> generatorCache = new();
-
-        public static NodeGenerator GetGenerator(this Unit node)
->>>>>>> Stashed changes
         {
             var result = string.Empty;
 
