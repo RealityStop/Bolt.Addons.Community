@@ -164,7 +164,7 @@ namespace Unity.VisualScripting.Community
                     {
                         try
                         {
-                            return Flow.Predict(Unit.@object.GetPesudoSource(), graphPointer.AsReference()) as GameObject;
+                            return Flow.Predict<GameObject>(Unit.@object.GetPesudoSource(), graphPointer.AsReference());
                         }
                         catch (InvalidOperationException ex)
                         {

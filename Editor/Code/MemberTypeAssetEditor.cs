@@ -77,10 +77,13 @@ namespace Unity.VisualScripting.Community.CSharp
                 GUILayout.Space(4);
                 Methods();
 
-                if (typeof(TMemberTypeAsset) == typeof(ClassAsset) && (Target as ClassAsset).inheritsType)
+                if (typeof(TMemberTypeAsset) == typeof(ClassAsset))
                 {
-                    GUILayout.Space(4);
-                    RequiredInfo();
+                    if ((Target as ClassAsset).inheritsType)
+                    {
+                        GUILayout.Space(4);
+                        RequiredInfo();
+                    }
                     GUILayout.Space(4);
                     OverridableMembersInfo();
                 }
@@ -464,11 +467,11 @@ namespace Unity.VisualScripting.Community.CSharp
                     var listOfVariables = variables.value as List<TFieldDeclaration>;
 
                     var classAsset = Target as ClassAsset;
-                    var inheritedType = classAsset.inherits.type;
+                    var inheritedType = classAsset.inheritsType ? classAsset.inherits?.type ?? typeof(object) : typeof(object);
 
-                    var nonFinalMethods = inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(m => m.Overridable() && !MethodExists(m) && !m.IsPrivate)
-                        .ToArray();
-
+                    var nonFinalMethods = inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Where(m => m.IsValidOverridableMethod() && !MethodExists(m))
+                    .ToArray();
                     for (int i = 0; i < nonFinalMethods.Length; i++)
                     {
                         var index = i;
@@ -1413,31 +1416,28 @@ namespace Unity.VisualScripting.Community.CSharp
         private void DrawParameters(Metadata paramMeta, UnityEngine.Object target, FunctionNode functionUnit = null)
         {
             var parameters = paramMeta.value as List<TypeParam>;
+            IGraphContext context = null;
+            if (paramMeta.parent.value is Macro<FlowGraph> parent)
+            {
+                var reference = parent.GetReference().AsReference();
+                if (functionUnit != null)
+                    reference = GraphTraversal.GetReferenceWithGraph(reference, functionUnit.graph) ?? reference;
+                context = reference.Context();
+            }
             HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
             {
                 for (int i = 0; i < parameters.Count; i++)
                 {
                     parameters[i].opened = HUMEditor.Foldout(parameters[i].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                     {
-                        IGraphContext context = null;
-                        if (paramMeta.parent.value is Macro<FlowGraph> parent)
-                        {
-                            context = parent.GetReference().AsReference().Context();
-                        }
-                        context?.BeginEdit();
                         EditorGUI.BeginChangeCheck();
                         var paramName = GUILayout.TextField(parameters[i].name);
                         if (EditorGUI.EndChangeCheck())
                         {
                             Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Name");
                             parameters[i].name = paramName.LegalMemberName();
-                            foreach (var element in context.graph.elements)
-                            {
-                                if (element is Unit unit)
-                                    unit.Define();
-                            }
+                            context.DescribeAnalyzeAndDefineFlowGraph();
                         }
-                        context?.EndEdit();
 
                         if (GUILayout.Button("...", GUILayout.Width(19)))
                         {
@@ -1503,13 +1503,14 @@ namespace Unity.VisualScripting.Community.CSharp
                             }
                             if (TypeBuilderWindow.Button(currentParam["type"].value as Type))
                             {
-                                TypeBuilderWindow.ShowWindow(lastRect, (type) => { currentParam["type"].value = type; }, parameters[i].type, true, fakeGenericParameterTypes, () =>
+                                TypeBuilderWindow.ShowWindow(lastRect, (type) => { currentParam["type"].value = type; }, parameters[i].type, true, fakeGenericParameterTypes, null, (t) =>
                                 {
                                     Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Type");
                                     UpdatePreview();
+                                    context?.DescribeAnalyzeAndDefineFlowGraph();
                                 });
                             }
-                            GraphWindow.active?.context?.BeginEdit();
+                            context?.BeginEdit();
                             GUILayout.EndHorizontal();
                             EditorGUI.BeginChangeCheck();
                             GUILayout.BeginHorizontal();
@@ -1617,6 +1618,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             {
                                 Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
                                 UpdatePreview();
+                                context.DescribeAnalyzeAndDefineFlowGraph();
                             }
                             GUILayout.Space(4);
                             if (parameters[i].showInitalizer)
@@ -1638,7 +1640,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 Undo.RegisterCompleteObjectUndo(target, "Toggled Has Default");
                                 UpdatePreview();
                             }
-                            GraphWindow.active?.context?.BeginEdit();
+
                             GUILayout.Space(4);
 
                             if (i >= 0 && i < paramMeta.Count)
@@ -1681,13 +1683,8 @@ namespace Unity.VisualScripting.Community.CSharp
                             if (Inspector.EndBlock(paramMeta))
                             {
                                 Undo.RegisterCompleteObjectUndo(target, "Changed Parameter");
-                                GraphWindow.active?.context?.DescribeAndAnalyze();
                                 UpdatePreview();
-                                if (functionUnit != null)
-                                {
-                                    functionUnit.Define();
-                                    functionUnit.Describe();
-                                }
+                                context.DescribeAnalyzeAndDefineFlowGraph();
                             }
                         }, true);
                     });
@@ -1704,6 +1701,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     name += index;
                     Undo.RegisterCompleteObjectUndo(target, "Added Parameter");
                     parameters.Add(new TypeParam(typeof(string), name) { defaultValue = "" });
+                    context.DescribeAnalyzeAndDefineFlowGraph();
                 }
             });
         }
@@ -1774,22 +1772,18 @@ namespace Unity.VisualScripting.Community.CSharp
                     {
                         var index = i;
                         if (listOfMethods[index].parentAsset == null) listOfMethods[index].parentAsset = Target;
+                        var context = listOfMethods[index].GetReference().AsReference().Context();
                         listOfMethods[index].opened = HUMEditor.Foldout(listOfMethods[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
-                            var context = listOfMethods[index].GetReference().AsReference().Context();
-                            context?.BeginEdit();
                             HUMEditor.Changed(() =>
                             {
                                 listOfMethods[index].methodName = GUILayout.TextField(listOfMethods[index].methodName);
                             }, () =>
                             {
                                 listOfMethods[index].name = listOfMethods[index].methodName.LegalMemberName();
-                                var functionUnit = listOfMethods[index].graph.units[0] as FunctionNode;
-                                functionUnit.Define();
-                                functionUnit.Describe();
+                                context.DescribeAnalyzeAndDefineFlowGraph();
                                 UpdatePreview();
                             });
-                            context?.EndEdit();
                             if (GUILayout.Button("Edit", GUILayout.Width(60)))
                             {
                                 GraphWindow.OpenActive(listOfMethods[index].GetReference() as GraphReference);
@@ -1864,7 +1858,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                                     if (!subscribedEvents[methods[index]["returnType"]].Contains(0))
                                     {
-                                        methods[index]["returnType"].valueChanged += (val) => GraphWindow.active?.context?.DescribeAndAnalyze();
+                                        methods[index]["returnType"].valueChanged += (val) => context.DescribeAnalyzeAndDefineFlowGraph();
                                         subscribedEvents[methods[index]["returnType"]].Add(0);
                                     }
                                 }
@@ -1965,13 +1959,12 @@ namespace Unity.VisualScripting.Community.CSharp
                                                         TypeBuilderWindow.ShowWindow(lastRect, methods[index]["genericParameters"][gIndex]["baseTypeConstraint"], true, baseTypeLookup, () =>
                                                         {
                                                             Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Changed Generic Base Type Constraint");
-                                                            UpdatePreview();
                                                         }, (t) =>
                                                         {
                                                             var fakeGeneric = RuntimeTypeUtility.GetInstanceOfGenericFromMethod(listOfMethods[index], listOfMethods[index].genericParameters[iv].name);
                                                             fakeGeneric.ChangeBaseTypeConstraint(t);
-                                                            if (GraphWindow.active != null && GraphWindow.active.context != null)
-                                                                GraphWindow.active.context.DescribeAndAnalyze();
+                                                            context.DescribeAnalyzeAndDefineFlowGraph();
+                                                            UpdatePreview();
                                                         });
                                                     }
                                                     GUILayout.EndHorizontal();
@@ -2000,7 +1993,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                                                     {
                                                                         Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Changed Generic Interface Type Constraint");
                                                                         UpdatePreview();
-                                                                    });
+                                                                    }, (t) => context.DescribeAnalyzeAndDefineFlowGraph());
                                                                 }
                                                                 if (GUILayout.Button("...", GUILayout.Width(19)))
                                                                 {
@@ -2141,6 +2134,11 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     for (int i = 0; i < listOfVariables.Count; i++)
                     {
+                        var getterReference = listOfVariables[i].getter.GetReference().AsReference();
+                        var setterReference = listOfVariables[i].setter.GetReference().AsReference();
+                        var getterContext = getterReference.Context();
+                        var setterContext = setterReference.Context();
+
                         var index = i;
                         if (listOfVariables[index].getter.parentAsset == null || listOfVariables[index].setter.parentAsset == null)
                         {
@@ -2149,9 +2147,6 @@ namespace Unity.VisualScripting.Community.CSharp
                         }
                         listOfVariables[index].opened = HUMEditor.Foldout(listOfVariables[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
-                            if (GraphWindow.active != null && GraphWindow.active.context != null)
-                                GraphWindow.active.context.BeginEdit();
-
                             EditorGUI.BeginChangeCheck();
                             var fieldName = GUILayout.TextField(listOfVariables[index].name);
                             if (EditorGUI.EndChangeCheck())
@@ -2167,17 +2162,10 @@ namespace Unity.VisualScripting.Community.CSharp
                                 Undo.RegisterCompleteObjectUndo(listOfVariables[index].setter, "Changed Variable Name");
                                 listOfVariables[index].setter.name = listOfVariables[index].name + " Setter";
                                 Undo.CollapseUndoOperations(undoGroup);
-                                var getterFunctionUnit = listOfVariables[index].getter.graph.units[0] as FunctionNode;
-                                var setterFunctionUnit = listOfVariables[index].setter.graph.units[0] as FunctionNode;
-                                getterFunctionUnit.Define();
-                                getterFunctionUnit.Describe();
-                                setterFunctionUnit.Define();
-                                setterFunctionUnit.Describe();
+                                getterContext.DescribeAnalyzeAndDefineFlowGraph();
+                                setterContext.DescribeAnalyzeAndDefineFlowGraph();
                                 UpdatePreview();
                             }
-                            if (GraphWindow.active != null && GraphWindow.active.context != null)
-                                GraphWindow.active.context.EndEdit();
-
 
                             if (GUILayout.Button("...", GUILayout.Width(19)))
                             {
@@ -2265,7 +2253,12 @@ namespace Unity.VisualScripting.Community.CSharp
                                     {
                                         Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Type");
                                         UpdatePreview();
-                                    }, (t) => listOfVariables[index].OnChanged?.Invoke());
+                                    }, (t) =>
+                                    {
+                                        listOfVariables[index].OnChanged?.Invoke();
+                                        getterContext.DescribeAnalyzeAndDefineFlowGraph();
+                                        setterContext.DescribeAnalyzeAndDefineFlowGraph();
+                                    });
                                 }
                                 GUILayout.EndHorizontal();
 
@@ -2359,7 +2352,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                                 HUMEditor.Disabled(!listOfVariables[index].get, () =>
                                                 {
                                                     EditorGUI.BeginChangeCheck();
-                                                    var value = (AccessModifier)EditorGUILayout.EnumPopup((AccessModifier)variables[index]["getterScope"].value, GUILayout.Width(100));
+                                                    var value = (AccessModifier)EditorGUILayout.EnumPopup((AccessModifier)variables[index]["getterScope"].value);
                                                     if (EditorGUI.EndChangeCheck())
                                                     {
                                                         Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Get Scope");
@@ -2398,7 +2391,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                                 HUMEditor.Disabled(!listOfVariables[index].set, () =>
                                                 {
                                                     EditorGUI.BeginChangeCheck();
-                                                    var setterScope = (AccessModifier)EditorGUILayout.EnumPopup(listOfVariables[index].setterScope, GUILayout.Width(100));
+                                                    var setterScope = (AccessModifier)EditorGUILayout.EnumPopup(listOfVariables[index].setterScope);
                                                     if (EditorGUI.EndChangeCheck())
                                                     {
                                                         Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Set Scope");

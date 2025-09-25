@@ -83,6 +83,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public override List<string> Usings()
         {
             var usings = new List<string>();
+            if (type == null) return usings;
             if (type != typeof(void) && type != typeof(Void) && !type.IsPrimitive)
             {
                 if (type.Namespace != "Unity.VisualScripting.Community.Generics")

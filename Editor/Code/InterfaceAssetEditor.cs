@@ -238,7 +238,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                     }
                                 });
 
-                            }, true, false);//
+                            }, true, false);
                         });
 
                         GUILayout.Space(4);
@@ -254,7 +254,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void MoveItemUp<T>(List<T> list, int index)
         {
-            if (index <= 0 || index >= list.Count) return; // Validate index
+            if (index <= 0 || index >= list.Count) return;
             T item = list[index];
             list.RemoveAt(index);
             list.Insert(index - 1, item);
@@ -262,7 +262,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void MoveItemDown<T>(List<T> list, int index)
         {
-            if (index < 0 || index >= list.Count - 1) return; // Validate index
+            if (index < 0 || index >= list.Count - 1) return;
             T item = list[index];
             list.RemoveAt(index);
             list.Insert(index + 1, item);

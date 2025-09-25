@@ -36,7 +36,7 @@ namespace Unity.VisualScripting.Community
             variableName = Name;
             if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
             {
-                return CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ToolTip("Cooldown only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate Cooldown", ""));
+                return CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip("Cooldown only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate Cooldown", ""));
             }
 
             var output = string.Empty;

@@ -1,70 +1,117 @@
-using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
 using UnityEngine;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community
 {
-    public class GraphKeyboardControlsWindow : EditorWindow
+    public class GraphKeyboardControlsPopup : PopupWindowContent
     {
-        private static GraphKeyboardControlsWindow instance;
         private Dictionary<string, bool> foldoutStates = new Dictionary<string, bool>();
-        public static void ShowWindow()
+        private Vector2 scrollPosition;
+
+        private struct KeyboardControl
         {
-            if (instance != null)
+            public string Keys { get; private set; }
+            public string Description { get; private set; }
+            public KeyboardControl(string keys, string description)
             {
-                instance.Focus();
-                return;
+                Keys = keys;
+                Description = description;
             }
-            var window = CreateInstance<GraphKeyboardControlsWindow>();
-            window.titleContent = new GUIContent("Graph Keyboard Controls");
-
-            var mousePosition = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
-            window.position = new Rect(mousePosition.x, mousePosition.y, 280, 260);
-            window.ShowPopup();
-        }
-        Vector2 scrollPosition;
-        private void OnGUI()
-        {
-            HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 1, 1), () =>
-            {
-                scrollPosition = GUILayout.BeginScrollView(scrollPosition);
-                GUILayout.Label("Keyboard Controls", EditorStyles.boldLabel);
-                GUILayout.Space(10);
-
-                DrawControlRow("Ctrl + Tab (Requires selection)", "Open Surround with Commands");
-                DrawControlRow("Ctrl + / + /", "Create comment");
-                DrawControlRow("Ctrl + / + / (Requires selection)", "Create comment with connections");
-                DrawControlRow("← or → (Requires selection)\nThis only works on a single Unit \n(↑ to add Unit)", "Cycle through all ports");
-                DrawControlRow("Ctrl + 1-9 (Requires selection)\nThis only works on a single Unit \n(↑ to add Unit)", "Cycle through Control ports");
-                DrawControlRow("Alt + 1-9 (Requires selection)\nThis only works on a single Unit \n(↑ to add Unit)", "Cycle through Value ports");
-                DrawControlRow("Tab (Requires Fuzzy Finder & Creating Connection)\nSnippet Layout: [Name],[Parameters(Separated by ',')]", "Add Graph Snippet");
-                DrawControlRow("Space (While Creating Connection)", "Create Reroute");
-                GUILayout.EndScrollView();
-            }, true, true);
         }
 
-
-        void DrawControlRow(string keys, string description)
+        private readonly List<KeyboardControl> normalControls = new()
         {
-            if (!foldoutStates.ContainsKey(description))
-                foldoutStates[description] = false;
+            new("[Ctrl] + [/] + [/]", "Create comment"),
+            new("[Ctrl] + [Tab]", "Cycle through graph elements"),
+        };
 
-            foldoutStates[description] = HUMEditor.Foldout(foldoutStates[description], new GUIContent(description), HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1,
-            () =>
-            {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
+        private readonly List<KeyboardControl> selectionControls = new()
+        {
+            new("[Ctrl] + [Shift] + [T]", "Open Surround with Commands"),
+            new("[Ctrl] + [/] + [/]", "Create comment with connections"),
+            new("[←] [→] [↑] [↓]", "Move Selected Units"),
+            new("[Ctrl/Cmd] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through all ports"),
+            new("[Shift] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through Control ports"),
+            new("[Alt] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through Value ports"),
+        };
+
+        private readonly List<KeyboardControl> creatingConnectionControls = new()
+        {
+            new("[Tab]\nIn Fuzzy Finder\nSnippet Layout:\n[Name],[Parameters(Separated by ',')]", "Add Graph Snippet"),
+            new("[Space]", "Create Reroute")
+        };
+
+        public override Vector2 GetWindowSize()
+        {
+            return new Vector2(350, (normalControls.Count + selectionControls.Count + creatingConnectionControls.Count) * 40);
+        }
+
+        public override void OnGUI(Rect rect)
+        {
+            HUMEditor.Vertical().Box(
+                HUMEditorColor.DefaultEditorBackground.Darken(0.15f),
+                Color.black,
+                new RectOffset(4, 4, 4, 4),
+                new RectOffset(1, 1, 1, 1),
+                () =>
                 {
-                    GUILayout.Label(keys, EditorStyles.wordWrappedLabel);
-                });
-            });
+                    scrollPosition = GUILayout.BeginScrollView(scrollPosition);
+                    GUILayout.Label("Keyboard Controls", EditorStyles.boldLabel);
+                    GUILayout.Space(8);
+
+                    GUILayout.Label("Normal", EditorStyles.boldLabel);
+                    foreach (var control in normalControls)
+                        DrawControlRow(control.Keys, control.Description);
+
+                    GUILayout.Label("Requires Selection", EditorStyles.boldLabel);
+                    foreach (var control in selectionControls)
+                        DrawControlRow(control.Keys, control.Description);
+
+                    GUILayout.Label("Requires Creating Connection", EditorStyles.boldLabel);
+                    foreach (var control in creatingConnectionControls)
+                        DrawControlRow(control.Keys, control.Description);
+
+                    GUILayout.EndScrollView();
+                },
+                true, true
+            );
         }
 
-
-        private void OnLostFocus()
+        private void DrawControlRow(string keys, string description)
         {
-            Close();
+            if (!foldoutStates.TryGetValue(description, out bool isOpen))
+                isOpen = false;
+
+            foldoutStates[description] = HUMEditor.Foldout(
+                isOpen,
+                new GUIContent(description),
+                HUMEditorColor.DefaultEditorBackground.Darken(0.15f),
+                Color.black,
+                1,
+                () =>
+                {
+                    HUMEditor.Vertical().Box(
+                        HUMEditorColor.DefaultEditorBackground.Darken(0.15f),
+                        Color.black,
+                        new RectOffset(4, 4, 4, 4),
+                        new RectOffset(1, 1, 0, 1),
+                        () =>
+                        {
+                            GUILayout.Label(keys, EditorStyles.wordWrappedLabel);
+                        });
+                });
+        }
+
+        public override void OnClose()
+        {
+            foldoutStates.Clear();
+        }
+
+        public static void Show(Rect activatorRect)
+        {
+            PopupWindow.Show(activatorRect, new GraphKeyboardControlsPopup());
         }
     }
 }

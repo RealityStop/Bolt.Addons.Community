@@ -18,6 +18,21 @@ namespace Unity.VisualScripting.Community
         public Dictionary<object, object> globalGeneratorData = new Dictionary<object, object>();
         private readonly Dictionary<Unit, UnitSymbol> unitSymbols = new();
 
+        public bool isDisposed { get; private set; } = false;
+
+        public void Dispose()
+        {
+            if (!isDisposed)
+            {
+                isDisposed = true;
+                scopes.Clear();
+                preservedScopes.Clear();
+                expectedTypes.Clear();
+                globalGeneratorData.Clear();
+                unitSymbols.Clear();
+            }
+        }
+
         private GraphPointer graphPointer;
         public GameObject gameObject { get; set; }
         public Type ScriptType { get; private set; } = typeof(object);
@@ -331,6 +346,10 @@ namespace Unity.VisualScripting.Community
                 var target = firstObject.IsUnityNull() ? new GameObject("C# Preview Placeholder") : firstObject;
                 typeof(GraphPointer).GetProperty("gameObject").SetValue(graphReference, target);
             }
+            else if (gameObject == null && graphReference != null && graphReference.gameObject != null)
+            {
+                gameObject = graphReference.gameObject;
+            }
             graphPointer = graphReference;
         }
 
@@ -338,6 +357,10 @@ namespace Unity.VisualScripting.Community
         {
             this.ScriptType = ScriptType;
             this.graphPointer = graphPointer;
+            if (gameObject == null && graphPointer != null && graphPointer.gameObject != null)
+            {
+                gameObject = graphPointer.gameObject;
+            }
         }
 
         private sealed class GeneratorScope

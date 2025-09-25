@@ -20,6 +20,20 @@ namespace Unity.VisualScripting.Community
             return nodePath;
         }
 
+        public static GraphReference GetReferenceWithGraph(GraphReference reference, IGraph graph)
+        {
+            if (reference.graph == graph) return reference;
+            foreach (var element in graph.elements)
+            {
+                if (element is IGraphParentElement graphParent)
+                {
+                    GetReferenceWithGraph(reference.ChildReference(graphParent, false), graph);
+                }
+            }
+
+            return null;
+        }
+
         public static string GetElementPath(GraphReference reference, string pathPrefix = " -> ")
         {
             string BuildPrefix(GraphReference nodePath, GraphReference rootRef)
@@ -106,7 +120,7 @@ namespace Unity.VisualScripting.Community
             return string.Join(pathPrefix, stack);
         }
 
-       public static string GetParentName(GraphReference reference)
+        public static string GetParentName(GraphReference reference)
         {
             if (reference.IsWithin<INesterUnit>())
             {

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -34,7 +35,10 @@ namespace Unity.VisualScripting.Community
                 {
                     if (@event.keyCode == KeyCode.Slash && @event.rawType == EventType.KeyUp && @event.CtrlOrCmd())
                     {
-                        CommentPopup.Open();
+                        CommentPopup.Open((node) =>
+                        {
+                            node.connectedElements.AddRange(canvas.selection.Where(e => e != node));
+                        });
                         firstSlash = false;
                     }
                 }

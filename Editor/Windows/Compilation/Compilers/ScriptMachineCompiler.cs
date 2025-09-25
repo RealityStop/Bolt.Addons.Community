@@ -14,9 +14,6 @@ namespace Unity.VisualScripting.Community
 {
     public class ScriptMachineCompiler : BaseCompiler
     {
-        private GameObject currentObject;
-        private int machineIndex;
-
         protected override string GetFilePath(UnityEngine.Object asset, PathConfig paths)
         {
             var machine = (ScriptMachine)asset;
@@ -32,17 +29,19 @@ namespace Unity.VisualScripting.Community
             return code;
         }
 
-        private string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
+        protected override string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
         {
             var machine = (ScriptMachine)asset;
             return Path.Combine(paths.ObjectsRelativePath, GetMachineName(machine).LegalMemberName() + ".cs");
         }
 
-        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
+        public override void PostProcess(UnityEngine.Object asset, PathConfig paths, Type type)
         {
+            if (asset is not ScriptMachine || type == null) return;
+            
             var machine = (ScriptMachine)asset;
+
             var scriptImporter = AssetImporter.GetAtPath(GetRelativeFilePath(asset, paths)) as MonoImporter;
-            var type = scriptImporter.GetScript().GetClass();
             var component = machine.gameObject.GetComponent(type);
             if (component == null)
             {
@@ -73,15 +72,9 @@ namespace Unity.VisualScripting.Community
 
         private string GetMachineName(ScriptMachine machine)
         {
-            if (currentObject != machine.gameObject)
-            {
-                machineIndex = 0;
-                currentObject = machine.gameObject;
-            }
-
             return machine.nest?.graph.title?.Length > 0
                 ? machine.nest.graph.title.LegalMemberName()
-                : machine.gameObject.name.Capitalize().First().Letter() + "_ScriptMachine_" + machineIndex++;
+                : machine.gameObject.name.Capitalize().First().Letter() + "_ScriptMachine_" + Array.IndexOf(machine.gameObject.GetComponents<ScriptMachine>(), machine);
         }
     }
 }

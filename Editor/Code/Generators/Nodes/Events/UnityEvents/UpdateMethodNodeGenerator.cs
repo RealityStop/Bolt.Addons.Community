@@ -18,15 +18,17 @@ namespace Unity.VisualScripting.Community
         {
         }
 
-        // Not used for UpdateMethodNodeGenerator
-        public sealed override string MethodBody => "";
+        /// <summary>
+        /// Not used for UpdateMethodNodeGenerator
+        /// </summary>
+        public sealed override string MethodBody => null;
         public override MethodModifier MethodModifier => MethodModifier.None;
         public override AccessModifier AccessModifier => AccessModifier.Private;
         public override string Name => unit.GetType().DisplayName().Replace(" ", "") + count;
         public abstract string GenerateUpdateCode(ControlGenerationData data, int indent);
         public override sealed string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeUtility.ToolTip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
             foreach (var param in Parameters)
             {
                 data.AddLocalNameInScope(param.name, param.type);

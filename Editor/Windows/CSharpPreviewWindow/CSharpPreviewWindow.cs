@@ -37,10 +37,12 @@ namespace Unity.VisualScripting.Community.CSharp
             win.titleContent = new GUIContent("C# Preview");
             win.minSize = new Vector2(400, 400);
             win.UpdateCodeDisplay();
+            window = win;
         }
 
         private void OnEnable()
         {
+            window = this;
             Selection.selectionChanged += OnSelectionChanged;
             OnSelectionChanged();
             UpdateCodeDisplay();
@@ -69,6 +71,7 @@ namespace Unity.VisualScripting.Community.CSharp
         public static void OpenWithCode(string code, bool canCompile)
         {
             var win = GetWindow<CSharpPreviewWindow>();
+            window = win;
             win.titleContent = new GUIContent("C# Preview");
             win.minSize = new Vector2(400, 400);
             win.manualCode = code;
@@ -105,7 +108,20 @@ namespace Unity.VisualScripting.Community.CSharp
         private string LoadCode()
         {
             if (_asset == null) return string.Empty;
+
+            if (CodeGeneratorValueUtility.currentAsset == null && _asset != null)
+                CodeGeneratorValueUtility.currentAsset = _asset;
+
             var generator = CodeGenerator.GetSingleDecorator(_asset);
+            if (_asset is GameObject @object)
+            {
+                var components = @object.GetComponents<ScriptMachine>();
+                if (components.Length > 0)
+                {
+                    (generator as GameObjectGenerator).current = components[Mathf.Clamp(currentComponentIndex, 0, components.Length - 1)];
+                    CodeGeneratorValueUtility.currentAsset = (generator as GameObjectGenerator).current;
+                }
+            }
             if (generator == null) return string.Empty;
 
             var code = generator.Generate(0);
@@ -117,7 +133,6 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             if (CodeGeneratorValueUtility.currentAsset == null && _asset != null)
                 CodeGeneratorValueUtility.currentAsset = _asset;
-
             DrawToolbar();
 
             if (showSettings)
@@ -352,7 +367,7 @@ namespace Unity.VisualScripting.Community.CSharp
         private string CleanLine(string line)
         {
             var toolTipText = CodeUtility.ExtractTooltip(line, out _);
-            string cleanText = CodeUtility.CleanCode(toolTipText);
+            string cleanText = CodeUtility.CleanCode(toolTipText, false);
             return RemoveColorTags(cleanText);
         }
         private float DrawLine(Rect rect, int index)
@@ -384,7 +399,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 bool isMatchingInLine = false;
                 foreach (var region in regions)
                 {
-
                     if (!string.IsNullOrEmpty(searchQuery) && !isMatchingInLine)
                     {
                         isMatchingInLine = true;
@@ -400,7 +414,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     }
 
                     var toolTipText = CodeUtility.ExtractTooltip(region.code, out var tooltip);
-                    string cleanText = CodeUtility.CleanCode(toolTipText);
+                    string cleanText = CodeUtility.CleanCode(toolTipText, false);
 
                     Vector2 size = noPaddingStyle.CalcSize(Temp(cleanText));
                     var content = string.IsNullOrEmpty(tooltip) ? Temp(cleanText) : Temp(cleanText, tooltip);
@@ -891,9 +905,8 @@ namespace Unity.VisualScripting.Community.CSharp
             scrollPosition.y = line * lineHeight;
         }
 
-        [SerializeField]
         private static CSharpPreviewWindow window;
-        public static void RefreshPreview(bool open = false)
+        public static CSharpPreviewWindow RefreshPreview(bool open = false)
         {
             if (window == null && open) window = GetWindow<CSharpPreviewWindow>();
             if (window != null)
@@ -901,6 +914,34 @@ namespace Unity.VisualScripting.Community.CSharp
                 window.UpdateCodeDisplay();
                 window.Repaint();
             }
+
+            return window;
+        }
+
+        [UnityEditor.Callbacks.DidReloadScripts]
+        private static void OnReload()
+        {
+            var manager = new CSharpPreviewSettingsManager();
+            manager.InitializeSettings();
+            manager.UpdateSettings(settings =>
+            {
+                foreach (var info in settings.pendingInfo)
+                {
+                    info.RestoreCompiler();
+                    if (info.compiler is not BaseCompiler compiler) continue;
+                    var type = AssetDatabase.LoadAssetAtPath<MonoScript>(info.relativePath).GetClass();
+                    try
+                    {
+                        compiler.PostProcess(info.@object, new PathConfig(), type);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"Error with post process for {compiler.GetType().Name}: {ex.Message}");
+                    }
+                }
+
+                settings.pendingInfo.Clear();
+            });
         }
     }
 }

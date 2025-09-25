@@ -69,13 +69,17 @@ namespace Unity.VisualScripting.Community
                 graph.units.Add(unitToRestoreTo);
                 unitToRestoreTo.graph = graph;
                 if (!addedUnits.Contains(unitToRestoreTo))
+                {
                     addedUnits.Add(unitToRestoreTo);
+                }
             }
             else
             {
                 unitToRestoreTo = (Unit)graph.units.First(u => u.guid == unitToRestoreTo.guid);
                 if (!addedUnits.Contains(unitToRestoreTo))
+                {
                     addedUnits.Add(unitToRestoreTo);
+                }
             }
 
             if (unitToRestoreTo.position != null)

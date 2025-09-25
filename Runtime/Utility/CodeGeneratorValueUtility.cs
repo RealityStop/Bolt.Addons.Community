@@ -230,12 +230,14 @@ namespace Unity.VisualScripting.Community
             }
         }
 #endif
-        private static Object EnsureCurrentAsset()
+        private static Object EnsureCurrentAsset(Object shouldBe = null)
         {
 #if UNITY_EDITOR
-
-            if (currentAsset != null) return currentAsset;
-            
+            if (shouldBe != null)
+            {
+                if (currentAsset != null && currentAsset == shouldBe) return currentAsset;
+            }
+            else if (currentAsset != null) return currentAsset;
             if (Selection.activeGameObject != null)
             {
                 currentAsset = requestMachine?.Invoke(Selection.activeGameObject);
@@ -251,6 +253,9 @@ namespace Unity.VisualScripting.Community
                     currentAsset = Selection.activeObject;
                 }
             }
+
+            if (shouldBe != null && currentAsset != shouldBe) currentAsset = shouldBe;
+
             return currentAsset;
 #else
             return null;
@@ -320,7 +325,7 @@ namespace Unity.VisualScripting.Community
         }
         public static Dictionary<string, Object> GetAllValues(Object target, bool clearObsolete = true)
         {
-            EnsureCurrentAsset();
+            EnsureCurrentAsset(target);
             EnsureLoaded();
             if (clearObsolete)
                 RemoveObsoleteValues(target);

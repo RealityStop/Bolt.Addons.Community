@@ -15,7 +15,7 @@ public class TodoGenerator : NodeGenerator<Todo>
 
 	public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
 	{
-		return MakeClickableForThisUnit(CodeBuilder.Indent(indent) + CodeBuilder.CommentHighlight("//TODO: " + base.Unit.CustomMessage)) + GetNextUnit(Unit.exit, data, indent);
+		return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeBuilder.CommentHighlight("//TODO: " + base.Unit.CustomMessage)) + GetNextUnit(Unit.exit, data, indent);
 	}
 }
 

@@ -8,17 +8,17 @@ namespace Unity.VisualScripting.Community
     {
         public bool isOn { get; private set; }
         private bool initialized;
-        // Used by the code generator to allow initialization via object initializer syntax.
         private bool _startOn;
+        // Used by the code generator to allow initialization via object initializer syntax.
         [GenerateProperty]
         public bool startOn
         {
             get => _startOn;
             set
             {
-                _startOn = value;
                 if (!initialized)
                 {
+                    _startOn = value;
                     isOn = value;
                     initialized = true;
                 }

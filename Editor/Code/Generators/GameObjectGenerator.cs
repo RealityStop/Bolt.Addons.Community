@@ -2,17 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Linq;
-using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
-using System.Collections;
-using Unity.VisualScripting.Community.Utility;
-using Mono.Cecil;
-
-
-#if PACKAGE_INPUT_SYSTEM_EXISTS
-using Unity.VisualScripting.InputSystem;
-using UnityEngine.InputSystem;
-#endif
 
 namespace Unity.VisualScripting.Community
 {
@@ -22,6 +12,20 @@ namespace Unity.VisualScripting.Community
     {
         public ScriptMachine[] components = new ScriptMachine[0];
         public ScriptMachine current;
+
+        private readonly Dictionary<object, ControlGenerationData> datas = new();
+
+        public override ControlGenerationData GetGenerationData()
+        {
+            if (datas.TryGetValue(current, out var data) && !data.isDisposed)
+            {
+                return data;
+            }
+            
+            datas[current] = CreateGenerationData();
+            return datas[current];
+        }
+
         protected override FlowGraph GetFlowGraph()
         {
             return current.nest?.graph;

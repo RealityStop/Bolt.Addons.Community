@@ -5,8 +5,9 @@ namespace Unity.VisualScripting.Community
     [RenamedFrom("ClearSavedVars")]
     [RenamedFrom("Unity.VisualScripting.Community.ClearSavedVars")]
     [UnitCategory("Community/Variables")]
-    [UnitTitle("Clear")]
-    [UnitSurtitle("Saved Variables")]
+    [UnitTitle("Clear Variables")]
+    [UnitShortTitle("Clear")]
+    [UnitSubtitle("Saved Variables")]
     [TypeIcon(typeof(FlowGraph))]
     public class ClearSavedVariables : Unit
     {

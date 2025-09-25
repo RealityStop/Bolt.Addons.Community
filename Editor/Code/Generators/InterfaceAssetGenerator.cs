@@ -9,6 +9,11 @@ namespace Unity.VisualScripting.Community
     [Serializable]
     public sealed class InterfaceAssetGenerator : CodeGenerator<InterfaceAsset>
     {
+        public override ControlGenerationData CreateGenerationData()
+        {
+            return new ControlGenerationData(typeof(object), null);
+        }
+
         public override string Generate(int indent)
         {
             if (Data != null)

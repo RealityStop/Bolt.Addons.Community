@@ -51,7 +51,7 @@ namespace Unity.VisualScripting.Community
 
             if (string.IsNullOrEmpty(kindAccessor))
             {
-                return MakeClickableForThisUnit(CodeUtility.ToolTip(
+                return MakeClickableForThisUnit(CodeUtility.ErrorTooltip(
                     $"{Unit.kind} Variables do not support connected names",
                     "Could not generate Variable",
                     string.Empty));

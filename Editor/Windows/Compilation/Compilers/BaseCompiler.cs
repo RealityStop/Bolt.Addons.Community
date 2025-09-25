@@ -6,16 +6,19 @@ using System.Reflection;
 using System.Linq;
 using System;
 using UnityEditor.Compilation;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community
 {
+    [Serializable]
     public abstract class BaseCompiler : IAssetCompiler
     {
         private static Dictionary<System.Reflection.Assembly, bool> _editorAssemblyCache = new Dictionary<System.Reflection.Assembly, bool>();
 
         protected abstract string GetFilePath(UnityEngine.Object asset, PathConfig paths);
+        protected abstract string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths);
         protected abstract string GenerateCode(UnityEngine.Object asset);
-        protected abstract void PostProcess(UnityEngine.Object asset, PathConfig paths);
+        public abstract void PostProcess(UnityEngine.Object asset, PathConfig paths, Type type);
 
         public void Compile(UnityEngine.Object asset, PathConfig paths)
         {
@@ -23,13 +26,26 @@ namespace Unity.VisualScripting.Community
             HUMIO.Delete(fullPath);
             HUMIO.Ensure(fullPath).Path();
 
+
             string code = GenerateCode(asset);
             HUMIO.Save(code).Custom(fullPath).Text(false);
 
-            CompilationPipeline.compilationFinished += (v) =>
+            string relativePath = GetRelativeFilePath(asset, paths);
+
+            // Use the C# Preview settings to serialize the info across reloads.
+            // This might not be the best solution but I tried everything to try and get this to work.
+            // So i am just going to go with this.
+            var manager = new CSharpPreviewSettingsManager();
+            manager.InitializeSettings();
+            manager.UpdateSettings(settings =>
             {
-                PostProcess(asset, paths);
-            };
+                settings.pendingInfo.Add(new CSharpPreviewSettings.CompilerInfo()
+                {
+                    @object = asset,
+                    relativePath = relativePath,
+                    compilerTypeName = GetType().AssemblyQualifiedName
+                });
+            });
         }
 
         protected bool IsEditorAssembly(System.Reflection.Assembly assembly, HashSet<string> visited)

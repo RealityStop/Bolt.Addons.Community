@@ -18,19 +18,17 @@ namespace Unity.VisualScripting.Community
         }
 
         public override bool canClip => false;
-
+        Vector3 lineStart;
+        Vector3 lineEnd;
         public override void DrawForeground()
         {
             Vector3 unitCenter = new Vector3(position.x + position.width / 2f, position.y + position.height / 2f);
+            Vector3 direction = Quaternion.Euler(0f, 0f, unit.rotationAngle) * Vector3.right;
 
-            float halfWidth = position.width / 2f;
-            float lineHalfWidth = halfWidth - arrowHandle / 2f;
+            float totalLength = position.width + unit.Length;
 
-            float lineLength = Mathf.Max(unit.Length, 0f);
-
-            Vector3 lineStart = unitCenter + Quaternion.Euler(0f, 0f, unit.rotationAngle) * new Vector3(-lineHalfWidth, 0f, 0f);
-            Vector3 lineEnd = unitCenter + Quaternion.Euler(0f, 0f, unit.rotationAngle) * new Vector3(lineHalfWidth + lineLength, 0f, 0f);
-
+            lineStart = unitCenter - direction * (totalLength / 2f);
+            lineEnd = unitCenter + direction * (totalLength / 2f);
             Handles.color = unit.Color;
 
             switch (unit.lineType)
@@ -52,7 +50,7 @@ namespace Unity.VisualScripting.Community
 
             if (unit.ShowSquare)
             {
-                DrawUnitPosition(unitCenter);
+                DrawUnitPosition(unitCenter, lineStart, lineEnd);
             }
 
             DrawTextField((lineStart + lineEnd) / 2f, unit.Text);
@@ -78,17 +76,17 @@ namespace Unity.VisualScripting.Community
             Handles.DrawAAConvexPolygon(arrowPoints);
         }
 
-        private void DrawUnitPosition(Vector3 unitCenter)
+        private void DrawUnitPosition(Vector3 unitCenter, Vector3 lineStart, Vector3 lineEnd)
         {
             float halfSize = arrowHandle / 2f;
 
-            if (!isMouseOver)
+            if (isMouseOver)
             {
-                Handles.color = Color.white;
+                Handles.color = Color.black;
             }
             else
             {
-                Handles.color = Color.black;
+                Handles.color = Color.white;
             }
             Handles.DrawAAConvexPolygon(
                 unitCenter + new Vector3(-halfSize, -halfSize, 0f),
@@ -114,7 +112,7 @@ namespace Unity.VisualScripting.Community
             GUI.Label(labelRect, content, style);
             Handles.EndGUI();
         }
-        
+
         private void DrawDottedLine(Vector3 start, Vector3 end, float segmentLength, float gapLength = 5f)
         {
             Vector3 direction = (end - start).normalized;
@@ -124,13 +122,13 @@ namespace Unity.VisualScripting.Community
             while (Vector3.Distance(currentPosition, end) > segmentLength)
             {
                 Vector3 segmentEnd = currentPosition + direction * segmentLength;
-                Handles.DrawLine(currentPosition, segmentEnd);
+                Handles.DrawAAPolyLine(currentPosition, segmentEnd);
                 currentPosition = segmentEnd + direction * gapLength;
             }
 
             if (Vector3.Distance(currentPosition, end) > 0f)
             {
-                Handles.DrawLine(currentPosition, end);
+                Handles.DrawAAPolyLine(currentPosition, end);
             }
         }
     }

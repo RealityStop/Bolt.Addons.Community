@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateAwakeCode(ControlGenerationData data, int indent)
         {
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeClickableForThisUnit(CodeUtility.ToolTip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
             return CodeBuilder.Indent(indent) + (GetTargetValueInput() != null ? GenerateValue(GetTargetValueInput(), data) + MakeClickableForThisUnit(GetListenerSetupCode()) : MakeClickableForThisUnit(GetListenerSetupCode()));
         }
 

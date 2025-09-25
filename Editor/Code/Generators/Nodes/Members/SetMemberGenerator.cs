@@ -33,7 +33,7 @@ namespace Unity.VisualScripting.Community
                 }
                 else
                 {
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + $".{memberName} = " + $"{inputValue}{MakeClickableForThisUnit(";")}\n");
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + $".{memberName} = ") + $"{inputValue}{MakeClickableForThisUnit(";")}\n";
                 }
                 output += GetNextUnit(Unit.assigned, data, indent);
 
@@ -45,7 +45,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return new ValueCode($"{GenerateValue(Unit.target, data)}", Unit.target.type, ShouldCast(Unit.target, data)) + MakeClickableForThisUnit(new ValueCode($".{Unit.member.name}"));
+            return Unit.CreateClickableString().Ignore(GenerateValue(Unit.target, data)).Cast(Unit.target.type, ShouldCast(Unit.target, data)).Dot().Clickable(Unit.member.name);
         }
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
@@ -75,7 +75,7 @@ namespace Unity.VisualScripting.Community
                     if (typeof(Component).IsAssignableFrom(input.type) || input.type == typeof(GameObject))
                     {
                         var inputCode = GetNextValueUnit(input, data);
-                        return new ValueCode(inputCode, typeof(GameObject), ShouldCast(input, data)) + MakeClickableForThisUnit($"{GetComponent(Unit.target, data)}");
+                        return Unit.CreateClickableString().Ignore(inputCode).Cast(typeof(GameObject), ShouldCast(input, data)).Clickable(GetComponent(Unit.target, data));
                     }
                     return GetNextValueUnit(input, data);
                 }
@@ -83,9 +83,9 @@ namespace Unity.VisualScripting.Community
                 {
                     if (Unit.target.nullMeansSelf)
                     {
-                        if (input.type.IsSubclassOf(typeof(Component)))
+                        if (typeof(Component).IsAssignableFrom(input.type))
                         {
-                            return MakeClickableForThisUnit("gameObject".VariableHighlight() + new ValueCode($"{GetComponent(Unit.target, data)}"));
+                            return MakeClickableForThisUnit("gameObject".VariableHighlight() + GetComponent(Unit.target, data));
                         }
                         else
                         {

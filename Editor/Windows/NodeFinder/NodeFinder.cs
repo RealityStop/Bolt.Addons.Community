@@ -103,7 +103,7 @@ namespace Unity.VisualScripting.Community
         private SearchMode _searchMode;
 
         [MenuItem("Window/Community Addons/Node Finder &f")]
-        public static void Open()
+        public static NodeFinderWindow Open()
         {
             var window = GetWindow<NodeFinderWindow>();
             window.titleContent = new GUIContent("Node Finder");
@@ -111,6 +111,7 @@ namespace Unity.VisualScripting.Community
             GUIContent searchIconContent = EditorGUIUtility.IconContent("d_ViewToolZoom");
             window.titleContent = new GUIContent("Node Finder", searchIconContent.image);
             window._focusSearchNextFrame = true;
+            return window;
         }
 
         private void Init()
@@ -318,8 +319,18 @@ namespace Unity.VisualScripting.Community
                 }
 
                 float y = viewRect.y + i * (lineHeight + lineSpacing);
-
                 Rect rowRect = new Rect(viewRect.x + 5, y, viewRect.width - 10, lineHeight);
+
+                for (int d = 1; d <= cached.Depth; d++)
+                {
+                    float lineX = rowRect.x + indentPerLevel * d - indentPerLevel / 2;
+                    Handles.color = Color.gray;
+                    Handles.DrawLine(
+                        new Vector3(lineX, rowRect.y, 0),
+                        new Vector3(lineX, rowRect.y + rowRect.height + lineSpacing, 0)
+                    );
+                }
+
                 Color oldColor = GUI.backgroundColor;
 
                 if (cached.Match.IsErrorUnit) GUI.backgroundColor = Color.red;
@@ -413,11 +424,11 @@ namespace Unity.VisualScripting.Community
 
                 if (unitQuery == "*")
                 {
-                    description = "Any unit";
+                    description = "Any element";
                 }
                 else if (!string.IsNullOrEmpty(unitQuery))
                 {
-                    description = $"Unit containing '{unitQuery}'";
+                    description = $"Element {(_searchMode == SearchMode.Contains ? "containing" : "starting with")} '{unitQuery}'";
                 }
 
                 if (portQuery != null)
@@ -500,6 +511,7 @@ namespace Unity.VisualScripting.Community
                         }
                     }
                 }
+                return;
             }
 
             foreach (var provider in _graphProviders.Values)
@@ -687,15 +699,17 @@ namespace Unity.VisualScripting.Community
 
         private void FocusMatchObject(MatchObject match)
         {
-            GraphWindow.OpenActive(match.Reference);
-            var context = match.Reference.Context();
-            if (context == null) return;
+            GraphUtility.OverrideContextIfNeeded(() =>
+            {
+                GraphWindow.OpenActive(match.Reference);
+                var context = match.Reference.Context();
+                if (context == null) return;
 
-            Selection.activeObject = match.Target;
-
-            context.BeginEdit();
-            context.canvas?.ViewElements(match.Element.Yield());
-            context.EndEdit();
+                Selection.activeObject = match.Target;
+                context.BeginEdit();
+                context.canvas?.ViewElements(match.Element.Yield());
+                context.EndEdit();
+            });
         }
 
         private void HighlightObject(MatchObject match)
@@ -766,7 +780,6 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-
         private class HelpPopup : PopupWindowContent
         {
             private Vector2 _scroll;
@@ -799,11 +812,12 @@ namespace Unity.VisualScripting.Community
                     "   Example:  Move | Jump   → matches elements containing 'Move' OR 'Jump'\n\n" +
                     "• Use '>' (arrow) to match connected ports of a unit.\n" +
                     "   Example:  Player > Target  → matches a unit named 'Player' with a port connected to something matching 'Target'\n\n" +
-                    "• You can nest advanced patterns:\n" +
+                    "• You can group Connection searches:\n" +
                     "   Move > Position | Rotate > Angle\n" +
                     "   → matches (Move connected to Position) OR (Rotate connected to Angle)\n\n" +
                     "   Move > Position > Target\n" +
-                    "   → matches a Move unit which has any port connected to Position, which is connected to Target from any port.\n\n" +
+                    "   → matches a Move unit which has any port connected to Position, which has any port connected to Target.\n\n" +
+                    "   Note: You cannot have nested groups for example Move Connected to (Position OR Angle) this is not supported\n\n" +
                     "• Use '@' tags to filter by port type:\n" +
                     "    - @CI> → Control Input\n" +
                     "    - @CO> → Control Output\n" +
@@ -815,7 +829,8 @@ namespace Unity.VisualScripting.Community
                     "   → matches a 'Move' unit's Control Output connected to a 'Target' unit match.\n\n" +
                     "   Note: Text after `>` or `|` is searched separately and still follows the selected search mode (Contains or Starts With).\n\n" +
                     "• '*' can be used at either side:\n" +
-                    "   * > Debug  → any unit connected to something containing 'Debug'",
+                    "   * > Debug  → any unit connected to something containing 'Debug'\n" +
+                    "   Debug > *  → something containing 'Debug' connected to any unit",
                     MessageType.None
                 );
 
@@ -824,6 +839,7 @@ namespace Unity.VisualScripting.Community
                 GUILayout.Label("Tips", EditorStyles.boldLabel);
                 EditorGUILayout.HelpBox(
                     $"• Press Alt + F to quickly focus the search field or window if not focused or open.\n" +
+                    $"• Hover over the 'Search:' label to see your query displayed in a more readable format.\n" +
                     "• Error nodes are always shown regardless of query.",
                     MessageType.None
                 );

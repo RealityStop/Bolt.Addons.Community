@@ -15,7 +15,7 @@ namespace Unity.VisualScripting.Community
 
             if (!generator.recursion?.TryEnter(node) ?? false)
             {
-                return generator.MakeClickableForThisUnit(CodeUtility.ToolTip($"{input.key} is infinitely generating itself. Consider reviewing your graph logic or Increasing recursion depth in preview Settings.", "Infinite recursion detected!", ""));
+                return generator.MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"{input.key} is infinitely generating itself. Consider reviewing your graph logic or Increasing recursion depth in preview Settings.", "Infinite recursion detected!", ""));
             }
 
             try
@@ -35,7 +35,7 @@ namespace Unity.VisualScripting.Community
 
             if (!generator.recursion?.TryEnter(node) ?? false)
             {
-                return generator.MakeClickableForThisUnit(CodeUtility.ToolTip($"{output.key} is infinitely generating itself. Consider reviewing your graph logic or Increasing recursion depth in preview Settings.", "Infinite recursion detected!", ""));
+                return generator.MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"{output.key} is infinitely generating itself. Consider reviewing your graph logic or Increasing recursion depth in preview Settings.", "Infinite recursion detected!", ""));
             }
 
             try
@@ -55,13 +55,13 @@ namespace Unity.VisualScripting.Community
 
             if (!generator.recursion?.TryEnter(node) ?? false)
             {
-                return CodeBuilder.Indent(indent) + generator.MakeClickableForThisUnit(CodeUtility.ToolTip("This node appears to cause infinite recursion(The flow is leading back to this node). Consider using a While loop instead or Increasing recursion depth in preview Settings.", "Infinite recursion detected!", ""));
+                return CodeBuilder.Indent(indent) + generator.MakeClickableForThisUnit(CodeUtility.ErrorTooltip("This node appears to cause infinite recursion(The flow is leading back to this node). Consider using a While loop instead or Increasing recursion depth in preview Settings.", "Infinite recursion detected!", ""));
             }
 
             try
             {
                 var commentNode = node.graph.units.FirstOrDefault(u => u is CommentNode commentNode && commentNode.connectedElements.Any(c => c == node));
-                string comment = commentNode != null ? GetComment(commentNode as CommentNode) + "\n" : "";
+                string comment = commentNode != null ? GetComment(commentNode as CommentNode, indent) + "\n" : "";
                 return comment + generator.GenerateControl(input, data, indent);
             }
             finally
@@ -70,16 +70,16 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private static string GetComment(CommentNode comment)
+        private static string GetComment(CommentNode comment, int indent)
         {
             var result = string.Empty;
 
             if (comment.hasTitle && !string.IsNullOrEmpty(comment.title))
             {
-                result += ("// " + comment.title).CommentHighlight();
+                result += CodeBuilder.Indent(indent) + CodeUtility.MakeClickable(comment, ("// " + comment.title).CommentHighlight());
 
                 if (!string.IsNullOrEmpty(comment.comment))
-                    result += " :".CommentHighlight();
+                    result += CodeUtility.MakeClickable(comment, " :".CommentHighlight());
                 result += "\n";
             }
 
@@ -92,7 +92,7 @@ namespace Unity.VisualScripting.Community
 
                 foreach (var line in lines)
                 {
-                    result += ("// " + line.TrimEnd()).CommentHighlight() + "\n";
+                    result += CodeBuilder.Indent(indent) + CodeUtility.MakeClickable(comment, ("// " + line.TrimEnd()).CommentHighlight()) + "\n";
                 }
             }
 

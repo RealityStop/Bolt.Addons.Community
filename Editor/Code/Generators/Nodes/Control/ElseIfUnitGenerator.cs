@@ -29,7 +29,7 @@ namespace Unity.VisualScripting.Community
                 if (IsFalseLiteral(Unit.condition))
                 {
                     output.AppendLine(CodeBuilder.Indent(indent + 1) +
-                        MakeClickableForThisUnit(CodeUtility.ToolTip(
+                        MakeClickableForThisUnit(CodeUtility.ErrorTooltip(
                             $"The code in the 'If' branch is unreachable because the condition is always false.",
                             $"Unreachable Code in 'If' Branch: {Unit.If.key}", "")));
                 }
@@ -75,7 +75,7 @@ namespace Unity.VisualScripting.Community
                         }
 
                         output.AppendLine(CodeBuilder.Indent(indent + 1) +
-                            MakeClickableForThisUnit(CodeUtility.ToolTip(reason, $"Unreachable Code in 'Else If' Branch: {controlOutput.key}", "")));
+                            MakeClickableForThisUnit(CodeUtility.ErrorTooltip(reason, $"Unreachable Code in 'Else If' Branch: {controlOutput.key}", "")));
                     }
 
                     output.Append(GetNextUnit(controlOutput, data, indent + 1));
@@ -93,7 +93,7 @@ namespace Unity.VisualScripting.Community
 
                     data.NewScope();
                     if (foundTrue)
-                        output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ToolTip("This branch is unreachable because a prior condition is always true.", $"Unreachable Code in 'Else'", "")));
+                        output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip("This branch is unreachable because a prior condition is always true.", $"Unreachable Code in 'Else'", "")));
                     output.Append(GetNextUnit(Unit.Else, data, indent + 1));
                     data.ExitScope();
 

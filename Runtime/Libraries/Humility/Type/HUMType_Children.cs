@@ -1016,124 +1016,96 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 return HightlightedLiteral(value, newLine, fullName, variableForObjects);
             }
+
             var members = GetCachedMembers(value?.GetType());
             var output = string.Empty;
             var usableMembers = new List<MemberInfo>();
-            var isMultiLine = members.Length > 2;
 
-            // Check if the value is a dictionary and if it has more than 0 elements
-            if (value is IDictionary dictionary && dictionary.Count > 0)
+            foreach (var member in members)
             {
-                isMultiLine = true;
-            }
-
-            for (int i = 0; i < members.Length; i++)
-            {
-                var member = members[i];
                 if (member is FieldInfo field)
                 {
                     if (field.IsPublic && !field.IsStatic && !field.IsInitOnly)
-                    {
                         usableMembers.Add(field);
-                    }
                 }
                 else if (member is PropertyInfo property)
                 {
                     if (property.SetMethod != null && property.SetMethod.IsPublic && !property.IsStatic())
-                    {
                         usableMembers.Add(property);
-                    }
                 }
             }
 
-            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) + "new " + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName, false) : GenericDeclaration(value.GetType(), fullName), false) + (value.GetType().IsArray ? "" : "()");
+            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) +
+            "new " + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName, false) : GenericDeclaration(value.GetType(), fullName)) +
+            (value.GetType().IsArray ? "" : "()");
+
+            bool isMultiLine = (value is ICollection col && col.Count > 0) || usableMembers.Count > 0;
 
             if (isMultiLine)
             {
-                output += "\n" + CodeBuilder.GetCurrentIndent() + ((value is ICollection collection && collection.Count > 0) || usableMembers.Count > 0 ? "{" : string.Empty) + "\n";
-            }
-            else
-            {
-                output += (value is ICollection collection && collection.Count > 0) || usableMembers.Count > 0 ? $"\n{CodeBuilder.GetCurrentIndent()}{{" : string.Empty;
-            }
-
-            if (value is IDictionary or IList)
+                output += "\n" + CodeBuilder.GetCurrentIndent() + "{";
                 CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
+            }
 
             var indent = CodeBuilder.GetCurrentIndent();
 
-            if (value is IList list)
+            if (value is IList list && list.Count > 0)
             {
-                int index = 0;
-                foreach (var item in list)
+                for (int i = 0; i < list.Count; i++)
                 {
-                    if (list.Count > 2)
-                    {
-                        output += "\n";
-                        output += indent + item.As().Code(true, true, false, "", false, fullName, variableForObjects);
-                    }
-                    else
-                    {
-                        output += (index == 0 ? " " : "") + item.As().Code(true, true, false, "", false, fullName, variableForObjects);
-                    }
+                    output += "\n" + indent +
+                    list[i].As().Code(true, true, false, "", false, fullName, variableForObjects);
 
-                    if (++index != list.Count)
-                    {
+                    if (i < list.Count - 1)
                         output += ", ";
-                    }
                 }
             }
-            else if (value is IDictionary _dictionary)
+            else if (value is IDictionary dict && dict.Count > 0)
             {
-                int index = 0;
-                foreach (DictionaryEntry entry in _dictionary)
+                int i = 0;
+                foreach (DictionaryEntry entry in dict)
                 {
-                    string newLinestr = _dictionary.Count > 2 ? "\n" : "";
-                    output += indent + "{ ";
-                    output += entry.Key.As().Code(true, true, false, "", false, fullName, variableForObjects);
-                    output += ", ";
-                    output += entry.Value.As().Code(true, true, false, "", false, fullName, variableForObjects);
-                    output += " }";
-                    if (++index != _dictionary.Count)
-                    {
-                        output += $", {newLinestr}";
-                    }
-                }
-            }
-            else if (value is Array array)
-            {
-                int index = 0;
-                foreach (var item in array)
-                {
-                    if (array.Length > 2)
-                    {
-                        output += "\n";
-                        output += indent + item.As().Code(true, true, false, "", false, fullName, variableForObjects);
-                    }
-                    else
-                    {
-                        output += (index == 0 ? " " : "") + item.As().Code(true, true, false, "", false, fullName, variableForObjects);
-                    }
+                    output += "\n" + indent + "{ " +
+                    entry.Key.As().Code(true, true, false, "", false, fullName, variableForObjects) +
+                    ", " +
+                    entry.Value.As().Code(true, true, false, "", false, fullName, variableForObjects) +
+                    " }";
 
-                    if (++index != array.Length)
-                    {
+                    if (++i < dict.Count)
                         output += ", ";
-                    }
+                }
+            }
+            else if (value is Array array && array.Length > 0)
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    output += "\n" + indent +
+                    array.GetValue(i).As().Code(true, true, false, "", false, fullName, variableForObjects);
+
+                    if (i < array.Length - 1)
+                        output += ", ";
                 }
             }
 
-            if (isMultiLine)
-                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
             for (int i = 0; i < usableMembers.Count; i++)
             {
-                var _value = usableMembers[i] is FieldInfo fieldInfo ? fieldInfo.GetValueOptimized(value) : ((PropertyInfo)usableMembers[i]).GetValueOptimized(value);
-                output += (isMultiLine ? CodeBuilder.GetCurrentIndent() : string.Empty) + usableMembers[i].Name + " = " + _value.As().Code(true, true, false, "", false, fullName, variableForObjects);
-                output += i < usableMembers.Count - 1 ? ", " + (isMultiLine ? "\n" : string.Empty) : string.Empty;
-            }
-            if (isMultiLine)
-                CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
+                var memberValue = usableMembers[i] is FieldInfo f
+                    ? f.GetValueOptimized(value)
+                    : ((PropertyInfo)usableMembers[i]).GetValueOptimized(value);
 
-            output += isMultiLine ? "\n" + (value is ICollection ? CodeBuilder.Indent(CodeBuilder.currentIndent - 1) : CodeBuilder.Indent(CodeBuilder.currentIndent)) + "}" : (value is ICollection collectionWithItems && collectionWithItems.Count > 0) || usableMembers.Count > 0 ? $"\n{CodeBuilder.Indent(CodeBuilder.currentIndent - 1)}}}" : string.Empty;
+                output += "\n" + indent +
+                          usableMembers[i].Name + " = " +
+                          memberValue.As().Code(true, true, false, "", false, fullName, variableForObjects);
+
+                if (i < usableMembers.Count - 1)
+                    output += ", ";
+            }
+
+            if (isMultiLine)
+            {
+                CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
+                output += "\n" + CodeBuilder.GetCurrentIndent() + "}";
+            }
 
             return output;
         }
@@ -1143,120 +1115,93 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             var members = GetCachedMembers(value?.GetType());
             var output = string.Empty;
             var usableMembers = new List<MemberInfo>();
-            var isMultiLine = members.Length > 2;
 
-            if (value is IDictionary dictionary && dictionary.Count > 0)
+            foreach (var member in members)
             {
-                isMultiLine = true;
-            }
-
-            for (int i = 0; i < members.Length; i++)
-            {
-                var member = members[i];
                 if (member is FieldInfo field)
                 {
                     if (field.IsPublic && !field.IsStatic && !field.IsInitOnly)
-                    {
                         usableMembers.Add(field);
-                    }
                 }
                 else if (member is PropertyInfo property)
                 {
                     if (property.SetMethod != null && property.SetMethod.IsPublic && !property.IsStatic())
-                    {
                         usableMembers.Add(property);
-                    }
                 }
             }
 
-            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) + "new ".ConstructHighlight() + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName) : GenericDeclaration(value.GetType(), fullName)) + (value.GetType().IsArray ? "" : "()");
+            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) +
+            "new ".ConstructHighlight() +
+            (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName) : GenericDeclaration(value.GetType(), fullName)) +
+            (value.GetType().IsArray ? "" : "()");
+
+            bool isMultiLine = (value is ICollection col && col.Count > 0) || usableMembers.Count > 0;
 
             if (isMultiLine)
             {
-                output += "\n" + CodeBuilder.GetCurrentIndent() + ((value is ICollection collection && collection.Count > 0) || usableMembers.Count > 0 ? "{" : string.Empty) + "\n";
-            }
-            else
-            {
-                output += (value is ICollection collection && collection.Count > 0) || usableMembers.Count > 0 ? $"\n{CodeBuilder.GetCurrentIndent()}{{\n{CodeBuilder.GetCurrentIndent(1)}" : string.Empty;
-            }
-
-            if (value is IDictionary or IList)
+                output += "\n" + CodeBuilder.GetCurrentIndent() + "{";
                 CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
+            }
 
             var indent = CodeBuilder.GetCurrentIndent();
 
-            if (value is IList list)
+            if (value is IList list && list.Count > 0)
             {
-                int index = 0;
-                foreach (var item in list)
+                for (int i = 0; i < list.Count; i++)
                 {
-                    if (list.Count > 2)
-                    {
-                        output += "\n";
-                        output += indent + item.As().Code(true, true, true, "", false, fullName, variableForObjects);
-                    }
-                    else
-                    {
-                        output += (index == 0 ? " " : "") + item.As().Code(true, true, true, "", false, fullName, variableForObjects);
-                    }
+                    output += "\n" + indent +
+                    list[i].As().Code(true, true, true, "", false, fullName, variableForObjects);
 
-                    if (++index != list.Count)
-                    {
+                    if (i < list.Count - 1)
                         output += ", ";
-                    }
                 }
             }
-            else if (value is IDictionary _dictionary)
+            else if (value is IDictionary dict && dict.Count > 0)
             {
-                int index = 0;
-                foreach (DictionaryEntry entry in _dictionary)
+                int i = 0;
+                foreach (DictionaryEntry entry in dict)
                 {
-                    string newLinestr = _dictionary.Count > 2 ? "\n" : "";
-                    output += indent + "{ ";
-                    output += entry.Key.As().Code(true, true, true, "", false, fullName, variableForObjects);
+                    output += "\n" + indent + "{ " +
+                    entry.Key.As().Code(true, true, true, "", false, fullName, variableForObjects) +
+                    ", " +
+                    entry.Value.As().Code(true, true, true, "", false, fullName, variableForObjects) +
+                    " }";
+
+                    if (++i < dict.Count)
+                        output += ", ";
+                }
+            }
+            else if (value is Array array && array.Length > 0)
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    output += "\n" + indent +
+                    array.GetValue(i).As().Code(true, true, true, "", false, fullName, variableForObjects);
+
+                    if (i < array.Length - 1)
+                        output += ", ";
+                }
+            }
+
+            for (int i = 0; i < usableMembers.Count; i++)
+            {
+                var memberValue = usableMembers[i] is FieldInfo f
+                    ? f.GetValueOptimized(value)
+                    : ((PropertyInfo)usableMembers[i]).GetValueOptimized(value);
+
+                output += "\n" + indent +
+                usableMembers[i].Name.VariableHighlight() + " = " +
+                memberValue.As().Code(true, true, true, "", false, fullName, variableForObjects);
+
+                if (i < usableMembers.Count - 1)
                     output += ", ";
-                    output += entry.Value.As().Code(true, true, true, "", false, fullName, variableForObjects);
-                    output += " }";
-                    if (++index != _dictionary.Count)
-                    {
-                        output += $", {newLinestr}";
-                    }
-                }
-            }
-            else if (value is Array array)
-            {
-                int index = 0;
-                foreach (var item in array)
-                {
-                    if (array.Length > 2)
-                    {
-                        output += "\n";
-                        output += indent + item.As().Code(true, true, true, "", false, fullName, variableForObjects);
-                    }
-                    else
-                    {
-                        output += (index == 0 ? " " : "") + item.As().Code(true, true, true, "", false, fullName, variableForObjects);
-                    }
-
-                    if (++index != array.Length)
-                    {
-                        output += ", ";
-                    }
-                }
             }
 
             if (isMultiLine)
-                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
-            for (int i = 0; i < usableMembers.Count; i++)
             {
-                var _value = usableMembers[i] is FieldInfo fieldInfo ? fieldInfo.GetValueOptimized(value) : ((PropertyInfo)usableMembers[i]).GetValueOptimized(value);
-                output += (isMultiLine ? CodeBuilder.GetCurrentIndent() : string.Empty) + usableMembers[i].Name.VariableHighlight() + " = " + _value.As().Code(true, true, true, "", false, fullName, variableForObjects);
-                output += i < usableMembers.Count - 1 ? ", " + (isMultiLine ? "\n" : string.Empty) : string.Empty;
-            }
-            if (isMultiLine || (value is ICollection _collection && _collection.Count > 0))
                 CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
-
-            output += isMultiLine ? "\n" + (value is ICollection ? CodeBuilder.Indent(CodeBuilder.currentIndent - 1) : CodeBuilder.Indent(CodeBuilder.currentIndent)) + "}" : (value is ICollection collectionWithItems && collectionWithItems.Count > 0) || usableMembers.Count > 0 ? $"\n{CodeBuilder.Indent(CodeBuilder.currentIndent - 1)}}}" : string.Empty;
+                output += "\n" + CodeBuilder.GetCurrentIndent() + "}";
+            }
 
             return output;
         }
@@ -1267,123 +1212,95 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 return HighlightedLiteral(value, unit, newLine, fullName, variableForObjects);
             }
+
             var members = GetCachedMembers(value?.GetType());
             var output = string.Empty;
             var usableMembers = new List<MemberInfo>();
-            var isMultiLine = members.Length > 2;
 
-            if (value is IDictionary dictionary && dictionary.Count > 0)
+            foreach (var member in members)
             {
-                isMultiLine = true;
-            }
-
-            for (int i = 0; i < members.Length; i++)
-            {
-                var member = members[i];
                 if (member is FieldInfo field)
                 {
                     if (field.IsPublic && !field.IsStatic && !field.IsInitOnly)
-                    {
                         usableMembers.Add(field);
-                    }
                 }
                 else if (member is PropertyInfo property)
                 {
                     if (property.SetMethod != null && property.SetMethod.IsPublic && !property.IsStatic())
-                    {
                         usableMembers.Add(property);
-                    }
                 }
             }
 
-            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) + CodeUtility.MakeClickable(unit, "new " + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName, false) : GenericDeclaration(value.GetType(), fullName), false) + (value.GetType().IsArray ? "" : "()"));
+            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) + CodeUtility.MakeClickable(unit,
+            "new " +
+            (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName, false) : GenericDeclaration(value.GetType(), fullName)) +
+            (value.GetType().IsArray ? "" : "()"));
 
-            if (isMultiLine)
+            if ((value is ICollection c && c.Count > 0) || usableMembers.Count > 0)
             {
-                output += "\n" + CodeBuilder.GetCurrentIndent() + CodeUtility.MakeClickable(unit, (value is ICollection collection && collection.Count > 0) || usableMembers.Count > 0 ? "{" : string.Empty) + "\n";
-            }
-            else
-            {
-                output += (value is ICollection collection && collection.Count > 0) || usableMembers.Count > 0 ? $"\n{CodeBuilder.GetCurrentIndent()}{CodeUtility.MakeClickable(unit, "{")}" : string.Empty;
-            }
-
-            if (value is IDictionary or IList)
+                output += "\n" + CodeBuilder.GetCurrentIndent() + CodeUtility.MakeClickable(unit, "{");
                 CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
+            }
 
             var indent = CodeBuilder.GetCurrentIndent();
 
-            if (value is IList list)
+            if (value is IList list && list.Count > 0)
             {
-                int index = 0;
-                foreach (var item in list)
+                for (int i = 0; i < list.Count; i++)
                 {
-                    if (list.Count > 2)
-                    {
-                        output += "\n";
-                        output += indent + CodeUtility.MakeClickable(unit, item.As().Code(true, true, false, "", false, fullName, variableForObjects));
-                    }
-                    else
-                    {
-                        output += (index == 0 ? " " : "") + CodeUtility.MakeClickable(unit, item.As().Code(true, true, false, "", false, fullName, variableForObjects));
-                    }
+                    output += "\n" + indent + list[i].As().Code(true, unit, true, false, "", false, fullName, variableForObjects);
 
-                    if (++index != list.Count)
-                    {
-                        output += CodeUtility.MakeClickable(unit, ", ");
-                    }
+                    if (i < list.Count - 1)
+                        output += CodeUtility.MakeClickable(unit, ",");
                 }
             }
-            else if (value is IDictionary _dictionary)
+            else if (value is IDictionary dict && dict.Count > 0)
             {
-                int index = 0;
-                foreach (DictionaryEntry entry in _dictionary)
+                int i = 0;
+                foreach (DictionaryEntry entry in dict)
                 {
-                    string newLinestr = _dictionary.Count > 2 ? "\n" : "";
-                    output += indent + CodeUtility.MakeClickable(unit, "{ ");
-                    output += CodeUtility.MakeClickable(unit, entry.Key.As().Code(true, true, false, "", false, fullName, variableForObjects));
-                    output += CodeUtility.MakeClickable(unit, ", ");
-                    output += CodeUtility.MakeClickable(unit, entry.Value.As().Code(true, true, false, "", false, fullName, variableForObjects));
-                    output += CodeUtility.MakeClickable(unit, " }");
-                    if (++index != _dictionary.Count)
-                    {
-                        output += CodeUtility.MakeClickable(unit, ",") + $" {newLinestr}";
-                    }
+                    output += "\n" + indent +
+                              CodeUtility.MakeClickable(unit, "{ ") +
+                                  entry.Key.As().Code(true, unit, true, false, "", false, fullName, variableForObjects) +
+                              CodeUtility.MakeClickable(unit, ", ") +
+                                  entry.Value.As().Code(true, unit, true, false, "", false, fullName, variableForObjects) +
+                              CodeUtility.MakeClickable(unit, " }");
+
+                    if (++i < dict.Count)
+                        output += CodeUtility.MakeClickable(unit, ",");
                 }
             }
-            else if (value is Array array)
+            else if (value is Array array && array.Length > 0)
             {
-                int index = 0;
-                foreach (var item in array)
+                for (int i = 0; i < array.Length; i++)
                 {
-                    if (array.Length > 2)
-                    {
-                        output += "\n";
-                        output += indent + CodeUtility.MakeClickable(unit, item.As().Code(true, true, false, "", false, fullName, variableForObjects));
-                    }
-                    else
-                    {
-                        output += (index == 0 ? " " : "") + CodeUtility.MakeClickable(unit, item.As().Code(true, true, false, "", false, fullName, variableForObjects));
-                    }
+                    output += "\n" + indent + array.GetValue(i).As().Code(true, unit, true, false, "", false, fullName, variableForObjects);
 
-                    if (++index != array.Length)
-                    {
-                        output += CodeUtility.MakeClickable(unit, ", ");
-                    }
+                    if (i < array.Length - 1)
+                        output += CodeUtility.MakeClickable(unit, ",");
                 }
             }
 
-            if (isMultiLine)
-                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
             for (int i = 0; i < usableMembers.Count; i++)
             {
-                var _value = usableMembers[i] is FieldInfo fieldInfo ? fieldInfo.GetValueOptimized(value) : ((PropertyInfo)usableMembers[i]).GetValueOptimized(value);
-                output += (isMultiLine ? CodeBuilder.GetCurrentIndent() : string.Empty) + CodeUtility.MakeClickable(unit, usableMembers[i].Name + " = " + _value.As().Code(true, true, false, "", false, fullName, variableForObjects));
-                output += i < usableMembers.Count - 1 ? CodeUtility.MakeClickable(unit, ", ") + (isMultiLine ? "\n" : string.Empty) : string.Empty;
-            }
-            if (isMultiLine)
-                CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
+                var member = usableMembers[i];
+                var memberValue = member is FieldInfo f ? f.GetValueOptimized(value) : ((PropertyInfo)member).GetValueOptimized(value);
 
-            output += isMultiLine ? "\n" + (value is ICollection ? CodeBuilder.Indent(CodeBuilder.currentIndent - 1) : CodeBuilder.Indent(CodeBuilder.currentIndent)) + CodeUtility.MakeClickable(unit, "}") : (value is ICollection collectionWithItems && collectionWithItems.Count > 0) || usableMembers.Count > 0 ? $"\n{CodeBuilder.Indent(CodeBuilder.currentIndent - 1)}" + CodeUtility.MakeClickable(unit, "}") : string.Empty;
+                output += "\n" + indent + CodeUtility.MakeClickable(unit,
+                member.Name +
+                " = ") +
+                memberValue.As().Code(true, unit, true, false, "", false, fullName, variableForObjects);
+
+                if (i < usableMembers.Count - 1)
+                    output += CodeUtility.MakeClickable(unit, ",");
+            }
+
+            if ((value is ICollection col && col.Count > 0) || usableMembers.Count > 0)
+            {
+                CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
+                output += "\n" + CodeBuilder.GetCurrentIndent() +
+                CodeUtility.MakeClickable(unit, "}");
+            }
 
             return output;
         }
@@ -1393,121 +1310,91 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             var members = GetCachedMembers(value?.GetType());
             var output = string.Empty;
             var usableMembers = new List<MemberInfo>();
-            var isMultiLine = members.Length > 2;
 
-            // Check if the value is a dictionary and if it has more than 0 elements
-            if (value is IDictionary dictionary && dictionary.Count > 0)
+            foreach (var member in members)
             {
-                isMultiLine = true;
-            }
-
-            for (int i = 0; i < members.Length; i++)
-            {
-                var member = members[i];
                 if (member is FieldInfo field)
                 {
                     if (field.IsPublic && !field.IsStatic && !field.IsInitOnly)
-                    {
                         usableMembers.Add(field);
-                    }
                 }
                 else if (member is PropertyInfo property)
                 {
                     if (property.SetMethod != null && property.SetMethod.IsPublic && !property.IsStatic())
-                    {
                         usableMembers.Add(property);
-                    }
                 }
             }
 
-            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) + CodeUtility.MakeClickable(unit, "new ".ConstructHighlight() + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName) : GenericDeclaration(value.GetType(), fullName)) + (value.GetType().IsArray ? "" : "()"));
+            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) +
+            CodeUtility.MakeClickable(unit, "new ".ConstructHighlight() +
+            (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName) : GenericDeclaration(value.GetType(), fullName)) +
+            (value.GetType().IsArray ? "" : "()"));
 
-            if (isMultiLine)
+            if ((value is ICollection c && c.Count > 0) || usableMembers.Count > 0)
             {
-                output += "\n" + CodeBuilder.GetCurrentIndent() + CodeUtility.MakeClickable(unit, (value is ICollection collection && collection.Count > 0) || usableMembers.Count > 0 ? "{" : string.Empty) + "\n";
-            }
-            else
-            {
-                output += (value is ICollection collection && collection.Count > 0) || usableMembers.Count > 0 ? $"\n{CodeBuilder.GetCurrentIndent()}{CodeUtility.MakeClickable(unit, "{")}" : string.Empty;
-            }
-
-            if (value is IDictionary or IList)
+                output += "\n" + CodeBuilder.GetCurrentIndent() + CodeUtility.MakeClickable(unit, "{");
                 CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
+            }
 
             var indent = CodeBuilder.GetCurrentIndent();
 
-            if (value is IList list)
+            if (value is IList list && list.Count > 0)
             {
-                int index = 0;
-                foreach (var item in list)
+                for (int i = 0; i < list.Count; i++)
                 {
-                    if (list.Count > 2)
-                    {
-                        output += "\n";
-                        output += indent + CodeUtility.MakeClickable(unit, item.As().Code(true, true, true, "", false, fullName, variableForObjects));
-                    }
-                    else
-                    {
-                        output += (index == 0 ? " " : "") + CodeUtility.MakeClickable(unit, item.As().Code(true, true, true, "", false, fullName, variableForObjects));
-                    }
+                    output += "\n" + indent + list[i].As().Code(true, unit, true, true, "", false, fullName, variableForObjects);
 
-                    if (++index != list.Count)
-                    {
-                        output += CodeUtility.MakeClickable(unit, ", ");
-                    }
+                    if (i < list.Count - 1)
+                        output += CodeUtility.MakeClickable(unit, ",");
                 }
             }
-            else if (value is IDictionary _dictionary)
+            else if (value is IDictionary dict && dict.Count > 0)
             {
-                int index = 0;
-                foreach (DictionaryEntry entry in _dictionary)
+                int i = 0;
+                foreach (DictionaryEntry entry in dict)
                 {
-                    string newLinestr = _dictionary.Count > 2 ? "\n" : "";
-                    output += indent + CodeUtility.MakeClickable(unit, "{ ");
-                    output += CodeUtility.MakeClickable(unit, entry.Key.As().Code(true, true, true, "", false, fullName, variableForObjects));
-                    output += CodeUtility.MakeClickable(unit, ", ");
-                    output += CodeUtility.MakeClickable(unit, entry.Value.As().Code(true, true, true, "", false, fullName, variableForObjects));
-                    output += CodeUtility.MakeClickable(unit, " }");
-                    if (++index != _dictionary.Count)
-                    {
-                        output += CodeUtility.MakeClickable(unit, ",") + $" {newLinestr}";
-                    }
+                    output += "\n" + indent +
+                              CodeUtility.MakeClickable(unit, "{ ") +
+                                  entry.Key.As().Code(true, unit, true, true, "", false, fullName, variableForObjects) +
+                              CodeUtility.MakeClickable(unit, ", ") +
+                                  entry.Value.As().Code(true, unit, true, true, "", false, fullName, variableForObjects) +
+                              CodeUtility.MakeClickable(unit, " }");
+
+                    if (++i < dict.Count)
+                        output += CodeUtility.MakeClickable(unit, ",");
                 }
             }
-            else if (value is Array array)
+            else if (value is Array array && array.Length > 0)
             {
-                int index = 0;
-                foreach (var item in array)
+                for (int i = 0; i < array.Length; i++)
                 {
-                    if (array.Length > 2)
-                    {
-                        output += "\n";
-                        output += indent + CodeUtility.MakeClickable(unit, item.As().Code(true, true, true, "", false, fullName, variableForObjects));
-                    }
-                    else
-                    {
-                        output += (index == 0 ? " " : "") + CodeUtility.MakeClickable(unit, item.As().Code(true, true, true, "", false, fullName, variableForObjects));
-                    }
+                    output += "\n" + indent + array.GetValue(i).As().Code(true, unit, true, true, "", false, fullName, variableForObjects);
 
-                    if (++index != array.Length)
-                    {
-                        output += CodeUtility.MakeClickable(unit, ", ");
-                    }
+                    if (i < array.Length - 1)
+                        output += CodeUtility.MakeClickable(unit, ",");
                 }
             }
 
-            if (isMultiLine)
-                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
             for (int i = 0; i < usableMembers.Count; i++)
             {
-                var _value = usableMembers[i] is FieldInfo fieldInfo ? fieldInfo.GetValueOptimized(value) : ((PropertyInfo)usableMembers[i]).GetValueOptimized(value);
-                output += (isMultiLine ? CodeBuilder.GetCurrentIndent() : string.Empty) + CodeUtility.MakeClickable(unit, usableMembers[i].Name.VariableHighlight() + " = " + _value.As().Code(true, true, true, "", false, fullName, variableForObjects));
-                output += i < usableMembers.Count - 1 ? CodeUtility.MakeClickable(unit, ", ") + (isMultiLine ? "\n" : string.Empty) : string.Empty;
-            }
-            if (isMultiLine)
-                CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
+                var member = usableMembers[i];
+                var memberValue = member is FieldInfo f ? f.GetValueOptimized(value) : ((PropertyInfo)member).GetValueOptimized(value);
 
-            output += isMultiLine ? "\n" + (value is ICollection ? CodeBuilder.Indent(CodeBuilder.currentIndent - 1) : CodeBuilder.Indent(CodeBuilder.currentIndent)) + CodeUtility.MakeClickable(unit, "}") : (value is ICollection collectionWithItems && collectionWithItems.Count > 0) || usableMembers.Count > 0 ? $"\n{CodeBuilder.Indent(CodeBuilder.currentIndent - 1)}" + CodeUtility.MakeClickable(unit, "}") : string.Empty;
+                output += "\n" + indent + CodeUtility.MakeClickable(unit,
+                member.Name.VariableHighlight() +
+                " = ") +
+                memberValue.As().Code(true, unit, true, true, "", false, fullName, variableForObjects);
+
+                if (i < usableMembers.Count - 1)
+                    output += CodeUtility.MakeClickable(unit, ",");
+            }
+
+            if ((value is ICollection col && col.Count > 0) || usableMembers.Count > 0)
+            {
+                CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
+                output += "\n" + CodeBuilder.GetCurrentIndent() +
+                CodeUtility.MakeClickable(unit, "}");
+            }
 
             return output;
         }

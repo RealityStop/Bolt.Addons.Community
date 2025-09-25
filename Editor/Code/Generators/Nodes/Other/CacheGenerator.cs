@@ -17,7 +17,7 @@ namespace Unity.VisualScripting.Community
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             
-            return MakeClickableForThisUnit(data.GetVariableName(Name, true, CodeUtility.ToolTip($"The variable '{Name}' could not be found, it could be because you are trying to access this value across different flows.", $"Error finding variable {Name}", "")).VariableHighlight());
+            return MakeClickableForThisUnit(data.GetVariableName(Name, true, CodeUtility.ErrorTooltip($"The variable '{Name}' could not be found, it could be because you are trying to access this value across different flows.", $"Error finding variable {Name}", "")).VariableHighlight());
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)

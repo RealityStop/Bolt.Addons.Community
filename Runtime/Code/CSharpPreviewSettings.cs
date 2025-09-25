@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,6 +17,9 @@ namespace Unity.VisualScripting.Community
         public Color InterfaceColor = new Color(221, 255, 187, 255);
 
         public float zoomValue = 1f;
+
+        [HideInInspector]
+        public List<CompilerInfo> pendingInfo = new List<CompilerInfo>();
 
         [HideInInspector]
         public bool isInitalized = false;
@@ -45,6 +49,28 @@ namespace Unity.VisualScripting.Community
 
             InterfaceColor = new Color(221, 255, 187, 255);
             isInitalized = true;
+        }
+
+        [Serializable]
+        public class CompilerInfo
+        {
+            public UnityEngine.Object @object;
+            public string relativePath;
+            public string compilerTypeName;
+
+            [NonSerialized] public object compiler;
+
+            public void RestoreCompiler()
+            {
+                if (compiler == null && !string.IsNullOrEmpty(compilerTypeName))
+                {
+                    var type = Type.GetType(compilerTypeName);
+                    if (type != null)
+                    {
+                        compiler = Activator.CreateInstance(type);
+                    }
+                }
+            }
         }
     }
 }

@@ -83,13 +83,16 @@ namespace Unity.VisualScripting.Community
 
         private Dictionary<string, (MethodGenerator method, bool createNew)> RequiredMethods = new Dictionary<string, (MethodGenerator, bool)>();
 
-        protected ControlGenerationData data;
-
         protected abstract FlowGraph GetFlowGraph();
         protected abstract GraphPointer GetGraphPointer();
         protected abstract string GetGraphName();
 
         protected virtual bool IsValid() => true;
+
+        public override ControlGenerationData CreateGenerationData()
+        {
+            return new ControlGenerationData(typeof(MonoBehaviour), GetGraphPointer());
+        }
 
         public override string Generate(int indent)
         {
@@ -98,9 +101,9 @@ namespace Unity.VisualScripting.Community
             var @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, GetGraphName(), typeof(MonoBehaviour));
             if (GetFlowGraph().units.Any(u => u is GraphInput || u is GraphOutput))
             {
-                @class.beforeUsings = "/* Warning: This graph appears to be a subgraph. Direct generation of subgraphs is not supported. */\n".WarningHighlight();
+                @class.beforeUsings = CodeUtility.ErrorTooltip("Direct generation of subgraphs will ignore the GraphInput and GraphOutput ports", "Warning: This graph appears to be a subgraph.", "\n");
             }
-            data = new ControlGenerationData(typeof(MonoBehaviour), GetGraphPointer());
+            data = GetGenerationData();
             @class.generateUsings = true;
             Initialize(@class);
             GenerateVariableDeclarations(@class);
@@ -112,7 +115,7 @@ namespace Unity.VisualScripting.Community
                 if (!createNew) continue;
                 @class.AddMethod(method);
             }
-
+            
             var values = CodeGeneratorValueUtility.GetAllValues(GetGraphPointer().rootObject);
             var index = 0;
             foreach (var variable in values)
@@ -126,7 +129,7 @@ namespace Unity.VisualScripting.Community
                 @class.AddField(field);
                 index++;
             }
-
+            data.Dispose();
             return @class.Generate(0);
         }
 
@@ -148,7 +151,7 @@ namespace Unity.VisualScripting.Community
 
             GraphTraversal.TraverseFlowGraph(GetFlowGraph(), (unit) =>
             {
-                var usings = new List<string> { "Unity", "UnityEngine", "Unity.VisualScripting" };
+                var usings = new HashSet<string> { "Unity", "UnityEngine", "Unity.VisualScripting" };
                 var generator = unit.GetGenerator();
 
                 if (generator.GetType().IsDefined(typeof(RequiresVariablesAttribute), true))
@@ -162,7 +165,7 @@ namespace Unity.VisualScripting.Community
                     }
                     else
                     {
-                        Debug.LogError(generator.GetType().DisplayName() + "Requires Variables does not implement IRequiresVariables");
+                        Debug.LogError(generator.GetType().DisplayName() + " Requires Variables does not implement IRequiresVariables");
                     }
                 }
 
@@ -205,7 +208,7 @@ namespace Unity.VisualScripting.Community
                     }
                     else
                     {
-                        Debug.LogError(generator.GetType().DisplayName() + "Requires Methods but does not implement IRequiresMethods");
+                        Debug.LogError(generator.GetType().DisplayName() + " Requires Methods but does not implement IRequiresMethods");
                     }
                 }
 
@@ -286,7 +289,7 @@ namespace Unity.VisualScripting.Community
 
                 if (unit is CustomEvent evt && evt.graph != GetFlowGraph()) return;
 
-                if (unit is ReturnEvent or TriggerReturnEvent) return;
+                if (unit is ReturnEvent) return;
 
                 if (unit is IEventUnit || unit.GetGenerator() is MethodNodeGenerator) _eventUnits.Add(unit);
             });
@@ -297,9 +300,14 @@ namespace Unity.VisualScripting.Community
             foreach (VariableDeclaration variable in GetFlowGraph().variables)
             {
                 var type = !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object);
-                type = typeof(IDelegate).IsAssignableFrom(type) ? (variable.value as IDelegate)?.GetDelegateType() ?? (Activator.CreateInstance(type) as IDelegate)?.GetDelegateType() : type;
+                var isDelegate = typeof(IDelegate).IsAssignableFrom(type);
+                type = isDelegate ? (variable.value as IDelegate)?.GetDelegateType() ?? (Activator.CreateInstance(type) as IDelegate)?.GetDelegateType() : type;
                 var name = data.AddLocalNameInScope(variable.name.LegalMemberName(), type);
                 var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, type, name, variable.value);
+                if (isDelegate)
+                {
+                    field.Default(null);
+                }
                 field.SetNewlineLiteral(false);
                 @class.AddField(field);
             }
@@ -473,6 +481,11 @@ namespace Unity.VisualScripting.Community
                 }
                 if (Unit is IEventUnit unit)
                 {
+                    if (Unit is TriggerReturnEvent triggerReturn)
+                    {
+                        HandleMethodNodeGenerator(triggerReturn.GetMethodGenerator(), methodBodies);
+                        continue;
+                    }
                     string unityMethodName = GetMethodName(unit);
                     var parameters = GetMethodParameters(unit);
 
@@ -600,30 +613,7 @@ namespace Unity.VisualScripting.Community
                 }
                 else if (Unit.GetGenerator() is MethodNodeGenerator methodNodeGenerator)
                 {
-                    methodNodeGenerator.Data = data;
-                    methodNodeGenerator.Data.SetReturns(methodNodeGenerator.ReturnType);
-                    methodNodeGenerator.Data.EnterMethod();
-                    var MethodBody = methodNodeGenerator.MethodBody;
-                    string body = string.IsNullOrEmpty(MethodBody) ? methodNodeGenerator.GenerateControl(null, data, 0) : MethodBody;
-                    methodNodeGenerator.Data.ExitMethod();
-                    if (!methodBodies.TryGetValue(methodNodeGenerator.Name, out var method))
-                    {
-                        method = MethodGenerator.Method(methodNodeGenerator.AccessModifier, methodNodeGenerator.MethodModifier, methodNodeGenerator.ReturnType, methodNodeGenerator.Name);
-                        method.AddGenerics(methodNodeGenerator.GenericCount);
-                        foreach (var param in methodNodeGenerator.Parameters)
-                        {
-                            if (methodNodeGenerator.GenericCount == 0 || !param.usesGeneric)
-                                method.AddParameter(ParameterGenerator.Parameter(param.name, param.type, param.modifier));
-                            else if (methodNodeGenerator.GenericCount > 0 && param.usesGeneric)
-                            {
-                                var genericString = method.generics[param.generic].name;
-                                method.AddParameter(ParameterGenerator.Parameter(param.name, genericString.TypeHighlight(), param.type, param.modifier));
-                            }
-                        }
-                        methodBodies[methodNodeGenerator.Name] = method;
-                    }
-
-                    methodBodies[methodNodeGenerator.Name].body += (RequiredMethods.TryGetValue(methodNodeGenerator.Name, out var _body) ? _body : "") + body;
+                    HandleMethodNodeGenerator(methodNodeGenerator, methodBodies);
                 }
             }
 
@@ -632,6 +622,34 @@ namespace Unity.VisualScripting.Community
 
             foreach (var coroutine in coroutineBodies.Values)
                 @class.AddMethod(coroutine);
+        }
+
+        private void HandleMethodNodeGenerator(MethodNodeGenerator methodNodeGenerator, Dictionary<string, MethodGenerator> methodBodies)
+        {
+            methodNodeGenerator.Data = data;
+            methodNodeGenerator.Data.SetReturns(methodNodeGenerator.ReturnType);
+            methodNodeGenerator.Data.EnterMethod();
+            var MethodBody = methodNodeGenerator.MethodBody;
+            string body = MethodBody ?? methodNodeGenerator.GenerateControl(null, data, 0);
+            methodNodeGenerator.Data.ExitMethod();
+            if (!methodBodies.TryGetValue(methodNodeGenerator.Name, out var method))
+            {
+                method = MethodGenerator.Method(methodNodeGenerator.AccessModifier, methodNodeGenerator.MethodModifier, methodNodeGenerator.ReturnType, methodNodeGenerator.Name);
+                method.AddGenerics(methodNodeGenerator.GenericCount);
+                foreach (var param in methodNodeGenerator.Parameters)
+                {
+                    if (methodNodeGenerator.GenericCount == 0 || !param.usesGeneric)
+                        method.AddParameter(ParameterGenerator.Parameter(param.name, param.type, param.modifier));
+                    else if (methodNodeGenerator.GenericCount > 0 && param.usesGeneric)
+                    {
+                        var genericString = method.generics[param.generic].name;
+                        method.AddParameter(ParameterGenerator.Parameter(param.name, genericString.TypeHighlight(), param.type, param.modifier));
+                    }
+                }
+                methodBodies[methodNodeGenerator.Name] = method;
+            }
+
+            methodBodies[methodNodeGenerator.Name].body += (RequiredMethods.TryGetValue(methodNodeGenerator.Name, out var _body) ? _body : "") + body;
         }
 
         private void AddMethodAttributes(MethodGenerator method, List<AttributeDeclaration> attributes)

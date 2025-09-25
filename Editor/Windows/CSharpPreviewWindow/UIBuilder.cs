@@ -1,9 +1,8 @@
-using UnityEditor.UIElements;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using UnityEditor;
 
 namespace Unity.VisualScripting.Community
 {
@@ -11,251 +10,176 @@ namespace Unity.VisualScripting.Community
     {
         public static void DrawCSharpPreviewSettings(CSharpPreviewSettings settings, System.Action onChanged)
         {
-            SectionLabel("C# Preview Settings", 18, 10);
+            SectionLabel("C# Preview Settings", 15, 0);
 
-            GUILayout.BeginVertical("box");
+            GUILayout.BeginVertical(GetBoxStyle());
             {
-                SectionLabel("Generation Settings", 14, 5);
-
-                var showSubgraph = Toggle("Show Subgraph Comment :", "Generate a comment where the Subgraph and Port are being generated. Useful for navigating the code.", settings.showSubgraphComment);
-
-                if (showSubgraph != settings.showSubgraphComment)
+                DrawToggleRow("Show Subgraph Comment :", "Generate a comment where the Subgraph and Port are being generated. Useful for navigating the code.", ref settings.showSubgraphComment, () =>
                 {
-                    settings.showSubgraphComment = showSubgraph;
-                    CSharpPreviewSettings.ShouldShowSubgraphComment = showSubgraph;
+                    CSharpPreviewSettings.ShouldShowSubgraphComment = settings.showSubgraphComment;
                     settings.SaveAndDirty();
                     onChanged?.Invoke();
-                }
+                });
 
-                var showRecommendations = Toggle("Show Recommendations :", "Show recommendations if there is a better way of generating the code.", settings.showRecommendations);
-
-                if (showRecommendations != settings.showRecommendations)
+                DrawToggleRow("Show Recommendations :", "Show recommendations if there is a better way of generating the code.", ref settings.showRecommendations, () =>
                 {
-                    settings.showRecommendations = showRecommendations;
-                    CSharpPreviewSettings.ShouldShowRecommendations = showRecommendations;
+                    CSharpPreviewSettings.ShouldShowRecommendations = settings.showRecommendations;
                     settings.SaveAndDirty();
                     onChanged?.Invoke();
-                }
+                });
 
-                var showTooltips = Toggle("Show Tooltips :", "Show tooltips in places where there is a problem.", settings.showTooltips);
-
-                if (showTooltips != settings.showTooltips)
+                DrawToggleRow("Show Tooltips :", "Show tooltips in places where there is a problem.", ref settings.showTooltips, () =>
                 {
-                    settings.showTooltips = showTooltips;
-                    CSharpPreviewSettings.ShouldGenerateTooltips = showTooltips;
+                    CSharpPreviewSettings.ShouldGenerateTooltips = settings.showTooltips;
                     settings.SaveAndDirty();
                     onChanged?.Invoke();
-                }
+                });
 
-                var recursionDepth = IntField("Recursion Depth :", "Adjust recursion depth for complex graphs. If you see 'Infinite recursion', try increasing this value. Setting too high may hurt performance.", settings.recursionDepth);
-
-                if (recursionDepth != settings.recursionDepth)
+                DrawIntFieldRow("Recursion Depth :", "Adjust recursion depth for complex graphs. If you see 'Infinite recursion', try increasing this value. Setting too high may hurt performance.", ref settings.recursionDepth, () =>
                 {
-                    settings.recursionDepth = recursionDepth;
-                    CSharpPreviewSettings.RecursionDepth = recursionDepth;
+                    CSharpPreviewSettings.RecursionDepth = settings.recursionDepth;
                     settings.SaveAndDirty();
                     onChanged?.Invoke();
-                }
+                });
             }
             GUILayout.EndVertical();
 
-            GUILayout.BeginVertical("box");
+            SectionLabel("Syntax Highlights", 15, 0);
+
+            GUILayout.BeginVertical(GetBoxStyle());
             {
-                SectionLabel("Syntax Highlights", 14, 5);
-
-                ColorFieldWithDefault("Variable Color :", "The variable color.", settings.VariableColor, newValue =>
-                    {
-                        settings.VariableColor = newValue;
-                        CodeBuilder.VariableColor = newValue.ToHexString();
-                        settings.SaveAndDirty();
-                        onChanged?.Invoke();
-                    },
-                    () =>
-                    {
-                        if (UnityEngine.ColorUtility.TryParseHtmlString("#00FFFF", out var value))
-                        {
-                            value.a = 1f;
-                            settings.VariableColor = value;
-                            CodeBuilder.VariableColor = "00FFFF";
-                            onChanged?.Invoke();
-                        }
-                    });
-
-                ColorFieldWithDefault("String Color :", "The color for strings.", settings.StringColor, newValue =>
-                    {
-                        settings.StringColor = newValue;
-                        CodeBuilder.StringColor = newValue.ToHexString();
-                        settings.SaveAndDirty();
-                        onChanged?.Invoke();
-                    },
-                    () =>
-                    {
-                        if (UnityEngine.ColorUtility.TryParseHtmlString("#CC8833", out var value))
-                        {
-                            value.a = 1f;
-                            settings.StringColor = value;
-                            CodeBuilder.StringColor = "CC8833";
-                            onChanged?.Invoke();
-                        }
-                    });
-
-                ColorFieldWithDefault("Numeric Color :", "The color for numeric values.", settings.NumericColor, newValue =>
-                    {
-                        settings.NumericColor = newValue;
-                        CodeBuilder.NumericColor = newValue.ToHexString();
-                        settings.SaveAndDirty();
-                        onChanged?.Invoke();
-                    },
-                    () =>
-                    {
-                        if (UnityEngine.ColorUtility.TryParseHtmlString("#DDFFBB", out var value))
-                        {
-                            value.a = 1f;
-                            settings.NumericColor = value;
-                            CodeBuilder.NumericColor = "DDFFBB";
-                            onChanged?.Invoke();
-                        }
-                    });
-
-                ColorFieldWithDefault("Construct Color :", "The color for constructs (e.g., public, private, int, float).", settings.ConstructColor, newValue =>
-                    {
-                        settings.ConstructColor = newValue;
-                        CodeBuilder.ConstructColor = newValue.ToHexString();
-                        settings.SaveAndDirty();
-                        onChanged?.Invoke();
-                    },
-                    () =>
-                    {
-                        if (UnityEngine.ColorUtility.TryParseHtmlString("#4488FF", out var value))
-                        {
-                            value.a = 1f;
-                            settings.ConstructColor = value;
-                            CodeBuilder.ConstructColor = "4488FF";
-                            onChanged?.Invoke();
-                        }
-                    });
-
-                ColorFieldWithDefault("Type Color :", "The color for data types.", settings.TypeColor, newValue =>
-                    {
-                        settings.TypeColor = newValue;
-                        CodeBuilder.TypeColor = newValue.ToHexString();
-                        settings.SaveAndDirty();
-                        onChanged?.Invoke();
-                    },
-                    () =>
-                    {
-                        if (UnityEngine.ColorUtility.TryParseHtmlString("#33EEAA", out var value))
-                        {
-                            value.a = 1f;
-                            settings.TypeColor = value;
-                            CodeBuilder.TypeColor = "33EEAA";
-                            onChanged?.Invoke();
-                        }
-                    });
-
-                ColorFieldWithDefault("Enum Color :", "The color for enums.", settings.EnumColor, newValue =>
-                    {
-                        settings.EnumColor = newValue;
-                        CodeBuilder.EnumColor = newValue.ToHexString();
-                        settings.SaveAndDirty();
-                        onChanged?.Invoke();
-                    },
-                    () =>
-                    {
-                        if (UnityEngine.ColorUtility.TryParseHtmlString("#FFFFBB", out var value))
-                        {
-                            value.a = 1f;
-                            settings.EnumColor = value;
-                            CodeBuilder.EnumColor = "FFFFBB";
-                            onChanged?.Invoke();
-                        }
-                    });
-
-                ColorFieldWithDefault("Interface Color :", "The color for interfaces.", settings.InterfaceColor, newValue =>
-                    {
-                        settings.InterfaceColor = newValue;
-                        CodeBuilder.InterfaceColor = newValue.ToHexString();
-                        settings.SaveAndDirty();
-                        onChanged?.Invoke();
-                    },
-                    () =>
-                    {
-                        if (UnityEngine.ColorUtility.TryParseHtmlString("#DDFFBB", out var value))
-                        {
-                            value.a = 1f;
-                            settings.InterfaceColor = value;
-                            CodeBuilder.InterfaceColor = "DDFFBB";
-                            onChanged?.Invoke();
-                        }
-                    });
+                DrawColorRow("Variable Color :", "The variable color.", ref settings.VariableColor, "#00FFFF", val =>
+                {
+                    CodeBuilder.VariableColor = val.ToHexString();
+                    settings.SaveAndDirty();
+                    onChanged?.Invoke();
+                });
+                GUILayout.Space(5);
+                DrawColorRow("String Color :", "The color for strings.", ref settings.StringColor, "#CC8833", val =>
+                {
+                    CodeBuilder.StringColor = val.ToHexString();
+                    settings.SaveAndDirty();
+                    onChanged?.Invoke();
+                });
+                GUILayout.Space(5);
+                DrawColorRow("Numeric Color :", "The color for numeric values.", ref settings.NumericColor, "#DDFFBB", val =>
+                {
+                    CodeBuilder.NumericColor = val.ToHexString();
+                    settings.SaveAndDirty();
+                    onChanged?.Invoke();
+                });
+                GUILayout.Space(5);
+                DrawColorRow("Construct Color :", "The color for constructs (e.g., public, private, int, float).", ref settings.ConstructColor, "#4488FF", val =>
+                {
+                    CodeBuilder.ConstructColor = val.ToHexString();
+                    settings.SaveAndDirty();
+                    onChanged?.Invoke();
+                });
+                GUILayout.Space(5);
+                DrawColorRow("Type Color :", "The color for data types.", ref settings.TypeColor, "#33EEAA", val =>
+                {
+                    CodeBuilder.TypeColor = val.ToHexString();
+                    settings.SaveAndDirty();
+                    onChanged?.Invoke();
+                });
+                GUILayout.Space(5);
+                DrawColorRow("Enum Color :", "The color for enums.", ref settings.EnumColor, "#FFFFBB", val =>
+                {
+                    CodeBuilder.EnumColor = val.ToHexString();
+                    settings.SaveAndDirty();
+                    onChanged?.Invoke();
+                });
+                GUILayout.Space(5);
+                DrawColorRow("Interface Color :", "The color for interfaces.", ref settings.InterfaceColor, "#DDFFBB", val =>
+                {
+                    CodeBuilder.InterfaceColor = val.ToHexString();
+                    settings.SaveAndDirty();
+                    onChanged?.Invoke();
+                });
             }
             GUILayout.EndVertical();
         }
 
-        /// <summary>
-        /// Draws a color field with a label + "Default" button, GUILayout-based.
-        /// </summary>
-        public static void ColorFieldWithDefault(string label, string tooltip, Color value, System.Action<Color> onChanged, System.Action onReset, float labelWidth = 200, float fieldWidth = 400)
+        #region Helpers
+
+        private static GUIStyle GetBoxStyle()
         {
-            GUILayout.BeginHorizontal();
+            return new GUIStyle(EditorStyles.helpBox)
             {
-                var oldContent = EditorGUIUtility.labelWidth;
-                EditorGUIUtility.labelWidth = labelWidth;
-
-                EditorGUILayout.LabelField(new GUIContent(label, tooltip),
-                    EditorStyles.boldLabel,
-                    GUILayout.Width(labelWidth));
-
-                EditorGUIUtility.labelWidth = oldContent;
-
-                var newValue = EditorGUILayout.ColorField(value, GUILayout.Width(fieldWidth));
-                if (newValue != value)
-                    onChanged?.Invoke(newValue);
-
-                if (GUILayout.Button("Default", GUILayout.Width(70)))
-                {
-                    onReset?.Invoke();
-                }
-            }
-            GUILayout.EndHorizontal();
+                padding = new RectOffset(5, 10, 10, 10),
+                margin = new RectOffset(5, 5, 5, 5)
+            };
         }
 
-        /// <summary>
-        /// Draws a bold section label.
-        /// </summary>
-        public static void SectionLabel(string text, int fontSize = 14, int topMargin = 10)
+        private static void SectionLabel(string text, int fontSize = 14, int topMargin = 10, Color? color = null)
         {
+            GUILayout.Space(topMargin);
             var style = new GUIStyle(EditorStyles.boldLabel)
             {
-                fontSize = fontSize
+                fontSize = fontSize,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = color ?? Color.white },
+                padding = new RectOffset(4, 4, 2, 2)
             };
-
-            GUILayout.Space(topMargin);
             GUILayout.Label(text, style);
         }
 
-        /// <summary>
-        /// Draws a toggle with label.
-        /// </summary>
-        public static bool Toggle(string label, string tooltip, bool value, float labelWidth = 200)
+        private static void DrawToggleRow(string label, string tooltip, ref bool value, System.Action onChanged, float labelWidth = 200)
         {
             GUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(new GUIContent(label, tooltip), EditorStyles.boldLabel, GUILayout.Width(labelWidth));
             var newValue = EditorGUILayout.Toggle(value, GUILayout.Width(20));
+            if (newValue != value)
+            {
+                value = newValue;
+                onChanged?.Invoke();
+            }
             GUILayout.EndHorizontal();
-            return newValue;
         }
 
-        /// <summary>
-        /// Draws an int field with label.
-        /// </summary>
-        public static int IntField(string label, string tooltip, int value, float labelWidth = 200)
+        private static void DrawIntFieldRow(string label, string tooltip, ref int value, System.Action onChanged, float labelWidth = 200)
         {
             GUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(new GUIContent(label, tooltip), EditorStyles.boldLabel, GUILayout.Width(labelWidth));
-            var newValue = EditorGUILayout.IntField(value, GUILayout.Width(100));
+            var newValue = EditorGUILayout.DelayedIntField(value, GUILayout.Width(100));
+            if (newValue != value)
+            {
+                value = newValue;
+                onChanged?.Invoke();
+            }
             GUILayout.EndHorizontal();
-            return newValue;
         }
+
+        private static void DrawColorRow(string label, string tooltip, ref Color value, string defaultHex, System.Action<Color> onChanged, float labelWidth = 200, float fieldWidth = 300)
+        {
+            GUILayout.BeginHorizontal();
+            {
+                var oldWidth = EditorGUIUtility.labelWidth;
+                EditorGUIUtility.labelWidth = labelWidth;
+                EditorGUILayout.LabelField(new GUIContent(label, tooltip), EditorStyles.boldLabel, GUILayout.Width(labelWidth));
+                EditorGUIUtility.labelWidth = oldWidth;
+
+                Rect rect = GUILayoutUtility.GetRect(fieldWidth, EditorGUIUtility.singleLineHeight);
+                var newValue = EditorGUI.ColorField(new Rect(rect.x + 25, rect.y, fieldWidth - 25 - 70, rect.height), GUIContent.none, value, true, true, false);
+                if (newValue != value)
+                {
+                    value = newValue;
+                    onChanged?.Invoke(newValue);
+                }
+
+                if (GUI.Button(new Rect(rect.xMax - 70, rect.y, 70, rect.height), "Default"))
+                {
+                    if (UnityEngine.ColorUtility.TryParseHtmlString(defaultHex, out var defaultValue))
+                    {
+                        defaultValue.a = 1f;
+                        value = defaultValue;
+                        onChanged?.Invoke(defaultValue);
+                    }
+                }
+            }
+            GUILayout.EndHorizontal();
+        }
+
+        #endregion
     }
 }

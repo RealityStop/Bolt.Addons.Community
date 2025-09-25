@@ -60,6 +60,11 @@
             "name": "com.unity.modules.physics",
             "expression": "1.0.0",
             "define": "MODULE_PHYSICS_EXISTS"
+        },
+        {
+            "name": "com.unity.modules.ai",
+            "expression": "1.0.0",
+            "define": "MODULE_AI_EXISTS"
         }
     ],
     "noEngineReferences": false

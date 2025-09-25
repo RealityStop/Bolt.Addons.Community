@@ -24,8 +24,11 @@ namespace Unity.VisualScripting.Community
     
                 if (@event != null && @event.keyCode == KeyCode.Tab && canvas.connectionSource != null)
                 {
+                    if (string.IsNullOrEmpty(currentQuery))
+                    {
+                        return;
+                    }
                     __instance.Close();
-    
                     string snippetName = currentQuery.Split(',', StringSplitOptions.RemoveEmptyEntries)[0];
                     string[] argumentValues = currentQuery.Split(',', StringSplitOptions.RemoveEmptyEntries).Skip(1).ToArray();
     
@@ -135,79 +138,66 @@ namespace Unity.VisualScripting.Community
     
         private bool IsCorrectType(Type type, string input)
         {
-            // Try parsing a `bool`
             if (type == typeof(bool) && bool.TryParse(input, out bool boolResult))
             {
                 return true;
             }
-    
-            // Try parsing a `char` (must be a single character)
+
             if (type == typeof(char) && input.Length == 1)
             {
                 return true;
             }
-    
-            // Try parsing a `byte`
+
             if (type == typeof(byte) && byte.TryParse(input, out byte byteResult))
             {
                 return true;
             }
-    
-            // Try parsing a `sbyte`
+
             if (type == typeof(sbyte) && sbyte.TryParse(input, out sbyte sbyteResult))
             {
                 return true;
             }
-    
-            // Try parsing a `short`
+
             if (type == typeof(short) && short.TryParse(input, out short shortResult))
             {
                 return true;
             }
-    
-            // Try parsing a `ushort`
+
             if (type == typeof(ushort) && ushort.TryParse(input, out ushort ushortResult))
             {
                 return true;
             }
-    
-            // Try parsing an `int`
+
             if (type == typeof(int) && int.TryParse(input, out int intResult))
             {
                 return true;
             }
-    
-            // Try parsing a `uint`
+
             if (type == typeof(uint) && uint.TryParse(input, out uint uintResult))
             {
                 return true;
             }
-    
-            // Try parsing a `long`
+
             if (type == typeof(long) && long.TryParse(input, out long longResult))
             {
                 return true;
             }
-    
-            // Try parsing a `ulong`
+
             if (type == typeof(ulong) && ulong.TryParse(input, out ulong ulongResult))
             {
                 return true;
             }
-    
-            // Try parsing a `float`
+
             if (type == typeof(float) && float.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out float floatResult))
             {
                 return true;
             }
-    
-            // Try parsing a `double`
+
             if (type == typeof(double) && double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out double doubleResult))
             {
                 return true;
             }
-    
-            // Try parsing a `decimal`
+
             if (type == typeof(decimal) && decimal.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out decimal decimalResult))
             {
                 return true;

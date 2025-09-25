@@ -6,12 +6,6 @@ namespace Unity.VisualScripting.Community
     {
         private float elapsedTime;
 
-        /// <summary>
-        /// Updates the timer.
-        /// </summary>
-        /// <param name="threshold">The number of seconds required before triggering.</param>
-        /// <param name="unscaled">Whether to ignore the time scale.</param>
-        /// <returns>True if the threshold was reached this frame, false otherwise.</returns>
         public bool Update(float threshold, bool unscaled = false)
         {
             elapsedTime += unscaled ? Time.unscaledDeltaTime : Time.deltaTime;

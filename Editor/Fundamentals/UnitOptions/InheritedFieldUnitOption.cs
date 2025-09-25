@@ -101,12 +101,6 @@ namespace Unity.VisualScripting.Community
 
         public override void OnPopulate()
         {
-            // Members are late-reflected to speed up loading and search
-            // We only reflect them when we're just about to populate their node
-            // By doing it in OnPopulate instead of on-demand later, we ensure
-            // any error will be gracefully catched and shown as a warning by
-            // the fuzzy window
-
             member.EnsureReflected();
             pseudoDeclarer.EnsureReflected();
 

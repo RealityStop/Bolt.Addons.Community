@@ -28,7 +28,7 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         [UnitHeaderInspectable("Global")]
         public bool global;
-        
+
         /// <summary>
         /// Outputs the data wrapper, which contains the references needed for returning back to the trigger.
         /// </summary>
@@ -51,7 +51,9 @@ namespace Unity.VisualScripting.Community
         /// <summary>
         /// The target receiver GameObject for this event.
         /// </summary>
-        [DoNotSerialize][PortLabelHidden][NullMeansSelf]
+        [DoNotSerialize]
+        [PortLabelHidden]
+        [NullMeansSelf]
         public ValueInput target;
 
         /// <summary>
@@ -68,9 +70,9 @@ namespace Unity.VisualScripting.Community
 
             arguments.Clear();
 
-            if (!global) target = ValueInput<GameObject>("target", (GameObject)null).NullMeansSelf();
+            if (!global) target = ValueInput<GameObject>("target", null).NullMeansSelf();
 
-            name = ValueInput<string>("name", string.Empty);
+            name = ValueInput("name", string.Empty);
 
             eventData = ValueOutput<ReturnEventData>("data");
 
@@ -111,7 +113,7 @@ namespace Unity.VisualScripting.Community
 
             for (int i = 0; i < arguments.Count; i++)
             {
-                flow.SetValue(arguments[i], args.arguments[args.isCallback ? i : i+1]);
+                flow.SetValue(arguments[i], args.arguments[args.isCallback ? i : i + 1]);
             }
         }
 

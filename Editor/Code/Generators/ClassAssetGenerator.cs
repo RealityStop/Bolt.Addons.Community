@@ -31,7 +31,6 @@ namespace Unity.VisualScripting.Community
         };
 
         private readonly HashSet<Unit> _specialUnits = new HashSet<Unit>();
-        private ControlGenerationData data;
 
         Dictionary<string, int> methodIndex = new Dictionary<string, int>();
 
@@ -370,7 +369,7 @@ namespace Unity.VisualScripting.Community
                 data.SetReturns(variableData.type);
                 @class.AddUsings(ProcessGraphUnits(variableData.getter.graph, @class));
                 property.MultiStatementGetter(variableData.getterScope, (variableData.getter.graph.units[0] as Unit).GenerateControl(null, data, 0));
-                if (!data.HasReturned) property.SetWarning("Not all code paths return a value");
+                if (!data.HasReturned && !property.IsAutoImplemented()) property.SetWarning("Not all code paths return a value");
                 data.ExitMethod();
             }
 
@@ -462,7 +461,7 @@ namespace Unity.VisualScripting.Community
             );
         }
 
-        private void CreateGenerationData()
+        public override ControlGenerationData CreateGenerationData()
         {
             data = new ControlGenerationData(Data.inheritsType ? Data.GetInheritedType() : typeof(object), null);
             foreach (var variable in Data.variables)
@@ -470,6 +469,7 @@ namespace Unity.VisualScripting.Community
                 if (!string.IsNullOrEmpty(variable.FieldName))
                     data.AddLocalNameInScope(variable.FieldName, variable.type);
             }
+            return data;
         }
 
         private void AddMethodAttributes(MethodGenerator method, ClassMethodDeclaration methodData)
@@ -574,7 +574,7 @@ namespace Unity.VisualScripting.Community
                 methodGenerator.Data.SetReturns(methodGenerator.ReturnType);
                 methodGenerator.Data.EnterMethod();
                 var MethodBody = methodGenerator.MethodBody;
-                method.Body(string.IsNullOrEmpty(MethodBody) ? methodGenerator.GenerateControl(null, data, 0) : MethodBody);
+                method.Body(MethodBody ?? methodGenerator.GenerateControl(null, data, 0));
                 methodGenerator.Data.ExitMethod();
                 @class.AddMethod(method);
             }

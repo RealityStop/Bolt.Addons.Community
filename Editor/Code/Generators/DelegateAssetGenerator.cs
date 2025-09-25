@@ -18,6 +18,11 @@ namespace Unity.VisualScripting.Community
         private bool IsFunc => Data.type.type.GetMethod("Invoke").ReturnType != typeof(void);
         private Type DelegateType => Data.type.type.GetMethod("Invoke").ReturnType == typeof(void) ? typeof(IAction) : typeof(IFunc);
 
+        public override ControlGenerationData CreateGenerationData()
+        {
+            return new ControlGenerationData(DelegateType, null);
+        }
+
         public override string Generate(int indent)
         {
             NamespaceGenerator @namespace = NamespaceGenerator.Namespace("Unity.VisualScripting.Community.Generated");

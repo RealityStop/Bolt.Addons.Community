@@ -181,7 +181,7 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>, IRequireVariables
 
             if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
             {
-                sb.AppendLine(CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeUtility.ToolTip("/* Custom Event units only work on monobehaviours */", "Could not generate Custom Events", "")));
+                sb.AppendLine(CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip("/* Custom Event units only work on monobehaviours */", "Could not generate Custom Events", "")));
                 break;
             }
 
@@ -193,7 +193,7 @@ public class SubgraphGenerator : NodeGenerator<SubgraphUnit>, IRequireVariables
 
             sb.AppendLine(CodeBuilder.Indent(indent) +
                           CodeBuilder.CallCSharpUtilityMethod(customEvent, CodeUtility.MakeClickable(customEvent, nameof(CSharpUtility.RegisterCustomEvent)),
-                          generator.GenerateValue(customEvent.target, data), CodeUtility.MakeClickable(customEvent, action), CodeUtility.MakeClickable(customEvent, (action + "_" + customEvent.ToString().Replace(".", "")).As().Code(false))) +
+                          generator.GenerateValue(customEvent.target, data), CodeUtility.MakeClickable(customEvent, action), CodeUtility.MakeClickable(customEvent, (methodName + "_" + customEvent.ToString().Replace(".", "")).As().Code(false))) +
                           CodeUtility.MakeClickable(customEvent, ";"));
 
             var returnType = customEvent.coroutine ? typeof(IEnumerator) : typeof(void);

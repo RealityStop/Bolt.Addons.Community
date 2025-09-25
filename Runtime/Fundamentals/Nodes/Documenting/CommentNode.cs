@@ -64,5 +64,39 @@ namespace Unity.VisualScripting.Community
         protected override void Definition() { }
 
         public override bool isControlRoot { get { return true; } }
+
+        public void UpdateFrom(CommentNode other)
+        {
+            if (other == null || other == this) return;
+
+            refresh = other.refresh;
+            connectedElements = new List<IGraphElement>(other.connectedElements);
+
+            wholeRect = other.wholeRect;
+            borderRect = other.borderRect;
+            textRect = other.textRect;
+
+            paletteSelection = other.paletteSelection;
+
+            curvedLine = other.curvedLine;
+            customPalette = other.customPalette;
+            fontColorize = other.fontColorize;
+            lockedToPalette = other.lockedToPalette;
+            fontBold = other.fontBold;
+            fontItalic = other.fontItalic;
+            autoWidth = other.autoWidth;
+            hasOutline = other.hasOutline;
+            hasTitle = other.hasTitle;
+            alignCentre = other.alignCentre;
+
+            fontSize = other.fontSize;
+            maxWidth = other.maxWidth;
+
+            title = other.title;
+            comment = other.comment;
+
+            color = other.color;
+            fontColor = other.fontColor;
+        }
     }
 }

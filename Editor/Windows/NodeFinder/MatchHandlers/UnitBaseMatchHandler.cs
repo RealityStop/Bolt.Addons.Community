@@ -34,7 +34,7 @@ namespace Unity.VisualScripting.Community
         private List<MatchObject> CreateChildrenRecursive(List<SearchUtility.MatchNode> matches)
         {
             var list = ListPool<MatchObject>.New();
-            foreach (var match in matches)
+            foreach (var match in matches ?? new List<SearchUtility.MatchNode>())
             {
                 if (match.Unit == null) continue;
                 var matchObject = new MatchObject(match.Unit, SearchUtility.GetSearchName(match.Unit));

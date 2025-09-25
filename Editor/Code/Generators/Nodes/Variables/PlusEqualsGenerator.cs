@@ -43,9 +43,9 @@ namespace Unity.VisualScripting.Community
                 switch (Unit.kind)
                 {
                     case VariableKind.Flow:
-                        return MakeClickableForThisUnit(CodeUtility.ToolTip("Flow Variables do not support connected names", "Could not generate Flow Variable", ""));
+                        return MakeClickableForThisUnit(CodeUtility.ErrorTooltip("Flow Variables do not support connected names", "Could not generate Flow Variable", ""));
                     case VariableKind.Graph:
-                        return MakeClickableForThisUnit(CodeUtility.ToolTip("Graph Variables do not support connected names", "Could not generate Graph Variable", ""));
+                        return MakeClickableForThisUnit(CodeUtility.ErrorTooltip("Graph Variables do not support connected names", "Could not generate Graph Variable", ""));
                     case VariableKind.Object:
                         kind = MakeClickableForThisUnit(variables + ".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeClickableForThisUnit(")")}";
                         if (VisualScripting.Variables.Object(GetTarget(data)).IsDefined(name))
@@ -85,7 +85,7 @@ namespace Unity.VisualScripting.Community
                 }
                 var nameCode = base.GenerateValue(Unit.name, data);
                 data.SetExpectedType(variableType);
-                var code = Unit.CreateClickableString(CodeBuilder.Indent(indent)).Ignore(kind).OpenParentheses(".Set").Ignore(base.GenerateValue(Unit.name, data)).Comma(" ").Ignore(kind).Clickable($".Get<{variableType.As().CSharpName(false, true)}>(").Ignore(base.GenerateValue(Unit.name, data)).CloseParentheses().Clickable(" + ").Ignore(GenerateValue(Unit.amount, data)).EndLine().Ignore("\n");
+                var code = Unit.CreateClickableString(CodeBuilder.Indent(indent)).Ignore(kind).OpenParentheses(".Set").Ignore(base.GenerateValue(Unit.name, data)).Comma(" ").Ignore(kind).Clickable($".Get<{variableType.As().CSharpName(false, true)}>(").Ignore(base.GenerateValue(Unit.name, data)).CloseParentheses().Clickable(" + ").Ignore(GenerateValue(Unit.amount, data)).EndStatement().Ignore("\n");
                 output += code;
                 data.RemoveExpectedType();
                 output += GetNextUnit(Unit.assigned, data, indent);
@@ -107,7 +107,7 @@ namespace Unity.VisualScripting.Community
                             else
                                 variableType = typeof(float);
                             var kind = MakeClickableForThisUnit($"{variables}" + ".Object(") + GenerateValue(Unit.@object, data) + MakeClickableForThisUnit(")");
-                            return Unit.CreateClickableString(CodeBuilder.Indent(indent)).Ignore(kind).OpenParentheses(".Set").Ignore(base.GenerateValue(Unit.name, data)).Comma(" ").Ignore(kind).Clickable($".Get<{variableType.As().CSharpName(false, true)}>(").Ignore(base.GenerateValue(Unit.name, data)).CloseParentheses().Clickable(" + ").Ignore(GenerateValue(Unit.amount, data)).EndLine().Ignore("\n").Ignore(GetNextUnit(Unit.assigned, data, indent));
+                            return Unit.CreateClickableString(CodeBuilder.Indent(indent)).Ignore(kind).OpenParentheses(".Set").Ignore(base.GenerateValue(Unit.name, data)).Comma(" ").Ignore(kind).Clickable($".Get<{variableType.As().CSharpName(false, true)}>(").Ignore(base.GenerateValue(Unit.name, data)).CloseParentheses().Clickable(" + ").Ignore(GenerateValue(Unit.amount, data)).EndStatement().Ignore("\n").Ignore(GetNextUnit(Unit.assigned, data, indent));
                         }
                     case VariableKind.Scene:
                         {
@@ -118,7 +118,7 @@ namespace Unity.VisualScripting.Community
                             else
                                 variableType = typeof(float);
                             var kind = MakeClickableForThisUnit(GetSceneKind(data, variables));
-                            return Unit.CreateClickableString(CodeBuilder.Indent(indent)).Ignore(kind).OpenParentheses(".Set").Ignore(base.GenerateValue(Unit.name, data)).Comma(" ").Ignore(kind).Clickable($".Get<{variableType.As().CSharpName(false, true)}>(").Ignore(base.GenerateValue(Unit.name, data)).CloseParentheses().Clickable(" + ").Ignore(GenerateValue(Unit.amount, data)).EndLine().Ignore("\n").Ignore(GetNextUnit(Unit.assigned, data, indent));
+                            return Unit.CreateClickableString(CodeBuilder.Indent(indent)).Ignore(kind).OpenParentheses(".Set").Ignore(base.GenerateValue(Unit.name, data)).Comma(" ").Ignore(kind).Clickable($".Get<{variableType.As().CSharpName(false, true)}>(").Ignore(base.GenerateValue(Unit.name, data)).CloseParentheses().Clickable(" + ").Ignore(GenerateValue(Unit.amount, data)).EndStatement().Ignore("\n").Ignore(GetNextUnit(Unit.assigned, data, indent));
                         }
                     case VariableKind.Application:
                         {
@@ -130,7 +130,7 @@ namespace Unity.VisualScripting.Community
                                 variableType = typeof(float);
 
                             var kind = MakeClickableForThisUnit($"{variables}" + "." + "Application".VariableHighlight());
-                            return Unit.CreateClickableString(CodeBuilder.Indent(indent)).Ignore(kind).OpenParentheses(".Set").Ignore(base.GenerateValue(Unit.name, data)).Comma(" ").Ignore(kind).Clickable($".Get<{variableType.As().CSharpName(false, true)}>(").Ignore(base.GenerateValue(Unit.name, data)).CloseParentheses().Clickable(" + ").Ignore(GenerateValue(Unit.amount, data)).EndLine().Ignore("\n").Ignore(GetNextUnit(Unit.assigned, data, indent));
+                            return Unit.CreateClickableString(CodeBuilder.Indent(indent)).Ignore(kind).OpenParentheses(".Set").Ignore(base.GenerateValue(Unit.name, data)).Comma(" ").Ignore(kind).Clickable($".Get<{variableType.As().CSharpName(false, true)}>(").Ignore(base.GenerateValue(Unit.name, data)).CloseParentheses().Clickable(" + ").Ignore(GenerateValue(Unit.amount, data)).EndStatement().Ignore("\n").Ignore(GetNextUnit(Unit.assigned, data, indent));
                         }
                     case VariableKind.Saved:
                         {
@@ -141,7 +141,7 @@ namespace Unity.VisualScripting.Community
                             else
                                 variableType = typeof(float);
                             var kind = MakeClickableForThisUnit($"{variables}" + "." + "Saved".VariableHighlight());
-                            return Unit.CreateClickableString(CodeBuilder.Indent(indent)).Ignore(kind).OpenParentheses(".Set").Ignore(base.GenerateValue(Unit.name, data)).Comma(" ").Ignore(kind).Clickable($".Get<{variableType.As().CSharpName(false, true)}>(").Ignore(base.GenerateValue(Unit.name, data)).CloseParentheses().Clickable(" + ").Ignore(GenerateValue(Unit.amount, data)).EndLine().Ignore("\n").Ignore(GetNextUnit(Unit.assigned, data, indent));
+                            return Unit.CreateClickableString(CodeBuilder.Indent(indent)).Ignore(kind).OpenParentheses(".Set").Ignore(base.GenerateValue(Unit.name, data)).Comma(" ").Ignore(kind).Clickable($".Get<{variableType.As().CSharpName(false, true)}>(").Ignore(base.GenerateValue(Unit.name, data)).CloseParentheses().Clickable(" + ").Ignore(GenerateValue(Unit.amount, data)).EndStatement().Ignore("\n").Ignore(GetNextUnit(Unit.assigned, data, indent));
                         }
                 }
                 var _name = data.GetVariableName(name.LegalMemberName());
@@ -188,7 +188,7 @@ namespace Unity.VisualScripting.Community
                     {
                         try
                         {
-                            return Flow.Predict(Unit.@object.GetPesudoSource(), graphPointer.AsReference()) as GameObject;
+                            return Flow.Predict<GameObject>(Unit.@object.GetPesudoSource(), graphPointer.AsReference());
                         }
                         catch (InvalidOperationException ex)
                         {

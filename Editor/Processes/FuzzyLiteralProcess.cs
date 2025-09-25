@@ -139,6 +139,10 @@ namespace Unity.VisualScripting.Community
 
         private static bool IsExpression(string query)
         {
+            if (string.IsNullOrEmpty(query) || !(query.Contains("+") || query.Contains("-") || query.Contains("*") || query.Contains("/")))
+            {
+                return false;
+            }
             string pattern = @"^\s*\(*\s*\d+(\s*[+\-*\/]\s*\d+\s*)*\)*\s*$";
 
             return Regex.IsMatch(query, pattern);

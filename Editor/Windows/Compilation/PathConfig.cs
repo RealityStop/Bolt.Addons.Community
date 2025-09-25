@@ -1,9 +1,11 @@
 using UnityEngine;
 using System.IO;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using System;
 
 namespace Unity.VisualScripting.Community
 {
+    [Serializable]
     public class PathConfig
     {
         public readonly string BasePath;

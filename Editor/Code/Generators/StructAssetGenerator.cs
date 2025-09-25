@@ -12,7 +12,6 @@ namespace Unity.VisualScripting.Community
     [CodeGenerator(typeof(StructAsset))]
     public sealed class StructAssetGenerator : MemberTypeAssetGenerator<StructAsset, StructFieldDeclaration, StructMethodDeclaration, StructConstructorDeclaration>
     {
-        private ControlGenerationData data;
         protected override TypeGenerator OnGenerateType(ref string output, NamespaceGenerator @namespace)
         {
             var @struct = StructGenerator.Struct(RootAccessModifier.Public, StructModifier.None, Data.title.LegalMemberName());
@@ -569,13 +568,13 @@ namespace Unity.VisualScripting.Community
                 methodGenerator.Data.EnterMethod();
                 methodGenerator.Data.SetReturns(methodGenerator.ReturnType);
                 var MethodBody = methodGenerator.MethodBody;
-                method.Body(string.IsNullOrEmpty(MethodBody) ? methodGenerator.GenerateControl(null, data, 0) : MethodBody);
+                method.Body(MethodBody ?? methodGenerator.GenerateControl(null, data, 0));
                 methodGenerator.Data.ExitMethod();
                 @struct.AddMethod(method);
             }
         }
 
-        private void CreateGenerationData()
+        public override ControlGenerationData CreateGenerationData()
         {
             data = new ControlGenerationData(typeof(ValueType), null);
             foreach (var variable in Data.variables)
@@ -583,6 +582,7 @@ namespace Unity.VisualScripting.Community
                 if (!string.IsNullOrEmpty(variable.FieldName))
                     data.AddLocalNameInScope(variable.FieldName, variable.type);
             }
+            return data;
         }
     }
 }

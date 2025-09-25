@@ -44,7 +44,7 @@ namespace Unity.VisualScripting.Community
                     currentIndex = data.AddLocalNameInScope("currentIndex", typeof(int));
                     output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(typeof(int).As().CSharpName() + " " + currentIndex.VariableHighlight() + " = -1;") + "\n";
                 }
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"foreach".ControlHighlight() + " (" + (fallback && type == typeof(object) ? "var".ConstructHighlight() : $"{type.As().CSharpName()}") + $" {variableName}".VariableHighlight() + " in".ConstructHighlight()) + $" {collection}" + MakeClickableForThisUnit(")");
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"foreach".ControlHighlight() + " (" + (fallback && type == typeof(object) ? "var".ConstructHighlight() : $"{type.As().CSharpName()}") + $" {variableName}".VariableHighlight() + " in ".ConstructHighlight()) + $"{collection}" + MakeClickableForThisUnit(")");
                 output += "\n";
                 output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{");
                 output += "\n";

@@ -13,6 +13,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 using static Unity.VisualScripting.Round<float, float>;
 using System.Reflection;
+using UnityEngine.AI;
 
 namespace Unity.VisualScripting.Community
 {
@@ -57,6 +58,17 @@ namespace Unity.VisualScripting.Community
             }
 
             return _machines.ToArrayPooled();
+        }
+
+        public static bool MachineIs(SMachine target, ScriptGraphAsset asset)
+        {
+            if (target == null) return false;
+
+            var macro = target.nest.macro;
+
+            if (macro != null) return macro == asset;
+
+            return false;
         }
 
         public static IList MergeLists(params IList[] lists)
@@ -111,6 +123,34 @@ namespace Unity.VisualScripting.Community
             }
         }
 
+        public static void RegisterReturnEvent(GameObject target, Action<ReturnEventArg> action, string name, int argCount, string eventID)
+        {
+            var hook = CommunityEvents.ReturnEvent;
+
+            var key = (target, hook, eventID);
+
+            if (registeredEvents.Add(key))
+            {
+                void Action(ReturnEventArg arg)
+                {
+                    bool should = name == arg.name;
+
+                    if ((arg.isCallback ? argCount == arg.arguments.Length : argCount + 1 == arg.arguments.Length || (argCount == 0 && arg.arguments.Length == 0)) && should)
+                    {
+                        if (arg.global)
+                        {
+                            action(arg);
+                        }
+                        else
+                        {
+                            if (arg.target != null && arg.target == target) action(arg);
+                        }
+                    }
+                }
+                EventBus.Register(hook, (Action<ReturnEventArg>)Action);
+            }
+        }
+
         public static void ClearSavedVariables()
         {
             SavedVariables.saved.Clear();
@@ -123,8 +163,79 @@ namespace Unity.VisualScripting.Community
             SavedVariables.saved[key] = initalvariable.value;
 
             if (SavedVariables.current != SavedVariables.initial) SavedVariables.current[key] = initalvariable.value;
+            SavedVariables.SaveDeclarations(SavedVariables.saved);
         }
 
+        public static TGraphAsset GetGraph<TGraph, TGraphAsset, TMachine>(GameObject target)
+        where TGraph : class, IGraph, new()
+        where TGraphAsset : Macro<TGraph>
+        where TMachine : Machine<TGraph, TGraphAsset>
+        {
+            return target.GetComponent<TMachine>().nest.macro;
+        }
+
+        public static List<TGraphAsset> GetGraphs<TGraph, TGraphAsset, TMachine>(GameObject target)
+        where TGraph : class, IGraph, new()
+        where TGraphAsset : Macro<TGraph>
+        where TMachine : Machine<TGraph, TGraphAsset>
+        {
+            return target.GetComponents<TMachine>()
+                .Where(machine => target.GetComponent<TMachine>().nest.macro != null)
+                .Select(machine => machine.nest.macro)
+                .ToList();
+        }
+
+        public static void SetGraph<TGraph, TMacro, TMachine>(UnityEngine.Object target, TMacro macro)
+        where TGraph : class, IGraph, new()
+        where TMacro : Macro<TGraph>
+        where TMachine : Machine<TGraph, TMacro>
+        {
+            if (target is GameObject go)
+            {
+                go.GetComponent<TMachine>().nest.SwitchToMacro(macro);
+            }
+            else if (target is TMachine machine)
+            {
+                machine.nest.SwitchToMacro(macro);
+            }
+        }
+
+        public static bool HasGraph<TGraph, TMacro, TMachine>(UnityEngine.Object target, TMacro macro)
+        where TGraph : class, IGraph, new()
+        where TMacro : Macro<TGraph>
+        where TMachine : Machine<TGraph, TMacro>
+        {
+            if (target is GameObject gameObject)
+            {
+                if (gameObject != null)
+                {
+                    var stateMachines = gameObject.GetComponents<TMachine>();
+
+                    return stateMachines
+                        .Where(currentMachine => currentMachine != null)
+                        .Any(currentMachine => currentMachine.graph != null && currentMachine.graph.Equals(macro.graph));
+                }
+            }
+            else if (target is TMachine machine)
+            {
+                if (machine.graph != null && machine.graph.Equals(macro.graph))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+#if MODULE_AI_EXISTS
+        public static bool DestinationReached(GameObject gameObject, float threshold, bool requireSuccess)
+        {
+            var navMeshAgent = gameObject.GetComponent<NavMeshAgent>();
+
+            return navMeshAgent != null &&
+                navMeshAgent.remainingDistance <= threshold &&
+                (navMeshAgent.pathStatus == NavMeshPathStatus.PathComplete || !requireSuccess);
+        }
+#endif
         public static (float pre, float post) Increment(float value)
         {
             float pre = value;
@@ -158,6 +269,16 @@ namespace Unity.VisualScripting.Community
             return args.arguments[index].ConvertTo(targetType);
         }
 
+        public static object GetArgument(this ReturnEventArg args, int index, Type targetType)
+        {
+            return args.arguments[index].ConvertTo(targetType);
+        }
+
+        public static void TriggerAssetCustomEvent(ScriptGraphAsset asset, string name, params object[] args)
+        {
+            GraphReference.New(asset, true).TriggerEventHandler(hook => hook == "Custom", new CustomEventArgs(name, args), parent => true, true);
+        }
+
         public static T CreateDefinedEventInstance<T>(params object[] parameters)
         {
             var info = ReflectedInfo.For(typeof(T));
@@ -168,11 +289,11 @@ namespace Unity.VisualScripting.Community
                 var member = members[i];
                 if (member is FieldInfo fieldInfo)
                 {
-                    fieldInfo.SetValueOptimized(eventInstance, parameters[i].ConvertTo(fieldInfo.FieldType));
+                    fieldInfo.SetValue(eventInstance, parameters[i].ConvertTo(fieldInfo.FieldType));
                 }
                 else if (member is PropertyInfo propertyInfo)
                 {
-                    propertyInfo.SetValueOptimized(eventInstance, parameters[i].ConvertTo(propertyInfo.PropertyType));
+                    propertyInfo.SetValue(eventInstance, parameters[i].ConvertTo(propertyInfo.PropertyType));
                 }
             }
             return eventInstance;

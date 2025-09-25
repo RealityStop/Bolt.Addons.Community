@@ -1,7 +1,7 @@
+using System;
 using System.IO;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEditor;
-using UnityEditor.Compilation;
 
 namespace Unity.VisualScripting.Community
 {
@@ -19,13 +19,13 @@ namespace Unity.VisualScripting.Community
             return StructAssetGenerator.GetSingleDecorator(structAsset).GenerateClean(0);
         }
 
-        private string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
+        protected override string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
         {
             var structAsset = (StructAsset)asset;
             return Path.Combine(paths.ObjectsRelativePath, structAsset.title.LegalMemberName() + ".cs");
         }
 
-        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
+        public override void PostProcess(UnityEngine.Object asset, PathConfig paths, Type type)
         {
             var structAsset = (StructAsset)asset;
             var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(GetRelativeFilePath(asset, paths));

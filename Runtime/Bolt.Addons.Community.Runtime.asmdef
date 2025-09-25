@@ -18,6 +18,11 @@
             "name": "com.unity.visualscripting",
             "expression": "1.7.1",
             "define": "VISUAL_SCRIPTING_1_7"
+        },
+        {
+            "name": "com.unity.modules.ai",
+            "expression": "1.0.0",
+            "define": "MODULE_AI_EXISTS"
         }
     ],
     "noEngineReferences": false

@@ -26,6 +26,11 @@ namespace Unity.VisualScripting.Community
             segments.Add((value, clickable));
         }
 
+        private ClickableStringBuilder(Unit unit)
+        {
+            this.unit = unit;
+        }
+
         /// <summary>
         /// Creates a new <see cref="ClickableStringBuilder"/> starting with the specified text.
         /// </summary>
@@ -35,6 +40,17 @@ namespace Unity.VisualScripting.Community
         public static ClickableStringBuilder CreateString(Unit unit, string initial, bool clickable)
         {
             return new ClickableStringBuilder(unit, initial, clickable);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ClickableStringBuilder"/> starting with the specified text.
+        /// </summary>
+        /// <param name="unit">The owning unit this code is generated for.</param>
+        /// <param name="initial">Initial text to add to the builder.</param>
+        /// <param name="clickable">If <c>true</c>, the initial text will be clickable.</param>
+        public static ClickableStringBuilder CreateString(Unit unit)
+        {
+            return new ClickableStringBuilder(unit);
         }
 
         /// <summary>
@@ -143,6 +159,25 @@ namespace Unity.VisualScripting.Community
         }
 
         /// <summary>
+        /// Adds a member access expression: target.member
+        /// Highlights '<paramref name="member"/>' with VariableHighlight
+        /// </summary>
+        public ClickableStringBuilder GetMember(Action<ClickableStringBuilder> target, string member)
+        {
+            target?.Invoke(this);
+            return Dot().Add(member.VariableHighlight());
+        }
+
+        /// <summary>
+        /// Adds a member access expression: .member
+        /// Highlights '<paramref name="member"/>' with VariableHighlight
+        /// </summary>
+        public ClickableStringBuilder GetMember(string member)
+        {
+            return Dot().Add(member.VariableHighlight());
+        }
+
+        /// <summary>
         /// Adds a member access expression: Type.member
         /// Highlights '<paramref name="member"/>' with VariableHighlight
         /// </summary>
@@ -197,6 +232,71 @@ namespace Unity.VisualScripting.Community
         public ClickableStringBuilder InvokeMember(string target, string member, params string[] parameters)
         {
             return Add(target).Dot().Add(member).Parentheses(inner => inner.Add(string.Join(", ", parameters)));
+        }
+
+        /// <summary>
+        /// Adds a invoke member expression: target.member()
+        /// </summary>
+        public ClickableStringBuilder InvokeMember(string target, string member, params Action<ClickableStringBuilder>[] parameters)
+        {
+            return Add(target).Dot().Add(member).Parentheses(inner =>
+            {
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    parameters[i](inner);
+                    if (i < parameters.Length - 1)
+                    {
+                        inner.Add(", ");
+                    }
+                }
+            });
+        }
+
+        /// <summary>
+        /// Adds a invoke member expression: target.member()
+        /// </summary>
+        public ClickableStringBuilder InvokeMember(Action<ClickableStringBuilder> target, string member, params Action<ClickableStringBuilder>[] parameters)
+        {
+            target?.Invoke(this);
+            return Dot().Add(member).Parentheses(inner =>
+            {
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    parameters[i](inner);
+                    if (i < parameters.Length - 1)
+                    {
+                        inner.Add(", ");
+                    }
+                }
+            });
+        }
+
+        /// <summary>
+        /// Adds a invoke member expression: target.member()
+        /// </summary>
+        public ClickableStringBuilder InvokeMember(Action<ClickableStringBuilder> target, string member, Type[] generics, params Action<ClickableStringBuilder>[] parameters)
+        {
+            target?.Invoke(this);
+            return Dot().Add(member).Add($"<{string.Join(", ", generics.Select(g => g.As().CSharpName(false, true)))}>").Parentheses(inner =>
+            {
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    parameters[i](inner);
+                    if (i < parameters.Length - 1)
+                    {
+                        inner.Add(", ");
+                    }
+                }
+            });
+        }
+
+        /// <summary>
+        /// Adds a invoke member expression: target.member()
+        /// </summary>
+        public ClickableStringBuilder InvokeMember(Action<ClickableStringBuilder> target, string member, Type[] generics, params string[] parameters)
+        {
+            target?.Invoke(this);
+            return Dot().Add(member).Add($"<{string.Join(", ", generics.Select(g => g.As().CSharpName(false, true)))}>").Parentheses(inner => inner.Add(string.Join(", ", parameters)));
         }
 
         /// <summary>
@@ -260,11 +360,45 @@ namespace Unity.VisualScripting.Community
         }
 
         /// <summary>
+        /// Adds a invoke member expression: Type.member()
+        /// </summary>
+        public ClickableStringBuilder InvokeMember(Type target, string member, Type[] generics, bool fullName, params Action<ClickableStringBuilder>[] parameters)
+        {
+            return Add(target.As().CSharpName(false, fullName)).Dot().Add(member).Add($"<{string.Join(", ", generics.Select(g => g.As().CSharpName(false, fullName)))}>").Parentheses(inner =>
+            {
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    parameters[i](inner);
+                    if (i < parameters.Length - 1)
+                    {
+                        inner.Add(", ");
+                    }
+                }
+            });
+        }
+
+        /// <summary>
         /// Adds a method call expression: Method()
         /// </summary>
         public ClickableStringBuilder MethodCall(string name, params string[] parameters)
         {
             return Add(name).Parentheses(inner => inner.Add(string.Join(", ", parameters)));
+        }
+
+        /// <summary>
+        /// Adds a method call expression: Method()
+        /// </summary>
+        public ClickableStringBuilder MethodCall(string name, Type[] generics, params string[] parameters)
+        {
+            return Add(name).Add($"<{string.Join(", ", generics.Select(g => g.As().CSharpName(false, true)))}>").Parentheses(inner => inner.Add(string.Join(", ", parameters)));
+        }
+
+        /// <summary>
+        /// Adds a method call expression: Method()
+        /// </summary>
+        public ClickableStringBuilder MethodCall(string name, params Type[] generics)
+        {
+            return Add(name).Add($"<{string.Join(", ", generics.Select(g => g.As().CSharpName(false, true)))}>").Parentheses();
         }
 
         /// <summary>
@@ -291,6 +425,40 @@ namespace Unity.VisualScripting.Community
         public ClickableStringBuilder MethodCall(string name)
         {
             return Add(name).Parentheses();
+        }
+
+        /// <summary>
+        /// Adds a constructor call expression: new Type()
+        /// </summary>
+        public ClickableStringBuilder Create(Type type)
+        {
+            return Add("new ".ConstructHighlight()).Add(type.As().CSharpName(false, true)).Parentheses();
+        }
+
+        /// <summary>
+        /// Adds a constructor call expression: new Type()
+        /// </summary>
+        public ClickableStringBuilder Create(Type type, params string[] parameters)
+        {
+            return Add("new ".ConstructHighlight()).Add(type.As().CSharpName(false, true)).Parentheses(inner => inner.Add(string.Join(", ", parameters)));
+        }
+
+        /// <summary>
+        /// Adds a constructor call expression: new Type()
+        /// </summary>
+        public ClickableStringBuilder Create(Type type, params Action<ClickableStringBuilder>[] parameters)
+        {
+            return Add("new ".ConstructHighlight()).Add(type.As().CSharpName(false, true)).Parentheses(inner =>
+            {
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    parameters[i](inner);
+                    if (i < parameters.Length - 1)
+                    {
+                        inner.Add(", ");
+                    }
+                }
+            });
         }
 
         public ClickableStringBuilder Select(Action<ClickableStringBuilder> condition, string ifTrue, string ifFalse)
@@ -367,9 +535,9 @@ namespace Unity.VisualScripting.Community
         }
 
         /// <summary>
-        /// Appends a code block with a preceding section (e.g. method header) and inner body.
+        /// Appends a code block with a preceding section (e.g. if header) and inner body.
         /// </summary>
-        public ClickableStringBuilder Body(Action<ClickableStringBuilder> before, Action<ClickableStringBuilder, int> inner, bool newLine, int indent = 0)
+        public ClickableStringBuilder Body(Action<ClickableStringBuilder> before, Action<ClickableStringBuilder, int> inner, bool newLine, int indent = 0, bool newLineOnEnd = true)
         {
             Indent(indent);
             before?.Invoke(this);
@@ -379,8 +547,24 @@ namespace Unity.VisualScripting.Community
             inner?.Invoke(this, indent + 1);
             if (newLine) NewLine();
             CloseBrace(indent);
-            if (newLine) NewLine();
+            if (newLineOnEnd) NewLine();
             return this;
+        }
+
+        /// <summary>
+        /// Appends a code block with a preceding section (e.g. if header) and inner body.
+        /// </summary>
+        public ClickableStringBuilder If(Action<ClickableStringBuilder> condition, Action<ClickableStringBuilder, int> inner, bool newLine, int indent = 0)
+        {
+            return Body(before => before.Clickable("if ".ControlHighlight()).Parentheses(condition), inner, newLine, indent);
+        }
+
+        /// <summary>
+        /// Appends a code block with a preceding section (e.g. if header) and inner body.
+        /// </summary>
+        public ClickableStringBuilder If(string condition, Action<ClickableStringBuilder, int> inner, bool newLine, int indent = 0)
+        {
+            return If(c => c.Clickable(condition), inner, newLine, indent);
         }
         #endregion
 
@@ -425,11 +609,18 @@ namespace Unity.VisualScripting.Community
         public ClickableStringBuilder Dot() => Add(".");
         public ClickableStringBuilder Equal(bool spaceAround = false) => Add((spaceAround ? " " : "") + "=" + (spaceAround ? " " : ""));
         public ClickableStringBuilder Equals(bool spaceAround = false) => Add((spaceAround ? " " : "") + "==" + (spaceAround ? " " : ""));
+        public ClickableStringBuilder NotEquals(bool spaceAround = false) => Add((spaceAround ? " " : "") + "!=" + (spaceAround ? " " : ""));
+        public ClickableStringBuilder Null() => Add("null".ConstructHighlight());
 
         /// <summary>
-        /// Adds a statement terminator: );
+        /// Adds a statement terminator ');'
         /// </summary>
-        public ClickableStringBuilder EndLine() => Add(CodeBuilder.End());
+        public ClickableStringBuilder EndStatement() => Add(CodeBuilder.End());
+
+        /// <summary>
+        /// Adds line end ';\n'
+        /// </summary>
+        public ClickableStringBuilder EndLine(bool newLine = true) => newLine ? Add(";").NewLine() : Add(";");
         public ClickableStringBuilder NewLine() => Ignore("\n");
         public ClickableStringBuilder Indent() => Ignore(CodeBuilder.Indent(1));
         public ClickableStringBuilder Indent(int indent) => Ignore(CodeBuilder.Indent(indent));
@@ -458,7 +649,6 @@ namespace Unity.VisualScripting.Community
         /// <summary>
         /// Generate code for calling a extensition method in the CSharpUtility class
         /// </summary>
-        /// <param name="unit">Unit to make the code selectable for</param>
         /// <param name="target">Target for the method This is not made selectable</param>
         /// <param name="methodName">Method to call, This is not made selectable</param>
         /// <param name="parameters">Parameters for the method, This is not made selectable</param>
@@ -466,6 +656,86 @@ namespace Unity.VisualScripting.Community
         public ClickableStringBuilder CallCSharpUtilityExtensitionMethod(string target, string methodName, params string[] parameters)
         {
             return Ignore(target).Dot().Ignore(methodName).Parentheses(inner => inner.Ignore(string.Join(CodeUtility.MakeClickable(unit, ", "), parameters)));
+        }
+
+        /// <summary>
+        /// Generate code for calling a extensition method in the CSharpUtility class
+        /// </summary>
+        /// <param name="target">Target for the method This is not made selectable</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>The method call as a string</returns>
+        public ClickableStringBuilder CallCSharpUtilityExtensitionMethod(string target, string methodName)
+        {
+            return Ignore(target).Dot().Ignore(methodName);
+        }
+
+        /// <summary>
+        /// Generate code for calling a extensition method in the CSharpUtility class
+        /// </summary>
+        /// <param name="target">Target for the method This is not made selectable</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>The method call as a string</returns>
+        public ClickableStringBuilder CallCSharpUtilityExtensitionMethod(string target, string methodName, params Action<ClickableStringBuilder>[] parameters)
+        {
+            return Ignore(target).Dot().Ignore(methodName).Parentheses(inner =>
+            {
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    parameters[i](inner);
+                    if (i < parameters.Length - 1)
+                    {
+                        inner.Add(", ");
+                    }
+                }
+            });
+        }
+
+        /// <summary>
+        /// Generate code for calling a method in the CSharpUtility class
+        /// </summary>
+        /// <param name="target">Target for the method This is not made selectable</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>The method call as a string</returns>
+        public ClickableStringBuilder CallCSharpUtilityMethod(string methodName, params string[] parameters)
+        {
+            return Clickable(typeof(CSharpUtility).As().CSharpName(false, true)).Dot().Ignore(methodName).Parentheses(inner => inner.Ignore(string.Join(CodeUtility.MakeClickable(unit, ", "), parameters)));
+        }
+
+        /// <summary>
+        /// Generate code for calling a method in the CSharpUtility class
+        /// </summary>
+        /// <param name="target">Target for the method This is not made selectable</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>The method call as a string</returns>
+        public ClickableStringBuilder CallCSharpUtilityMethod(string methodName)
+        {
+            return Clickable(typeof(CSharpUtility).As().CSharpName(false, true)).Dot().Ignore(methodName).Parentheses();
+        }
+
+        /// <summary>
+        /// Generate code for calling a method in the CSharpUtility class
+        /// </summary>
+        /// <param name="target">Target for the method This is not made selectable</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>The method call as a string</returns>
+        public ClickableStringBuilder CallCSharpUtilityMethod(string methodName, params Action<ClickableStringBuilder>[] parameters)
+        {
+            return Clickable(typeof(CSharpUtility).As().CSharpName(false, true)).Dot().Ignore(methodName).Parentheses(inner =>
+            {
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    parameters[i](inner);
+                    if (i < parameters.Length - 1)
+                    {
+                        inner.Add(", ");
+                    }
+                }
+            });
         }
 
         /// <summary>
@@ -528,7 +798,15 @@ namespace Unity.VisualScripting.Community
         }
 
         /// <summary>
-        /// Creates a ClickableStringBuilder with Ignore Context enabled.
+        /// Creates a ClickableStringBuilder, should only be used for C# Preview.
+        /// </summary>
+        public static ClickableStringBuilder CreateClickableString(this Unit unit)
+        {
+            return ClickableStringBuilder.CreateString(unit);
+        }
+
+        /// <summary>
+        /// Creates a ClickableStringBuilder with Ignore Context enabled, should only be used for C# Preview.
         /// </summary>
         public static ClickableStringBuilder CreateIgnoreString(this Unit unit, string initial = "")
         {

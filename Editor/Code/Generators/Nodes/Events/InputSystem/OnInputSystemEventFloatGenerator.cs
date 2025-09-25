@@ -41,7 +41,7 @@ namespace Unity.VisualScripting.Community
         {
             if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
             {
-                return CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ToolTip("OnInputSystemEvents only work with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate OnInputSystemEvent", ""));
+                return CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip("OnInputSystemEvents only work with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate OnInputSystemEvent", ""));
             }
             var output = new StringBuilder();
             var inputVariable = data.AddLocalNameInScope("playerInput", typeof(PlayerInput));
@@ -126,7 +126,7 @@ namespace Unity.VisualScripting.Community
                 {
                     if (input.unit.defaultValues[input.key] is not InputAction value)
                     {
-                        return MakeClickableForThisUnit(CodeUtility.ToolTip("The problem could be that the player input component could not be found.", "Could not generate Input Action", "null".ConstructHighlight()));
+                        return MakeClickableForThisUnit(CodeUtility.ErrorTooltip("The problem could be that the player input component could not be found.", "Could not generate Input Action", "null".ConstructHighlight()));
                     }
                     else
                     {

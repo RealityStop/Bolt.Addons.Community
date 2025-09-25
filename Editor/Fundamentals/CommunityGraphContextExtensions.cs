@@ -26,14 +26,17 @@ namespace Unity.VisualScripting.Community
                     yield return item;
                 }
 
+                yield return new GraphContextMenuItem(OpenNodeFinder, "Open NodeFinder Window");
                 yield return new GraphContextMenuItem(OpenUtilityWindow, "Open Utility Window");
                 yield return new GraphContextMenuItem(OpenKeyboardControlsWindow, "Open Keyboard Controls Window");
             }
         }
 
-        private void OpenKeyboardControlsWindow(Vector2 vector)
+        private void OpenKeyboardControlsWindow(Vector2 guiPosition)
         {
-            GraphKeyboardControlsWindow.ShowWindow();
+            Rect rect = new Rect(e.mousePosition.x, e.mousePosition.y, 0, 0);
+
+            GraphKeyboardControlsPopup.Show(rect);
         }
 
         private void ConvertToEmbed(Vector2 pos)
@@ -50,6 +53,11 @@ namespace Unity.VisualScripting.Community
         {
             var window = UtilityWindow.Open();
             window.graphContext = context;
+        }
+
+        private void OpenNodeFinder(Vector2 pos)
+        {
+            NodeFinderWindow.Open();
         }
     }
 }

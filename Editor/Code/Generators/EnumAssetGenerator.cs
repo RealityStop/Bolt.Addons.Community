@@ -12,6 +12,11 @@ namespace Unity.VisualScripting.Community
     {
         private List<int> indices = new List<int>();
 
+        public override ControlGenerationData CreateGenerationData()
+        {
+            return new ControlGenerationData(typeof(Enum), null);
+        }
+
         public override string Generate(int indent)
         {
             if (Data != null)

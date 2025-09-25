@@ -44,9 +44,8 @@ namespace Unity.VisualScripting.Community
         {
             if (Unit.argumentPorts.Contains(output))
             {
-                var callCode = CodeBuilder.CallCSharpUtilityExtensitionMethod(Unit, "args".VariableHighlight(), MakeClickableForThisUnit(nameof(CSharpUtility.GetArgument)), Unit.argumentPorts.IndexOf(output).As().Code(false, Unit), MakeClickableForThisUnit("typeof".ConstructHighlight() + "(" + (data.GetExpectedType() ?? typeof(object)).As().CSharpName(false, true) + ")"));
+                var callCode = CodeBuilder.CallCSharpUtilityExtensitionMethod(Unit, MakeClickableForThisUnit("args".VariableHighlight()), MakeClickableForThisUnit(nameof(CSharpUtility.GetArgument)), Unit.argumentPorts.IndexOf(output).As().Code(false, Unit), MakeClickableForThisUnit("typeof".ConstructHighlight() + "(" + (data.GetExpectedType() ?? typeof(object)).As().CSharpName(false, true) + ")"));
                 var code = Unit.CreateClickableString().Ignore(callCode).Cast(data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != typeof(object));
-                data.CreateSymbol(Unit, typeof(object));
                 return code;
             }
             return base.GenerateValue(output, data);

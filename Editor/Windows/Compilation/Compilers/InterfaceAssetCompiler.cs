@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEditor.Compilation;
@@ -12,13 +13,19 @@ namespace Unity.VisualScripting.Community
             return Path.Combine(paths.InterfacesPath, interfaceAsset.title.LegalMemberName() + ".cs");
         }
 
+        protected override string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
+        {
+            var interfaceAsset = (InterfaceAsset)asset;
+            return Path.Combine(paths.InterfacesRelativePath, interfaceAsset.title.LegalMemberName() + ".cs");
+        }
+
         protected override string GenerateCode(UnityEngine.Object asset)
         {
             var interfaceAsset = (InterfaceAsset)asset;
             return InterfaceAssetGenerator.GetSingleDecorator(interfaceAsset).GenerateClean(0);
         }
 
-        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
+        public override void PostProcess(UnityEngine.Object asset, PathConfig paths, Type type)
         {
             var interfaceAsset = (InterfaceAsset)asset;
             var name = interfaceAsset.title.LegalMemberName();

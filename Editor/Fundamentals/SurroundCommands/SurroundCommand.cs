@@ -19,6 +19,17 @@ namespace Unity.VisualScripting.Community
         public abstract string DisplayName { get; }
         public abstract bool SequenceExit { get; }
 
-        public Sequence sequenceUnit => _sequenceUnit;
+        public Sequence sequenceUnit
+        {
+            get
+            {
+                if (_sequenceUnit == null)
+                {
+                    _sequenceUnit = new Sequence() { outputCount = 2 };
+                }
+                _sequenceUnit.EnsureDefined();
+                return _sequenceUnit;
+            }
+        }
     }
 }

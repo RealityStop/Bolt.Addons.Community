@@ -98,6 +98,11 @@ namespace Unity.VisualScripting.Community
                     return false;
                 }
 
+                if (sourceType == typeof(object) && targetType != typeof(object))
+                {
+                    return true;
+                }
+
                 if (!IsCastingRequired(sourceType, targetType, ignoreInputType))
                 {
                     return false;

@@ -114,7 +114,6 @@ namespace Unity.VisualScripting.Community.CSharp
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            // CSharpPreviewWindow.instance?.preview.Refresh();
             HUMEditor.Vertical(() =>
             {
                 HUMEditor.Changed(() =>

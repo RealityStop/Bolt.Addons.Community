@@ -10,14 +10,11 @@ using System;
 
 namespace Unity.VisualScripting.Community
 {
-    [NodeGenerator(typeof(Unity.VisualScripting.InvokeMember))]
-    public sealed class InvokeMemberGenerator : NodeGenerator<Unity.VisualScripting.InvokeMember>
+    [NodeGenerator(typeof(InvokeMember))]
+    public sealed class InvokeMemberGenerator : NodeGenerator<InvokeMember>
     {
-        private ControlGenerationData controlGenerationData;
-
         private Dictionary<ValueOutput, string> outputNames;
-
-        public InvokeMemberGenerator(Unity.VisualScripting.InvokeMember unit) : base(unit)
+        public InvokeMemberGenerator(InvokeMember unit) : base(unit)
         {
             if (Unit.member.isExtension)
             {
@@ -35,43 +32,65 @@ namespace Unity.VisualScripting.Community
             {
                 if (!Unit.enter.hasValidConnection && Unit.outputParameters.Count > 0)
                 {
-                    return $"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */".WarningHighlight();
+                    return MakeClickableForThisUnit($"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */".WarningHighlight());
                 }
-                var _output = string.Empty;
 
                 if (Unit.member.isConstructor)
                 {
-                    _output += new ValueCode(MakeClickableForThisUnit($"{"new".ConstructHighlight()} {Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}(") + $"{GenerateArguments(data)}{MakeClickableForThisUnit(")")}");
+                    string parameters = string.Empty;
+                    string typeName = Unit.member.pseudoDeclaringType.As().CSharpName(false, true);
+                    if (Unit.member.pseudoDeclaringType.IsArray)
+                    {
+                        int count = 0;
+                        var type = Unit.member.pseudoDeclaringType;
+                        while (type.IsArray)
+                        {
+                            count++;
+                            type = type.GetElementType();
+                        }
+
+                        typeName = MakeClickableForThisUnit(typeName.Replace("[]", "")) + MakeClickableForThisUnit("[") + GenerateArguments(data) + MakeClickableForThisUnit("]") + MakeClickableForThisUnit(string.Concat(Enumerable.Repeat("[]", count - 1)));
+                    }
+                    else
+                    {
+                        parameters = MakeClickableForThisUnit("(") + GenerateArguments(data) + MakeClickableForThisUnit(")");
+                        typeName = MakeClickableForThisUnit(typeName);
+                    }
+                    return MakeClickableForThisUnit("new ".ConstructHighlight()) + typeName + parameters;
                 }
                 else
                 {
                     if (Unit.target == null)
                     {
-                        _output += new ValueCode(MakeClickableForThisUnit($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}(") + $"{GenerateArguments(data)}{MakeClickableForThisUnit(")")}");
+                        return MakeClickableForThisUnit(Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeClickableForThisUnit(")");
                     }
                     else
                     {
                         if (Unit.target.hasValidConnection && Unit.target.type != Unit.target.connection.source.type && Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            _output += new ValueCode(GenerateValue(Unit.target, data) + MakeClickableForThisUnit(GetComponent(Unit.target, data) + "." + Unit.member.name + $"(") + $"{GenerateArguments(data)}{MakeClickableForThisUnit(")")}");
+                            return GenerateValue(Unit.target, data) + MakeClickableForThisUnit(GetComponent(Unit.target, data) + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeClickableForThisUnit(")");
                         }
                         else if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
                         {
-                            _output += new ValueCode(GenerateValue(Unit.target, data) + MakeClickableForThisUnit(GetComponent(Unit.target, data) + "." + Unit.member.name + $"(") + $"{GenerateArguments(data)}{MakeClickableForThisUnit(")")}", typeof(GameObject), ShouldCast(Unit.target, data, false));
+                            return (GenerateValue(Unit.target, data) + MakeClickableForThisUnit(GetComponent(Unit.target, data) + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeClickableForThisUnit(")")).CastAs(typeof(GameObject), Unit, ShouldCast(Unit.target, data, false));
                         }
                         else
                         {
-                            _output += new ValueCode($"{GenerateValue(Unit.target, data)}" + MakeClickableForThisUnit($".{Unit.member.name}(") + $"{GenerateArguments(data)}{MakeClickableForThisUnit(")")}");
+                            return GenerateValue(Unit.target, data) + MakeClickableForThisUnit("." + Unit.member.name + "(") + GenerateArguments(data) + MakeClickableForThisUnit(")");
                         }
                     }
                 }
-                return _output;
             }
             else if (Unit.outputParameters.ContainsValue(output))
             {
                 if (!Unit.enter.hasValidConnection && Unit.outputParameters.Count > 0)
                 {
-                    return $"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */".WarningHighlight();
+                    return MakeClickableForThisUnit($"/* Control Port Enter of {Unit.member.ToDeclarer()} requires a connection */".WarningHighlight());
+                }
+
+                if (Unit.member.GetParameterInfos().ToArray()[Unit.outputParameters.FirstOrDefault(parameter => parameter.Value == output).Key].ParameterType.IsByRef)
+                {
+                    return GenerateValue(Unit.inputParameters[Unit.outputParameters.FirstOrDefault(parameter => parameter.Value == output).Key], data);
                 }
 
                 var transformedKey = outputNames[output].Replace("&", "").Replace("%", "");
@@ -103,17 +122,32 @@ namespace Unity.VisualScripting.Community
                 return $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()";
             }
         }
-
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
             outputNames = new Dictionary<ValueOutput, string>();
-            controlGenerationData = data;
             var output = string.Empty;
             if (Unit.result == null || !Unit.result.hasValidConnection)
             {
                 if (Unit.member.isConstructor)
                 {
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{"new".ConstructHighlight()} {Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}(") + $"{GenerateArguments(data)}{MakeClickableForThisUnit(");")}" + "\n";
+                    string parameters;
+                    if (Unit.member.pseudoDeclaringType.IsArray)
+                    {
+                        int count = 0;
+                        var type = Unit.member.pseudoDeclaringType;
+                        while (type.IsArray)
+                        {
+                            count++;
+                            type = type.GetElementType();
+                        }
+
+                        string typeName = Unit.member.pseudoDeclaringType.As().CSharpName(false, true);
+                        parameters = MakeClickableForThisUnit(typeName.Replace("[]", "")) + MakeClickableForThisUnit("[") + GenerateArguments(data) + MakeClickableForThisUnit("]") + MakeClickableForThisUnit(string.Concat(Enumerable.Repeat("[]", count - 1)));
+                    }
+                    else
+                        parameters = MakeClickableForThisUnit(Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + "(") + GenerateArguments(data) + MakeClickableForThisUnit(");");
+
+                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{"new".ConstructHighlight()} ") + parameters + "\n";
                 }
                 else
                 {
@@ -123,7 +157,6 @@ namespace Unity.VisualScripting.Community
                     }
                     else
                     {
-
                         var target = GenerateValue(Unit.target, data);
                         if (Unit.member.pseudoDeclaringType == typeof(GameObject) && Unit.target.hasValidConnection && typeof(Component).IsAssignableFrom(GetSourceType(Unit.target, data) ?? Unit.target.connection.source.type))
                         {
@@ -153,11 +186,12 @@ namespace Unity.VisualScripting.Community
         {
             if (input.hasValidConnection)
             {
+                var shouldCast = ShouldCast(input, data, false);
+                if (input.type.IsSubclassOf(typeof(Component))) return GetNextValueUnit(input, data).CastAs(typeof(GameObject), Unit, shouldCast);
                 data.SetExpectedType(input.type);
                 var connectedCode = GetNextValueUnit(input, data);
                 data.RemoveExpectedType();
-                if (input.type.IsSubclassOf(typeof(Component))) return new ValueCode(GetNextValueUnit(input, data), typeof(GameObject), ShouldCast(input, data, false));
-                return new ValueCode(connectedCode, input.type, ShouldCast(input, data, false));
+                return connectedCode.CastAs(input.type, Unit, shouldCast);
             }
             else if (input.hasDefaultValue)
             {
@@ -195,73 +229,115 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private string GenerateArguments(ControlGenerationData data = null)
+        private string GenerateArguments(ControlGenerationData data)
         {
-            if (controlGenerationData != null && Unit.member.isMethod)
+            var method = Unit.member.methodInfo;
+            var parameters = method?.GetParameters();
+            if (data != null && Unit.member.isMethod)
             {
-                List<string> output = new List<string>();
-                var index = 0;
-                foreach (var parameter in Unit.member.methodInfo.GetParameters())
+                var output = new List<string>();
+                int count = parameters.Length;
+
+                for (int i = 0; i < count; i++)
                 {
+                    var parameter = parameters[i];
+                    var input = Unit.inputParameters.TryGetValue(i, out var p) ? p : null;
                     if (parameter.HasOutModifier())
                     {
-                        var name = controlGenerationData.AddLocalNameInScope(parameter.Name, parameter.ParameterType).VariableHighlight();
-                        output.Add("out var ".ConstructHighlight() + name);
-                        if (Unit.outputParameters.Values.Any(output => output.key == "&" + parameter.Name && !outputNames.ContainsKey(Unit.outputParameters[index])))
-                            outputNames.Add(Unit.outputParameters[index], "&" + name);
+                        var name = data.AddLocalNameInScope(parameter.Name, parameter.ParameterType).VariableHighlight();
+                        output.Add(MakeClickableForThisUnit("out var".ConstructHighlight() + name));
+
+                        if (Unit.outputParameters.TryGetValue(i, out var outValue) && !outputNames.ContainsKey(outValue))
+                            outputNames.Add(outValue, "&" + name);
                     }
                     else if (parameter.ParameterType.IsByRef)
                     {
-                        var name = controlGenerationData.AddLocalNameInScope(parameter.Name, parameter.ParameterType).VariableHighlight();
-                        var input = Unit.inputParameters[index];
-                        if (!input.hasValidConnection || (input.hasValidConnection && input.connection.source.unit is not GetVariable or AssetFieldUnit or InheritedFieldUnit or GetMember))
+                        if (input == null)
                         {
-                            output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */".WarningHighlight());
+                            output.Add(MakeClickableForThisUnit($"/* Missing input for {parameter.Name} */".WarningHighlight()));
                             continue;
                         }
-                        output.Add("ref ".ConstructHighlight() + GenerateValue(Unit.inputParameters[index], data));
-                        outputNames.Add(Unit.outputParameters[index], "&" + name);
+
+                        if (!input.hasValidConnection || (input.hasValidConnection && !input.connection.source.unit.IsValidRefUnit()))
+                        {
+                            output.Add(MakeClickableForThisUnit($"/* {input.key.Replace("%", "")} needs connection to a variable or member unit */".WarningHighlight()));
+                            continue;
+                        }
+
+                        var name = data.AddLocalNameInScope(parameter.Name, parameter.ParameterType).VariableHighlight();
+                        output.Add(MakeClickableForThisUnit("ref ".ConstructHighlight()) + GenerateValue(input, data));
+                        if (Unit.outputParameters.TryGetValue(i, out var outRef) && !outputNames.ContainsKey(outRef))
+                            outputNames.Add(outRef, "&" + name);
                     }
-                    else if (parameter.IsDefined(typeof(ParamArrayAttribute), false) && !Unit.inputParameters[index].hasValidConnection)
+                    if (parameter.IsOptional && !input.hasValidConnection && !input.hasDefaultValue)
                     {
-                        continue;
+                        bool hasLaterConnection = false;
+
+                        for (int j = i + 1; j < count; j++)
+                        {
+                            var laterParam = Unit.inputParameters[j];
+                            if (laterParam != null && (laterParam.hasValidConnection || laterParam.hasDefaultValue))
+                            {
+                                hasLaterConnection = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasLaterConnection)
+                            continue;
                     }
-                    else if (parameter.IsOptional && !Unit.inputParameters[index].hasValidConnection)
+                    else if (parameter.IsDefined(typeof(ParamArrayAttribute), false) && (input == null || !input.hasValidConnection))
                     {
                         continue;
                     }
                     else
                     {
-                        output.Add(GenerateValue(Unit.inputParameters.Values.First(input => input.key == "%" + parameter.Name), data));
+                        output.Add(GenerateValue(input, data));
                     }
-                    index++;
                 }
+
                 return string.Join(MakeClickableForThisUnit(", "), output);
             }
             else if (Unit.member.isMethod)
             {
-                List<string> output = new List<string>();
-                var index = 0;
-                foreach (var parameter in Unit.member.methodInfo.GetParameters())
+                var output = new List<string>();
+                int count = parameters.Length;
+
+                for (int i = 0; i < count; i++)
                 {
-                    if (parameter.IsDefined(typeof(ParamArrayAttribute), false) && !Unit.inputParameters[index].hasValidConnection)
-                    {
+                    if (!Unit.inputParameters.TryGetValue(i, out var input))
                         continue;
-                    }
-                    else if (parameter.IsOptional && !Unit.inputParameters[index].hasValidConnection)
+
+                    var param = parameters[i];
+                    if (param.IsOptional && !input.hasValidConnection && !input.hasDefaultValue)
                     {
-                        continue;
+                        bool hasLaterConnection = false;
+
+                        for (int j = i + 1; j < count; j++)
+                        {
+                            var laterParam = Unit.inputParameters[j];
+                            if (laterParam != null && (laterParam.hasValidConnection || laterParam.hasDefaultValue))
+                            {
+                                hasLaterConnection = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasLaterConnection)
+                            continue;
                     }
-                    else if (Unit.inputParameters.ContainsKey(index))
-                        output.Add(GenerateValue(Unit.inputParameters[index], data));
-                    index++;
+
+                    if (param.IsDefined(typeof(ParamArrayAttribute), false) && !input.hasValidConnection)
+                        continue;
+
+                    output.Add(GenerateValue(input, data));
                 }
+
                 return string.Join(MakeClickableForThisUnit(", "), output);
             }
             else
             {
-                List<string> output = Unit.valueInputs.Select(input => GenerateValue(input, data)).ToList();
-                return string.Join(MakeClickableForThisUnit(", "), output);
+                return string.Join(MakeClickableForThisUnit(", "), Unit.valueInputs.Select(input => GenerateValue(input, data)));
             }
         }
     }

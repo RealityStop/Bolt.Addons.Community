@@ -5,21 +5,22 @@ using System;
 namespace Unity.VisualScripting.Community
 {
     [Serializable]
-    public abstract class CodeGenerator : Decorator<CodeGenerator, CodeGeneratorAttribute, object>, ICodeGenerator
+    public abstract class CodeGenerator : Decorator<CodeGenerator, CodeGeneratorAttribute, object>, ICodeGenerator, ICreateGenerationData
     {
-        private bool _canCompile = true;
-        bool ICodeGenerator.CanCompile
+
+        public ControlGenerationData data { get; protected set; }
+
+        public virtual ControlGenerationData GetGenerationData()
         {
-            get => _canCompile;
-            set => _canCompile = value;
+            if (data == null || data.isDisposed)
+            {
+                data = CreateGenerationData();
+            }
+            return data;
         }
 
-        public bool CanCompile
-        {
-            get => _canCompile;
-            protected set => _canCompile = value;
-        }
-
+        public abstract ControlGenerationData CreateGenerationData();
+        
         public abstract string Generate(int indent);
 
         public string GenerateClean(int indent)
@@ -27,6 +28,7 @@ namespace Unity.VisualScripting.Community
             var generatedCode = CodeUtility.CleanCode(Generate(indent).RemoveHighlights().RemoveMarkdown());
             return generatedCode;
         }
+
     }
 
     [Serializable]

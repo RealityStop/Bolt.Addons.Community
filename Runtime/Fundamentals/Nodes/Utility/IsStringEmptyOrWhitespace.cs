@@ -3,10 +3,11 @@ using Unity.VisualScripting;
 namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.StringNullorWhiteSpace")]
-    [UnitCategory("Community\\Utility\\string")]
-    [UnitTitle("IsEmptyOrWhitespace")]
+    [RenamedFrom("Unity.VisualScripting.Community.StringNullorWhiteSpace")]
+    [UnitCategory("Community\\Utility\\String")]
+    [UnitTitle("Is Empty Or Whitespace")]
     [TypeIcon(typeof(string))]
-    public class StringNullorWhiteSpace : Unit
+    public class IsStringEmptyOrWhitespace : Unit
     {
         [DoNotSerialize]
         [PortLabelHidden]
@@ -38,7 +39,7 @@ namespace Unity.VisualScripting.Community
         {
             string Value = flow.GetValue<string>(String);
 
-            if (string.IsNullOrEmpty(Value) || string.IsNullOrWhiteSpace(Value))
+            if (string.IsNullOrWhiteSpace(Value))
             {
                 return True;
             }

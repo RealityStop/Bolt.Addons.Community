@@ -1,13 +1,13 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
     public class TimerLogic
     {
-        public float duration = 1f; // Duration of the timer in seconds
-        public bool unscaled = false; // Use unscaled time (ignores game speed changes)
+        public float duration = 1f;
+        public bool unscaled = false;
 
         private float elapsedTime = 0f;
         private bool isRunning = false;
@@ -15,99 +15,44 @@ namespace Unity.VisualScripting.Community
         private Action onCompleted;
         private Action onTick;
 
-        // Events
-        public event Action OnCompleted
+        public void Initialize(Action onCompleted = null, Action onTick = null)
         {
-            add
-            {
-                if (onCompleted == null || !onCompleted.GetInvocationList().Contains(value))
-                {
-                    onCompleted += value;
-                }
-            }
-            remove
-            {
-                if (onCompleted != null && onCompleted.GetInvocationList().Contains(value))
-                {
-                    onCompleted -= value;
-                }
-            }
-        }
-
-        public event Action OnTick
-        {
-            add
-            {
-                if (onTick == null || !onTick.GetInvocationList().Contains(value))
-                {
-                    onTick += value;
-                }
-            }
-            remove
-            {
-                if (onTick != null && onTick.GetInvocationList().Contains(value))
-                {
-                    onTick -= value;
-                }
-            }
+            this.onCompleted = onCompleted;
+            this.onTick = onTick;
         }
 
         public void Update()
         {
-            if (isRunning)
+            if (!isRunning) return;
+
+            elapsedTime += unscaled ? Time.unscaledDeltaTime : Time.deltaTime;
+
+            onTick?.Invoke();
+
+            if (elapsedTime >= duration)
             {
-                // Update elapsed time
-                elapsedTime += unscaled ? Time.unscaledDeltaTime : Time.deltaTime;
-
-                // Call tick event
-                onTick?.Invoke();
-
-                // Check if timer is completed
-                if (elapsedTime >= duration)
-                {
-                    onCompleted?.Invoke();
-
-                    isRunning = false;
-                }
+                onCompleted?.Invoke();
+                isRunning = false;
             }
         }
 
-        // Start the timer
         public void StartTimer(float duration, bool unscaled)
         {
-            elapsedTime = 0f;
-            isRunning = true;
             this.duration = duration;
             this.unscaled = unscaled;
-        }
-
-        // Start the timer with Action
-        public void StartTimer(float duration, bool unscaled, Action OnStarted)
-        {
             elapsedTime = 0f;
             isRunning = true;
-            this.duration = duration;
-            this.unscaled = unscaled;
-            OnStarted?.Invoke();
         }
 
-        // Pause the timer
-        public void PauseTimer()
+        public void StartTimer(float duration, bool unscaled, Action onStarted)
         {
-            isRunning = false;
+            StartTimer(duration, unscaled);
+            onStarted?.Invoke();
         }
 
-        // Resume the timer
-        public void ResumeTimer()
-        {
-            isRunning = true;
-        }
-
-        // Toggle the timer on/off
-        public void ToggleTimer()
-        {
-            isRunning = !isRunning;
-        }
+        public void PauseTimer() => isRunning = false;
+        public void ResumeTimer() => isRunning = true;
+        public void ToggleTimer() => isRunning = !isRunning;
 
         public float Elapsed => Mathf.Min(elapsedTime, duration);
         public float ElapsedPercentage => Mathf.Clamp01(elapsedTime / duration);

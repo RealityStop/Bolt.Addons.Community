@@ -33,13 +33,13 @@ namespace Unity.VisualScripting.Community
         protected override void OnGUI(Rect position, GUIContent label)
         {
             var selectiveExpose = (SelectExpose)metadata.value;
-            BeginBlock(metadata, position);
+            BeginBlock(metadata["type"], position);
 
             Rect labelRect = new Rect(position.x, position.y, 40, EditorGUIUtility.singleLineHeight);
             GUI.Label(labelRect, "Type:");
 
             Rect buttonRect = new Rect(position.x + 45, position.y, position.width - 45, EditorGUIUtility.singleLineHeight);
-            if (GUI.Button(buttonRect, new GUIContent(((Type)metadata["type"].value).DisplayName(), ((Type)metadata["type"].value).Icon()[IconSize.Small])))
+            if (GUI.Button(buttonRect, new GUIContent(selectiveExpose.type.DisplayName(), ((Type)metadata["type"].value).Icon()[IconSize.Small])))
             {
                 TypeBuilderWindow.ShowWindow(labelRect, metadata["type"], true, new Type[0], () =>
                 {
@@ -61,7 +61,7 @@ namespace Unity.VisualScripting.Community
                     var members = selectiveExpose.type.GetMembers()
                         .Where(m => m is System.Reflection.FieldInfo || m is System.Reflection.PropertyInfo)
                         .Select(m => m.ToManipulator());
-
+                    BeginBlock(metadata["selectedMembers"], position);
                     foreach (var member in members)
                     {
                         var memberName = member.name;
@@ -80,16 +80,21 @@ namespace Unity.VisualScripting.Community
 
                         position.y += EditorGUIUtility.singleLineHeight;
                     }
+                    if (EndBlock(metadata["selectedMembers"]))
+                    {
+                        metadata.RecordUndo();
+                        metadata["selectedMembers"].value = selectiveExpose.selectedMembers;
+                    }
                 }
                 else
                 {
                     EditorGUI.LabelField(new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight), "No type selected.");
                 }
             }
-            if (EndBlock(metadata))
+            if (EndBlock(metadata["type"]))
             {
                 metadata.RecordUndo();
-                metadata.value = selectiveExpose;
+                metadata["type"].value = selectiveExpose.type;
             }
         }
     }

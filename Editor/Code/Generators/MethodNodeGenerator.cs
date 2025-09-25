@@ -24,7 +24,7 @@ namespace Unity.VisualScripting.Community
         public virtual int GenericCount { get => 0; }
         public abstract List<TypeParam> Parameters { get; }
         public virtual List<AttributeDeclaration> Attributes { get; } = new List<AttributeDeclaration>();
-        public virtual string MethodBody { get; }
+        public virtual string MethodBody { get; } = null;
         public ControlGenerationData Data;
         public int indent = 0;
 

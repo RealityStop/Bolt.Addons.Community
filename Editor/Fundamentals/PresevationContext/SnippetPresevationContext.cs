@@ -187,7 +187,11 @@ namespace Unity.VisualScripting.Community
             var offsetPosition = fuzzyWindowPosition;
 
             canvas.CancelConnection();
+            canvas.selection.Clear();
             preservation.AddToGraph(offsetPosition);
+            var firstUnit = preservation.addedUnits.FirstOrDefault();
+            if (firstUnit != null)
+                canvas.selection.Add(firstUnit);
             preservation.Connect();
             preservation.Reset();
             return preservation;

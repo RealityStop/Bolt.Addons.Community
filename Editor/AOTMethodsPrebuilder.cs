@@ -10,6 +10,10 @@ using UnityEngine.Events;
 using UnityEditor;
 using System.IO;
 using Unity.VisualScripting;
+using Unity.VisualScripting.Community.Libraries.CSharp;
+using System.Reflection;
+using ParameterModifier = Unity.VisualScripting.Community.Libraries.CSharp.ParameterModifier;
+using UnityEngine.UI;
 
 namespace Unity.VisualScripting.Community
 {
@@ -25,24 +29,30 @@ namespace Unity.VisualScripting.Community
             AssetDatabase.Refresh();
         }
 
-
         private void GenerateScript()
         {
             EditorUtility.DisplayProgressBar("Generating Aot Support", "Finding Script Graphs and Scenes...", 0f);
             typesToSupport = GetTypesForAOTMethods().Distinct().ToList();
+            EditorUtility.ClearProgressBar();
             typesToSupport.RemoveAll(type => type.types.Count == 0);
             string scriptContent = GenerateScriptContent(typesToSupport);
-            string path = Application.dataPath + "/Unity.VisualScripting.Community.Generated/Scripts/AotSupportMethods.cs";
-            Debug.Log("Generated OnUnityEvent Support script at : " + path + "\nEnsure that the script stays here");
-            HUMIO.Ensure(path).Path();
-            File.WriteAllText(path, scriptContent);
+            var BasePath = Path.Combine(Application.dataPath, AssetCompiler.GeneratedPath);
+            var ScriptsPath = Path.Combine(BasePath, "Scripts");
+            Debug.Log("Generated OnUnityEvent Support script at : " + ScriptsPath + "\nEnsure that the script stays here");
+            File.WriteAllText(Application.dataPath + "/" + AssetCompiler.GeneratedPath + "/Scripts" + "/AotSupportMethods.cs", scriptContent);
             AssetDatabase.Refresh();
-            EditorUtility.ClearProgressBar();
         }
 
+        private readonly List<string> includedNamespaces = new List<string>
+        {
+            "System",
+            "UnityEngine.Events",
+            "Unity.VisualScripting",
+            "Unity.VisualScripting.Community"
+        };
         private string GenerateScriptContent(List<TypeGroup> typeGroups)
         {
-            HashSet<string> namespaces = new HashSet<string>();
+            HashSet<string> namespaces = new HashSet<string>(includedNamespaces);
 
             foreach (var typeGroup in typeGroups)
             {
@@ -57,65 +67,64 @@ namespace Unity.VisualScripting.Community
 
             }
 
-            string namespaceDeclarations = string.Join(Environment.NewLine, namespaces.Select(ns => $"using {ns};"));
-            string scriptContent = $"{namespaceDeclarations}\n";
-            scriptContent += @"using System;
-    using UnityEngine.Events;
-    using Unity.VisualScripting;
-    using Unity.VisualScripting.Community;
-    
-    public static class AotSupportMethods
-    {
-    ";
+            var @namespace = NamespaceGenerator.Namespace("Unity.VisualScripting.Community.Generated");
+            var @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.Static, "AotSupportMethods", null, "", namespaces.ToList());
+            var processedGroups = new HashSet<TypeGroup>();
             foreach (var typeGroup in typeGroups)
             {
+                if (!processedGroups.Add(typeGroup))
+                    continue;
                 string methodParameters = string.Join(", ", typeGroup.types.Select(type => type.CSharpFullName(true)));
-
                 string methodReturnType = "UnityAction<" + methodParameters + ">";
-
-                scriptContent += $"    public static {methodReturnType} {string.Join("_", typeGroup.types.Select(type => type.HumanName(false).Replace(" ", "")))}Handler(GraphReference reference, OnUnityEvent onUnityEvent)\n";
-                scriptContent += "    {\n";
-
-                // Construct argument list
+                var method = MethodGenerator.Method(AccessModifier.Public, MethodModifier.Static, methodReturnType, "UnityEngine.Events", string.Join("_", typeGroup.types.Select(type => type.HumanName(false).Replace(" ", ""))) + "Handler");
+                method.AddParameter(ParameterGenerator.Parameter("reference", typeof(GraphReference), ParameterModifier.None));
+                method.AddParameter(ParameterGenerator.Parameter("onUnityEvent", typeof(OnUnityEvent), ParameterModifier.None));
+                method.SetWarning($"Method generated from {typeGroup.parent.CSharpFullName()}");
                 List<string> args = new List<string>();
                 for (int i = 0; i < typeGroup.types.Count; i++)
                 {
                     args.Add("arg" + i);
                 }
 
-                // Construct event data initialization
                 string eventData = "";
                 for (int i = 0; i < typeGroup.types.Count; i++)
                 {
-                    eventData += $"Value{i} = arg{i},{(i != typeGroup.types.Count - 1 ? "\n" : "")}\t\t\t\t";
+                    eventData += $"Value{i} = arg{i},{(i != typeGroup.types.Count - 1 ? "\n" : "")}\t\t";
                 }
 
-                // Append method body
-                scriptContent += @$"        return ({string.Join(", ", args)}) => 
-            {{
-                onUnityEvent.Trigger(reference, new EventData
-                {{  
-                    {eventData}
-                }});
-            }};
-    ";
-                scriptContent += "    }\n\n";
+
+                var body = @$"return ({string.Join(", ", args)}) => 
+{{
+    onUnityEvent.Trigger(reference, new EventData
+    {{  
+        {eventData}
+    }});
+}};";
+                method.Body(body);
+                @class.AddMethod(method);
             }
-
-            scriptContent += "}\n";
-
-            return scriptContent;
+            @namespace.AddClass(@class);
+            return @namespace.GenerateClean(0);
         }
 
-        public List<TypeGroup> GetTypesForAOTMethods()
+        private List<TypeGroup> GetTypesForAOTMethods()
         {
             List<TypeGroup> types = new List<TypeGroup>();
 
-            foreach (var type in AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes().Where(type => type.Inherits(typeof(UnityEventBase)))))
+            var allTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes().Where(type => typeof(UnityEventBase).IsAssignableFrom(type))).ToList();
+
+            int count = allTypes.Count;
+            for (int i = 0; i < count; i++)
             {
-                if (type.IsPublic && type.BaseType.IsGenericType && !type.BaseType.GetGenericArguments().Any(arg => arg.IsGenericTypeParameter) && type.BaseType.GetGenericArguments().All(_type => _type.IsPublic && AllowedNameSpace(_type.Namespace)))
+                var currentType = allTypes[i];
+                var type = currentType.IsGenericType ? currentType : currentType.BaseType;
+                float progress = (float)i / count;
+
+                if (type.IsPublic && type.IsGenericType && !type.GetGenericArguments().Any(arg => arg.IsGenericTypeParameter) && type.GetGenericArguments().All(_type => _type.IsPublic && AllowedNameSpace(_type.Namespace)))
                 {
-                    types.Add(new TypeGroup(type.BaseType.GetGenericArguments()));
+                    EditorUtility.DisplayProgressBar("Generating Aot Support Methods for OnUnityEvent", $"Found {type.HumanName(true)}...", progress);
+
+                    types.Add(new TypeGroup(currentType, type.GetGenericArguments()));
                 }
             }
 
@@ -125,7 +134,7 @@ namespace Unity.VisualScripting.Community
         private bool IsIncludedNamespace(string _namespace)
         {
             if (string.IsNullOrEmpty(_namespace)) return false;
-            return _namespace == "System" || _namespace == "UnityEngine.Events" || _namespace == "Unity.VisualScripting" || _namespace == "Unity.VisualScripting.Community";
+            return includedNamespaces.Contains(_namespace);
         }
 
         private bool AllowedNameSpace(string _namespace)
@@ -135,13 +144,15 @@ namespace Unity.VisualScripting.Community
             return true;
         }
 
-        public class TypeGroup : IEquatable<TypeGroup>
+        private class TypeGroup : IEquatable<TypeGroup>
         {
-            public TypeGroup(params Type[] types)
+            public TypeGroup(Type parent, params Type[] types)
             {
+                this.parent = parent;
                 this.types = types.ToList();
             }
 
+            public Type parent;
             public List<Type> types = new List<Type>();
 
             public bool Equals(TypeGroup other)

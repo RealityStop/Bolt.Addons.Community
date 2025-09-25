@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community
     
         public override string SearchResultLabel(string query)
         {
-            return query;
+            return query + $"<color=#{ColorPalette.unityForegroundDim.ToHexString()}> (dynamic value)</color>";
         }
     
         protected override void FillFromUnit()

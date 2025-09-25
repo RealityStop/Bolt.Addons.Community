@@ -12,10 +12,11 @@ namespace Unity.VisualScripting.Community
         Vector2 mousePosition;
         Vector2 placement;
         private bool focused;
-
-        public static void Open()
+        System.Action<CommentNode> onCreate = null;
+        public static void Open(System.Action<CommentNode> onCreate = null)
         {
             CommentPopup popup = CommentPopup.CreateInstance<CommentPopup>();
+            popup.onCreate = onCreate;
             var canvas = GraphWindow.activeContext?.canvas as FlowCanvas;
             popup.placement = canvas.mousePosition;
             active = popup;
@@ -46,7 +47,9 @@ namespace Unity.VisualScripting.Community
             if (Event.current.keyCode == KeyCode.Return && Event.current.rawType == EventType.KeyUp)
             {
                 var canvas = GraphWindow.activeContext?.canvas as FlowCanvas;
-                canvas?.AddUnit(new CommentNode() { comment = text, color = new Color(Random.Range(0.1f, 0.6f), Random.Range(0.1f, 0.6f), Random.Range(0.1f, 0.6f)) }, placement);
+                var node = new CommentNode() { comment = text, color = new Color(Random.Range(0.1f, 0.6f), Random.Range(0.1f, 0.6f), Random.Range(0.1f, 0.6f)) };
+                onCreate?.Invoke(node);
+                canvas?.AddUnit(node, placement);
                 Close();
             }
             else

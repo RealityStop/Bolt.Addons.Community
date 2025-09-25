@@ -15,6 +15,8 @@ namespace Unity.VisualScripting.Community
         private bool positionSet;
         private Vector2 mousePosition;
 
+        public static SurroundWithWindow Window { get; private set; }
+
         /// <summary>
         /// Show the popup window at the mouse position.
         /// </summary>
@@ -27,6 +29,7 @@ namespace Unity.VisualScripting.Community
                 .Where(type => typeof(ISurroundWithCommandBase).IsAssignableFrom(type) && !type.IsAbstract && !type.IsInterface)
                 .ToList();
             window.ShowPopup();
+            Window = window;
             return window;
         }
 

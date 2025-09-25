@@ -1,10 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
-using UnityEditor.Compilation;
 
 namespace Unity.VisualScripting.Community
 {
@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community
             return code;
         }
 
-        private string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
+        protected override string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
         {
             var classAsset = (ClassAsset)asset;
             if (classAsset.inheritsType && IsEditorAssembly(classAsset.GetInheritedType().Assembly, new HashSet<string>()))
@@ -33,7 +33,7 @@ namespace Unity.VisualScripting.Community
             return Path.Combine(paths.ObjectsRelativePath, classAsset.title.LegalMemberName() + ".cs");
         }
 
-        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
+        public override void PostProcess(UnityEngine.Object asset, PathConfig paths, Type type)
         {
             var classAsset = (ClassAsset)asset;
             var scriptImporter = AssetImporter.GetAtPath(GetRelativeFilePath(asset, paths)) as MonoImporter;

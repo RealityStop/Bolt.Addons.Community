@@ -35,7 +35,7 @@ namespace Unity.VisualScripting.Community
                 else
                 {
                     data.NewScope();
-                    output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ToolTip($"The code in the 'True' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.condition, data))}).", $"Unreachable Code in 'True' Branch: {Unit.ifTrue.key}", "")));
+                    output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"The code in the 'True' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.condition, data))}).", $"Unreachable Code in 'True' Branch: {Unit.ifTrue.key}", "")));
                     trueCode = GetNextUnit(Unit.ifTrue, data, indent + 1).TrimEnd();
                     data.ExitScope();
                     output.Append(trueCode);
@@ -74,7 +74,7 @@ namespace Unity.VisualScripting.Community
                     else
                     {
                         data.NewScope();
-                        output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ToolTip($"The code in the 'False' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.condition, data))}).", $"Unreachable Code in 'False' Branch: {Unit.ifFalse.key}", "")));
+                        output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"The code in the 'False' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.condition, data))}).", $"Unreachable Code in 'False' Branch: {Unit.ifFalse.key}", "")));
                         output.Append(GetNextUnit(Unit.ifFalse, data, indent + 1).TrimEnd());
                         data.ExitScope();
                     }

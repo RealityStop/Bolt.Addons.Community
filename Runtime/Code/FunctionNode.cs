@@ -64,7 +64,8 @@ namespace Unity.VisualScripting.Community
 
         private void ConstructorDefinition()
         {
-            for (int i = 0; i < constructorDeclaration?.parameters.Count; i++)
+            if (constructorDeclaration == null) return;
+            for (int i = 0; i < constructorDeclaration.parameters.Count; i++)
             {
                 if (constructorDeclaration.parameters[i].type != null && !string.IsNullOrEmpty(constructorDeclaration.parameters[i].name)) parameterPorts.Add(ValueOutput(constructorDeclaration.parameters[i].type, constructorDeclaration.parameters[i].name));
             }
@@ -93,11 +94,11 @@ namespace Unity.VisualScripting.Community
                 // {
                 //     returnValue = ValueInput(methodDeclaration.returnType, "result");
                 // }
-            }
 
-            for (int i = 0; i < methodDeclaration?.parameters.Count; i++)
-            {
-                if (methodDeclaration.parameters[i].type != null && !string.IsNullOrEmpty(methodDeclaration.parameters[i].name)) parameterPorts.Add(ValueOutput(methodDeclaration.parameters[i].type, methodDeclaration.parameters[i].name));
+                for (int i = 0; i < methodDeclaration.parameters.Count; i++)
+                {
+                    if (methodDeclaration.parameters[i].type != null && !string.IsNullOrEmpty(methodDeclaration.parameters[i].name)) parameterPorts.Add(ValueOutput(methodDeclaration.parameters[i].type, methodDeclaration.parameters[i].name));
+                }
             }
         }
 
@@ -110,7 +111,7 @@ namespace Unity.VisualScripting.Community
         public object Get()
         {
             if (fieldDeclaration == null) throw new NullReferenceException($"{nameof(fieldDeclaration)} cannot be null.");
-            if(!fieldDeclaration.get) throw new InvalidOperationException($"Cannot get value from field {fieldDeclaration.name}");
+            if (!fieldDeclaration.get) throw new InvalidOperationException($"Cannot get value from field {fieldDeclaration.name}");
             var flow = Flow.New(fieldDeclaration.getter.GetReference() as GraphReference);
             var result = flow.GetValue(returnValue);
             return result;
@@ -132,7 +133,7 @@ namespace Unity.VisualScripting.Community
         public object Invoke(params object[] parameters)
         {
             if (methodDeclaration == null) throw new NullReferenceException($"{nameof(methodDeclaration)} cannot be null.");
-            if (parameters.Length != methodDeclaration.parameters.Count) 
+            if (parameters.Length != methodDeclaration.parameters.Count)
                 throw new ArgumentException($"Expected {methodDeclaration.parameters.Count} parameters but got {parameters.Length}");
 
             // Validate parameter types

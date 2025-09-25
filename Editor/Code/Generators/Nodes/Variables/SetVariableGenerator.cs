@@ -47,9 +47,9 @@ namespace Unity.VisualScripting.Community
                 switch (Unit.kind)
                 {
                     case VariableKind.Flow:
-                        return MakeClickableForThisUnit(CodeUtility.ToolTip("Flow Variables do not support connected names", "Could not generate Flow Variable", ""));
+                        return MakeClickableForThisUnit(CodeUtility.ErrorTooltip("Flow Variables do not support connected names", "Could not generate Flow Variable", ""));
                     case VariableKind.Graph:
-                        return MakeClickableForThisUnit(CodeUtility.ToolTip("Graph Variables do not support connected names", "Could not generate Graph Variable", ""));
+                        return MakeClickableForThisUnit(CodeUtility.ErrorTooltip("Graph Variables do not support connected names", "Could not generate Graph Variable", ""));
                     case VariableKind.Object:
                         kind = MakeClickableForThisUnit(variables + ".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeClickableForThisUnit(")")}";
                         if (VisualScripting.Variables.Object(GetTarget(data)).IsDefined(name))
@@ -191,7 +191,7 @@ namespace Unity.VisualScripting.Community
                     {
                         try
                         {
-                            return Flow.Predict(Unit.@object.GetPesudoSource(), graphPointer.AsReference()) as GameObject;
+                            return Flow.Predict<GameObject>(Unit.@object.GetPesudoSource(), graphPointer.AsReference());
                         }
                         catch (InvalidOperationException ex)
                         {

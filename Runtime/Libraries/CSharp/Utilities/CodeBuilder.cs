@@ -134,20 +134,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (customIndentCache.TryGetValue((amount, spacing), out var indent))
                 return indent;
 
-            var spaceBuilder = new System.Text.StringBuilder(spacing);
-            for (int i = 0; i < spacing; i++)
-            {
-                spaceBuilder.Append(' ');
-            }
-            var space = spaceBuilder.ToString();
+            indent = amount <= 0 || spacing <= 0 ? "" : new string(' ', amount * spacing);
 
-            var outputBuilder = new System.Text.StringBuilder(amount * spacing);
-            for (int i = 0; i < amount; i++)
-            {
-                outputBuilder.Append(space);
-            }
-
-            indent = outputBuilder.ToString();
             customIndentCache[(amount, spacing)] = indent;
 
             return indent;

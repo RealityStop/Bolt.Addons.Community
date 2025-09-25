@@ -7,63 +7,111 @@ namespace Unity.VisualScripting.Community
     [TypeIcon(typeof(Timer))]
     public class StopwatchUnit : Unit
     {
-        public Stopwatch stopwatch;
+        public Stopwatch Stopwatch { get; private set; }
 
         [DoNotSerialize]
-        public ControlInput start;
+        public ControlInput Start { get; private set; }
 
         [DoNotSerialize]
-        public ControlInput stop;
+        public ControlInput Stop { get; private set; }
 
         [DoNotSerialize]
-        public ControlOutput started;
+        public ControlOutput Started { get; private set; }
 
         [DoNotSerialize]
-        public ControlOutput stopped;
-
-
-        [DoNotSerialize]
-        public ValueOutput elapsedSeconds;
+        public ControlOutput Stopped { get; private set; }
 
         [DoNotSerialize]
-        public ValueOutput isRunning;
+        public ValueOutput ElapsedSeconds { get; private set; }
+        [DoNotSerialize]
+        public ValueOutput ElapsedMilliseconds { get; private set; }
+        [DoNotSerialize]
+        public ValueOutput ElapsedMinutes { get; private set; }
+        [DoNotSerialize]
+        public ValueOutput ElapsedHours { get; private set; }
+
+        [DoNotSerialize]
+        public ValueOutput IsRunning { get; private set; }
+
+        [Inspectable]
+        public bool milliseconds;
+        [Inspectable]
+        public bool seconds = true;
+        [Inspectable]
+        public bool minutes;
+        [Inspectable]
+        public bool hours;
 
         protected override void Definition()
         {
-            started = ControlOutput("Started");
-            stopped = ControlOutput("Stopped");
+            Started = ControlOutput("Started");
+            Stopped = ControlOutput("Stopped");
 
-            start = ControlInput("Start", StartStopwatch);
-            stop = ControlInput("Stop", StopStopwatch);
+            Start = ControlInput("Start", StartStopwatch);
+            Stop = ControlInput("Stop", StopStopwatch);
 
+            if (milliseconds)
+            {
+                ElapsedMilliseconds = ValueOutput("elapsedMilliseconds", GetElapsedMilliseconds);
+                Assignment(Start, ElapsedMilliseconds);
+            }
+            if (seconds)
+            {
+                ElapsedSeconds = ValueOutput("elapsedSeconds", GetElapsedSeconds);
+                Assignment(Start, ElapsedSeconds);
+            }
+            if (minutes)
+            {
+                ElapsedMinutes = ValueOutput("elapsedMinutes", GetElapsedMinutes);
+                Assignment(Start, ElapsedMinutes);
+            }
+            if (hours)
+            {
+                ElapsedHours = ValueOutput("elapsedHours", GetElapsedHours);
+                Assignment(Start, ElapsedHours);
+            }
+            IsRunning = ValueOutput("isRunning", GetIsRunning);
 
-            elapsedSeconds = ValueOutput(nameof(elapsedSeconds), GetElapsedSeconds);
-            isRunning = ValueOutput(nameof(isRunning), IsRunning);
-            Succession(start, started);
-            Succession(stop, stopped);
+            Succession(Start, Started);
+            Succession(Stop, Stopped);
         }
 
         private ControlOutput StartStopwatch(Flow flow)
         {
-            stopwatch = new Stopwatch();
-            stopwatch.Start();
-            return started;
+            Stopwatch ??= new Stopwatch();
+            Stopwatch.Start();
+            return Started;
         }
 
         private ControlOutput StopStopwatch(Flow flow)
         {
-            stopwatch?.Stop();
-            return stopped;
+            Stopwatch?.Stop();
+            return Stopped;
+        }
+
+        private float GetElapsedMilliseconds(Flow flow)
+        {
+            return Stopwatch != null ? Stopwatch.Elapsed.Milliseconds : 0f;
         }
 
         private float GetElapsedSeconds(Flow flow)
         {
-            return stopwatch != null ? (float)stopwatch.Elapsed.TotalSeconds : 0f;
+            return Stopwatch != null ? (float)Stopwatch.Elapsed.TotalSeconds : 0f;
         }
 
-        private bool IsRunning(Flow flow)
+        private float GetElapsedMinutes(Flow flow)
         {
-            return stopwatch != null && stopwatch.IsRunning;
+            return Stopwatch != null ? (float)Stopwatch.Elapsed.TotalMinutes : 0f;
+        }
+
+        private float GetElapsedHours(Flow flow)
+        {
+            return Stopwatch != null ? (float)Stopwatch.Elapsed.TotalHours : 0f;
+        }
+
+        private bool GetIsRunning(Flow flow)
+        {
+            return Stopwatch != null && Stopwatch.IsRunning;
         }
     }
 }

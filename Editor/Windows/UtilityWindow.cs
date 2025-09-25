@@ -20,19 +20,18 @@ namespace Unity.VisualScripting.Community
             var window = CreateInstance<UtilityWindow>();
             window.titleContent = new GUIContent("UVS Community Utilities");
 
-            // Set the popup position and size
             var mousePosition = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
             window.position = new Rect(mousePosition.x, mousePosition.y, 250, 300);
 
-            // Show as popup
             window.ShowPopup();
             return window;
         }
+
         private void OnLostFocus()
         {
-            // Close the window when it loses focus
             Close();
         }
+        
         private void OnGUI()
         {
             e = Event.current;
@@ -68,8 +67,10 @@ namespace Unity.VisualScripting.Community
             header.style.marginBottom = 4;
             header.style.unityTextAlign = TextAnchor.MiddleCenter;
 
-            var label = new Label();
-            label.text = "Convert Node Selection";
+            var label = new Label
+            {
+                text = "Selection To Subgraph"
+            };
             label.style.flexGrow = 1;
 
             var buttonContainer = new VisualElement();
@@ -102,8 +103,10 @@ namespace Unity.VisualScripting.Community
             header.style.unityTextAlign = TextAnchor.MiddleCenter;
             header.style.marginTop = 6;
 
-            var label = new Label();
-            label.text = "Asset Compilation";
+            var label = new Label
+            {
+                text = "Asset Compilation"
+            };
             label.style.flexGrow = 1;
 
             var hint = new HelpBox("Generate C# scripts for Defined Events, Funcs, and Actions for complete AOT Safety on all platforms.", HelpBoxMessageType.Info);
@@ -113,7 +116,7 @@ namespace Unity.VisualScripting.Community
             buttonContainer.style.flexDirection = FlexDirection.Row;
             buttonContainer.style.height = 24;
 
-            var compileButton = new Button(() => { AssetCompiler.Compile(); }) { text = "Compile" };
+            var compileButton = new Button(() => { AssetCompiler.Compile(); }) { text = "Compile All" };
             compileButton.style.maxWidth = buttonContainer.contentRect.width;
             compileButton.style.flexGrow = 1;
 
@@ -221,10 +224,10 @@ namespace Unity.VisualScripting.Community
             buttonContainer.style.flexDirection = FlexDirection.Row;
             buttonContainer.style.height = 24;
 
-            var regenerateButton = new Button(() => { NodeFinderWindow.Open(); }) { text = "Node Finder" };
-            regenerateButton.style.flexGrow = 1;
+            var nodeFinderWindowButton = new Button(() => { NodeFinderWindow.Open(); }) { text = "Node Finder" };
+            nodeFinderWindowButton.style.flexGrow = 1;
 
-            buttonContainer.Add(regenerateButton);
+            buttonContainer.Add(nodeFinderWindowButton);
 
             container.Add(buttonContainer);
             return container;

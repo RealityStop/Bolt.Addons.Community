@@ -5,7 +5,6 @@ using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
-using UnityEditor.Compilation;
 
 namespace Unity.VisualScripting.Community
 {
@@ -24,13 +23,13 @@ namespace Unity.VisualScripting.Community
             return code;
         }
 
-        private string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
+        protected override string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
         {
             var graphAsset = (ScriptGraphAsset)asset;
             return Path.Combine(paths.ObjectsRelativePath, GetGraphName(graphAsset).LegalMemberName() + ".cs");
         }
 
-        protected override void PostProcess(UnityEngine.Object asset, PathConfig paths)
+        public override void PostProcess(UnityEngine.Object asset, PathConfig paths, Type type)
         {
             var graphAsset = (ScriptGraphAsset)asset;
             var scriptImporter = AssetImporter.GetAtPath(GetRelativeFilePath(asset, paths)) as MonoImporter;

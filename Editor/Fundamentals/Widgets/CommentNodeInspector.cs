@@ -187,7 +187,7 @@ namespace Unity.VisualScripting.Community
 #else
             BeginBlock(metadata, position, GUIContent.none);
 #endif
-            if (!initialised) UpdatePalette();  // Probably not required with Scriptable **************
+            if (!initialised) UpdatePalette();
 
             xWidth = position.width;
             xFieldRatio = (xWidth < 336 ? ((335 - xWidth) / xFieldDivision) + xFieldDivision / 10f : 0) + ((xWidth - 335) / xFieldDivision);
@@ -327,7 +327,7 @@ namespace Unity.VisualScripting.Community
 
             // Font Size + Bold? Italic? Outline? Centre?
             GUI.Label(GUIRect(x: xIndentB, down: 22, w: xIndentC), "Font Size", inspectorGUI);
-            unit.fontSize = EditorGUI.IntField(GUIRect(right: xIndentC, x: xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", unit.fontSize, titleGUI);
+            unit.fontSize = Mathf.Clamp(EditorGUI.IntField(GUIRect(right: xIndentC, x: xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", unit.fontSize, titleGUI), 13, 150);
 
             ToggleButtonColor(unit.fontBold);
             if (GUI.Button(GUIRect(right: 50, w: 40), "Bold", buttonGUI)) unit.fontBold = !unit.fontBold;
@@ -344,7 +344,7 @@ namespace Unity.VisualScripting.Community
 
             // Max Width + Auto?
             GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 22, w: xIndentC), "Max Width", inspectorGUI);
-            unit.maxWidth = EditorGUI.IntField(GUIRect(x: xIndentC + xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", unit.maxWidth, titleGUI);
+            unit.maxWidth = Mathf.Clamp(EditorGUI.IntField(GUIRect(x: xIndentC + xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", unit.maxWidth, titleGUI), 50, 1000);
             ToggleButtonColor(unit.autoWidth);
             if (GUI.Button(GUIRect(x: xIndentC + 50, w: 40), "Auto", buttonGUI)) unit.autoWidth = !unit.autoWidth;
             ResetGUI();
@@ -473,7 +473,8 @@ namespace Unity.VisualScripting.Community
             if (EndBlock(metadata))
             {
                 metadata.RecordUndo();
-                metadata.value = unit;
+                // Do this to avoid attempting to change the Style
+                ((CommentNode)metadata.value).UpdateFrom(unit);
             }
         }
     }

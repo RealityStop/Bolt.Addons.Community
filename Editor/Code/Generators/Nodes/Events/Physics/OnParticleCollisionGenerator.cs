@@ -20,7 +20,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeClickableForThisUnit(CodeUtility.ToolTip($"{Community.NameUtility.DisplayName(typeof(OnParticleCollision))} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {Community.NameUtility.DisplayName(typeof(OnParticleCollision))}", ""));
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"{Community.NameUtility.DisplayName(typeof(OnParticleCollision))} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {Community.NameUtility.DisplayName(typeof(OnParticleCollision))}", ""));
             var body = Unit.collisionEvents.hasValidConnection ? CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{"var".ConstructHighlight()} {"collisionEvents".VariableHighlight()} = {new List<ParticleCollisionEvent>().As().Code(true)};") + "\n" : "";
             data.AddLocalNameInScope("collisionEvents", typeof(List<ParticleCollisionEvent>));
             body += GetNextUnit(Unit.trigger, data, indent);

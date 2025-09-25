@@ -18,6 +18,16 @@ namespace Unity.VisualScripting.Community
             string output = string.Empty;
             if (input == Unit.enter)
             {
+                if (Unit.data.hasValidConnection)
+                {
+                    data.SetExpectedType(typeof(ReturnEventArg));
+                    var dataCode = GenerateValue(Unit.data, data);
+                    data.RemoveExpectedType();
+                    output += CodeBuilder.Indent(indent) + dataCode + MakeClickableForThisUnit("." + "callback".VariableHighlight() + "?.Invoke(") + GenerateValue(Unit.value, data) + MakeClickableForThisUnit(");") + "\n";
+
+                    return output;
+                }
+
                 if (data.MustReturn)
                 {
                     var sourceType = GetSourceType(Unit.value, data) ?? typeof(object);

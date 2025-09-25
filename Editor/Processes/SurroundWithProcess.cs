@@ -1,9 +1,7 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Unity.VisualScripting;
-using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
 using UnityEngine;
 
@@ -13,10 +11,10 @@ namespace Unity.VisualScripting.Community
     {
         public override void Process(FlowGraph graph, FlowCanvas canvas)
         {
-            if (@event != null && @event.keyCode == KeyCode.Tab && @event.CtrlOrCmd() && canvas.selection.Count > 0 && !canvas.isCreatingConnection)
+            if (@event != null && @event.CtrlOrCmd() && @event.shift && @event.keyCode == KeyCode.T && canvas.selection.Count > 0 && !canvas.isCreatingConnection && SurroundWithWindow.Window == null)
             {
                 var sourceOutputs = new List<ControlOutput>();
-                var sourceUnits = graph.units.Where(unit => !canvas.selection.Contains(unit) && unit.controlOutputs.Any(output =>
+                var sourceUnits = graph.units.Where(unit => (!canvas.selection.Contains(unit) || (canvas.selection.Contains(unit) && unit.controlInputs.Count == 0)) && unit.controlOutputs.Any(output =>
                 {
                     if (output.hasValidConnection && canvas.selection.Contains(output.connection.destination.unit))
                     {
@@ -26,10 +24,8 @@ namespace Unity.VisualScripting.Community
                     return false;
                 })).ToList();
 
-                // Get the destination unit that all sources connect to
                 var firstDestination = sourceOutputs.FirstOrDefault()?.connection.destination.unit as Unit;
 
-                // Check if all sources connect to the same destination unit
                 bool allSourcesConnectToSame = sourceOutputs.All(output =>
                         output.hasValidConnection &&
                         output.connection.destination.unit == firstDestination);
@@ -39,130 +35,145 @@ namespace Unity.VisualScripting.Community
                     Debug.LogError("Cannot surround different flows!");
                     return;
                 }
-                if (sourceOutputs.Count > 0)
-                {
-                    var firstUnit = firstDestination;
-                    var lastUnit = (Unit)graph.units.First(unit => canvas.selection.Contains(unit) && (!unit.controlOutputs.Any(output => output.hasValidConnection) || unit.controlOutputs.Any(output => output.hasValidConnection && !canvas.selection.Contains(output.connection.destination.unit))));
-                    List<Unit> exitUnits = new List<Unit>();
-                    List<Unit> surroundUnits = new List<Unit>();
-
-                    SurroundWithWindow.ShowWindow((surroundCommand) =>
-                    {
-                        if (lastUnit.controlOutputs.Any(output => output.hasValidConnection))
-                        {
-                            foreach (var controlOutput in lastUnit.controlOutputs)
-                            {
-                                AddUnitsRecursive(controlOutput, exitUnits);
-                            }
-                        }
-                        graph.units.Add(surroundCommand.SurroundUnit);
-
-                        if (surroundCommand.SequenceExit)
-                        {
-                            graph.units.Add(surroundCommand.sequenceUnit);
-                        }
-                        var firstInput = firstUnit?.controlInputs?.FirstOrDefault(input => input.hasValidConnection);
-                        firstInput?.Disconnect();
-                        surroundCommand.surroundSource.ConnectToValid(firstInput);
-                        foreach (var output in lastUnit.controlOutputs)
-                        {
-                            if (output.hasValidConnection)
-                                output.Disconnect();
-                        }
-                        AddUnitsRecursive(surroundCommand.surroundSource, surroundUnits);
-
-                        if (surroundCommand.SequenceExit)
-                        {
-                            foreach (var sourceOutput in sourceOutputs)
-                            {
-                                sourceOutput.ConnectToValid(surroundCommand.sequenceUnit.enter);
-                            }
-                            surroundCommand.sequenceUnit.multiOutputs[0].ConnectToValid(surroundCommand.unitEnterPort);
-                            surroundCommand.SurroundUnit.position = new Vector2(firstUnit.position.x + 150, firstUnit.position.y);
-                            surroundCommand.sequenceUnit.position = new Vector2(surroundCommand.SurroundUnit.position.x - 150, surroundCommand.SurroundUnit.position.y);
-                        }
-                        else
-                        {
-                            foreach (var sourceOutput in sourceOutputs)
-                            {
-                                sourceOutput.ConnectToValid(surroundCommand.unitEnterPort);
-                            }
-                            surroundCommand.SurroundUnit.position = new Vector2(firstUnit.position.x + 150, firstUnit.position.y);
-                        }
-                        Vector2 exitStartPosition = new Vector2();
-                        if (surroundUnits.Count > 0)
-                        {
-                            var referencePostion = surroundUnits[0].position;
-                            foreach (var unit in surroundUnits)
-                            {
-                                var offset = new Vector2(surroundCommand.SurroundUnit.position.x + 200, surroundCommand.SurroundUnit.position.y) - referencePostion;
-                                if (unit != surroundCommand.SurroundUnit)
-                                    unit.position += offset;
-                                exitStartPosition = unit.position;
-                            }
-                        }
-                        if (exitUnits.Count > 0)
-                        {
-                            exitUnits[0].controlInputs.First().ConnectToValid(surroundCommand.surroundExit);
-                            var referencePostion = exitUnits[0].position;
-                            foreach (var unit in exitUnits)
-                            {
-                                bool sourceIsAboveExit = surroundCommand.SurroundUnit.controlOutputs.ToList().IndexOf(surroundCommand.surroundSource) < surroundCommand.SurroundUnit.controlOutputs.ToList().IndexOf(surroundCommand.surroundExit) || surroundCommand.SequenceExit;
-                                var offset = new Vector2(exitStartPosition.x, sourceIsAboveExit ? exitStartPosition.y + 170 : exitStartPosition.y - 170) - referencePostion;
-                                unit.position += offset;
-                                exitStartPosition.x += 150;
-                            }
-                        }
-                        if (surroundCommand.autoConnectPort != null)
-                        {
-                            canvas.connectionSource = surroundCommand.autoConnectPort;
-                            LudiqGraphsEditorUtility.editedContext.BeginOverride(GraphWindow.active.context);
-                            canvas.NewUnitContextual();
-                            LudiqGraphsEditorUtility.editedContext.EndOverride();
-                        }
-                    });
-                }
-                else
+                if (sourceOutputs.Count == 0)
                 {
                     Debug.LogWarning("No source unit to connect to!");
+                    return;
                 }
+                SurroundWithWindow.ShowWindow((surroundCommand) =>
+                {
+                    ApplySurround(graph, canvas, surroundCommand);
+                });
             }
         }
 
-        private void AddUnitsRecursive(ControlOutput output, List<Unit> units)
+        private void ApplySurround(FlowGraph graph, FlowCanvas canvas, SurroundCommand surroundCommand)
         {
-            if (output.hasValidConnection)
-            {
-                var destination = output.connection.destination.unit as Unit;
-                if (!units.Contains(destination))
-                {
-                    units.Add(destination);
-                    foreach (var controlOutput in destination.controlOutputs)
-                    {
-                        AddUnitsRecursive(controlOutput, units);
-                    }
+            var selection = canvas.selection.OfType<Unit>().ToList();
+            if (selection.Count == 0) return;
+            
+            // Downstream (selection → outside)
+            var downstreamConnections = graph.controlConnections
+                .Where(c => selection.Contains(c.source.unit) && !selection.Contains(c.destination.unit))
+                .ToList();
 
-                    foreach (var valueInput in destination.valueInputs)
+            // Incoming (outside → selection)
+            var incomingConnections = graph.controlConnections
+                .Where(c => !selection.Contains(c.source.unit) && selection.Contains(c.destination.unit))
+                .ToList();
+
+            var firstUnit = incomingConnections.FirstOrDefault()?.destination.unit ?? selection.First();
+            var lastUnit = downstreamConnections.LastOrDefault()?.source.unit ?? selection.Last();
+
+            var minX = selection.Min(u => u.position.x);
+            var minY = selection.Min(u => u.position.y);
+            var maxX = selection.Max(u => u.position.x);
+            var maxY = selection.Max(u => u.position.y);
+
+            var selectionCenter = new Vector2((minX + maxX) / 2f, (minY + maxY) / 2f);
+
+            var surroundUnit = surroundCommand.SurroundUnit;
+            graph.units.Add(surroundUnit);
+
+            const float spacing = 200f;
+            if (surroundCommand.SequenceExit)
+            {
+                var seq = surroundCommand.sequenceUnit;
+                graph.units.Add(seq);
+                seq.position = new Vector2(minX, selectionCenter.y);
+                surroundUnit.position = new Vector2(minX + spacing, selectionCenter.y);
+                maxX += spacing;
+            }
+            else
+                surroundUnit.position = new Vector2(minX, selectionCenter.y);
+
+            var offsetX = canvas.Widget(surroundUnit).position.width + spacing + (surroundCommand.SequenceExit ? canvas.Widget(surroundCommand.sequenceUnit).position.width + spacing : 0f);
+            foreach (var u in selection)
+            {
+                u.position += new Vector2(offsetX, 0f);
+            }
+
+            if (surroundCommand.SequenceExit)
+            {
+                var seq = surroundCommand.sequenceUnit;
+                foreach (var conn in incomingConnections)
+                {
+                    conn.source?.ValidlyConnectTo(seq.controlInputs[0]);
+                }
+
+                if (seq.controlOutputs.Count > 0 && surroundCommand.unitEnterPort != null)
+                {
+                    seq.controlOutputs[0].ValidlyConnectTo(surroundCommand.unitEnterPort);
+                }
+
+                if (surroundCommand.surroundSource != null && firstUnit.controlInputs.Count > 0)
+                {
+                    surroundCommand.surroundSource.ValidlyConnectTo(firstUnit.controlInputs[0]);
+                }
+
+                foreach (var conn in downstreamConnections)
+                {
+                    if (conn.destination != null)
                     {
-                        AddValueUnitsRecursive(valueInput, units);
+                        conn.destination.unit.position += new Vector2(0, canvas.Widget(lastUnit).position.height);
+                        conn.source.Disconnect();
+                        seq.controlOutputs[1].ValidlyConnectTo(conn.destination);
                     }
                 }
             }
-        }
-
-        private void AddValueUnitsRecursive(ValueInput valueInput, List<Unit> units)
-        {
-            if (valueInput.hasValidConnection)
+            else
             {
-                var source = valueInput.connection.source.unit as Unit;
-                if (!units.Contains(source))
+                foreach (var conn in incomingConnections)
                 {
-                    units.Add(source);
-                    foreach (var _valueInput in source.valueInputs)
+                    if (conn.source != null && surroundCommand.unitEnterPort != null)
                     {
-                        AddValueUnitsRecursive(_valueInput, units);
+                        conn.source.ValidlyConnectTo(surroundCommand.unitEnterPort);
                     }
                 }
+
+                if (surroundCommand.surroundSource != null && firstUnit.controlInputs.Count > 0)
+                {
+                    surroundCommand.surroundSource.ValidlyConnectTo(firstUnit.controlInputs[0]);
+                }
+
+                foreach (var conn in downstreamConnections)
+                {
+                    if (conn.destination != null && surroundCommand.surroundExit != null)
+                    {
+                        conn.destination.unit.position -= new Vector2(0, canvas.Widget(lastUnit).position.height);
+                        conn.source.Disconnect();
+                        surroundCommand.surroundExit.ValidlyConnectTo(conn.destination);
+                    }
+                }
+            }
+
+            if (surroundCommand.autoConnectPort != null)
+            {
+                canvas.connectionSource = surroundCommand.autoConnectPort;
+                GraphUtility.AddNewUnitContextual(graph, canvas, (element) =>
+                {
+                    if (element is not Unit unit) return;
+                    if (surroundCommand.autoConnectPort is ValueInput)
+                    {
+                        var surroundPos = surroundCommand.autoConnectPort.unit.position;
+                        unit.position = new Vector2(surroundPos.x - 150, surroundPos.y + 150);
+                    }
+                    else if (surroundCommand.autoConnectPort is ValueOutput)
+                    {
+                        var surroundPos = surroundCommand.autoConnectPort.unit.position;
+                        unit.position = new Vector2(surroundPos.x + 150, surroundPos.y + 150);
+                    }
+                    else if (surroundCommand.autoConnectPort is ControlOutput)
+                    {
+                        var surroundPos = surroundCommand.autoConnectPort.unit.position;
+                        unit.position = new Vector2(surroundPos.x + 250, surroundPos.y + 150);
+                    }
+                    else if (surroundCommand.autoConnectPort is ControlOutput)
+                    {
+                        var surroundPos = surroundCommand.autoConnectPort.unit.position;
+                        unit.position = new Vector2(surroundPos.x - 250, surroundPos.y + 150);
+                    }
+                });
             }
         }
     }

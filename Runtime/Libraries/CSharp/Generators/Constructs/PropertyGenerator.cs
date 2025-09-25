@@ -260,14 +260,14 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             var warningsStr = string.Empty;
             if (warnings.Count > 0)
             {
-                warningsStr = "\n" + string.Join("\n", warnings.Select(w =>
-                    CodeBuilder.Indent(indent) + (" /* " + w + " */").WarningHighlight()));
+                warningsStr = string.Join("\n", warnings.Select(w =>
+                    CodeBuilder.Indent(indent) + (" /* " + w + " */").WarningHighlight())) + "\n";
             }
 
-            return attributesStr + header + body + warningsStr;
+            return warningsStr + attributesStr + header + body;
         }
 
-        private bool IsAutoImplemented()
+        public bool IsAutoImplemented()
         {
             return (string.IsNullOrWhiteSpace(getterBody) && string.IsNullOrWhiteSpace(setterBody)) ||
                    (modifier == PropertyModifier.Abstract);

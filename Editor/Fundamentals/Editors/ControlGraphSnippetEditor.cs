@@ -16,7 +16,6 @@ namespace Unity.VisualScripting.Community
         }
         public override void OnInspectorGUI()
         {
-            // Reference to the target object
             var snippet = (ControlGraphSnippet)target;
 
             if (!snippet.graphContainsUnit)
@@ -38,7 +37,6 @@ namespace Unity.VisualScripting.Community
                 GraphWindow.OpenActive(GraphReference.New(snippet, true));
             }
 
-            // Apply changes
             if (GUI.changed)
             {
                 EditorUtility.SetDirty(snippet);

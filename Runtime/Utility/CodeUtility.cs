@@ -74,12 +74,23 @@ namespace Unity.VisualScripting.Community
         }
 
         /// <summary>
-        /// Used for the csharp preview to generate a tooltip
+        /// Used for the csharp preview to generate a tooltip.
+        /// Do not use '\n' (newline) in tooltip or notify string it will break the tooltip extraction
         /// </summary>
         /// <returns>The string with the ToolTip tags</returns>
-        public static string ToolTip(string ToolTip, string notifyString, string code, bool highlight = true)
+        public static string ErrorTooltip(string ToolTip, string notifyString, string code, bool highlight = true)
         {
             return CSharpPreviewSettings.ShouldGenerateTooltips ? $"[CommunityAddonsCodeToolTip({ToolTip})]{(highlight ? $"/* {notifyString} (Hover for more info) */".WarningHighlight() : $"/* {notifyString} (Hover for more info) */")}[CommunityAddonsCodeToolTipEnd] {code}" : (highlight ? $"/* {notifyString} */".WarningHighlight() : $"/* {notifyString} */") + code;
+        }
+
+        /// <summary>
+        /// Used for the csharp preview to generate a tooltip.
+        /// Do not use '\n' (newline) in tooltip it will break the tooltip extraction
+        /// </summary>
+        /// <returns>The string with the ToolTip tags</returns>
+        public static string InfoTooltip(string ToolTip, string code, bool highlight = true)
+        {
+            return CSharpPreviewSettings.ShouldGenerateTooltips ? $"[CommunityAddonsCodeToolTip({ToolTip})]{(highlight ? $"/* Note: (Hover for more info) */".CommentHighlight() : $"/* Note: (Hover for more info) */")}[CommunityAddonsCodeToolTipEnd] {code}" : code;
         }
 
         private static readonly Dictionary<string, string> AllToolTipCache = new();
@@ -116,9 +127,9 @@ namespace Unity.VisualScripting.Community
             return RecommendationRegex.Replace(code, string.Empty);
         }
 
-        public static string CleanCode(string code)
+        public static string CleanCode(string code, bool removeRecommendations = true)
         {
-            return RemoveAllClickableTags(RemoveAllToolTipTagsEntirely(RemoveRecommendations(code)));
+            return RemoveAllClickableTags(RemoveAllToolTipTagsEntirely(removeRecommendations ? RemoveRecommendations(code) : code));
         }
 
         private static readonly Dictionary<string, List<ClickableRegion>> clickableRegionsCache = new();

@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using NUnit.Framework;
+using Unity.VisualScripting;
+using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
@@ -57,7 +60,7 @@ namespace Unity.VisualScripting.Community
             {
                 yield return snippetsGroup;
             }
-            // Check to see if current graph is part of a Class Asset only Class Assets have the AssetType unit
+            // Check to see if current graph is part of a Class Asset only Class Assets have the AssetType unit right now
             if (options.Any(option => option is AssetTypeOption assetTypeOption && assetTypeOption.classAsset != null && assetTypeOption.unit.asset != null))
                 yield return csharpGroup;
 
@@ -308,11 +311,26 @@ namespace Unity.VisualScripting.Community
     }
 
     /// <summary>
-    /// These are empty classes used for the typeIcon
+    /// This is a empty classes used for the typeIcon
     /// they do not have any functionality
     /// </summary>
     internal class Method { }
+
+    /// <summary>
+    /// This is a empty classes used for the typeIcon
+    /// they do not have any functionality
+    /// </summary>
     internal class Property { }
+
+    /// <summary>
+    /// This is a empty classes used for the typeIcon
+    /// they do not have any functionality
+    /// </summary>
     internal class Field { }
+
+    /// <summary>
+    /// This is a empty classes used for the typeIcon
+    /// they do not have any functionality
+    /// </summary>
     internal class Generic { }
 }

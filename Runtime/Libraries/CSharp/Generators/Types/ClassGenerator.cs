@@ -88,7 +88,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             output += !string.IsNullOrEmpty(beforeUsings) ? CodeBuilder.Indent(indent) + beforeUsings : string.Empty;
             if (generateUsings)
             {
-                var usings = Usings();
+                var usings = Usings().ToHashSetPooled().ToListPooled();
                 var hasUsings = false;
                 for (int i = 0; i < usings.Count; i++)
                 {

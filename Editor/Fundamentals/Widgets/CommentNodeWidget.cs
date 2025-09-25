@@ -165,17 +165,18 @@ namespace Unity.VisualScripting.Community
             GUI.DrawTexture(unit.borderRect, Texture2D.whiteTexture, ScaleMode.ScaleAndCrop, true, 0, unit.color, 0, 7);
             GUI.DrawTexture(unit.borderRect, Texture2D.whiteTexture, ScaleMode.ScaleAndCrop, true, 0, unit.color * (2f - unit.color.grayscale), borderInside, 7);
         }
-#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
         private Vector2 GetElementPosition(IGraphElement graphElement, IGraphElementWidget elementWidget)
         {
             if (graphElement is GraphGroup graphGroup)
             {
                 return new Vector2(graphGroup.position.position.x + elementWidget.position.width / 2, graphGroup.position.position.y + elementWidget.position.height / 2);
             }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
             else if (graphElement is StickyNote stickyNote)
             {
                 return new Vector2(stickyNote.position.position.x + elementWidget.position.width / 2, stickyNote.position.position.y + elementWidget.position.height / 2);
             }
+#endif
             else if (graphElement is Unit unit)
             {
                 return new Vector2(unit.position.x + elementWidget.position.width / 2, unit.position.y + (elementWidget.position.height / 2));
@@ -183,21 +184,7 @@ namespace Unity.VisualScripting.Community
 
             throw new InvalidOperationException("Cannot get element position : " + graphElement);
         }
-#else
-        private Vector2 GetElementPosition(IGraphElement graphElement, IGraphElementWidget elementWidget)
-        {
-            if (graphElement is GraphGroup graphGroup)
-            {
-                return new Vector2(graphGroup.position.position.x + elementWidget.position.width / 2, graphGroup.position.position.y + elementWidget.position.height / 2);
-            }
-            else if (graphElement is Unit unit)
-            {
-                return new Vector2(unit.position.x + elementWidget.position.width / 2, unit.position.y + elementWidget.position.height / 2);
-            }
 
-            throw new InvalidOperationException("Cannot get element position : " + graphElement);
-        }
-#endif
         Vector2 CorrectLineEnd(Edge edge, Vector2 vector2)
         {
             if (edge == Edge.Top)
@@ -467,10 +454,11 @@ namespace Unity.VisualScripting.Community
                 GUI.contentColor = unit.fontColor.maxColorComponent > 0.5f ? unit.color * 0.9f * (unit.color.maxColorComponent / 1f) : (unit.color * 0.9f * (1f / unit.color.maxColorComponent)).WithAlpha(1f);
 
                 float outline = Mathf.Max(unit.fontSize / 60f, 1f);
-                EditorGUI.LabelField(unit.textRect.Offset(x: -outline, y: -outline), unit.comment, textGUI);
-                EditorGUI.LabelField(unit.textRect.Offset(x: outline, y: outline), unit.comment, textGUI);
-                EditorGUI.LabelField(unit.textRect.Offset(x: -outline, y: outline), unit.comment, textGUI);
-                EditorGUI.LabelField(unit.textRect.Offset(x: outline, y: -outline), unit.comment, textGUI);
+                EditorGUI.LabelField(unit.textRect.Offset(x: -outline, y: -outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
+                EditorGUI.LabelField(unit.textRect.Offset(x: outline, y: outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
+                EditorGUI.LabelField(unit.textRect.Offset(x: -outline, y: outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
+                EditorGUI.LabelField(unit.textRect.Offset(x: outline, y: -outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
+                GUI.contentColor = unit.fontColor;
             }
 
             EditorGUI.LabelField(unit.textRect, unit.comment, textGUI);

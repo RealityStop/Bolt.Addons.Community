@@ -7,8 +7,9 @@ namespace Unity.VisualScripting.Community
     [RenamedFrom("ResetSavedVariable")]
     [RenamedFrom("Unity.VisualScripting.Community.ResetSavedVariable")]
     [UnitCategory("Community/Variables")]
-    [UnitTitle("Reset")]
-    [UnitSurtitle("Saved Variables")]
+    [UnitTitle("Reset Variables")]
+    [UnitSubtitle("Saved Variables")]
+    [UnitShortTitle("Reset")]
     [TypeIcon(typeof(FlowGraph))]
     public class ResetSavedVariables : VariadicNode<string>
     {
@@ -40,7 +41,6 @@ namespace Unity.VisualScripting.Community
 
         protected override void BuildRelations(ValueInput arg)
         {
-            Requirement(arg, Reset);
         }
     }
 }
