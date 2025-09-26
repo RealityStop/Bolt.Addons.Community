@@ -425,7 +425,9 @@ namespace Unity.VisualScripting.Community
             var coroutineBodies = new Dictionary<string, MethodGenerator>();
 
             bool addedSpecialUpdateCode = false;
+#pragma warning disable
             bool addedSpecialFixedUpdateCode = false;
+#pragma warning restore
 
             if (focusTrueUnits.Count > 0 || focusFalseUnits.Count > 0)
             {
@@ -787,7 +789,9 @@ namespace Unity.VisualScripting.Community
         private void GenerateSpecialUnits(ClassGenerator @class)
         {
             bool hasUpdate = false;
+#pragma warning disable
             bool hasFixedUpdate = false;
+#pragma warning restore
 #if PACKAGE_INPUT_SYSTEM_EXISTS
             bool hasInputSystemNode = false;
 #endif

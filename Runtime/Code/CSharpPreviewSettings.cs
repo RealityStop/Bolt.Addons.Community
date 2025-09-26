@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
@@ -8,14 +7,13 @@ namespace Unity.VisualScripting.Community
     [Serializable]
     public sealed class CSharpPreviewSettings : ScriptableObject
     {
-        public Color VariableColor = new Color(38, 204, 204, 255);
-        public Color StringColor = new Color(204, 136, 51, 255);
-        public Color NumericColor = new Color(221, 255, 187, 255);
-        public Color ConstructColor = new Color(68, 138, 255, 255);
-        public Color TypeColor = new Color(51, 238, 170, 255);
-        public Color EnumColor = new Color(255, 255, 187, 255);
-        public Color InterfaceColor = new Color(221, 255, 187, 255);
-
+        public Color VariableColor = new Color(0.149f, 0.8f, 0.8f, 1f);
+        public Color StringColor = new Color(0.8f, 0.533f, 0.2f, 1f);
+        public Color NumericColor = new Color(0.867f, 1f, 0.733f, 1f);
+        public Color ConstructColor = new Color(0.267f, 0.541f, 1f, 1f);
+        public Color TypeColor = new Color(0.2f, 0.933f, 0.667f, 1f);
+        public Color EnumColor = new Color(1f, 1f, 0.733f, 1f);
+        public Color InterfaceColor = new Color(0.867f, 1f, 0.733f, 1f);
         public float zoomValue = 1f;
 
         [HideInInspector]
@@ -35,19 +33,14 @@ namespace Unity.VisualScripting.Community
 
         public void Initalize()
         {
-            VariableColor = new Color(38, 204, 204, 255);
+            VariableColor = new Color(0.149f, 0.8f, 0.8f, 1f);
+            StringColor = new Color(0.8f, 0.533f, 0.2f, 1f);
+            NumericColor = new Color(0.867f, 1f, 0.733f, 1f);
+            ConstructColor = new Color(0.267f, 0.541f, 1f, 1f);
+            TypeColor = new Color(0.2f, 0.933f, 0.667f, 1f);
+            EnumColor = new Color(1f, 1f, 0.733f, 1f);
+            InterfaceColor = new Color(0.867f, 1f, 0.733f, 1f);
 
-            StringColor = new Color(204, 136, 51, 255);
-
-            NumericColor = new Color(221, 255, 187, 255);
-
-            ConstructColor = new Color(68, 138, 255, 255);
-
-            TypeColor = new Color(51, 238, 170, 255);
-
-            EnumColor = new Color(255, 255, 187, 255);
-
-            InterfaceColor = new Color(221, 255, 187, 255);
             isInitalized = true;
         }
 
