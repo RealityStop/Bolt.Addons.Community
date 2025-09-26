@@ -51,7 +51,7 @@ namespace Unity.VisualScripting.Community
         {
             var selection = canvas.selection.OfType<Unit>().ToList();
             if (selection.Count == 0) return;
-            
+
             // Downstream (selection → outside)
             var downstreamConnections = graph.controlConnections
                 .Where(c => selection.Contains(c.source.unit) && !selection.Contains(c.destination.unit))
@@ -152,7 +152,9 @@ namespace Unity.VisualScripting.Community
                 canvas.connectionSource = surroundCommand.autoConnectPort;
                 GraphUtility.AddNewUnitContextual(graph, canvas, (element) =>
                 {
-                    if (element is not Unit unit) return;
+                    var unit = element as Unit;
+                    if (unit == null) return;
+
                     if (surroundCommand.autoConnectPort is ValueInput)
                     {
                         var surroundPos = surroundCommand.autoConnectPort.unit.position;

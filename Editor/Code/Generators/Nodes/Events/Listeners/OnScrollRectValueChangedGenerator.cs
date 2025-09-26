@@ -9,9 +9,9 @@ namespace Unity.VisualScripting.Community
     public class OnScrollRectValueChangedGenerator : EventListenerMethodGenerator<OnScrollRectValueChanged>
     {
         public OnScrollRectValueChangedGenerator(Unit unit) : base(unit) { NameSpaces = "UnityEngine.UI"; }
-        public override List<ValueOutput> OutputValues => new() { Unit.value };
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>() { Unit.value };
 
-        public override List<TypeParam> Parameters => new() { new TypeParam(typeof(Vector2), "value") };
+        public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(Vector2), "value") };
 
         public override ControlOutput OutputPort => Unit.trigger;
 

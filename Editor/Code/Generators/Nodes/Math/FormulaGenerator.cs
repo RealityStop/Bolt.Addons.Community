@@ -9,7 +9,7 @@ namespace Unity.VisualScripting.Community
     [NodeGenerator(typeof(Formula))]
     public sealed class FormulaGenerator : NodeGenerator<Formula>
     {
-        private static readonly Dictionary<string, string> FunctionMap = new()
+        private static readonly Dictionary<string, string> FunctionMap = new Dictionary<string, string>()
         {
             ["abs"] = $"{"Mathf".TypeHighlight()}.Abs",
             ["acos"] = $"{"Mathf".TypeHighlight()}.Acos",
@@ -58,7 +58,7 @@ namespace Unity.VisualScripting.Community
 
             string ParseExpression()
             {
-                StringBuilder sb = new();
+                StringBuilder sb = new StringBuilder();
                 while (index < formula.Length)
                 {
                     char ch = formula[index];
@@ -205,8 +205,8 @@ namespace Unity.VisualScripting.Community
 
             List<string> ParseArguments()
             {
-                List<string> args = new();
-                StringBuilder argBuilder = new();
+                List<string> args = new List<string>();
+                StringBuilder argBuilder = new StringBuilder();
                 int parenDepth = 1;
 
                 while (index < formula.Length && parenDepth > 0)

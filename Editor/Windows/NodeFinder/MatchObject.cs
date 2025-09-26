@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community
                 return Object;
             }
         }
-        public List<MatchObject> SubMatches { get; set; } = new();
+        public List<MatchObject> SubMatches { get; set; } = new List<MatchObject>();
 
         public bool IsErrorUnit { get; set; }
 
@@ -52,12 +52,14 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            var groups = query.Split('|', StringSplitOptions.RemoveEmptyEntries);
+            var groups = query.Split('|');
+            groups = groups.Where(s => !string.IsNullOrEmpty(s)).ToArray();
             var highlights = new List<(int start, int length)>();
 
             foreach (var group in groups)
             {
-                var parts = group.Split('>', 2, StringSplitOptions.RemoveEmptyEntries);
+                var tempParts = group.Split('>');
+                var parts = tempParts.Take(2).Where(s => !string.IsNullOrEmpty(s)).ToArray();
                 var unitQuery = Normalize(parts[0].Trim());
                 string portQuery = parts.Length > 1 ? Normalize(parts[1].Trim()) : null;
 
@@ -67,12 +69,12 @@ namespace Unity.VisualScripting.Community
                 }
 
                 string portTag = null;
-                if (unitQuery.EndsWith("@CI", StringComparison.OrdinalIgnoreCase)) { portTag = "CI"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@CO", StringComparison.OrdinalIgnoreCase)) { portTag = "CO"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@VI", StringComparison.OrdinalIgnoreCase)) { portTag = "VI"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@VO", StringComparison.OrdinalIgnoreCase)) { portTag = "VO"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@I", StringComparison.OrdinalIgnoreCase)) { portTag = "I"; unitQuery = unitQuery[..^2]; }
-                else if (unitQuery.EndsWith("@O", StringComparison.OrdinalIgnoreCase)) { portTag = "O"; unitQuery = unitQuery[..^2]; }
+                if (unitQuery.EndsWith("@CI", StringComparison.OrdinalIgnoreCase)) { portTag = "CI"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 3); }
+                else if (unitQuery.EndsWith("@CO", StringComparison.OrdinalIgnoreCase)) { portTag = "CO"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 3); }
+                else if (unitQuery.EndsWith("@VI", StringComparison.OrdinalIgnoreCase)) { portTag = "VI"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 3); }
+                else if (unitQuery.EndsWith("@VO", StringComparison.OrdinalIgnoreCase)) { portTag = "VO"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 3); }
+                else if (unitQuery.EndsWith("@I", StringComparison.OrdinalIgnoreCase)) { portTag = "I"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 2); }
+                else if (unitQuery.EndsWith("@O", StringComparison.OrdinalIgnoreCase)) { portTag = "O"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 2); }
 
                 bool unitMatch = unitQuery == "*" || searchMode switch
                 {
@@ -178,7 +180,7 @@ namespace Unity.VisualScripting.Community
                     if (parts.Length == 2)
                         return parts.First() + "/" + Path.GetFileNameWithoutExtension(fileName);
 
-                    string folder = parts[^2];
+                    string folder = parts[parts.Length - 2];
 
                     if (parts.Length == 3)
                         return parts.First() + "/" + folder + "/" + Path.GetFileNameWithoutExtension(fileName);
@@ -214,7 +216,7 @@ namespace Unity.VisualScripting.Community
                     }
                     else
                     {
-                        path = $"{sceneName}/.../{hierarchy[^1]}/{GraphTraversal.GetElementPath(reference)}";
+                        path = $"{sceneName}/.../{hierarchy[hierarchy.Count - 1]}/{GraphTraversal.GetElementPath(reference)}";
                     }
 
                     return path;

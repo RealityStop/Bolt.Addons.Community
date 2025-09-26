@@ -9,8 +9,13 @@ namespace Unity.VisualScripting.Community
     [RenamedFrom("Bolt.Addons.Community.Code.ClassFieldDeclaration")]
     public sealed class ClassFieldDeclaration : FieldDeclaration, ISerializationCallbackReceiver
     {
+#if VISUAL_SCRIPTING_1_7
         [Serialize]
         public SerializableType typeHandle;
+#else
+        [Serialize]
+        public string typeHandleIdentification;
+#endif
 
         [InspectorToggleLeft]
         [Serialize]
@@ -21,7 +26,11 @@ namespace Unity.VisualScripting.Community
 
         public void OnAfterDeserialize()
         {
+#if VISUAL_SCRIPTING_1_7
             type = Type.GetType(typeHandle.Identification);
+#else
+            type = Type.GetType(typeHandleIdentification);
+#endif
             defaultValue = serializedValue.Deserialize();
             OnChanged?.Invoke();
         }
@@ -40,12 +49,20 @@ namespace Unity.VisualScripting.Community
 
             if (type == null)
             {
+#if VISUAL_SCRIPTING_1_7
                 typeHandle = new SerializableType();
+#else
+                typeHandleIdentification = null;
+#endif
                 return;
             }
             else
             {
+#if VISUAL_SCRIPTING_1_7
                 typeHandle.Identification = type.AssemblyQualifiedName;
+#else
+                typeHandleIdentification = type.AssemblyQualifiedName;
+#endif
             }
         }
     }

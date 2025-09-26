@@ -105,7 +105,11 @@ namespace Unity.VisualScripting.Community
         {
             if (valueInput.hasValidConnection)
             {
-                if (valueInput.type == valueInput.connection.source.type && valueInput.connection.source.unit is MemberUnit or InheritedMemberUnit or AssetFieldUnit or AssetMethodCallUnit)
+                if (valueInput.type == valueInput.connection.source.type &&
+                    (valueInput.connection.source.unit is MemberUnit ||
+                     valueInput.connection.source.unit is InheritedMemberUnit ||
+                     valueInput.connection.source.unit is AssetFieldUnit ||
+                     valueInput.connection.source.unit is AssetMethodCallUnit))
                 {
                     code = string.Empty;
                     return false;

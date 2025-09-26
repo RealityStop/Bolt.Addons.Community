@@ -26,7 +26,7 @@ namespace Unity.VisualScripting.Community
 
         public override List<TypeParam> Parameters => new List<TypeParam>()
         {
-            new(typeof(PointerEventData), "eventData")
+            new TypeParam(typeof(PointerEventData), "eventData")
         };
 
         public PointerEventUnitGenerator(Unit unit) : base(unit) { }

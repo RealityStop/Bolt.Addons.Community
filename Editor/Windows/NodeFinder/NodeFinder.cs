@@ -18,8 +18,8 @@ namespace Unity.VisualScripting.Community
             // Exact
         }
 
-        private Dictionary<Type, IGraphProvider> _graphProviders = new();
-        private readonly Dictionary<Type, IMatchHandler> _matchHandlers = new();
+        private Dictionary<Type, IGraphProvider> _graphProviders = new Dictionary<Type, IGraphProvider>();
+        private readonly Dictionary<Type, IMatchHandler> _matchHandlers = new Dictionary<Type, IMatchHandler>();
 
         [NonSerialized]
         bool _loadedStates = false;
@@ -122,7 +122,11 @@ namespace Unity.VisualScripting.Community
                 alignment = TextAnchor.MiddleLeft,
                 richText = true,
                 wordWrap = false,
+#if UNITY_2021_2_OR_NEWER
                 clipping = TextClipping.Ellipsis
+#else
+                clipping = TextClipping.Clip
+#endif
             };
         }
 
@@ -138,7 +142,7 @@ namespace Unity.VisualScripting.Community
             public bool MatchIsInGroup => Group != null;
         }
 
-        private readonly List<CachedMatchGUI> _cachedGUI = new();
+        private readonly List<CachedMatchGUI> _cachedGUI = new List<CachedMatchGUI>();
 
         private const string SearchControlName = "CommunityAddons_NodeFinder_SearchTextField";
         private bool _focusSearchNextFrame;
@@ -247,7 +251,7 @@ namespace Unity.VisualScripting.Community
                     PopupWindow.Show(
                         new Rect(Event.current.mousePosition, Vector2.zero),
                         new ToggleMenu<IGraphProvider>(
-                            _graphProviders.Values.Where(p => p is not CurrentGraphProvider),
+                            _graphProviders.Values.Where(p => !(p is CurrentGraphProvider)),
                             p =>
                             {
                                 p.ToggleProvider();
@@ -348,9 +352,11 @@ namespace Unity.VisualScripting.Community
 
                 string fullText = cached.RowContent.text;
                 float textWidth = _buttonStyle.CalcSize(Temp(fullText, null)).x;
-
+#if UNITY_2021_2_OR_NEWER
                 _buttonStyle.clipping = TextClipping.Ellipsis;
-
+#else
+                _buttonStyle.clipping = TextClipping.Clip;
+#endif
                 GUIContent elementContent = Temp(fullText, cached.RowContent.image,
                     cached.RowContent.tooltip + (textWidth > elementRect.width
                         ? "\n\nFullText: " + fullText.Replace("<b>", string.Empty).Replace("</b>", string.Empty)
@@ -403,22 +409,27 @@ namespace Unity.VisualScripting.Community
             if (string.IsNullOrEmpty(query))
                 return "";
 
-            var groups = query.Split('|', StringSplitOptions.RemoveEmptyEntries);
-            List<string> groupDescriptions = new();
+            var groups = query
+                .Split('|')
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToArray();
+
+            List<string> groupDescriptions = new List<string>();
 
             foreach (var group in groups)
             {
-                var parts = group.Split('>', 2, StringSplitOptions.RemoveEmptyEntries);
-                string unitQuery = SearchUtility.Normalize(parts[0].Trim());
+                var rawParts = group.Split('>');
+                var parts = rawParts.Where(p => !string.IsNullOrEmpty(p)).Take(2).Select(p => Community.SearchUtility.Normalize(p.Trim())).ToArray();
+                string unitQuery = Community.SearchUtility.Normalize(parts[0].Trim());
                 string portQuery = parts.Length > 1 ? parts[1].Trim() : null;
 
                 string portTag = null;
-                if (unitQuery.EndsWith("@CI", StringComparison.OrdinalIgnoreCase)) { portTag = "Control Input"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@CO", StringComparison.OrdinalIgnoreCase)) { portTag = "Control Output"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@VI", StringComparison.OrdinalIgnoreCase)) { portTag = "Value Input"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@VO", StringComparison.OrdinalIgnoreCase)) { portTag = "Value Output"; unitQuery = unitQuery[..^3]; }
-                else if (unitQuery.EndsWith("@I", StringComparison.OrdinalIgnoreCase)) { portTag = "Input"; unitQuery = unitQuery[..^2]; }
-                else if (unitQuery.EndsWith("@O", StringComparison.OrdinalIgnoreCase)) { portTag = "Output"; unitQuery = unitQuery[..^2]; }
+                if (unitQuery.EndsWith("@CI", StringComparison.OrdinalIgnoreCase)) { portTag = "Control Input"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 3); }
+                else if (unitQuery.EndsWith("@CO", StringComparison.OrdinalIgnoreCase)) { portTag = "Control Output"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 3); }
+                else if (unitQuery.EndsWith("@VI", StringComparison.OrdinalIgnoreCase)) { portTag = "Value Input"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 3); }
+                else if (unitQuery.EndsWith("@VO", StringComparison.OrdinalIgnoreCase)) { portTag = "Value Output"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 3); }
+                else if (unitQuery.EndsWith("@I", StringComparison.OrdinalIgnoreCase)) { portTag = "Input"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 2); }
+                else if (unitQuery.EndsWith("@O", StringComparison.OrdinalIgnoreCase)) { portTag = "Output"; unitQuery = unitQuery.Substring(0, unitQuery.Length - 2); }
 
                 string description = string.Empty;
 
@@ -673,15 +684,34 @@ namespace Unity.VisualScripting.Community
         private const string PathDivider = " -> ";
         private GUIContent GetSourceInfo(Object key, GraphReference reference)
         {
-            return key switch
+            if (key is ScriptGraphAsset)
             {
-                ScriptGraphAsset => Temp(GraphTraversal.GetElementPath(reference), GetIcon<ScriptGraphAsset>()),
-                StateGraphAsset => Temp(GraphTraversal.GetElementPath(reference), GetIcon<StateGraphAsset>()),
-                IEventMachine or GameObject => Temp(GraphTraversal.GetElementPath(reference), GetIcon<GameObject>()),
-                ClassAsset asset => asset.icon != null ? Temp((asset.title ?? asset.name) + PathDivider + GraphTraversal.GetElementPath(reference), asset.icon) : Temp((asset.title ?? asset.name) + PathDivider + GraphTraversal.GetElementPath(reference), GetIcon<ClassAsset>()),
-                StructAsset asset => asset.icon != null ? Temp((asset.title ?? asset.name) + PathDivider + GraphTraversal.GetElementPath(reference), asset.icon) : Temp((asset.title ?? asset.name) + PathDivider + GraphTraversal.GetElementPath(reference), GetIcon<StructAsset>()),
-                _ => Temp(key.name, key.GetType().Icon()[IconSize.Small]),
-            };
+                return Temp(GraphTraversal.GetElementPath(reference), GetIcon<ScriptGraphAsset>());
+            }
+            else if (key is StateGraphAsset)
+            {
+                return Temp(GraphTraversal.GetElementPath(reference), GetIcon<StateGraphAsset>());
+            }
+            else if (key is IEventMachine || key is GameObject)
+            {
+                return Temp(GraphTraversal.GetElementPath(reference), GetIcon<GameObject>());
+            }
+            else if (key is ClassAsset classAsset)
+            {
+                return classAsset.icon != null
+                    ? Temp((classAsset.title ?? classAsset.name) + PathDivider + GraphTraversal.GetElementPath(reference), classAsset.icon)
+                    : Temp((classAsset.title ?? classAsset.name) + PathDivider + GraphTraversal.GetElementPath(reference), GetIcon<ClassAsset>());
+            }
+            else if (key is StructAsset structAsset)
+            {
+                return structAsset.icon != null
+                    ? Temp((structAsset.title ?? structAsset.name) + PathDivider + GraphTraversal.GetElementPath(reference), structAsset.icon)
+                    : Temp((structAsset.title ?? structAsset.name) + PathDivider + GraphTraversal.GetElementPath(reference), GetIcon<StructAsset>());
+            }
+            else
+            {
+                return Temp(key.name, key.GetType().Icon()[IconSize.Small]);
+            }
         }
 
         private Texture GetIcon<T>()

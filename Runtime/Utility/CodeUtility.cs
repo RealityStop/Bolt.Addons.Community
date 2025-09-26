@@ -12,8 +12,8 @@ namespace Unity.VisualScripting.Community
 {
     public static class CodeUtility
     {
-        private static readonly Regex RemoveHighlightsRegex = new(@"<b class='highlight'>(.*?)<\/b>", RegexOptions.Compiled | RegexOptions.Singleline);
-        private static readonly Dictionary<string, string> RemoveAllCache = new();
+        private static readonly Regex RemoveHighlightsRegex = new Regex(@"<b class='highlight'>(.*?)<\/b>", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Dictionary<string, string> RemoveAllCache = new Dictionary<string, string>();
 
 
         public static string RemoveAllClickableTags(string input)
@@ -93,8 +93,8 @@ namespace Unity.VisualScripting.Community
             return CSharpPreviewSettings.ShouldGenerateTooltips ? $"[CommunityAddonsCodeToolTip({ToolTip})]{(highlight ? $"/* Note: (Hover for more info) */".CommentHighlight() : $"/* Note: (Hover for more info) */")}[CommunityAddonsCodeToolTipEnd] {code}" : code;
         }
 
-        private static readonly Dictionary<string, string> AllToolTipCache = new();
-        private static readonly Regex ToolTipRegex = new(@"\[CommunityAddonsCodeToolTip\((.*?)\)\](.*?)\[CommunityAddonsCodeToolTipEnd\]", RegexOptions.Compiled);
+        private static readonly Dictionary<string, string> AllToolTipCache = new Dictionary<string, string>();
+        private static readonly Regex ToolTipRegex = new Regex(@"\[CommunityAddonsCodeToolTip\((.*?)\)\](.*?)\[CommunityAddonsCodeToolTipEnd\]", RegexOptions.Compiled);
 
         public static string RemoveAllToolTipTagsEntirely(string code)
         {
@@ -120,7 +120,7 @@ namespace Unity.VisualScripting.Community
             return code;
         }
 
-        private static readonly Regex RecommendationRegex = new(@"/\*\(Recommendation\) .*?\*/", RegexOptions.Compiled);
+        private static readonly Regex RecommendationRegex = new Regex(@"/\*\(Recommendation\) .*?\*/", RegexOptions.Compiled);
 
         public static string RemoveRecommendations(string code)
         {
@@ -132,7 +132,7 @@ namespace Unity.VisualScripting.Community
             return RemoveAllClickableTags(RemoveAllToolTipTagsEntirely(removeRecommendations ? RemoveRecommendations(code) : code));
         }
 
-        private static readonly Dictionary<string, List<ClickableRegion>> clickableRegionsCache = new();
+        private static readonly Dictionary<string, List<ClickableRegion>> clickableRegionsCache = new Dictionary<string, List<ClickableRegion>>();
 
         public static List<ClickableRegion> ExtractAndPopulateClickableRegions(string input)
         {
@@ -144,32 +144,25 @@ namespace Unity.VisualScripting.Community
             const string closeTag = "⟧⟧";
 
             var regions = new List<ClickableRegion>();
-            ReadOnlySpan<char> span = input;
-            var lineBreaks = PrecomputeLineBreaks(span);
+            var lineBreaks = PrecomputeLineBreaks(input);
 
             int index = 0;
-            while (index < span.Length)
+            while (index < input.Length)
             {
-                int openIdx = span.Slice(index).IndexOf(openTag);
+                int openIdx = input.IndexOf(openTag, index, StringComparison.Ordinal);
                 if (openIdx == -1) break;
-                openIdx += index;
 
-                int midIdx = span.Slice(openIdx + openTag.Length).IndexOf(midTag);
+                int midIdx = input.IndexOf(midTag, openIdx + openTag.Length, StringComparison.Ordinal);
                 if (midIdx == -1) break;
-                midIdx += openIdx + openTag.Length;
 
-                var unitIdSpan = span.Slice(openIdx + openTag.Length, midIdx - (openIdx + openTag.Length));
-                string unitId = unitIdSpan.ToString();
+                string unitId = input.Substring(openIdx + openTag.Length, midIdx - (openIdx + openTag.Length));
 
-                int closeIdx = span.Slice(midIdx + midTag.Length).IndexOf(closeTag);
+                int closeIdx = input.IndexOf(closeTag, midIdx + midTag.Length, StringComparison.Ordinal);
                 if (closeIdx == -1) break;
-                closeIdx += midIdx + midTag.Length;
 
                 int codeStart = midIdx + midTag.Length;
                 int codeLength = closeIdx - codeStart;
-
-                ReadOnlySpan<char> codeSpan = span.Slice(codeStart, codeLength);
-                string code = codeSpan.ToString();
+                string code = input.Substring(codeStart, codeLength);
 
                 int startLine = GetLineNumber(lineBreaks, openIdx);
                 int endLine = GetLineNumber(lineBreaks, closeIdx);
@@ -184,12 +177,12 @@ namespace Unity.VisualScripting.Community
 
                 if (regions.Count > 0)
                 {
-                    var last = regions[^1];
+                    var last = regions[regions.Count - 1];
                     if (last.unitId == unitId && last.endLine == startLine)
                     {
                         last.code += code;
                         last.endLine = endLine;
-                        regions[^1] = last;
+                        regions[regions.Count - 1] = last;
                     }
                     else
                     {
@@ -208,14 +201,14 @@ namespace Unity.VisualScripting.Community
             return regions;
         }
 
-        public static List<int> PrecomputeLineBreaks(ReadOnlySpan<char> span)
+        public static List<int> PrecomputeLineBreaks(string input)
         {
             var lineBreaks = new List<int>(128) { 0 };
-            int length = span.Length;
+            int length = input.Length;
 
             for (int i = 0; i < length; i++)
             {
-                if (span[i] == '\n')
+                if (input[i] == '\n')
                 {
                     lineBreaks.Add(i + 1);
                 }
@@ -223,7 +216,6 @@ namespace Unity.VisualScripting.Community
 
             return lineBreaks;
         }
-
 
         private static int GetLineNumber(List<int> lineBreaks, int charIndex)
         {

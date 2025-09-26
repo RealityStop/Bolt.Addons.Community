@@ -10,7 +10,7 @@ namespace Unity.VisualScripting.Community
             nameInspectorConstructor = (metadata) => new VariableNameInspector(metadata, GetNameSuggestions);
         }
     
-        private readonly Dictionary<IUnitPort, VariableNameInspector> inspectorCache = new();
+        private readonly Dictionary<IUnitPort, VariableNameInspector> inspectorCache = new Dictionary<IUnitPort, VariableNameInspector>();
         private readonly System.Func<Metadata, VariableNameInspector> nameInspectorConstructor;
     
         protected override NodeColorMix baseColor => NodeColorMix.TealReadable;

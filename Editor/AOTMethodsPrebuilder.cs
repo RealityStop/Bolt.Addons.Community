@@ -21,7 +21,7 @@ namespace Unity.VisualScripting.Community
     {
         public int callbackOrder => 1;
 
-        private List<TypeGroup> typesToSupport = new();
+        private List<TypeGroup> typesToSupport = new List<TypeGroup>();
 
         public void OnPreprocessBuild(BuildReport report)
         {
@@ -120,7 +120,10 @@ namespace Unity.VisualScripting.Community
                 var type = currentType.IsGenericType ? currentType : currentType.BaseType;
                 float progress = (float)i / count;
 
-                if (type.IsPublic && type.IsGenericType && !type.GetGenericArguments().Any(arg => arg.IsGenericTypeParameter) && type.GetGenericArguments().All(_type => _type.IsPublic && AllowedNameSpace(_type.Namespace)))
+                if (type.IsPublic
+                    && type.IsGenericType
+                    && !type.GetGenericArguments().Any(arg => arg.IsGenericParameter)
+                    && type.GetGenericArguments().All(_type => _type.IsPublic && AllowedNameSpace(_type.Namespace)))
                 {
                     EditorUtility.DisplayProgressBar("Generating Aot Support Methods for OnUnityEvent", $"Found {type.HumanName(true)}...", progress);
 

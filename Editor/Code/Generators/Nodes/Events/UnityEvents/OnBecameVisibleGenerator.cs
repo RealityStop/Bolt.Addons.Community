@@ -10,9 +10,9 @@ namespace Unity.VisualScripting.Community
     [NodeGenerator(typeof(OnBecameVisible))]
     public class OnBecameVisibleGenerator : UnityMethodGenerator<OnBecameVisible, EmptyEventArgs>
     {
-        public override List<ValueOutput> OutputValues => new();
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>();
 
-        public override List<TypeParam> Parameters => new();
+        public override List<TypeParam> Parameters => new List<TypeParam>();
 
         public OnBecameVisibleGenerator(Unit unit) : base(unit) { }
     }

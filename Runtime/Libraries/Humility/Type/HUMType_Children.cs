@@ -58,7 +58,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
             if (type.Name.EndsWith("Attribute", StringComparison.Ordinal))
             {
-                var name = type.Name[..^9];
+                var name = type.Name.Substring(0, type.Name.Length - 9);
                 return fullName && !string.IsNullOrEmpty(type.Namespace)
                     ? $"{type.Namespace}.{name}"
                     : name;
@@ -125,7 +125,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
             if (type.Name.EndsWith("Attribute", StringComparison.Ordinal))
             {
-                var coreName = type.Name[..^9].TypeHighlight();
+                var coreName = type.Name.Substring(0, type.Name.Length - 9).TypeHighlight();
                 if (fullName && !string.IsNullOrEmpty(type.Namespace))
                     return $"{type.Namespace.NamespaceHighlight()}.{coreName}";
                 return coreName;
@@ -578,7 +578,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 if (variableForObjects)
                 {
                     var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
-                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString()[..3]}";
+                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString().Substring(0, 3)}";
 
                     if (!hasVariable)
                     {
@@ -689,7 +689,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 if (variableForObjects)
                 {
                     var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
-                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString()[..3]}";
+                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString().Substring(0, 3)}";
 
                     if (!hasVariable)
                         CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
@@ -795,7 +795,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 if (variableForObjects)
                 {
                     var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
-                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString()[..3]}";
+                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString().Substring(0, 3)}";
 
                     if (!hasVariable)
                         CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
@@ -900,7 +900,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 if (variableForObjects)
                 {
                     var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
-                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString()[..3]}";
+                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString().Substring(0, 3)}";
 
                     if (!hasVariable)
                         CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
@@ -986,7 +986,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return highlight ? type.TypeHighlight() : type;
         }
 
-        private static readonly Dictionary<Type, MemberInfo[]> memberCache = new();
+        private static readonly Dictionary<Type, MemberInfo[]> memberCache = new Dictionary<Type, MemberInfo[]>();
 
         private static MemberInfo[] GetCachedMembers(Type type)
         {

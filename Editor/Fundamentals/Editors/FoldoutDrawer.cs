@@ -8,7 +8,7 @@ namespace Unity.VisualScripting.Community
     [CustomPropertyDrawer(typeof(FoldoutAttribute))]
     public class FoldoutDrawer : PropertyDrawer
     {
-        private static Dictionary<string, bool> foldoutStates = new();
+        private static Dictionary<string, bool> foldoutStates = new Dictionary<string, bool>();
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -21,18 +21,18 @@ namespace Unity.VisualScripting.Community
 
             if (IsFirstPropertyInGroup(property, out var groupProperties))
             {
-                Rect foldoutRect = new(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+                Rect foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
                 foldoutStates[foldout.group] = EditorGUI.Foldout(foldoutRect, expanded, foldout.group, true);
                 position.y += EditorGUIUtility.singleLineHeight;
             }
 
             if (expanded)
             {
-                Rect labelRect = new(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+                Rect labelRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
                 EditorGUI.LabelField(labelRect, property.displayName);
 
                 float fieldHeight = EditorGUI.GetPropertyHeight(property, true);
-                Rect fieldRect = new(position.x, position.y + EditorGUIUtility.singleLineHeight + 2, position.width, fieldHeight);
+                Rect fieldRect = new Rect(position.x, position.y + EditorGUIUtility.singleLineHeight + 2, position.width, fieldHeight);
                 EditorGUI.PropertyField(fieldRect, property, GUIContent.none, true);
             }
         }

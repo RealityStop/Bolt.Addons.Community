@@ -9,7 +9,7 @@ using Unity.VisualScripting.Community;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community
 {
     public class GraphSnippetProcess : GraphProcess<FlowGraph, FlowCanvas>
     {
@@ -21,7 +21,7 @@ namespace Unity.VisualScripting.Community
                 var fuzzyWindowType = typeof(FuzzyWindow);
                 var queryField = fuzzyWindowType.GetField("query", BindingFlags.Instance | BindingFlags.NonPublic);
                 var currentQuery = (string)queryField.GetValue(__instance);
-    
+
                 if (@event != null && @event.keyCode == KeyCode.Tab && canvas.connectionSource != null)
                 {
                     if (string.IsNullOrEmpty(currentQuery))
@@ -29,11 +29,18 @@ namespace Unity.VisualScripting.Community
                         return;
                     }
                     __instance.Close();
+#if UNITY_2021_2_OR_NEWER
                     string snippetName = currentQuery.Split(',', StringSplitOptions.RemoveEmptyEntries)[0];
                     string[] argumentValues = currentQuery.Split(',', StringSplitOptions.RemoveEmptyEntries).Skip(1).ToArray();
-    
+#else
+                    var parts = currentQuery.Split(',').Where(s => !string.IsNullOrEmpty(s)).ToArray();
+                    string snippetName = parts.Length > 0 ? parts[0] : "";
+                    string[] argumentValues = parts.Length > 1 ? parts.Skip(1).ToArray() : Array.Empty<string>();
+#endif
+
+
                     bool matchFound = false;
-    
+
                     if (canvas.connectionSource is ControlOutput)
                     {
                         var snippets = AssetDatabase.FindAssets($"t:{typeof(ControlGraphSnippet)}")
@@ -45,7 +52,7 @@ namespace Unity.VisualScripting.Community
                                 {
                                     var argumentType = snippet.snippetArguments[i].argumentType;
                                     var argumentValue = argumentValues[i];
-    
+
                                     if (IsCorrectType(argumentType, argumentValue))
                                     {
                                         continue;
@@ -58,11 +65,11 @@ namespace Unity.VisualScripting.Community
                                 return true;
                             })
                             .ToList();
-    
+
                         var orderedSnippets = snippets
                             .OrderableSearchFilter(snippetName, snippet => snippet.SnippetName)
                             .ToList();
-    
+
                         matchFound = HandleSnippetSelection<ControlGraphSnippet, SnippetControlSourceUnit>(orderedSnippets, graph, canvas, currentQuery);
                     }
                     else if (canvas.connectionSource is ValueInput)
@@ -77,7 +84,7 @@ namespace Unity.VisualScripting.Community
                                     {
                                         var argumentType = snippet.snippetArguments[i].argumentType;
                                         var argumentValue = argumentValues[i];
-    
+
                                         if (IsCorrectType(argumentType, argumentValue))
                                         {
                                             continue;
@@ -90,7 +97,7 @@ namespace Unity.VisualScripting.Community
                                     return true;
                                 })
                             .ToList();
-    
+
                         var orderedSnippets = snippets
                             .Where(snippet =>
                                 (canvas.connectionSource as ValueInput).type.IsAssignableFrom(snippet.sourceType.type) ||
@@ -99,7 +106,7 @@ namespace Unity.VisualScripting.Community
                             .ToList();
                         matchFound = HandleSnippetSelection<ValueGraphSnippet, SnippetValueSourceUnit>(orderedSnippets, graph, canvas, currentQuery);
                     }
-    
+
                     if (!matchFound)
                     {
                         Debug.LogWarning("No matching snippet found for query: " + currentQuery);
@@ -107,14 +114,15 @@ namespace Unity.VisualScripting.Community
                 }
             }
         }
-    
+
         private bool HandleSnippetSelection<TSnippet, TSourceUnit>(List<SearchResult<TSnippet>> orderedSnippets, FlowGraph graph, FlowCanvas canvas, string currentQuery) where TSnippet : GraphSnippet where TSourceUnit : SnippetSourceUnit
         {
             var snippet = orderedSnippets.FirstOrDefault(s => s.result != null);
             if (snippet.result == null) return false;
-    
-    
-            if (snippet.result.graph.units.FirstOrDefault(unit => unit is SnippetControlSourceUnit || unit is SnippetValueSourceUnit) is not Unit sourceUnit)
+
+
+            var sourceUnitCandidate = snippet.result.graph.units.FirstOrDefault(unit => unit is SnippetControlSourceUnit || unit is SnippetValueSourceUnit);
+            if (!(sourceUnitCandidate is Unit sourceUnit))
             {
                 Debug.LogWarning("Source unit in snippet is missing: " + snippet.result.name, snippet.result);
                 return false;
@@ -129,13 +137,13 @@ namespace Unity.VisualScripting.Community
                 Debug.LogWarning("No unit is connected to the source unit in snippet: " + snippet.result.name, snippet.result);
                 return false;
             }
-    
+
             var connectedUnit = (typeof(TSourceUnit) == typeof(SnippetControlSourceUnit) ? (sourceUnit as SnippetControlSourceUnit).source.connection.destination.unit : (sourceUnit as SnippetValueSourceUnit).source.connection.source.unit) as Unit;
             SnippetPreservationContext<TSourceUnit>.AddSnippet(graph, canvas, connectedUnit, snippet.result.SnippetType, snippet.result, currentQuery);
             return true;
         }
-    
-    
+
+
         private bool IsCorrectType(Type type, string input)
         {
             if (type == typeof(bool) && bool.TryParse(input, out bool boolResult))
@@ -208,5 +216,5 @@ namespace Unity.VisualScripting.Community
             }
             return false;
         }
-    } 
+    }
 }

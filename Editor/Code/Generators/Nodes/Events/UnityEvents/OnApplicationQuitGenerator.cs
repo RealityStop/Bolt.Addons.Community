@@ -10,9 +10,9 @@ namespace Unity.VisualScripting.Community
     [NodeGenerator(typeof(OnApplicationQuit))]
     public class OnApplicationQuitGenerator : UnityMethodGenerator<OnApplicationQuit, EmptyEventArgs>
     {
-        public override List<ValueOutput> OutputValues => new();
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>();
 
-        public override List<TypeParam> Parameters => new();
+        public override List<TypeParam> Parameters => new List<TypeParam>();
 
         public OnApplicationQuitGenerator(Unit unit) : base(unit) { }
     }

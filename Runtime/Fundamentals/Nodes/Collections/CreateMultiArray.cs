@@ -71,7 +71,7 @@ namespace Unity.VisualScripting.Community
             }
 
             result = ValueOutput("array", Create);
-            
+
             if (previous != null)
             {
                 relations.Add(new UnitRelation(previous, result));
@@ -261,7 +261,7 @@ namespace Unity.VisualScripting.Community
 
             return null;
         }
-
+#if VISUAL_SCRIPTING_1_7
         public override IEnumerable<object> GetAotStubs(HashSet<object> visited)
         {
             if (type == null) yield break;
@@ -282,5 +282,27 @@ namespace Unity.VisualScripting.Community
                 }
             }
         }
+#else
+        public override IEnumerable<object> aotStubs
+        {
+            get
+            {
+                if (type == null) yield break;
+
+                for (int i = 1; i <= dimensions; i++)
+                {
+                    var arrayType = type.MakeArrayType(i);
+
+                    foreach (var member in arrayType.GetSafeMembers())
+                    {
+                        if (member != null)
+                        {
+                            yield return member.info;
+                        }
+                    }
+                }
+            }
+        }
+#endif
     }
 }

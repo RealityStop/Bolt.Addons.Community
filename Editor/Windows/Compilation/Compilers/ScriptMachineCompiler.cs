@@ -9,20 +9,24 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
-
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
 namespace Unity.VisualScripting.Community
 {
     public class ScriptMachineCompiler : BaseCompiler
     {
         protected override string GetFilePath(UnityEngine.Object asset, PathConfig paths)
         {
-            var machine = (ScriptMachine)asset;
+            var machine = (SMachine)asset;
             return Path.Combine(paths.ObjectsPath, GetMachineName(machine).LegalMemberName() + ".cs");
         }
 
         protected override string GenerateCode(UnityEngine.Object asset)
         {
-            var machine = (ScriptMachine)asset;
+            var machine = (SMachine)asset;
             var generator = (GameObjectGenerator)GameObjectGenerator.GetSingleDecorator(machine.gameObject);
             generator.current = machine;
             var code = generator.GenerateClean(0);
@@ -31,15 +35,15 @@ namespace Unity.VisualScripting.Community
 
         protected override string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)
         {
-            var machine = (ScriptMachine)asset;
+            var machine = (SMachine)asset;
             return Path.Combine(paths.ObjectsRelativePath, GetMachineName(machine).LegalMemberName() + ".cs");
         }
 
         public override void PostProcess(UnityEngine.Object asset, PathConfig paths, Type type)
         {
-            if (asset is not ScriptMachine || type == null) return;
-            
-            var machine = (ScriptMachine)asset;
+            if (!(asset is SMachine) || type == null) return;
+
+            var machine = (SMachine)asset;
 
             var scriptImporter = AssetImporter.GetAtPath(GetRelativeFilePath(asset, paths)) as MonoImporter;
             var component = machine.gameObject.GetComponent(type);
@@ -49,8 +53,16 @@ namespace Unity.VisualScripting.Community
             }
 
             var values = CodeGeneratorValueUtility.GetAllValues(machine, false);
+#if VISUAL_SCRIPTING_1_7
             var variables = machine.graph.variables.Where(v =>
-                typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(v.typeHandle.Identification)));
+            {
+                var type = Type.GetType(v.typeHandle.Identification);
+                return type != null && typeof(UnityEngine.Object).IsAssignableFrom(type);
+            });
+#else
+            var variables = machine.graph.variables.Where(v =>
+                typeof(UnityEngine.Object).IsAssignableFrom(v.value?.GetType()));
+#endif
 
             var objects = variables.Select(v => (v.name, (UnityEngine.Object)v.value))
                 .Concat(values.Select(v => (v.Key.LegalMemberName(), v.Value)))
@@ -70,11 +82,11 @@ namespace Unity.VisualScripting.Community
             scriptImporter.SetDefaultReferences(names, objs);
         }
 
-        private string GetMachineName(ScriptMachine machine)
+        private string GetMachineName(SMachine machine)
         {
             return machine.nest?.graph.title?.Length > 0
                 ? machine.nest.graph.title.LegalMemberName()
-                : machine.gameObject.name.Capitalize().First().Letter() + "_ScriptMachine_" + Array.IndexOf(machine.gameObject.GetComponents<ScriptMachine>(), machine);
+                : machine.gameObject.name.Capitalize().First().Letter() + $"_{typeof(SMachine).Name}_" + Array.IndexOf(machine.gameObject.GetComponents<SMachine>(), machine);
         }
     }
 }

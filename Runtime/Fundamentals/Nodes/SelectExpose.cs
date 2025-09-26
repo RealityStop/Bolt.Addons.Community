@@ -48,7 +48,7 @@ namespace Unity.VisualScripting.Community
         public Dictionary<ValueOutput, Member> members { get; private set; }
 
         public override bool canDefine => type != null;
-
+#if VISUAL_SCRIPTING_1_7
         public override IEnumerable<object> GetAotStubs(HashSet<object> visited)
         {
             if (members != null)
@@ -62,7 +62,24 @@ namespace Unity.VisualScripting.Community
                 }
             }
         }
-
+#else
+        public override IEnumerable<object> aotStubs
+        {
+            get
+            {
+                if (members != null)
+                {
+                    foreach (var member in members.Values)
+                    {
+                        if (member != null && member.isReflected)
+                        {
+                            yield return member.info;
+                        }
+                    }
+                }
+            }
+        }
+#endif
         protected override void Definition()
         {
             members = new Dictionary<ValueOutput, Member>();

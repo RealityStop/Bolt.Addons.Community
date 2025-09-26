@@ -25,9 +25,9 @@ namespace Unity.VisualScripting.Community
 
         public GenericParameter parent;
         public bool HasParent => parent != null;
-        public SystemType type = new();
+        public SystemType type = new SystemType();
         public string name = "(null)";
-        public SystemType selectedType = new();
+        public SystemType selectedType = new SystemType();
         [SerializeField]
         [HideInInspector]
         public List<GenericParameter> nestedParameters = new List<GenericParameter>();

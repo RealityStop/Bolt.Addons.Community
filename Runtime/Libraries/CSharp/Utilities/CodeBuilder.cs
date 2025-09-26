@@ -773,7 +773,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return Highlight(code, RecommendationColor);
         }
 
-        private static readonly Dictionary<string, string> RemoveHighlightsCache = new();
+        private static readonly Dictionary<string, string> RemoveHighlightsCache = new Dictionary<string, string>();
         public static string RemoveHighlights(this string code)
         {
             if (RemoveHighlightsCache.TryGetValue(code, out var result))

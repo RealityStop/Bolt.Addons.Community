@@ -1,3 +1,4 @@
+#if VISUAL_SCRIPTING_1_7
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
@@ -57,3 +58,4 @@ namespace Unity.VisualScripting.Community
         }
     }
 }
+#endif

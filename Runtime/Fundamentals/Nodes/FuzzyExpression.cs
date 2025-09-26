@@ -9,7 +9,7 @@ namespace Unity.VisualScripting.Community
     [TypeIcon(typeof(ScalarSum))]
     public class FuzzyExpression : Unit
     {
-        public List<string> tokens = new();
+        public List<string> tokens = new List<string>();
 
         protected override void Definition()
         {

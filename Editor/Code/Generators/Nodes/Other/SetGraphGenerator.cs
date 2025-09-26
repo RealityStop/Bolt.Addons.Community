@@ -1,3 +1,4 @@
+#if VISUAL_SCRIPTING_1_7
 using System;
 using UnityEngine;
 
@@ -40,3 +41,4 @@ namespace Unity.VisualScripting.Community
         }
     }
 }
+#endif

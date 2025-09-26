@@ -15,9 +15,9 @@ namespace Unity.VisualScripting.Community
         public OnInputFieldEndEditGeneratorGenerator(Unit unit) : base(unit)
         {
         }
-        public override List<ValueOutput> OutputValues => new() { Unit.value };
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>() { Unit.value };
 
-        public override List<TypeParam> Parameters => new() { new TypeParam(typeof(string), "value") };
+        public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(string), "value") };
 
         public override ControlOutput OutputPort => Unit.trigger;
 

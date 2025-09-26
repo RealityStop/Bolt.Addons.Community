@@ -42,7 +42,9 @@ namespace Unity.VisualScripting.Community.Utility
         [SerializeField]
         [InspectorToggleLeft]
         public object defaultValue;
+#if VISUAL_SCRIPTING_1_7
         public SerializableType typeHandle;
+#endif
         [RenamedFrom("showCall")]
         public bool showInitalizer = false;
         public bool showDefault = false;

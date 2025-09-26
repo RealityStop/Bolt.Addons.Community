@@ -15,8 +15,8 @@ namespace Unity.VisualScripting.Community
 
         protected static HashSet<Unit> processedUnits = new HashSet<Unit>();
 
-        protected List<UnitPreservationContext<TSourceUnit>> connectedPreservation = new();
-        protected Dictionary<string, object> defaultValues = new();
+        protected List<UnitPreservationContext<TSourceUnit>> connectedPreservation = new List<UnitPreservationContext<TSourceUnit>>();
+        protected Dictionary<string, object> defaultValues = new Dictionary<string, object>();
 
         public IUnitPort sourcePort;
         public string initialPortKey = "";
@@ -26,7 +26,8 @@ namespace Unity.VisualScripting.Community
         // Enum for port types
         protected enum PortType { ControlOutput, ValueInput, ControlInput, ValueOutput }
 
-        protected List<((Unit unit, string key, PortType portType) target, (UnitPreservationContext<TSourceUnit> unit, string key) result)> connectedPorts = new();
+        protected List<((Unit unit, string key, PortType portType) target, (UnitPreservationContext<TSourceUnit> unit, string key) result)> connectedPorts =
+        new List<((Unit unit, string key, PortType portType) target, (UnitPreservationContext<TSourceUnit> unit, string key) result)>();
 
         // Constructor
         public UnitPreservationContext(Unit unitToPreserveFrom, FlowGraph graph)

@@ -2,7 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
 namespace Unity.VisualScripting.Community
 {
     [GraphProvider]
@@ -18,9 +22,9 @@ namespace Unity.VisualScripting.Community
 
         public override IEnumerable<(GraphReference, IGraphElement)> GetElements()
         {
-            foreach (var machine in GetTargetsFromScene<ScriptMachine>().Where(machine => machine.nest.source == GraphSource.Embed))
+            foreach (var machine in GetTargetsFromScene<SMachine>().Where(machine => machine.nest.source == GraphSource.Embed))
             {
-                if (machine != null && machine.GetReference()?.graph is not FlowGraph) continue;
+                if (machine != null && !(machine.GetReference()?.graph is FlowGraph)) continue;
 
                 var baseRef = machine.GetReference().AsReference();
                 foreach (var element in GraphTraversal.TraverseFlowGraph<IGraphElement>(baseRef))

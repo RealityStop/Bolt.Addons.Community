@@ -29,7 +29,9 @@ namespace Unity.VisualScripting.Community
         {
             var structAsset = (StructAsset)asset;
             var scriptImporter = (MonoImporter)MonoImporter.GetAtPath(GetRelativeFilePath(asset, paths));
+#if UNITY_2023_1_OR_NEWER
             scriptImporter.SetIcon(structAsset.icon);
+#endif
             if (!structAsset.lastCompiledNames.Contains(structAsset.GetFullTypeName()))
                 structAsset.lastCompiledNames.Add(structAsset.GetFullTypeName());
         }

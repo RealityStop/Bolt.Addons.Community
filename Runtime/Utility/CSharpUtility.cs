@@ -73,7 +73,7 @@ namespace Unity.VisualScripting.Community
 
         public static IList MergeLists(params IList[] lists)
         {
-            List<object> mergedList = new();
+            List<object> mergedList = new List<object>();
 
             foreach (System.Collections.IList list in lists)
             {
@@ -109,7 +109,7 @@ namespace Unity.VisualScripting.Community
         }
 
         private static readonly HashSet<(GameObject target, EventHook hook, string eventID)> registeredEvents
-            = new();
+            = new HashSet<(GameObject target, EventHook hook, string eventID)>();
 
         public static void RegisterCustomEvent(GameObject target, Action<CustomEventArgs> action, string eventID)
         {
@@ -311,7 +311,7 @@ namespace Unity.VisualScripting.Community
 
         public static object CreateWaitForSeconds(float time, bool unscaled)
         {
-            return unscaled ? new WaitForSecondsRealtime(time) : new WaitForSeconds(time);
+            return unscaled ? (object)new WaitForSecondsRealtime(time) : new WaitForSeconds(time);
         }
 
         public static bool Chance(float probability)
@@ -345,11 +345,11 @@ namespace Unity.VisualScripting.Community
         public static IDictionary GetDictionaryVariable(this VariableDeclarations declarations, string name)
         {
             var variableValue = declarations.Get(name) ?? throw new ArgumentException($"Indicated variable '{name}' does not exist."); ;
-            if (variableValue is not IDictionary dictionary)
+            if (!(variableValue is IDictionary))
             {
                 throw new ArgumentException($"Indicated variable '{name}' is not a dictionary.");
             }
-            return dictionary;
+            return variableValue as IDictionary;
         }
 
         /// <summary>
@@ -361,7 +361,7 @@ namespace Unity.VisualScripting.Community
         /// </remarks>
         public static AotDictionary MergeDictionaries(params IDictionary[] dictionaries)
         {
-            AotDictionary mergedDictionary = new();
+            AotDictionary mergedDictionary = new AotDictionary();
 
             foreach (var dictionary in dictionaries)
             {
@@ -385,7 +385,7 @@ namespace Unity.VisualScripting.Community
         /// </remarks>
         public static Dictionary<TKey, TValue> MergeDictionaries<TKey, TValue>(params IDictionary[] dictionaries)
         {
-            Dictionary<TKey, TValue> mergedDictionary = new();
+            Dictionary<TKey, TValue> mergedDictionary = new Dictionary<TKey, TValue>();
 
             foreach (var dictionary in dictionaries)
             {
@@ -423,7 +423,7 @@ namespace Unity.VisualScripting.Community
         /// </remarks>
         public static Dictionary<Tkey, TValue> MergeDictionariesReplace<Tkey, TValue>(params Dictionary<Tkey, TValue>[] dictionaries)
         {
-            Dictionary<Tkey, TValue> mergedDictionary = new();
+            Dictionary<Tkey, TValue> mergedDictionary = new Dictionary<Tkey, TValue>();
 
             foreach (var dictionary in dictionaries)
             {
@@ -534,10 +534,10 @@ namespace Unity.VisualScripting.Community
         {
             if (values.Length == 0)
             {
-                return new();
+                return new Vector2();
             }
 
-            Vector2 sum = new();
+            Vector2 sum = new Vector2();
             foreach (Vector2 value in values)
             {
                 sum += value;
@@ -550,10 +550,10 @@ namespace Unity.VisualScripting.Community
         {
             if (values.Length == 0)
             {
-                return new();
+                return new Vector3();
             }
 
-            Vector3 sum = new();
+            Vector3 sum = new Vector3();
             foreach (Vector3 value in values)
             {
                 sum += value;
@@ -566,10 +566,10 @@ namespace Unity.VisualScripting.Community
         {
             if (values.Length == 0)
             {
-                return new();
+                return new Vector4();
             }
 
-            Vector4 sum = new();
+            Vector4 sum = new Vector4();
             foreach (Vector4 value in values)
             {
                 sum += value;
@@ -600,10 +600,10 @@ namespace Unity.VisualScripting.Community
         {
             if (values.Count == 0)
             {
-                return new();
+                return new Vector2();
             }
 
-            Vector2 sum = new();
+            Vector2 sum = new Vector2();
             foreach (Vector2 value in values)
             {
                 sum += value;
@@ -616,10 +616,10 @@ namespace Unity.VisualScripting.Community
         {
             if (values.Count == 0)
             {
-                return new();
+                return new Vector3();
             }
 
-            Vector3 sum = new();
+            Vector3 sum = new Vector3();
             foreach (Vector3 value in values)
             {
                 sum += value;
@@ -632,10 +632,10 @@ namespace Unity.VisualScripting.Community
         {
             if (values.Count == 0)
             {
-                return new();
+                return new Vector4();
             }
 
-            Vector4 sum = new();
+            Vector4 sum = new Vector4();
             foreach (Vector4 value in values)
             {
                 sum += value;
@@ -870,31 +870,52 @@ namespace Unity.VisualScripting.Community
         public static IList RandomNumbers(int count, float min, float max, bool integers = false, bool aotList = false, bool unique = true)
         {
             if (count <= 0)
-                return aotList ? new AotList() : integers ? new List<int>() : new List<float>();
+            {
+                IList list;
+                if (aotList)
+                    list = new AotList();
+                else if (integers)
+                    list = new List<int>();
+                else
+                    list = new List<float>();
+                return list;
+            }
 
             if (integers && unique && (max - min) < count)
                 throw new ArgumentException("Unique integer range is too small for the number of elements requested.");
 
-            IList list = aotList ? new AotList(count) : integers ? new List<int>(count) : new List<float>(count);
+            IList _list;
+            if (aotList)
+            {
+                _list = new AotList(count);
+            }
+            else if (integers)
+            {
+                _list = new List<int>(count);
+            }
+            else
+            {
+                _list = new List<float>(count);
+            }
 
             HashSet<object> uniqueness = unique ? new HashSet<object>() : null;
 
-            while (list.Count < count)
+            while (_list.Count < count)
             {
                 object value = integers ? UnityEngine.Random.Range((int)min, (int)max) : UnityEngine.Random.Range(min, max);
 
                 if (unique)
                 {
                     if (uniqueness.Add(value))
-                        list.Add(value);
+                        _list.Add(value);
                 }
                 else
                 {
-                    list.Add(value);
+                    _list.Add(value);
                 }
             }
 
-            return list;
+            return _list;
         }
 
         public static (object key, object value) GetRandomElement(IEnumerable collection, bool isDictionary = false)

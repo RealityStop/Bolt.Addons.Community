@@ -54,7 +54,7 @@ namespace Unity.VisualScripting.Community
 
         public static IEnumerable<FakeGenericParameterType> GetNestedFakeGenerics(Type type)
         {
-            if (!type.IsGenericType && type is not FakeGenericParameterType)
+            if (!type.IsGenericType && !(type is FakeGenericParameterType))
                 yield break;
             var genericParameters = GetArrayBase(type).GetGenericArguments();
             foreach (var generic in genericParameters)

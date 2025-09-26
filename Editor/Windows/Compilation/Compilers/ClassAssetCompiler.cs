@@ -48,7 +48,9 @@ namespace Unity.VisualScripting.Community
                                                             .Concat(values.Select(v => v.Value))
                                                             .ToArray();
 
+#if UNITY_2023_1_OR_NEWER
             scriptImporter.SetIcon(classAsset.icon);
+#endif
             scriptImporter.SetDefaultReferences(names, objects);
             if (!classAsset.lastCompiledNames.Contains(classAsset.GetFullTypeName()))
                 classAsset.lastCompiledNames.Add(classAsset.GetFullTypeName());

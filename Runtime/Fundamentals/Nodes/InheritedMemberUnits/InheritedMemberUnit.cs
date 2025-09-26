@@ -10,7 +10,7 @@ namespace Unity.VisualScripting.Community
     {
         public Member member;
         public MemberType memberType;
-
+#if VISUAL_SCRIPTING_1_7
         public override IEnumerable<object> GetAotStubs(HashSet<object> visited)
         {
             if (member != null && member.isReflected)
@@ -18,6 +18,18 @@ namespace Unity.VisualScripting.Community
                 yield return member.info;
             }
         }
+#else
+        public override IEnumerable<object> aotStubs
+        {
+            get
+            {
+                if (member != null && member.isReflected)
+                {
+                    yield return member.info;
+                }
+            }
+        }
+#endif
     }
 
     public enum MethodType

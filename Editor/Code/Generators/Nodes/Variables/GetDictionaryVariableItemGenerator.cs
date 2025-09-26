@@ -82,7 +82,30 @@ namespace Unity.VisualScripting.Community
             {
                 var expectedType = data.GetExpectedType();
                 var hasExpectedType = expectedType != null;
-                var isExpectedType = (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType)) || (hasExpectedType && IsVariableDefined(data, name) && !string.IsNullOrEmpty(GetVariableDeclaration(data, name).typeHandle.Identification) && expectedType.IsAssignableFrom(Type.GetType(GetVariableDeclaration(data, name).typeHandle.Identification))) || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && expectedType.IsAssignableFrom(targetType));
+                Type targetType = null;
+                var declaration = IsVariableDefined(data, name) ? GetVariableDeclaration(data, name) : null;
+
+#if VISUAL_SCRIPTING_1_7
+                var isExpectedType =
+                    hasExpectedType &&
+                    (
+                        (variableType != null && expectedType.IsAssignableFrom(variableType)) ||
+                        (declaration != null && !string.IsNullOrEmpty(declaration.typeHandle.Identification) &&
+                            expectedType.IsAssignableFrom(Type.GetType(declaration.typeHandle.Identification))) ||
+                        (data.TryGetVariableType(data.GetVariableName(name), out targetType) &&
+                            expectedType.IsAssignableFrom(targetType))
+    );
+#else
+                var isExpectedType =
+                    hasExpectedType &&
+                    (
+                        (variableType != null && expectedType.IsAssignableFrom(variableType)) ||
+                        (declaration != null && declaration.value != null &&
+                            expectedType.IsAssignableFrom(declaration.value.GetType())) ||
+                        (data.TryGetVariableType(data.GetVariableName(name), out targetType) &&
+                            expectedType.IsAssignableFrom(targetType))
+                    );
+#endif
                 data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
 
                 if (!IsVariableDefined(data, name)) return Unit.specifyFallback ? GenerateValue(Unit.fallback, data) : MakeClickableForThisUnit($"/* Could not find variable with name \"{variableName}\" */".WarningHighlight());
@@ -96,7 +119,26 @@ namespace Unity.VisualScripting.Community
                 data.CreateSymbol(Unit, variableType);
                 var expectedType = data.GetExpectedType();
                 var hasExpectedType = expectedType != null;
-                var isExpectedType = (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType)) || (hasExpectedType && IsVariableDefined(data, name) && !string.IsNullOrEmpty(GetVariableDeclaration(data, name).typeHandle.Identification) && expectedType.IsAssignableFrom(Type.GetType(GetVariableDeclaration(data, name).typeHandle.Identification))) || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && expectedType.IsAssignableFrom(targetType));
+                Type targetType = null;
+                var declaration = IsVariableDefined(data, name) ? GetVariableDeclaration(data, name) : null;
+
+#if VISUAL_SCRIPTING_1_7
+                var isExpectedType =
+                    (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType))
+                    || (hasExpectedType && declaration != null &&
+                        !string.IsNullOrEmpty(declaration.typeHandle.Identification) &&
+                        expectedType.IsAssignableFrom(Type.GetType(declaration.typeHandle.Identification)))
+                    || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out targetType) &&
+                        expectedType.IsAssignableFrom(targetType));
+#else
+                var isExpectedType =
+                    (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType))
+                    || (hasExpectedType && declaration != null &&
+                        declaration.value != null &&
+                        expectedType.IsAssignableFrom(declaration.value.GetType()))
+                    || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out targetType) &&
+                        expectedType.IsAssignableFrom(targetType));
+#endif
                 data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
 
                 if (!data.ContainsNameInAnyScope(variableName)) return Unit.specifyFallback ? GenerateValue(Unit.fallback, data) : MakeClickableForThisUnit($"/* Could not find variable with name \"{variableName}\" */".WarningHighlight());
@@ -114,10 +156,19 @@ namespace Unity.VisualScripting.Community
                 if (isDefined)
                 {
                     var declaration = GetVariableDeclaration(data, name);
-                    return declaration?.typeHandle.Identification != null ? Type.GetType(declaration.typeHandle.Identification) : null;
+#if VISUAL_SCRIPTING_1_7
+                    return declaration?.typeHandle.Identification != null 
+                        ? Type.GetType(declaration.typeHandle.Identification) 
+                        : null;
+#else
+                    return declaration?.value != null
+                        ? declaration.value.GetType()
+                        : null;
+#endif
                 }
             }
-            return data.TryGetVariableType(data.GetVariableName(name), out Type targetType) ? targetType : data.GetExpectedType() ?? typeof(object);
+            Type targetType = null;
+            return data.TryGetVariableType(data.GetVariableName(name), out targetType) ? targetType : data.GetExpectedType() ?? typeof(object);
         }
 
         private bool IsVariableDefined(ControlGenerationData data, string name)

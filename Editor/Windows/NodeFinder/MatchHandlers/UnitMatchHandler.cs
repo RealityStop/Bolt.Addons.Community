@@ -8,7 +8,7 @@ namespace Unity.VisualScripting.Community
         public override string Name => "Unit";
         public override bool CanHandle(IGraphElement element)
         {
-            return element is Unit and not CommentNode;
+            return element is Unit && !(element is CommentNode);
         }
     }
 }

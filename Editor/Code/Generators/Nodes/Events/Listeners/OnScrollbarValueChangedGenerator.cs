@@ -8,9 +8,9 @@ namespace Unity.VisualScripting.Community
     public class OnScrollbarValueChangedGenerator : EventListenerMethodGenerator<OnScrollbarValueChanged>
     {
         public OnScrollbarValueChangedGenerator(Unit unit) : base(unit) { NameSpaces = "UnityEngine.UI"; }
-        public override List<ValueOutput> OutputValues => new() { Unit.value };
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>() { Unit.value };
 
-        public override List<TypeParam> Parameters => new() { new TypeParam(typeof(float), "value") };
+        public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(float), "value") };
 
         public override ControlOutput OutputPort => Unit.trigger;
 

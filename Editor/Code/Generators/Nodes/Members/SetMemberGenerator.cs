@@ -104,7 +104,9 @@ namespace Unity.VisualScripting.Community
         {
             if (valueInput.hasValidConnection)
             {
-                if (valueInput.type == valueInput.connection.source.type && valueInput.connection.source.unit is MemberUnit or CodeAssetUnit)
+                if (valueInput.type == valueInput.connection.source.type &&
+                    (valueInput.connection.source.unit is MemberUnit ||
+                     valueInput.connection.source.unit is CodeAssetUnit))
                 {
                     return "";
                 }

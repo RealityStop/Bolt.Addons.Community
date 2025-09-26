@@ -8,9 +8,9 @@ namespace Unity.VisualScripting.Community
     public class OnToggleValueChangedGenerator : EventListenerMethodGenerator<OnToggleValueChanged>
     {
         public OnToggleValueChangedGenerator(Unit unit) : base(unit) { NameSpaces = "UnityEngine.UI"; }
-        public override List<ValueOutput> OutputValues => new() { Unit.value };
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>() { Unit.value };
 
-        public override List<TypeParam> Parameters => new() { new TypeParam(typeof(bool), "value") };
+        public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(bool), "value") };
 
         public override ControlOutput OutputPort => Unit.trigger;
 

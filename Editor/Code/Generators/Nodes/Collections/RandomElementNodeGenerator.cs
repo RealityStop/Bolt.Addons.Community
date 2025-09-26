@@ -47,7 +47,7 @@ namespace Unity.VisualScripting.Community
 
             string methodCall = CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("GetRandomElement"), new[] { collection, isDict });
 
-            StringBuilder sb = new();
+            StringBuilder sb = new StringBuilder();
             sb.AppendLine($"{indentStr}{MakeClickableForThisUnit($"{"var".ConstructHighlight()} {variableName.VariableHighlight()} = ")}{methodCall}{MakeClickableForThisUnit(";")}");
 
             return sb.AppendLine(GetNextUnit(Unit.exit, data, indent)).ToString();

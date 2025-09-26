@@ -1,3 +1,4 @@
+#if VISUAL_SCRIPTING_1_7
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(GetScriptGraphs))]
@@ -6,3 +7,4 @@ namespace Unity.VisualScripting.Community
         public GetScriptGraphsGenerator(Unit unit) : base(unit) { }
     }
 }
+#endif

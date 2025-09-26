@@ -14,7 +14,7 @@ namespace Unity.VisualScripting.Community
         private EnumeratorNode Unit => (EnumeratorNode)unit;
         public override ControlOutput OutputPort => Unit.trigger;
 
-        public override List<ValueOutput> OutputValues => new();
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>();
 
         public override AccessModifier AccessModifier => AccessModifier.Private;
 
@@ -24,7 +24,7 @@ namespace Unity.VisualScripting.Community
 
         public override Type ReturnType => typeof(System.Collections.IEnumerator);
 
-        public override List<TypeParam> Parameters => new();
+        public override List<TypeParam> Parameters => new List<TypeParam>();
 
         public EnumeratorNodeGenerator(Unit unit) : base(unit) { }
 

@@ -3,7 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
-
+#if VISUAL_SCRIPTING_1_7
+using SUnit = Unity.VisualScripting.SubgraphUnit;
+#else
+using SUnit = Unity.VisualScripting.SuperUnit;
+#endif
 namespace Unity.VisualScripting.Community
 {
     public static class NodeGeneration
@@ -99,7 +103,7 @@ namespace Unity.VisualScripting.Community
             return result.TrimEnd();
         }
 
-        private static readonly Dictionary<Unit, NodeGenerator> generatorCache = new();
+        private static readonly Dictionary<Unit, NodeGenerator> generatorCache = new Dictionary<Unit, NodeGenerator>();
 
         public static NodeGenerator GetGenerator(this Unit node)
         {
@@ -152,7 +156,7 @@ namespace Unity.VisualScripting.Community
             return source.unit switch
             {
                 GraphInput graphInput => FindConnectedInput(GetGenerator(graphInput), source.key),
-                SubgraphUnit subgraph => FindConnectedSubgraphOutput(subgraph, source.key),
+                SUnit subgraph => FindConnectedSubgraphOutput(subgraph, source.key),
                 _ => source
             };
         }
@@ -173,10 +177,13 @@ namespace Unity.VisualScripting.Community
             return null;
         }
 
-        private static IUnitValuePort FindConnectedSubgraphOutput(SubgraphUnit subgraph, string key)
+        private static IUnitValuePort FindConnectedSubgraphOutput(SUnit subgraph, string key)
         {
             var graph = subgraph.nest?.graph;
-            if (graph?.units.FirstOrDefault(u => u is GraphOutput) is not GraphOutput output)
+            var outputCandidate = graph?.units.FirstOrDefault(u => u is GraphOutput);
+            GraphOutput output = outputCandidate as GraphOutput;
+
+            if (output == null)
                 return null;
 
             foreach (var valueInput in output.valueInputs)

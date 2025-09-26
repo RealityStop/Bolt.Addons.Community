@@ -30,7 +30,7 @@ namespace Unity.VisualScripting.Community
         }
         public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType)
         {
-            if (instance is not FakeGenericParameterType fakeGenericParameterType)
+            if (!(instance is FakeGenericParameterType))
             {
                 // Still allow serialization if its not a fake type
                 if (instance is Type type)
@@ -78,6 +78,7 @@ namespace Unity.VisualScripting.Community
                 serialized = default;
                 return fsResult.Fail("Instance is not " + typeof(FakeGenericParameterType) + " or Type");
             }
+            var fakeGenericParameterType = instance as FakeGenericParameterType;
             Serializer.TrySerialize(fakeGenericParameterType.Constraints, out var typeConstraints);
             Serializer.TrySerialize(fakeGenericParameterType.BaseType, out var baseTypeConstraint);
             Serializer.TrySerialize(fakeGenericParameterType.InterfaceConstraints.ToList(), out var interfaceConstraints);
@@ -230,13 +231,13 @@ namespace Unity.VisualScripting.Community
                         object genericArgs = null;
                         var result = TryDeserialize(genericArgsData, ref genericArgs, typeof(List<Type>));
 
-                        if (result.Failed || genericArgs is not List<Type> genericArgsList || !genericArgsList.Any())
+                        if (result.Failed || !(genericArgs is List<Type>) || !(genericArgs as List<Type>).Any())
                         {
                             Debug.LogError("Failed to deserialize generic arguments");
                             instance = typeof(object);
                             return fsResult.Success;
                         }
-
+                        var genericArgsList = genericArgs as List<Type>;
                         try
                         {
                             if (genericArgsList.Any(arg => arg == null))

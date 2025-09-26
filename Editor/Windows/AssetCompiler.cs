@@ -11,7 +11,11 @@ using System.IO;
 using UnityEditor.Compilation;
 using UnityEngine.SceneManagement;
 using System.Collections.ObjectModel;
-
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
 namespace Unity.VisualScripting.Community
 {
     public static class AssetCompiler
@@ -38,7 +42,7 @@ namespace Unity.VisualScripting.Community
             RegisterCompiler<DelegateAsset>(new DelegateAssetCompiler());
             RegisterCompiler<InterfaceAsset>(new InterfaceAssetCompiler());
             RegisterCompiler<ScriptGraphAsset>(new ScriptGraphAssetCompiler());
-            RegisterCompiler<ScriptMachine>(new ScriptMachineCompiler());
+            RegisterCompiler<SMachine>(new ScriptMachineCompiler());
         }
 
         public static void RegisterCompiler<T>(IAssetCompiler compiler) where T : UnityEngine.Object
@@ -58,7 +62,7 @@ namespace Unity.VisualScripting.Community
 
             CompileAssets(HUMAssets.Find().Assets().OfType<CodeAsset>());
             CompileAssets(HUMAssets.Find().Assets().OfType<ScriptGraphAsset>());
-            CompileScriptMachines(AssetCompilierUtility.FindObjectsOfTypeIncludingInactive<ScriptMachine>());
+            CompileScriptMachines(AssetCompilierUtility.FindObjectsOfTypeIncludingInactive<SMachine>());
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -75,7 +79,7 @@ namespace Unity.VisualScripting.Community
             }
             CompileAssets(Selection.GetFiltered<ScriptGraphAsset>(SelectionMode.Assets));
             CompileScriptMachines(Selection.GetFiltered<GameObject>(SelectionMode.Unfiltered)
-                .SelectMany(go => go.GetComponents<ScriptMachine>()));
+                .SelectMany(go => go.GetComponents<SMachine>()));
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -86,13 +90,13 @@ namespace Unity.VisualScripting.Community
             paths.EnsureDirectories();
             if (asset is GameObject @object)
             {
-                ScriptMachine scriptMachine = null;
+                SMachine scriptMachine = null;
                 if (CodeGenerator.GetSingleDecorator(@object) is GameObjectGenerator gen && gen.current != null)
                     scriptMachine = gen.current;
                 if (scriptMachine == null)
-                    scriptMachine = @object.GetComponent<ScriptMachine>();
+                    scriptMachine = @object.GetComponent<SMachine>();
                 if (scriptMachine != null)
-                    CompileScriptMachines(new List<ScriptMachine>() { scriptMachine });
+                    CompileScriptMachines(new List<SMachine>() { scriptMachine });
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
                 return;
@@ -117,9 +121,9 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private static void CompileScriptMachines(IEnumerable<ScriptMachine> machines)
+        private static void CompileScriptMachines(IEnumerable<SMachine> machines)
         {
-            if (compilers.TryGetValue(typeof(ScriptMachine), out var compiler))
+            if (compilers.TryGetValue(typeof(SMachine), out var compiler))
             {
                 foreach (var machine in machines)
                 {

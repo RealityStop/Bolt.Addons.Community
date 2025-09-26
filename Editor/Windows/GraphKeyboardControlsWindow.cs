@@ -21,26 +21,26 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private readonly List<KeyboardControl> normalControls = new()
+        private readonly List<KeyboardControl> normalControls = new List<KeyboardControl>()
         {
-            new("[Ctrl] + [/] + [/]", "Create comment"),
-            new("[Ctrl] + [Tab]", "Cycle through graph elements"),
+            new KeyboardControl("[Ctrl] + [/] + [/]", "Create comment"),
+            new KeyboardControl("[Ctrl] + [Tab]", "Cycle through graph elements"),
         };
 
-        private readonly List<KeyboardControl> selectionControls = new()
+        private readonly List<KeyboardControl> selectionControls = new List<KeyboardControl>()
         {
-            new("[Ctrl] + [Shift] + [T]", "Open Surround with Commands"),
-            new("[Ctrl] + [/] + [/]", "Create comment with connections"),
-            new("[←] [→] [↑] [↓]", "Move Selected Units"),
-            new("[Ctrl/Cmd] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through all ports"),
-            new("[Shift] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through Control ports"),
-            new("[Alt] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through Value ports"),
+            new KeyboardControl("[Ctrl] + [Shift] + [T]", "Open Surround with Commands"),
+            new KeyboardControl("[Ctrl] + [/] + [/]", "Create comment with connections"),
+            new KeyboardControl("[←] [→] [↑] [↓]", "Move Selected Units"),
+            new KeyboardControl("[Ctrl/Cmd] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through all ports"),
+            new KeyboardControl("[Shift] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through Control ports"),
+            new KeyboardControl("[Alt] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through Value ports"),
         };
 
-        private readonly List<KeyboardControl> creatingConnectionControls = new()
+        private readonly List<KeyboardControl> creatingConnectionControls = new List<KeyboardControl>()
         {
-            new("[Tab]\nIn Fuzzy Finder\nSnippet Layout:\n[Name],[Parameters(Separated by ',')]", "Add Graph Snippet"),
-            new("[Space]", "Create Reroute")
+            new KeyboardControl("[Tab]\nIn Fuzzy Finder\nSnippet Layout:\n[Name],[Parameters(Separated by ',')]", "Add Graph Snippet"),
+            new KeyboardControl("[Space]", "Create Reroute")
         };
 
         public override Vector2 GetWindowSize()

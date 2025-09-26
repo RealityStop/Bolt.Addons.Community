@@ -5,6 +5,11 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 using Unity.VisualScripting.Community;
 using System.IO;
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
 
 namespace Unity.VisualScripting.Community
 {
@@ -151,6 +156,7 @@ namespace Unity.VisualScripting.Community
         {
             try
             {
+                if (!File.Exists(SAVE_PATH)) return;
                 var json = File.ReadAllText(SAVE_PATH);
                 var wrapper = JsonUtility.FromJson<SerializableWrapper>(json);
 
@@ -248,7 +254,7 @@ namespace Unity.VisualScripting.Community
                 {
                     currentAsset = requestMachine?.Invoke(gameObject);
                 }
-                else if (Selection.activeObject is CodeAsset or ScriptGraphAsset)
+                else if (Selection.activeObject is CodeAsset || Selection.activeObject is ScriptGraphAsset)
                 {
                     currentAsset = Selection.activeObject;
                 }
@@ -264,7 +270,7 @@ namespace Unity.VisualScripting.Community
         /// <summary>
         /// Used to communicate with the CodeGenerator to get the current scriptmachine from the target object.
         /// </summary>
-        public static System.Func<GameObject, ScriptMachine> requestMachine;
+        public static System.Func<GameObject, SMachine> requestMachine;
         public static Object currentAsset;
         public static void SetIsUsed(string variableName)
         {
@@ -304,7 +310,7 @@ namespace Unity.VisualScripting.Community
                 return false;
             }
 
-            if (target is ScriptMachine scriptMachine)
+            if (target is SMachine scriptMachine)
             {
                 if (ObjectValueHandlers.TryGetValue(scriptMachine, out var values) &&
                     values.ContainsValue(value))

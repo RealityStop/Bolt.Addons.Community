@@ -110,12 +110,16 @@ namespace Unity.VisualScripting.Community
             GenerateEventMethods(@class);
             GenerateSpecialUnits(@class);
 
-            foreach (var (name, (method, createNew)) in RequiredMethods)
+            foreach (var kvp in RequiredMethods)
             {
+                var name = kvp.Key;
+                var method = kvp.Value.Item1;
+                var createNew = kvp.Value.Item2;
+
                 if (!createNew) continue;
                 @class.AddMethod(method);
             }
-            
+
             var values = CodeGeneratorValueUtility.GetAllValues(GetGraphPointer().rootObject);
             var index = 0;
             foreach (var variable in values)
@@ -225,7 +229,7 @@ namespace Unity.VisualScripting.Community
 
                 GenerateAwakeHandlers(@class, unit);
 
-                if (generator is UpdateMethodNodeGenerator or UpdateVariableNodeGenerator)
+                if (generator is UpdateMethodNodeGenerator || generator is UpdateVariableNodeGenerator)
                 {
                     _updateUnits.Add(unit);
                 }
@@ -274,7 +278,7 @@ namespace Unity.VisualScripting.Community
 
                 if (!string.IsNullOrEmpty(generator.NameSpaces))
                 {
-                    foreach (var ns in generator.NameSpaces.Split(","))
+                    foreach (var ns in generator.NameSpaces.Split(','))
                     {
                         var @namespace = ns.Replace("`", ",").Trim();
 
@@ -299,7 +303,11 @@ namespace Unity.VisualScripting.Community
         {
             foreach (VariableDeclaration variable in GetFlowGraph().variables)
             {
+#if VISUAL_SCRIPTING_1_7
                 var type = !string.IsNullOrEmpty(variable.typeHandle.Identification) ? Type.GetType(variable.typeHandle.Identification) : typeof(object);
+#else
+                var type = variable.value?.GetType() ?? typeof(object);
+#endif
                 var isDelegate = typeof(IDelegate).IsAssignableFrom(type);
                 type = isDelegate ? (variable.value as IDelegate)?.GetDelegateType() ?? (Activator.CreateInstance(type) as IDelegate)?.GetDelegateType() : type;
                 var name = data.AddLocalNameInScope(variable.name.LegalMemberName(), type);
@@ -475,7 +483,13 @@ namespace Unity.VisualScripting.Community
 
             foreach (Unit Unit in _eventUnits.OrderBy(unit => GetUnitOrder(unit)))
             {
-                if (Unit is OnApplicationFocus or OnApplicationLostFocus or OnApplicationPause or OnApplicationResume or CustomEvent || Unit.GetGenerator() is AwakeMethodNodeGenerator or AwakeVariableNodeGenerator)
+                if (Unit is OnApplicationFocus ||
+                    Unit is OnApplicationLostFocus ||
+                    Unit is OnApplicationPause ||
+                    Unit is OnApplicationResume ||
+                    Unit is CustomEvent ||
+                    Unit.GetGenerator() is AwakeMethodNodeGenerator ||
+                    Unit.GetGenerator() is AwakeVariableNodeGenerator)
                 {
                     continue;
                 }
@@ -538,7 +552,7 @@ namespace Unity.VisualScripting.Community
                         if (!methodBodies.TryGetValue(unityMethodName, out var unityMethod))
                         {
                             unityMethod = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), unityMethodName);
-                            if (Unit is BoltNamedAnimationEvent or BoltAnimationEvent or BoltUnityEvent)
+                            if (Unit is BoltNamedAnimationEvent || Unit is BoltAnimationEvent || Unit is BoltUnityEvent)
                             {
                                 unityMethod.SetSummary($"Handles the linked {Unit.GetType().Name} event logic.\nUse this method when assigning the event callback in the Unity Inspector.");
                                 if (Unit is BoltNamedAnimationEvent namedAnimationEvent && namedAnimationEvent.name.hasValidConnection)
@@ -578,7 +592,7 @@ namespace Unity.VisualScripting.Community
                         if (!methodBodies.TryGetValue(unityMethodName, out var method))
                         {
                             method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), unityMethodName);
-                            if (Unit is BoltNamedAnimationEvent or BoltAnimationEvent or BoltUnityEvent)
+                            if (Unit is BoltNamedAnimationEvent || Unit is BoltAnimationEvent || Unit is BoltUnityEvent)
                             {
                                 method.SetSummary($"Handles the linked {Unit.GetType().Name} event logic.\nUse this method when assigning the event callback in the Unity Inspector.");
                                 if (Unit is BoltNamedAnimationEvent namedAnimationEvent && namedAnimationEvent.name.hasValidConnection)
@@ -649,7 +663,14 @@ namespace Unity.VisualScripting.Community
                 methodBodies[methodNodeGenerator.Name] = method;
             }
 
-            methodBodies[methodNodeGenerator.Name].body += (RequiredMethods.TryGetValue(methodNodeGenerator.Name, out var _body) ? _body : "") + body;
+            if (RequiredMethods.TryGetValue(methodNodeGenerator.Name, out var _body))
+            {
+                methodBodies[methodNodeGenerator.Name].body += _body.method.body + body;
+            }
+            else
+            {
+                methodBodies[methodNodeGenerator.Name].body += body;
+            }
         }
 
         private void AddMethodAttributes(MethodGenerator method, List<AttributeDeclaration> attributes)
@@ -704,7 +725,7 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private static readonly Dictionary<Type, int> EventOrder = new()
+        private static readonly Dictionary<Type, int> EventOrder = new Dictionary<Type, int>()
         {
             { typeof(OnEnable), 0 },
             { typeof(Start), 1 },

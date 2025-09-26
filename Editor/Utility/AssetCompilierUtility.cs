@@ -4,6 +4,12 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
+
 namespace Unity.VisualScripting.Community
 {
     public static class AssetCompilierUtility
@@ -41,7 +47,7 @@ namespace Unity.VisualScripting.Community
                     var gen = GameObjectGenerator.GetSingleDecorator(obj) as GameObjectGenerator;
                     if (gen.current == null)
                     {
-                        var component = obj.GetComponent<ScriptMachine>();
+                        var component = obj.GetComponent<SMachine>();
                         gen.current = component;
                         return component;
                     }

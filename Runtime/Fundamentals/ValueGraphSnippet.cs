@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community
     {
         public sealed override SnippetType SnippetType => SnippetType.ValueInput;
         [HideInInspector]
-        public SystemType sourceType = new(typeof(object));
+        public SystemType sourceType = new SystemType(typeof(object));
         [SerializeField]
         [HideInInspector]
         private SnippetValueSourceUnit _sourceUnit;

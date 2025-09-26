@@ -17,7 +17,7 @@ namespace Unity.VisualScripting.Community
     public class ClickableStringBuilder
     {
         private readonly Unit unit;
-        private readonly List<(string value, bool clickable)> segments = new();
+        private readonly List<(string value, bool clickable)> segments = new List<(string value, bool clickable)>();
         private bool ignoreContextActive = false;
 
         private ClickableStringBuilder(Unit unit, string value, bool clickable)

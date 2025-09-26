@@ -8,15 +8,15 @@ namespace Unity.VisualScripting.Community
 {
     public sealed class ControlGenerationData
     {
-        private readonly Stack<GeneratorScope> scopes = new();
-        private readonly Stack<GeneratorScope> preservedScopes = new();
-        private readonly Stack<(Type type, bool isMet)> expectedTypes = new();
+        private readonly Stack<GeneratorScope> scopes = new Stack<GeneratorScope>();
+        private readonly Stack<GeneratorScope> preservedScopes = new Stack<GeneratorScope>();
+        private readonly Stack<(Type type, bool isMet)> expectedTypes = new Stack<(Type type, bool isMet)>();
         /// <summary>
         /// Store any extra info
         /// </summary>
         public Dictionary<object, object> scopeGeneratorData { get => PeekScope().generatorData; }
         public Dictionary<object, object> globalGeneratorData = new Dictionary<object, object>();
-        private readonly Dictionary<Unit, UnitSymbol> unitSymbols = new();
+        private readonly Dictionary<Unit, UnitSymbol> unitSymbols = new Dictionary<Unit, UnitSymbol>();
 
         public bool isDisposed { get; private set; } = false;
 
@@ -141,7 +141,8 @@ namespace Unity.VisualScripting.Community
         }
         public void ExitMethod()
         {
-            while (preservedScopes.TryPeek(out var result) && result.methodId == methodId)
+            GeneratorScope result;
+            while (preservedScopes.Count > 0 && (result = preservedScopes.Peek()).methodId == methodId)
             {
                 preservedScopes.Pop();
             }
@@ -368,7 +369,7 @@ namespace Unity.VisualScripting.Community
             public Dictionary<string, Type> scopeVariables { get; private set; }
             public Dictionary<string, string> nameMapping { get; private set; }
             public GeneratorScope ParentScope { get; private set; }
-            public readonly Dictionary<object, object> generatorData = new();
+            public readonly Dictionary<object, object> generatorData = new Dictionary<object, object>();
 
             public Type Returns { get; set; } = typeof(void);
             public bool MustBreak { get; set; }
@@ -380,8 +381,8 @@ namespace Unity.VisualScripting.Community
 
             public GeneratorScope(GeneratorScope parentScope, int methodId)
             {
-                scopeVariables = new();
-                nameMapping = new();
+                scopeVariables = new Dictionary<string, Type>();
+                nameMapping = new Dictionary<string, string>();
                 ParentScope = parentScope;
                 this.methodId = methodId;
             }

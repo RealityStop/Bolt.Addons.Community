@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
         public BaseMinimumGenerator(Unit unit) : base(unit) { }
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            List<string> values = new();
+            List<string> values = new List<string>();
             foreach (var input in Unit.multiInputs)
             {
                 data.SetExpectedType(typeof(T));

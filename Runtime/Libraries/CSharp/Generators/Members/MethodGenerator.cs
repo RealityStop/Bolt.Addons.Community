@@ -57,7 +57,10 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (!string.IsNullOrEmpty(summary))
             {
                 _summary = CodeBuilder.Indent(indent) + "/// <summary>".CommentHighlight();
-                foreach (var line in summary.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+
+                //foreach (var line in summary.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+
+                foreach (var line in summary.Split('\n').Where(s => !string.IsNullOrEmpty(s)))
                 {
                     _summary += "\n" + CodeBuilder.Indent(indent) + $"/// {line}".CommentHighlight();
                 }

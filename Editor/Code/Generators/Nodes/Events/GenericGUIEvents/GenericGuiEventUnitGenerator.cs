@@ -27,7 +27,7 @@ namespace Unity.VisualScripting.Community
 
         public override List<TypeParam> Parameters => new List<TypeParam>()
         {
-            new(typeof(BaseEventData), "eventData")
+            new TypeParam(typeof(BaseEventData), "eventData")
         };
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)

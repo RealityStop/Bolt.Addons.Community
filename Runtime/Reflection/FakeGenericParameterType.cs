@@ -17,7 +17,7 @@ namespace Unity.VisualScripting.Community
         public string _name;
         public TypeParameterConstraints _constraints;
         public Type _baseTypeConstraint;
-        public List<Type> _interfaceConstraints = new();
+        public List<Type> _interfaceConstraints = new List<Type>();
 
         public readonly bool _isArrayType;
         public int _arrayRank;
@@ -179,7 +179,7 @@ namespace Unity.VisualScripting.Community
 
         public override EventInfo[] GetEvents(BindingFlags bindingAttr)
         {
-            List<EventInfo> list = new();
+            List<EventInfo> list = new List<EventInfo>();
             if (BaseType != null)
             {
                 list.AddRange(BaseType.GetEvents(bindingAttr));
@@ -203,7 +203,7 @@ namespace Unity.VisualScripting.Community
 
         public override FieldInfo[] GetFields(BindingFlags bindingAttr)
         {
-            List<FieldInfo> list = new();
+            List<FieldInfo> list = new List<FieldInfo>();
             if (BaseType != null)
             {
                 list.AddRange(BaseType.GetFields(bindingAttr));
@@ -227,7 +227,7 @@ namespace Unity.VisualScripting.Community
 
         public override Type[] GetInterfaces()
         {
-            List<Type> list = new();
+            List<Type> list = new List<Type>();
             if (BaseType != null)
             {
                 list.AddRange(BaseType.GetInterfaces());
@@ -261,7 +261,7 @@ namespace Unity.VisualScripting.Community
 
         public override MemberInfo[] GetMembers(BindingFlags bindingAttr)
         {
-            List<MemberInfo> list = new();
+            List<MemberInfo> list = new List<MemberInfo>();
             if (BaseType != null)
             {
                 list.AddRange(BaseType.GetMembers(bindingAttr));
@@ -276,7 +276,7 @@ namespace Unity.VisualScripting.Community
 
         public override MethodInfo[] GetMethods(BindingFlags bindingAttr)
         {
-            List<MethodInfo> list = new();
+            List<MethodInfo> list = new List<MethodInfo>();
             if (BaseType != null)
             {
                 list.AddRange(BaseType.GetMethods(bindingAttr));
@@ -305,7 +305,7 @@ namespace Unity.VisualScripting.Community
 
         public override Type[] GetNestedTypes(BindingFlags bindingAttr)
         {
-            List<Type> list = new();
+            List<Type> list = new List<Type>();
             if (BaseType != null)
             {
                 list.AddRange(BaseType.GetNestedTypes(bindingAttr));
@@ -320,7 +320,7 @@ namespace Unity.VisualScripting.Community
 
         public override PropertyInfo[] GetProperties(BindingFlags bindingAttr)
         {
-            List<PropertyInfo> list = new();
+            List<PropertyInfo> list = new List<PropertyInfo>();
             if (BaseType != null)
             {
                 list.AddRange(BaseType.GetProperties(bindingAttr));

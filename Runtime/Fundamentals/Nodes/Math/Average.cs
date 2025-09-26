@@ -52,7 +52,6 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize]
         public ValueOutput average;
 
-
         protected override void Definition()
         {
             numbers = ValueInput<List<Vector2>>(nameof(numbers));
@@ -65,10 +64,10 @@ namespace Unity.VisualScripting.Community
 
             if (_numbers == null || _numbers.Count == 0)
             {
-                return new();
+                return new Vector2();
             }
 
-            Vector2 sum = new();
+            Vector2 sum = new Vector2();
 
             foreach (Vector2 num in _numbers)
             {
@@ -88,7 +87,6 @@ namespace Unity.VisualScripting.Community
         public ValueInput numbers;
         [DoNotSerialize]
         public ValueOutput average;
-
 
         protected override void Definition()
         {
@@ -125,7 +123,6 @@ namespace Unity.VisualScripting.Community
         public ValueInput numbers;
         [DoNotSerialize]
         public ValueOutput average;
-
 
         protected override void Definition()
         {

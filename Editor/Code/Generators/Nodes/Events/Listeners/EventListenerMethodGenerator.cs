@@ -13,8 +13,8 @@ namespace Unity.VisualScripting.Community
         protected EventListenerMethodGenerator(Unit unit) : base(unit) { }
         protected TUnit Unit => unit as TUnit;
         public override Type ReturnType => IsCoroutine() ? typeof(IEnumerator) : typeof(void);
-        public override List<ValueOutput> OutputValues => new();
-        public override List<TypeParam> Parameters => new();
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>();
+        public override List<TypeParam> Parameters => new List<TypeParam>();
 
         public override AccessModifier AccessModifier => AccessModifier.None;
 

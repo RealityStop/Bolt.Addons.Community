@@ -7,7 +7,11 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting;
 using System.Text.RegularExpressions;
-
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
 namespace Unity.VisualScripting.Community.CSharp
 {
     public class CSharpPreviewWindow : EditorWindow
@@ -23,7 +27,7 @@ namespace Unity.VisualScripting.Community.CSharp
         private Dictionary<int, List<ClickableRegion>> cachedRegions;
 
         private string searchQuery = "";
-        private List<int> searchMatches = new();
+        private List<int> searchMatches = new List<int>();
         private int currentMatchIndex = 0;
         private Color highlightColor = new Color(1f, 0.8f, 0f, 0.1f);
 
@@ -55,7 +59,9 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void OnSelectionChanged()
         {
-            if (Selection.activeObject is ScriptGraphAsset or CodeAsset or GameObject)
+            if (Selection.activeObject is ScriptGraphAsset ||
+                Selection.activeObject is CodeAsset ||
+                Selection.activeObject is GameObject)
             {
                 _asset = Selection.activeObject;
                 canCompile = true;
@@ -115,7 +121,7 @@ namespace Unity.VisualScripting.Community.CSharp
             var generator = CodeGenerator.GetSingleDecorator(_asset);
             if (_asset is GameObject @object)
             {
-                var components = @object.GetComponents<ScriptMachine>();
+                var components = @object.GetComponents<SMachine>();
                 if (components.Length > 0)
                 {
                     (generator as GameObjectGenerator).current = components[Mathf.Clamp(currentComponentIndex, 0, components.Length - 1)];
@@ -301,7 +307,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (_asset is GameObject @object)
             {
-                var components = @object.GetComponents<ScriptMachine>();
+                var components = @object.GetComponents<SMachine>();
                 var generator = CodeGenerator.GetSingleDecorator(@object) as GameObjectGenerator;
 
                 if (components == null || components.Length <= 1)
@@ -359,8 +365,8 @@ namespace Unity.VisualScripting.Community.CSharp
         }
 
         private const float LineNumberWidth = 35f;
-        private HashSet<int> selectedLines = new();
-        private HashSet<ClickableRegion> selectedRegions = new();
+        private HashSet<int> selectedLines = new HashSet<int>();
+        private HashSet<ClickableRegion> selectedRegions = new HashSet<ClickableRegion>();
         private string selectedUnitID;
         private bool allCodeSelected = false;
 
@@ -640,7 +646,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 leadingWhitespaceLength++;
             }
 
-            string whitespace = line[..leadingWhitespaceLength];
+            string whitespace = line.Substring(0, leadingWhitespaceLength);
             if (!firstRegion.code.StartsWith(whitespace))
             {
                 firstRegion.code = whitespace + firstRegion.code.TrimStart();
@@ -671,7 +677,10 @@ namespace Unity.VisualScripting.Community.CSharp
                 GraphWindow.active.Focus();
 
                 List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
-                if (reference.macro != null && reference.macro is MethodDeclaration or ConstructorDeclaration or FieldDeclaration)
+                if (reference.macro != null &&
+                    (reference.macro is MethodDeclaration ||
+                     reference.macro is ConstructorDeclaration ||
+                     reference.macro is FieldDeclaration))
                 {
                     if (reference.macro is MethodDeclaration methodDeclaration)
                     {
@@ -797,7 +806,7 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 if (gameObjectGenerator.Data != null)
                 {
-                    List<(GraphReference, Unit)> units = new();
+                    List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
                     units = GraphTraversal.TraverseFlowGraph<Unit>(gameObjectGenerator.current.GetReference() as GraphReference).ToList();
                     var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
                     GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
@@ -928,7 +937,8 @@ namespace Unity.VisualScripting.Community.CSharp
                 foreach (var info in settings.pendingInfo)
                 {
                     info.RestoreCompiler();
-                    if (info.compiler is not BaseCompiler compiler) continue;
+                    var compiler = info.compiler as BaseCompiler;
+                    if (compiler == null) continue;
                     var type = AssetDatabase.LoadAssetAtPath<MonoScript>(info.relativePath).GetClass();
                     try
                     {

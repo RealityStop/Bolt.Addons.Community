@@ -102,7 +102,7 @@ namespace Unity.VisualScripting.Community.Variables.Editor
         {
             if (!reference.scene.HasValue || !reference.scene.Value.IsValid())
                 yield break;
-                
+
             var scene = reference.scene.Value;
 
             foreach (var root in scene.GetRootGameObjects())
@@ -270,7 +270,7 @@ namespace Unity.VisualScripting.Community.Variables.Editor
 
         private static bool IsClassAsset(IMacro macro)
         {
-            if (macro is ConstructorDeclaration or PropertyGetterMacro or PropertySetterMacro or MethodDeclaration)
+            if (macro is ConstructorDeclaration || macro is PropertyGetterMacro || macro is PropertySetterMacro || macro is MethodDeclaration)
             {
                 return GetClassAsset(macro) != null;
             }

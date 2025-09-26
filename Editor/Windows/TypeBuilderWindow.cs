@@ -29,7 +29,7 @@ namespace Unity.VisualScripting.Community
         private bool canMakeArrayTypeForBaseType;
         public static bool Button(Type type, string nullType = "Select Type", TextAnchor textAnchor = TextAnchor.MiddleLeft, params GUILayoutOption[] options)
         {
-            GUIContent buttonContent = new(
+            GUIContent buttonContent = new GUIContent(
                 type?.As().CSharpName(false, false, false) ?? nullType,
                 type.GetTypeIcon()
             );
@@ -180,7 +180,7 @@ namespace Unity.VisualScripting.Community
             return genericParameter.constraints;
         }
 
-        private static readonly Dictionary<(GenericParameterAttributes, Type[]), Type[]> constraintCache = new();
+        private static readonly Dictionary<(GenericParameterAttributes, Type[]), Type[]> constraintCache = new Dictionary<(GenericParameterAttributes, Type[]), Type[]>();
         public Type[] GetConstraintAttributeTypes(GenericParameterAttributes attributes, Type[] typesLookup)
         {
             var key = (attributes, typesLookup);
@@ -311,7 +311,7 @@ namespace Unity.VisualScripting.Community
             }
             foreach (var arg in type.GetGenericArguments())
             {
-                if (arg.IsGenericTypeParameter)
+                if (arg.IsGenericParameter)
                 {
                     yield return arg.Name;
                 }
@@ -325,7 +325,7 @@ namespace Unity.VisualScripting.Community
                 else if (arg.IsArray)
                 {
                     var baseType = GetArrayBase(arg);
-                    if (baseType.IsGenericTypeParameter)
+                    if (baseType.IsGenericParameter)
                     {
                         yield return baseType.Name;
                     }
@@ -412,11 +412,11 @@ namespace Unity.VisualScripting.Community
         private (float, Rect) DrawTypeField(GUIContent buttonContent, GenericParameter generic, bool isBaseType)
         {
             GUILayout.BeginHorizontal();
-            Rect buttonRect = new();
+            Rect buttonRect = new Rect();
             if (GUILayout.Button(buttonContent, GUILayout.MaxHeight(19f)))
             {
                 buttonRect = lastRect;
-                int selectedIndex = Array.IndexOf(isBaseType && customTypeLookup != null ? customTypeLookup : baseTypeLookup, generic != null ? generic.type : typeof(object));
+                int selectedIndex = Array.IndexOf(isBaseType && customTypeLookup != null ? customTypeLookup : baseTypeLookup, generic != null ? generic.type.type : typeof(object));
                 Type _selected = null;
                 LudiqGUI.FuzzyDropdown(lastRect, isBaseType ? GetBaseTypeOptions() : GetNestedTypeOptions(generic), selectedIndex, (type) =>
                 {
@@ -524,7 +524,7 @@ namespace Unity.VisualScripting.Community
                 {
                     GUILayout.BeginHorizontal();
                     GUILayout.Label(genericParam.As().CSharpName(false, false, false), GUILayout.Width(150));
-                    GUIContent typeButtonContent = new(parameter.type.type?.As().CSharpName(false, false, false) ?? "Select Type", parameter.type.type?.GetTypeIcon());
+                    GUIContent typeButtonContent = new GUIContent(parameter.type.type?.As().CSharpName(false, false, false) ?? "Select Type", parameter.type.type?.GetTypeIcon());
 
                     var buttonWidth = DrawTypeField(typeButtonContent, parameter, false);
 

@@ -374,7 +374,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             int backtickIndex = typeName.IndexOf('`');
                             if (backtickIndex > 0)
                             {
-                                typeName = typeName[..backtickIndex];
+                                typeName = typeName.Substring(0, backtickIndex);
                             }
                             GUILayout.Label($"{typeName}({parameterDescriptions})");
 
@@ -799,7 +799,7 @@ namespace Unity.VisualScripting.Community.CSharp
             }
             OnExtendedOptionsGUI();
 
-            if (Target is ClassAsset or StructAsset or InterfaceAsset)
+            if (Target is ClassAsset || Target is StructAsset || Target is InterfaceAsset)
             {
                 Interfaces();
             }
@@ -1209,7 +1209,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 GUILayout.BeginHorizontal();
                                 if (metadata.value is Type type)
                                 {
-                                    GUIContent TypebuilderButtonContent = new(
+                                    GUIContent TypebuilderButtonContent = new GUIContent(
                                     (metadata.value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
                                     (metadata.value as Type)?.Icon()?[IconSize.Small]
                                     );
@@ -1329,11 +1329,11 @@ namespace Unity.VisualScripting.Community.CSharp
                                 attributeParamMeta[paramIndex]["defaultValue"],
                                 new Rect()
                             );
-                            if (!isParamsParameter && Param.defaultValue is not ICollection)
+                            if (!isParamsParameter && !(Param.defaultValue is ICollection))
                             {
                                 if (attributeParamMeta[paramIndex]["defaultValue"].value is Type type)
                                 {
-                                    GUIContent TypebuilderButtonContent = new(
+                                    GUIContent TypebuilderButtonContent = new GUIContent(
                                     (attributeParamMeta[paramIndex]["defaultValue"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
                                     (attributeParamMeta[paramIndex]["defaultValue"].value as Type)?.Icon()?[IconSize.Small]
                                     );
@@ -1708,7 +1708,9 @@ namespace Unity.VisualScripting.Community.CSharp
 
         void UpdateDefaultValueType(Type type, Metadata currentParam)
         {
+#if VISUAL_SCRIPTING_1_7
             currentParam["typeHandle"].value = new SerializableType(type.AssemblyQualifiedName);
+#endif
             if (currentParam["defaultValue"].value?.GetType() == type)
             {
                 currentParam["defaultValue"].value = null;

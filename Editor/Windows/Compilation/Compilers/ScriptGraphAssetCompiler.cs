@@ -34,9 +34,16 @@ namespace Unity.VisualScripting.Community
             var graphAsset = (ScriptGraphAsset)asset;
             var scriptImporter = AssetImporter.GetAtPath(GetRelativeFilePath(asset, paths)) as MonoImporter;
             var values = CodeGeneratorValueUtility.GetAllValues(graphAsset);
+#if VISUAL_SCRIPTING_1_7
             var variables = graphAsset.graph.variables.Where(v =>
-                            typeof(UnityEngine.Object).IsAssignableFrom(Type.GetType(v.typeHandle.Identification)));
-
+            {
+                var type = Type.GetType(v.typeHandle.Identification);
+                return type != null && typeof(UnityEngine.Object).IsAssignableFrom(type);
+            });
+#else
+            var variables = graphAsset.graph.variables.Where(v =>
+                typeof(UnityEngine.Object).IsAssignableFrom(v.value?.GetType()));
+#endif
             string[] names = variables.Select(v => v.name)
                             .Concat(values.Select(v => v.Key.LegalMemberName()))
                             .ToArray();

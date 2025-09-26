@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
     
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            List<string> values = new();
+            List<string> values = new List<string>();
             foreach (var input in Unit.multiInputs)
             {
                 data.SetExpectedType(typeof(T));

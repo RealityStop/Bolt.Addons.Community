@@ -65,7 +65,7 @@ namespace Unity.VisualScripting.Community
                     else if (parameter.modifier == ParameterModifier.Ref)
                     {
                         var input = Unit.InputParameters.Values.First(value => value.key == "%" + parameter.name);
-                        if (!input.hasValidConnection || input.hasValidConnection && input.connection.source.unit is not GetVariable)
+                        if (!input.hasValidConnection || input.hasValidConnection && !(input.connection.source.unit is GetVariable))
                         {
                             output.Add($"/* {input.key.Replace("%", "")} needs to be connected to a variable unit or a get member unit */".WarningHighlight());
                             continue;

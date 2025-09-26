@@ -14,7 +14,7 @@ namespace Unity.VisualScripting.Community
         private BoltAnimationEvent Unit => unit as BoltAnimationEvent;
         public override ControlOutput OutputPort => Unit.trigger;
 
-        public override List<ValueOutput> OutputValues => new();
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>();
 
         public override AccessModifier AccessModifier => AccessModifier.Private;
 

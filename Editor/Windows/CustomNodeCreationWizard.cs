@@ -181,7 +181,7 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            if (GUILayout.Button("Add " + title[..^1]))
+            if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
             {
                 inputs.Add(new InputData());
             }
@@ -233,7 +233,7 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            if (GUILayout.Button("Add " + title[..^1]))
+            if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
             {
                 valueInputs.Add(new ValueInputData());
             }
@@ -284,7 +284,7 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            if (GUILayout.Button("Add " + title[..^1]))
+            if (GUILayout.Button("Add " + title.Substring(0, title.Length - 1)))
             {
                 valueOutputs.Add(new ValueOutputData());
             }

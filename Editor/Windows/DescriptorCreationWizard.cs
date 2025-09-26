@@ -123,7 +123,7 @@ namespace Unity.VisualScripting.Community
             if (input.Length == 1)
                 return char.ToUpper(input[0]).ToString();
 
-            return char.ToUpper(input[0]) + input[1..];
+            return char.ToUpper(input[0]) + input.Substring(1);
         }
 
         private void GenerateDescriptor()

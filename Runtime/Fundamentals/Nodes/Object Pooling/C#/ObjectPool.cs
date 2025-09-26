@@ -46,7 +46,7 @@ namespace Unity.VisualScripting.Community
 
             activeObjects.Add(obj);
 
-            EventBus.Trigger<PoolData>(CommunityEvents.OnRetrieved, new(this, obj));
+            EventBus.Trigger<PoolData>(CommunityEvents.OnRetrieved, new PoolData(this, obj));
 
             return obj;
         }
@@ -58,7 +58,7 @@ namespace Unity.VisualScripting.Community
             activeObjects.Remove(obj);
             objectPoolQueue.Enqueue(obj);
 
-            EventBus.Trigger<PoolData>(CommunityEvents.OnReturned, new(this, obj));
+            EventBus.Trigger<PoolData>(CommunityEvents.OnReturned, new PoolData(this, obj));
         }
 
         public ReadOnlyCollection<GameObject> GetActiveObjects()

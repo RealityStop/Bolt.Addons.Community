@@ -27,7 +27,7 @@ namespace Unity.VisualScripting.Community
 
         public override Type ReturnType => Unit.coroutine ? typeof(IEnumerator) : typeof(void);
 
-        public override List<TypeParam> Parameters => new() { new TypeParam(typeof(CustomEventArgs), "args") };
+        public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(CustomEventArgs), "args") };
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {

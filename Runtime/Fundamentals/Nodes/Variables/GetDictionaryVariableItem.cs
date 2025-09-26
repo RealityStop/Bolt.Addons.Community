@@ -109,7 +109,7 @@ namespace Unity.VisualScripting.Community
 				throw new ArgumentException($"Indicated variable '{name}' does not exist.");
 			}
 
-            if (variableValue is not IDictionary dictionary)
+            if (!(variableValue is IDictionary))
             {
                 if (specifyFallback)
                 {
@@ -118,7 +118,7 @@ namespace Unity.VisualScripting.Community
 
                 throw new ArgumentException($"Indicated variable '{name}' is not a dictionary.");
             }
-
+			var dictionary = variableValue as IDictionary;
             if (specifyFallback && !dictionary.Contains(keyValue))
 				return flow.GetValue(fallback);
 

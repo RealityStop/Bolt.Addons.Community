@@ -51,7 +51,7 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize, PortLabel("Event Target"), PortLabelHidden, NullMeansSelf]
         public ValueInput EventTarget { get; private set; }
 
-        [DoNotSerialize] public List<ValueInput> inputPorts { get; } = new();
+        [DoNotSerialize] public List<ValueInput> inputPorts { get; } = new List<ValueInput>();
         [DoNotSerialize] public ControlInput enter { get; private set; }
         [DoNotSerialize] public ControlOutput exit { get; private set; }
         [DoNotSerialize] private ReflectedInfo Info;

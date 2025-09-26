@@ -10,9 +10,9 @@ namespace Unity.VisualScripting.Community
     [NodeGenerator(typeof(OnBecameInvisible))]
     public class OnBecameInvisibleGenerator : UnityMethodGenerator<OnBecameInvisible, EmptyEventArgs>
     {
-        public override List<ValueOutput> OutputValues => new();
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>();
 
-        public override List<TypeParam> Parameters => new();
+        public override List<TypeParam> Parameters => new List<TypeParam>();
 
         public OnBecameInvisibleGenerator(Unit unit) : base(unit) { }
     }

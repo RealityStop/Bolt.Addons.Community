@@ -13,7 +13,7 @@ namespace Unity.VisualScripting.Community
     [NodeGenerator(typeof(SetDictionaryVariableItem))]
     public class SetDictionaryVariableItemGenerator : LocalVariableGenerator
     {
-        private static readonly Dictionary<string, Type> typeCache = new();
+        private static readonly Dictionary<string, Type> typeCache = new Dictionary<string, Type>();
 
         private SetDictionaryVariableItem Unit => unit as SetDictionaryVariableItem;
         public SetDictionaryVariableItemGenerator(Unit unit) : base(unit)
@@ -121,7 +121,7 @@ namespace Unity.VisualScripting.Community
                 }
             }
         }
-        
+
         private string GetSceneKind(ControlGenerationData data, string variables)
         {
             return typeof(Component).IsAssignableFrom(data.ScriptType) ? variables + ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")" : variables + "." + "Application".VariableHighlight();
@@ -232,13 +232,17 @@ namespace Unity.VisualScripting.Community
 
         private Type ResolveVariableType(VariableDeclarations declarations, string name)
         {
-            if (declarations.IsDefined(name))
-            {
-                var id = declarations.GetDeclaration(name).typeHandle.Identification;
-                return string.IsNullOrEmpty(id) ? typeof(object) : GetCachedType(id);
-            }
-            return typeof(IDictionary);
-        }
+            if (!declarations.IsDefined(name))
+                return typeof(object);
 
+            var declaration = declarations.GetDeclaration(name);
+
+#if VISUAL_SCRIPTING_1_7
+            var id = declaration.typeHandle.Identification;
+            return string.IsNullOrEmpty(id) ? typeof(object) : GetCachedType(id);
+#else
+            return declaration.value != null ? declaration.value.GetType() : typeof(object);
+#endif
+        }
     }
 }

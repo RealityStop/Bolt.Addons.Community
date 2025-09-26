@@ -21,7 +21,7 @@ namespace Unity.VisualScripting.Community
         {
             if (!IsAdvanced(query))
             {
-                matches = new();
+                matches = new List<MatchNode>();
                 return NormalSearch(query, haystack, searchMode);
             }
 
@@ -59,12 +59,12 @@ namespace Unity.VisualScripting.Community
             string currentQuery = pathParts[index];
             string portTag = null;
 
-            if (currentQuery.EndsWith("@CI", StringComparison.OrdinalIgnoreCase)) { portTag = "CI"; currentQuery = currentQuery[..^3]; }
-            else if (currentQuery.EndsWith("@CO", StringComparison.OrdinalIgnoreCase)) { portTag = "CO"; currentQuery = currentQuery[..^3]; }
-            else if (currentQuery.EndsWith("@VI", StringComparison.OrdinalIgnoreCase)) { portTag = "VI"; currentQuery = currentQuery[..^3]; }
-            else if (currentQuery.EndsWith("@VO", StringComparison.OrdinalIgnoreCase)) { portTag = "VO"; currentQuery = currentQuery[..^3]; }
-            else if (currentQuery.EndsWith("@I", StringComparison.OrdinalIgnoreCase)) { portTag = "I"; currentQuery = currentQuery[..^2]; }
-            else if (currentQuery.EndsWith("@O", StringComparison.OrdinalIgnoreCase)) { portTag = "O"; currentQuery = currentQuery[..^2]; }
+            if (currentQuery.EndsWith("@CI", StringComparison.OrdinalIgnoreCase)) { portTag = "CI"; currentQuery = currentQuery.Substring(0, currentQuery.Length - 3); }
+            else if (currentQuery.EndsWith("@CO", StringComparison.OrdinalIgnoreCase)) { portTag = "CO"; currentQuery = currentQuery.Substring(0, currentQuery.Length - 3); }
+            else if (currentQuery.EndsWith("@VI", StringComparison.OrdinalIgnoreCase)) { portTag = "VI"; currentQuery = currentQuery.Substring(0, currentQuery.Length - 3); }
+            else if (currentQuery.EndsWith("@VO", StringComparison.OrdinalIgnoreCase)) { portTag = "VO"; currentQuery = currentQuery.Substring(0, currentQuery.Length - 3); }
+            else if (currentQuery.EndsWith("@I", StringComparison.OrdinalIgnoreCase)) { portTag = "I"; currentQuery = currentQuery.Substring(0, currentQuery.Length - 2); }
+            else if (currentQuery.EndsWith("@O", StringComparison.OrdinalIgnoreCase)) { portTag = "O"; currentQuery = currentQuery.Substring(0, currentQuery.Length - 2); }
 
             if (!(currentQuery == "*" || NormalSearch(currentQuery, SearchUtility.GetSearchName(unit), searchMode)))
                 return false;
@@ -118,7 +118,10 @@ namespace Unity.VisualScripting.Community
                 return false;
             }
 
-            var groups = query.Split('|', StringSplitOptions.RemoveEmptyEntries);
+            var groups = query
+                .Split('|')
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToArray();
 
             foreach (var group in groups)
             {
@@ -132,7 +135,11 @@ namespace Unity.VisualScripting.Community
                     continue;
                 }
 
-                var pathParts = group.Split('>', StringSplitOptions.RemoveEmptyEntries).Select(p => Normalize(p.Trim())).ToList();
+                var pathParts = group
+                    .Split('>')
+                    .Select(p => Normalize(p.Trim()))
+                    .Where(p => !string.IsNullOrEmpty(p))
+                    .ToList();
 
                 if (AdvancedSearchRecursive(unit, pathParts, 0, searchMode, out var matches) && matches.Count > 0)
                 {
@@ -162,7 +169,7 @@ namespace Unity.VisualScripting.Community
         }
 
 
-        private static readonly Dictionary<string, string> NormalizeCache = new();
+        private static readonly Dictionary<string, string> NormalizeCache = new Dictionary<string, string>();
 
         public static string Normalize(string input)
         {
@@ -302,7 +309,7 @@ namespace Unity.VisualScripting.Community
             return matches?.Count > 0;
         }
 
-        private static readonly Dictionary<Type, MemberInfo> NameMemberCache = new();
+        private static readonly Dictionary<Type, MemberInfo> NameMemberCache = new Dictionary<Type, MemberInfo>();
 
         public static string GetSearchName(Unit unit)
         {
@@ -396,7 +403,7 @@ namespace Unity.VisualScripting.Community
         {
             public IUnitPort Port { get; set; }
             public Unit Unit { get; set; }
-            public List<MatchNode> Children { get; set; } = new();
+            public List<MatchNode> Children { get; set; } = new List<MatchNode>();
         }
     }
 }

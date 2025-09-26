@@ -503,7 +503,7 @@ namespace Unity.VisualScripting.Community
                 field.SetNew(variableGenerator.IsNew);
                 @class.AddField(field);
             }
-            else if (generator is MethodNodeGenerator methodGenerator && methodGenerator.unit is not IEventUnit)
+            else if (generator is MethodNodeGenerator methodGenerator && !(methodGenerator.unit is IEventUnit))
             {
                 var type = methodGenerator.unit.GetType();
                 if (!generatorCounts.ContainsKey(type))

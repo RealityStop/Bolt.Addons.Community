@@ -37,8 +37,8 @@ namespace Unity.VisualScripting.Community
         protected override void Definition()
         {
             amount = Mathf.Clamp(amount, 1, 10);
-            elseIfs = new();
-            elseIfConditions = new();
+            elseIfs = new List<ControlOutput>();
+            elseIfConditions = new List<ValueInput>();
 
             Enter = ControlInput(nameof(Enter), ElseIf);
             If = ControlOutput(nameof(If));

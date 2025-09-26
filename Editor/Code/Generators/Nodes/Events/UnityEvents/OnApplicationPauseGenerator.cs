@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community
     {
         public OnApplicationPauseGenerator(Unit unit) : base(unit) { }
 
-        public override List<ValueOutput> OutputValues => new();
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>();
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(bool), "paused") };
     }

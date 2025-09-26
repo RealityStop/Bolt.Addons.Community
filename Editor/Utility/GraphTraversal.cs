@@ -1,20 +1,27 @@
 using System.Collections.Generic;
 using UnityEngine;
+#if VISUAL_SCRIPTING_1_7
+using SUnit = Unity.VisualScripting.SubgraphUnit;
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SUnit = Unity.VisualScripting.SuperUnit;
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
 
 namespace Unity.VisualScripting.Community
 {
     public static class GraphTraversal
     {
-        public static List<(GraphReference, SubgraphUnit)> GetReferencePath(GraphReference reference)
+        public static List<(GraphReference, SUnit)> GetReferencePath(GraphReference reference)
         {
-            List<(GraphReference, SubgraphUnit)> nodePath = new List<(GraphReference, SubgraphUnit)>
+            List<(GraphReference, SUnit)> nodePath = new List<(GraphReference, SUnit)>
             {
-                (reference, !reference.isRoot ? reference.GetParent<SubgraphUnit>() : null)
+                (reference, !reference.isRoot ? reference.GetParent<SUnit>() : null)
             };
             while (reference.ParentReference(false) != null)
             {
                 reference = reference.ParentReference(false);
-                nodePath.Add((reference, !reference.isRoot ? reference.GetParent<SubgraphUnit>() : null));
+                nodePath.Add((reference, !reference.isRoot ? reference.GetParent<SUnit>() : null));
             }
             nodePath.Reverse();
             return nodePath;
@@ -74,9 +81,9 @@ namespace Unity.VisualScripting.Community
 
                         int index;
 
-                        if (eventMachine is ScriptMachine sm)
+                        if (eventMachine is SMachine sm)
                         {
-                            var comps = rootRef.rootObject.GetComponents<ScriptMachine>();
+                            var comps = rootRef.rootObject.GetComponents<SMachine>();
                             index = System.Array.IndexOf(comps, sm);
                         }
                         else if (eventMachine is StateMachine stm)
@@ -150,7 +157,7 @@ namespace Unity.VisualScripting.Community
             {
                 return @object.name;
             }
-            else if (nester is SubgraphUnit) return "Embed Subgraph";
+            else if (nester is SUnit) return "Embed Subgraph";
             else if (nester is StateUnit) return "Embed StateUnit";
             else return $"Embed {nester.GetType().Name}";
         }
@@ -203,7 +210,7 @@ namespace Unity.VisualScripting.Community
                 if (unit == null) continue;
 
                 visit((Unit)unit);
-                if (unit is SubgraphUnit subgraph)
+                if (unit is SUnit subgraph)
                 {
                     if (subgraph.nest.graph is FlowGraph flowGraph)
                     {
@@ -213,11 +220,13 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private static readonly Dictionary<GraphReference, (int ElementCount, Dictionary<IGraphElement, HashSet<(GraphReference, IGraphElement)>> ElementCache)> TraversalCache = new();
+        private static readonly Dictionary<GraphReference, (int ElementCount, Dictionary<IGraphElement, HashSet<(GraphReference, IGraphElement)>> ElementCache)> TraversalCache =
+        new Dictionary<GraphReference, (int ElementCount, Dictionary<IGraphElement, HashSet<(GraphReference, IGraphElement)>> ElementCache)>();
 
         public static IEnumerable<(GraphReference, T)> TraverseFlowGraph<T>(GraphReference graphReference) where T : IGraphElement
         {
-            if (graphReference.graph is not FlowGraph flowGraph) yield break;
+            var flowGraph = graphReference.graph as FlowGraph;
+            if (flowGraph == null) yield break;
 
             if (!TraversalCache.TryGetValue(graphReference, out var graphCache))
             {
@@ -233,7 +242,7 @@ namespace Unity.VisualScripting.Community
 
             foreach (var element in flowGraph.elements)
             {
-                if (element == null || element is not T) continue;
+                if (element == null || !(element is T)) continue;
 
                 if (graphCache.ElementCache.TryGetValue(element, out var cachedResult))
                 {
@@ -248,7 +257,7 @@ namespace Unity.VisualScripting.Community
                 var unitResult = new HashSet<(GraphReference, IGraphElement)>();
                 switch (element)
                 {
-                    case SubgraphUnit subgraphUnit:
+                    case SUnit subgraphUnit:
                         {
                             var subGraph = subgraphUnit.nest.graph;
                             if (subGraph == null) continue;
@@ -306,7 +315,8 @@ namespace Unity.VisualScripting.Community
 
         public static IEnumerable<(GraphReference, T)> TraverseStateGraph<T>(GraphReference graphReference) where T : IGraphElement
         {
-            if (graphReference.graph is not StateGraph stateGraph) yield break;
+            var stateGraph = graphReference.graph as StateGraph;
+            if (stateGraph == null) yield break;
 
             if (!TraversalCache.TryGetValue(graphReference, out var graphCache))
             {
@@ -323,7 +333,7 @@ namespace Unity.VisualScripting.Community
 
             foreach (var element in stateGraph.states)
             {
-                if (element == null || element is not T) continue;
+                if (element == null || !(element is T)) continue;
 
                 if (graphCache.ElementCache.TryGetValue(element, out var cachedResult))
                 {
@@ -376,8 +386,10 @@ namespace Unity.VisualScripting.Community
                             }
                             break;
                         }
+#if VISUAL_SCRIPTING_1_7
                     case AnyState:
                         continue;
+#endif
                     default:
                         {
                             var defaultItem = (graphReference, element);
@@ -395,7 +407,8 @@ namespace Unity.VisualScripting.Community
 
             foreach (var transition in stateGraph.transitions)
             {
-                if (transition is not FlowStateTransition flowStateTransition) continue;
+                var flowStateTransition = transition as FlowStateTransition;
+                if (flowStateTransition == null) continue;
 
                 if (graphCache.ElementCache.TryGetValue(transition, out var cachedResult))
                 {

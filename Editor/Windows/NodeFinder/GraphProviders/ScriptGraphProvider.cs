@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community
             {
                 var assetPath = AssetDatabase.GUIDToAssetPath(guid);
                 var asset = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(assetPath);
-                if (asset != null && asset.GetReference()?.graph is not FlowGraph) continue;
+                if (asset != null && !(asset.GetReference()?.graph is FlowGraph)) continue;
 
                 var baseRef = asset.GetReference().AsReference();
                 foreach (var element in GraphTraversal.TraverseFlowGraph<IGraphElement>(baseRef))

@@ -19,7 +19,7 @@ namespace Unity.VisualScripting.Community
             position = BeginLabeledBlock(metadata, position, label);
 
             HDRColor hdrColor = (HDRColor)metadata.value;
-            var newValue = EditorGUI.ColorField(position, new(), hdrColor.color, true, true, true);
+            var newValue = EditorGUI.ColorField(position, GUIContent.none, hdrColor.color, true, true, true);
 
             if (EndBlock(metadata))
             {

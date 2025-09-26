@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community
             {
                 var assetPath = AssetDatabase.GUIDToAssetPath(guid);
                 var asset = AssetDatabase.LoadAssetAtPath<StateGraphAsset>(assetPath);
-                if (asset != null && asset.GetReference()?.graph is not StateGraph) continue;
+                if (asset != null && !(asset.GetReference()?.graph is StateGraph)) continue;
 
                 var baseRef = asset.GetReference().AsReference();
                 foreach (var element in GraphTraversal.TraverseStateGraph<IGraphElement>(baseRef))

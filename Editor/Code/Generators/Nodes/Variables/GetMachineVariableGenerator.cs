@@ -7,6 +7,11 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
 
 namespace Unity.VisualScripting.Community
 {
@@ -38,7 +43,17 @@ namespace Unity.VisualScripting.Community
             data.CreateSymbol(Unit, variableType);
             var expectedType = data.GetExpectedType();
             var hasExpectedType = expectedType != null;
-            var isExpectedType = (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType)) || (hasExpectedType && IsVariableDefined(data, name) && !string.IsNullOrEmpty(GetVariableDeclaration(data, name).typeHandle.Identification) && expectedType.IsAssignableFrom(Type.GetType(GetVariableDeclaration(data, name).typeHandle.Identification))) || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && expectedType.IsAssignableFrom(targetType));
+#if VISUAL_SCRIPTING_1_7
+var isExpectedType =
+                (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType)) ||
+                (hasExpectedType && IsVariableDefined(data, name) && !string.IsNullOrEmpty(GetVariableDeclaration(data, name).typeHandle.Identification) && expectedType.IsAssignableFrom(Type.GetType(GetVariableDeclaration(data, name).typeHandle.Identification))) ||
+                (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && expectedType.IsAssignableFrom(targetType));
+#else
+            var isExpectedType =
+                (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType)) ||
+                (hasExpectedType && IsVariableDefined(data, name) && expectedType.IsAssignableFrom(GetVariableDeclaration(data, name).value?.GetType())) ||
+                (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && expectedType.IsAssignableFrom(targetType));
+#endif
             data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
             if (!Unit.target.hasValidConnection && Unit.defaultValues[Unit.target.key] == null)
             {
@@ -58,7 +73,16 @@ namespace Unity.VisualScripting.Community
                 if (isDefined)
                 {
                     var declaration = GetVariableDeclaration(data, name);
-                    return declaration?.typeHandle.Identification != null ? Type.GetType(declaration.typeHandle.Identification) : null;
+#if VISUAL_SCRIPTING_1_7
+                    return declaration?.typeHandle.Identification != null 
+                        ? Type.GetType(declaration.typeHandle.Identification) 
+                        : null;
+#else
+                    return declaration?.value != null
+                        ? declaration.value.GetType()
+                        : null;
+#endif
+
                 }
             }
             var target = GetTarget(data);
@@ -67,7 +91,8 @@ namespace Unity.VisualScripting.Community
             {
                 targetData = generationData.GetGenerationData();
             }
-            return targetData?.TryGetVariableType(targetData?.GetVariableName(name), out Type targetType) ?? false ? targetType : data.GetExpectedType() ?? typeof(object);
+            Type targetType = null;
+            return targetData?.TryGetVariableType(targetData?.GetVariableName(name), out targetType) ?? false ? targetType : data.GetExpectedType() ?? typeof(object);
         }
 
         private bool IsVariableDefined(ControlGenerationData data, string name)
@@ -85,16 +110,16 @@ namespace Unity.VisualScripting.Community
             }
             return null;
         }
-        private ScriptMachine GetTarget(ControlGenerationData data)
+        private SMachine GetTarget(ControlGenerationData data)
         {
             if (!Unit.target.hasValidConnection && Unit.defaultValues[Unit.target.key] == null && data.TryGetGraphPointer(out var graphPointer))
             {
                 var reference = graphPointer.AsReference();
-                return reference.rootObject is ScriptMachine scriptMachine ? scriptMachine : null;
+                return reference.rootObject is SMachine scriptMachine ? scriptMachine : null;
             }
             else if (!Unit.target.hasValidConnection && Unit.defaultValues[Unit.target.key] != null)
             {
-                return Unit.defaultValues[Unit.target.key].ConvertTo<ScriptMachine>();
+                return Unit.defaultValues[Unit.target.key].ConvertTo<SMachine>();
             }
             else
             {
@@ -104,7 +129,7 @@ namespace Unity.VisualScripting.Community
                     {
                         try
                         {
-                            return Flow.Predict<ScriptMachine>(Unit.target.GetPesudoSource(), _graphPointer.AsReference());
+                            return Flow.Predict<SMachine>(Unit.target.GetPesudoSource(), _graphPointer.AsReference());
                         }
                         catch (InvalidOperationException ex)
                         {
@@ -131,7 +156,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (!input.hasValidConnection)
                 {
-                    var machine = Unit.defaultValues[Unit.target.key] as ScriptMachine;
+                    var machine = Unit.defaultValues[Unit.target.key] as SMachine;
                     var machineName = GetMachineName(machine);
                     data.TryGetGameObject(out var gameObject);
                     if (machine.gameObject.GetComponents<MonoBehaviour>().Any(m => m.GetType().Name == machineName))
@@ -162,11 +187,11 @@ namespace Unity.VisualScripting.Community
             return base.GenerateValue(input, data);
         }
 
-        private string GetMachineName(ScriptMachine machine)
+        private string GetMachineName(SMachine machine)
         {
             return !string.IsNullOrEmpty(machine.nest?.graph.title)
                 ? machine.nest.graph.title.LegalMemberName()
-                : machine.gameObject.name.Capitalize().First().Letter() + "_ScriptMachine_" + Array.IndexOf(machine.gameObject.GetComponents<ScriptMachine>(), machine);
+                : machine.gameObject.name.Capitalize().First().Letter() + $"_{typeof(SMachine).Name}_" + Array.IndexOf(machine.gameObject.GetComponents<SMachine>(), machine);
         }
     }
 }
