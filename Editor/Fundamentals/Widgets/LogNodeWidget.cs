@@ -1,27 +1,24 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
-using UnityEngine;
-
-[Widget(typeof(LogNode))]
-public class LogNodeWidget : UnitWidget<LogNode>
+namespace Unity.VisualScripting.Community
 {
-    public LogNodeWidget(FlowCanvas canvas, LogNode unit) : base(canvas, unit)
+    [Widget(typeof(LogNode))]
+    public sealed class LogNodeWidget : UnitWidget<LogNode>
     {
-    }
-
-    protected override NodeColorMix baseColor 
+        public LogNodeWidget(FlowCanvas canvas, LogNode unit) : base(canvas, unit)
         {
-            get 
+        }
+
+        protected override NodeColorMix baseColor
+        {
+            get
             {
-            switch (unit.type) 
-            {
-                case Unity.VisualScripting.Community.LogType.Log: return NodeColor.Gray;
+                switch (unit.type)
+                {
+                    case Unity.VisualScripting.Community.LogType.Log: return NodeColor.Gray;
                     case Unity.VisualScripting.Community.LogType.Warning: return NodeColor.Orange;
                     case Unity.VisualScripting.Community.LogType.Error: return NodeColor.Red;
                     default: return NodeColor.Gray;
-            }
+                }
             }
         }
+    }
 }

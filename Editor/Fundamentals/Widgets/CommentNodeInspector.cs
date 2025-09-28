@@ -207,7 +207,6 @@ namespace Unity.VisualScripting.Community
                 if (copyContent) unit.comment = copyUnit.comment;
             }
 
-
             ///////////////////////////   Section - Color Palette   /////////////////////////////////////////////
 
             // Header

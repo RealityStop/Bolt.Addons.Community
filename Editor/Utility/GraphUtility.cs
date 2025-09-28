@@ -50,6 +50,10 @@ namespace Unity.VisualScripting.Community
                     unit.Define();
                 }
             }
+            else
+            {
+                context?.DescribeAndAnalyze();
+            }
         }
 
         private static Task<ElementAddResult> WaitForElementAddedOrCanceled(FlowGraph graph)

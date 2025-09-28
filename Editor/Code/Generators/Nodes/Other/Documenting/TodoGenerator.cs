@@ -5,17 +5,19 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-[NodeGenerator(typeof(Todo))]
-public class TodoGenerator : NodeGenerator<Todo>
+namespace Unity.VisualScripting.Community 
 {
-	public TodoGenerator(Todo Unit) : base(Unit)
+	[NodeGenerator(typeof(Todo))]
+	public sealed class TodoGenerator : NodeGenerator<Todo>
 	{
-
-	}
-
-	public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-	{
-		return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeBuilder.CommentHighlight("//TODO: " + base.Unit.CustomMessage)) + GetNextUnit(Unit.exit, data, indent);
-	}
+		public TodoGenerator(Todo Unit) : base(Unit)
+		{
+	
+		}
+	
+		public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+		{
+			return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeBuilder.CommentHighlight("//TODO: " + base.Unit.CustomMessage)) + GetNextUnit(Unit.exit, data, indent);
+		}
+	} 
 }
-

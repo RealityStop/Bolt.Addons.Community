@@ -8,7 +8,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(PlusEquals))]
-    public class PlusEqualsGenerator : LocalVariableGenerator
+    public sealed class PlusEqualsGenerator : LocalVariableGenerator
     {
         public PlusEqualsGenerator(Unit unit) : base(unit)
         {

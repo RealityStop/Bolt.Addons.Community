@@ -264,6 +264,10 @@ namespace Unity.VisualScripting.Community
                         {
                             return new Vector2(target.center.x, target.yMin);
                         }
+                        else if (graphElement is CommentNode)
+                        {
+                            return new Vector2(target.center.x, target.yMin);
+                        }
                         return new Vector2(target.center.x, target.yMin - 3);
                     }
                 case Edge.Bottom:
@@ -272,6 +276,10 @@ namespace Unity.VisualScripting.Community
                         {
                             new Vector2(target.center.x, target.yMax);
                         }
+                        else if (graphElement is CommentNode)
+                        {
+                            return new Vector2(target.center.x, target.yMax);
+                        }
                         return new Vector2(target.center.x, target.yMax + 6);
                     }
                 case Edge.Left:
@@ -279,11 +287,19 @@ namespace Unity.VisualScripting.Community
                     {
                         return new Vector2(target.xMax, target.center.y);
                     }
+                    else if (graphElement is CommentNode)
+                    {
+                        return new Vector2(target.xMax, target.yMin + 30);
+                    }
                     return new Vector2(target.xMax + 2, target.yMin + 30);
                 case Edge.Right:
                     if (graphElement is GraphGroup)
                     {
                         return new Vector2(target.xMin, target.center.y);
+                    }
+                    else if (graphElement is CommentNode)
+                    {
+                        return new Vector2(target.xMin, target.yMin + 30);
                     }
                     return new Vector2(target.xMin - 2, target.yMin + 30);
                 default:
@@ -301,6 +317,10 @@ namespace Unity.VisualScripting.Community
                         {
                             return new Vector2(target.center.x, target.yMin);
                         }
+                        else if (graphElement is CommentNode)
+                        {
+                            return new Vector2(target.center.x, target.yMin);
+                        }
                         return new Vector2(target.center.x, target.yMin - 3);
                     }
                 case Edge.Bottom:
@@ -309,6 +329,10 @@ namespace Unity.VisualScripting.Community
                         {
                             new Vector2(target.center.x, target.yMax);
                         }
+                        else if (graphElement is CommentNode)
+                        {
+                            return new Vector2(target.center.x, target.yMax);
+                        }
                         return new Vector2(target.center.x, target.yMax + 6);
                     }
                 case Edge.Left:
@@ -316,11 +340,19 @@ namespace Unity.VisualScripting.Community
                     {
                         return new Vector2(target.xMax, target.center.y);
                     }
+                    else if (graphElement is CommentNode)
+                    {
+                        return new Vector2(target.xMax, target.yMin + 30);
+                    }
                     return new Vector2(target.xMax + 2, target.yMin + 30);
                 case Edge.Right:
                     if (graphElement is GraphGroup)
                     {
                         return new Vector2(target.xMin, target.center.y);
+                    }
+                    else if (graphElement is CommentNode)
+                    {
+                        return new Vector2(target.xMin, target.yMin + 30);
                     }
                     return new Vector2(target.xMin - 2, target.yMin + 30);
                 default:
@@ -361,6 +393,7 @@ namespace Unity.VisualScripting.Community
         public override void HandleInput()
         {
             base.HandleInput();
+
             if (canvas.selection.Contains(unit))
             {
                 if (e.keyCode == KeyCode.C)
@@ -418,8 +451,12 @@ namespace Unity.VisualScripting.Community
 
         public override void DrawForeground()
         {
+            GUI.contentColor = Color.white;
+            if (unit.hasTitle)
+                EditorGUI.LabelField(new Rect(unit.position.x + borderOutside + 7f, unit.position.y, unit.wholeRect.width, borderOutside), unit.title, titleGUI);
+
             GUI.contentColor = unit.fontColor;
-            // Get text area rect
+
             unit.textRect = unit.borderRect.Offset(xy: borderText, centre: true);
             // If mouse hovering over unit
             if (unit.textRect.Contains(e.mousePosition))
@@ -432,6 +469,7 @@ namespace Unity.VisualScripting.Community
                     metadata["comment"].RecordUndo();
                     metadata["comment"].value = comment;
                 }
+                return;
             }
             // Draw main comment
             // If unit text selected
@@ -462,11 +500,7 @@ namespace Unity.VisualScripting.Community
             }
 
             EditorGUI.LabelField(unit.textRect, unit.comment, textGUI);
-
-            // Draw title
             GUI.contentColor = Color.white;
-            if (unit.hasTitle)
-                EditorGUI.LabelField(new Rect(unit.position.x + borderOutside + 7f, unit.position.y, unit.wholeRect.width, borderOutside), unit.title, titleGUI);
 
             unit.position = unit.wholeRect.position;
         }

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    public static class EditorIconUtility
+    public static class EditorTypeUtility
     {
         public static Texture GetTypeIcon(this Type type)
         {
@@ -55,6 +55,48 @@ namespace Unity.VisualScripting.Community
             RenderTexture.ReleaseTemporary(rt);
 
             return resized;
+        }
+
+        public static bool IsClosedGeneric(Type type)
+        {
+            if (type.IsGenericParameter)
+                return false;
+
+            if (type.IsGenericType)
+            {
+                foreach (var arg in type.GetGenericArguments())
+                {
+                    if (!IsClosedGeneric(arg))
+                        return false;
+                }
+            }
+
+            if (type.IsArray)
+                return IsClosedGeneric(type.GetElementType());
+
+            return true;
+        }
+
+        public static bool IsRuntimeType(Type type)
+        {
+            if (type.IsGenericType)
+            {
+                foreach (var arg in type.GetGenericArguments())
+                {
+                    if (!IsRuntimeType(arg))
+                        return false;
+                }
+            }
+
+            if (type.IsArray)
+                return IsRuntimeType(type.GetElementType());
+
+            return Codebase.IsRuntimeType(type);
+        }
+
+        public static string RootNamespace(this Type type)
+        {
+            return type.Namespace?.PartBefore('.');
         }
 
         public static bool IsValidOverridableMethod(this MethodInfo m)

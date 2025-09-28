@@ -6,22 +6,52 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("CustomScriptGeneratorWindow")]
-    public class DescriptorCreationWizard : EditorWindow
+    public sealed class DescriptorCreationWizard : EditorWindow
     {
-        private MonoScript unitScript;
-        private bool includeDescription = false;
-        private string scriptDescription = "";
-        private bool iconEnabled = false;
-        private bool portsEnabled = false;
-        private Texture2D customIcon = null;
-        private string iconPath = "";
+        [SerializeField]
+        private Type unitType;
 
+        private bool customizeDefined = true;
+        private bool customizeDefault = false;
+        private bool customizeError = false;
+
+        private string definedTitle = "";
+        private string definedShortTitle = "";
+        private string definedSurtitle = "";
+        private string definedSubtitle = "";
+        private string definedSummary = "";
+
+        private string defaultTitle = "";
+        private string defaultShortTitle = "";
+        private string defaultSurtitle = "";
+        private string defaultSubtitle = "";
+        private string defaultSummary = "";
+
+        private string errorTitle = "";
+        private string errorShortTitle = "";
+        private string errorSurtitle = "";
+        private string errorSubtitle = "";
+        private string errorSummary = "";
+
+        private bool definedIconEnabled = false;
+        private Texture2D definedIcon = null;
+        private string definedIconPath = "";
+
+        private bool defaultIconEnabled = false;
+        private Texture2D defaultIcon = null;
+        private string defaultIconPath = "";
+
+        private bool errorIconEnabled = false;
+        private Texture2D errorIcon = null;
+        private string errorIconPath = "";
+
+        private bool portsEnabled = false;
         private Dictionary<MemberInfo, PortInfo> portInfos = new Dictionary<MemberInfo, PortInfo>();
         private class PortInfo
         {
@@ -37,46 +67,70 @@ namespace Unity.VisualScripting.Community
             GetWindow<DescriptorCreationWizard>("Descriptor Creation Wizard");
         }
 
+        Vector2 scrollPosition;
         private void OnGUI()
         {
             HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, 1, () =>
             {
                 GUILayout.Label("Descriptor Creation Wizard", EditorStyles.boldLabel);
-
                 GUILayout.Space(10);
 
-                unitScript = EditorGUILayout.ObjectField("Unit Script", unitScript, typeof(MonoScript), false) as MonoScript;
-                var unitType = unitScript != null ? unitScript.GetClass() : null;
-                if (unitScript == null || !typeof(Unit).IsAssignableFrom(unitType))
+                if (TypeBuilderWindow.Button(unitType))
+                {
+                    var types = Codebase.settingsAssembliesTypes
+                            .Where(t => typeof(Unit).IsAssignableFrom(t) && !t.IsDefined(typeof(ObsoleteAttribute)) && DescriptorProvider.instance.GetDecoratorType(t) == typeof(UnitDescriptor<IUnit>))
+                            .ToArray() ?? Array.Empty<Type>();
+                    if (unitType == null && types.Length > 0) { unitType = types[0]; }
+                    TypeBuilderWindow.ShowWindow(
+                        GUILayoutUtility.GetLastRect(),
+                        t => unitType = t,
+                        unitType,
+                        false,
+                        types
+                    );
+                }
+
+                if (unitType == null || !typeof(Unit).IsAssignableFrom(unitType))
                 {
                     EditorGUILayout.HelpBox("The selected script does not contain a valid class or is not a Unit.", MessageType.Error);
                     return;
                 }
+                scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+                DrawCustomizationGUI();
+                EditorGUILayout.EndScrollView();
 
-                includeDescription = EditorGUILayout.Toggle("Include Description", includeDescription);
-
-                if (includeDescription)
+                GUILayout.Space(10);
+                if (GUILayout.Button("Generate"))
                 {
-                    scriptDescription = EditorGUILayout.TextField("Unit Description", scriptDescription);
+                    GenerateDescriptor();
+                }
+            }, true, true);
+        }
+
+        private void DrawCustomizationGUI()
+        {
+            customizeDefined = EditorGUILayout.Foldout(customizeDefined, "Customize Defined State");
+            if (customizeDefined)
+            {
+                definedTitle = EditorGUILayout.TextField("Title", definedTitle);
+                definedShortTitle = EditorGUILayout.TextField("Short Title", definedShortTitle);
+                definedSurtitle = EditorGUILayout.TextField("Surtitle", definedSurtitle);
+                definedSubtitle = EditorGUILayout.TextField("Subtitle", definedSubtitle);
+                definedSummary = EditorGUILayout.TextField("Summary", definedSummary);
+                definedIconEnabled = EditorGUILayout.Toggle("Use Custom Icon", definedIconEnabled);
+                if (definedIconEnabled)
+                {
+                    definedIcon = EditorGUILayout.ObjectField("Icon", definedIcon, typeof(Texture2D), false) as Texture2D;
+                    definedIconPath = AssetDatabase.GetAssetPath(definedIcon);
                 }
 
-                iconEnabled = EditorGUILayout.Toggle("Use Custom Icon", iconEnabled);
-
-                if (iconEnabled)
-                {
-                    customIcon = EditorGUILayout.ObjectField("Custom Icon", customIcon, typeof(Texture2D), false) as Texture2D;
-                    iconPath = AssetDatabase.GetAssetPath(customIcon);
-                }
-
-                portsEnabled = EditorGUILayout.Toggle("Customize ports", portsEnabled);
-
+                portsEnabled = EditorGUILayout.Toggle("Customize Ports", portsEnabled);
                 if (portsEnabled)
                 {
                     var ports = new List<MemberInfo>();
-
                     ports.AddRange(unitType.GetFields().Where(f => typeof(IUnitPort).IsAssignableFrom(f.FieldType)));
-
-                    ports.AddRange(unitType.GetProperties().Where(p => typeof(IUnitPort).IsAssignableFrom(p.PropertyType) && p.GetIndexParameters().Length == 0 && p.CanRead && p.GetGetMethod(true) != null));
+                    ports.AddRange(unitType.GetProperties()
+                        .Where(p => typeof(IUnitPort).IsAssignableFrom(p.PropertyType) && p.GetIndexParameters().Length == 0 && p.CanRead && p.GetGetMethod(true) != null));
 
                     foreach (var port in ports)
                     {
@@ -103,88 +157,104 @@ namespace Unity.VisualScripting.Community
                             IsOpen = isOpen
                         };
                     }
-
                 }
+            }
 
-                GUILayout.Space(10);
-
-                if (GUILayout.Button("Generate"))
+            customizeDefault = EditorGUILayout.Foldout(customizeDefault, "Customize Default State");
+            if (customizeDefault)
+            {
+                defaultTitle = EditorGUILayout.TextField("Title", defaultTitle);
+                defaultShortTitle = EditorGUILayout.TextField("Short Title", defaultShortTitle);
+                defaultSurtitle = EditorGUILayout.TextField("Surtitle", defaultSurtitle);
+                defaultSubtitle = EditorGUILayout.TextField("Subtitle", defaultSubtitle);
+                defaultSummary = EditorGUILayout.TextField("Summary", defaultSummary);
+                defaultIconEnabled = EditorGUILayout.Toggle("Use Custom Icon", defaultIconEnabled);
+                if (defaultIconEnabled)
                 {
-                    GenerateDescriptor();
+                    defaultIcon = EditorGUILayout.ObjectField("Icon", defaultIcon, typeof(Texture2D), false) as Texture2D;
+                    defaultIconPath = AssetDatabase.GetAssetPath(defaultIcon);
                 }
-            }, true, true);
+            }
+
+            customizeError = EditorGUILayout.Foldout(customizeError, "Customize Error State");
+            if (customizeError)
+            {
+                errorTitle = EditorGUILayout.TextField("Title", errorTitle);
+                errorShortTitle = EditorGUILayout.TextField("Short Title", errorShortTitle);
+                errorSurtitle = EditorGUILayout.TextField("Surtitle", errorSurtitle);
+                errorSubtitle = EditorGUILayout.TextField("Subtitle", errorSubtitle);
+                errorSummary = EditorGUILayout.TextField("Summary", errorSummary);
+                errorIconEnabled = EditorGUILayout.Toggle("Use Custom Icon", errorIconEnabled);
+                if (errorIconEnabled)
+                {
+                    errorIcon = EditorGUILayout.ObjectField("Icon", errorIcon, typeof(Texture2D), false) as Texture2D;
+                    errorIconPath = AssetDatabase.GetAssetPath(errorIcon);
+                }
+            }
         }
 
         string CapitalizeFirst(string input)
         {
-            if (string.IsNullOrEmpty(input))
-                return string.Empty;
-
-            if (input.Length == 1)
-                return char.ToUpper(input[0]).ToString();
-
-            return char.ToUpper(input[0]) + input.Substring(1);
+            if (string.IsNullOrEmpty(input)) return string.Empty;
+            return input.Length == 1 ? char.ToUpper(input[0]).ToString() : char.ToUpper(input[0]) + input.Substring(1);
         }
 
         private void GenerateDescriptor()
         {
-            if (unitScript == null)
+            if (unitType == null)
             {
-                Debug.Log("Please select a unit script.");
+                Debug.Log("Please select a unit type.");
                 return;
             }
 
-            string defaultPath = EditorUtility.SaveFilePanelInProject("Save Descriptor Script (It needs to be in a folder named Editor)", unitScript.name + "Descriptor.cs", "cs", "Enter a file name to save the descriptor script as");
+            string defaultPath = EditorUtility.SaveFilePanelInProject(
+                "Save Descriptor Script (It needs to be in a folder named Editor)",
+                unitType.HumanName(true) + "Descriptor.cs",
+                "cs",
+                "Enter a file name to save the descriptor script as"
+            );
 
-            if (string.IsNullOrEmpty(defaultPath))
+            if (string.IsNullOrEmpty(defaultPath)) return;
+
+            string unitName = unitType.As().CSharpName(false, true, false);
+            string unitNamespace = unitType.Namespace;
+            string descriptorClassName = unitType.HumanName(true).Replace(" ", "") + "Descriptor";
+
+            var descriptorClass = ClassGenerator.Class(
+                RootAccessModifier.Public,
+                ClassModifier.None,
+                descriptorClassName,
+                $"UnitDescriptor<{unitName}>",
+                unitNamespace, new List<string> { "Unity.VisualScripting", "UnityEditor", "UnityEngine", "System" }
+            );
+
+            descriptorClass.generateUsings = true;
+            if (!string.IsNullOrEmpty(unitNamespace)) descriptorClass.AddUsings(unitNamespace.Yield().ToList());
+
+            var constructor = ConstructorGenerator.Constructor(AccessModifier.Public, ConstructorModifier.None, ConstructorInitializer.Base, descriptorClassName);
+            constructor.AddParameter(true, ParameterGenerator.Parameter("target", unitType, Libraries.CSharp.ParameterModifier.None));
+
+            descriptorClass.AddConstructor(constructor);
+
+            AddTextMethod(descriptorClass, "Title", definedTitle, defaultTitle, errorTitle);
+            AddTextMethod(descriptorClass, "ShortTitle", definedShortTitle, defaultShortTitle, errorShortTitle);
+            AddTextMethod(descriptorClass, "Surtitle", definedSurtitle, defaultSurtitle, errorSurtitle);
+            AddTextMethod(descriptorClass, "Subtitle", definedSubtitle, defaultSubtitle, errorSubtitle);
+            AddTextMethod(descriptorClass, "Summary", definedSummary, defaultSummary, errorSummary);
+
+            AddIconMethod(descriptorClass, "DefinedIcon", definedIconEnabled, definedIconPath);
+            AddIconMethod(descriptorClass, "DefaultIcon", defaultIconEnabled, defaultIconPath);
+            AddIconMethod(descriptorClass, "ErrorIcon", errorIconEnabled, errorIconPath, includeException: true);
+
+            if (portsEnabled && portInfos.Count > 0 && portInfos.Any(i => !string.IsNullOrEmpty(i.Value.Label) || string.IsNullOrEmpty(i.Value.Description)))
             {
-                return;
-            }
+                var portMethod = MethodGenerator.Method(AccessModifier.Protected, MethodModifier.Override, typeof(void), "DefinedPort");
+                portMethod.AddParameter(ParameterGenerator.Parameter("port", typeof(IUnitPort), Libraries.CSharp.ParameterModifier.None));
+                portMethod.AddParameter(ParameterGenerator.Parameter("description", typeof(UnitPortDescription), Libraries.CSharp.ParameterModifier.None));
 
-            Type type = unitScript.GetClass();
-            string unitScriptName = type.Name;
-            string unitNamespace = type.Namespace;
-            string descriptorClassName = unitScriptName + "Descriptor";
-            string targetNodeName = unitScriptName;
 
-            string descriptorContent = $@"using Unity.VisualScripting;
-
-using UnityEditor;
-using UnityEngine;{(!string.IsNullOrEmpty(unitNamespace) ? $"\nusing {unitNamespace};" : "")}
-
-[Descriptor(typeof({unitScriptName}))]
-public class {descriptorClassName} : UnitDescriptor<{targetNodeName}>
-{{
-    public {descriptorClassName}({targetNodeName} target) : base(target)
-    {{
-    }}";
-
-            if (iconEnabled && customIcon != null)
-            {
-                descriptorContent += $@"
-            if (iconEnabled && customIcon != null)
-            {descriptorContent += $@"
-    protected override EditorTexture DefinedIcon()
-    {{
-        string iconFullPath = ""{iconPath}"";
-        Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconFullPath);
-        return EditorTexture.Single(icon);
-    }}"}
-";
-            }
-
-            descriptorContent += $@"
-    protected override string DefinedSummary()
-    {{
-        return {(!string.IsNullOrEmpty(scriptDescription) ? $"\"{scriptDescription}\"" : "base.DefinedSummary()")};
-    }}";
-
-            if (portsEnabled)
-            {
-                var builder = new StringBuilder();
-                builder.AppendLine($"\n{CodeBuilder.Indent(1)}protected override void DefinedPort(IUnitPort port, UnitPortDescription description)");
-                builder.AppendLine(CodeBuilder.Indent(1) + "{");
-                builder.AppendLine(CodeBuilder.Indent(2) + "base.DefinedPort(port, description);");
+                var body = new StringBuilder();
+                body.AppendLine("base.DefinedPort(port, description);");
 
                 foreach (var kvp in portInfos)
                 {
@@ -192,33 +262,74 @@ public class {descriptorClassName} : UnitDescriptor<{targetNodeName}>
                     var label = kvp.Value.Label;
                     var summary = kvp.Value.Description;
 
-                    if (string.IsNullOrEmpty(label) && string.IsNullOrEmpty(summary))
-                        continue;
+                    if (string.IsNullOrEmpty(label) && string.IsNullOrEmpty(summary)) continue;
 
-                    builder.AppendLine($"{CodeBuilder.Indent(2)}if (port == unit.{fieldName})");
-                    builder.AppendLine(CodeBuilder.Indent(2) + "{");
-
-                    if (!string.IsNullOrEmpty(label))
-                        builder.AppendLine(CodeBuilder.Indent(3) + $"description.label = \"{label}\";");
-
-                    if (!string.IsNullOrEmpty(summary))
-                        builder.AppendLine(CodeBuilder.Indent(3) + $"description.summary = \"{summary}\";");
-
-                    builder.AppendLine(CodeBuilder.Indent(2) + "}");
+                    body.AppendLine($"if (port == unit.{fieldName})");
+                    body.AppendLine("{");
+                    if (!string.IsNullOrEmpty(label)) body.AppendLine($"    description.label = \"{label}\";");
+                    if (!string.IsNullOrEmpty(summary)) body.AppendLine($"    description.summary = \"{summary}\";");
+                    body.AppendLine("}");
                 }
 
-                builder.AppendLine(CodeBuilder.Indent(1) + "}");
-
-                descriptorContent += builder.ToString();
+                portMethod.body = body.ToString();
+                descriptorClass.AddMethod(portMethod);
             }
-            descriptorContent += $@"
-}}";
 
-            System.IO.File.WriteAllText(defaultPath, descriptorContent);
-
+            string content = descriptorClass.GenerateClean(0);
+            System.IO.File.WriteAllText(defaultPath, content);
             AssetDatabase.Refresh();
-
             Debug.Log("Descriptor script generated successfully at " + defaultPath);
+        }
+
+        private void AddTextMethod(ClassGenerator cls, string methodName, string defined, string def, string error)
+        {
+            if (!string.IsNullOrEmpty(defined))
+            {
+                var method = MethodGenerator.Method(AccessModifier.Protected, MethodModifier.Override, typeof(string), "Defined" + methodName);
+                method.Body($"return \"{defined}\";");
+                cls.AddMethod(method);
+            }
+
+            if (!string.IsNullOrEmpty(def))
+            {
+                var method = MethodGenerator.Method(AccessModifier.Protected, MethodModifier.Override, typeof(string), "Default" + methodName);
+                method.Body($"return \"{def}\";");
+                cls.AddMethod(method);
+            }
+
+            if (!string.IsNullOrEmpty(error))
+            {
+                cls.AddUsings(typeof(Exception).Namespace.Yield().ToList());
+                var method = MethodGenerator.Method(AccessModifier.Protected, MethodModifier.Override, typeof(string), "Error" + methodName);
+                method.AddParameter(ParameterGenerator.Parameter("exception", typeof(Exception), Libraries.CSharp.ParameterModifier.None));
+                method.Body($"return $\"{ExtractCodes(error)}\";");
+                cls.AddMethod(method);
+            }
+        }
+
+        private string ExtractCodes(string error)
+        {
+            return error
+            .Replace("{message}", "{exception.Message}", StringComparison.OrdinalIgnoreCase)
+            .Replace("{ms}", "{exception.Message}", StringComparison.OrdinalIgnoreCase)
+            .Replace("{st}", "{exception.StackTrace}", StringComparison.OrdinalIgnoreCase)
+            .Replace("{stacktrace}", "{exception.StackTrace}", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void AddIconMethod(ClassGenerator cls, string methodName, bool enabled, string path, bool includeException = false)
+        {
+            if (!enabled || string.IsNullOrEmpty(path)) return;
+            var method = MethodGenerator.Method(AccessModifier.Protected, MethodModifier.Override, typeof(EditorTexture), methodName);
+
+            if (includeException)
+            {
+                method.AddParameter(ParameterGenerator.Parameter("exception", typeof(Exception), Libraries.CSharp.ParameterModifier.None));
+                cls.AddUsings(typeof(Exception).Namespace.Yield().ToList());
+            }
+
+            method.body = $"Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(\"{path}\");\nreturn EditorTexture.Single(icon);";
+
+            cls.AddMethod(method);
         }
     }
 }

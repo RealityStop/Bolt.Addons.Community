@@ -22,8 +22,9 @@ namespace Unity.VisualScripting.Community
         [PortLabelHidden]
         public ControlOutput invoke;
 
-        [UnitHeaderInspectable]
-        private bool variable;
+        [Inspectable]
+        public bool showCallback = true;
+
         private object[] values;
 
         public DelegateNode() : base() { }
@@ -44,13 +45,16 @@ namespace Unity.VisualScripting.Community
             if (_delegate != null)
             {
                 _delegate.Unit = this;
-                Callback = ValueOutput(_delegate.GetDelegateType(), nameof(Callback), (flow) =>
-                {
-                    var _flow = Flow.New(flow.stack.AsReference());
-                    InitializeDelegate(_flow, _delegate.initialized);
-                    return _delegate.GetDelegate();
-                });
 
+                if (showCallback)
+                {
+                    Callback = ValueOutput(_delegate.GetDelegateType(), nameof(Callback), (flow) =>
+                    {
+                        var _flow = Flow.New(flow.stack.AsReference());
+                        InitializeDelegate(_flow, _delegate.initialized);
+                        return _delegate.GetDelegate();
+                    });
+                }
                 @delegate = ValueOutput(_delegate.GetType(), "delegate", (flow) =>
                 {
                     var _flow = Flow.New(flow.stack.AsReference());

@@ -1,20 +1,21 @@
-using System;
-using Unity.VisualScripting;
-
-[UnitTitle("Argument")]//Unit title
-[TypeIcon(typeof(GraphInput))]//Unit icon
-[SpecialUnit]
-public class SnippetInputNode : Unity.VisualScripting.Unit
+namespace Unity.VisualScripting.Community 
 {
-    [Inspectable]
-    [UnitHeaderInspectable("Name")]
-    public string argumentName;
-    [DoNotSerialize]
-    [PortLabelHidden]
-    public ValueOutput output;
-
-    protected override void Definition()
+    [UnitTitle("Argument")]
+    [TypeIcon(typeof(GraphInput))]
+    [SpecialUnit]
+    [RenamedFrom("SnippetInputNode")]
+    public sealed class SnippetInputNode : Unity.VisualScripting.Unit
     {
-        output = ValueOutput<object>(nameof(Literal.output));
-    }
+        [Inspectable]
+        [UnitHeaderInspectable("Name")]
+        public string argumentName;
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ValueOutput output;
+    
+        protected override void Definition()
+        {
+            output = ValueOutput<object>(nameof(Literal.output));
+        }
+    } 
 }

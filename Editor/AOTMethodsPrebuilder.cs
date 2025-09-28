@@ -59,7 +59,7 @@ namespace Unity.VisualScripting.Community
                 foreach (var type in typeGroup.types)
                 {
                     string namespaceName = type.Namespace;
-                    if (!string.IsNullOrEmpty(namespaceName) && !IsIncludedNamespace(namespaceName) && AllowedNameSpace(namespaceName))
+                    if (!string.IsNullOrEmpty(namespaceName) && !IsIncludedNamespace(namespaceName) && AllowedNameSpace(type))
                     {
                         namespaces.Add(namespaceName);
                     }
@@ -122,8 +122,8 @@ namespace Unity.VisualScripting.Community
 
                 if (type.IsPublic
                     && type.IsGenericType
-                    && !type.GetGenericArguments().Any(arg => arg.IsGenericParameter)
-                    && type.GetGenericArguments().All(_type => _type.IsPublic && AllowedNameSpace(_type.Namespace)))
+                    && EditorTypeUtility.IsRuntimeType(type)
+                    && type.GetGenericArguments().All(arg => EditorTypeUtility.IsClosedGeneric(arg)))
                 {
                     EditorUtility.DisplayProgressBar("Generating Aot Support Methods for OnUnityEvent", $"Found {type.HumanName(true)}...", progress);
 
@@ -140,10 +140,12 @@ namespace Unity.VisualScripting.Community
             return includedNamespaces.Contains(_namespace);
         }
 
-        private bool AllowedNameSpace(string _namespace)
+        private bool AllowedNameSpace(Type type)
         {
-            if (string.IsNullOrEmpty(_namespace)) return false;
-            if (_namespace.Contains("UnityEditor") || _namespace.Contains("NUnit")) return false;
+            if (string.IsNullOrEmpty(type.Namespace)) return false;
+            var rootNamespace = type.RootNamespace();
+            if (rootNamespace == "UnityEditor" || rootNamespace == "UnityEditorInternal" ||
+            type.Namespace.Contains("UnityEditor") || type.Namespace.Contains("NUnit")) return false;
             return true;
         }
 
