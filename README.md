@@ -91,7 +91,6 @@ Events
  - **Reset Graph Listener**
  - **ChannelEvent**
  - **TriggerChannelEvent**
- - **Wait for Task Event**
  - **Send Task Event**
 
 Documentation
@@ -123,7 +122,7 @@ Control
  - **FlowToCoroutine**
  - **CoroutineToFlow**
  - **WaitForManualPress**
- - **If**
+ - **If (Next)**
  - **ElseIf**
  - **Using**
 
@@ -191,7 +190,7 @@ Math
 	 - **Logarithmic**
 	 - **Reverse Linear**
 	 - **Sigmoid**
-  - Negate Value
+  - **Negate Value**
 
 
 --------
@@ -211,6 +210,8 @@ Editor
  - **Editor Window**
  - **NodeCreationWizard**
  - **DescriptorCreationWizard**
+ - **Control Snippet**
+ - **Value Snippet**
 
 
 --------
