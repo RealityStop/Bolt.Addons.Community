@@ -29,33 +29,41 @@ namespace Unity.VisualScripting.Community
                 yield return new GraphContextMenuItem(OpenNodeFinder, "Open NodeFinder Window");
                 yield return new GraphContextMenuItem(OpenUtilityWindow, "Open Utility Window");
                 yield return new GraphContextMenuItem(OpenKeyboardControlsWindow, "Open Keyboard Controls Window");
+                yield return new GraphContextMenuItem(OpenGraphSnippetPopup, "Open Graph Snippets Window");
             }
         }
 
-        private void OpenKeyboardControlsWindow(Vector2 guiPosition)
+        private void OpenKeyboardControlsWindow(Vector2 _)
         {
             Rect rect = new Rect(e.mousePosition.x, e.mousePosition.y, 0, 0);
 
             GraphKeyboardControlsPopup.Show(rect);
         }
 
-        private void ConvertToEmbed(Vector2 pos)
+        private void OpenGraphSnippetPopup(Vector2 _)
+        {
+            Rect rect = new Rect(e.mousePosition.x, e.mousePosition.y, 0, 0);
+
+            GraphSnippetsPopup.Show(rect);
+        }
+
+        private void ConvertToEmbed(Vector2 _)
         {
             NodeSelection.Convert(GraphSource.Embed);
         }
 
-        private void ConvertToMacro(Vector2 pos)
+        private void ConvertToMacro(Vector2 _)
         {
             NodeSelection.Convert(GraphSource.Macro);
         }
 
-        private void OpenUtilityWindow(Vector2 pos)
+        private void OpenUtilityWindow(Vector2 _)
         {
             var window = UtilityWindow.Open();
             window.graphContext = context;
         }
 
-        private void OpenNodeFinder(Vector2 pos)
+        private void OpenNodeFinder(Vector2 _)
         {
             NodeFinderWindow.Open();
         }

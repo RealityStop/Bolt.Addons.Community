@@ -12,10 +12,8 @@ namespace Unity.VisualScripting.Community
         [PortLabelHidden]
         public ControlInput enter;
         [DoNotSerialize]
-        [PortLabelHidden]
         public ControlOutput exit;
         [DoNotSerialize]
-        [PortLabelHidden]
         public ControlOutput body;
         [DoNotSerialize]
         [PortLabelHidden]

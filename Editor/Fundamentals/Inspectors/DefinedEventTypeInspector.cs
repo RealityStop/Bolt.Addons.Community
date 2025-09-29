@@ -27,15 +27,19 @@ namespace Unity.VisualScripting.Community
         {
             if (allTypes == null)
             {
-                if (_typeFilter != null)
+                if (!CommunityOptionFetcher.DefinedEvent_RestrictEventTypes)
                 {
-                    allTypes = Types.Where(t => !CommunityOptionFetcher.DefinedEvent_RestrictEventTypes || _typeFilter.ValidateType(t) && t != typeof(IDefinedEvent))
+                    allTypes = Types;
+                }
+                else if (_typeFilter != null)
+                {
+                    allTypes = Types.Where(t => typeof(IDefinedEvent).IsAssignableFrom(t) && t != typeof(IDefinedEvent))
                         .ToArray();
                 }
                 else
                 {
                     allTypes = Types
-                        .Where(t => !CommunityOptionFetcher.DefinedEvent_RestrictEventTypes || typeof(IDefinedEvent).IsAssignableFrom(t) && t != typeof(IDefinedEvent))
+                        .Where(t => typeof(IDefinedEvent).IsAssignableFrom(t) && t != typeof(IDefinedEvent))
                         .ToArray();
                 }
             }
