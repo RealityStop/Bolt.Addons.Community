@@ -214,7 +214,7 @@ namespace Unity.VisualScripting.Community.Variables.Editor
 
                     foreach (var method in inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
                     {
-                        if (method.IsPrivate || method.IsAssembly || method.IsSpecialName || method.IsProperty() || method.IsEvent() || method.IsGenericMethod) continue;
+                        if (method.IsPrivate || method.IsAssembly || method.Name == "Finalize" || method.IsSpecialName || method.IsProperty() || method.IsEvent() || method.IsGenericMethod) continue;
 
                         if (method.IsAbstract || method.IsVirtual)
                         {

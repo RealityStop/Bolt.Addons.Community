@@ -1,15 +1,10 @@
 fileFormatVersion: 2
-<<<<<<<< Updated upstream:Runtime/Fundamentals/Nodes/Logic/Control/TriggerXTimes.cs.meta
 guid: 0a9168f38dc022c44918a4dd058642ce
-========
-guid: eb6601c1b17ad594abec1d097b096e01
->>>>>>>> Stashed changes:Runtime/Fundamentals/Nodes/Object Pooling/C#/PoolObject.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences: []
   executionOrder: 0
-  icon: {fileID: 2800000, guid: 0bf9dc43e069dd04785be1f910bd4237, type: 3}
   userData: 
   assetBundleName: 
   assetBundleVariant: 
