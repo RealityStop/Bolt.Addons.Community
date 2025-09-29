@@ -29,7 +29,7 @@ Open the Unity Package Manager, and click the "+" button in the top-left corner 
 
 and add the following url:
 
-> https://github.com/S2NX7/Bolt.Addons.Community.git
+> https://github.com/RealityStop/Bolt.Addons.Community.git
 
 For BOLT use branch `bolt-main` with this url:
 
@@ -72,6 +72,8 @@ Variables
  - **Increment Variable**
  - **Decrement Variable**
  - **Plus Equals**
+ - **Reset Saved Variables**
+ - **Clear Saved Variables**
 
 Events
  - **On Every X Seconds**
@@ -123,6 +125,7 @@ Control
  - **WaitForManualPress**
  - **If**
  - **ElseIf**
+ - **Using**
 
 Logic
  - **Latch**
@@ -139,8 +142,9 @@ Utility
  - **Value Reroute**
  - **Copy To Clipboard**
  - **Counter**
- - **Is Empty or Whitespace**
+ - **IsStringEmptyOrWhitespace**
  - **HDRColors**
+ - **Select Expose**
 
 String
  - **Bold**
@@ -150,6 +154,7 @@ String
  - **Strikethrough**
  - **Underline**
  - **Reverse String**
+ - **String Builder**
 
 Object Pooling
  - **Initialize Object Pool**
@@ -157,7 +162,7 @@ Object Pooling
  - **Return Object**
  - **Return All**
 	 - **Events**
-         - *On Retrived*
+         - *On Retrieved*
          - *On Returned*
            
 Graphs
@@ -204,8 +209,8 @@ Code
 
 Editor
  - **Editor Window**
- - **Unit Generator Window**
- - **Unit Descriptor Generator Window**
+ - **NodeCreationWizard**
+ - **DescriptorCreationWizard**
 
 
 --------
