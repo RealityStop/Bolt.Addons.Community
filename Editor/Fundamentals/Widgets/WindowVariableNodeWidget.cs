@@ -20,7 +20,6 @@ namespace Unity.VisualScripting.Community
         {
             if (port == unit.name)
             {
-                // This feels so hacky. The real holy grail here would be to support attribute decorators like Unity does.
                 InspectorProvider.instance.Renew(ref nameInspector, metadata, nameInspectorConstructor);
 
                 return nameInspector;

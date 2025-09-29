@@ -1,7 +1,8 @@
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.ToggleBool")]
     [UnitCategory("Community\\Utility")]
     [UnitTitle("Toggle Boolean")]
     [TypeIcon(typeof(ToggleFlow))]

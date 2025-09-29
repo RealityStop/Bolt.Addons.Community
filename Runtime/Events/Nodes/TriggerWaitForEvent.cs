@@ -1,14 +1,17 @@
+using System;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.TriggerNextTask")]
     /// <summary>
     /// Triggers A Wait For Event node if it one is waiting.
     /// </summary>
     [UnitTitle("SendTaskEvent")]
     [UnitCategory("Events\\Community")]
     [TypeIcon(typeof(EventUnit<EmptyEventArgs>))]
+    [Obsolete]
     public class TriggerNextTask : Unit
     {
         [DoNotSerialize]

@@ -1,6 +1,6 @@
 > The orginal creators have moved on and are no longer active in the Bolt community.
 > 
-> But there are new maintainers!
+> However, the project is now in the hands of new maintainers!
 
 # Community Addons
 ### Unity Visual Scripting Extensions
@@ -72,6 +72,8 @@ Variables
  - **Increment Variable**
  - **Decrement Variable**
  - **Plus Equals**
+ - **Reset Saved Variables**
+ - **Clear Saved Variables**
 
 Events
  - **On Every X Seconds**
@@ -89,7 +91,6 @@ Events
  - **Reset Graph Listener**
  - **ChannelEvent**
  - **TriggerChannelEvent**
- - **Wait for Task Event**
  - **Send Task Event**
 
 Documentation
@@ -121,8 +122,9 @@ Control
  - **FlowToCoroutine**
  - **CoroutineToFlow**
  - **WaitForManualPress**
- - **If**
+ - **If (Next)**
  - **ElseIf**
+ - **Using**
 
 Logic
  - **Latch**
@@ -139,8 +141,9 @@ Utility
  - **Value Reroute**
  - **Copy To Clipboard**
  - **Counter**
- - **Is Empty or Whitespace**
+ - **IsStringEmptyOrWhitespace**
  - **HDRColors**
+ - **Select Expose**
 
 String
  - **Bold**
@@ -150,6 +153,7 @@ String
  - **Strikethrough**
  - **Underline**
  - **Reverse String**
+ - **String Builder**
 
 Object Pooling
  - **Initialize Object Pool**
@@ -157,7 +161,7 @@ Object Pooling
  - **Return Object**
  - **Return All**
 	 - **Events**
-         - *On Retrived*
+         - *On Retrieved*
          - *On Returned*
            
 Graphs
@@ -186,7 +190,7 @@ Math
 	 - **Logarithmic**
 	 - **Reverse Linear**
 	 - **Sigmoid**
-  - Negate Value
+  - **Negate Value**
 
 
 --------
@@ -204,8 +208,10 @@ Code
 
 Editor
  - **Editor Window**
- - **Unit Generator Window**
- - **Unit Descriptor Generator Window**
+ - **NodeCreationWizard**
+ - **DescriptorCreationWizard**
+ - **Control Snippet**
+ - **Value Snippet**
 
 
 --------

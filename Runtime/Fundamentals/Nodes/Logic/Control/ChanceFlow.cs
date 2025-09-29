@@ -1,12 +1,16 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
+    /// <summary>
+    /// Triggers an output based on a given probability (0 to 100%).
+    /// </summary>
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.RandomOutputNode")]
     [UnitTitle("ChanceFlow")]
     [UnitCategory("Community\\Control")]
     [TypeIcon(typeof(SwitchOnInteger))]
-    public class RandomOutputNode : Unit
+    public class ChanceFlow : Unit
     {
         [DoNotSerialize]
         public ValueInput value;
@@ -35,35 +39,14 @@ namespace Bolt.Addons.Community.Fundamentals
         public ControlOutput OnEnter(Flow flow)
         {
             float probability = flow.GetValue<float>(value);
-
-            if (probability > 100f)
-            {
-                probability = 100f;
-            }
-
-            if (probability < 0f)
-            {
-                probability = 0f;
-            }
-
-            // Update the value input on the node with the clamped value
-            value.SetDefaultValue(probability);
-
-            // Clamp the probability value between 0 and 100
             probability = Mathf.Clamp(probability, 0f, 100f) / 100f;
-
-            // Generate a random value between 0 and 1
             float randomValue = Random.value;
-
-            // Check if the random value is less than or equal to the probability
             if (randomValue <= probability)
             {
-                // Trigger the true output
                 return trueOutput;
             }
             else
             {
-                // Trigger the false output
                 return falseOutput;
             }
         }

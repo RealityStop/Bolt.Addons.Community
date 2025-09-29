@@ -20,6 +20,9 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public HighlightType highlightType;
         public Type type;
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
+        private bool isLiteral = true;
+        private bool isNewlineLiteral = true;
+        private bool isNew = true;
 
         private FieldGenerator() { }
 
@@ -56,6 +59,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             field.stringType = typeName;
             field.name = name.LegalMemberName();
             field.highlightType = highlightType;
+            field.defaultValue = defaultValue;
             return field;
         }
 
@@ -94,9 +98,25 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             if (attributes.Count > 0) _attributes += "\n";
             var modSpace = (modifier == FieldModifier.None) ? string.Empty : " ";
-            var definition = CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + (typeIsString ? stringType.WithHighlight(highlightType) : type.As().CSharpName()) + " " + name.LegalMemberName();
-            var output = !isString && (defaultValue == null || defaultValue.Equals(HUMValue.Create().New(type))) ? ";" : " = " + (isString ? stringDefault : defaultValue.As().Code(true, true) + ";");
+            var definition = CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + (typeIsString ? stringType.WithHighlight(highlightType) : type.As().CSharpName()) + " " + name.LegalMemberName().VariableHighlight();
+            var output = !isString && (defaultValue == null || (!(typeIsString ? stringType == nameof(Type) : type == typeof(Type)) && defaultValue.Equals(type.PseudoDefault()))) ? ";" : " = " + (isString ? stringDefault + ";" : defaultValue.As().Code(isNew, isLiteral, true, "", isNewlineLiteral, true, false) + ";");
             return _attributes + definition + output;
+        }
+
+        public FieldGenerator SetLiteral(bool value)
+        {
+            isLiteral = value;
+            return this;
+        }
+        public FieldGenerator SetNewlineLiteral(bool value)
+        {
+            isNewlineLiteral = value;
+            return this;
+        }
+        public FieldGenerator SetNew(bool value)
+        {
+            isNew = value;
+            return this;
         }
 
         public override List<string> Usings()

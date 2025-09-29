@@ -4,8 +4,13 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
     [Serializable]
+    [Inspectable]
     public sealed class SystemType : ISerializationCallbackReceiver
     {
+        [Inspectable]
+        [InspectorLabel("")]
+        [InspectorWide]
+        [FullSerializer.fsProperty(Converter = typeof(FakeGenericParameterTypeConverter))]
         public Type type;
         [SerializeField][HideInInspector]
         private string qualifiedName;

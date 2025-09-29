@@ -18,21 +18,17 @@
         [DoNotSerialize]
         public ControlInput enter { get; private set; }
 
-
         /// <summary>
         /// The entry point for the branch.
         /// </summary>
         [DoNotSerialize]
         public ControlInput open { get; private set; }
 
-
         /// <summary>
         /// The entry point for the branch.
         /// </summary>
         [DoNotSerialize]
         public ControlInput close { get; private set; }
-
-
 
         /// <summary>
         /// The entry point for the branch.
@@ -101,8 +97,6 @@
             _isOpen = !_isOpen;
             return null;
         }
-
-
 
         private void PrepInitialState(Flow flow)
         {

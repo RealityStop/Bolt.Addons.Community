@@ -1,43 +1,53 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
-[UnitTitle("FlowToCoroutine")]//Unit title
-[UnitCategory("Community\\Control")]
-[TypeIcon(typeof(Coroutine))]//Unit icon
-public class FlowToCoroutine : Unit
+namespace Unity.VisualScripting.Community
 {
-    
-    [DoNotSerialize]
-    public ControlInput In;
-    [DoNotSerialize]
-    public ControlOutput Converted;
-    [DoNotSerialize]
-    public ControlOutput _flow;
-
-    protected override void Definition()
+    [RenamedFrom("FlowToCoroutine")]
+    [UnitTitle("FlowToCoroutine")]
+    [UnitCategory("Community\\Control")]
+    [TypeIcon(typeof(Coroutine))]
+    public class FlowToCoroutine : Unit
     {
-        In = ControlInput("In", Convert);
-        Converted = ControlOutput("Coroutine");
-        _flow = ControlOutput("Flow");
+        [DoNotSerialize]
+        public ControlInput In;
+        [DoNotSerialize]
+        public ControlOutput Converted;
+        [DoNotSerialize]
+        [PortLabel("Flow")]
+        public ControlOutput normalFlow;
 
-        Succession(In, Converted);
-        Succession(In, _flow);
-    }
-
-    private ControlOutput Convert(Flow flow) 
-    {
-        var GraphRef = flow.stack.ToReference();
-
-        if (flow.isCoroutine)
+        protected override void Definition()
         {
-            Debug.LogWarning("FlowToCoroutine node is used to convert a normal flow to a Coroutine flow there is no point in using it in a Coroutine flow", flow.stack.gameObject);
-            return Converted;
+            In = ControlInput("In", Convert);
+            Converted = ControlOutput("Coroutine");
+            normalFlow = ControlOutput("Flow");
+
+            Succession(In, Converted);
+            Succession(In, normalFlow);
         }
-        else 
+
+        private ControlOutput Convert(Flow flow)
         {
-            var Convertedflow = Flow.New(GraphRef);
-            Convertedflow.StartCoroutine(Converted);
-            return _flow;
+            var graphRef = flow.stack.ToReference();
+
+            if (flow.isCoroutine)
+            {
+                Debug.LogWarning(
+                    $"[FlowToCoroutine] This unit is meant to convert a normal flow into a coroutine flow. " +
+                    $"Using it inside an existing coroutine flow has no effect and is unnecessary. " +
+                    $"Unit: {this}",
+                    flow.stack.gameObject
+                );
+
+                return Converted;
+            }
+            else
+            {
+                var convertedflow = Flow.New(graphRef);
+                convertedflow.StartCoroutine(Converted);
+                return normalFlow;
+            }
         }
     }
 }

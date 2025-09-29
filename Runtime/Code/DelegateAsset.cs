@@ -16,9 +16,6 @@ namespace Unity.VisualScripting.Community
         public SystemType type = new SystemType() { type = typeof(Action) };
 
         [Inspectable]
-        public List<GenericDeclaration> generics = new List<GenericDeclaration>();
-
-        [Inspectable]
         public string displayName;
     }
 }

@@ -1,26 +1,80 @@
-﻿using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using UnityEngine;
 using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
-
+using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Reflection;
+using Unity.VisualScripting.Community.Utility;
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+using UnityEngine.InputSystem;
+using Unity.VisualScripting.InputSystem;
+#endif
 namespace Unity.VisualScripting.Community
 {
     [Serializable]
     [CodeGenerator(typeof(ClassAsset))]
     public sealed class ClassAssetGenerator : MemberTypeAssetGenerator<ClassAsset, ClassFieldDeclaration, ClassMethodDeclaration, ClassConstructorDeclaration>
     {
+        /// <summary>
+        /// Units that require the Update method in a monobehaviour to function
+        /// </summary>
+        private static readonly HashSet<Type> _specialUnitTypes = new HashSet<Type> {
+            typeof(Timer),
+            typeof(Cooldown),
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+            typeof(OnInputSystemEventButton),
+            typeof(OnInputSystemEventVector2),
+            typeof(OnInputSystemEventFloat)
+#endif
+        };
+
+        private readonly HashSet<Unit> _specialUnits = new HashSet<Unit>();
+
+        Dictionary<string, int> methodIndex = new Dictionary<string, int>();
+
         protected override TypeGenerator OnGenerateType(ref string output, NamespaceGenerator @namespace)
         {
-            var @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, Data.title.LegalMemberName(), Data.scriptableObject ? typeof(ScriptableObject) : typeof(object));
-            if (Data.definedEvent) @class.ImplementInterface(typeof(IDefinedEvent));
-            if (Data.inspectable) @class.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
-            if (Data.serialized) @class.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());
-            if (Data.includeInSettings) @class.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
-            if (Data.scriptableObject) @class.AddAttribute(AttributeGenerator.Attribute<CreateAssetMenuAttribute>().AddParameter("menuName", Data.menuName).AddParameter("fileName", Data.fileName).AddParameter("order", Data.order));
+            _specialUnits.Clear();
+            methodIndex.Clear();
+            if (Data == null)
+                return ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, "", null);
+            generatorCounts.Clear();
+            CreateGenerationData();
+            string className = Data.title.LegalMemberName();
+            Type baseType = Data.scriptableObject
+                ? typeof(ScriptableObject)
+                : (Data.inheritsType && Data.inherits.type != null ? Data.GetInheritedType() : typeof(object));
 
-            var decorators = new Dictionary<Type, List<NodeGenerator>>();
+            var @class = ClassGenerator.Class(RootAccessModifier.Public, Data.classModifier, className, baseType);
+            @namespace.beforeUsings = "#pragma warning disable".ConstructHighlight();
+
+            if (Data.definedEvent)
+                @class.ImplementInterface(typeof(IDefinedEvent));
+
+            if (Data.inspectable)
+                @class.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
+
+            if (Data.serialized)
+                @class.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());
+
+            if (Data.includeInSettings)
+                @class.AddAttribute(AttributeGenerator.Attribute<IncludeInSettingsAttribute>().AddParameter(true));
+
+            if (Data.scriptableObject)
+            {
+                @class.AddAttribute(AttributeGenerator.Attribute<CreateAssetMenuAttribute>()
+                    .AddParameter("menuName", Data.menuName)
+                    .AddParameter("fileName", Data.fileName)
+                    .AddParameter("order", Data.order));
+            }
+
+            if (Data.inheritsType && Data.inherits.type != null && Data.classModifier != ClassModifier.Static && Data.classModifier != ClassModifier.StaticPartial)
+            {
+                @class.AddUsings(new List<string> { Data.inherits.type.Namespace });
+            }
+
             foreach (var attribute in Data.attributes)
             {
                 var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
@@ -28,280 +82,110 @@ namespace Unity.VisualScripting.Community
                 {
                     if (param.defaultValue is IList list)
                     {
-                        if (param.isParamsParameter)
+                        if (param.modifier == Libraries.CSharp.ParameterModifier.Params)
                         {
                             foreach (var item in list)
                             {
                                 attrGenerator.AddParameter(item);
                             }
                         }
-                        else
-                        {
-                            if (!attrGenerator.parameterValues.Contains(param))
-                            {
-                                attrGenerator.AddParameter(param.defaultValue);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (!attrGenerator.parameterValues.Contains(param))
+                        else if (!attrGenerator.parameterValues.Contains(param))
                         {
                             attrGenerator.AddParameter(param.defaultValue);
                         }
                     }
+                    else if (!attrGenerator.parameterValues.Contains(param))
+                    {
+                        attrGenerator.AddParameter(param.defaultValue);
+                    }
+                }
+                foreach (var item in attribute.fields)
+                {
+                    attrGenerator.AddParameter(item.Key, item.Value);
                 }
                 @class.AddAttribute(attrGenerator);
             }
 
-            for (int i = 0; i < Data.constructors.Count; i++)
+            foreach (var @interface in Data.interfaces)
             {
-                var constructor = ConstructorGenerator.Constructor(Data.constructors[i].scope, Data.constructors[i].modifier, Data.title.LegalMemberName());
-                if (Data.constructors[i].graph.units.Count > 0)
-                {
-                    var usings = new List<string>();
-                    foreach (var _unit in Data.constructors[i].graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
-                    {
-                        var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
-                        if (decorators.TryGetValue(_unit.GetType(), out List<NodeGenerator> list))
-                        {
-                            decorators[_unit.GetType()].Add(generator);
-                        }
-                        else
-                        {
-                            decorators.Add(_unit.GetType(), new List<NodeGenerator>() { generator });
-                        }
-                        if (!string.IsNullOrEmpty(generator.NameSpace))
-                            usings.Add(generator.NameSpace);
-                    }
-                    var generationData = new ControlGenerationData();
-                    foreach (var variable in Data.variables)
-                    {
-                        generationData.AddLocalNameInScope(variable.FieldName);
-                    }
+                @class.ImplementInterface(@interface.type);
+            }
 
-                    generationData.returns = Data.variables[i].type;
-                    var unit = Data.constructors[i].graph.units[0] as FunctionNode;
-                    constructor.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, generationData, 0));
-                    generationData.ExitScope();
-                    for (int pIndex = 0; pIndex < Data.constructors[i].parameters.Count; pIndex++)
+            foreach (var constructorData in Data.constructors)
+            {
+                var parameters = constructorData.parameters;
+                if (@class.constructors.Any(f => f.parameters.Select(param => param.generator.type).SequenceEqual(parameters.Select(param => param.type))))
+                {
+                    continue;
+                }
+
+                var constructor = ConstructorGenerator.Constructor(constructorData.scope, constructorData.modifier, constructorData.initializerType, className);
+
+                if (constructorData.graph.units.Count == 0) continue;
+                @class.AddUsings(ProcessGraphUnits(constructorData.graph, @class));
+                data.EnterMethod();
+                data.SetExpectedType(typeof(void));
+                data.SetGraphPointer(constructorData.GetReference().AsReference());
+                constructor.Body((constructorData.graph.units[0] as Unit).GenerateControl(null, data, 0));
+                data.ExitMethod();
+                foreach (var param in parameters)
+                {
+                    param.showInitalizer = true;
+                    if (!string.IsNullOrEmpty(param.name))
                     {
-                        if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(false, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, ParameterModifier.None));
+                        constructor.AddParameter(param.useInInitializer, CreateParameter(param));
                     }
-                    @class.AddUsings(usings);
                 }
 
                 @class.AddConstructor(constructor);
             }
 
-            for (int i = 0; i < Data.variables.Count; i++)
+            foreach (var variableData in Data.variables)
             {
-                if (!string.IsNullOrEmpty(Data.variables[i].name) && Data.variables[i].type != null)
+                if (!string.IsNullOrEmpty(variableData.name) && variableData.type != null)
                 {
-                    var attributes = Data.variables[i].attributes;
-
-                    if (Data.variables[i].isProperty)
+                    if (@class.fields.Any(f => f.name == variableData.FieldName) || @class.properties.Any(p => p.name == variableData.FieldName))
                     {
-                        var property = PropertyGenerator.Property(Data.variables[i].scope, Data.variables[i].propertyModifier, Data.variables[i].type, Data.variables[i].name, false);
+                        continue;
+                    }
 
-                        for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
-                        {
-                            AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
-                            foreach (var param in attributes[attrIndex].parameters)
-                            {
-                                if (param.defaultValue is IList list)
-                                {
-                                    if (param.isParamsParameter)
-                                    {
-                                        foreach (var item in list)
-                                        {
-                                            attrGenerator.AddParameter(item);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        attrGenerator.AddParameter(param.defaultValue);
-                                    }
-                                }
-                                else
-                                {
-                                    if (!attrGenerator.parameterValues.Contains(param))
-                                    {
-                                        attrGenerator.AddParameter(param.defaultValue);
-                                    }
-                                }
-                            }
-                            property.AddAttribute(attrGenerator);
-                        }
-
-                        if (Data.variables[i].get)
-                        {
-                            var generationData = new ControlGenerationData();
-                            foreach (var variable in Data.variables)
-                            {
-                                generationData.AddLocalNameInScope(variable.FieldName);
-                            }
-
-                            generationData.returns = Data.variables[i].type;
-                            property.MultiStatementGetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].getter.graph.units[0] as Unit, Data.variables[i].getter.graph.units[0] as Unit)
-                            .GenerateControl(null, generationData, 0));
-                            generationData.ExitScope();
-                            var usings = new List<string>();
-                            foreach (var _unit in Data.variables[i].getter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
-                            {
-                                var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
-                                if (decorators.TryGetValue(_unit.GetType(), out List<NodeGenerator> list))
-                                {
-                                    decorators[_unit.GetType()].Add(generator);
-                                }
-                                else
-                                {
-                                    decorators.Add(_unit.GetType(), new List<NodeGenerator>() { generator });
-                                }
-                                if (!string.IsNullOrEmpty(generator.NameSpace))
-                                    usings.Add(generator.NameSpace);
-                            }
-
-                            @class.AddUsings(usings);
-                        }
-
-                        if (Data.variables[i].set)
-                        {
-                            var generationData = new ControlGenerationData();
-                            foreach (var variable in Data.variables)
-                            {
-                                generationData.AddLocalNameInScope(variable.FieldName);
-                            }
-
-                            generationData.returns = Data.variables[i].type;
-                            property.MultiStatementSetter(AccessModifier.Public, NodeGenerator.GetSingleDecorator(Data.variables[i].setter.graph.units[0] as Unit, Data.variables[i].setter.graph.units[0] as Unit)
-                            .GenerateControl(null, generationData, 0));
-                            generationData.ExitScope();
-                            var usings = new List<string>();
-                            foreach (var _unit in Data.variables[i].setter.graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
-                            {
-                                var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
-                                if (decorators.TryGetValue(_unit.GetType(), out List<NodeGenerator> list))
-                                {
-                                    decorators[_unit.GetType()].Add(generator);
-                                }
-                                else
-                                {
-                                    decorators.Add(_unit.GetType(), new List<NodeGenerator>() { generator });
-                                }
-                                if (!string.IsNullOrEmpty(generator.NameSpace))
-                                    usings.Add(generator.NameSpace);
-                            }
-
-                            @class.AddUsings(usings);
-                        }
-
-                        @class.AddProperty(property);
+                    if (variableData.isProperty)
+                    {
+                        ProcessProperty(variableData, @class);
                     }
                     else
                     {
-                        var field = FieldGenerator.Field(Data.variables[i].scope, Data.variables[i].fieldModifier, Data.variables[i].type, Data.variables[i].name, Data.variables[i].defaultValue);
-                        for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
-                        {
-                            AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
-                            foreach (var param in attributes[attrIndex].parameters)
-                            {
-                                if (param.defaultValue is IList list)
-                                {
-                                    if (param.isParamsParameter)
-                                    {
-                                        foreach (var item in list)
-                                        {
-                                            attrGenerator.AddParameter(item);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        attrGenerator.AddParameter(param.defaultValue);
-                                    }
-                                }
-                                else
-                                {
-                                    if (!attrGenerator.parameterValues.Contains(param))
-                                    {
-                                        attrGenerator.AddParameter(param.defaultValue);
-                                    }
-                                }
-                            }
-                            field.AddAttribute(attrGenerator);
-                        }
-
-                        @class.AddField(field);
+                        ProcessField(variableData, @class);
                     }
                 }
             }
 
-            for (int i = 0; i < Data.methods.Count; i++)
+            foreach (var methodData in Data.methods)
             {
-                if (!string.IsNullOrEmpty(Data.methods[i].name) && Data.methods[i].returnType != null)
+                if (!string.IsNullOrEmpty(methodData.name) && methodData.returnType != null)
                 {
-                    var method = MethodGenerator.Method(Data.methods[i].scope, Data.methods[i].modifier, Data.methods[i].returnType, Data.methods[i].name);
-                    var attributes = Data.methods[i].attributes;
-                    for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
+                    if (@class.methods.Any(m => m.name == methodData.name && m.parameters.Select(p => p.type).SequenceEqual(methodData.parameters.Select(p => p.type))))
                     {
-                        AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
-                        foreach (var param in attributes[attrIndex].parameters)
-                        {
-                            if (param.defaultValue is IList list)
-                            {
-                                if (param.isParamsParameter)
-                                {
-                                    foreach (var item in list)
-                                    {
-                                        attrGenerator.AddParameter(item);
-                                    }
-                                }
-                                else
-                                {
-                                    attrGenerator.AddParameter(param.defaultValue);
-                                }
-                            }
-                            else
-                            {
-                                if (!attrGenerator.parameterValues.Contains(param))
-                                {
-                                    attrGenerator.AddParameter(param.defaultValue);
-                                }
-                            }
-                        }
-                        method.AddAttribute(attrGenerator);
+                        continue;
                     }
-                    if (Data.methods[i].graph.units.Count > 0)
+                    if (methodData.graph.units.Count == 0) continue;
+                    var method = MethodGenerator.Method(methodData.scope, methodData.modifier, methodData.returnType, methodData.name);
+                    method.AddGenerics(methodData.genericParameters.ToArray());
+                    AddMethodAttributes(method, methodData);
+                    data.EnterMethod();
+                    data.SetExpectedType(methodData.returnType);
+                    data.SetReturns(methodData.returnType);
+                    data.SetGraphPointer(methodData.GetReference().AsReference());
+                    @class.AddUsings(ProcessGraphUnits(methodData.graph, @class));
+                    var unit = methodData.graph.units[0] as FunctionNode;
+                    method.Body(unit.GenerateControl(null, data, 0));
+                    if (data.MustReturn && !data.HasReturned) method.SetWarning("Not all code paths return a value");
+                    data.ExitMethod();
+                    foreach (var param in methodData.parameters)
                     {
-                        var usings = new List<string>();
-                        foreach (var _unit in Data.methods[i].graph.GetUnitsRecursive(Recursion.New(Recursion.defaultMaxDepth)).Cast<Unit>())
+                        if (!string.IsNullOrEmpty(param.name))
                         {
-                            var generator = NodeGenerator.GetSingleDecorator(_unit, _unit);
-                            if (decorators.TryGetValue(_unit.GetType(), out List<NodeGenerator> list))
-                            {
-                                decorators[_unit.GetType()].Add(generator);
-                            }
-                            else
-                            {
-                                decorators.Add(_unit.GetType(), new List<NodeGenerator>() { generator });
-                            }
-                            if (!string.IsNullOrEmpty(generator.NameSpace))
-                                usings.Add(generator.NameSpace);
-                        }
-                        var generationData = new ControlGenerationData();
-                        foreach (var variable in Data.variables)
-                        {
-                            generationData.AddLocalNameInScope(variable.FieldName);
-                        }
-                        @class.AddUsings(usings);
-                        var unit = Data.methods[i].graph.units[0] as FunctionNode;
-                        generationData.NewScope();
-                        method.Body(FunctionNodeGenerator.GetSingleDecorator(unit, unit).GenerateControl(null, generationData, 0));
-                        generationData.ExitScope();
-
-                        for (int pIndex = 0; pIndex < Data.methods[i].parameters.Count; pIndex++)
-                        {
-                            if (!string.IsNullOrEmpty(Data.methods[i].parameters[pIndex].name)) method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, ParameterModifier.None));
+                            method.AddParameter(CreateParameter(param));
                         }
                     }
 
@@ -309,55 +193,389 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            foreach (var key in decorators.Keys)
+            if (_specialUnits.Count > 0)
             {
-                foreach (var generator in decorators[key])
+                data.EnterMethod();
+                bool addedSpecialUpdatedCode = false;
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                bool addedSpecialFixedUpdatedCode = false;
+#endif
+                HashSet<Unit> visited = new HashSet<Unit>();
+                if (!addedSpecialUpdatedCode && @class.methods.Any(m => m.name.Replace(" ", "") == "Update"))
                 {
-                    TriggerHandleOtherGenerators(key, @class, generator);
+                    addedSpecialUpdatedCode = true;
+                    var method = @class.methods.First(m => m.name.Replace(" ", "") == "Update");
+                    if (Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
+                    {
+                        if (!string.IsNullOrEmpty(method.body))
+                            method.beforeBody += string.Join("\n", _specialUnits.Select(unit => CodeUtility.MakeClickable(unit, (unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();")).ToArray());
+                        else
+                            method.AddToBody(string.Join("\n", _specialUnits.Select(unit => CodeUtility.MakeClickable(unit, (unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();")).ToArray()));
+                    }
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                    if (UnityEngine.InputSystem.InputSystem.settings.updateMode == InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
+                    {
+                        foreach (var unit in _specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
+                        {
+                            if (!unit.trigger.hasValidConnection) continue;
+                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeClickable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();") + "\n";
+                        }
+                    }
+#endif
                 }
+                else if (!addedSpecialUpdatedCode)
+                {
+                    addedSpecialUpdatedCode = true;
+                    var method = MethodGenerator.Method(AccessModifier.None, MethodModifier.None, typeof(void), "Update");
+                    if (Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
+                    {
+                        method.AddToBody(string.Join("\n", _specialUnits.Select(unit => CodeUtility.MakeClickable(unit, (unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();")).ToArray()));
+                    }
+
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                    if (UnityEngine.InputSystem.InputSystem.settings.updateMode == InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
+                    {
+                        foreach (var unit in _specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
+                        {
+                            if (!unit.trigger.hasValidConnection) continue;
+                            method.AddToBody(CodeBuilder.Indent(2) + CodeUtility.MakeClickable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();") + "\n");
+                        }
+                    }
+#endif
+                    @class.AddMethod(method);
+                }
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                if (UnityEngine.InputSystem.InputSystem.settings.updateMode != InputSettings.UpdateMode.ProcessEventsInDynamicUpdate && Data.inheritsType && typeof(MonoBehaviour).IsAssignableFrom(Data.GetInheritedType()))
+                {
+                    if (!addedSpecialFixedUpdatedCode && @class.methods.Any(m => m.name.Replace(" ", "") == "FixedUpdate"))
+                    {
+                        addedSpecialFixedUpdatedCode = true;
+                        var method = @class.methods.First(m => m.name.Replace(" ", "") == "FixedUpdate");
+                        foreach (var unit in _specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
+                        {
+                            if (!unit.trigger.hasValidConnection) continue;
+                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeClickable(unit, unit.GetMethodGenerator()?.Name + "();") + "\n";
+                        }
+                    }
+                    else if (!addedSpecialFixedUpdatedCode)
+                    {
+                        addedSpecialFixedUpdatedCode = true;
+                        var method = MethodGenerator.Method(AccessModifier.None, MethodModifier.None, typeof(void), "FixedUpdate");
+                        foreach (var unit in _specialUnits.Where(unit => unit is OnInputSystemEvent).Cast<OnInputSystemEvent>())
+                        {
+                            if (!unit.trigger.hasValidConnection) continue;
+                            method.beforeBody += CodeBuilder.Indent(2) + CodeUtility.MakeClickable(unit, MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit)?.Name + "();") + "\n";
+                        }
+                        @class.AddMethod(method);
+                    }
+                }
+#endif
+                data.ExitMethod();
             }
+            var values = CodeGeneratorValueUtility.GetAllValues(Data, true);
+            var index = 0;
+            foreach (var variable in values)
+            {
+                var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, variable.Value != null ? variable.Value.GetType() : typeof(UnityEngine.Object), variable.Key.LegalMemberName());
+                
+                var attribute = AttributeGenerator.Attribute(typeof(FoldoutAttribute));
+                attribute.AddParameter("ObjectReferences");
+                field.AddAttribute(attribute);
 
+                @class.AddField(field);
+                index++;
+            }
             @namespace.AddClass(@class);
-
             return @class;
         }
-
-        private void TriggerHandleOtherGenerators(Type type, ClassGenerator @class, NodeGenerator generator)
+        
+        private HashSet<string> ProcessGraphUnits(FlowGraph graph, ClassGenerator @class)
         {
-            GetType().GetMethod(nameof(HandleOtherGenerators), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.InvokeMethod | System.Reflection.BindingFlags.NonPublic).MakeGenericMethod(type).Invoke(this, new object[] { @class, generator });
+            HashSet<string> usings = new HashSet<string>();
+            GraphTraversal.TraverseFlowGraph(graph, (unit) =>
+            {
+                var type = unit.GetType();
+                var generator = unit.GetGenerator();
+
+                if (generator.GetType().IsDefined(typeof(RequiresVariablesAttribute), true))
+                {
+                    if (generator is IRequireVariables variables)
+                    {
+                        foreach (var variable in variables.GetRequiredVariables(data))
+                        {
+                            @class.AddField(variable);
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError(generator.GetType().DisplayName() + "Requires Variables does not implement IRequiresVariables");
+                    }
+                }
+
+                if (generator.GetType().IsDefined(typeof(RequiresMethodsAttribute), true))
+                {
+                    if (generator is IRequireMethods methods)
+                    {
+                        foreach (var method in methods.GetRequiredMethods(data))
+                        {
+                            @class.AddMethod(method);
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError(generator.GetType().DisplayName() + "Requires Methods but does not implement IRequiresMethods");
+                    }
+                }
+
+                HandleOtherGenerators(@class, generator);
+
+                if (_specialUnitTypes.Contains(type))
+                {
+                    _specialUnits.Add(unit);
+                }
+
+                if (generator is InterfaceNodeGenerator interfaceNodeGenerator)
+                {
+                    foreach (var interfaceType in interfaceNodeGenerator.InterfaceTypes)
+                    {
+                        @class.ImplementInterface(interfaceType);
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(generator.NameSpaces))
+                {
+                    var namespaces = generator.NameSpaces.Split(',');
+                    foreach (var ns in namespaces)
+                    {
+                        usings.Add(ns.Replace("`", ",").Trim());
+                    }
+                }
+            });
+            return usings;
         }
 
-        private void HandleOtherGenerators<T>(ClassGenerator @class, NodeGenerator generator) where T : Unit
+        private void ProcessProperty(ClassFieldDeclaration variableData, ClassGenerator @class)
         {
-            if (generator is VariableNodeGenerator<T> variableGenerator)
+            var property = PropertyGenerator.Property(variableData.scope, variableData.propertyModifier, variableData.type, variableData.name, variableData.defaultValue != null, variableData.getterScope, variableData.setterScope);
+            property.Default(variableData.defaultValue);
+            AddAttributesToProperty(property, variableData.attributes);
+
+            // Handle getter
+            if (variableData.get)
             {
-                var count = 0;
-                while (@class.fields.Any(field => field.name == variableGenerator.Name))
-                {
-                    variableGenerator.count = count;
-                    count++;
-                }
-                @class.AddField(FieldGenerator.Field(variableGenerator.AccessModifier, variableGenerator.FieldModifier, variableGenerator.Type, variableGenerator.Name));
+                data.EnterMethod();
+                data.SetExpectedType(variableData.type);
+                data.SetGraphPointer(variableData.getter.GetReference().AsReference());
+                data.SetReturns(variableData.type);
+                @class.AddUsings(ProcessGraphUnits(variableData.getter.graph, @class));
+                property.MultiStatementGetter(variableData.getterScope, (variableData.getter.graph.units[0] as Unit).GenerateControl(null, data, 0));
+                if (!data.HasReturned && !property.IsAutoImplemented()) property.SetWarning("Not all code paths return a value");
+                data.ExitMethod();
             }
-            else if (generator is MethodNodeGenerator<T> methodGenerator)
+
+            // Handle setter
+            if (variableData.set)
             {
-                var count = 0;
-                while (@class.methods.Any(method => method.name == methodGenerator.Name))
+                data.EnterMethod();
+                data.SetExpectedType(variableData.type);
+                data.SetGraphPointer(variableData.setter.GetReference().AsReference());
+                @class.AddUsings(ProcessGraphUnits(variableData.setter.graph, @class));
+                property.MultiStatementSetter(variableData.setterScope, (variableData.setter.graph.units[0] as Unit).GenerateControl(null, data, 0));
+                data.ExitMethod();
+            }
+
+            @class.AddProperty(property);
+        }
+
+        private void ProcessField(ClassFieldDeclaration variableData, ClassGenerator @class)
+        {
+            var field = FieldGenerator.Field(variableData.scope, variableData.fieldModifier, variableData.type, variableData.name, variableData.defaultValue);
+            AddAttributesToField(field, variableData.attributes);
+            @class.AddField(field);
+        }
+
+        private void AddAttributesToProperty(PropertyGenerator property, List<AttributeDeclaration> attributes)
+        {
+            foreach (var attribute in attributes)
+            {
+                var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
+                AddParametersToAttribute(attrGenerator, attribute.parameters);
+                AddFieldParametersToAttribute(attrGenerator, attribute.fields);
+                property.AddAttribute(attrGenerator);
+            }
+        }
+
+        private void AddAttributesToField(FieldGenerator field, List<AttributeDeclaration> attributes)
+        {
+            foreach (var attribute in attributes)
+            {
+                var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
+                AddParametersToAttribute(attrGenerator, attribute.parameters);
+                AddFieldParametersToAttribute(attrGenerator, attribute.fields);
+                field.AddAttribute(attrGenerator);
+            }
+        }
+
+        private void AddFieldParametersToAttribute(AttributeGenerator attrGenerator, Dictionary<string, object> fields)
+        {
+            foreach (var item in fields)
+            {
+                attrGenerator.AddParameter(item.Key, item.Value);
+            }
+        }
+
+        private void AddParametersToAttribute(AttributeGenerator attrGenerator, List<TypeParam> parameters)
+        {
+            foreach (var param in parameters)
+            {
+                if (param.defaultValue is IList list)
                 {
-                    methodGenerator.count = count;
-                    count++;
+                    if (param.modifier == Libraries.CSharp.ParameterModifier.Params)
+                    {
+                        foreach (var item in list)
+                        {
+                            attrGenerator.AddParameter(item);
+                        }
+                    }
+                    else
+                    {
+                        attrGenerator.AddParameter(param.defaultValue);
+                    }
                 }
-                var method = MethodGenerator.Method(methodGenerator.AccessModifier, methodGenerator.MethodModifier, methodGenerator.Type, methodGenerator.Name);
+                else if (!attrGenerator.parameterValues.Contains(param))
+                {
+                    attrGenerator.AddParameter(param.defaultValue);
+                }
+            }
+        }
+
+        private ParameterGenerator CreateParameter(TypeParam parameter)
+        {
+            return ParameterGenerator.Parameter(
+                parameter.name,
+                parameter.type,
+                parameter.modifier,
+                parameter.attributes,
+                parameter.hasDefault,
+                parameter.defaultValue
+            );
+        }
+
+        public override ControlGenerationData CreateGenerationData()
+        {
+            data = new ControlGenerationData(Data.inheritsType ? Data.GetInheritedType() : typeof(object), null);
+            foreach (var variable in Data.variables)
+            {
+                if (!string.IsNullOrEmpty(variable.FieldName))
+                    data.AddLocalNameInScope(variable.FieldName, variable.type);
+            }
+            return data;
+        }
+
+        private void AddMethodAttributes(MethodGenerator method, ClassMethodDeclaration methodData)
+        {
+            foreach (var attribute in methodData.attributes)
+            {
+                var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
+                foreach (var param in attribute.parameters)
+                {
+                    attrGenerator.AddParameter(param.defaultValue);
+                }
+                AddFieldParametersToAttribute(attrGenerator, attribute.fields);
+                method.AddAttribute(attrGenerator);
+            }
+        }
+        Dictionary<Type, int> generatorCounts = new Dictionary<Type, int>();
+        private void HandleOtherGenerators(ClassGenerator @class, NodeGenerator generator)
+        {
+            if (generator is VariableNodeGenerator variableGenerator)
+            {
+                var type = variableGenerator.unit.GetType();
+                if (!generatorCounts.ContainsKey(type))
+                {
+                    generatorCounts[type] = 0;
+                }
+                variableGenerator.count = generatorCounts[type];
+                generatorCounts[type]++;
+                var field = FieldGenerator.Field(variableGenerator.AccessModifier, variableGenerator.FieldModifier, variableGenerator.Type, variableGenerator.Name, variableGenerator.HasDefaultValue ? variableGenerator.DefaultValue : null);
+                field.SetLiteral(variableGenerator.Literal);
+                field.SetNewlineLiteral(variableGenerator.NewLineLiteral);
+                field.SetNew(variableGenerator.IsNew);
+                @class.AddField(field);
+            }
+            else if (generator is MethodNodeGenerator methodGenerator && !(methodGenerator.unit is IEventUnit))
+            {
+                var type = methodGenerator.unit.GetType();
+                if (!generatorCounts.ContainsKey(type))
+                {
+                    generatorCounts[type] = 0;
+                }
+                methodGenerator.count = generatorCounts[type];
+                generatorCounts[type]++;
+                foreach (var item in @class.fields)
+                {
+                    if (!data.ContainsNameInAnyScope(item.name))
+                        data.AddLocalNameInScope(item.name, item.type);
+                }
+                var method = MethodGenerator.Method(methodGenerator.AccessModifier, methodGenerator.MethodModifier, methodGenerator.ReturnType, methodGenerator.Name);
+                method.AddGenerics(methodGenerator.GenericCount);
+
                 foreach (var param in methodGenerator.Parameters)
                 {
-                    method.AddParameter(ParameterGenerator.Parameter(param.name, param.type, ParameterModifier.None));
+                    if (methodGenerator.GenericCount == 0 || !param.usesGeneric)
+                        method.AddParameter(ParameterGenerator.Parameter(param.name, param.type, param.modifier));
+                    else if (methodGenerator.GenericCount > 0 && param.usesGeneric)
+                    {
+                        var genericString = method.generics[param.generic].name;
+                        method.AddParameter(ParameterGenerator.Parameter(param.name, genericString.TypeHighlight(), param.type, param.modifier));
+                    }
+                }
+
+                if (methodGenerator.Attributes.Count > 0)
+                {
+                    foreach (var attribute in methodGenerator.Attributes)
+                    {
+                        var attrGenerator = AttributeGenerator.Attribute(attribute.GetAttributeType());
+                        foreach (var param in attribute.parameters)
+                        {
+                            if (param.defaultValue is IList list)
+                            {
+                                if (param.modifier == Libraries.CSharp.ParameterModifier.Params)
+                                {
+                                    foreach (var item in list)
+                                    {
+                                        attrGenerator.AddParameter(item);
+                                    }
+                                }
+                                else if (!attrGenerator.parameterValues.Contains(param))
+                                {
+                                    attrGenerator.AddParameter(param.defaultValue);
+                                }
+                            }
+                            else if (!attrGenerator.parameterValues.Contains(param))
+                            {
+                                attrGenerator.AddParameter(param.defaultValue);
+                            }
+                        }
+                        foreach (var item in attribute.fields)
+                        {
+                            attrGenerator.AddParameter(item.Key, item.Value);
+                        }
+                        method.AddAttribute(attrGenerator);
+                    }
                 }
 
                 foreach (var variable in Data.variables)
                 {
-                    methodGenerator.Data.AddLocalNameInScope(variable.FieldName);
+                    if (!data.ContainsNameInAnyScope(variable.name))
+                        data.AddLocalNameInScope(variable.FieldName, variable.type);
                 }
-                method.Body(methodGenerator.MethodBody);
+                methodGenerator.Data = data;
+                methodGenerator.Data.SetReturns(methodGenerator.ReturnType);
+                methodGenerator.Data.EnterMethod();
+                var MethodBody = methodGenerator.MethodBody;
+                method.Body(MethodBody ?? methodGenerator.GenerateControl(null, data, 0));
+                methodGenerator.Data.ExitMethod();
                 @class.AddMethod(method);
             }
         }

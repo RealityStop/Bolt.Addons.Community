@@ -7,6 +7,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
     {
         public static string AsString(this AccessModifier scope)
         {
+            if (scope == AccessModifier.None) return string.Empty;
             var output = EnumToLower(scope);
 
             if (scope == AccessModifier.PrivateProtected || scope == AccessModifier.ProtectedInternal) output = output.Add().Space().Between().Lowercase().And().Uppercase();

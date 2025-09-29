@@ -11,6 +11,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public List<StructGenerator> structs = new List<StructGenerator>();
         public List<EnumGenerator> enums = new List<EnumGenerator>();
         public List<InterfaceGenerator> interfaces = new List<InterfaceGenerator>();
+        public string beforeUsings;
 
         private NamespaceGenerator() { }
 
@@ -70,7 +71,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         protected override string GenerateBefore(int indent)
         {
-            var output = string.Empty;
+            var output = string.IsNullOrEmpty(beforeUsings) ? string.Empty : CodeBuilder.Indent(indent) + beforeUsings + "\n";
             var _usings = Usings();
             usings.MergeUnique(_usings);
             for (int i = 0; i < usings.Count; i++)
@@ -78,7 +79,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 if (!string.IsNullOrEmpty(usings[i])) output += "using".ConstructHighlight() + " " + usings[i] + ";" + ((i < usings.Count - 1) ? "\n" : string.Empty);
             }
             if (output.Contains("using")) output += string.IsNullOrEmpty(@namespace) ? "\n" : "\n\n";
-            return (!string.IsNullOrEmpty(@namespace) ? output + "namespace ".ConstructHighlight() + @namespace : output);
+            return !string.IsNullOrEmpty(@namespace) ? output + "namespace ".ConstructHighlight() + @namespace : output;
         }
 
         protected override string GenerateBody(int indent)

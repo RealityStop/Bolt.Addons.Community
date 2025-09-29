@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(SelectOnFlow))]
-    public class SelectOnFlowGenerator : MethodNodeGenerator<SelectOnFlow>
+    public class SelectOnFlowGenerator : MethodNodeGenerator
     {
         public SelectOnFlowGenerator(SelectOnFlow unit) : base(unit)
         {
@@ -27,12 +27,18 @@ namespace Unity.VisualScripting.Community
         {
             get => string.IsNullOrEmpty(_name) ? $"SelectOnFlow{count}" : _name;
         }
+        private SelectOnFlow Unit => unit as SelectOnFlow;
+        public override Type ReturnType => typeof(void);
 
-        public override Type Type => typeof(void);
+        public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(0, "value") };
 
-        public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(object), "value") };
+        public override string MethodBody => GetNextUnit(OutputPort, Data, 0);
 
-        public override string MethodBody => GetNextUnit(Unit.exit, Data, 0);
+        public override int GenericCount => 1;
+
+        public override ControlOutput OutputPort => Unit.exit;
+
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>() {Unit.selection};
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
@@ -46,13 +52,13 @@ namespace Unity.VisualScripting.Community
             {
                 _name = "";
             }
-            output += CodeBuilder.Indent(indent) + CodeUtility.MakeSelectable(Unit, Name + (Unit.branches[input].hasValidConnection ? "(" + CodeUtility.MakeSelectable(Unit.branches[input].connection.source.unit as Unit, GenerateValue(Unit.branches[input])) + ")" : "(" + GenerateValue(Unit.branches[input])) + ");") + "\n";
+            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(Name + "(") + GenerateValue(Unit.branches[input], data) + MakeClickableForThisUnit(");") + "\n";
             return output;
         }
 
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return CodeUtility.MakeSelectable(Unit, "value".VariableHighlight());
+            return MakeClickableForThisUnit("value".VariableHighlight());
         }
     }
 }

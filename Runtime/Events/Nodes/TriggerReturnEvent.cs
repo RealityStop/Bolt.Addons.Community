@@ -17,7 +17,7 @@ namespace Unity.VisualScripting.Community
         /// <summary>
         /// Overrides the hook name that the Event Bus calls to decipher different event types.
         /// </summary>
-        protected override string hookName => "TriggerReturn";
+        protected override string hookName => CommunityEvents.TriggerReturnEvent;
 
         [Serialize]
         private int _count;
@@ -128,7 +128,7 @@ namespace Unity.VisualScripting.Community
             var eventData = new ReturnEventData(new ReturnEventArg(this, global ? (GameObject)null : flow.GetValue<GameObject>(target), flow.GetValue<string>(name), global, argumentList.ToArray()));
             argumentList.Add(eventData);
             argumentList.AddRange(arguments.Select(new System.Func<ValueInput, object>(flow.GetConvertedValue)));
-            ReturnEvent.Trigger(this, global ? (GameObject)null : flow.GetValue<GameObject>(target), flow.GetValue<string>(name), global, argumentList.ToArray());
+            ReturnEvent.Trigger(this, global ? (GameObject)null : flow?.GetValue<GameObject>(target), flow?.GetValue<string>(name), global, argumentList.ToArray());
           
             return exit;
         }
@@ -146,8 +146,8 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         public static void Trigger(ReturnEventArg args)
         {
-            if (args.global) { EventBus.Trigger<ReturnEventArg>("TriggerReturn", args); return; }
-            EventBus.Trigger<ReturnEventArg>("TriggerReturn", args);
+            if (args.global) { EventBus.Trigger<ReturnEventArg>(CommunityEvents.TriggerReturnEvent, args); return; }
+            EventBus.Trigger<ReturnEventArg>(CommunityEvents.TriggerReturnEvent, args);
         }
 
         /// <summary>

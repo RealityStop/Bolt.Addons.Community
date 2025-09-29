@@ -5,14 +5,30 @@ using System;
 namespace Unity.VisualScripting.Community
 {
     [Serializable]
-    public abstract class CodeGenerator : Decorator<CodeGenerator, CodeGeneratorAttribute, object>, ICodeGenerator
+    public abstract class CodeGenerator : Decorator<CodeGenerator, CodeGeneratorAttribute, object>, ICodeGenerator, ICreateGenerationData
     {
+
+        public ControlGenerationData data { get; protected set; }
+
+        public virtual ControlGenerationData GetGenerationData()
+        {
+            if (data == null || data.isDisposed)
+            {
+                data = CreateGenerationData();
+            }
+            return data;
+        }
+
+        public abstract ControlGenerationData CreateGenerationData();
+        
         public abstract string Generate(int indent);
 
         public string GenerateClean(int indent)
         {
-            return CodeUtility.RemoveAllSelectableTags(CodeUtility.RemoveCustomHighlights(Generate(indent).RemoveHighlights().RemoveMarkdown()));
+            var generatedCode = CodeUtility.CleanCode(Generate(indent).RemoveHighlights().RemoveMarkdown());
+            return generatedCode;
         }
+
     }
 
     [Serializable]

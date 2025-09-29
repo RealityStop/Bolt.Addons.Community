@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3e9aafafc06bb84386caa9ca71df80c, type: 3}
+  m_Name: CreateVector3XYZSnippet
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"sourceType":{"type":"UnityEngine.Vector3","qualifiedName":"UnityEngine.Vector3,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"},"_sourceUnit":{"sourceType":"UnityEngine.Vector3","defaultValues":{},"position":{"x":0.0,"y":0.0},"guid":"c0d7e425-a4c5-41bb-8cd8-d0b4652f1375","$version":"A","$id":"2"},"SnippetName":"CreateVector3","snippetArguments":[{"argumentName":"X","argumentType":"System.Single"},{"argumentName":"Y","argumentType":"System.Single"},{"argumentName":"Z","argumentType":"System.Single"}],"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":32.0,"y":55.0},"zoom":1.0,"elements":[{"$ref":"2"},{"argumentName":"X","defaultValues":{},"position":{"x":-308.0,"y":-4.0},"guid":"3dcc4b95-44bc-468e-b98f-c462a45050ed","$version":"A","$type":"SnippetInputNode","$id":"16"},{"argumentName":"Y","defaultValues":{},"position":{"x":-307.0,"y":95.0},"guid":"aa6aa7fd-9b27-47ae-a6d1-2846a7c91ce1","$version":"A","$type":"SnippetInputNode","$id":"18"},{"chainable":false,"parameterNames":["x","y","z"],"member":{"name":".ctor","parameterTypes":["System.Single","System.Single","System.Single"],"targetType":"UnityEngine.Vector3","targetTypeName":"UnityEngine.Vector3","$version":"A"},"defaultValues":{"%x":{"$content":0.0,"$type":"System.Single"},"%y":{"$content":0.0,"$type":"System.Single"},"%z":{"$content":0.0,"$type":"System.Single"}},"position":{"x":-141.0,"y":57.0},"guid":"f0d2eef4-7e98-47c0-aea9-3e0e6ce0f4e6","$version":"A","$type":"Unity.VisualScripting.InvokeMember","$id":"20"},{"argumentName":"Z","defaultValues":{},"position":{"x":-307.0,"y":197.0},"guid":"b1715e97-cb37-481c-84d7-402d464b417b","$version":"A","$type":"SnippetInputNode","$id":"24"},{"sourceUnit":{"$ref":"16"},"sourceKey":"output","destinationUnit":{"$ref":"20"},"destinationKey":"%x","guid":"1c54425a-e219-41c1-9d0d-538c0bff7f65","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"18"},"sourceKey":"output","destinationUnit":{"$ref":"20"},"destinationKey":"%y","guid":"90e14abe-3511-419b-bf49-6430e57f1556","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"24"},"sourceKey":"output","destinationUnit":{"$ref":"20"},"destinationKey":"%z","guid":"61b1c09a-7cca-438d-be2d-a9310727776a","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"20"},"sourceKey":"result","destinationUnit":{"$ref":"2"},"destinationKey":"source","guid":"9e76b382-90da-466e-8c38-4b7b88491500","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
+  SnippetName: CreateVector3
+  snippetArguments:
+  - argumentName: X
+  - argumentName: Y
+  - argumentName: Z
+  sourceType:
+    qualifiedName: UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null

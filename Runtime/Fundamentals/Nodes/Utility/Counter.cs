@@ -1,8 +1,9 @@
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Bolt.Addons.Community.Fundamentals.Units.Utility
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.CounterNode")]
     [UnitTitle("Counter")]
     [UnitCategory("Community\\Utility")]
     [TypeIcon(typeof(Add<object>))]

@@ -1,48 +1,62 @@
+
 using System;
-using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using System.Collections.Generic;
+using Unity.VisualScripting;
+using System.Linq;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
     [NodeGenerator(typeof(DelegateNode))]
-    public sealed class DelegateNodeGenerator : NodeGenerator<DelegateNode>
+    public class DelegateNodeGenerator : NodeGenerator<DelegateNode>
     {
-        public int indent = 0;
-        private bool shouldIndent;
-        public DelegateNodeGenerator(DelegateNode unit) : base(unit)
+        public DelegateNodeGenerator(Unit unit) : base(unit) { }
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+            if (output == Unit.@delegate || output == Unit.Callback)
+            {
+                data.CreateSymbol(Unit, Unit._delegate.GetDelegateType());
+                data.NewScope();
+                List<string> parameters = new List<string>();
+                for (int i = 0; i < Unit._delegate.GetDelegateType().GetGenericArguments().Length; i++)
+                {
+                    if (Unit._delegate is IFunc func)
+                    {
+                        data.SetReturns(func.ReturnType);
+                        foreach (var type in func.GetDelegateType().GetGenericArguments())
+                        {
+                            if (i < func.GetDelegateType().GetGenericArguments().Length - 1)
+                            {
+                                parameters.Add(data.AddLocalNameInScope("arg" + i, Unit._delegate.GetDelegateType().GetGenericArguments()[i]).VariableHighlight());
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var action = Unit._delegate as IAction;
+                        data.SetReturns(typeof(void));
+                        foreach (var type in action.GetDelegateType().GetGenericArguments())
+                        {
+                            parameters.Add(data.AddLocalNameInScope("arg" + i, Unit._delegate.GetDelegateType().GetGenericArguments()[i]).VariableHighlight());
+                        }
+                    }
+                }
+                var delegateCode = CodeBuilder.MultiLineLambda(Unit, MakeClickableForThisUnit(string.Join(", ", parameters)), GenerateControl(null, data, CodeBuilder.currentIndent) + (Unit._delegate is IFunc ? "\n" + CodeBuilder.GetCurrentIndent(Unit.invoke.hasValidConnection ? 0 : 1) + MakeClickableForThisUnit("return ".ControlHighlight()) + GenerateValue((Unit as FuncNode).@return, data) + MakeClickableForThisUnit(";") : string.Empty), Unit.invoke.hasValidConnection ? CodeBuilder.currentIndent - 1 : (Unit._delegate is IFunc ? CodeBuilder.currentIndent - 1 : CodeBuilder.currentIndent));
+                data.ExitScope();
+                return delegateCode;
+            }
+            else if (Unit.parameters.Contains(output) && (Unit.@delegate.hasValidConnection || Unit.Callback.hasValidConnection))
+            {
+                return MakeClickableForThisUnit(data.GetVariableName("arg" + Unit.parameters.IndexOf(output)).VariableHighlight());
+            }
+            else return base.GenerateValue(output, data);
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            this.indent = indent + 1;
-            var output = string.Empty;
-            shouldIndent = true;
-            output += CodeUtility.MakeSelectable(Unit, $"({GetParameters()}) => \n{{\n{CodeBuilder.Indent(indent)}{(Unit.invoke.hasAnyConnection ? (Unit.invoke.connection.destination.unit as Unit).GenerateControl(Unit.invoke.connection.destination, new ControlGenerationData(), indent + 1) : string.Empty)}{(Unit is FuncNode func ? GenerateValue(func.@return) : string.Empty)}\n}}");
-            return output;
-        }
-
-        private string GetParameters()
-        {
-            return string.Join(", ", Unit.parameters.Select(param => param.key));
-        }
-
-        public override string GenerateValue(ValueOutput output)
-        {
-            return output.key;
-        }
-
-        public override string GenerateValue(ValueInput input)
-        {
-            if(Unit is FuncNode funcNode)
-            {
-                if(input == funcNode.@return && funcNode.@return.hasValidConnection)
-                {
-                    return CodeUtility.MakeSelectable(input.connection.source.unit as Unit, (shouldIndent ? CodeBuilder.Indent(indent) : string.Empty) + "return".ControlHighlight() + " " + (input.connection.source.unit as Unit).GenerateValue(input.connection.source) + ";");
-                }
-            }
-            return base.GenerateValue(input);
+            return GetNextUnit(Unit.invoke, data, indent + 1).TrimEnd();
         }
     }
 }

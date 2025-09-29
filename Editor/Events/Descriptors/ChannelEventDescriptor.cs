@@ -1,29 +1,13 @@
-using Bolt.Addons.Community.Fundamentals;
-using System;
-using Unity.VisualScripting;
-using UnityEngine;
-
-[Descriptor(typeof(ChannelEvent))]
-public class ChannelEventDescriptor : UnitDescriptor<ChannelEvent>
+namespace Unity.VisualScripting.Community
 {
-    public ChannelEventDescriptor(ChannelEvent unit) : base(unit) { }
-
-    protected override void DefinedPort(IUnitPort port, UnitPortDescription description)
+    [Descriptor(typeof(ChannelEvent))]
+    public class ChannelEventDescriptor : UnitDescriptor<ChannelEvent>
     {
-        base.DefinedPort(port, description);
-        switch (port.key)
+        public ChannelEventDescriptor(ChannelEvent unit) : base(unit) { }
+
+        protected override string DefinedSummary()
         {
-            case "trigger":
-                description.summary = "Triggers when any" +
-                    "<b>TriggerChannelEvent</b> node gets Triggered no matter the channel";
-                description.label = "Trigger";
-                break;
+            return "Triggers when an event occurs on the chosen channel.";
         }
-    }
-
-    protected override string DefinedSummary()
-    {
-        return "You cannot change the channel after" +
-            " the game has started changing it has no effect";
     }
 }

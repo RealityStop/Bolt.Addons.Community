@@ -9,7 +9,9 @@ namespace Unity.VisualScripting.Community
     /// <summary>
     /// The Unit that returns your flow and value back to the Complete port of the initial trigger unit.
     /// </summary>
-    [UnitCategory("Events/Community/Returns")][UnitShortTitle("Return")][UnitSubtitle("Return Event")]
+    [UnitCategory("Events/Community/Returns")]
+    [UnitShortTitle("Return")]
+    [UnitSubtitle("Return Event")]
     [RenamedFrom("Lasm.BoltExtensions.EventReturn")]
     [RenamedFrom("Lasm.UAlive.EventReturn")]
     [RenamedFrom("Bolt.Addons.Community.ReturnEvents.EventReturn")]
@@ -56,6 +58,8 @@ namespace Unity.VisualScripting.Community
         {
             var _data = flow.GetValue<ReturnEventData>(data);
             var val = flow.GetValue(value);
+
+
             if (_data.args.trigger != null) _data.args.trigger.storingValue = val;
             if (_data.args.isCallback)
             {
@@ -65,6 +69,18 @@ namespace Unity.VisualScripting.Community
             {
                 TriggerReturnEvent.Trigger(_data.args);
             }
+
+            // I feel like this node should act more like a actual C# return.
+            // Do to this it should break any and all loops in the method and stop the flow completely.
+            // but flow.Dispose causes problems so i doubt this is possible
+
+            // if(flow.currentLoop != -1)
+            // {
+            //     flow.BreakLoop();
+            // }
+
+            // flow.Dispose();
+
             return null;
         }
     }

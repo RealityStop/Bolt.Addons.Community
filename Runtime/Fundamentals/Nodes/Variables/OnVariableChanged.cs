@@ -2,11 +2,11 @@
 
 namespace Unity.VisualScripting.Community
 {
-     [SpecialUnit]
-     [UnitCategory("Events/Community/Variables")]
-     [RenamedFrom("Bolt.Addons.Community.Fundamentals.OnVariableChanged")]
-     public sealed class OnVariableChanged : MachineEventUnit<EmptyEventArgs>, IUnifiedVariableUnit
-     {
+    [SpecialUnit]
+    [UnitCategory("Events/Community/Variables")]
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.OnVariableChanged")]
+    public sealed class OnVariableChanged : MachineEventUnit<EmptyEventArgs>, IUnifiedVariableUnit
+    {
         public new class Data : EventUnit<EmptyEventArgs>.Data
         {
             public object _previousValue;
@@ -79,14 +79,9 @@ namespace Unity.VisualScripting.Community
                 Requirement(Initial, value);
             }
 
-
             if (kind == VariableKind.Object)
             {
                 @object = ValueInput<GameObject>(nameof(@object), null).NullMeansSelf();
-            }
-
-            if (kind == VariableKind.Object)
-            {
                 Requirement(@object, value);
             }
         }
@@ -143,7 +138,7 @@ namespace Unity.VisualScripting.Community
                     data._previousValue = val;
 
 
-            
+
             bool equal = OperatorUtility.Equal(data._previousValue, val);
             if (!equal)
             {
@@ -155,5 +150,5 @@ namespace Unity.VisualScripting.Community
 
             return !equal;
         }
-     }
+    }
 }

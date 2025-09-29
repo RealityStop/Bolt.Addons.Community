@@ -1,3 +1,4 @@
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
 using UnityEngine;
@@ -18,15 +19,28 @@ namespace Unity.VisualScripting.Community
                 settings.name = "CSharpPreviewSettings";
                 AssetDatabase.CreateAsset(settings, path + "CSharpPreviewSettings.asset");
                 settings.Initalize();
+                settings.VariableColor = settings.VariableColor.WithAlpha(1f);
+                settings.StringColor = settings.StringColor.WithAlpha(1f);
+                settings.NumericColor = settings.NumericColor.WithAlpha(1f);
+                settings.ConstructColor = settings.ConstructColor.WithAlpha(1f);
+                settings.TypeColor = settings.TypeColor.WithAlpha(1f);
+                settings.EnumColor = settings.EnumColor.WithAlpha(1f);
+                settings.InterfaceColor = settings.InterfaceColor.WithAlpha(1f);
             }
-
-            CSharpPreview.NumericColor = settings.NumericColor;
-            CSharpPreview.EnumColor = settings.EnumColor;
-            CSharpPreview.ConstructColor = settings.ConstructColor;
-            CSharpPreview.VariableColor = settings.VariableColor;
-            CSharpPreview.StringColor = settings.StringColor;
-            CSharpPreview.InterfaceColor = settings.InterfaceColor;
-            CSharpPreview.TypeColor = settings.TypeColor;
+            else if (!settings.isInitalized)
+            {
+                settings.Initalize();
+                settings.VariableColor = settings.VariableColor.WithAlpha(1f);
+                settings.StringColor = settings.StringColor.WithAlpha(1f);
+                settings.NumericColor = settings.NumericColor.WithAlpha(1f);
+                settings.ConstructColor = settings.ConstructColor.WithAlpha(1f);
+                settings.TypeColor = settings.TypeColor.WithAlpha(1f);
+                settings.EnumColor = settings.EnumColor.WithAlpha(1f);
+                settings.InterfaceColor = settings.InterfaceColor.WithAlpha(1f);
+            }
+            CSharpPreviewSettings.ShouldShowRecommendations = settings.showRecommendations;
+            CSharpPreviewSettings.ShouldGenerateTooltips = settings.showTooltips;
+            CSharpPreviewSettings.ShouldShowSubgraphComment = settings.showSubgraphComment;
         }
     }
 }

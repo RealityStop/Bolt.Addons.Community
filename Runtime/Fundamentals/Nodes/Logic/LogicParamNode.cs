@@ -43,7 +43,7 @@ namespace Unity.VisualScripting.Community
         [Serialize]
         [Inspectable]
         [InspectorLabel("[[ = ]] Numeric")]
-       [InspectableIf(nameof(supportsNumeric))]
+        [InspectableIf(nameof(supportsNumeric))]
         public bool Numeric = false;
 
 

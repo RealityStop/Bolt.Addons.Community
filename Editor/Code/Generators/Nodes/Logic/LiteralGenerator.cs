@@ -1,6 +1,7 @@
 ﻿using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
@@ -9,19 +10,18 @@ namespace Unity.VisualScripting.Community
     {
         public LiteralGenerator(Literal unit) : base(unit)
         {
-            NameSpace = Unit.value.GetType().Namespace;
+
         }
 
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            if (!(Unit.type.GenericTypeArguments.Length > 0))
+            if (data.GetExpectedType()?.IsAssignableFrom(Unit.type) ?? false)
             {
-                return Unit.value.As().Code(true, true, true, "");
+                data.SetCurrentExpectedTypeMet(true, Unit.type);
             }
-            else 
-            {
-                return "new ".ConstructHighlight() + HUMType_Children.GenericDeclaration(Unit.type) + "()";
-            }
+            if (Unit.value != null)
+                NameSpaces = Unit.value.GetType().Namespace;
+            return Unit.value.As().Code(true, Unit, true, true, "", false, true);
         }
     }
 }

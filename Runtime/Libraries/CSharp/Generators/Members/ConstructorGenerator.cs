@@ -1,5 +1,6 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections.Generic;
+using Unity.VisualScripting.Community.Utility;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -7,21 +8,28 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
     public sealed class ConstructorGenerator : MemberBodyGenerator
     {
         private ConstructorModifier modifier;
-        private List<(bool hasBase, ParameterGenerator generator)> parameters = new List<(bool hasBase, ParameterGenerator generator)>();
+        public List<(bool useInCall, ParameterGenerator generator)> parameters { get; private set; } = new List<(bool useInCall, ParameterGenerator generator)>();
         private List<AttributeGenerator> attributes = new List<AttributeGenerator>();
         private string body;
+
+        public List<string> callChainParameters = new List<string>();
+
+        private ConstructorInitializer callType;
 
         private ConstructorGenerator() { }
 
         /// <summary>
         /// Create a new constructor.
         /// </summary>
-        public static ConstructorGenerator Constructor(AccessModifier scope, ConstructorModifier modifier, string name)
+        public static ConstructorGenerator Constructor(AccessModifier scope, ConstructorModifier modifier, ConstructorInitializer callType, string name)
         {
-            var constructor = new ConstructorGenerator();
-            constructor.scope = scope;
-            constructor.modifier = modifier;
-            constructor.name = name;
+            var constructor = new ConstructorGenerator
+            {
+                scope = scope,
+                modifier = modifier,
+                name = name,
+                callType = callType
+            };
             return constructor;
         }
 
@@ -34,20 +42,21 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
             var modSpace = modifier == ConstructorModifier.None ? string.Empty : " ";
             var parameters = string.Empty;
-            var baseParameters = string.Empty;
 
             for (int i = 0; i < this.parameters.Count; i++)
             {
                 parameters += this.parameters[i].generator.Generate(0);
                 if (i < this.parameters.Count - 1) parameters += ", ";
-                if (this.parameters[i].hasBase)
+                if (this.parameters[i].useInCall)
                 {
-                    baseParameters += this.parameters[i].generator.name;
-                    if (i < this.parameters.Count - 1) baseParameters += ", ";
+                    callChainParameters.Add(this.parameters[i].generator.name.VariableHighlight());
                 }
             }
 
-            return attributes + CodeBuilder.Indent(indent) + scope.AsString().ToLower().ConstructHighlight() + " " + modifier.AsString().ConstructHighlight() + modSpace + name.LegalMemberName().TypeHighlight() + "(" + parameters + ")" + (string.IsNullOrEmpty(baseParameters) ? string.Empty : " : base(" + baseParameters + ")");
+            var _callChainParameters = string.Empty;
+            _callChainParameters = string.Join(", ", callChainParameters);
+            string callChain = callType != ConstructorInitializer.None ? $" : {(callType == ConstructorInitializer.Base ? "base" : "this").ConstructHighlight()}(" + _callChainParameters + ")" : string.Empty;
+            return attributes + CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + name.LegalMemberName().TypeHighlight() + "(" + parameters + ")" + callChain;
         }
 
         protected override sealed string GenerateBody(int indent)
@@ -66,9 +75,21 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return this;
         }
 
-        public ConstructorGenerator AddParameter(bool hasBase, ParameterGenerator parameter)
+        public ConstructorGenerator AddParameter(bool useInCall, ParameterGenerator parameter)
         {
-            parameters.Add((hasBase, parameter));
+            parameters.Add((useInCall, parameter));
+            return this;
+        }
+
+        public ConstructorGenerator AddBaseParameters(List<string> parameterNames)
+        {
+            callChainParameters.AddRange(parameterNames);
+            return this;
+        }
+
+        public ConstructorGenerator AddBaseParameter(string parameterName)
+        {
+            callChainParameters.Add(parameterName);
             return this;
         }
 

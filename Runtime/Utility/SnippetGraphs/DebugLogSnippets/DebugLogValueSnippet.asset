@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e57c036929169040a5d784c8a5618e5, type: 3}
+  m_Name: DebugLogValueSnippet
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"SnippetName":"DebugLog","snippetArguments":[{"argumentName":"value","argumentType":"System.String"}],"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":403.0,"y":100.0},"zoom":1.0,"elements":[{"defaultValues":{},"position":{"x":0.0,"y":0.0},"guid":"2f1ff1d7-b53f-451c-b43e-cd1b31dc0af1","$version":"A","$type":"Unity.VisualScripting.Community.SnippetControlSourceUnit","$id":"11"},{"chainable":false,"parameterNames":["message"],"member":{"name":"Log","parameterTypes":["System.Object"],"targetType":"UnityEngine.Debug","targetTypeName":"UnityEngine.Debug","$version":"A"},"defaultValues":{},"position":{"x":220.0,"y":51.0},"guid":"756cc832-34f2-42f9-9bb6-dddfe9407076","$version":"A","$type":"Unity.VisualScripting.InvokeMember","$id":"13"},{"argumentName":"value","defaultValues":{},"position":{"x":-9.0,"y":98.0},"guid":"8eb466cc-5ef2-4fa5-a45e-fe6eec80c814","$version":"A","$type":"SnippetInputNode","$id":"17"},{"sourceUnit":{"$ref":"11"},"sourceKey":"source","destinationUnit":{"$ref":"13"},"destinationKey":"enter","guid":"2134b0f1-e313-4c5e-b3c4-9ec403e24029","$type":"Unity.VisualScripting.ControlConnection"},{"sourceUnit":{"$ref":"17"},"sourceKey":"output","destinationUnit":{"$ref":"13"},"destinationKey":"%message","guid":"8ba0f717-b3e6-4928-9437-5b546ea487b4","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
+  SnippetName: DebugLog
+  snippetArguments:
+  - argumentName: value

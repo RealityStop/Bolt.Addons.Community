@@ -29,12 +29,13 @@ namespace Unity.VisualScripting.Community
 
         public bool isProperty;
         public bool get = true;
+        public AccessModifier getterScope;
         public bool set = true;
+        public AccessModifier setterScope;
 
         public List<AttributeDeclaration> attributes = new List<AttributeDeclaration>();
 
-        public ClassAsset classAsset;
-        public StructAsset structAsset;
+        public CodeAsset parentAsset;
 
         public PropertyGetterMacro getter;
         public PropertySetterMacro setter;
@@ -43,6 +44,7 @@ namespace Unity.VisualScripting.Community
         [HideInInspector]
         private string qualifiedName;
 
+        public Action OnChanged;
 #if UNITY_EDITOR
         public bool opened;
         public bool propertyOpened;

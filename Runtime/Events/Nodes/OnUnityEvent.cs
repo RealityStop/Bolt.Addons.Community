@@ -7,7 +7,6 @@ using UnityEngine.Events;
 
 namespace Unity.VisualScripting.Community
 {
-
     internal class OnUnityEventData : EventUnit<EventData>.Data
     {
         public object EventListener { get; set; }
@@ -40,7 +39,6 @@ namespace Unity.VisualScripting.Community
         protected override void Definition()
         {
             base.Definition();
-
             UnityEvent = ValueInput<UnityEventBase>("event");
 
             if (Type != null)
@@ -59,9 +57,9 @@ namespace Unity.VisualScripting.Community
 
             if (data.EventListener != null || !UnityEvent.hasValidConnection) return;
 
+            var stackRef = stack.ToReference();
             UpdatePorts();
 
-            var stackRef = stack.ToReference();
             var eventBase = Flow.FetchValue<UnityEventBase>(UnityEvent, stackRef);
             var method = Type.GetMethod(nameof(UnityEngine.Events.UnityEvent.AddListener));
             var delegateType = method?.GetParameters()[0].ParameterType;
@@ -117,7 +115,6 @@ namespace Unity.VisualScripting.Community
             }
 
 #if ENABLE_IL2CPP
-
             if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.LinuxEditor || Application.platform == RuntimePlatform.OSXEditor)
             {
                 string methodName;
@@ -131,19 +128,17 @@ namespace Unity.VisualScripting.Community
 
                 return method?.MakeGenericMethod(delegateType.GetGenericArguments()).Invoke(this, new object[] { reference });
             }
-            else if (GetAotSupportMethodsType() != null)
+            else if (GetAotSupportMethodsType() is Type type)
             {
-                Type aotSupportMethodsType = GetAotSupportMethodsType();
+                Type aotSupportMethodsType = type;
                 var method = aotSupportMethodsType.GetMethods().First(method => method.ReturnType == delegateType);
-                return method?.Invoke(null, new object[] { reference, this });
+                return method?.InvokeOptimized(null, new object[] { reference, this });
             }
             else
             {
                 throw new InvalidOperationException("Could not find AOT Support Methods");
             }
- 
 #else
-
             string methodName;
 
             if (numParams == 1) methodName = nameof(OneParamHandler);
@@ -155,7 +150,6 @@ namespace Unity.VisualScripting.Community
 
             return method?.MakeGenericMethod(delegateType.GetGenericArguments()).Invoke(this, new object[] { reference });
 #endif
-
         }
 
         internal UnityAction<T1> OneParamHandler<T1>(GraphReference reference)
@@ -222,25 +216,26 @@ namespace Unity.VisualScripting.Community
         {
             return stack.GetElementData<OnUnityEventData>(this);
         }
-
+        private static Type AotSupportMethodsType;
+        private static bool aotSupportMethodsTypeChecked = false;
+        const string AotSupportTypeFullName = "Unity.VisualScripting.Community.Generated.AotSupportMethods";
         private Type GetAotSupportMethodsType()
         {
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            if (AotSupportMethodsType != null || aotSupportMethodsTypeChecked)
+                return AotSupportMethodsType;
 
-            foreach (Assembly assembly in assemblies)
+            aotSupportMethodsTypeChecked = true;
+            AotSupportMethodsType = Type.GetType("Unity.VisualScripting.Community.Generated.AotSupportMethods, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
+            if (AotSupportMethodsType == null)
             {
-                Type[] types = assembly.GetTypes();
-
-                foreach (Type type in types)
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
                 {
-                    if (type.Name == "AotSupportMethods")
-                    {
-                        return type;
-                    }
+                    AotSupportMethodsType = asm.GetType(AotSupportTypeFullName);
+                    if (AotSupportMethodsType != null)
+                        break;
                 }
             }
-            return null;
+            return AotSupportMethodsType;
         }
-
     }
 }

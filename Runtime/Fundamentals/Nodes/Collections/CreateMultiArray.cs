@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Reflection;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -20,17 +22,20 @@ namespace Unity.VisualScripting.Community
         /// <summary>
         /// The amount of dimensions we want this array to have. Max of 32 dimensions.
         /// </summary>
-        [Inspectable][UnitHeaderInspectable("Dimensions")]
+        [Inspectable]
+        [UnitHeaderInspectable("Dimensions")]
         public int dimensions
         {
-            get { return _dimensions; } set { _dimensions = Mathf.Clamp(value, 1, 32); }
+            get { return _dimensions; }
+            set { _dimensions = Mathf.Clamp(value, 1, 32); }
         }
 
         /// <summary>
         /// The type of this array.
         /// </summary>
         [Serialize]
-        [Inspectable][UnitHeaderInspectable("Type")]
+        [Inspectable]
+        [UnitHeaderInspectable("Type")]
         public System.Type type;
 
         /// <summary>
@@ -50,13 +55,28 @@ namespace Unity.VisualScripting.Community
         {
             indexes.Clear();
 
+            ValueInput previous = null;
+
             for (int i = 0; i < dimensions; i++)
             {
-                var dimension = ValueInput<int>(i.ToString() + " Length", 0);
-                indexes.Add(dimension);
+                var current = ValueInput($"{i} Length", 0);
+                indexes.Add(current);
+
+                if (previous != null)
+                {
+                    relations.Add(new UnitRelation(previous, current));
+                }
+
+                previous = current;
             }
 
-            result = ValueOutput<Array>("array", Create);
+            result = ValueOutput("array", Create);
+
+            if (previous != null)
+            {
+                relations.Add(new UnitRelation(previous, result));
+            }
+
         }
 
         private Array Create(Flow flow)
@@ -235,11 +255,54 @@ namespace Unity.VisualScripting.Community
 
                 case 32:
                     {
-                        return Array.CreateInstance(type, new int[] { lengths[0], lengths[1], lengths[2], lengths[3], lengths[4], lengths[5], lengths[6], lengths[7], lengths[8], lengths[9], lengths[10], lengths[11], lengths[12], lengths[13], lengths[14], lengths[15], lengths[16], lengths[17], lengths[18], lengths[19], lengths[20], lengths[21], lengths[22], lengths[23], lengths[24], lengths[25], lengths[26], lengths[27], lengths[28], lengths[29], lengths[30], lengths[31]});
+                        return Array.CreateInstance(type, new int[] { lengths[0], lengths[1], lengths[2], lengths[3], lengths[4], lengths[5], lengths[6], lengths[7], lengths[8], lengths[9], lengths[10], lengths[11], lengths[12], lengths[13], lengths[14], lengths[15], lengths[16], lengths[17], lengths[18], lengths[19], lengths[20], lengths[21], lengths[22], lengths[23], lengths[24], lengths[25], lengths[26], lengths[27], lengths[28], lengths[29], lengths[30], lengths[31] });
                     }
             }
 
             return null;
         }
+#if VISUAL_SCRIPTING_1_7
+        public override IEnumerable<object> GetAotStubs(HashSet<object> visited)
+        {
+            if (type == null) yield break;
+
+            for (int i = 1; i <= dimensions; i++)
+            {
+                var arrayType = type.MakeArrayType(i);
+
+                if (visited.Add(arrayType))
+                {
+                    foreach (var member in arrayType.GetSafeMembers())
+                    {
+                        if (member != null && visited.Add(member))
+                        {
+                            yield return member.info;
+                        }
+                    }
+                }
+            }
+        }
+#else
+        public override IEnumerable<object> aotStubs
+        {
+            get
+            {
+                if (type == null) yield break;
+
+                for (int i = 1; i <= dimensions; i++)
+                {
+                    var arrayType = type.MakeArrayType(i);
+
+                    foreach (var member in arrayType.GetSafeMembers())
+                    {
+                        if (member != null)
+                        {
+                            yield return member.info;
+                        }
+                    }
+                }
+            }
+        }
+#endif
     }
 }

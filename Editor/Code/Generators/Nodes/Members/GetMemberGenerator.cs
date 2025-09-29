@@ -6,112 +6,139 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
-[NodeGenerator(typeof(Unity.VisualScripting.GetMember))]
-public sealed class GetMemberGenerator : NodeGenerator<Unity.VisualScripting.GetMember>
+using System;
+
+namespace Unity.VisualScripting.Community
 {
-    public GetMemberGenerator(Unity.VisualScripting.GetMember unit) : base(unit)
+    [NodeGenerator(typeof(Unity.VisualScripting.GetMember))]
+    public sealed class GetMemberGenerator : NodeGenerator<Unity.VisualScripting.GetMember>
     {
-        NameSpace = Unit.member.declaringType.Namespace;
-    }
-
-    public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-    {
-        return base.GenerateControl(input, data, indent);
-    }
-
-    public override string GenerateValue(ValueOutput output)
-    {
-        if (Unit.target != null)
+        public GetMemberGenerator(Unity.VisualScripting.GetMember unit) : base(unit)
         {
-            if (Unit.target.hasValidConnection)
-            {
-                string type;
-
-                if (Unit.member.isField)
-                {
-                    type = Unit.member.fieldInfo.Name;
-                }
-                else if (Unit.member.isProperty)
-                {
-                    type = Unit.member.name;
-                }
-                else
-                {
-                    type = Unit.member.ToPseudoDeclarer().ToString();
-                }
-
-                string outputCode;
-
-                if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
-                {
-                    outputCode = new ValueCode($"{GenerateValue(Unit.target)}{GetComponent(Unit.target)}.{type}");
-                }
-                else
-                {
-                    outputCode = new ValueCode($"{GenerateValue(Unit.target)}.{type}");
-                }
-
-                return outputCode;
-            }
-            else
-            {
-                return $"{GenerateValue(Unit.target)}.{Unit.member.name}";
-            }
+            NameSpaces = Unit.member.declaringType.Namespace;
         }
-        else
-        {
-            return Unit.member.ToString();
-        }
-    }
 
-
-    public override string GenerateValue(ValueInput input)
-    {
-        if (Unit.target != null)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            if (input == Unit.target)
+            var builder = Unit.CreateClickableString();
+            if (Unit.target != null)
             {
                 if (Unit.target.hasValidConnection)
                 {
-                    if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
-                    {
-                        return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), typeof(GameObject), ShouldCast(input));
-                    }
-                    return new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), input.type, ShouldCast(input));
-                }
-                else if (Unit.target.hasDefaultValue)
-                {
-                    var defaultValue = Unit.defaultValues[input.key];
+                    string name;
 
-                    if (Unit.target.type == typeof(GameObject) || input.type.IsSubclassOf(typeof(Component)))
+                    if (Unit.member.isField)
                     {
-                        return "gameObject".VariableHighlight() + new ValueCode($"{GetComponent(Unit.target)}");
+                        name = Unit.member.fieldInfo.Name;
+                    }
+                    else if (Unit.member.isProperty)
+                    {
+                        name = Unit.member.name;
                     }
                     else
                     {
-                        return defaultValue.As().Code(false, true, true);
+                        name = Unit.member.ToPseudoDeclarer().ToString(); // I don't think this should be possible through normal usage.
                     }
-
+                    if (typeof(Component).IsAssignableFrom(Unit.member.pseudoDeclaringType))
+                    {
+                        if (GetComponent(Unit.target, data, out var code))
+                            return builder.InvokeMember(t => t.Ignore(GenerateValue(Unit.target, data)), code).GetMember(name);
+                        else
+                            return builder.GetMember(t => t.Ignore(GenerateValue(Unit.target, data)), name);
+                    }
+                    else
+                    {
+                        return builder.GetMember(t => t.Ignore(GenerateValue(Unit.target, data)), name);
+                    }
                 }
                 else
                 {
-                    return "/* Target Requires Input */";
+                    return builder.GetMember(t => t.Ignore(GenerateValue(Unit.target, data)), Unit.member.name);
+                }
+            }
+            else
+            {
+                return builder.GetMember(Unit.member.targetType, Unit.member.name);
+            }
+        }
+
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        {
+            var builder = Unit.CreateClickableString();
+            if (Unit.target != null)
+            {
+                if (input == Unit.target)
+                {
+                    if (Unit.target.hasValidConnection)
+                    {
+                        data.SetExpectedType(Unit.member.pseudoDeclaringType);
+                        var connectedCode = GetNextValueUnit(input, data);
+                        data.RemoveExpectedType();
+                        if (Unit.member.pseudoDeclaringType.IsSubclassOf(typeof(Component)))
+                        {
+                            return connectedCode.CastAs(typeof(GameObject), Unit, ShouldCast(input, data));
+                        }
+                        return connectedCode.CastAs(input.type, Unit, ShouldCast(input, data));
+                    }
+                    else if (Unit.target.hasDefaultValue)
+                    {
+                        if (input.type == typeof(GameObject) || input.type.IsSubclassOf(typeof(Component)) || input.type == typeof(Component))
+                        {
+                            if (GetComponent(Unit.target, data, out var code))
+                                return builder.InvokeMember("gameObject".VariableHighlight(), code, Array.Empty<string>());
+                            else
+                                builder.Clickable("gameObject".VariableHighlight());
+                        }
+                        return Unit.defaultValues[input.key].As().Code(true, Unit, true, true, "", false, true);
+                    }
+                    else
+                    {
+                        return base.GenerateValue(input, data);
+                    }
+                }
+            }
+
+            return base.GenerateValue(input, data);
+        }
+
+        bool GetComponent(ValueInput valueInput, ControlGenerationData data, out string code)
+        {
+            if (valueInput.hasValidConnection)
+            {
+                if (valueInput.type == valueInput.connection.source.type &&
+                    (valueInput.connection.source.unit is MemberUnit ||
+                     valueInput.connection.source.unit is InheritedMemberUnit ||
+                     valueInput.connection.source.unit is AssetFieldUnit ||
+                     valueInput.connection.source.unit is AssetMethodCallUnit))
+                {
+                    code = string.Empty;
+                    return false;
+                }
+                else
+                {
+                    if ((valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent") || GetSourceType(valueInput, data) == typeof(GameObject) && Unit.member.pseudoDeclaringType != typeof(GameObject))
+                    {
+                        code = $"GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>";
+                        return true;
+                    }
+                    code = string.Empty;
+                    return false;
+                }
+            }
+            else
+            {
+                if (Unit.member.pseudoDeclaringType != typeof(GameObject))
+                {
+                    code = $"GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>";
+                    return true;
+                }
+                else
+                {
+                    code = string.Empty;
+                    return false;
                 }
             }
         }
 
-        return base.GenerateValue(input);
-    }
-
-    string GetComponent(ValueInput valueInput)
-    {
-        if (valueInput.hasValidConnection)
-        {
-            return valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent" ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()." : ".";
-        }
-        else
-        {
-            return $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>().";
-        }
     }
 }

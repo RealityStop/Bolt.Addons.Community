@@ -12,11 +12,10 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            data.hasBroke = true;
-
+            data.SetHasBroke(true);
             if (input == Unit.enter)
             {
-                return CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "break".ControlHighlight() + ";");
+                return CodeBuilder.Indent(indent) + MakeClickableForThisUnit("break".ControlHighlight() + ";") + "\n";
             }
 
             return base.GenerateControl(input, data, indent);

@@ -1,6 +1,8 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting;
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -13,6 +15,8 @@ namespace Unity.VisualScripting.Community
 
         private bool isDeleting;
         public override bool canDelete => isDeleting;
+        public override bool canCopy => false;
+        protected override IEnumerable<DropdownOption> contextOptions => Enumerable.Empty<DropdownOption>();
 
         protected override NodeColorMix color => new NodeColorMix(NodeColor.Green);
 
@@ -25,7 +29,6 @@ namespace Unity.VisualScripting.Community
                 selection.Clear();
                 selection.Add(unit);
                 Delete();
-                Debug.Log(reference.macro.GetType());
                 if (reference.macro != null && reference.macro.GetType().Inherits<MethodDeclaration>())
                 {
                     Debug.LogWarning("You cannot have more then one EntryUnit in a Method. Auto deleting.");

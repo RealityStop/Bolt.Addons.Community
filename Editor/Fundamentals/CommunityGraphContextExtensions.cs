@@ -1,8 +1,6 @@
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 using System;
-using Unity.VisualScripting.Community;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
@@ -17,37 +15,57 @@ namespace Unity.VisualScripting.Community
         {
             get
             {
-                if (selection.Count >= 2)
+                if (selection.Count > 0)
                 {
                     yield return new GraphContextMenuItem(ConvertToEmbed, "To Embed Subgraph");
                     yield return new GraphContextMenuItem(ConvertToMacro, "To Macro Subgraph");
-                }
-
-                if (selection.Count == 0)
-                {
-                    yield return new GraphContextMenuItem(OpenCSharpPreview, "Open Utility Window");
                 }
 
                 foreach (var item in base.contextMenuItems)
                 {
                     yield return item;
                 }
+
+                yield return new GraphContextMenuItem(OpenNodeFinder, "Open NodeFinder Window");
+                yield return new GraphContextMenuItem(OpenUtilityWindow, "Open Utility Window");
+                yield return new GraphContextMenuItem(OpenKeyboardControlsWindow, "Open Keyboard Controls Window");
+                yield return new GraphContextMenuItem(OpenGraphSnippetPopup, "Open Graph Snippets Window");
             }
         }
 
-        private void ConvertToEmbed(Vector2 pos)
+        private void OpenKeyboardControlsWindow(Vector2 _)
+        {
+            Rect rect = new Rect(e.mousePosition.x, e.mousePosition.y, 0, 0);
+
+            GraphKeyboardControlsPopup.Show(rect);
+        }
+
+        private void OpenGraphSnippetPopup(Vector2 _)
+        {
+            Rect rect = new Rect(e.mousePosition.x, e.mousePosition.y, 0, 0);
+
+            GraphSnippetsPopup.Show(rect);
+        }
+
+        private void ConvertToEmbed(Vector2 _)
         {
             NodeSelection.Convert(GraphSource.Embed);
         }
 
-        private void ConvertToMacro(Vector2 pos)
+        private void ConvertToMacro(Vector2 _)
         {
             NodeSelection.Convert(GraphSource.Macro);
         }
 
-        private void OpenCSharpPreview(Vector2 pos)
+        private void OpenUtilityWindow(Vector2 _)
         {
-            UtilityWindow.Open();
+            var window = UtilityWindow.Open();
+            window.graphContext = context;
+        }
+
+        private void OpenNodeFinder(Vector2 _)
+        {
+            NodeFinderWindow.Open();
         }
     }
 }

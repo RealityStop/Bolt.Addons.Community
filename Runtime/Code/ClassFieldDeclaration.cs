@@ -9,31 +9,30 @@ namespace Unity.VisualScripting.Community
     [RenamedFrom("Bolt.Addons.Community.Code.ClassFieldDeclaration")]
     public sealed class ClassFieldDeclaration : FieldDeclaration, ISerializationCallbackReceiver
     {
-        /// <summary>
-        /// This is only so that its possible to override the SystemObjectInspector
-        /// To draw the inspector for the value without the Type
-        /// </summary>
+#if VISUAL_SCRIPTING_1_7
+        [Serialize]
         public SerializableType typeHandle;
+#else
+        [Serialize]
+        public string typeHandleIdentification;
+#endif
 
         [InspectorToggleLeft]
+        [Serialize]
         public object defaultValue = 0;
 
         [Serialize]
-        private object serlizer;
-
-        [SerializeField]
-        [HideInInspector]
         private SerializationData serializedValue;
-
-        [SerializeField]
-        [HideInInspector]
-        private SerializationData serializedValueType;
 
         public void OnAfterDeserialize()
         {
-            type = (Type)serializedValueType.Deserialize();
-            serlizer = serializedValue.Deserialize();
-            defaultValue = serlizer;
+#if VISUAL_SCRIPTING_1_7
+            type = Type.GetType(typeHandle.Identification);
+#else
+            type = Type.GetType(typeHandleIdentification);
+#endif
+            defaultValue = serializedValue.Deserialize();
+            OnChanged?.Invoke();
         }
 
         public void OnBeforeSerialize()
@@ -46,17 +45,24 @@ namespace Unity.VisualScripting.Community
             else
             {
                 serializedValue = defaultValue.Serialize();
-                serlizer = defaultValue.Serialize();
             }
 
             if (type == null)
             {
-                serializedValueType = new SerializationData();
+#if VISUAL_SCRIPTING_1_7
+                typeHandle = new SerializableType();
+#else
+                typeHandleIdentification = null;
+#endif
                 return;
             }
             else
             {
-                serializedValueType = type.Serialize();
+#if VISUAL_SCRIPTING_1_7
+                typeHandle.Identification = type.AssemblyQualifiedName;
+#else
+                typeHandleIdentification = type.AssemblyQualifiedName;
+#endif
             }
         }
     }

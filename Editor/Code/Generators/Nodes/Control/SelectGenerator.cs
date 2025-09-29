@@ -9,62 +9,63 @@ namespace Unity.VisualScripting.Community
         {
         }
 
-        public override string GenerateValue(ValueOutput output)
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+
             if (output == Unit.selection)
             {
                 var str = string.Empty;
-                var @true = base.GenerateValue(Unit.ifTrue);
-                var @false = base.GenerateValue(Unit.ifFalse);
-                var condition = base.GenerateValue(Unit.condition);
+                var @true = base.GenerateValue(Unit.ifTrue, data);
+                var @false = base.GenerateValue(Unit.ifFalse, data);
+                var condition = base.GenerateValue(Unit.condition, data);
 
                 if (Unit.condition.hasValidConnection)
                 {
-                    condition = GenerateValue(Unit.condition);
+                    condition = GenerateValue(Unit.condition, data);
                 }
 
                 if (Unit.ifTrue.hasValidConnection)
                 {
-                    @true = GenerateValue(Unit.ifTrue);
+                    @true = GenerateValue(Unit.ifTrue, data);
                 }
 
                 if (Unit.ifFalse.hasValidConnection)
                 {
-                    @false = GenerateValue(Unit.ifFalse);
+                    @false = GenerateValue(Unit.ifFalse, data);
                 }
 
-                str = "(" + condition + " ? " + @true + " : " + @false + ")";
+                str = MakeClickableForThisUnit("(") + condition + MakeClickableForThisUnit(" ? ") + @true + MakeClickableForThisUnit(" : ") + @false + MakeClickableForThisUnit(")");
                 return str;
             }
 
-            return base.GenerateValue(output);
+            return base.GenerateValue(output, data);
         }
 
-        public override string GenerateValue(ValueInput input)
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
-            var @true = base.GenerateValue(Unit.ifTrue);
-            var @false = base.GenerateValue(Unit.ifFalse);
-            var condition = base.GenerateValue(Unit.condition);
+            var @true = base.GenerateValue(Unit.ifTrue, data);
+            var @false = base.GenerateValue(Unit.ifFalse, data);
+            var condition = base.GenerateValue(Unit.condition, data);
 
             if (input == Unit.condition)
             {
-                condition = ((Unit)Unit.condition.connection.source.unit).GenerateValue(Unit.condition.connection.source);
+                condition = ((Unit)Unit.condition.connection.source.unit).GenerateValue(Unit.condition.connection.source, data);
                 return condition;
             }
 
             if (input == Unit.ifTrue)
             {
-                @true = ((Unit)Unit.ifTrue.connection.source.unit).GenerateValue(Unit.ifTrue.connection.source);
+                @true = ((Unit)Unit.ifTrue.connection.source.unit).GenerateValue(Unit.ifTrue.connection.source, data);
                 return @true;
             }
 
             if (input == Unit.ifFalse)
             {
-                @false = ((Unit)Unit.ifFalse.connection.source.unit).GenerateValue(Unit.ifFalse.connection.source);
+                @false = ((Unit)Unit.ifFalse.connection.source.unit).GenerateValue(Unit.ifFalse.connection.source, data);
                 return @false;
             }
 
-            return base.GenerateValue(input);
+            return base.GenerateValue(input, data);
         }
     }
 }

@@ -1,15 +1,33 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
+using System;
 using UnityEngine;
+using Unity.VisualScripting;
 
-[System.Serializable]
-[TypeIcon(typeof(Color))]
-[IncludeInSettings(true)]
-[Inspectable]
-public struct HDRColor
+namespace Unity.VisualScripting.Community
 {
+    [Serializable]
+    [TypeIcon(typeof(Color))]
+    [IncludeInSettings(true)]
     [Inspectable]
-    [ColorUsage(true, true)]
-    public Color color;
+    [RenamedFrom("HDRColor")]
+    public struct HDRColor
+    {
+        [Inspectable]
+        [ColorUsage(true, true)]
+        public Color color;
+
+        public static implicit operator Color(HDRColor hdrColor)
+        {
+            return hdrColor.color;
+        }
+
+        public static implicit operator HDRColor(Color color)
+        {
+            return new HDRColor { color = color };
+        }
+        
+        public override string ToString()
+        {
+            return color.ToString();
+        }
+    }
 }

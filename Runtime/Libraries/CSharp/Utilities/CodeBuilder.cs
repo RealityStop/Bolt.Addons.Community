@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -23,8 +24,13 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static string SummaryColor = "00CC00";
         public static string VariableColor = "00FFFF";
         public static string RecommendationColor = "FFD700";
+        /// <summary>
+        /// Unused
+        /// </summary>
+        public static string MethodColor = "EBEB5B";
         #endregion
 
+        public static int currentIndent { get; private set; }
         /// <summary>
         /// Creates the opening of a new body as a string.
         /// </summary>
@@ -83,38 +89,74 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return output;
         }
 
+        public static string ToMultipleEnumString(this Enum value, bool highlight, string separator = ", ")
+        {
+            Type type = value.GetType();
+            if (!type.IsDefined(typeof(FlagsAttribute), false))
+                return highlight ? type.Name.TypeHighlight() + "." + value.ToString().EnumHighlight() : type.Name + "." + value.ToString();
+
+            List<string> values = new List<string>();
+            foreach (Enum enumValue in Enum.GetValues(type))
+            {
+                if (enumValue.Equals(Enum.ToObject(type, 0))) continue;
+                if (value.HasFlag(enumValue))
+                    values.Add(highlight ? $"{type.Name.TypeHighlight()}.{enumValue.ToString().EnumHighlight()}" : $"{type.Name}.{enumValue}");
+            }
+
+            return values.Count > 0 ? string.Join(separator, values) : highlight ? $"{type.Name.TypeHighlight()}.{Enum.GetValues(type).GetValue(0).ToString().EnumHighlight()}" : $"{type.Name}.{Enum.GetValues(type).GetValue(0)}";
+        }
+
+        private static readonly Dictionary<int, string> indentCache = new Dictionary<int, string>();
+
         /// <summary>
         /// Creates an indentation. The spacing is equal to 4 whitespaces.
         /// </summary>
         public static string Indent(int amount)
         {
-            var output = string.Empty;
+            currentIndent = amount;
+            if (indentCache.TryGetValue(amount, out var indent))
+                return indent;
 
-            for (int i = 0; i < amount; i++)
-            {
-                output += "    ";
-            }
+            indent = amount <= 0 ? "" : new string(' ', amount * 4);
+            indentCache[amount] = indent;
 
-            return output;
+            return indent;
         }
+
+        private static readonly Dictionary<(int, int), string> customIndentCache = new Dictionary<(int, int), string>();
 
         /// <summary>
         /// Creates an indentation with a custom amount of whitespaces per indent.
         /// </summary>
         public static string Indent(int amount, int spacing)
         {
-            var output = string.Empty;
-            var space = string.Empty;
+            currentIndent = amount;
+            if (customIndentCache.TryGetValue((amount, spacing), out var indent))
+                return indent;
 
-            for (int i = 0; i < spacing; i++)
-            {
-                space += " ";
-            }
+            indent = amount <= 0 || spacing <= 0 ? "" : new string(' ', amount * spacing);
 
-            for (int i = 0; i < amount; i++)
-            {
-                output += space;
-            }
+            customIndentCache[(amount, spacing)] = indent;
+
+            return indent;
+        }
+
+        /// <summary>
+        /// Creates an indentation with the current indent amount.
+        /// </summary>
+        public static string GetCurrentIndent()
+        {
+            var output = Indent(currentIndent);
+
+            return output;
+        }
+
+        /// <summary>
+        /// Creates an indentation with the current indent + addAmount.
+        /// </summary>
+        public static string GetCurrentIndent(int addAmount)
+        {
+            var output = Indent(currentIndent + addAmount);
 
             return output;
         }
@@ -136,7 +178,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string Using(List<string> namespaces)
         {
-            var output = string.Empty;
             var _namespaces = namespaces.ToArray();
             return Using(_namespaces);
         }
@@ -184,19 +225,76 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             for (int i = 0; i < generator.fields.Count; i++)
             {
                 usings.MergeUnique(generator.fields[i].Usings());
+                for (int attrIndex = 0; attrIndex < generator.fields[i].attributes.Count; attrIndex++)
+                {
+                    usings.MergeUnique(generator.fields[i].attributes[attrIndex].Usings());
+                }
             }
 
             for (int i = 0; i < generator.properties.Count; i++)
             {
                 usings.MergeUnique(generator.properties[i].Usings());
+                for (int attrIndex = 0; attrIndex < generator.properties[i].attributes.Count; attrIndex++)
+                {
+                    usings.MergeUnique(generator.properties[i].attributes[attrIndex].Usings());
+                }
             }
 
             for (int i = 0; i < generator.methods.Count; i++)
             {
                 usings.MergeUnique(generator.methods[i].Usings());
+                for (int attrIndex = 0; attrIndex < generator.methods[i].attributes.Count; attrIndex++)
+                {
+                    usings.MergeUnique(generator.methods[i].attributes[attrIndex].Usings());
+                }
+                for (int paramIndex = 0; paramIndex < generator.methods[i].parameters.Count; paramIndex++)
+                {
+                    usings.MergeUnique(generator.methods[i].parameters[paramIndex].Usings());
+                    List<string> parameterAttributeNamespaces = new List<string>();
+                    foreach (var attribute in generator.methods[i].parameters[paramIndex].attributes)
+                    {
+                        parameterAttributeNamespaces.Add(attribute.GetAttributeType().Namespace);
+                    }
+                    usings.MergeUnique(parameterAttributeNamespaces);
+                }
             }
 
             return usings;
+        }
+
+        public static bool IsMoreRestrictive(this AccessModifier scope, AccessModifier than)
+        {
+            var accessLevels = new Dictionary<AccessModifier, int>
+            {
+                { AccessModifier.Public, 0 },
+                { AccessModifier.ProtectedInternal, 1 },
+                { AccessModifier.Internal, 2 },
+                { AccessModifier.Protected, 3 },
+                { AccessModifier.PrivateProtected, 4 },
+                { AccessModifier.Private, 5 }
+            };
+
+            return accessLevels[scope] > accessLevels[than];
+        }
+
+        public static AccessModifier GetMoreRestrictive(this AccessModifier scope1, AccessModifier scope2)
+        {
+            if (scope1.IsMoreRestrictive(scope2))
+            {
+                return scope1;
+
+            }
+            else return scope2;
+        }
+
+        public static AccessModifier GetLessRestrictive(this AccessModifier scope1, AccessModifier scope2)
+        {
+            if (!scope1.IsMoreRestrictive(scope2))
+            {
+                return scope1;
+
+            }
+            else return scope2;
         }
 
         public static AccessModifier GetScope(this MethodInfo method)
@@ -210,6 +308,47 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return AccessModifier.Public;
         }
 
+        public static ParameterModifier GetModifier(this ParameterInfo parameter)
+        {
+            if (parameter.ParameterType.IsByRef) return ParameterModifier.Ref;
+            if (parameter.IsOut) return ParameterModifier.Out;
+            if (parameter.IsIn) return ParameterModifier.In;
+            return ParameterModifier.None;
+        }
+
+        public static AccessModifier GetScope(this ConstructorInfo constructor)
+        {
+            if (constructor.IsPublic) return AccessModifier.Public;
+            if (constructor.IsPrivate) return AccessModifier.Private;
+            if (constructor.IsPrivate && constructor.IsFamily) return AccessModifier.PrivateProtected;
+            if (constructor.IsFamilyAndAssembly) return AccessModifier.ProtectedInternal;
+            if (constructor.IsFamily) return AccessModifier.Protected;
+            if (constructor.IsAssembly) return AccessModifier.Internal;
+            return AccessModifier.Public;
+        }
+
+        public static AccessModifier GetScope(this PropertyInfo property)
+        {
+            var getMethod = property.GetGetMethod(true);
+            var setMethod = property.GetSetMethod(true);
+
+            if (getMethod != null && setMethod == null)
+            {
+                return getMethod.GetScope();
+            }
+            else if (setMethod != null && getMethod == null)
+            {
+                return setMethod.GetScope();
+            }
+            else
+            {
+                AccessModifier getMethodAccess = getMethod.GetScope();
+                AccessModifier setMethodAccess = setMethod.GetScope();
+
+                return getMethodAccess.GetLessRestrictive(setMethodAccess);
+            }
+        }
+
         public static MethodModifier GetModifier(this MethodInfo method)
         {
             if (method.IsStatic) return MethodModifier.Static;
@@ -217,6 +356,12 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (method.IsAbstract) return MethodModifier.Abstract;
             if (method.IsFinal) return MethodModifier.Sealed;
             return MethodModifier.None;
+        }
+
+        public static ConstructorModifier GetModifier(this ConstructorInfo Constructor)
+        {
+            if (Constructor.IsStatic) return ConstructorModifier.Static;
+            return ConstructorModifier.None;
         }
 
         public static string Parameters(this List<ParameterGenerator> parameters)
@@ -233,13 +378,24 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string InitializeVariable(string name, Type type)
         {
-            return !type.Is().NullOrVoid() ? type.As().CSharpName() + " " + CodeBuilder.Assign(name, HUMValue.Create().New(type).As().Code(false)) + "\n" : string.Empty;
+            return !type.Is().NullOrVoid() ? type.As().CSharpName() + " " + name.Assign(HUMValue.Create().New(type).As().Code(false)) + "\n" : string.Empty;
         }
 
-        public static string Qoute()
+        public static string InitializeVariable(string name, Type type, string value)
+        {
+            return !type.Is().NullOrVoid() ? type.As().CSharpName() + " " + name.Assign(value) + "\n" : string.Empty;
+        }
+
+        public static string Quote()
         {
             return @"""";
         }
+
+        public static string Quotes(this string value)
+        {
+            return @"""" + value + @"""";
+        }
+
 
         public static string Comma()
         {
@@ -271,85 +427,278 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return ");";
         }
 
+        public static string End(this string code)
+        {
+            return code + ");";
+        }
+
+        public static string End(this string code, Unit unit)
+        {
+            return code + ");".MakeClickable(unit);
+        }
+
+        public static string Parentheses(this string value)
+        {
+            return "(" + value + ")";
+        }
+
+        public static string Parentheses(this string value, Unit unit)
+        {
+            return "(".MakeClickable(unit) + value + ")".MakeClickable(unit);
+        }
+
         public static string SingleLineLambda(string parameters, string body)
         {
-            return "(" + parameters + ")=>{ " + body + " }";
+            return "(" + parameters + ") => { " + body + " }";
+        }
+
+        public static string ExpressionLambda(this string body, string parameters = "", Unit unit = null)
+        {
+            return "(".MakeClickable(unit) + parameters + ") => ".MakeClickable(unit) + body;
+        }
+
+        public static string ExpressionLambda(this string body, Unit unit = null)
+        {
+            return "() => ".MakeClickable(unit) + body;
         }
 
         public static string MultiLineLambda(string parameters, string body, int Indent)
         {
             return $"({parameters}) =>" + "\n" +
-                   "{" + "\n" +
-                    CodeBuilder.Indent(Indent) + body + "\n" +
-                   "}";
+                    CodeBuilder.Indent(Indent) + "{" + "\n" +
+                    body + "\n" +
+                   CodeBuilder.Indent(Indent) + "}";
         }
 
-        public static string Assign(string member, string value, Type castedType)
+        public static string MultiLineLambda(Unit unit, string parameters, string body, int Indent)
         {
-            return member + " = " + "(" + castedType.As().CSharpName() + ")" + value + ";";
+            return CodeUtility.MakeClickable(unit, "(") + parameters + CodeUtility.MakeClickable(unit, ") =>") + "\n" +
+                   CodeBuilder.Indent(Indent) + CodeUtility.MakeClickable(unit, "{") + "\n" +
+                    body + "\n" +
+                   CodeBuilder.Indent(Indent) + CodeUtility.MakeClickable(unit, "}");
         }
 
-        public static string Assign(string member, string value)
+        public static string Assign(this string member, string value, Type castedType)
+        {
+            return member + " = " + value.Cast(castedType) + ";";
+        }
+
+        public static string Assign(this string member, string value)
         {
             return member + " = " + value + ";";
         }
 
-        public static string Return(string value)
+        public static string Return(this string value, bool highlight = true, Unit unit = null)
         {
-            return "return ".ControlHighlight() + value + ";";
+            return (highlight ? "return ".ControlHighlight() : "return ").MakeClickable(unit) + value + ";".MakeClickable(unit);
         }
 
-        public static string CastAs(this string value, Type type)
+        public static string YieldReturn(this string value, bool highlight = true, Unit unit = null)
         {
-            return $"({type.As().CSharpName()}){value}";
+            return (highlight ? "yield return ".ControlHighlight() : "yield return ").MakeClickable(unit) + value + ";".MakeClickable(unit);
+        }
+
+        public static string Create(this Type type, string parameters = "", bool fullName = true, bool highlight = true, Unit unit = null)
+        {
+            return ((highlight ? "new ".ConstructHighlight() : "new ") + type.As().CSharpName(false, fullName, highlight) + $"(").MakeClickable(unit) + parameters + ")".MakeClickable(unit);
+        }
+
+        private static string MakeClickable(this string value, Unit unit)
+        {
+            if (unit != null)
+            {
+                return CodeUtility.MakeClickable(unit, value);
+            }
+            else
+            {
+                return value;
+            }
+        }
+
+        private static string MakeClickableIf(this string value, Unit unit, bool isTrue)
+        {
+            if (isTrue)
+            {
+                return CodeUtility.MakeClickable(unit, value);
+            }
+            else
+            {
+                return value;
+            }
+        }
+
+        public static string Cast(this string value, Type type)
+        {
+            return $"({type.As().CSharpName(false, true)}){value}";
+        }
+
+        public static string Cast(this string value, Type type, Unit unit)
+        {
+            return $"({type.As().CSharpName(false, true)})".MakeClickable(unit) + value;
+        }
+
+        public static string CastAs(this string value, Type type, bool shouldCast)
+        {
+            if (shouldCast)
+                return $"(({type.As().CSharpName(false, true)}){value})";
+            return value;
+        }
+
+        public static string CastAs(this string value, Type type, Unit unit, bool shouldCast)
+        {
+            if (shouldCast)
+                return $"(({type.As().CSharpName(false, true)})".MakeClickable(unit) + value + ")".MakeClickable(unit);
+            return value;
         }
 
         public static string LegalMemberName(this string memberName)
         {
-            if (string.IsNullOrEmpty(memberName)) return string.Empty;
+            if (string.IsNullOrEmpty(memberName))
+                return string.Empty;
 
-            var output = memberName;
-            output = output.Replace(" ", string.Empty);
+            var builder = new System.Text.StringBuilder(memberName.Length);
 
-            var newCopy = output;
-
-            for (int i = 0; i < newCopy.Length; i++)
+            foreach (var c in memberName)
             {
-                if (!char.IsLetter(newCopy[i]) && !char.IsNumber(newCopy[i]) && newCopy[i] != "_".ToCharArray()[0])
+                if (char.IsLetterOrDigit(c) || c == '_')
                 {
-                    output = output.Replace(newCopy[i].ToString(), string.Empty);
+                    builder.Append(c);
                 }
             }
 
-            if (!string.IsNullOrEmpty(output) && char.IsNumber(output[0]))
+            if (builder.Length > 0 && char.IsDigit(builder[0]))
             {
-                output = "_" + output;
+                builder.Insert(0, '_');
             }
 
-            return output;
+            return builder.ToString();
+        }
+
+        public static string GenericName(this string memberName, int count)
+        {
+            if (string.IsNullOrWhiteSpace(memberName))
+                return "T" + count;
+
+            var builder = new System.Text.StringBuilder(memberName.Length);
+
+            foreach (char c in memberName)
+            {
+                if (char.IsLetterOrDigit(c) || c == '_')
+                {
+                    builder.Append(c);
+                }
+            }
+
+            if (builder.Length == 0)
+            {
+                return "T" + count;
+            }
+
+            if (char.IsDigit(builder[0]))
+            {
+                builder.Insert(0, 'T');
+            }
+
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Generate code for calling a method in the CSharpUtility class
+        /// </summary>
+        /// <param name="unit">Unit to make the code selectable for</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>The method call as a string</returns>
+        public static string CallCSharpUtilityMethod(Unit unit, string methodName, params string[] parameters)
+        {
+            return CodeUtility.MakeClickable(unit, $"{typeof(CSharpUtility).As().CSharpName(false, true)}.") + methodName + CodeUtility.MakeClickable(unit, "(") + string.Join(CodeUtility.MakeClickable(unit, ", "), parameters) + CodeUtility.MakeClickable(unit, ")");
+        }
+
+        /// <summary>
+        /// Generate code for calling a generic method in the CSharpUtility class
+        /// </summary>
+        /// <param name="unit">Unit to make the code selectable for</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>The method call as a string</returns>
+        public static string CallCSharpUtilityGenericMethod(Unit unit, string methodName, string[] parameters, params Type[] genericTypes)
+        {
+            if (genericTypes.Length > 0)
+            {
+                string genericTypeString = CodeUtility.MakeClickable(unit, "<" + string.Join(", ", genericTypes.Select(t => t.As().CSharpName(false, true))) + ">");
+                return CodeUtility.MakeClickable(unit, $"{typeof(CSharpUtility).As().CSharpName(false, true)}.") + methodName + genericTypeString + CodeUtility.MakeClickable(unit, "(") + string.Join(CodeUtility.MakeClickable(unit, ", "), parameters) + CodeUtility.MakeClickable(unit, ")");
+            }
+            else
+            {
+                return CallCSharpUtilityMethod(unit, methodName, parameters);
+            }
+        }
+
+        /// <summary>
+        /// Generate code for calling a extensition method in the CSharpUtility class
+        /// </summary>
+        /// <param name="unit">Unit to make the code selectable for</param>
+        /// <param name="target">Target for the method This is not made selectable</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>The method call as a string</returns>
+        public static string CallCSharpUtilityExtensitionMethod(Unit unit, string target, string methodName, params string[] parameters)
+        {
+            return target + ".".MakeClickable(unit) + methodName + "(".MakeClickable(unit) + string.Join(", ".MakeClickable(unit), parameters) + ")".MakeClickable(unit);
+        }
+
+        /// <summary>
+        /// Generate code for calling a static method in the Type inputed
+        /// </summary>
+        /// <param name="unit">Unit to make the code selectable for</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="fullName">if the type should generate with its full name or not</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>The method call as a string</returns>
+        public static string StaticCall(Unit unit, Type type, string methodName, bool fullName = true, params string[] parameters)
+        {
+            var typeName = type.As().CSharpName(false, fullName);
+            var clickableType = typeName.MakeClickable(unit);
+            var clickableMethodName = methodName.MakeClickable(unit);
+            var clickableOpenParen = "(".MakeClickable(unit);
+            var clickableComma = ", ".MakeClickable(unit);
+            var clickableCloseParen = ")".MakeClickable(unit);
+
+            return clickableType + "." + clickableMethodName + clickableOpenParen +
+                   string.Join(clickableComma, parameters) + clickableCloseParen;
+        }
+
+        /// <summary>
+        /// Generate code for calling a static method in the Type inputed
+        /// </summary>
+        /// <param name="unit">Unit to make the code selectable for</param>
+        /// <param name="methodName">Method to call, This is not made selectable</param>
+        /// <param name="fullName">if the type should generate with its full name or not</param>
+        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
+        /// <returns>The method call as a string</returns>
+        public static string StaticCall(Type type, string methodName, bool fullName = true, params string[] parameters)
+        {
+            string typeName = type.As().CSharpName(false, fullName);
+            string joinedParams = string.Join(", ", parameters);
+
+            return $"{typeName}.{methodName}({joinedParams})";
         }
 
         public static string Highlight(string code, Color color)
         {
-            var output = string.Empty;
-            output += "[BeginUAPreviewHighlight]" + $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>" + "[EndUAPreviewHighlight]";
-            output += code;
-            output += "[BeginUAPreviewHighlight]" + "</color>" + "[EndUAPreviewHighlight]";
-            return output;
+            string hex = UnityEngine.ColorUtility.ToHtmlStringRGB(color);
+            return $"[BeginUAPreviewHighlight]<color=#{hex}>[EndUAPreviewHighlight]{code}[BeginUAPreviewHighlight]</color>[EndUAPreviewHighlight]";
         }
 
         public static string Highlight(string code, string hex)
         {
-            var output = string.Empty;
-            output += "[BeginUAPreviewHighlight]" + $"<color=#{hex}>" + "[EndUAPreviewHighlight]";
-            output += code;
-            output += "[BeginUAPreviewHighlight]" + "</color>" + "[EndUAPreviewHighlight]";
-            return output;
+            return $"[BeginUAPreviewHighlight]<color=#{hex}>[EndUAPreviewHighlight]{code}[BeginUAPreviewHighlight]</color>[EndUAPreviewHighlight]";
         }
 
         public static string MakeRecommendation(string Message)
         {
-            return $"/*(Recommendation) {Message}*/".RecommendationHighlight();
+            if (CSharpPreviewSettings.ShouldShowRecommendations) return $"/*(Recommendation) {Message}*/".RecommendationHighlight();
+            else return "";
         }
 
         public static string WarningHighlight(this string code)
@@ -359,7 +708,18 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string ConstructHighlight(this string code)
         {
+            // Temporary compatibility with existing uses of "if" and "else"
+            if (code == "if" || code == "else")
+            {
+                return code.ControlHighlight();
+            }
+
             return Highlight(code, ConstructColor);
+        }
+
+        public static string NamespaceHighlight(this string code)
+        {
+            return Highlight(code, new Color(0.50f, 0.50f, 0.50f));
         }
 
         public static string InterfaceHighlight(this string code)
@@ -413,12 +773,15 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return Highlight(code, RecommendationColor);
         }
 
-
+        private static readonly Dictionary<string, string> RemoveHighlightsCache = new Dictionary<string, string>();
         public static string RemoveHighlights(this string code)
         {
-            return code.RemoveBetween("[BeginUAPreviewHighlight]", "[EndUAPreviewHighlight]");
+            if (RemoveHighlightsCache.TryGetValue(code, out var result))
+                return result;
+            var _code = code.RemoveBetween("[BeginUAPreviewHighlight]", "[EndUAPreviewHighlight]");
+            RemoveHighlightsCache[code] = _code;
+            return _code;
         }
-
 
         public static string RemoveMarkdown(this string code)
         {
