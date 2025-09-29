@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Control")]
     [UnitTitle("Using")]
@@ -22,15 +22,19 @@ namespace Unity.VisualScripting.Community
         public ValueInput value;
         protected override void Definition()
         {
-            enter = ControlInputCoroutine(nameof(enter), Trigger, TriggerCoroutine);
+            enter = ControlInput(nameof(enter), Trigger);
             exit = ControlOutput(nameof(exit));
             body = ControlOutput(nameof(body));
             value = ValueInput<IDisposable>(nameof(value), default);
             Succession(enter, exit);
             Succession(enter, body);
         }
-        public ControlOutput Trigger(Flow flow) 
+        public ControlOutput Trigger(Flow flow)
         {
+            if (flow.isCoroutine)
+            {
+                throw new NotSupportedException("The 'using' statement cannot be used with coroutines.");
+            }
             var disposable = flow.GetValue<IDisposable>(value);
             using (disposable)
             {
@@ -38,14 +42,5 @@ namespace Unity.VisualScripting.Community
             }
             return exit;
         }
-        public IEnumerator TriggerCoroutine(Flow flow) 
-        {
-            var disposable = flow.GetValue<IDisposable>(value);
-            using (disposable)
-            {
-                yield return body;
-            }
-            yield return exit;
-        }
-    } 
+    }
 }

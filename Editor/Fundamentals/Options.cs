@@ -181,7 +181,6 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             }
         }
 
-
         private static IEnumerable<IUnitOption> InheritedMembersOptions(GraphReference reference)
         {
             if (IsClassAsset(reference.macro))
@@ -215,7 +214,7 @@ namespace Unity.VisualScripting.Community.Variables.Editor
 
                     foreach (var method in inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
                     {
-                        if (method.IsPrivate || method.IsAssembly || method.IsProperty() || method.IsEvent() || method.IsGenericMethod) continue;
+                        if (method.IsPrivate || method.IsAssembly || method.IsSpecialName || method.IsProperty() || method.IsEvent() || method.IsGenericMethod) continue;
 
                         if (method.IsAbstract || method.IsVirtual)
                         {
@@ -249,7 +248,9 @@ namespace Unity.VisualScripting.Community.Variables.Editor
                     {
                         if (field.IsPrivate || field.IsAssembly) continue;
                         yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Get));
-                        yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Set));
+
+                        if (field.CanWrite())
+                            yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Set));
                     }
 
                     foreach (var property in inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
@@ -298,22 +299,44 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             return null;
         }
 
-        private static bool IsEvent(this MethodInfo methodInfo)
+        private static bool IsEvent(this MethodInfo method)
         {
-            return (methodInfo.Name.Contains("add_") && methodInfo.DeclaringType.GetEvents()
-                    .Any(e => e.GetAddMethod() == methodInfo))
-                || (methodInfo.Name.Contains("remove_") && methodInfo.DeclaringType.GetEvents()
-                    .Any(e => e.GetRemoveMethod() == methodInfo));
+            if (method == null || method.DeclaringType == null)
+                return false;
+
+            if (!method.IsSpecialName)
+                return false;
+
+            var events = method.DeclaringType.GetEvents(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+
+            foreach (var ev in events)
+            {
+                if (ev.AddMethod == method || ev.RemoveMethod == method)
+                    return true;
+            }
+
+            return false;
         }
 
-
-        private static bool IsProperty(this MethodInfo methodInfo)
+        private static bool IsProperty(this MethodInfo method)
         {
-            var property = methodInfo.DeclaringType
-                .GetProperties()
-                .FirstOrDefault(p => p.GetGetMethod() == methodInfo || p.GetSetMethod() == methodInfo);
+            if (method == null || method.DeclaringType == null)
+                return false;
 
-            return property != null;
+            if (!method.IsSpecialName)
+                return false;
+
+            var props = method.DeclaringType.GetProperties(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+
+            foreach (var prop in props)
+            {
+                if (prop.GetMethod == method || prop.SetMethod == method)
+                    return true;
+            }
+
+            return false;
         }
     }
 }

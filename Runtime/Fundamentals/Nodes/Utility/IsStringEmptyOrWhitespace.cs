@@ -4,7 +4,7 @@ namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.StringNullorWhiteSpace")]
     [RenamedFrom("Unity.VisualScripting.Community.StringNullorWhiteSpace")]
-    [UnitCategory("Community\\Utility\\String")]
+    [UnitCategory("Community\\Utility\\string")]
     [UnitTitle("Is Empty Or Whitespace")]
     [TypeIcon(typeof(string))]
     public class IsStringEmptyOrWhitespace : Unit

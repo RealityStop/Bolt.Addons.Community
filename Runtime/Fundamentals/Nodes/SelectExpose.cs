@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
     /// </summary>
     [UnitOrder(5)]
     [UnitCategory("Community")]
-    public sealed class SelectExpose : Unit, IAotStubbable
+    public sealed class SelectExpose : Unit
     {
         [Obsolete(Serialization.ConstructorWarning)]
         public SelectExpose() : base() { }
