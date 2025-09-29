@@ -33,7 +33,7 @@ namespace Unity.VisualScripting.Community
                 }
                 else if (_typeFilter != null)
                 {
-                    allTypes = Types.Where(t => typeof(IDefinedEvent).IsAssignableFrom(t) && t != typeof(IDefinedEvent))
+                    allTypes = Types.Where(t => _typeFilter.Types.Any(type => type.IsAssignableFrom(t)) && t != typeof(IDefinedEvent))
                         .ToArray();
                 }
                 else
