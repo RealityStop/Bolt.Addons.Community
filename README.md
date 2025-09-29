@@ -1,6 +1,6 @@
 > The orginal creators have moved on and are no longer active in the Bolt community.
 > 
-> But there are new maintainers!
+> However, the project is now in the hands of new maintainers!
 
 # Community Addons
 ### Unity Visual Scripting Extensions
