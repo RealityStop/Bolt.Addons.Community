@@ -7,7 +7,7 @@ namespace Unity.VisualScripting.Community
     [UnitCategory("Community\\Logic")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.Polarity")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.Polarity")]
-    [TypeIcon(typeof(Unity.VisualScripting.Comparison))]
+    [TypeIcon(typeof(VisualScripting.Comparison))]
     public class Polarity : Unit
     {
         public Polarity() : base() { }

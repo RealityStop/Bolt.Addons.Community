@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community
             xFieldRatio,
             tempFloat,
 #pragma warning disable 0414
-            guiScale = 1f;      // Unused at this stage
+            guiScale = 1f;      // Unused
 #pragma warning restore 0414
 
         static bool
@@ -46,7 +46,7 @@ namespace Unity.VisualScripting.Community
             copyContent,
 
             customAddColor,
-            scaleGUI;           // Unused at this stage
+            scaleGUI;           // Unused
 
 
         static readonly GUIStyle
@@ -60,7 +60,6 @@ namespace Unity.VisualScripting.Community
             copyUnit,
             unit;
 
-        // For palette calculations
         const int
             columns = 9,
             rows = 6;
@@ -90,6 +89,11 @@ namespace Unity.VisualScripting.Community
         // Update the palette colours on change
         public static void UpdatePalette()
         {
+            if (style == null)
+            {
+                new CommentPaletteRoutine().Run();
+            }
+
             for (int i = 0; i < columns; i++)
             {
                 baseColors[i].r = 1f - Mathf.Clamp(Mathf.Abs(((i * steps + style.colorOffset - offset[0]) % 1f) - 0.5f) * style.colorSpread, 0f, 1f);
@@ -183,7 +187,7 @@ namespace Unity.VisualScripting.Community
 #else
             BeginBlock(metadata, position, GUIContent.none);
 #endif
-            if (!initialised) UpdatePalette();  // Probably not required with Scriptable **************
+            if (!initialised) UpdatePalette();
 
             xWidth = position.width;
             xFieldRatio = (xWidth < 336 ? ((335 - xWidth) / xFieldDivision) + xFieldDivision / 10f : 0) + ((xWidth - 335) / xFieldDivision);
@@ -202,7 +206,6 @@ namespace Unity.VisualScripting.Community
                 if (copyTitle) { unit.title = copyUnit.title; unit.hasTitle = copyUnit.hasTitle; }
                 if (copyContent) unit.comment = copyUnit.comment;
             }
-
 
             ///////////////////////////   Section - Color Palette   /////////////////////////////////////////////
 
@@ -295,7 +298,7 @@ namespace Unity.VisualScripting.Community
 
             // Color Spread
             tempFloat = style.colorSpread;
-            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 10, w: xIndentC, h: 18), "Color Spread", inspectorGUI);
+            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 10, w: xIndentC, h: 18), new GUIContent("Color Spread", "Adjust the spread of colors within the palette."), inspectorGUI);
             style.colorSpread = Mathf.Clamp(EditorGUI.FloatField(GUIRect(x: xIndentC + xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", style.colorSpread * 10f, titleGUI) / 10f, 0f, 3f);
             if (style.colorSpread != tempFloat) UpdatePalette();
 
@@ -311,19 +314,19 @@ namespace Unity.VisualScripting.Community
 
             // Color Contrast
             tempFloat = style.colorHeight;
-            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 22, w: xIndentC), "Color Offset", inspectorGUI);
+            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 22, w: xIndentC), new GUIContent("Color Offset", "Set the contrast of colors in the palette."), inspectorGUI);
             style.colorHeight = Mathf.Clamp(EditorGUI.FloatField(GUIRect(x: xIndentC + xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", style.colorHeight * 10f, titleGUI) / 10f, 0.6f, 9.8f);
             if (style.colorHeight != tempFloat) UpdatePalette();
 
             // Color Offset
             tempFloat = style.colorOffset;
-            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 22, w: xIndentC), "Color Height", inspectorGUI);
+            GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 22, w: xIndentC), new GUIContent("Color Height", "Modify the offset for the height of colors in the palette."), inspectorGUI);
             style.colorOffset = Mathf.Clamp(EditorGUI.FloatField(GUIRect(x: xIndentC + xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", style.colorOffset * 10f, titleGUI) / 10f, 0f, 1.5f);
             if (style.colorOffset != tempFloat) UpdatePalette();
 
             // Font Size + Bold? Italic? Outline? Centre?
             GUI.Label(GUIRect(x: xIndentB, down: 22, w: xIndentC), "Font Size", inspectorGUI);
-            unit.fontSize = EditorGUI.IntField(GUIRect(right: xIndentC, x: xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", unit.fontSize, titleGUI);
+            unit.fontSize = Mathf.Clamp(EditorGUI.IntField(GUIRect(right: xIndentC, x: xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", unit.fontSize, titleGUI), 13, 150);
 
             ToggleButtonColor(unit.fontBold);
             if (GUI.Button(GUIRect(right: 50, w: 40), "Bold", buttonGUI)) unit.fontBold = !unit.fontBold;
@@ -340,21 +343,29 @@ namespace Unity.VisualScripting.Community
 
             // Max Width + Auto?
             GUI.Label(GUIRect(xMargin: 0, x: xIndentB, down: 22, w: xIndentC), "Max Width", inspectorGUI);
-            unit.maxWidth = EditorGUI.IntField(GUIRect(x: xIndentC + xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", unit.maxWidth, titleGUI);
+            unit.maxWidth = Mathf.Clamp(EditorGUI.IntField(GUIRect(x: xIndentC + xFieldOffset - xFieldRatio, w: xIndentC + xFieldWidth + xFieldRatio - 5), " ", unit.maxWidth, titleGUI), 50, 1000);
             ToggleButtonColor(unit.autoWidth);
             if (GUI.Button(GUIRect(x: xIndentC + 50, w: 40), "Auto", buttonGUI)) unit.autoWidth = !unit.autoWidth;
             ResetGUI();
 
-            // Comment Title
-            GUI.Label(GUIRect(x: xIndentB, down: 33), "Title", inspectorGUI);
+            var EnablecurveLineWidth = inspectorGUI.CalcSize(new GUIContent("Curved Line")).x;
+            GUI.Label(GUIRect(x: xIndentB, down: 33, w: EnablecurveLineWidth), "Curved Line", inspectorGUI);
+            unit.curvedLine = GUI.Toggle(GUIRect(x: xIndentC, w: 20), unit.curvedLine, "");
+
+            float titleWidth = inspectorGUI.CalcSize(new GUIContent("Title")).x;
+            GUI.Label(GUIRect(x: xIndentB, down: 22, w: titleWidth), "Title", inspectorGUI);
+
             unit.hasTitle = GUI.Toggle(GUIRect(x: xIndentC, w: 20), unit.hasTitle, "");
-            if (unit.hasTitle) unit.title = GUI.TextField(GUIRect(x: xIndentC + 20, w: xWidth - xIndentC - 10, h: 16), unit.title, titleGUI);
+
+            if (unit.hasTitle)
+            {
+                unit.title = GUI.TextField(GUIRect(x: xIndentC + 20, w: xWidth - xIndentC - 10, h: 16), unit.title ?? string.Empty, 50, titleGUI);
+            }
 
             // Comment Contents
             var textHeight = commentGUI.CalcHeight(new GUIContent(unit.comment), xWidth - xIndentC + 10);
             GUI.Label(GUIRect(x: xIndentB, down: 22, w: xWidth, h: 18), "Comment", inspectorGUI);
             unit.comment = GUI.TextArea(GUIRect(x: xIndentC, w: xWidth - xIndentC + 10, h: textHeight + 2), unit.comment, commentGUI);
-
 
             ///////////////////////////   Section - Copy   /////////////////////////////////////////////
 
@@ -461,7 +472,8 @@ namespace Unity.VisualScripting.Community
             if (EndBlock(metadata))
             {
                 metadata.RecordUndo();
-                metadata.value = unit;
+                // Do this to avoid attempting to change the Style
+                ((CommentNode)metadata.value).UpdateFrom(unit);
             }
         }
     }

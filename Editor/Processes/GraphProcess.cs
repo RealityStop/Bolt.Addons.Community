@@ -14,11 +14,13 @@ namespace Unity.VisualScripting.Community
         public void Bind()
         {
             UnityEditorEvent.onCurrentEvent += SetKeyCode;
+            OnBind();
         }
 
         public void Unbind()
         {
             UnityEditorEvent.onCurrentEvent -= SetKeyCode;
+            OnUnbind();
         }
 
         private void SetKeyCode(Event e)

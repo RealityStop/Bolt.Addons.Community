@@ -1,5 +1,6 @@
 using System.Collections;
 using System;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
@@ -80,8 +81,14 @@ namespace Unity.VisualScripting.Community
 			var nameValue = flow.GetValue<string>(this.name);
 			if (string.IsNullOrEmpty(nameValue))
 				return false;
+			var declarations = GetDeclarations(flow);
+			if (declarations?.IsDefined(nameValue) ?? false)
+			{
+				var value = declarations?.Get(nameValue);
 
-			return GetDeclarations(flow)?.IsDefined(nameValue) ?? false;
+				return value != null && value is IDictionary;
+			}
+			return false;
 		}
 
 
@@ -99,21 +106,20 @@ namespace Unity.VisualScripting.Community
 					return flow.GetValue(fallback);
 				}
 
-				throw new ArgumentException("Indicated variable does not exist.");
+				throw new ArgumentException($"Indicated variable '{name}' does not exist.");
 			}
 
+            if (!(variableValue is IDictionary))
+            {
+                if (specifyFallback)
+                {
+                    return flow.GetValue(fallback);
+                }
+
+                throw new ArgumentException($"Indicated variable '{name}' is not a dictionary.");
+            }
 			var dictionary = variableValue as IDictionary;
-			if (dictionary == null)
-			{
-				if (specifyFallback)
-				{
-					return flow.GetValue(fallback);
-				}
-
-				throw new ArgumentException("Indicated variable is not a dictionary.");
-			}
-
-			if (specifyFallback && !dictionary.Contains(keyValue))
+            if (specifyFallback && !dictionary.Contains(keyValue))
 				return flow.GetValue(fallback);
 
 			return dictionary[keyValue];

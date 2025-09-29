@@ -1,70 +1,78 @@
-using Unity;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
-using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
-using UnityEngine;
-[NodeGenerator(typeof(Unity.VisualScripting.For))]
-public sealed class ForGenerator : NodeGenerator<Unity.VisualScripting.For>
+
+namespace Unity.VisualScripting.Community 
 {
-    private string variable = "i";
-    public ForGenerator(Unity.VisualScripting.For unit) : base(unit)
+    [NodeGenerator(typeof(For))]
+    public sealed class ForGenerator : LocalVariableGenerator
     {
-    }
-
-    public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-    {
-        var output = string.Empty;
-
-        if (input == Unit.enter)
+        private For Unit => unit as For;
+        public ForGenerator(For unit) : base(unit)
         {
-            var initialization = GenerateValue(Unit.firstIndex);
-            var condition = GenerateValue(Unit.lastIndex);
-            var iterator = GenerateValue(Unit.step);
-
-            variable = data.AddLocalNameInScope("i");
-            
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + $"for".ControlHighlight() + "(int".ConstructHighlight() + $" {variable} ".VariableHighlight() + $"= {initialization}; " + variable.VariableHighlight() + $" < {condition}; " + variable.VariableHighlight() + $" += {iterator})");
-            output += "\n";
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
-            output += "\n";
-
-            if (Unit.body.hasAnyConnection)
+        }
+    
+        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        {
+            var output = string.Empty;
+    
+            if (input == Unit.enter)
             {
-                data.NewScope();
-                output += GetNextUnit(Unit.body, data, indent + 1);
-                data.ExitScope();
+                var initialization = GenerateValue(Unit.firstIndex, data);
+                var condition = GenerateValue(Unit.lastIndex, data);
+                var iterator = GenerateValue(Unit.step, data);
+    
+                variableName = data.AddLocalNameInScope("i", typeof(int));
+                variableType = typeof(int);
+    
+                string varName = MakeClickableForThisUnit(variableName.VariableHighlight());
+                string iteratorCode = !Unit.step.hasValidConnection && (int)Unit.defaultValues[Unit.step.key] == 1 ? varName.VariableHighlight() + MakeClickableForThisUnit("++") : varName.VariableHighlight() + MakeClickableForThisUnit(" += ") + iterator;
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"for".ControlHighlight() + "(" + "int ".ConstructHighlight()) + $"{varName}".VariableHighlight() + MakeClickableForThisUnit(" = ") + initialization + MakeClickableForThisUnit("; ") + varName.VariableHighlight() + $"{MakeClickableForThisUnit(" < ")}{condition}{MakeClickableForThisUnit("; ")}" + $"{iteratorCode}{MakeClickableForThisUnit(")")}";
+                output += "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{");
+                output += "\n";
+    
+                if (Unit.body.hasAnyConnection)
+                {
+                    data.NewScope();
+                    output += GetNextUnit(Unit.body, data, indent + 1).TrimEnd();
+                    data.ExitScope();
+                }
+    
+                output += "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
+                output += "\n";
             }
-
-            output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
+    
+            if (Unit.exit.hasAnyConnection)
+            {
+                output += GetNextUnit(Unit.exit, data, indent);
+                output += "\n";
+            }
+    
+    
+            return output;
         }
-
-        if (Unit.exit.hasAnyConnection)
+    
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            output += "\n";
-            output += GetNextUnit(Unit.exit, data, indent);
+            return MakeClickableForThisUnit(variableName.VariableHighlight());
         }
-
-
-        return output;
-    }
-
-    public override string GenerateValue(ValueOutput output)
-    {
-        return variable.VariableHighlight();
-    }
-
-    public override string GenerateValue(ValueInput input)
-    {
-        if (input.hasValidConnection)
+    
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
-            return CodeUtility.MakeSelectable(input.connection.source.unit as Unit, new ValueCode((input.connection.source.unit as Unit).GenerateValue(input.connection.source), input.type, ShouldCast(input)));
+            if (input.hasValidConnection)
+            {
+                data.SetExpectedType(input.type);
+                var connectedCode = GetNextValueUnit(input, data);
+                data.RemoveExpectedType();
+                return connectedCode.CastAs(input.type, Unit, ShouldCast(input, data, false));
+            }
+            else
+            {
+                return Unit.defaultValues[input.key].As().Code(false, unit);
+            }
         }
-        else
-        {
-            return Unit.defaultValues[input.key].ToString();
-        }
-    }
+    } 
 }

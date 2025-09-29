@@ -1,4 +1,3 @@
-
 using Unity.VisualScripting.Community.Utility;
 using System;
 using System.Collections.Generic;
@@ -17,134 +16,116 @@ namespace Unity.VisualScripting.Community
     [RenamedFrom("Bolt.Addons.Community.DefinedEvents.Units.GlobalDefinedEventUnit")]
     public class GlobalDefinedEventNode : EventUnit<DefinedEventArgs>, IDefinedEventNode
     {
-        const string EventName = "OnGlobalDefinedEvent";
+        // Old serialized field
+        [SerializeAs("eventType")]
+        [Obsolete]
+        private System.Type _legacyEventType;
 
-        #region Previous Event Type Handling (for backward compatibility)
-
-        [SerializeAs(nameof(eventType))]
-        private Type _eventType;
-
-        [DoNotSerialize]
-        public Type eventType
-        {
-            get { return _eventType; }
-            set { _eventType = value; }
-        }
+        // New serialized field
+        [SerializeAs("NeweventType")]
+        private DefinedEventType _eventType;
 
         [DoNotSerialize]
-        public Type restrictedEventType
-        {
-            get { return _eventType; }
-            set { _eventType = value; }
-        }
-
-        #endregion
-
-        #region New Event Type Handling
-
-        [SerializeAs(nameof(NeweventType))]
-        private IDefinedEventType New_eventType;
-
-        [DoNotSerialize]
-        public IDefinedEventType NeweventType
-        {
-            get { return New_eventType; }
-            set { New_eventType = value; }
-        }
-
-        [DoNotSerialize]
+        [InspectableIf(nameof(IsNotRestricted))]
+        [InspectorLabel("EventType")]
+#if !RESTRICT_EVENT_TYPES
         [UnitHeaderInspectable]
+#endif
+        public DefinedEventType EventType
+        {
+            get => _eventType;
+            set => _eventType = value;
+        }
+
+        [DoNotSerialize]
         [InspectableIf(nameof(IsRestricted))]
-        public IDefinedEventType NewrestrictedEventType
+        [InspectorLabel("EventType")]
+        [TypeFilter(TypesMatching.AssignableToAll, typeof(IDefinedEvent))]
+        // Doing this instead because the UnitWidget for those node was just not working
+#if RESTRICT_EVENT_TYPES
+        [UnitHeaderInspectable]
+#endif
+        public DefinedEventType RestrictedEventType
         {
-            get { return New_eventType; }
-            set { New_eventType = value; }
+            get => _eventType;
+            set => _eventType = value;
         }
 
-        public bool IsRestricted
-        {
-            get { return CommunityOptionFetcher.DefinedEvent_RestrictEventTypes; }
-        }
+        public bool IsRestricted => CommunityOptionFetcher.DefinedEvent_RestrictEventTypes;
+        public bool IsNotRestricted => !IsRestricted;
 
-        public bool IsNotRestricted
-        {
-            get { return !IsRestricted; }
-        }
-        #endregion
-
-
-        [DoNotSerialize]
-        public List<ValueOutput> outputPorts { get; } = new List<ValueOutput>();
-
-        [DoNotSerialize]
-        private ReflectedInfo Info;
+        [DoNotSerialize] public List<ValueOutput> outputPorts { get; } = new List<ValueOutput>();
 
         protected override bool register => true;
 
+        [DoNotSerialize] private ReflectedInfo Info;
+
         protected override bool ShouldTrigger(Flow flow, DefinedEventArgs args)
         {
-            return args.eventData.GetType() == NeweventType.type;
+            return args.eventData.GetType() == _eventType.type;
         }
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return ConstructHook(NeweventType.type);
+            return ConstructHook(_eventType.type);
         }
 
         protected override void Definition()
         {
             base.Definition();
 
-            // For backward compatibility, convert the Type to IDefinedEventType
-            if (restrictedEventType != null)
+            // For backward compatibility, convert the Type to DefinedEventType
+#pragma warning disable
+            if (_legacyEventType != null)
             {
-                NewrestrictedEventType = new IDefinedEventType(restrictedEventType);
-                restrictedEventType = null;
+                _eventType = new DefinedEventType(_legacyEventType);
+                _legacyEventType = null;
             }
+#pragma warning restore
+            _eventType ??= new DefinedEventType();
 
-            if (NewrestrictedEventType == null)
-            {
-                NewrestrictedEventType = new IDefinedEventType();
-            }
-
-            BuildFromInfo();          
+            BuildFromInfo();
         }
 
 
         private void BuildFromInfo()
         {
             outputPorts.Clear();
-            if (NeweventType == null)
+            if (_eventType?.type == null)
                 return;
 
-            Info = ReflectedInfo.For(NeweventType.type);
-            foreach (var field in Info.reflectedFields)
+            if (IsRestricted)
             {
-                outputPorts.Add(ValueOutput(field.Value.FieldType, field.Value.Name));
+                Info = ReflectedInfo.For(_eventType.type);
+                foreach (var field in Info.reflectedFields)
+                    outputPorts.Add(ValueOutput(field.Value.FieldType, field.Value.Name));
+                foreach (var property in Info.reflectedProperties)
+                    outputPorts.Add(ValueOutput(property.Value.PropertyType, property.Value.Name));
             }
-
-            foreach (var property in Info.reflectedProperties)
+            else
             {
-                outputPorts.Add(ValueOutput(property.Value.PropertyType, property.Value.Name));
+                outputPorts.Add(ValueOutput(_eventType.type, "Value"));
             }
         }
 
         protected override void AssignArguments(Flow flow, DefinedEventArgs args)
         {
-            for (var i = 0; i < outputPorts.Count; i++)
+            if (IsRestricted)
             {
-                var outputPort = outputPorts[i];
-                var key = outputPort.key;
-                if (Info.reflectedFields.ContainsKey(key))
+                for (var i = 0; i < outputPorts.Count; i++)
                 {
-                    var reflectedField = Info.reflectedFields[key];
-                    flow.SetValue(outputPort, reflectedField.GetValue(args.eventData));
+                    var outputPort = outputPorts[i];
+                    var key = outputPort.key;
+                    if (Info.reflectedFields.TryGetValue(key, out var f))
+                        flow.SetValue(outputPort, f.GetValue(args.eventData));
+                    else if (Info.reflectedProperties.TryGetValue(key, out var p))
+                        flow.SetValue(outputPort, p.GetValue(args.eventData));
                 }
-                else if (Info.reflectedProperties.ContainsKey(key))
-                {
-                    var reflectedProperty = Info.reflectedProperties[key];
-                    flow.SetValue(outputPort, reflectedProperty.GetValue(args.eventData));
-                }
+            }
+            else
+            {
+                if (outputPorts.Count > 0)
+                    flow.SetValue(outputPorts[0], args.eventData);
             }
         }
 
@@ -152,9 +133,9 @@ namespace Unity.VisualScripting.Community
         {
             EventHook hook;
             if (DefinedEventSupport.IsOptimized())
-                hook = new EventHook(EventName, tag: eventType.GetTypeInfo().FullName);
+                hook = new EventHook(CommunityEvents.OnGlobalDefinedEvent, tag: eventType.GetTypeInfo().FullName);
             else
-                hook = new EventHook(EventName);
+                hook = new EventHook(CommunityEvents.OnGlobalDefinedEvent);
             return hook;
         }
 
@@ -169,7 +150,8 @@ namespace Unity.VisualScripting.Community
         public static IDisposable RegisterListener<T>(Action<T> onEvent)
         {
             var eventHook = ConstructHook(typeof(T));
-            Action<DefinedEventArgs> action = (x) => {
+            Action<DefinedEventArgs> action = (x) =>
+            {
                 if (x.eventData.GetType() == typeof(T))
                     onEvent((T)x.eventData);
             };

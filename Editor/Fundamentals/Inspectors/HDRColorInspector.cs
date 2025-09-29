@@ -1,9 +1,10 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.VisualScripting
+namespace Unity.VisualScripting.Community
 {
-    [Inspector(typeof(HDRColor))] // Update this to use HDRColor instead of Color
+    [Inspector(typeof(HDRColor))]
+    [RenamedFrom("Unity.VisualScripting.HDRColorInspector")]
     public class HDRColorInspector : Inspector
     {
         public HDRColorInspector(Metadata metadata) : base(metadata) { }
@@ -17,9 +18,8 @@ namespace Unity.VisualScripting
         {
             position = BeginLabeledBlock(metadata, position, label);
 
-            // Retrieve the color value from the HDRColor struct
             HDRColor hdrColor = (HDRColor)metadata.value;
-            var newValue = EditorGUI.ColorField(position, new(), hdrColor.color, true, true, true);
+            var newValue = EditorGUI.ColorField(position, GUIContent.none, hdrColor.color, true, true, true);
 
             if (EndBlock(metadata))
             {

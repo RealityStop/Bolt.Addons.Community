@@ -8,7 +8,8 @@
         "GUID:4a1f8feb9bcc2f14e92b27fc6b4b9007",
         "GUID:21b0c8d1703a94250bfac916590cea4f",
         "GUID:ea715009a4efd4c6cbc85be3ae097dd3",
-        "GUID:315d634a9ac6d460a9515f5a56be6311"
+        "GUID:315d634a9ac6d460a9515f5a56be6311",
+        "GUID:75469ad4d38634e559750d17036d5f7c"
     ],
     "includePlatforms": [
         "Editor"
@@ -34,6 +35,36 @@
             "name": "com.unity.visualscripting",
             "expression": "1.7.5",
             "define": "VISUAL_SCRIPTING_1_7_5_OR_GREATER"
+        },
+        {
+            "name": "com.unity.visualscripting",
+            "expression": "1.8.0",
+            "define": "VISUAL_SCRIPTING_1_8_0_OR_GREATER"
+        },
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "1.0.1",
+            "define": "PACKAGE_INPUT_SYSTEM_EXISTS"
+        },
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "1.2.0",
+            "define": "PACKAGE_INPUT_SYSTEM_1_2_0_OR_NEWER_EXISTS"
+        },
+        {
+            "name": "com.unity.modules.physics2d",
+            "expression": "1.0.0",
+            "define": "MODULE_PHYSICS_2D_EXISTS"
+        },
+        {
+            "name": "com.unity.modules.physics",
+            "expression": "1.0.0",
+            "define": "MODULE_PHYSICS_EXISTS"
+        },
+        {
+            "name": "com.unity.modules.ai",
+            "expression": "1.0.0",
+            "define": "MODULE_AI_EXISTS"
         }
     ],
     "noEngineReferences": false

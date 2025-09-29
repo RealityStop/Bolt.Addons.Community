@@ -3,7 +3,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [CustomEditor(typeof(EnumAsset))]
     public class EnumAssetEditor : CodeAssetEditor<EnumAsset, EnumAssetGenerator>

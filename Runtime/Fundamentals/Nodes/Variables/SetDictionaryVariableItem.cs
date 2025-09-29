@@ -70,21 +70,13 @@ namespace Unity.VisualScripting.Community
 			var newValue = flow.GetValue<object>(this.newValue);
 			var name = flow.GetValue<string>(this.name);
 
-			var variableValue = GetDeclarations(flow).Get(name);
-
-			if(variableValue == null)
-			{
-				throw new ArgumentException("Indicated variable does not exist.");
-			}
-
+			var variableValue = GetDeclarations(flow).Get(name) ?? throw new ArgumentException("Indicated variable does not exist.");
+            if (!(variableValue is IDictionary))
+            {
+                throw new ArgumentException("Indicated variable is not a dictionary.");
+            }
 			var dictionary = variableValue as IDictionary;
-			if (dictionary == null)
-			{
-				throw new ArgumentException("Indicated variable is not a dictionary.");
-			}
-
-
-			dictionary[dictionaryKey] = newValue;
+            dictionary[dictionaryKey] = newValue;
 			flow.SetValue(output, newValue);
 
 			return assigned;

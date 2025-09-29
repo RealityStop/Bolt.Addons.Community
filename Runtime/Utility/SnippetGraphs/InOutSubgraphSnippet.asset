@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e57c036929169040a5d784c8a5618e5, type: 3}
+  m_Name: InOutSubgraphSnippet
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"SnippetName":"InOutSubgraph","snippetArguments":[],"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":393.0,"y":-7.0},"zoom":1.0,"elements":[{"defaultValues":{},"position":{"x":0.0,"y":0.0},"guid":"1911aa17-1e82-4f8a-bfed-41cb977bd5e6","$version":"A","$type":"Unity.VisualScripting.Community.SnippetControlSourceUnit","$id":"10"},{"nest":{"source":"Embed","macro":null,"embed":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[{"key":"In","label":null,"summary":null,"hideLabel":false}],"controlOutputDefinitions":[{"key":"Out","label":null,"summary":null,"hideLabel":false}],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":0.0,"y":0.0},"zoom":1.0,"elements":[{"defaultValues":{},"position":{"x":-250.0,"y":-30.0},"guid":"790883d2-792a-4d24-aa87-0ee4ff5b0cf7","$version":"A","$type":"Unity.VisualScripting.GraphInput","$id":"24"},{"defaultValues":{},"position":{"x":104.0,"y":-30.0},"guid":"a8c58075-4013-4822-9087-16773f3f6b4d","$version":"A","$type":"Unity.VisualScripting.GraphOutput","$id":"26"},{"sourceUnit":{"$ref":"24"},"sourceKey":"In","destinationUnit":{"$ref":"26"},"destinationKey":"Out","guid":"46a199ad-ee12-44f6-a70e-49761ccaa764","$type":"Unity.VisualScripting.ControlConnection"}],"$version":"A"}},"defaultValues":{},"position":{"x":185.0,"y":0.0},"guid":"45b79625-7d16-4ac5-8496-a43d2169b2f8","$version":"A","$type":"Unity.VisualScripting.SubgraphUnit","$id":"12"},{"defaultValues":{},"position":{"x":0.0,"y":0.0},"guid":"fe603429-9669-4d1e-b54f-a07355cdff40","$version":"A","$type":"Unity.VisualScripting.Community.SnippetControlSourceUnit"},{"defaultValues":{},"position":{"x":0.0,"y":0.0},"guid":"6c088bb4-1c21-4354-8b9c-d9b5c0bccbc6","$version":"A","$type":"Unity.VisualScripting.Community.SnippetControlSourceUnit"},{"defaultValues":{},"position":{"x":0.0,"y":0.0},"guid":"647fcc4a-e51c-40cd-8ae6-119af3fbc4fe","$version":"A","$type":"Unity.VisualScripting.Community.SnippetControlSourceUnit"},{"sourceUnit":{"$ref":"10"},"sourceKey":"source","destinationUnit":{"$ref":"12"},"destinationKey":"In","guid":"07943a79-9bf9-4ba0-8d96-98bcbd13baa2","$type":"Unity.VisualScripting.ControlConnection"}],"$version":"A"}}'
+    _objectReferences: []
+  SnippetName: InOutSubgraph
+  snippetArguments: []

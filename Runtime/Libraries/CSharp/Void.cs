@@ -1,4 +1,5 @@
-﻿using Unity.VisualScripting;
+﻿using System.Reflection;
+using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {

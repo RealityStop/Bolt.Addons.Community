@@ -43,7 +43,10 @@ namespace Unity.VisualScripting.Community
                     var _instruction = flow.GetValue<YieldInstruction>(instruction);
                     yield return _instruction;
                     break;
-
+                case EnumeratorType.CustomYieldInstruction:
+                    var _customInstruction = flow.GetValue<CustomYieldInstruction>(instruction);
+                    yield return _customInstruction;
+                    break;
                 case EnumeratorType.Enumerator:
                     var _enumerator = flow.GetValue<IEnumerator>(enumerator);
                     while (_enumerator.MoveNext())
@@ -64,6 +67,7 @@ namespace Unity.VisualScripting.Community
         public enum EnumeratorType
         {
             YieldInstruction,
+            CustomYieldInstruction,
             Enumerator,
             Coroutine
         }

@@ -1,6 +1,7 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -16,10 +17,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (string.IsNullOrEmpty(name)) { return string.Empty; }
 
             var output = returnType.As().CSharpName() + " " + name.LegalMemberName() + "(";
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                output += parameters[i].Generate(indent);
-            }
+
+            output += string.Join(", ", parameters.Select(p => p.Generate(indent)));
             output += ");";
 
             return output;

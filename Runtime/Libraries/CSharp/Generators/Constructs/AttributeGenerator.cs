@@ -20,29 +20,40 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         /// </summary>
         public override string Generate(int indent)
         {
-            var parameters = string.Empty;
+            if (type == null)
+            {
+                return "";
+            }
 
+            var parameterList = new List<string>();
+
+            // Add parameters without labels
             for (int i = 0; i < parameterValues.Count; i++)
             {
-                parameters += parameterValues[i].As().Code(false);
-                if (i < parameterValues.Count - 1) parameters += ", ";
+                parameterList.Add(parameterValues[i].As().Code(false));
             }
 
+            // Add parameters with labels
             for (int i = 0; i < parameterValuesWithLabel.Count; i++)
             {
-                parameters += parameterValuesWithLabel[i].Item1 + " = " + parameterValuesWithLabel[i].Item2.As().Code(false);
-                if (i < parameterValuesWithLabel.Count - 1) parameters += ", ";
+                parameterList.Add(parameterValuesWithLabel[i].Item1.VariableHighlight() + " = " + parameterValuesWithLabel[i].Item2.As().Code(false));
             }
 
+            // Add type parameters
             for (int i = 0; i < stringTypeParameterValues.Count; i++)
             {
-                parameters += "typeof(" + stringTypeParameterValues[i] + ")";
-                if (i < stringTypeParameterValues.Count - 1) parameters += ", ";
+                parameterList.Add("typeof".ConstructHighlight() + "(" + stringTypeParameterValues[i] + ")");
             }
 
-            var showBrackets = stringTypeParameterValues.Count > 0 || parameterValuesWithLabel.Count > 0 || parameterValues.Count > 0;
+            // Join all parameters with ", "
+            var parameters = string.Join(", ", parameterList);
 
-            return CodeBuilder.Indent(indent) + "[" + type.Name.Replace("Attribute", string.Empty).TypeHighlight() + (showBrackets ? "(" + parameters + ")" : string.Empty) + "]";
+            var showBrackets = parameterList.Count > 0;
+
+            return CodeBuilder.Indent(indent) + "[" +
+                type.Name.Replace("Attribute", string.Empty).TypeHighlight() +
+                (showBrackets ? "(" + parameters + ")" : string.Empty) +
+                "]";
         }
 
         private AttributeGenerator()

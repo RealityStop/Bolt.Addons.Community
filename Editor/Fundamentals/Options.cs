@@ -2,18 +2,87 @@
 using System.Linq;
 using System;
 using UnityEditor;
+using System.Reflection;
+using UnityEngine.SceneManagement;
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
 
 namespace Unity.VisualScripting.Community.Variables.Editor
 {
     [InitializeAfterPlugins]
     public static class Options
     {
+        public static Dictionary<Type, FuzzyLiteralOption> dynamicLiteralOptions = new Dictionary<Type, FuzzyLiteralOption>();
+        public static FuzzyExpressionOption fuzzyExpressionOption;
+
+        private static List<Type> dynamicOptionsOrder = new List<Type>
+        {
+            typeof(string),
+            typeof(int),
+            typeof(float),
+            typeof(long),
+            typeof(double),
+            typeof(ulong),
+            typeof(short),
+            typeof(ushort),
+            typeof(bool),
+            typeof(byte),
+            typeof(decimal),
+            typeof(DateTime),
+            typeof(TimeSpan)
+        };
         static Options()
         {
+            InitializeFuzzyLiteralOptions();
+            fuzzyExpressionOption = new FuzzyExpressionOption(new FuzzyExpression());
             UnitBase.staticUnitsExtensions.Add(GetStaticOptions);
             UnitBase.staticUnitsExtensions.Add(StaticEditorOptions);
             UnitBase.dynamicUnitsExtensions.Add(DynamicEditorOptions);
-            UnitBase.dynamicUnitsExtensions.Add(MachineVariableOptions);
+            UnitBase.contextualUnitsExtensions.Add(MachineVariableOptions);
+            UnitBase.contextualUnitsExtensions.Add(InheritedMembersOptions);
+            UnitBase.contextualUnitsExtensions.Add(GenericOptions);
+            UnitBase.dynamicUnitsExtensions.Add(GetDynamicOptions);
+            UnitBase.contextualUnitsExtensions.Add(SnippetInputNodeOption);
+        }
+
+        private static IEnumerable<IUnitOption> GenericOptions(GraphReference reference)
+        {
+            if (reference.macro is MethodDeclaration method)
+            {
+                foreach (var generic in method.genericParameters)
+                {
+                    yield return new GenericNodeOption(new GenericNode(method, method.genericParameters.IndexOf(generic)));
+                }
+            }
+        }
+
+        private static IEnumerable<IUnitOption> SnippetInputNodeOption(GraphReference reference)
+        {
+            if (reference.macro is GraphSnippet graphSnippet)
+            {
+                yield return new SnippetInputNodeOption(new SnippetInputNode());
+
+                foreach (var arg in graphSnippet.snippetArguments)
+                {
+                    var node = new SnippetInputNode();
+                    node.argumentName = arg.argumentName;
+                    yield return new SnippetInputNodeOption(node);
+                }
+            }
+        }
+
+        private static void InitializeFuzzyLiteralOptions()
+        {
+            foreach (var optionType in dynamicOptionsOrder)
+            {
+                if (!dynamicLiteralOptions.ContainsKey(optionType))
+                {
+                    dynamicLiteralOptions[optionType] = new FuzzyLiteralOption(new FuzzyLiteral(optionType, optionType.PseudoDefault()));
+                }
+            }
         }
 
         private static IEnumerable<IUnitOption> GetStaticOptions()
@@ -29,28 +98,34 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             }
         }
 
-        private static IEnumerable<IUnitOption> MachineVariableOptions()
+        private static IEnumerable<IUnitOption> MachineVariableOptions(GraphReference reference)
         {
-            List<IUnitOption> options = new List<IUnitOption>();
+            if (!reference.scene.HasValue || !reference.scene.Value.IsValid())
+                yield break;
 
-            string[] scriptGraphAssetGuids = AssetDatabase.FindAssets($"t:{typeof(ScriptGraphAsset)}");
-            foreach (var scriptGraphAssetGuid in scriptGraphAssetGuids)
+            var scene = reference.scene.Value;
+
+            foreach (var root in scene.GetRootGameObjects())
             {
-                string assetPath = AssetDatabase.GUIDToAssetPath(scriptGraphAssetGuid);
-                ScriptGraphAsset scriptGraphAsset = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(assetPath);
-
-                var variables = scriptGraphAsset.graph.variables;
-
-                foreach (var variable in variables)
+                foreach (var machine in root.GetComponentsInChildren<SMachine>(true))
                 {
-                    options.Add(new SetMachineVariableNodeOption(new SetMachineVariableNode() { asset = scriptGraphAsset, defaultName = variable.name }));
-                    options.Add(new GetMachineVariableNodeOption(new GetMachineVariableNode() { asset = scriptGraphAsset, defaultName = variable.name }));
-                }
-            }
+                    if (machine == reference.machine as SMachine) continue;
+                    var graph = machine.graph;
+                    if (graph == null || graph.variables == null)
+                        continue;
 
-            foreach (var option in options)
-            {
-                yield return option;
+                    foreach (var variable in graph.variables)
+                    {
+                        if (string.IsNullOrEmpty(variable.name))
+                            continue;
+
+                        yield return new SetMachineVariableNodeOption(
+                            new SetMachineVariableNode { defaultName = variable.name, defaultTarget = machine });
+
+                        yield return new GetMachineVariableNodeOption(
+                            new GetMachineVariableNode { defaultName = variable.name, defaultTarget = machine });
+                    }
+                }
             }
         }
 
@@ -89,6 +164,179 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             {
                 yield return option;
             }
+        }
+
+        private static IEnumerable<IUnitOption> GetDynamicOptions()
+        {
+            InitializeFuzzyLiteralOptions();
+
+            yield return fuzzyExpressionOption;
+
+            foreach (var optionType in dynamicOptionsOrder)
+            {
+                if (dynamicLiteralOptions.ContainsKey(optionType))
+                {
+                    yield return dynamicLiteralOptions[optionType];
+                }
+            }
+        }
+
+        private static IEnumerable<IUnitOption> InheritedMembersOptions(GraphReference reference)
+        {
+            if (IsClassAsset(reference.macro))
+            {
+                var classAsset = GetClassAsset(reference.macro);
+                if (classAsset != null)
+                {
+                    yield return new AssetTypeOption(new AssetType(classAsset));
+                    foreach (var method in classAsset.methods)
+                    {
+                        yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.Invoke));
+                        if (method.returnType != typeof(void) && method.returnType != typeof(Libraries.CSharp.Void))
+                        {
+                            yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.ReturnValue));
+                            yield return new AssetFuncUnitOption(new AssetFuncUnit(method));
+                        }
+                        else if (method.returnType == typeof(void) || method.returnType == typeof(Libraries.CSharp.Void))
+                        {
+                            yield return new AssetActionUnitOption(new AssetActionUnit(method));
+                        }
+                    }
+
+                    foreach (var field in classAsset.variables)
+                    {
+                        yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Get));
+                        yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Set));
+                    }
+
+                    var inheritedType = classAsset.GetInheritedType();
+                    if (inheritedType == null) yield break;
+
+                    foreach (var method in inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                    {
+                        if (method.IsPrivate || method.IsAssembly || method.IsSpecialName || method.IsProperty() || method.IsEvent() || method.IsGenericMethod) continue;
+
+                        if (method.IsAbstract || method.IsVirtual)
+                        {
+                            yield return new BaseMethodUnitOption(new BaseMethodCall(new Member(inheritedType, method), MethodType.Invoke));
+                            if (method.ReturnType != typeof(void) && method.GetParameters().All(param => !param.HasOutModifier() && !param.ParameterType.IsByRef))
+                                yield return new BaseMethodUnitOption(new BaseMethodCall(new Member(inheritedType, method), MethodType.ReturnValue));
+                        }
+
+                        if (!method.IsAbstract)
+                        {
+                            yield return new InheritedMethodUnitOption(new InheritedMethodCall(new Member(inheritedType, method), MethodType.Invoke));
+                            if (method.ReturnType != typeof(void))
+                                yield return new InheritedMethodUnitOption(new InheritedMethodCall(new Member(inheritedType, method), MethodType.ReturnValue));
+                        }
+                    }
+
+                    foreach (var property in inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Where(property => property.GetMethod?.IsAbstract == true || property.SetMethod?.IsAbstract == true))
+                    {
+                        if (property.GetMethod != null && !property.GetMethod.IsPrivate && !property.GetMethod.IsAssembly && !property.GetMethod.IsGenericMethod)
+                        {
+                            yield return new BasePropertyGetterUnitOption(new BasePropertyGetterUnit(new Member(inheritedType, property)));
+                        }
+
+                        if (property.SetMethod != null && !property.SetMethod.IsPrivate && !property.SetMethod.IsAssembly && !property.SetMethod.IsGenericMethod)
+                        {
+                            yield return new BasePropertySetterUnitOption(new BasePropertySetterUnit(new Member(inheritedType, property)));
+                        }
+                    }
+
+                    foreach (var field in inheritedType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                    {
+                        if (field.IsPrivate || field.IsAssembly) continue;
+                        yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Get));
+
+                        if (field.CanWrite())
+                            yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, field), ActionDirection.Set));
+                    }
+
+                    foreach (var property in inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                    {
+                        if (property.GetMethod != null && !property.GetMethod.IsPrivate && !property.GetMethod.IsAssembly && !property.GetMethod.IsGenericMethod)
+                        {
+                            yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, property), ActionDirection.Get));
+                        }
+
+                        if (property.SetMethod != null && !property.SetMethod.IsPrivate && !property.SetMethod.IsAssembly && !property.SetMethod.IsGenericMethod)
+                        {
+                            yield return new InheritedFieldUnitOption(new InheritedFieldUnit(new Member(inheritedType, property), ActionDirection.Set));
+                        }
+                    }
+                }
+            }
+        }
+
+        private static bool IsClassAsset(IMacro macro)
+        {
+            if (macro is ConstructorDeclaration || macro is PropertyGetterMacro || macro is PropertySetterMacro || macro is MethodDeclaration)
+            {
+                return GetClassAsset(macro) != null;
+            }
+            return false;
+        }
+
+        private static ClassAsset GetClassAsset(IMacro macro)
+        {
+            if (macro is ConstructorDeclaration constructorDeclaration)
+            {
+                return constructorDeclaration.parentAsset as ClassAsset;
+            }
+            else if (macro is PropertyGetterMacro propertyGetterMacro)
+            {
+                return propertyGetterMacro.parentAsset as ClassAsset;
+            }
+            else if (macro is PropertySetterMacro propertySetterMacro)
+            {
+                return propertySetterMacro.parentAsset as ClassAsset;
+            }
+            else if (macro is MethodDeclaration methodDeclaration)
+            {
+                return methodDeclaration.parentAsset as ClassAsset;
+            }
+            return null;
+        }
+
+        private static bool IsEvent(this MethodInfo method)
+        {
+            if (method == null || method.DeclaringType == null)
+                return false;
+
+            if (!method.IsSpecialName)
+                return false;
+
+            var events = method.DeclaringType.GetEvents(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+
+            foreach (var ev in events)
+            {
+                if (ev.AddMethod == method || ev.RemoveMethod == method)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsProperty(this MethodInfo method)
+        {
+            if (method == null || method.DeclaringType == null)
+                return false;
+
+            if (!method.IsSpecialName)
+                return false;
+
+            var props = method.DeclaringType.GetProperties(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+
+            foreach (var prop in props)
+            {
+                if (prop.GetMethod == method || prop.SetMethod == method)
+                    return true;
+            }
+
+            return false;
         }
     }
 }

@@ -7,29 +7,39 @@ using System.Linq;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-[NodeGenerator(typeof(ConvertNode))]
-public class ConvertNodeGenerator : NodeGenerator<ConvertNode>
+namespace Unity.VisualScripting.Community 
 {
-    public ConvertNodeGenerator(Unit unit) : base(unit)
+    [NodeGenerator(typeof(ConvertNode))]
+    public class ConvertNodeGenerator : NodeGenerator<ConvertNode>
     {
-        NameSpace = "System.Linq";
-    }
-
-    public override string GenerateValue(ValueOutput output)
-    {
-        if (Unit.conversion == ConversionType.Any)
+        public ConvertNodeGenerator(Unit unit) : base(unit)
         {
-            if(Unit.type == typeof(object)) return GenerateValue(Unit.value);
-            return $"({Unit.type.As().CSharpName(true, true)})" + GenerateValue(Unit.value);
         }
-        else if (Unit.conversion == ConversionType.ToArrayOfObject)
+    
+        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return $"({new ValueCode(GenerateValue(Unit.value), typeof(IEnumerable), ShouldCast(Unit.value, true), true)}).Cast<{"object".ConstructHighlight()}>().ToArray()";
+            if (data.GetExpectedType() != null && data.GetExpectedType() == Unit.type)
+            {
+                data.SetCurrentExpectedTypeMet(true, Unit.type);
+            }
+            if (Unit.conversion == ConversionType.Any)
+            {
+                NameSpaces = "";
+                if (Unit.type == typeof(object)) return GenerateValue(Unit.value, data);
+                NameSpaces = Unit.type.Namespace;
+                return Unit.CreateClickableString().Ignore(GenerateValue(Unit.value, data)).Cast(Unit.type, true);
+            }
+            else if (Unit.conversion == ConversionType.ToArrayOfObject)
+            {
+                NameSpaces = "System.Linq";
+                return Unit.CreateClickableString().Ignore(GenerateValue(Unit.value, data)).Cast(typeof(IEnumerable), ShouldCast(Unit.value, data, true)).Dot().Clickable($"Cast<{"object".ConstructHighlight()}>().ToArray()");
+            }
+            else if (Unit.conversion == ConversionType.ToListOfObject)
+            {
+                NameSpaces = "System.Linq";
+                return Unit.CreateClickableString().Ignore(GenerateValue(Unit.value, data)).Cast(typeof(IEnumerable), ShouldCast(Unit.value, data, true)).Dot().Clickable($"Cast<{"object".ConstructHighlight()}>().ToList()");
+            }
+            return base.GenerateValue(output, data);
         }
-        else if (Unit.conversion == ConversionType.ToListOfObject)
-        {
-            return $"({new ValueCode(GenerateValue(Unit.value), typeof(IEnumerable), ShouldCast(Unit.value, true), true)}).Cast<{"object".ConstructHighlight()}>().ToList()";
-        }
-        return base.GenerateValue(output);
-    }
+    } 
 }

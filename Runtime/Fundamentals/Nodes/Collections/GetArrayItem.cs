@@ -51,14 +51,29 @@ namespace Unity.VisualScripting.Community
 
             array = ValueInput<Array>("array");
 
+            ValueInput previous = null;
+
             for (int i = 0; i < dimensions; i++)
             {
-                var dimension = ValueInput<int>(i.ToString() + " Index", 0);
-                indexes.Add(dimension);
+                var current = ValueInput<int>($"{i} Index", 0);
+                indexes.Add(current);
+
+                if (previous != null)
+                {
+                    relations.Add(new UnitRelation(previous, current));
+                }
+
+                previous = current;
             }
 
-            value = ValueOutput<object>("result",  GetItem);
+            value = ValueOutput<object>("result", GetItem);
+
+            if (previous != null)
+            {
+                relations.Add(new UnitRelation(previous, value));
+            }
         }
+
 
         private object GetItem(Flow flow)
         {
@@ -93,7 +108,7 @@ namespace Unity.VisualScripting.Community
 
                 case 5:
                     {
-                        return flow.GetValue<Array>(array).GetValue(new int[] { lengths[0], lengths[1], lengths[2], lengths[3], lengths[4]});
+                        return flow.GetValue<Array>(array).GetValue(new int[] { lengths[0], lengths[1], lengths[2], lengths[3], lengths[4] });
                     }
 
                 case 6:

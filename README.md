@@ -29,7 +29,7 @@ Open the Unity Package Manager, and click the "+" button in the top-left corner 
 
 and add the following url:
 
-> https://github.com/RealityStop/Bolt.Addons.Community.git
+> https://github.com/S2NX7/Bolt.Addons.Community.git
 
 For BOLT use branch `bolt-main` with this url:
 

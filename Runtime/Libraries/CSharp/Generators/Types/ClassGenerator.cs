@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -33,7 +34,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         private bool useAssemblyQualifiedNameForInheritance;
         public string assemblyQualifiedInheritanceNamespace;
         public string assemblyQualifiedInheritanceType;
-
+        public string beforeUsings;
         private ClassGenerator() { }
 
         /// <summary>
@@ -83,11 +84,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         protected override string GenerateBefore(int indent)
         {
-            var output = string.Empty;
-
+            var output = "";
+            output += !string.IsNullOrEmpty(beforeUsings) ? CodeBuilder.Indent(indent) + beforeUsings : string.Empty;
             if (generateUsings)
             {
-                var usings = Usings();
+                var usings = Usings().ToHashSetPooled().ToListPooled();
                 var hasUsings = false;
                 for (int i = 0; i < usings.Count; i++)
                 {
@@ -107,8 +108,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             var canShowInherits = !(inherits == null && string.IsNullOrEmpty(assemblyQualifiedInheritanceType) || inherits == typeof(object) && inherits.BaseType == null);
             output += CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + (modifier == ClassModifier.None ? string.Empty : " " + modifier.AsString().ConstructHighlight()) + " class ".ConstructHighlight() + name.LegalMemberName().TypeHighlight();
-            output += !canShowInherits && interfaces.Count == 0 ? string.Empty : " : ";
-            output += canShowInherits ? (inherits == null ? assemblyQualifiedInheritanceType : inherits.As().CSharpName()) + (interfaces.Count > 0 ? ", " : string.Empty) : string.Empty;
+            output += (canShowInherits || interfaces.Count > 0) && SupportsInheritance() ? " : " : string.Empty;
+            output += (canShowInherits || interfaces.Count > 0) && SupportsInheritance() ? (inherits == null ? assemblyQualifiedInheritanceType : inherits != typeof(object) ? inherits.As().CSharpName() : string.Empty) + (interfaces.Count > 0 ? ", " : string.Empty) : string.Empty;
 
             for (int i = 0; i < interfaces.Count; i++)
             {
@@ -117,6 +118,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
 
             return output;
+        }
+
+        public bool SupportsInheritance()
+        {
+            return modifier != ClassModifier.Static && modifier != ClassModifier.StaticPartial;
         }
 
         protected override string GenerateBody(int indent)
@@ -199,7 +205,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
             else
             {
-                if (!inherits.Is().PrimitiveStringOrVoid()) usings.Add(inherits.Namespace);
+                if (inherits != null && !inherits.Is().PrimitiveStringOrVoid()) usings.Add(inherits.Namespace);
             }
 
             var interfaceList = new List<string>();
@@ -234,8 +240,12 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return usings;
         }
 
-        
 
+        public ClassGenerator Inherit(Type type)
+        {
+            inherits = type;
+            return this;
+        }
         /// <summary>
         /// Add an interface to this class.
         /// </summary>

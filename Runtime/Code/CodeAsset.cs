@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using System.Collections.Generic;
 
 namespace Unity.VisualScripting.Community
 {
@@ -17,7 +18,11 @@ namespace Unity.VisualScripting.Community
         public string category;
         public bool optionsOpened;
         public bool preview;
-        public string lastCompiledName;
+        public List<string> lastCompiledNames = new List<string>();
+
+        #if UNITY_EDITOR
+        public bool shouldRefresh;
+        #endif
 
         public string GetFullTypeName()
         {

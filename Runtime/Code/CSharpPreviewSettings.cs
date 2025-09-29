@@ -1,43 +1,69 @@
 using System;
-using UnityEditor;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
+    [Serializable]
     public sealed class CSharpPreviewSettings : ScriptableObject
     {
+        public Color VariableColor = new Color(0.149f, 0.8f, 0.8f, 1f);
+        public Color StringColor = new Color(0.8f, 0.533f, 0.2f, 1f);
+        public Color NumericColor = new Color(0.867f, 1f, 0.733f, 1f);
+        public Color ConstructColor = new Color(0.267f, 0.541f, 1f, 1f);
+        public Color TypeColor = new Color(0.2f, 0.933f, 0.667f, 1f);
+        public Color EnumColor = new Color(1f, 1f, 0.733f, 1f);
+        public Color InterfaceColor = new Color(0.867f, 1f, 0.733f, 1f);
+        public float zoomValue = 1f;
 
-        public Color VariableColor = new Color(38, 204, 204, 255);
+        [HideInInspector]
+        public List<CompilerInfo> pendingInfo = new List<CompilerInfo>();
 
-        public Color StringColor = new Color(204, 136, 51, 255);
+        [HideInInspector]
+        public bool isInitalized = false;
+        public bool showSubgraphComment = true;
+        public bool showRecommendations = true;
+        public bool showTooltips = true;
+        public int recursionDepth = 10;
 
-        public Color NumericColor = new Color(221, 255, 187, 255);
-
-        public Color ConstructColor = new Color(68, 138, 255, 255);
-
-        public Color TypeColor = new Color(51, 238, 170, 255);
-
-        public Color EnumColor = new Color(255, 255, 187, 255);
-
-        public Color InterfaceColor = new Color(221, 255, 187, 255);
-
-        public bool ShowSubgraphComment = true;
+        public static bool ShouldShowSubgraphComment = true;
+        public static bool ShouldShowRecommendations = true;
+        public static bool ShouldGenerateTooltips = true;
+        public static int RecursionDepth = 10;
 
         public void Initalize()
         {
-            VariableColor = new Color(38, 204, 204, 255);
+            VariableColor = new Color(0.149f, 0.8f, 0.8f, 1f);
+            StringColor = new Color(0.8f, 0.533f, 0.2f, 1f);
+            NumericColor = new Color(0.867f, 1f, 0.733f, 1f);
+            ConstructColor = new Color(0.267f, 0.541f, 1f, 1f);
+            TypeColor = new Color(0.2f, 0.933f, 0.667f, 1f);
+            EnumColor = new Color(1f, 1f, 0.733f, 1f);
+            InterfaceColor = new Color(0.867f, 1f, 0.733f, 1f);
 
-            StringColor = new Color(204, 136, 51, 255);
+            isInitalized = true;
+        }
 
-            NumericColor = new Color(221, 255, 187, 255);
+        [Serializable]
+        public class CompilerInfo
+        {
+            public UnityEngine.Object @object;
+            public string relativePath;
+            public string compilerTypeName;
 
-            ConstructColor = new Color(68, 138, 255, 255);
+            [NonSerialized] public object compiler;
 
-            TypeColor = new Color(51, 238, 170, 255);
-
-            EnumColor = new Color(255, 255, 187, 255);
-
-            InterfaceColor = new Color(221, 255, 187, 255);
+            public void RestoreCompiler()
+            {
+                if (compiler == null && !string.IsNullOrEmpty(compilerTypeName))
+                {
+                    var type = Type.GetType(compilerTypeName);
+                    if (type != null)
+                    {
+                        compiler = Activator.CreateInstance(type);
+                    }
+                }
+            }
         }
     }
 }

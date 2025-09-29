@@ -1,4 +1,5 @@
-﻿using Unity.VisualScripting.Community.Libraries.CSharp;
+﻿using System.Text;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community
 {
@@ -11,67 +12,131 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
         {
-            var output = string.Empty;
-
-            var trueData = new ControlGenerationData(data);
-            var falseData = new ControlGenerationData(data);
+            var output = new StringBuilder();
 
             if (input == Unit.enter)
             {
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "if".ConstructHighlight() + " (" + GenerateValue(Unit.condition) + ")");
-                output += "\n";
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
-                output += "\n";
-                trueData.NewScope();
-                output += Unit.ifTrue.hasAnyConnection ? (Unit.ifTrue.connection.destination.unit as Unit).GenerateControl(Unit.ifTrue.connection.destination, trueData, indent + 1) : string.Empty;
-                trueData.ExitScope();
-                output += "\n";
-                output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
-                output += "\n";
+                output.Append(CodeBuilder.Indent(indent))
+                      .Append(MakeClickableForThisUnit("if".ConstructHighlight() + " ("))
+                      .Append(GenerateValue(Unit.condition, data))
+                      .Append(MakeClickableForThisUnit(")"))
+                      .AppendLine()
+                      .Append(CodeBuilder.Indent(indent))
+                      .AppendLine(MakeClickableForThisUnit("{"));
 
-                if (Unit.ifFalse.hasAnyConnection)
+                string trueCode;
+                if (!TrueIsUnreachable())
                 {
-                    output += "\n";
-                    output += CodeUtility.MakeSelectable(Unit, CodeBuilder.Indent(indent) + "else".ConstructHighlight()) + (!Unit.ifTrue.hasValidConnection ? CodeBuilder.MakeRecommendation("You should use the negate node and connect the true input instead") : string.Empty);
-                    output += "\n";
-                    output += CodeUtility.MakeSelectable(Unit, CodeBuilder.OpenBody(indent));
-                    output += "\n";
-                    falseData.NewScope();
-                    output += Unit.ifFalse.hasAnyConnection ? (Unit.ifFalse.connection.destination.unit as Unit).GenerateControl(Unit.ifFalse.connection.destination, falseData, indent + 1) : string.Empty;
-                    falseData.ExitScope();
-                    output += "\n";
-                    output += CodeUtility.MakeSelectable(Unit, CodeBuilder.CloseBody(indent));
-                    output += "\n";
-                }
-            }
-
-
-            if (data.mustBreak)
-            {
-                if (!trueData.hasBroke || !falseData.hasBroke)
-                {
-                    data.hasBroke = false;
+                    data.NewScope();
+                    trueCode = GetNextUnit(Unit.ifTrue, data, indent + 1).TrimEnd();
+                    data.ExitScope();
+                    output.Append(trueCode);
                 }
                 else
                 {
-                    data.hasBroke = true;
+                    data.NewScope();
+                    output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"The code in the 'True' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.condition, data))}).", $"Unreachable Code in 'True' Branch: {Unit.ifTrue.key}", "")));
+                    trueCode = GetNextUnit(Unit.ifTrue, data, indent + 1).TrimEnd();
+                    data.ExitScope();
+                    output.Append(trueCode);
+                }
+
+                output.AppendLine()
+                      .Append(CodeBuilder.Indent(indent))
+                      .AppendLine(MakeClickableForThisUnit("}"));
+
+                if (!Unit.ifFalse.hasAnyConnection)
+                {
+                    output.Append("\n");
+                }
+
+                if (Unit.ifFalse.hasAnyConnection)
+                {
+                    output.Append(CodeBuilder.Indent(indent))
+                          .Append(MakeClickableForThisUnit("else".ConstructHighlight()));
+
+                    if (!Unit.ifTrue.hasValidConnection || string.IsNullOrEmpty(trueCode))
+                    {
+                        output.Append(MakeClickableForThisUnit(CodeBuilder.MakeRecommendation(
+                            "You should use the negate node and connect the true input instead")));
+                    }
+
+                    output.AppendLine()
+                          .Append(CodeBuilder.Indent(indent))
+                          .AppendLine(MakeClickableForThisUnit("{"));
+
+                    if (!FalseIsUnreachable())
+                    {
+                        data.NewScope();
+                        output.Append(GetNextUnit(Unit.ifFalse, data, indent + 1).TrimEnd());
+                        data.ExitScope();
+                    }
+                    else
+                    {
+                        data.NewScope();
+                        output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"The code in the 'False' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.condition, data))}).", $"Unreachable Code in 'False' Branch: {Unit.ifFalse.key}", "")));
+                        output.Append(GetNextUnit(Unit.ifFalse, data, indent + 1).TrimEnd());
+                        data.ExitScope();
+                    }
+
+                    output.AppendLine()
+                          .Append(CodeBuilder.Indent(indent))
+                          .AppendLine(MakeClickableForThisUnit("}") + "\n");
                 }
             }
 
-            return output;
+            return output.ToString();
         }
 
-        public override string GenerateValue(ValueInput input)
+        private bool TrueIsUnreachable()
+        {
+            if (!Unit.condition.hasValidConnection) return false;
+
+            if (Unit.condition.GetPesudoSource().unit is Literal literal && (bool)literal.value == false)
+                return true;
+
+            if (Unit.condition.GetPesudoSource() is ValueInput valueInput &&
+                valueInput.hasDefaultValue && !valueInput.hasValidConnection &&
+                valueInput.unit.defaultValues[valueInput.key] is bool condition &&
+                condition == false)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool FalseIsUnreachable()
+        {
+            if (!Unit.condition.hasValidConnection) return false;
+
+            if (Unit.condition.GetPesudoSource().unit is Literal literal && (bool)literal.value == true)
+                return true;
+
+            if (Unit.condition.GetPesudoSource() is ValueInput valueInput &&
+                valueInput.hasDefaultValue && !valueInput.hasValidConnection &&
+                valueInput.unit.defaultValues[valueInput.key] is bool condition &&
+                condition == true)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
             if (input == Unit.condition)
             {
                 if (Unit.condition.hasAnyConnection)
                 {
-                    return CodeUtility.MakeSelectable(input.connection.source.unit as Unit , (Unit.condition.connection.source.unit as Unit).GenerateValue(Unit.condition.connection.source));
+                    data.SetExpectedType(typeof(bool));
+                    var code = GetNextValueUnit(Unit.condition, data);
+                    data.RemoveExpectedType();
+                    return code;
                 }
             }
 
-            return base.GenerateValue(input);
+            return base.GenerateValue(input, data);
         }
     }
 }

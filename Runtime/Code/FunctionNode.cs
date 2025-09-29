@@ -25,6 +25,10 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize]
         public List<ValueOutput> parameterPorts = new List<ValueOutput>();
 
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ValueInput returnValue;
+
         public FunctionNode() : base() { }
 
         public FunctionNode(FunctionType functionType)
@@ -60,7 +64,8 @@ namespace Unity.VisualScripting.Community
 
         private void ConstructorDefinition()
         {
-            for (int i = 0; i < constructorDeclaration?.parameters.Count; i++)
+            if (constructorDeclaration == null) return;
+            for (int i = 0; i < constructorDeclaration.parameters.Count; i++)
             {
                 if (constructorDeclaration.parameters[i].type != null && !string.IsNullOrEmpty(constructorDeclaration.parameters[i].name)) parameterPorts.Add(ValueOutput(constructorDeclaration.parameters[i].type, constructorDeclaration.parameters[i].name));
             }
@@ -73,13 +78,27 @@ namespace Unity.VisualScripting.Community
 
         private void GetterDefinition()
         {
+            // if (fieldDeclaration?.type != null)
+            // {
+            //     returnValue = ValueInput(fieldDeclaration.type, "value");
+            // }
         }
 
         private void MethodDefinition()
         {
-            for (int i = 0; i < methodDeclaration?.parameters.Count; i++)
+            if (methodDeclaration != null)
             {
-                if (methodDeclaration.parameters[i].type != null && !string.IsNullOrEmpty(methodDeclaration.parameters[i].name)) parameterPorts.Add(ValueOutput(methodDeclaration.parameters[i].type, methodDeclaration.parameters[i].name));
+                methodDeclaration.OnSerialized += Define;
+
+                // if (methodDeclaration.returnType != null && (methodDeclaration.returnType != typeof(void) || methodDeclaration.returnType != typeof(Libraries.CSharp.Void)))
+                // {
+                //     returnValue = ValueInput(methodDeclaration.returnType, "result");
+                // }
+
+                for (int i = 0; i < methodDeclaration.parameters.Count; i++)
+                {
+                    if (methodDeclaration.parameters[i].type != null && !string.IsNullOrEmpty(methodDeclaration.parameters[i].name)) parameterPorts.Add(ValueOutput(methodDeclaration.parameters[i].type, methodDeclaration.parameters[i].name));
+                }
             }
         }
 
@@ -91,20 +110,40 @@ namespace Unity.VisualScripting.Community
 
         public object Get()
         {
-            // To Do for Live C#
-            return null;
+            if (fieldDeclaration == null) throw new NullReferenceException($"{nameof(fieldDeclaration)} cannot be null.");
+            if (!fieldDeclaration.get) throw new InvalidOperationException($"Cannot get value from field {fieldDeclaration.name}");
+            var flow = Flow.New(fieldDeclaration.getter.GetReference() as GraphReference);
+            var result = flow.GetValue(returnValue);
+            return result;
         }
 
         public void Set(object value)
         {
-            // To Do for Live C#
+            if (fieldDeclaration == null) throw new NullReferenceException($"{nameof(fieldDeclaration)} cannot be null.");
+            if ((value != null && !fieldDeclaration.type.IsAssignableFrom(value.GetType())) || !fieldDeclaration.set)
+            {
+                throw new ArgumentException($"Value of type {value.GetType()} cannot be assigned to field of type {fieldDeclaration.type}");
+            }
+
+            var flow = Flow.New(fieldDeclaration.setter.GetReference() as GraphReference);
+            flow.SetValue(parameterPorts[0], value);
+            flow.Invoke(invoke);
         }
 
-        public void Invoke(params object[] parameters)
+        public object Invoke(params object[] parameters)
         {
             if (methodDeclaration == null) throw new NullReferenceException($"{nameof(methodDeclaration)} cannot be null.");
+            if (parameters.Length != methodDeclaration.parameters.Count)
+                throw new ArgumentException($"Expected {methodDeclaration.parameters.Count} parameters but got {parameters.Length}");
 
-            if (parameters.Length != methodDeclaration.parameters.Count) throw new ArgumentOutOfRangeException("parameters", "Parameters are not the correct count or types to invoke this method.");
+            // Validate parameter types
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if (parameters[i] != null && !methodDeclaration.parameters[i].type.IsAssignableFrom(parameters[i].GetType()))
+                {
+                    throw new ArgumentException($"Parameter {i} of type {parameters[i].GetType()} cannot be assigned to parameter of type {methodDeclaration.parameters[i].type}");
+                }
+            }
 
             var flow = Flow.New(methodDeclaration.GetReference() as GraphReference);
 
@@ -114,6 +153,8 @@ namespace Unity.VisualScripting.Community
             }
 
             flow.Invoke(invoke);
+
+            return returnValue != null ? flow.GetValue(returnValue) : null;
         }
     }
 }

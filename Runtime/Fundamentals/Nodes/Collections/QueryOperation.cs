@@ -15,6 +15,13 @@
         OrderBy,
         OrderByDescending,
         Single,
-        Where
+        Where,
+        Last,
+        LastOrDefault,
+        Select,
+        Skip,
+        Take,
+        Count,
+        Sum
     }
 }

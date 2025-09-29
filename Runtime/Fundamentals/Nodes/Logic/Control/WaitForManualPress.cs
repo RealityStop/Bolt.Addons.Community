@@ -1,61 +1,70 @@
+using System.Collections;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
-[UnitTitle("WaitForPress")]
-[UnitCategory("Community/Control")]
-[TypeIcon(typeof(WaitUnit))]
-public class WaitForManualPress : Unit
+namespace Unity.VisualScripting.Community
 {
-    [NodeButton("Trigger")]
-    [UnitHeaderInspectable]
-    public NodeButton button;
-
-    [DoNotSerialize]
-    [PortLabelHidden]
-    public ControlInput input;
-
-    [DoNotSerialize]
-    [PortLabelHidden]
-    public ControlOutput output;
-
-    private bool IsWaiting;
-
-    private GraphReference reference;
-
-    private bool coroutine;
-
-    protected override void Definition()
+    [RenamedFrom("WaitForManualPress")]
+    [UnitTitle("WaitForPress")]
+    [UnitCategory("Community/Control")]
+    [TypeIcon(typeof(WaitUnit))]
+    public class WaitForManualPress : Unit
     {
-        input = ControlInput(nameof(input), Wait);
-        output = ControlOutput(nameof(output));
+        [NodeButton("Trigger")]
+        [UnitHeaderInspectable]
+        public NodeButton button;
 
-        Succession(input, output);
-    }
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ControlInput input;
 
-    private ControlOutput Wait(Flow flow) 
-    {
-        reference = flow.stack.ToReference();
-        coroutine = flow.isCoroutine;
-        IsWaiting = true;
-        return null;
-    }
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ControlOutput output;
 
-    public void Trigger(GraphReference reference) 
-    {
-        if (IsWaiting) 
+        private bool IsWaiting;
+
+        private GraphReference reference;
+
+        private bool coroutine;
+
+        protected override void Definition()
         {
-            IsWaiting = false;
-            Flow flow = Flow.New(reference);
+            input = ControlInputCoroutine(nameof(input), Wait, WaitCoroutine);
+            output = ControlOutput(nameof(output));
 
-            if (coroutine)
+            Succession(input, output);
+        }
+
+        private ControlOutput Wait(Flow flow)
+        {
+            reference = flow.stack.ToReference();
+            IsWaiting = true;
+            coroutine = false;
+            return null;
+        }
+
+        private IEnumerator WaitCoroutine(Flow flow)
+        {
+            IsWaiting = true;
+            coroutine = true;
+            yield return new WaitWhile(() => IsWaiting);
+            yield return output;
+        }
+
+        public void Trigger(GraphReference reference)
+        {
+            if (IsWaiting)
             {
-                flow.StartCoroutine(output);
-            }
-            else
-            {
-                flow.Run(output);
+                IsWaiting = false;
+                if (!coroutine)
+                {
+                    Flow flow = Flow.New(reference);
+                    flow.Invoke(output);
+                }
             }
         }
     }
+
 }

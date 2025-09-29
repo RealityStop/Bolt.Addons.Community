@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3e9aafafc06bb84386caa9ca71df80c, type: 3}
+  m_Name: CreateVector3Snippet
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"sourceType":{"type":"UnityEngine.Vector3","qualifiedName":"UnityEngine.Vector3,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"},"_sourceUnit":{"sourceType":"UnityEngine.Vector3","defaultValues":{},"position":{"x":0.0,"y":0.0},"guid":"c0d7e425-a4c5-41bb-8cd8-d0b4652f1375","$version":"A","$id":"2"},"SnippetName":"CreateVector3","snippetArguments":[],"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":0.0,"y":0.0},"zoom":1.0,"elements":[{"$ref":"2"},{"chainable":false,"parameterNames":["x","y","z"],"member":{"name":".ctor","parameterTypes":["System.Single","System.Single","System.Single"],"targetType":"UnityEngine.Vector3","targetTypeName":"UnityEngine.Vector3","$version":"A"},"defaultValues":{"%x":{"$content":0.0,"$type":"System.Single"},"%y":{"$content":0.0,"$type":"System.Single"},"%z":{"$content":0.0,"$type":"System.Single"}},"position":{"x":-136.0,"y":21.0},"guid":"5ff5f6f1-885a-4cd9-8ea7-277ba0e92387","$version":"A","$type":"Unity.VisualScripting.InvokeMember","$id":"13"},{"sourceUnit":{"$ref":"13"},"sourceKey":"result","destinationUnit":{"$ref":"2"},"destinationKey":"source","guid":"1258c3a5-00e6-49b3-9ca1-0c422dca2d48","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
+  SnippetName: CreateVector3
+  snippetArguments: []
+  sourceType:
+    qualifiedName: UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community
 {
@@ -19,8 +20,13 @@ namespace Unity.VisualScripting.Community
         [InspectorWide]
         public List<InterfaceMethodItem> methods = new List<InterfaceMethodItem>();
 
+        [Inspectable]
+        [InspectorWide]
+        public List<SystemType> interfaces = new List<SystemType>();
+
 #if UNITY_EDITOR
         public bool methodsOpen;
+        public bool interfacesOpened;
         public bool propertiesOpen;
         public Texture2D icon;
 #endif

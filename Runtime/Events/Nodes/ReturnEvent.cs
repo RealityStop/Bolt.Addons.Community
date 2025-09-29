@@ -28,7 +28,7 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         [UnitHeaderInspectable("Global")]
         public bool global;
-        
+
         /// <summary>
         /// Outputs the data wrapper, which contains the references needed for returning back to the trigger.
         /// </summary>
@@ -51,13 +51,15 @@ namespace Unity.VisualScripting.Community
         /// <summary>
         /// The target receiver GameObject for this event.
         /// </summary>
-        [DoNotSerialize][PortLabelHidden][NullMeansSelf]
+        [DoNotSerialize]
+        [PortLabelHidden]
+        [NullMeansSelf]
         public ValueInput target;
 
         /// <summary>
         /// Overrides the hook name that the Event Bus calls to decipher different event types.
         /// </summary>
-        protected override string hookName { get { return "Return"; } }
+        protected override string hookName => CommunityEvents.ReturnEvent;
 
         /// <summary>
         /// Defines the ports of this unit.
@@ -68,9 +70,9 @@ namespace Unity.VisualScripting.Community
 
             arguments.Clear();
 
-            if (!global) target = ValueInput<GameObject>("target", (GameObject)null).NullMeansSelf();
+            if (!global) target = ValueInput<GameObject>("target", null).NullMeansSelf();
 
-            name = ValueInput<string>("name", string.Empty);
+            name = ValueInput("name", string.Empty);
 
             eventData = ValueOutput<ReturnEventData>("data");
 
@@ -111,7 +113,7 @@ namespace Unity.VisualScripting.Community
 
             for (int i = 0; i < arguments.Count; i++)
             {
-                flow.SetValue(arguments[i], args.arguments[args.isCallback ? i : i+1]);
+                flow.SetValue(arguments[i], args.arguments[args.isCallback ? i : i + 1]);
             }
         }
 
@@ -125,12 +127,12 @@ namespace Unity.VisualScripting.Community
         /// <param name="args">The arguments to send through.</param>
         public static void Trigger(TriggerReturnEvent trigger, GameObject target, string name, bool global = false, params object[] args)
         {
-            EventBus.Trigger<ReturnEventArg>("Return", new ReturnEventArg(trigger, target, name, global, args));
+            EventBus.Trigger<ReturnEventArg>(CommunityEvents.ReturnEvent, new ReturnEventArg(trigger, target, name, global, args));
         }
 
         public static void Trigger(GameObject target, string name, Action<object> callback = null, bool global = false, params object[] args)
         {
-            EventBus.Trigger<ReturnEventArg>("Return", new ReturnEventArg(callback, target, name, global, args));
+            EventBus.Trigger<ReturnEventArg>(CommunityEvents.ReturnEvent, new ReturnEventArg(callback, target, name, global, args));
         }
     }
 }

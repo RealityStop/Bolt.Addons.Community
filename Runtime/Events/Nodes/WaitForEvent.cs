@@ -1,11 +1,14 @@
 using UnityEngine;
 using Unity.VisualScripting;
+using System;
 
-namespace Bolt.Addons.Community.Fundamentals
+namespace Unity.VisualScripting.Community
 {
+    [RenamedFrom("Bolt.Addons.Community.Fundamentals.WaitForNode")]
     [UnitCategory("Events\\Community")]
     [UnitTitle("Wait For Task Event")]
     [TypeIcon(typeof(CustomEvent))]
+    [Obsolete]
     public class WaitForNode : Unit
     {
         [DoNotSerialize]
