@@ -53,7 +53,7 @@ namespace Unity.VisualScripting.Community
                 }
 
                 @class.AddUsings(parameterUsings);
-
+                @class.AddUsings("Unity.VisualScripting.Community.Libraries.Humility".Yield().ToList());
                 if (string.IsNullOrEmpty(properties))
                 {
                     properties += " ";
@@ -188,7 +188,7 @@ namespace Unity.VisualScripting.Community
 
         private string GetCompoundTitle()
         {
-            return "_" + (Data.type.type == typeof(Action) ? "Generic" : string.Empty) + Data.type.type.DisplayName().LegalMemberName();
+            return (Data.type.type == typeof(Action) ? "_Generic" : string.Empty) + Data.type.type.HumanName(true).LegalMemberName();
         }
     }
 }

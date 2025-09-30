@@ -184,5 +184,14 @@ namespace Unity.VisualScripting.Community
 
             return false;
         }
+
+        public static string GetNamespace(this Type type)
+        {
+            if (type == typeof(Libraries.CSharp.Void))
+            {
+                return typeof(void).Namespace;
+            }
+            return type.Namespace;
+        }
     }
 }

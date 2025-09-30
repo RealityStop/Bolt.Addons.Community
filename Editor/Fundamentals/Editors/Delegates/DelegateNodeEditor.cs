@@ -21,10 +21,12 @@ namespace Unity.VisualScripting.Community
             var buttonRect = position;
             buttonRect.height = 20;
             buttonRect.x += 40;
+            buttonRect.y += EditorGUIUtility.singleLineHeight;
 
             var labelRect = position;
             labelRect.height = 20;
             labelRect.width = 40;
+            labelRect.y += EditorGUIUtility.singleLineHeight;
 
             var baseRect = position;
             baseRect.y += 24;

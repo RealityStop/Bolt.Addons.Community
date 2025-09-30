@@ -11,6 +11,9 @@
             {
                 case LogicParamNode.BranchType.And: return typeof(Unity.VisualScripting.And).Icon();
                 case LogicParamNode.BranchType.Or: return typeof(Unity.VisualScripting.Or).Icon();
+                case LogicParamNode.BranchType.GreaterThan: return typeof(Unity.VisualScripting.Greater).Icon();
+                case LogicParamNode.BranchType.LessThan: return typeof(Unity.VisualScripting.Less).Icon();
+                case LogicParamNode.BranchType.Equal: return typeof(Unity.VisualScripting.Equal).Icon();
                 default: return base.DefinedIcon();
             }
         }

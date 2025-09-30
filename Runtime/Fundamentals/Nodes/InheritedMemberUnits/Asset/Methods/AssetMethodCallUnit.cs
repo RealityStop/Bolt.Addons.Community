@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
@@ -66,7 +67,7 @@ namespace Unity.VisualScripting.Community
                 exit = ControlOutput(nameof(exit));
                 Succession(enter, exit);
             }
-            if (methodType == MethodType.ReturnValue && method.returnType != typeof(void) && method.returnType != typeof(Libraries.CSharp.Void))
+            if (methodType == MethodType.ReturnValue && !method.returnType.Is().Void())
             {
                 result = ValueOutput(method.returnType, nameof(result), (flow) =>
                 {
@@ -100,7 +101,7 @@ namespace Unity.VisualScripting.Community
                     if (methodType == MethodType.Invoke)
                         Requirement(inputParameter, enter);
 
-                    if (method.returnType != typeof(void) && method.returnType != typeof(Libraries.CSharp.Void) && methodType == MethodType.ReturnValue)
+                    if (!method.returnType.Is().Void() && methodType == MethodType.ReturnValue)
                     {
                         Requirement(inputParameter, result);
                     }

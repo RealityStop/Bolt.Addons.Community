@@ -187,7 +187,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             var usings = new List<string>();
             if (!string.IsNullOrEmpty(stringReturnType) && !string.IsNullOrEmpty(stringReturnTypeNamespace) && !usings.Contains(stringReturnTypeNamespace))
                 usings.Add(stringReturnTypeNamespace);
-            else if (returnType != null && !usings.Contains(returnType.Namespace) && !returnType.Is().PrimitiveStringOrVoid()) usings.Add(returnType.Namespace);
+            else if (returnType != null && !usings.Contains(returnType.Namespace) && !returnType.Is().PrimitiveStringOrVoid()) usings.Add(returnType.GetNamespace());
 
             for (int i = 0; i < attributes.Count; i++)
             {

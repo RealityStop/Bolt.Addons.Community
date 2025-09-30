@@ -36,7 +36,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == null)
                 return "null";
 
-            if (type == typeof(CSharp.Void) || type == typeof(void))
+            if (type.Is().Void())
                 return "void";
 
             if (type.IsConstructedGenericType || type.IsGenericType)
@@ -91,7 +91,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == null)
                 return "null".ConstructHighlight();
 
-            if (type == typeof(CSharp.Void) || type == typeof(void))
+            if (type.Is().Void())
                 return "void".ConstructHighlight();
 
             if (type.IsConstructedGenericType || type.IsGenericType)
@@ -243,7 +243,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         {
             var t = isData.type;
 
-            if (t == typeof(CSharp.Void) || t == typeof(void))
+            if (t.Is().Void())
             {
                 return false;
             }

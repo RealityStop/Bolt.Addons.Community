@@ -45,7 +45,7 @@ namespace Unity.VisualScripting.Community
         public List<ValueInput> indexes = new List<ValueInput>();
 
         /// <summary>
-        /// The Value Ouput that returns the newly created array.
+        /// The Value Output that returns the newly created array.
         /// </summary>
         [DoNotSerialize]
         [RenamedFrom("Lasm.BoltExtensions.CreateMultiArray.list")]

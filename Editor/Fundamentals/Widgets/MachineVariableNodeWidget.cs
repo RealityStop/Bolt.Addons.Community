@@ -35,12 +35,19 @@ namespace Unity.VisualScripting.Community
 
         private IEnumerable<string> GetNameSuggestions()
         {
+            if (unit.target == null || reference == null)
+                yield break;
+
             if (Flow.CanPredict(unit.target, reference))
             {
-                var variables = Flow.Predict<SMachine>(unit.target, reference).graph.variables.ToArrayPooled();
+                var machine = Flow.Predict<SMachine>(unit.target, reference);
+                if (machine == null || machine.graph == null) yield break;
+
+                var variables = machine.graph.variables.ToArrayPooled();
                 for (int i = 0; i < variables.Length; i++)
                 {
-                    yield return variables[i].name;
+                    if (variables[i] != null)
+                        yield return variables[i].name;
                 }
             }
         }

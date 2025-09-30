@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEditor;
 using UnityEngine;
 using SFile = System.IO.File;
@@ -137,13 +138,14 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         /// </summary>
         public static void Path(this HUMIO.Data.Ensure ensure)
         {
-            var legalPath = !ensure.path.Contains(".") ? ensure.path : ensure.path.Remove(ensure.path.LastIndexOf("/") + 1, (ensure.path.Length - 1) - ensure.path.LastIndexOf("/"));
+            string legalPath = System.IO.Path.GetDirectoryName(ensure.path);
 
             if (!Directory.Exists(legalPath))
             {
                 Directory.CreateDirectory(legalPath);
             }
         }
+
 
         /// <summary>
         /// Ensures this path will exist if it does not already.

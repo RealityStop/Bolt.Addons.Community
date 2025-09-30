@@ -24,6 +24,10 @@ namespace Unity.VisualScripting.Community
                 case EnumeratorType.YieldInstruction:
                     instruction = ValueInput<YieldInstruction>("instruction");
                     break;
+                    
+                case EnumeratorType.CustomYieldInstruction:
+                    instruction = ValueInput<CustomYieldInstruction>("instruction");
+                    break;
 
                 case EnumeratorType.Enumerator:
                     enumerator = ValueInput<IEnumerator>("enumerator");

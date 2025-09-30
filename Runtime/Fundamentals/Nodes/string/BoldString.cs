@@ -3,9 +3,9 @@ using Unity.VisualScripting;
 namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("BoldString")]
-    [UnitTitle("Bold")]//Unit title
+    [UnitTitle("Bold")]
     [UnitCategory("Community\\Utility\\string")]
-    [TypeIcon(typeof(string))]//Unit icon
+    [TypeIcon(typeof(string))]
     public class BoldString : Unit
     {
         [DoNotSerialize]

@@ -939,7 +939,10 @@ namespace Unity.VisualScripting.Community.CSharp
                     info.RestoreCompiler();
                     var compiler = info.compiler as BaseCompiler;
                     if (compiler == null) continue;
-                    var type = AssetDatabase.LoadAssetAtPath<MonoScript>(info.relativePath).GetClass();
+
+                    if (!AssetDatabase.AssetPathExists(info.relativePath)) continue;
+
+                    var type = AssetDatabase.LoadAssetAtPath<MonoScript>(info.relativePath)?.GetClass();
                     try
                     {
                         compiler.PostProcess(info.@object, new PathConfig(), type);

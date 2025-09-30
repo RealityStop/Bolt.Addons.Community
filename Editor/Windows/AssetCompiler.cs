@@ -1,21 +1,16 @@
 ﻿using UnityEngine;
 using Unity.VisualScripting.Community.Libraries.Humility;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEditor;
 using System.Linq;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Reflection;
 using System;
-using System.IO;
-using UnityEditor.Compilation;
-using UnityEngine.SceneManagement;
 using System.Collections.ObjectModel;
 #if VISUAL_SCRIPTING_1_7
 using SMachine = Unity.VisualScripting.ScriptMachine;
 #else
 using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
+
 namespace Unity.VisualScripting.Community
 {
     public static class AssetCompiler
@@ -49,7 +44,9 @@ namespace Unity.VisualScripting.Community
         {
             compilers[typeof(T)] = compiler;
         }
+
         public const string GeneratedPath = "Unity.VisualScripting.Community.Generated";
+        
         [MenuItem("Addons/Compile All")]
         public static void Compile()
         {

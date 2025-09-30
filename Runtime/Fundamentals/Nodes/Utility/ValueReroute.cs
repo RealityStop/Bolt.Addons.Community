@@ -20,15 +20,6 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public bool SnapToGrid;
 
-        [Inspectable]
-        public bool inputVisible = true;
-
-        [Inspectable]
-        public bool outputVisible = true;
-
-        [Inspectable]
-        public bool showFlowOnHover = true;
-
         protected override void Definition()
         {
             input = ValueInput(portType, "in");

@@ -25,10 +25,6 @@ namespace Unity.VisualScripting.Community
             {
                 foreach (var rootGameObject in scene.GetRootGameObjects())
                 {
-                    foreach (var result in rootGameObject.GetComponents<T>())
-                    {
-                        yield return result;
-                    }
                     foreach (var result in rootGameObject.GetComponentsInChildren<T>(true))
                     {
                         yield return result;

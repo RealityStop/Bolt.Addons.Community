@@ -1,4 +1,3 @@
-using Unity.VisualScripting;
 using System;
 
 namespace Unity.VisualScripting.Community

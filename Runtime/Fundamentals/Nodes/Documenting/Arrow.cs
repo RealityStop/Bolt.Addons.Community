@@ -3,7 +3,9 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community
 {
     /// <summary>
-    /// This node has no functionality; it's just a Arrow.
+    /// A purely visual documentation node for graph organization.  
+    /// The Arrow node has no functional behavior in execution and exists only  
+    /// to provide directional arrows, labels, and separators that improve graph readability.  
     /// </summary>
     [UnitCategory("Community\\Documentation")]
     [UnitTitle("Arrow")]

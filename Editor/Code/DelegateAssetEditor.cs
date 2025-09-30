@@ -44,10 +44,19 @@ namespace Unity.VisualScripting.Community.CSharp
                     var typeValue = (Type)type.value;
                     if (GUILayout.Button(new GUIContent(typeValue.As().CSharpName(false, false, false), typeValue.Icon()?[IconSize.Small])))
                     {
-                        TypeBuilderWindow.ShowWindow(GUILayoutUtility.GetLastRect(), (result) => Target.type = new SystemType(result), Target.type.type, false, delegateTypes, () => shouldUpdate = true);
+                        TypeBuilderWindow.ShowWindow(GUILayoutUtility.GetLastRect(), (result) => Target.type = new SystemType(result), Target.type.type, false, delegateTypes, null, (t) =>
+                        {
+                            shouldUpdate = true;
+                            Target.title = GetCompoundTitle();
+                        });
                     }
                 });
             });
+        }
+
+        private string GetCompoundTitle()
+        {
+            return (Target.type.type == typeof(Action) ? "_Generic" : string.Empty) + Target.type.type.HumanName(true).LegalMemberName();
         }
     }
 }

@@ -26,7 +26,6 @@ namespace Unity.VisualScripting.Community
             HUMIO.Delete(fullPath);
             HUMIO.Ensure(fullPath).Path();
 
-
             string code = GenerateCode(asset);
             HUMIO.Save(code).Custom(fullPath).Text(false);
 

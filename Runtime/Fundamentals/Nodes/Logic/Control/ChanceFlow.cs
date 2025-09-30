@@ -16,12 +16,14 @@ namespace Unity.VisualScripting.Community
         public ValueInput value;
 
         [DoNotSerialize]
+        [PortLabel("Succeeded")]
         public ControlOutput trueOutput;
 
         [DoNotSerialize]
         public ControlInput enter;
 
         [DoNotSerialize]
+        [PortLabel("Failed")]
         public ControlOutput falseOutput;
 
         protected override void Definition()

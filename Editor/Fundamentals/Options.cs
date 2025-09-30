@@ -4,6 +4,8 @@ using System;
 using UnityEditor;
 using System.Reflection;
 using UnityEngine.SceneManagement;
+using Unity.VisualScripting.Community.Libraries.Humility;
+
 #if VISUAL_SCRIPTING_1_7
 using SMachine = Unity.VisualScripting.ScriptMachine;
 #else
@@ -26,11 +28,11 @@ namespace Unity.VisualScripting.Community.Variables.Editor
             typeof(long),
             typeof(double),
             typeof(ulong),
+            typeof(bool),
+            typeof(decimal),
+            typeof(byte),
             typeof(short),
             typeof(ushort),
-            typeof(bool),
-            typeof(byte),
-            typeof(decimal),
             typeof(DateTime),
             typeof(TimeSpan)
         };
@@ -192,12 +194,12 @@ namespace Unity.VisualScripting.Community.Variables.Editor
                     foreach (var method in classAsset.methods)
                     {
                         yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.Invoke));
-                        if (method.returnType != typeof(void) && method.returnType != typeof(Libraries.CSharp.Void))
+                        if (!method.returnType.Is().Void())
                         {
                             yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.ReturnValue));
                             yield return new AssetFuncUnitOption(new AssetFuncUnit(method));
                         }
-                        else if (method.returnType == typeof(void) || method.returnType == typeof(Libraries.CSharp.Void))
+                        else
                         {
                             yield return new AssetActionUnitOption(new AssetActionUnit(method));
                         }

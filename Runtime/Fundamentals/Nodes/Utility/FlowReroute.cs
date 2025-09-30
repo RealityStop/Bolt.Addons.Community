@@ -13,23 +13,9 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize]
         [PortLabelHidden]
         public ControlOutput output;
-
-        [Inspectable]
-        public Color InputColor = Color.white;
-
-        [Inspectable]
-        public Color OutputColor = Color.white;
-
+        
         [Inspectable]
         public bool SnapToGrid;
-
-        [Inspectable]
-        public bool InputVisible = true;
-        [Inspectable]
-        public bool OutputVisible = true;
-
-        [Inspectable]
-        public bool showFlowOnHover = true;
 
         protected override void Definition()
         {
