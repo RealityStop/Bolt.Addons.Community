@@ -88,8 +88,6 @@ namespace Unity.VisualScripting.Community
         {
             if (methodDeclaration != null)
             {
-                methodDeclaration.OnSerialized += Define;
-
                 // if (methodDeclaration.returnType != null && (methodDeclaration.returnType != typeof(void) || methodDeclaration.returnType != typeof(Libraries.CSharp.Void)))
                 // {
                 //     returnValue = ValueInput(methodDeclaration.returnType, "result");

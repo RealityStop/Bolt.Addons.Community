@@ -22,6 +22,7 @@ namespace Unity.VisualScripting.Community
 
         public void Compile(UnityEngine.Object asset, PathConfig paths)
         {
+            if (asset == null) return;
             string fullPath = GetFilePath(asset, paths);
             HUMIO.Delete(fullPath);
             HUMIO.Ensure(fullPath).Path();

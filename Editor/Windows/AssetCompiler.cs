@@ -46,18 +46,22 @@ namespace Unity.VisualScripting.Community
         }
 
         public const string GeneratedPath = "Unity.VisualScripting.Community.Generated";
-        
-        [MenuItem("Addons/Compile All")]
+
+        [MenuItem("Addons/Compile All %&A")]
         public static void Compile()
         {
             if (!EditorUtility.DisplayDialog("Compile All Assets",
-                $"Compile all assets? This will clear all generated scripts in {GeneratedPath}.", "Yes", "No"))
+                $"Compile all assets? This will clear all generated scripts in Assets/{GeneratedPath}.", "Yes", "No"))
                 return;
 
             paths.EnsureDirectories();
             paths.ClearGeneratedFiles();
 
-            CompileAssets(HUMAssets.Find().Assets().OfType<CodeAsset>());
+            CompileAssets(HUMAssets.Find().Assets().OfType<ClassAsset>());
+            CompileAssets(HUMAssets.Find().Assets().OfType<StructAsset>());
+            CompileAssets(HUMAssets.Find().Assets().OfType<EnumAsset>());
+            CompileAssets(HUMAssets.Find().Assets().OfType<DelegateAsset>());
+            CompileAssets(HUMAssets.Find().Assets().OfType<InterfaceAsset>());
             CompileAssets(HUMAssets.Find().Assets().OfType<ScriptGraphAsset>());
             CompileScriptMachines(AssetCompilierUtility.FindObjectsOfTypeIncludingInactive<SMachine>());
 
@@ -65,14 +69,14 @@ namespace Unity.VisualScripting.Community
             AssetDatabase.Refresh();
         }
 
-        [MenuItem("Addons/Compile Selected")]
+        [MenuItem("Addons/Compile Selected %&S")]
         public static void CompileSelected()
         {
             paths.EnsureDirectories();
 
             foreach (var item in Selection.GetFiltered<CodeAsset>(SelectionMode.Assets))
             {
-                CompileAsset(item);
+                CompileAsset(item, false);
             }
             CompileAssets(Selection.GetFiltered<ScriptGraphAsset>(SelectionMode.Assets));
             CompileScriptMachines(Selection.GetFiltered<GameObject>(SelectionMode.Unfiltered)
@@ -82,7 +86,7 @@ namespace Unity.VisualScripting.Community
             AssetDatabase.Refresh();
         }
 
-        public static void CompileAsset(UnityEngine.Object asset)
+        public static void CompileAsset(UnityEngine.Object asset, bool refresh = true)
         {
             paths.EnsureDirectories();
             if (asset is GameObject @object)
@@ -94,17 +98,25 @@ namespace Unity.VisualScripting.Community
                     scriptMachine = @object.GetComponent<SMachine>();
                 if (scriptMachine != null)
                     CompileScriptMachines(new List<SMachine>() { scriptMachine });
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
+                if (refresh)
+                {
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+                }
                 return;
             }
+
             var type = asset.GetType();
             if (compilers.TryGetValue(type, out var compiler))
             {
                 compiler.Compile(asset, paths);
             }
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+
+            if (refresh)
+            {
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+            }
         }
 
         private static void CompileAssets<T>(IEnumerable<T> assets) where T : UnityEngine.Object
@@ -124,6 +136,7 @@ namespace Unity.VisualScripting.Community
             {
                 foreach (var machine in machines)
                 {
+                    if (machine == null || machine.graph == null) continue;
                     compiler.Compile(machine, paths);
                 }
             }

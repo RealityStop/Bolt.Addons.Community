@@ -28,6 +28,23 @@ namespace Unity.VisualScripting.Community
             window.Show();
         }
 
+        [MenuItem("Window/Community Addons/Toggle Reference picker &r")]
+        public static void ToggleReferencePicker()
+        {
+            if (HasOpenInstances<EditorWindowView>())
+            {
+                var focused = focusedWindow as EditorWindowView;
+
+                if (focused != null)
+                {
+                    focused.showReferencePicker = !focused.showReferencePicker;
+                    return;
+                }
+            }
+
+            Debug.LogWarning("No EditorWindowView open or focused cannot toggle reference picker.");
+        }
+
         public static EditorWindowView CreateWindow(EditorWindowAsset windowType, bool showReferencePicker = false)
         {
             EditorWindowView window = CreateInstance<EditorWindowView>();
@@ -41,31 +58,8 @@ namespace Unity.VisualScripting.Community
         [SerializeField]
         private bool showReferencePicker;
 
-        public IGraph childGraph => asset == null ? graph : asset.graph;
-
-        public bool isSerializationRoot => true;
-
-        public UnityEngine.Object serializedObject => asset;
-
-#if VISUAL_SCRIPTING_1_7_5_OR_GREATER
-        public IEnumerable<object> GetAotStubs(HashSet<object> visited)
-        {
-            return visited;
-        } 
-#else
-        public IEnumerable<object> aotStubs => graph.aotStubs;
-#endif
-
-        [SerializeReference]
-        private IGraph _graph = new FlowGraph();
-        public IGraph graph { get => asset == null ? _graph : asset.graph; set { if (asset == null) { _graph = value; } else { asset.graph = (FlowGraph)value; } } }
-
-        private GraphReference reference;
-
-        [SerializeField] 
-        private bool isAssetReference;
-
-        [Inspectable][SerializeField]
+        [Inspectable]
+        [SerializeField]
         public CustomVariables variables = new CustomVariables();
 
         public VisualElement container;
@@ -74,7 +68,7 @@ namespace Unity.VisualScripting.Community
 
         private bool firstPass = true;
 
-        private void OnHeaderGUI() 
+        private void OnHeaderGUI()
         {
             e = Event.current;
 
@@ -118,7 +112,10 @@ namespace Unity.VisualScripting.Community
 
         private void OnContainerGUI()
         {
-            if (showReferencePicker && header != null && !rootVisualElement.Contains(header)) rootVisualElement.Add(header);
+            if (showReferencePicker && header != null && !rootVisualElement.Contains(header))
+            {
+                rootVisualElement.Insert(0, header);
+            }
             if (!showReferencePicker && header != null && rootVisualElement.Contains(header)) rootVisualElement.Remove(header);
 
             if (asset != null)
@@ -138,19 +135,6 @@ namespace Unity.VisualScripting.Community
             return GraphReference.New(asset, true);
         }
 
-        public IGraph DefaultGraph()
-        {
-            return new FlowGraph();
-        }
-
-        public void OnBeforeSerialize()
-        {
-        }
-
-        public void OnAfterDeserialize()
-        {
-        }
-
         private void OnDestroy()
         {
             variables.onVariablesChanged -= OnVariablesChanged;
@@ -165,7 +149,7 @@ namespace Unity.VisualScripting.Community
                 GetReference().AsReference().TriggerEventHandler<EditorWindowEventArgs>((hook) => { return hook == "EditorWindow_OnDestroy"; }, new EditorWindowEventArgs(this), (p) => true, true);
             }
         }
-        
+
         private void OnDisable()
         {
             variables.onVariablesChanged -= OnVariablesChanged;
@@ -186,7 +170,7 @@ namespace Unity.VisualScripting.Community
             {
                 windows[i].Close();
                 UnityEngine.Object.DestroyImmediate(windows[i]);
-            } 
+            }
         }
 
         private void OnEnable()
@@ -243,7 +227,7 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private void OnVariablesChanged() 
+        private void OnVariablesChanged()
         {
             if (asset != null)
             {
