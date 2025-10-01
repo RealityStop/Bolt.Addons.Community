@@ -202,7 +202,7 @@ Math
 Code Assets are used to generate dependency free C# code.
 
 Code
- - **Class** (Experimental)
+ - [**Class** (Experimental)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Classes)
  - **Delegate**
  - **Enum**
  - **Interface** (Experimental)
