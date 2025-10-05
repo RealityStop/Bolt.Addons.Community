@@ -136,7 +136,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 var prefix = fullName && !string.IsNullOrEmpty(type.Namespace)
                     ? type.Namespace.NamespaceHighlight() + "."
                     : "";
-                return prefix + type.Name.EnumHighlight();
+                return prefix + type.Name.TypeHighlight();
             }
 
             if (type.IsInterface)
@@ -628,7 +628,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 return Create("WaitForFlowLogic", value.InputCount.As().Code(false, false, false), value.ResetOnExit.As().Code(false, false, false));
             }
             if (type.IsNumeric()) return @as.value.ToString();
-            if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(false);
+            if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(false, " | ", fullName);
 
             if (isNew)
             {
@@ -735,7 +735,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 return CodeUtility.MakeClickable(unit, Create("WaitForFlowLogic", value.InputCount.As().Code(false, false, false), value.ResetOnExit.As().Code(false, false, false)));
             }
             if (type.IsNumeric()) return CodeUtility.MakeClickable(unit, @as.value.ToString());
-            if (type.IsEnum) return CodeUtility.MakeClickable(unit, (@as.value as Enum).ToMultipleEnumString(false));
+            if (type.IsEnum) return CodeUtility.MakeClickable(unit, (@as.value as Enum).ToMultipleEnumString(false, " | ", fullName));
 
             if (isNew)
             {
@@ -841,7 +841,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 return CreateHighlighted("WaitForFlowLogic", value.InputCount.As().Code(false), value.ResetOnExit.As().Code(false));
             }
             if (type.IsNumeric()) return @as.value.ToString().NumericHighlight();
-            if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(true);
+            if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(true, " | ", fullName);
             if (isNew)
             {
                 if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)
@@ -948,7 +948,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             }
 
             if (type.IsNumeric()) return CodeUtility.MakeClickable(unit, @as.value.ToString().NumericHighlight());
-            if (type.IsEnum) return CodeUtility.MakeClickable(unit, (@as.value as Enum).ToMultipleEnumString(true));
+            if (type.IsEnum) return CodeUtility.MakeClickable(unit, (@as.value as Enum).ToMultipleEnumString(true, " | ", fullName));
             if (isNew)
             {
                 if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)

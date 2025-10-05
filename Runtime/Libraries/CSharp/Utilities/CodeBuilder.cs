@@ -89,21 +89,33 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return output;
         }
 
-        public static string ToMultipleEnumString(this Enum value, bool highlight, string separator = ", ")
+        public static string ToMultipleEnumString(this Enum value, bool highlight, string separator = ", ", bool fullName = false)
         {
             Type type = value.GetType();
+            string typeString = type.As().CSharpName(false, fullName, highlight);
+
             if (!type.IsDefined(typeof(FlagsAttribute), false))
-                return highlight ? type.Name.TypeHighlight() + "." + value.ToString().EnumHighlight() : type.Name + "." + value.ToString();
+                return highlight ? typeString + "." + value.ToString().EnumHighlight()
+                                 : typeString + "." + value.ToString();
 
             List<string> values = new List<string>();
             foreach (Enum enumValue in Enum.GetValues(type))
             {
                 if (enumValue.Equals(Enum.ToObject(type, 0))) continue;
+
                 if (value.HasFlag(enumValue))
-                    values.Add(highlight ? $"{type.Name.TypeHighlight()}.{enumValue.ToString().EnumHighlight()}" : $"{type.Name}.{enumValue}");
+                    values.Add(highlight
+                        ? $"{typeString}.{enumValue.ToString().EnumHighlight()}"
+                        : $"{typeString}.{enumValue}");
             }
 
-            return values.Count > 0 ? string.Join(separator, values) : highlight ? $"{type.Name.TypeHighlight()}.{Enum.GetValues(type).GetValue(0).ToString().EnumHighlight()}" : $"{type.Name}.{Enum.GetValues(type).GetValue(0)}";
+            if (values.Count > 0)
+                return string.Join(separator, values);
+
+            Enum zeroValue = (Enum)Enum.GetValues(type).GetValue(0);
+            return highlight
+                ? $"{typeString}.{zeroValue.ToString().EnumHighlight()}"
+                : $"{typeString}.{zeroValue}";
         }
 
         private static readonly Dictionary<int, string> indentCache = new Dictionary<int, string>();

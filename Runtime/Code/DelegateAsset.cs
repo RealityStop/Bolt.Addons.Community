@@ -12,8 +12,8 @@ namespace Unity.VisualScripting.Community
     public sealed class DelegateAsset : CodeAsset
     {
         [Inspectable]
-        [SerializeField]
         [Serialize]
+        [SerializeField]
         public SystemType type = new SystemType(typeof(Action));
 
         [Inspectable]

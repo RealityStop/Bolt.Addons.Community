@@ -50,7 +50,7 @@ namespace Unity.VisualScripting.Community
             }
             else if (input == Unit.Reset)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{Name.VariableHighlight()} = " + "false".ConstructHighlight() + ";") + "\n";
+                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{Name.VariableHighlight()}.Reset();") + "\n";
             }
 
             return output;
