@@ -40,6 +40,10 @@ namespace Unity.VisualScripting.Community
                 }
 
                 var @class = ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, title, typeof(object)).ImplementInterface(delegateType);
+                if (Data.type.type == typeof(Action))
+                {
+                    @class.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter("Unity.VisualScripting.Community.Generated._GenericAction"));
+                }
                 var properties = string.Empty;
                 var method = Data.type.type.GetMethod("Invoke");
                 var parameterUsings = new List<string>();
@@ -188,7 +192,7 @@ namespace Unity.VisualScripting.Community
 
         private string GetCompoundTitle()
         {
-            return (Data.type.type == typeof(Action) ? "_Generic" : string.Empty) + Data.type.type.HumanName(true).LegalMemberName();
+            return (Data.type.type == typeof(Action) ? "Generic_" : string.Empty) + Data.type.type.HumanName(true).LegalMemberName();
         }
     }
 }

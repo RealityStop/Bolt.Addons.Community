@@ -22,7 +22,18 @@ namespace Unity.VisualScripting.Community
 
         private static readonly Dictionary<Type, Type> arrayBaseTypeCache = new Dictionary<Type, Type>();
         private static readonly Dictionary<(Type, Type[]), Type> constructedTypeCache = new Dictionary<(Type, Type[]), Type>();
-
+        public int ChildCount
+        {
+            get
+            {
+                int count = nestedParameters.Count;
+                foreach (var param in nestedParameters)
+                {
+                    count += param.ChildCount;
+                }
+                return count;
+            }
+        }
         public GenericParameter parent;
         public bool HasParent => parent != null;
         public SystemType type = new SystemType();

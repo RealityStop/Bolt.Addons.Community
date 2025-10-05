@@ -14,16 +14,14 @@ namespace Unity.VisualScripting.Community
     [TypeIcon(typeof(Type))]
     public class FakeGenericParameterType : Type
     {
-        public string _name;
-        public TypeParameterConstraints _constraints;
-        public Type _baseTypeConstraint;
-        public List<Type> _interfaceConstraints = new List<Type>();
-
-        public readonly bool _isArrayType;
-        public int _arrayRank;
-        public FakeGenericParameterType _elementType;
-
-        public int _position;
+        public string name;
+        public TypeParameterConstraints constraints;
+        public Type baseTypeConstraint;
+        public List<Type> interfaceConstraints = new List<Type>();
+        public readonly bool isArrayType;
+        public int arrayRank;
+        public Type elementType;
+        public int position;
 
         public FakeGenericParameterType(
             string name,
@@ -32,68 +30,68 @@ namespace Unity.VisualScripting.Community
             Type baseTypeConstraint = null,
             List<Type> interfaceConstraints = null)
         {
-            _name = name;
-            _position = position;
-            _constraints = constraints;
-            _baseTypeConstraint = baseTypeConstraint;
-            _interfaceConstraints = interfaceConstraints ?? new List<Type>();
+            this.name = name;
+            this.position = position;
+            this.constraints = constraints;
+            this.baseTypeConstraint = baseTypeConstraint;
+            this.interfaceConstraints = interfaceConstraints ?? new List<Type>();
         }
 
         private FakeGenericParameterType(FakeGenericParameterType elementType, int rank)
         {
-            _isArrayType = true;
-            _arrayRank = rank;
-            _elementType = elementType;
+            isArrayType = true;
+            arrayRank = rank;
+            this.elementType = elementType;
         }
         public void ChangeName(string newName)
         {
-            _name = newName;
+            name = newName;
         }
         public void ChangeBaseTypeConstraint(Type newConstraint)
         {
-            _baseTypeConstraint = newConstraint;
+            baseTypeConstraint = newConstraint;
         }
         public void ChangeInterfaceTypeConstraints(List<Type> newConstraints)
         {
-            _interfaceConstraints = newConstraints;
+            interfaceConstraints = newConstraints;
         }
         public void ChangeTypeParameterConstraints(TypeParameterConstraints newConstraints)
         {
-            _constraints = newConstraints;
+            constraints = newConstraints;
         }
         public void ChangePosition(int newPosition)
         {
-            _position = newPosition;
+            position = newPosition;
         }
 
-        public override Type GetElementType() => _isArrayType ? _elementType : throw new InvalidOperationException();
+        public override Type GetElementType() => isArrayType ? elementType : throw new InvalidOperationException();
 
         public override Type MakeArrayType() => new FakeGenericParameterType(this, 1);
 
         public override Type MakeArrayType(int rank) => new FakeGenericParameterType(this, rank);
         public override int GetArrayRank()
         {
-            return _isArrayType ? _arrayRank : 0;
+            return isArrayType ? arrayRank : 0;
         }
         public override Type MakeGenericType(params Type[] typeArguments)
         {
             throw new InvalidOperationException("FakeGenericParameterType does not support MakeGenericType.");
         }
-        public override string Name => _isArrayType
-            ? $"{_elementType.Name}[{new string(',', _arrayRank - 1)}]"
-            : _name;
-        public TypeParameterConstraints Constraints => _constraints;
-        public Type BaseTypeConstraint => _baseTypeConstraint;
-        public IReadOnlyList<Type> InterfaceConstraints => _interfaceConstraints.AsReadOnly();
+        public override string Name => isArrayType
+            ? $"{elementType.Name}[{new string(',', arrayRank - 1)}]"
+            : name;
+        public TypeParameterConstraints Constraints => constraints;
+        public Type BaseTypeConstraint => baseTypeConstraint;
+        public IReadOnlyList<Type> InterfaceConstraints => interfaceConstraints.AsReadOnly();
 
         public override bool IsConstructedGenericType => false;
         public override bool IsGenericParameter => false;
         public override Type[] GetGenericParameterConstraints()
         {
             var list = new List<Type>();
-            if (_baseTypeConstraint != null)
+            if (baseTypeConstraint != null)
             {
-                list.Add(_baseTypeConstraint);
+                list.Add(baseTypeConstraint);
             }
 
             foreach (var interfaceConstraint in InterfaceConstraints)
@@ -102,18 +100,18 @@ namespace Unity.VisualScripting.Community
             }
             return list.ToArray();
         }
-        public override Type BaseType => _baseTypeConstraint ?? ((Constraints & TypeParameterConstraints.Struct) != 0 ? typeof(ValueType) : typeof(object));
+        public override Type BaseType => baseTypeConstraint ?? ((Constraints & TypeParameterConstraints.Struct) != 0 ? typeof(ValueType) : typeof(object));
         public override string ToString()
         {
-            string constraintInfo = $"{_name}";
-            if (_constraints != TypeParameterConstraints.None || _baseTypeConstraint != null || _interfaceConstraints.Count > 0)
+            string constraintInfo = $"{name}";
+            if (constraints != TypeParameterConstraints.None || baseTypeConstraint != null || interfaceConstraints.Count > 0)
             {
                 var parts = new List<string>();
-                if (_constraints.HasFlag(TypeParameterConstraints.Class)) parts.Add("class");
-                if (_constraints.HasFlag(TypeParameterConstraints.Struct)) parts.Add("struct");
-                if (_constraints.HasFlag(TypeParameterConstraints.New)) parts.Add("new()");
-                if (_baseTypeConstraint != null) parts.Add(_baseTypeConstraint.Name);
-                if (_interfaceConstraints.Count > 0) parts.AddRange(_interfaceConstraints.ConvertAll(i => i.As().CSharpName(false, true, false)));
+                if (constraints.HasFlag(TypeParameterConstraints.Class)) parts.Add("class");
+                if (constraints.HasFlag(TypeParameterConstraints.Struct)) parts.Add("struct");
+                if (constraints.HasFlag(TypeParameterConstraints.New)) parts.Add("new()");
+                if (baseTypeConstraint != null) parts.Add(baseTypeConstraint.Name);
+                if (interfaceConstraints.Count > 0) parts.AddRange(interfaceConstraints.ConvertAll(i => i.As().CSharpName(false, true, false)));
 
                 constraintInfo += $" : {string.Join(", ", parts)}";
             }
@@ -145,7 +143,7 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        public override int GenericParameterPosition => _position;
+        public override int GenericParameterPosition => position;
 
         public override bool IsDefined(Type attributeType, bool inherit)
         {
@@ -388,15 +386,9 @@ namespace Unity.VisualScripting.Community
         {
             return GetType().GetCustomAttributes(attributeType, inherit);
         }
-        protected override bool HasElementTypeImpl()
-        {
-            return false;
-        }
 
-        protected override bool IsArrayImpl()
-        {
-            return false;
-        }
+        protected override bool HasElementTypeImpl() => isArrayType;
+        protected override bool IsArrayImpl() => isArrayType;
 
         protected override bool IsByRefImpl()
         {

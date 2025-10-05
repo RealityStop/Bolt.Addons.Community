@@ -1,5 +1,3 @@
-using Unity.VisualScripting;
-using UnityEngine;
 using System.Collections.Generic;
 using System.Text;
 
@@ -36,8 +34,9 @@ namespace Unity.VisualScripting.Community
 
         [Inspectable, InspectorLabel("Append Modes", "List to store the modes for each input (Max: 10 items)")]
         [InspectorWide]
-        public List<AppendStringType> appendModes = new List<AppendStringType>();
+        public List<StringAppendMode> appendModes = new List<StringAppendMode>();
 
+        [DoNotSerialize]
         public List<ValueInput> inputPorts { get; private set; } = new List<ValueInput>();
         
         [DoNotSerialize]
@@ -69,7 +68,7 @@ namespace Unity.VisualScripting.Community
         {
             if (appendModes.Count < MinInputs)
             {
-                appendModes.Add(new AppendStringType());
+                appendModes.Add(new StringAppendMode());
             }
 
             if (appendModes.Count > MaxInputs)
@@ -169,14 +168,5 @@ namespace Unity.VisualScripting.Community
 
             return stringBuilder.ToString();
         }
-    }
-
-    public class AppendStringType
-    {
-        public StringBuilderUnit.AppendMode appendMode;
-        public string delimiter;      // Used for 'Delimiter' mode.
-        public string prefix;         // Used for 'Prefixed' mode.
-        public string suffix;         // Used for 'Suffixed' mode.
-        public int repeatCount = 1;   // Used for 'Repeated' mode (default to 1).
     }
 }

@@ -13,7 +13,8 @@ namespace Unity.VisualScripting.Community
     {
         [Inspectable]
         [SerializeField]
-        public SystemType type = new SystemType() { type = typeof(Action) };
+        [Serialize]
+        public SystemType type = new SystemType(typeof(Action));
 
         [Inspectable]
         public string displayName;

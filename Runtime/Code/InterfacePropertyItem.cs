@@ -1,5 +1,6 @@
 ﻿using Unity.VisualScripting;
 using System;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community
 {
@@ -11,10 +12,13 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public string name;
         [Inspectable]
-        public Type type = typeof(object);
+        public SystemType type = new SystemType(typeof(object));
         [Inspectable]
         public bool get = true;
         [Inspectable]
         public bool set = true;
+#if UNITY_EDITOR
+        public bool isOpen;
+#endif
     }
 }

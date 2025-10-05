@@ -2,6 +2,7 @@
 using UnityEditor;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -9,6 +10,18 @@ namespace Unity.VisualScripting.Community.CSharp
         where TAsset : CodeAsset
         where TAssetGenerator : CodeGenerator
     {
+        protected enum AttributeUsageType
+        {
+            Class,
+            Struct,
+            Enum,
+            Interface,
+            Field,
+            Property,
+            Method,
+            Parameter
+        }
+
         protected TAsset Target;
 
         protected TAssetGenerator generator;
@@ -174,6 +187,27 @@ namespace Unity.VisualScripting.Community.CSharp
         protected void UpdatePreview()
         {
             CSharpPreviewWindow.RefreshPreview();
+        }
+
+        protected object GetDefaultValue(Type type)
+        {
+            var defaultValue = type.PseudoDefault();
+            if (defaultValue != null) return defaultValue;
+            var defaultConstructor = type.GetDefaultConstructor();
+            if (defaultConstructor != null) return defaultConstructor.Invoke(new object[0]);
+            var pseudoDefaultConstructor = type.GetConstructors().FirstOrDefault(c => c.IsPublic && c.GetParameters().All(p => p.IsOptional));
+            if (pseudoDefaultConstructor != null) return pseudoDefaultConstructor.Invoke(new object[pseudoDefaultConstructor.GetParameters().Length]);
+            return null;
+        }
+
+        /// <summary>
+        /// Helper method to get AttributeUsageAttribute from a type
+        /// </summary>
+        protected AttributeUsageAttribute GetAttributeUsage(Type attrType)
+        {
+            return attrType.GetCustomAttributes(typeof(AttributeUsageAttribute), false)
+                .Cast<AttributeUsageAttribute>()
+                .FirstOrDefault() ?? new AttributeUsageAttribute(AttributeTargets.All);
         }
     }
 }

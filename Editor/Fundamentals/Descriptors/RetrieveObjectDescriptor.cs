@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community
         }
         protected override EditorTexture DefinedIcon()
         {
-            string iconFullPath = "Packages/dev.bolt.addons/Runtime/Fundamentals/Nodes/Object Pooling/Icons/database-file-icon.png";
+            string iconFullPath = "Packages/dev.bolt.addons/Editor/Fundamentals/Resources/RetrievePool.png";
             Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconFullPath);
             return EditorTexture.Single(icon);
         }

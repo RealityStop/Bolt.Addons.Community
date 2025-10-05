@@ -24,7 +24,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public override string Generate(int indent)
         {
             if (!useAssemblyQualifiedType && type == null) return "/* Parameter type is null */".WarningHighlight();
-            var _attributes = attributes != null && attributes.Count > 0 ? string.Join(" ", attributes.Select(attr => $"[{attr.GetAttributeType().As().CSharpName()}]")) + " " : string.Empty;
+            var _attributes = attributes != null && attributes.Count > 0 ? string.Join(" ", attributes.Select(attr => AttributeGenerator.Attribute(attr.GetAttributeType()).AddParameters(attr.parameters).Generate(0))) + " " : string.Empty;
             var _modifier = RuntimeTypeUtility.GetModifierAsString(modifier);
             var _default = isLiteral && !useAssemblyQualifiedType ? type.IsBasic() ? " = " + defaultValue.As().Code(true, true) : " = " + (type.IsStruct() && isLiteral && !type.IsBasic() ? "default".ConstructHighlight() : "null".ConstructHighlight()) : "";
             var parameter = _attributes + (useAssemblyQualifiedType ? _modifier + assemblyQualifiedType + " " + name.VariableHighlight() : _modifier + type.As().CSharpName() + " " + name.LegalMemberName().VariableHighlight()) + _default;

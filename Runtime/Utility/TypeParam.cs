@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using JetBrains.Annotations;
 
 namespace Unity.VisualScripting.Community.Utility
 {
@@ -17,7 +18,8 @@ namespace Unity.VisualScripting.Community.Utility
         public Type type = typeof(object);
 
         [SerializeField]
-        public SystemType Paramtype = new SystemType();
+        [UsedImplicitly]
+        public SystemType Paramtype = new SystemType(typeof(object));
 
         [SerializeField]
         [Inspectable]

@@ -39,29 +39,17 @@ namespace Unity.VisualScripting.Community.CSharp
         protected Metadata interfaces;
         protected SerializedProperty interfacesProp;
 
-        private Type[] attributeTypes = new Type[] { };
-        private Type[] classAttributeTypes = new Type[] { };
-        private Type[] enumAttributeTypes = new Type[] { };
-        private Type[] fieldAttributeTypes = new Type[] { };
-        private Type[] parameterAttributeTypes = new Type[] { };
-        private Type[] interfaceAttributeTypes = new Type[] { };
-        private Type[] methodAttributeTypes = new Type[] { };
-        private Type[] propertyAttributeTypes = new Type[] { };
-        private Type[] structAttributeTypes = new Type[] { };
+        private Type[] allTypes = new Type[0];
+        private Type[] classAttributeTypes = new Type[0];
+        private Type[] enumAttributeTypes = new Type[0];
+        private Type[] fieldAttributeTypes = new Type[0];
+        private Type[] parameterAttributeTypes = new Type[0];
+        private Type[] interfaceAttributeTypes = new Type[0];
+        private Type[] methodAttributeTypes = new Type[0];
+        private Type[] propertyAttributeTypes = new Type[0];
+        private Type[] structAttributeTypes = new Type[0];
 
         private Type ValueInspectorType;
-
-        private enum AttributeUsageType
-        {
-            Class,
-            Struct,
-            Enum,
-            Interface,
-            Field,
-            Property,
-            Method,
-            Parameter
-        }
 
         private Color boxBackground => HUMColor.Grey(0.15f);
 
@@ -685,6 +673,9 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (Target.icon == null) Target.icon = DefaultIcon();
 
+            allTypes = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(assembly => assembly.GetTypes()).ToArray();
+
             CacheConstrainedAttributes();
 
             UpdatePreview();
@@ -898,8 +889,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void CacheConstrainedAttributes()
         {
-            var allAttributeTypes = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(assembly => assembly.GetTypes())
+            var allAttributeTypes = allTypes
                 .Where(t => (t.IsSubclassOf(typeof(Attribute)) || t == typeof(Attribute)) && t.IsPublic)
                 .ToArray();
 
@@ -935,14 +925,6 @@ namespace Unity.VisualScripting.Community.CSharp
             parameterAttributeTypes = allAttributeTypes
                 .Where(attr => GetAttributeUsage(attr).ValidOn.HasFlag(AttributeTargets.Parameter) || GetAttributeUsage(attr).ValidOn == AttributeTargets.All)
                 .ToArray();
-        }
-
-        // Helper method to get AttributeUsageAttribute from a type
-        private AttributeUsageAttribute GetAttributeUsage(Type attrType)
-        {
-            return attrType.GetCustomAttributes(typeof(AttributeUsageAttribute), false)
-                .Cast<AttributeUsageAttribute>()
-                .FirstOrDefault() ?? new AttributeUsageAttribute(AttributeTargets.All);
         }
 
         private void Constructors()
@@ -1385,17 +1367,6 @@ namespace Unity.VisualScripting.Community.CSharp
             });
         }
 
-        public object GetDefaultValue(Type type)
-        {
-            var defaultValue = type.PseudoDefault();
-            if (defaultValue != null) return defaultValue;
-            var defaultConstructor = type.GetDefaultConstructor();
-            if (defaultConstructor != null) return defaultConstructor.Invoke(new object[0]);
-            var pseudoDefaultConstructor = type.GetConstructors().FirstOrDefault(c => c.IsPublic && c.GetParameters().All(p => p.IsOptional));
-            if (pseudoDefaultConstructor != null) return pseudoDefaultConstructor.Invoke(new object[pseudoDefaultConstructor.GetParameters().Length]);
-            return null;
-        }
-
         Type[] GetConstrainedAttributeTypes(AttributeUsageType usage)
         {
             return usage switch
@@ -1436,7 +1407,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         {
                             Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Name");
                             parameters[i].name = paramName.LegalMemberName();
-                            context.DescribeAnalyzeAndDefineFlowGraph();
+                            context?.DescribeAnalyzeAndDefineFlowGraph();
                         }
 
                         if (GUILayout.Button("...", GUILayout.Width(19)))
@@ -1618,7 +1589,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             {
                                 Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
                                 UpdatePreview();
-                                context.DescribeAnalyzeAndDefineFlowGraph();
+                                context?.DescribeAnalyzeAndDefineFlowGraph();
                             }
                             GUILayout.Space(4);
                             if (parameters[i].showInitalizer)
@@ -1684,7 +1655,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             {
                                 Undo.RegisterCompleteObjectUndo(target, "Changed Parameter");
                                 UpdatePreview();
-                                context.DescribeAnalyzeAndDefineFlowGraph();
+                                context?.DescribeAnalyzeAndDefineFlowGraph();
                             }
                         }, true);
                     });
@@ -1701,7 +1672,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     name += index;
                     Undo.RegisterCompleteObjectUndo(target, "Added Parameter");
                     parameters.Add(new TypeParam(typeof(string), name) { defaultValue = "" });
-                    context.DescribeAnalyzeAndDefineFlowGraph();
+                    context?.DescribeAnalyzeAndDefineFlowGraph();
                 }
             });
         }
@@ -1789,7 +1760,6 @@ namespace Unity.VisualScripting.Community.CSharp
                             if (GUILayout.Button("Edit", GUILayout.Width(60)))
                             {
                                 GraphWindow.OpenActive(listOfMethods[index].GetReference() as GraphReference);
-                                var listOfVariables = variables.value as List<TFieldDeclaration>;
                             }
 
                             if (GUILayout.Button("...", GUILayout.Width(19)))
@@ -1991,7 +1961,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                                                 var lastRect = GUILayoutUtility.GetLastRect();
                                                                 if (TypeBuilderWindow.Button(interfaceConstraints[_i]))
                                                                 {
-                                                                    TypeBuilderWindow.ShowWindow(lastRect, methods[index]["genericParameters"][gIndex]["constraints"][_i], true, AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).Where(t => t.IsInterface && t.IsPublic).ToArray(), () =>
+                                                                    TypeBuilderWindow.ShowWindow(lastRect, methods[index]["genericParameters"][gIndex]["constraints"][_i], true, allTypes.Where(t => t.IsInterface && t.IsPublic).ToArray(), () =>
                                                                     {
                                                                         Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Changed Generic Interface Type Constraint");
                                                                         UpdatePreview();

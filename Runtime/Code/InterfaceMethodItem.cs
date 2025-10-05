@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Utility;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community
 {
@@ -13,9 +14,10 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public string name;
         [Inspectable]
-        public Type returnType = typeof(object);
+        public SystemType returnType = new SystemType(typeof(object));
         [Inspectable]
         [InspectorWide]
+        [Serialize]
         public List<TypeParam> parameters = new List<TypeParam>();
 
 #if UNITY_EDITOR

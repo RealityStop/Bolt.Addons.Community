@@ -1,6 +1,8 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting.Community.Utility;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -117,6 +119,16 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             parameterValues.Add(value);
             return this;
         }
+
+        /// <summary>
+        /// Add parameters to this attribute, to be a part of the final string generated between the parenthesis. Generates without a label. ("MyAttribute(10f)")
+        /// </summary>
+        public AttributeGenerator AddParameters(List<TypeParam> parameters)
+        {
+            parameterValues.AddRange(parameters.Select(p => p.defaultValue));
+            return this;
+        }
+
 
         /// <summary>
         /// Add a parameter to this attribute, to be a part of the final string generated between the parenthesis. Generates without a label. ("MyAttribute(10f)")

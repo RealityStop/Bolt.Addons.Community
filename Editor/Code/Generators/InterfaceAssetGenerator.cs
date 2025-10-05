@@ -29,20 +29,25 @@ namespace Unity.VisualScripting.Community
                     var prop = Data.variables[i];
                     if (string.IsNullOrEmpty(prop.name) || prop.type == null) continue;
                     if (!prop.get && !prop.set) prop.get = true;
-                    @interface.AddProperty(InterfacePropertyGenerator.Property(prop.name, prop.type, prop.get, prop.set));
+                    @interface.AddProperty(InterfacePropertyGenerator.Property(prop.name, prop.type.type, prop.get, prop.set));
                 }
 
                 for (int i = 0; i < Data.methods.Count; i++)
                 {
                     var method = Data.methods[i];
                     if (string.IsNullOrEmpty(method.name) || method.returnType == null) continue;
-                    var methodGen = InterfaceMethodGenerator.Method(method.name, method.returnType);
+                    var methodGen = InterfaceMethodGenerator.Method(method.name, method.returnType.type);
 
                     for (int paramIndex = 0; paramIndex < Data.methods[i].parameters.Count; paramIndex++)
                     {
                         var parameter = Data.methods[i].parameters[paramIndex];
                         if (string.IsNullOrEmpty(parameter.name) || parameter.type == null) continue;
-                        methodGen.AddParameter(ParameterGenerator.Parameter(parameter.name, parameter.type, parameter.modifier));
+                        var param = ParameterGenerator.Parameter(parameter.name, parameter.Paramtype.type, parameter.modifier, parameter.hasDefault, parameter.defaultValue);
+                        foreach (var attribute in parameter.attributes)
+                        {
+                            param.attributes.Add(attribute);
+                        }
+                        methodGen.AddParameter(param);
                     }
 
                     @interface.AddMethod(methodGen);

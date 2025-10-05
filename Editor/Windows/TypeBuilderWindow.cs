@@ -93,7 +93,7 @@ namespace Unity.VisualScripting.Community
             ConfigureWindow(Window, position, currentType, new Type[0], canMakeArray, onBeforeChanged, onAfterChanged);
         }
         const float DefaultHeight = 320f;
-        const float MinWidth = 300f;
+        const float MinWidth = 500f;
         const float MaxWidth = 1000f;
         private bool triggerDropdownOnOpen = false;
         private static void ConfigureWindow(TypeBuilderWindow window, Rect position, Type type, Type[] types, bool canMakeArray, Action onBeforeChanged, Action<Type> onAfterChanged)
@@ -115,7 +115,7 @@ namespace Unity.VisualScripting.Community
 
             position = GUIUtility.GUIToScreenRect(position);
             position.width = Mathf.Clamp(position.width, MinWidth, MaxWidth);
-            window.minSize = new Vector2(300, 200);
+            window.minSize = new Vector2(MinWidth, MaxWidth);
             window.titleContent = new GUIContent("Type Builder");
 
             if (types?.Length > 0)
@@ -215,13 +215,11 @@ namespace Unity.VisualScripting.Community
             }
             HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 2, 2), () =>
             {
-                float contentWidth = 0;
                 scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.ExpandWidth(false));
                 HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
                 {
                     EditorGUILayout.LabelField(new GUIContent("Type Builder", typeof(Type).Icon()?[IconSize.Small], "A tool to create and customize types beyond the standard Type Field capabilities"), LudiqStyles.centeredLabel);
                     var labelWidth = GUI.skin.label.CalcSize(new GUIContent("Select Type")).x;
-                    contentWidth = Mathf.Max(contentWidth, labelWidth);
                 });
 
                 GUIContent inheritButtonContent = new GUIContent(
@@ -231,8 +229,8 @@ namespace Unity.VisualScripting.Community
 
                 lastRect = GUILayoutUtility.GetLastRect();
                 var buttonWidth = GUI.skin.button.CalcSize(inheritButtonContent).x;
-                contentWidth = Mathf.Max(contentWidth, buttonWidth);
-                var (size, buttonRect) = DrawTypeField(inheritButtonContent, genericParameter, true);
+
+                var buttonRect = DrawTypeField(inheritButtonContent, genericParameter, true);
                 if (triggerDropdownOnOpen && Event.current.type == EventType.Repaint)
                 {
                     triggerDropdownOnOpen = false;
@@ -243,7 +241,7 @@ namespace Unity.VisualScripting.Community
                     var index = 0;
                     foreach (var param in genericParameter.nestedParameters)
                     {
-                        contentWidth = Mathf.Max(contentWidth, DrawGenericParameter(param, GetArrayBase(genericParameter.type.type).GetGenericTypeDefinition().GetGenericArguments()[index]));
+                        DrawGenericParameter(param, GetArrayBase(genericParameter.type.type).GetGenericTypeDefinition().GetGenericArguments()[index]);
                         index++;
                     }
                 }
@@ -266,8 +264,6 @@ namespace Unity.VisualScripting.Community
                     Close();
                 }
                 EditorGUI.EndDisabledGroup();
-
-                Window.position = new Rect(position.x, position.y, contentWidth + 50, position.height);
             });
         }
         private void TriggerDropdown(Rect buttonRect)
@@ -409,7 +405,7 @@ namespace Unity.VisualScripting.Community
             return true;
         }
 
-        private (float, Rect) DrawTypeField(GUIContent buttonContent, GenericParameter generic, bool isBaseType)
+        private Rect DrawTypeField(GUIContent buttonContent, GenericParameter generic, bool isBaseType)
         {
             GUILayout.BeginHorizontal();
             Rect buttonRect = new Rect();
@@ -468,7 +464,7 @@ namespace Unity.VisualScripting.Community
                 {
                     if (isBaseType && genericParameter != null)
                     {
-                        if (baseType.IsArray || (baseType is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType._isArrayType))
+                        if (baseType.IsArray || (baseType is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType.isArrayType))
                         {
                             baseType = baseType.GetElementType();
                             genericParameter.type.type = baseType;
@@ -476,7 +472,7 @@ namespace Unity.VisualScripting.Community
                     }
                     else
                     {
-                        if (generic.type.type.IsArray || (generic.type.type is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType._isArrayType))
+                        if (generic.type.type.IsArray || (generic.type.type is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType.isArrayType))
                         {
                             generic.type.type = generic.type.type.GetElementType();
                             generic.parent.type.type = generic.parent.ConstructType();
@@ -487,8 +483,8 @@ namespace Unity.VisualScripting.Community
                 GUILayout.EndHorizontal();
             }
             GUILayout.EndHorizontal();
-            var buttonWidth = GUI.skin.button.CalcSize(buttonContent).x;
-            return (buttonWidth, buttonRect);
+
+            return buttonRect;
         }
 
         private bool CanTypeSupportArray(GenericParameter param)
@@ -511,13 +507,11 @@ namespace Unity.VisualScripting.Community
             return true;
         }
 
-        private float DrawGenericParameter(GenericParameter parameter, Type genericParam)
+        private void DrawGenericParameter(GenericParameter parameter, Type genericParam)
         {
-            float maxWidth = 0;
             parameter.isOpen = HUMEditor.Foldout(parameter.isOpen, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
             {
                 GUILayout.Label(parameter.type.type.As().CSharpName(false, false, false), LudiqStyles.centeredLabel);
-                maxWidth = Mathf.Max(maxWidth, GUI.skin.box.CalcSize(new GUIContent(parameter.type.type.DisplayName())).x);
             }, () =>
             {
                 HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
@@ -526,20 +520,18 @@ namespace Unity.VisualScripting.Community
                     GUILayout.Label(genericParam.As().CSharpName(false, false, false), GUILayout.Width(150));
                     GUIContent typeButtonContent = new GUIContent(parameter.type.type?.As().CSharpName(false, false, false) ?? "Select Type", parameter.type.type?.GetTypeIcon());
 
-                    var buttonWidth = DrawTypeField(typeButtonContent, parameter, false);
+                    DrawTypeField(typeButtonContent, parameter, false);
 
-                    maxWidth = Mathf.Max(maxWidth, GUI.skin.box.CalcSize(typeButtonContent).x);
                     GUILayout.EndHorizontal();
 
                     var index = 0;
                     foreach (var nested in parameter.nestedParameters)
                     {
-                        maxWidth = Mathf.Max(maxWidth, DrawGenericParameter(nested, parameter.type.type.GetGenericTypeDefinition().GetGenericArguments()[index]));
+                        DrawGenericParameter(nested, parameter.type.type.GetGenericTypeDefinition().GetGenericArguments()[index]);
                         index++;
                     }
                 });
             });
-            return maxWidth;
         }
 
         public static void ConstructType()

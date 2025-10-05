@@ -110,10 +110,10 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
             if (type is FakeGenericParameterType fake)
             {
-                if (fake._isArrayType)
+                if (fake.isArrayType)
                 {
                     var temp = type;
-                    while (((FakeGenericParameterType)temp)._isArrayType)
+                    while (((FakeGenericParameterType)temp).isArrayType)
                         temp = temp.GetElementType();
 
                     var coreName = ((FakeGenericParameterType)temp).Name.TypeHighlight();

@@ -1,7 +1,3 @@
-using UnityEngine;
-using Unity.VisualScripting;
-using System.Collections.Generic;
-
 namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.TriggerXTimes")]
@@ -45,12 +41,11 @@ namespace Unity.VisualScripting.Community
 
         private ControlOutput IncreaseTimes(Flow flow)
         {
-            timesTriggered++;
-
             int timesToTrigger = (int)flow.GetValue(Times);
 
-            if (timesTriggered <= timesToTrigger)
+            if (timesTriggered < timesToTrigger)
             {
+                timesTriggered++;
                 return Exit;
             }
             else

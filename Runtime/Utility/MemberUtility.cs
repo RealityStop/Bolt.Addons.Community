@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
@@ -14,11 +15,7 @@ namespace Unity.VisualScripting.Community
         public static Member ToManipulatorSafe(this MemberInfo memberInfo, Type targetType, bool nonPublic = false)
         {
             if (memberInfo == null) return null;
-            if (memberInfo is MethodBase m)
-            {
-                if (m.IsSpecialName) return null;
-                if (!nonPublic && !m.IsPublic) return null;
-            }
+
             if (memberInfo is EventInfo) return null;
 
             if (memberInfo is FieldInfo fieldInfo)
@@ -40,6 +37,7 @@ namespace Unity.VisualScripting.Community
 
             if (memberInfo is MethodInfo methodInfo)
             {
+                if (methodInfo.IsSpecialName) return null;
                 if (!nonPublic && !methodInfo.IsPublic) return null;
                 return methodInfo.ToManipulator(targetType);
             }
@@ -55,7 +53,13 @@ namespace Unity.VisualScripting.Community
 
         public static IEnumerable<Member> GetSafeMembers(this Type type, bool nonPublic = false)
         {
-            foreach (var memberInfo in type.GetMembers(Member.SupportedBindingFlags))
+            if (type is FakeGenericParameterType fakeGeneric)
+            {
+                type = fakeGeneric.BaseTypeConstraint ??
+                                 fakeGeneric.InterfaceConstraints.FirstOrDefault() ??
+                                 typeof(object);
+            }
+            foreach (var memberInfo in type.GetExtendedMembers(Member.SupportedBindingFlags))
             {
                 var member = memberInfo.ToManipulatorSafe(type, nonPublic);
 

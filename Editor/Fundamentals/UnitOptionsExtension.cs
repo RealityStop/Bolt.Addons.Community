@@ -60,7 +60,8 @@ namespace Unity.VisualScripting.Community
             {
                 yield return snippetsGroup;
             }
-            // Check to see if current graph is part of a Class Asset only Class Assets have the AssetType unit right now
+            // Check to see if current graph is part of a Class Asset only Class Assets have the AssetType unit right now,
+            // Struct assets will be added later.
             if (options.Any(option => option is AssetTypeOption assetTypeOption && assetTypeOption.classAsset != null && assetTypeOption.unit.asset != null))
                 yield return csharpGroup;
 

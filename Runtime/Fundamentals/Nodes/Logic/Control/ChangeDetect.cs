@@ -1,7 +1,7 @@
 ﻿namespace Unity.VisualScripting.Community
 {
     /// <summary>
-    /// Restricts control flow by only allowing through one control flow until reset.
+    /// Allows flow through only if the input value has changed, outputting the new value.
     /// </summary>
     [UnitCategory("Community\\Control")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.ChangeDetect")]
@@ -39,7 +39,7 @@
         /// </summary>
         [DoNotSerialize]
         [PortLabelHidden]
-        public ValueOutput lastValue{ get; private set; }
+        public ValueOutput lastValue { get; private set; }
 
         /// <summary>
         /// The exit point for the node.

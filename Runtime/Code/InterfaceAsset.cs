@@ -18,6 +18,7 @@ namespace Unity.VisualScripting.Community
 
         [Inspectable]
         [InspectorWide]
+        [Serialize]
         public List<InterfaceMethodItem> methods = new List<InterfaceMethodItem>();
 
         [Inspectable]

@@ -127,7 +127,7 @@ namespace Unity.VisualScripting.Community
         public static int GetArrayDepth(Type type)
         {
             var depth = 0;
-            while (type.IsArray || (type is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType._isArrayType))
+            while (type.IsArray || (type is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType.isArrayType))
             {
                 type = type.GetElementType();
                 depth++;
@@ -136,15 +136,15 @@ namespace Unity.VisualScripting.Community
         }
 
         /// <summary>
-        /// Get the base type if its an array for example string[][] would return string
+        /// Get the base type if its an array for example string[][] would return string.
         /// Will return the type inputed if not a array
         /// </summary>
         public static Type GetArrayBase(Type type)
         {
-            if (type.IsArray || (type is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType._isArrayType))
+            if (type.IsArray || (type is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType.isArrayType))
             {
                 var tempType = type.GetElementType();
-                while (tempType.IsArray || (tempType is FakeGenericParameterType tempfakeGenericParameterType && tempfakeGenericParameterType._isArrayType))
+                while (tempType.IsArray || (tempType is FakeGenericParameterType tempfakeGenericParameterType && tempfakeGenericParameterType.isArrayType))
                 {
                     tempType = tempType.GetElementType();
                 }
