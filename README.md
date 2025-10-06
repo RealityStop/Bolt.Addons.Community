@@ -165,7 +165,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 >  >    - [On Retrieved](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---OnRetrieved)
 >  >    - [On Returned](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---OnReturned)
 >           
->  [Graphs](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Graphs)
+>  [Graphs](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Machine-Variables)
 >   - **Machine Is**
 >   - **Get Machine**
 >   - **Get Machines**
