@@ -1,5 +1,4 @@
 using System;
-using Unity.VisualScripting.Community;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Build;
@@ -9,11 +8,8 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine.Events;
 using UnityEditor;
 using System.IO;
-using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Reflection;
 using ParameterModifier = Unity.VisualScripting.Community.Libraries.CSharp.ParameterModifier;
-using UnityEngine.UI;
 
 namespace Unity.VisualScripting.Community
 {
@@ -38,9 +34,12 @@ namespace Unity.VisualScripting.Community
             string scriptContent = GenerateScriptContent(typesToSupport);
             var BasePath = Path.Combine(Application.dataPath, AssetCompiler.GeneratedPath);
             var ScriptsPath = Path.Combine(BasePath, "Scripts");
+            if (!Directory.Exists(ScriptsPath))
+            {
+                Directory.CreateDirectory(ScriptsPath);
+            }
             Debug.Log("Generated OnUnityEvent Support script at : " + ScriptsPath + "\nEnsure that the script stays here");
-            File.WriteAllText(Application.dataPath + "/" + AssetCompiler.GeneratedPath + "/Scripts" + "/AotSupportMethods.cs", scriptContent);
-            AssetDatabase.Refresh();
+            File.WriteAllText(ScriptsPath + "/AotSupportMethods.cs", scriptContent);
         }
 
         private readonly List<string> includedNamespaces = new List<string>
@@ -144,8 +143,12 @@ namespace Unity.VisualScripting.Community
         {
             if (string.IsNullOrEmpty(type.Namespace)) return false;
             var rootNamespace = type.RootNamespace();
-            if (rootNamespace == "UnityEditor" || rootNamespace == "UnityEditorInternal" ||
-            type.Namespace.Contains("UnityEditor") || type.Namespace.Contains("NUnit")) return false;
+            if (rootNamespace == "UnityEditor" ||
+                rootNamespace == "UnityEditorInternal" ||
+                type.Namespace.Contains("UnityEditor") ||
+                type.Namespace.Contains("NUnit") ||
+                type.Assembly.FullName.Contains("UnityEngine.TestRunner"))
+                return false;
             return true;
         }
 

@@ -91,7 +91,7 @@ namespace Unity.VisualScripting.Community
             if (type.IsArray)
                 return IsRuntimeType(type.GetElementType());
 
-            return Codebase.IsRuntimeType(type);
+            return Codebase.IsRuntimeType(type) && !type.Namespace.Contains("NUnit");
         }
 
         public static string RootNamespace(this Type type)
