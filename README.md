@@ -62,169 +62,168 @@ To update, open Packages/manifest.json and remove the dev.bolt.addons entry unde
 ### What's included
 We include a multitude of assets, nodes, and tooling to extend missing language concepts and provide fundamental utilities and extensions for graphs. Here is what you will find:
 
-
 --------
-
 
 > ### NODES
+> 
+>  [Unit Documentation](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference)
+>
+>  [Variables](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Variables) 
+>  - [Increment Variable](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Increment-Variable)
+>  - [Decrement Variable](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Decrement-Variable)
+>  - [Plus Equals](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---PlusEquals)
+>  - [Reset Saved Variables](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ResetSavedVariables)
+>  - [Clear Saved Variables](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ClearSavedVariables)
+>
+>  [Events](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Events)
+>  - [On Every X Seconds](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---OnEveryXSecondsNode)
+>  - [On Variable Changed](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---OnVariableChangedNode)
+>  - [Manual Event](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ManualEvent)
+>  - [Defined Event](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---DefinedEventNode)
+>  - [Trigger Defined Event](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---TriggerDefinedEvent)
+>  - [Global Defined Event](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---GlobalDefinedEventNode)
+>  - [Trigger Global Defined Event](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---TriggerGlobalDefinedEvent)
+>  - [Return Event](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ReturnEvent)
+>  - [Event Return](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---EventReturn)
+>  - [Trigger Return Event](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---TriggerReturnEvent)
+>  - [Editor Window Events](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---EditorWindowEvents)
+>  - [Trigger Asset Custom Event](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---TriggerAssetCustomEvent)
+>  - [Reset Graph Listener](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ResetGraphListener)
+>  - [ChannelEvent](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ChannelEvent)
+>  - [TriggerChannelEvent](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---TriggerChannelEvent)
+>
+>  [Documentation](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Documentation)
+>   - [Comment](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---CommentNode)  
+>   - [Arrow](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Arrow)  
+>   - [Todo](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Todo)  
+>   - [Stuff Happens](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---StuffHappens)  
+>   - [Some Value](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---SomeValue) 
+>
+>  [Collections](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Collections)
+>   - [Query Node](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---QueryNode)  
+>   - [Random Element](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---RandomElementNode)  
+>   - [Random Numbers](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---RandomNumbersv2)   
+>   - [Create Array](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---CreateArray)  
+>   - [SetArrayItem](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---SetArrayItem)  
+>   - [GetArrayItem](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---GetArrayItem)  
+>
+>  [Control](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Control)
+>  - [Branch (Params)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---BranchParams)
+>  - [Gate](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Gate)
+>  - [Edge Trigger](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Edge-Trigger)
+>  - [Change Detect](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ChangeDetect)
+>  - [Invoke Delegate](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ActionInvokeNode)
+>  - [Bind Delegate](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---BindActionNode)
+>  - [Unbind Delegate](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---UnbindActionNode)
+>  - [Create Delegate](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ActionNode)
+>  - [Limited Trigger](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---LimitedTriggerNode)
+>  - [Chance Flow](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ChanceFlow)
+>  - [FlowToCoroutine](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---FlowToCoroutine)
+>  - [CoroutineToFlow](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---CoroutineToFlow)
+>  - [WaitForManualPress](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---WaitForManualPress)
+>  - [If (Next)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---BetterIf)
+>  - [ElseIf](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ElseIfUnit)
+>  - [Using](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Using)
+>  - [Flow Reroute](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---FlowReroute)
+>  - [Value Reroute](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ValueReroute)
+>
+>  [Logic](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Logic)
+>   - [Logic Params](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---LogicParams)  
+>   - [Log Node](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---LogNode)  
+>   - [Toggle Bool](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ToggleBool)  
+>   - [Gate](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Gate)  
+>   - [Polarity](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Polarity)  
+>   - [Between](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Between)  
+>   - [Edge Trigger](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Edge-Trigger)  
+>   - [Latch](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Latch)
+>
+>  [Utility](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Utility)
+>  - [Convert](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ConvertNode)
+>  - [As](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---AsUnit)
+>  - [Copy To Clipboard](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---CopyToClipboardUnit)
+>  - [Counter](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---CounterNode)
+>  - [IsStringEmptyOrWhitespace](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---IsStringEmptyOrWhitespace)
+>  - [HDRColors](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---HDRColors)
+>  - [Select Expose](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---SelectExpose)
+>  - [Bold](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---BoldString)
+>  - [Italic](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ItalicString)
+>  - [Strikethrough](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---StrikethroughString)
+>  - [Underline](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---UnderlineString)
+>  - [Reverse String](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ReverseStringNode)
+>  - [String Builder](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---StringBuilderUnit)
+>  - [Size](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---SizeString)
+>  - [Color](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ColorString)
+>  - [Random String](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---RandomStringNode)
+>  - [Multiline String](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---MultilineStringNode)
+>
+>  [Object Pooling](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Pooling)
+>  - [Initialize Object Pool](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---InitializePoolNode)
+>  - [Retrieve Object](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---RetrieveObjectNode)
+>  - [Return Object](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ReturnObjectNode)
+>  - [Return All Objects](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ReturnAllObjectsToPoolNode)
+>  - Events:
+>  >    - [On Retrieved](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---OnRetrieved)
+>  >    - [On Returned](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---OnReturned)
+>           
+>  [Graphs](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Graphs)
+>   - **Machine Is**
+>   - **Get Machine**
+>   - **Get Machines**
+>   - **Get Machine Variable**
+>   - **Set Machine Variable**
+>   - **Has Machine Variable**
+>
+>  [Time](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Time)
+>  - [Yield](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---YieldNode)
+>  - [Enumerator](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---EnumeratorNode)
+>  - [Stopwatch](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---StopwatchUnit)
 
-[Unit Documentation](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference)
-
-Variables
- - **Increment Variable**
- - **Decrement Variable**
- - **Plus Equals**
- - **Reset Saved Variables**
- - **Clear Saved Variables**
-
-Events
- - **On Every X Seconds**
- - **On Variable Changed**
- - **Manual Event**
- - **Defined Event**
- - **Trigger Defined Event**
- - **Global Defined Event**
- - **Trigger Global Defined Event**
- - **Return Event**
- - **Event Return**
- - **Trigger Return Event**
- - **Editor Window Events**
- - **Trigger Asset Custom Event**
- - **Reset Graph Listener**
- - **ChannelEvent**
- - **TriggerChannelEvent**
- - **Send Task Event**
-
-Documentation
- - **Arrow**
- - **Todo**
- - **Some Value**
- - **Stuff Happens**
- - **Comment**
-
-Collections
- - **Random Numbers**
- - **Create Array**
- - **Get Array Item**
- - **Set Array Item**
- - **Query**
- - **Random Element**
-
-Control
- - **Branch (Params)**
- - **Gate**
- - **Edge Trigger**
- - **Change Detect**
- - **Invoke Delegate**
- - **Bind Delegate**
- - **Unbind Delegate**
- - **Create Delegate**
- - **Limited Trigger**
- - **Chance Flow**
- - **FlowToCoroutine**
- - **CoroutineToFlow**
- - **WaitForManualPress**
- - **If (Next)**
- - **ElseIf**
- - **Using**
-
-Logic
- - **Latch**
- - **Polarity**
- - **Between**
- - **Logic (Params)**
- - **Log**
- - **Toggle Bool**
-
-Utility
- - **Convert**
- - **As**
- - **Flow Reroute**
- - **Value Reroute**
- - **Copy To Clipboard**
- - **Counter**
- - **IsStringEmptyOrWhitespace**
- - **HDRColors**
- - **Select Expose**
-
-String
- - **Bold**
- - **Size**
- - **Color**
- - **Italic**
- - **Strikethrough**
- - **Underline**
- - **Reverse String**
- - **String Builder**
-
-Object Pooling
- - **Initialize Object Pool**
- - **Retrive Object**
- - **Return Object**
- - **Return All**
-	 - **Events**
-         - *On Retrieved*
-         - *On Returned*
-           
-Graphs
- - **Machine Is**
- - **Get Machine**
- - **Get Machines**
- - **Get Machine Variable**
- - **Set Machine Variable**
- - **Has Machine Variable**
-
-Time
- - **Yield**
- - **Enumerator**
-
-Editor
- - **Window Is**
- - **Get Window Variable**
- - **Set Window Variable**
-
-Math
- - **Math Op**
- - **Functions**
-	 - **Decay**
-	 - **Exponential**
-	 - **Linear**
-	 - **Logarithmic**
-	 - **Reverse Linear**
-	 - **Sigmoid**
-  - **Negate Value**
-
-
---------
-
-> ### ASSETS
-
-Code Assets are used to generate dependency free C# code.
-
-Code
- - [**Class** (Experimental)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Classes)
- - **Delegate**
- - **Enum**
- - **Interface** (Experimental)
- - **Struct** (Experimental)
-
-Editor
- - **Editor Window**
- - **NodeCreationWizard**
- - **DescriptorCreationWizard**
- - **Control Snippet**
- - **Value Snippet**
-
-
---------
-
-
-> ### UTILITIES
-
- - **Node Selection to Asset or Embed**
- - **Compiler Button**
-
-
+>  [Editor Window View](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Window-View)
+>   - **Window Is**
+>   - **Get Window Variable**
+>   - **Set Window Variable**
+>
+>  [Math](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Math)
+>  - [Math Op](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---MathParamNode)
+>  - [Negate Value](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---NegativeValueNode)
+>  - Functions:
+>   > - [Decay](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---DecayFunction)
+>   > - [Exponential](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ExponentialFunction)
+>   > - [Linear](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---LinearFunction)
+>   > - [Logarithmic](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---LogarithmicFunction)
+>   > - [Reverse Linear](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ReverseLinearFunction)
+>   > - [Sigmoid](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---SigmoidFunction)
+> 
+> --------
+> 
+> > ### ASSETS
+> 
+> Code Assets are used to generate dependency free C# code.
+> 
+> Code
+>  - [**Class** (Experimental)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Classes)
+>  - [**Delegates**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Delegates)
+>  - [**Enums**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Enums)
+>  - **Interface** (Experimental)
+>  - [**Struct** (Experimental)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Structs)
+> 
+> Editor
+>  - [**Editor Window View**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Window-View)
+>  - [**Node Creation Wizard**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Node-Creation-Wizard)
+>  - [**Descriptor Creation Wizard**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Descriptor-Creation-Wizard)
+>  - [**Graph Snippets**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Graph-Snippets)
+> 	 - **Control Snippet**
+> 	 - **Value Snippet**
+> 
+> --------
+> 
+> 
+> [Utilities](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Utilities)
+> 
+>  - [Selection to Macro](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Selection-to-Macro)
+>  - [Graph Snippets](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Graph-Snippets)
+> 
+> 
 --------
 
 ## Current Maintainers
