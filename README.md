@@ -196,24 +196,24 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 > 
 > --------
 > 
-> > ### ASSETS
+> ### ASSETS
+> >
+> > Code Assets are used to generate dependency free C# code.
+> >
+> > Code
+> > - [**Class** (Experimental)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Classes)
+> > - [**Delegates**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Delegates)
+> > - [**Enums**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Enums)
+> > - **Interface** (Experimental)
+> > - [**Struct** (Experimental)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Structs)
 > 
-> Code Assets are used to generate dependency free C# code.
-> 
-> Code
->  - [**Class** (Experimental)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Classes)
->  - [**Delegates**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Delegates)
->  - [**Enums**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Enums)
->  - **Interface** (Experimental)
->  - [**Struct** (Experimental)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Structs)
-> 
-> Editor
->  - [**Editor Window View**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Window-View)
->  - [**Node Creation Wizard**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Node-Creation-Wizard)
->  - [**Descriptor Creation Wizard**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Descriptor-Creation-Wizard)
->  - [**Graph Snippets**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Graph-Snippets)
-> 	 - **Control Snippet**
-> 	 - **Value Snippet**
+> > Editor
+> > - [**Editor Window View**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Window-View)
+> > - [**Node Creation Wizard**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Node-Creation-Wizard)
+> > - [**Descriptor Creation Wizard**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Descriptor-Creation-Wizard)
+> > - [**Graph Snippets**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Graph-Snippets)
+> >	> - **Control Snippet**
+> >	> - **Value Snippet**
 > 
 > --------
 > 
