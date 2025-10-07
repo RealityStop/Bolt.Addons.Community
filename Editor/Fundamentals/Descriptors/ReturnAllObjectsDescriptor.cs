@@ -9,11 +9,10 @@ namespace Unity.VisualScripting.Community
         public ReturnAllObjectsToPoolNodeDescriptor(ReturnAllObjectsToPoolNode target) : base(target)
         {
         }
+
         protected override EditorTexture DefinedIcon()
         {
-            string iconFullPath = "Packages/dev.bolt.addons/Editor/Fundamentals/Resources/ReturnAll.png";
-            Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconFullPath);
-            return EditorTexture.Single(icon);
+            return PathUtil.Load("ReturnAll", CommunityEditorPath.Fundamentals);
         }
         protected override string DefinedSummary()
         {

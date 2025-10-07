@@ -10,11 +10,10 @@ namespace Unity.VisualScripting.Community
         public ReturnObjectNodeDescriptor(ReturnObjectNode target) : base(target)
         {
         }
+
         protected override EditorTexture DefinedIcon()
         {
-            string iconFullPath = "Packages/dev.bolt.addons/Editor/Fundamentals/Resources/ReturnObject.png";
-            Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconFullPath);
-            return EditorTexture.Single(icon);
+            return PathUtil.Load("ReturnObject", CommunityEditorPath.Fundamentals);
         }
         protected override string DefinedSummary()
         {

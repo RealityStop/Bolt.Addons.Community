@@ -13,9 +13,7 @@ namespace Unity.VisualScripting.Community
         }
         protected override EditorTexture DefinedIcon()
         {
-            string iconFullPath = "Packages/dev.bolt.addons/Editor/Fundamentals/Resources/Pool.png";
-            Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconFullPath);
-            return EditorTexture.Single(icon);
+            return PathUtil.Load("Pool", CommunityEditorPath.Fundamentals);
         }
         protected override string DefinedSummary()
         {

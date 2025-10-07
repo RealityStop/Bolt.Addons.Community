@@ -57,11 +57,22 @@ namespace Unity.VisualScripting.Community
             {
                 yield return snippetsGroup;
             }
-            // Check to see if current graph is part of a Class Asset only Class Assets have the AssetType unit right now,
-            // Struct assets will be added later.
-            if (options.Any(option => option is AssetTypeOption assetTypeOption && assetTypeOption.classAsset != null && assetTypeOption.unit.asset != null))
+            var assetTypeOption = options.FirstOrDefault(option => option is AssetTypeOption assetTypeOption && assetTypeOption.codeAsset != null && assetTypeOption.unit.asset != null) as AssetTypeOption;
+            if (assetTypeOption != null)
+            {
+                UnityAPI.Async(() =>
+                {
+                    if (assetTypeOption.codeAsset is ClassAsset)
+                    {
+                        csharpGroup.icon = typeof(ClassAsset).Icon();
+                    }
+                    else
+                    {
+                        csharpGroup.icon = typeof(StructAsset).Icon();
+                    }
+                });
                 yield return csharpGroup;
-
+            }
             if (unitOptionTree.filter.CompatibleInputType != null && !Codebase.settingsTypes.Contains(unitOptionTree.filter.CompatibleInputType))
             {
                 dynmaicInputMembersGroup.data = unitOptionTree.filter.CompatibleInputType;
@@ -86,8 +97,12 @@ namespace Unity.VisualScripting.Community
             {
                 yield return GetFirstOptionOfType<AssetType, AssetTypeOption>(o =>
                 {
-                    inheritedMembersGroup = new FuzzyGroup("Inherited", UnityAPI.Await(() => o.classAsset.inherits.type.Icon()));
-                    baseMembersGroup = new FuzzyGroup("Base", UnityAPI.Await(() => o.classAsset.inherits.type.Icon()));
+                    if (o.codeAsset is ClassAsset classAsset)
+                    {
+                        inheritedMembersGroup = new FuzzyGroup("Inherited", UnityAPI.Await(() => classAsset.inherits.type.Icon()));
+                        baseMembersGroup = new FuzzyGroup("Base", UnityAPI.Await(() => classAsset.inherits.type.Icon()));
+                        return o.unit.asset != null;
+                    }
                     return o.unit.asset != null;
                 });
                 yield return inheritedMembersGroup;

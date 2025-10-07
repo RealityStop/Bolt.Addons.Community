@@ -13,10 +13,6 @@ namespace Unity.VisualScripting.Community
     {
         [Inspectable]
         public Type type = typeof(int);
-        [Inspectable]
-        public bool inspectable = true;
-        [Inspectable]
-        public bool serialized = true;
 
         [Inspectable]
         public object value;

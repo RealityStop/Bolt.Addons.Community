@@ -1,6 +1,7 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -32,18 +33,12 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             for (int i = 0; i < attributes.Count; i++)
             {
-                output += attributes[i].Generate(indent);
-                if (i < attributes.Count - 1) output += "\n";
+                output += attributes[i].Generate(indent) + "\n";
             }
 
             var hasInterfaces = interfaces.Length > 0;
             output += CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + " interface ".ConstructHighlight() + typeName.LegalMemberName().InterfaceHighlight() + (hasInterfaces ? " : " : string.Empty);
-            
-            for (int i = 0; i < interfaces.Length; i++)
-            {
-                output += interfaces[i].Name.LegalMemberName().InterfaceHighlight();
-                if (i < interfaces.Length - 1) output += ", ";
-            }
+            output += string.Join(", ", interfaces.Select(i => i.Name.LegalMemberName().InterfaceHighlight()));
 
             return output;
         }
@@ -51,7 +46,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         protected override string GenerateBody(int indent)
         {
             var output = string.Empty;
-            
+
             for (int i = 0; i < properties.Count; i++)
             {
                 output += CodeBuilder.Indent(indent) + properties[i].Generate(indent);

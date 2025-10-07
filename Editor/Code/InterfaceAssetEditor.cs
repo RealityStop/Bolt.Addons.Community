@@ -920,6 +920,8 @@ namespace Unity.VisualScripting.Community.CSharp
                                 {
                                     Undo.RegisterCompleteObjectUndo(Target, "Toggled Property Set");
                                 }
+
+                                if (!Target.variables[i].get && !Target.variables[i].set) Target.variables[i].get = true;
                             });
                         });
                     }

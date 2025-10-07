@@ -21,8 +21,10 @@ namespace Unity.VisualScripting.Community
 
         public void OnPreprocessBuild(BuildReport report)
         {
+#if ENABLE_IL2CPP
             GenerateScript();
             AssetDatabase.Refresh();
+#endif
         }
 
         private void GenerateScript()

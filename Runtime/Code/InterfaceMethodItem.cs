@@ -14,7 +14,7 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public string name;
         [Inspectable]
-        public SystemType returnType = new SystemType(typeof(object));
+        public SystemType returnType = new SystemType(typeof(void));
         [Inspectable]
         [InspectorWide]
         [Serialize]

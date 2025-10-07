@@ -139,7 +139,7 @@ namespace Unity.VisualScripting.Community
 
             var compileSelectedButton = new Button(() =>
             {
-                var root = graphContext.reference.macro as Object;
+                var root = graphContext.reference.rootObject;
                 if (root != null)
                 {
                     if (root is MethodDeclaration methodDeclaration)

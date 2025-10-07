@@ -64,14 +64,18 @@ namespace Unity.VisualScripting.Community.CSharp
                 Variables();
                 GUILayout.Space(4);
                 Methods();
-
+                if (Target is ClassAsset classAsset && classAsset.inheritsType)
+                {
+                    GUILayout.Space(4);
+                    RequiredInfo();
+                }
+                else if (Target is StructAsset)
+                {
+                    GUILayout.Space(4);
+                    RequiredInfo();
+                }
                 if (typeof(TMemberTypeAsset) == typeof(ClassAsset))
                 {
-                    if ((Target as ClassAsset).inheritsType)
-                    {
-                        GUILayout.Space(4);
-                        RequiredInfo();
-                    }
                     GUILayout.Space(4);
                     OverridableMembersInfo();
                 }
@@ -84,28 +88,49 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private bool RequiresInfo()
         {
-            var classAsset = Target as ClassAsset;
-            var inheritedType = classAsset.inherits.type;
+            List<SystemType> allTypes = new List<SystemType>(Target.interfaces.ToList());
+            bool requires = false;
 
-            if (inheritedType == null) return false;
-            if (inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(m => !m.Name.Contains("get_") && !m.Name.Contains("set_")).Any(m => m.IsAbstract && !MethodExists(m)))
+            if (Target is ClassAsset classAsset)
             {
-                return true;
-            }
-            if (inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Any(p => (p.GetMethod?.IsAbstract == true || p.SetMethod?.IsAbstract == true) && !PropertyExists(p)))
-            {
-                return true;
-            }
-            if (!inheritedType.IsAbstract && inheritedType.IsClass)
-            {
-                if (inheritedType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-                    .Any(constructor => constructor.GetParameters().Length > 0 && !ConstructorExists(constructor)))
+                var inheritedType = classAsset.inherits.type;
+
+                if (inheritedType == null)
                 {
-                    return true;
+                    requires = false;
+                }
+                if (inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Any(m => m.IsValidOverridableMethod(true) && !MethodExists(m)))
+                {
+                    requires = true;
+                }
+                if (inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Any(p => p.IsValidOverridableProperty(true) && !PropertyExists(p)))
+                {
+                    requires = true;
+                }
+                if (!inheritedType.IsAbstract && inheritedType.IsClass)
+                {
+                    if (inheritedType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                        .Any(constructor => constructor.GetParameters().Length > 0 && !ConstructorExists(constructor)))
+                    {
+                        requires = true;
+                    }
+                }
+                if (!classAsset.inherits.type.IsClass)
+                    allTypes.Add(classAsset.inherits); // Interface requirements should already be met by the inherited class
+            }
+
+            foreach (var @interface in allTypes.Select(i => i.type).SelectMany(EditorTypeUtility.GetAllInterfacesRecursive))
+            {
+                if (@interface.GetMethods().Any(m => m.IsValidOverridableMethod(true) && !MethodExists(m)))
+                {
+                    requires = true;
+                }
+                if (@interface.GetProperties().Any(p => p.IsValidOverridableProperty(true) && !PropertyExists(p)))
+                {
+                    requires = true;
                 }
             }
-
-            return false;
+            return requires;
         }
 
         private bool ConstructorExists(ConstructorInfo c)
@@ -138,12 +163,12 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private bool MethodExists(MethodInfo m)
         {
-            var listOfMethods = methods.value as List<TMethodDeclaration>;
-            if (!listOfMethods.Any(method => method.methodName == m.Name)) return false;
-            foreach (var method in listOfMethods.Where(method => method.methodName == m.Name))
+            var listOfMethods = methods?.value as List<TMethodDeclaration>;
+            if ((bool)!listOfMethods?.Any(method => method.methodName == m.Name)) return false;
+            foreach (var method in listOfMethods?.Where(method => method.methodName == m.Name))
             {
                 if (method.scope != m.GetScope()) continue;
-                if (method.modifier != MethodModifier.Override) continue;
+                if (!m.DeclaringType.IsInterface && method.modifier != MethodModifier.Override) continue;
                 if (method.parameters.Count != m.GetParameters().Length) continue;
                 if (method.returnType != m.ReturnType) continue;
                 if (!method.parameters.Select(parameter => parameter.type).SequenceEqual(m.GetParameters().Select(parameter => parameter.ParameterType))) continue;
@@ -155,12 +180,12 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private bool PropertyExists(PropertyInfo p)
         {
-            var listOfFields = variables.value as List<TFieldDeclaration>;
-            if (!listOfFields.Any(field => field.name == p.Name)) return false;
-            foreach (var property in listOfFields.Where(fields => fields.FieldName == p.Name && fields.isProperty))
+            var listOfFields = variables?.value as List<TFieldDeclaration>;
+            if ((bool)!listOfFields?.Any(field => field.name == p.Name)) return false;
+            foreach (var property in listOfFields?.Where(fields => fields.FieldName == p.Name && fields.isProperty))
             {
                 if (property.scope != p.GetScope()) continue;
-                if (property.propertyModifier != PropertyModifier.Override) continue;
+                if (!p.DeclaringType.IsInterface && property.propertyModifier != PropertyModifier.Override) continue;
                 if (property.type != p.PropertyType) continue;
                 /* If a getter is not expected but present || If a getter is expected but not present */
                 if ((property.get && !p.CanRead) || (!property.get && p.CanRead)) continue;
@@ -207,20 +232,31 @@ namespace Unity.VisualScripting.Community.CSharp
                     var listOfConstructors = constructors.value as List<TConstructorDeclaration>;
                     var listOfMethods = methods.value as List<TMethodDeclaration>;
                     var listOfVariables = variables.value as List<TFieldDeclaration>;
+                    List<Type> types = new List<Type>(Target.interfaces.SelectMany(t => EditorTypeUtility.GetAllInterfacesRecursive(t.type)));
+                    if (Target is ClassAsset classAsset)
+                    {
+                        var inheritedType = classAsset.inherits.type;
+                        if (classAsset.inheritsType && !classAsset.inherits.type.IsClass) // Interface requirements should already be met by the inherited class
+                        {
+                            types.AddRange(EditorTypeUtility.GetAllInterfacesRecursive(inheritedType));
+                        }
 
-                    var classAsset = Target as ClassAsset;
-                    var inheritedType = classAsset.inherits.type;
+                        if (classAsset.inheritsType)
+                        {
+                            types.Add(inheritedType);
+                        }
+                    }
 
-                    var abstractMethods = inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-                        .Where(m => m.IsAbstract && !m.Name.Contains("get_") && !m.Name.Contains("set_"))
-                        .ToArray();
-
-                    for (int i = 0; i < abstractMethods.Length; i++)
+                    var requiredMethods = types.SelectMany(t => t.IsInterface ? t.GetMethods() : t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                        .Where(m => m.IsValidOverridableMethod(true) && !MethodExists(m)).ToArray();
+                    if (requiredMethods.Length > 0)
+                        GUILayout.Label("Methods");
+                    for (int i = 0; i < requiredMethods.Length; i++)
                     {
                         var index = i;
                         HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
-                            GUILayout.Label(abstractMethods[index].Name);
+                            GUILayout.Label(requiredMethods[index].Name);
 
                             if (GUILayout.Button("Add", GUILayout.Width(60)))
                             {
@@ -232,12 +268,13 @@ namespace Unity.VisualScripting.Community.CSharp
                                 var declaration = CreateInstance<TMethodDeclaration>();
                                 Undo.RegisterCreatedObjectUndo(declaration, "Created Method Declaration");
                                 declaration.parentAsset = Target;
-                                declaration.modifier = MethodModifier.Override;
-                                declaration.methodName = abstractMethods[i].Name;
+                                if (!requiredMethods[i].DeclaringType.IsInterface)
+                                    declaration.modifier = MethodModifier.Override;
+                                declaration.methodName = requiredMethods[i].Name;
                                 declaration.name = declaration.methodName;
-                                declaration.scope = abstractMethods[i].GetScope();
-                                declaration.returnType = abstractMethods[i].ReturnType;
-                                declaration.parameters = abstractMethods[i]
+                                declaration.scope = requiredMethods[i].GetScope();
+                                declaration.returnType = requiredMethods[i].ReturnType;
+                                declaration.parameters = requiredMethods[i]
                                     .GetParameters()
                                     .Select(param => new TypeParam(param.ParameterType, param.Name))
                                     .ToList();
@@ -261,17 +298,18 @@ namespace Unity.VisualScripting.Community.CSharp
                         GUILayout.Space(4);
                     }
 
-                    var abstractProperties = inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-                    .Where(p => p.GetGetMethod(true)?.IsAbstract == true || p.GetSetMethod(true)?.IsAbstract == true)
+                    var requiredProperties = types.SelectMany(t => t.IsInterface ? t.GetProperties() : t.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                    .Where(p => p.IsValidOverridableProperty(true) && !PropertyExists(p))
                     .ToArray();
-
-                    for (int i = 0; i < abstractProperties.Length; i++)
+                    if (requiredProperties.Length > 0)
+                        GUILayout.Label("Properties");
+                    for (int i = 0; i < requiredProperties.Length; i++)
                     {
                         var index = i;
                         HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                         {
-                            GUILayout.Label(abstractProperties[index].Name);
-                            var property = abstractProperties[index];
+                            var property = requiredProperties[index];
+                            GUILayout.Label(property.DeclaringType.Name + "." + property.Name);
                             if (GUILayout.Button("Add", GUILayout.Width(60)))
                             {
                                 int undoGroup = Undo.GetCurrentGroup();
@@ -283,9 +321,11 @@ namespace Unity.VisualScripting.Community.CSharp
                                 Undo.RegisterCreatedObjectUndo(declaration, "Created Field Declaration");
                                 declaration.parentAsset = Target;
                                 var getter = CreateInstance<PropertyGetterMacro>();
-                                var setter = CreateInstance<PropertySetterMacro>();
                                 Undo.RegisterCreatedObjectUndo(getter, "Created Property Getter Macro");
+                                declaration.getter = getter;
+                                var setter = CreateInstance<PropertySetterMacro>();
                                 Undo.RegisterCreatedObjectUndo(setter, "Created Property Setter Macro");
+                                declaration.setter = setter;
                                 getter.parentAsset = Target;
                                 setter.parentAsset = Target;
                                 AssetDatabase.AddObjectToAsset(declaration, Target);
@@ -298,37 +338,33 @@ namespace Unity.VisualScripting.Community.CSharp
 
                                 listOfVariables.Add(declaration);
 
-                                var functionGetterUnit = new FunctionNode(FunctionType.Getter)
-                                {
-                                    fieldDeclaration = declaration
-                                };
-
-                                var functionSetterUnit = new FunctionNode(FunctionType.Setter)
-                                {
-                                    fieldDeclaration = declaration
-                                };
-
-                                declaration.getter = getter;
-                                declaration.setter = setter;
-                                declaration.getter.graph.units.Add(functionGetterUnit);
-                                declaration.setter.graph.units.Add(functionSetterUnit);
-
                                 declaration.hideFlags = HideFlags.HideInHierarchy;
                                 getter.hideFlags = HideFlags.HideInHierarchy;
                                 setter.hideFlags = HideFlags.HideInHierarchy;
 
                                 declaration.scope = property.GetScope();
                                 declaration.type = property.PropertyType;
-                                declaration.propertyModifier = PropertyModifier.Override;
+                                if (!property.DeclaringType.IsInterface)
+                                    declaration.propertyModifier = PropertyModifier.Override;
 
                                 if (property.CanRead)
                                 {
+                                    var functionGetterUnit = new FunctionNode(FunctionType.Getter)
+                                    {
+                                        fieldDeclaration = declaration
+                                    };
+                                    declaration.getter.graph.units.Insert(0, functionGetterUnit);
                                     declaration.get = true;
                                     declaration.getterScope = property.GetGetMethod(true).GetScope();
                                 }
 
                                 if (property.CanWrite)
                                 {
+                                    var functionSetterUnit = new FunctionNode(FunctionType.Setter)
+                                    {
+                                        fieldDeclaration = declaration
+                                    };
+                                    declaration.setter.graph.units.Insert(0, functionSetterUnit);
                                     declaration.set = true;
                                     declaration.setterScope = property.GetSetMethod(true).GetScope();
                                 }
@@ -346,69 +382,74 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     //TODO : Add event support
 
-                    var parameterizedConstructors = inheritedType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-                    .Where(constructor => constructor.GetParameters().Length > 0)
-                    .ToArray();
-
-                    for (int i = 0; i < parameterizedConstructors.Length; i++)
+                    if (Target is ClassAsset asset && asset.inheritsType)
                     {
-                        var index = i;
-                        HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        var inheritedType = asset.inherits.type;
+                        var parameterizedConstructors = inheritedType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                        .Where(constructor => constructor.GetParameters().Length > 0)
+                        .ToArray();
+                        if (parameterizedConstructors.Length > 0)
+                            GUILayout.Label("Constructors");
+                        for (int i = 0; i < parameterizedConstructors.Length; i++)
                         {
-                            var parameters = parameterizedConstructors[index].GetParameters();
-                            var parameterDescriptions = string.Join(", ", parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"));
-
-                            string typeName = inheritedType.Name;
-                            int backtickIndex = typeName.IndexOf('`');
-                            if (backtickIndex > 0)
+                            var index = i;
+                            HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
                             {
-                                typeName = typeName.Substring(0, backtickIndex);
-                            }
-                            GUILayout.Label($"{typeName}({parameterDescriptions})");
+                                var parameters = parameterizedConstructors[index].GetParameters();
+                                var parameterDescriptions = string.Join(", ", parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"));
 
-                            if (GUILayout.Button("Add", GUILayout.Width(60)))
-                            {
-                                int undoGroup = Undo.GetCurrentGroup();
-                                Undo.SetCurrentGroupName("Added Required Constructor");
-
-                                Undo.RegisterCompleteObjectUndo(Target, "Added Required Constructor");
-
-                                var declaration = CreateInstance<TConstructorDeclaration>();
-                                Undo.RegisterCreatedObjectUndo(declaration, "Created Constructor Declaration");
-                                declaration.parentAsset = Target;
-                                declaration.hideFlags = HideFlags.HideInHierarchy;
-                                AssetDatabase.AddObjectToAsset(declaration, Target);
-
-                                listOfConstructors.Add(declaration);
-                                declaration.name = $"Constructor {listOfConstructors.IndexOf(declaration)}";
-
-                                var functionUnit = new FunctionNode(FunctionType.Constructor)
+                                string typeName = inheritedType.Name;
+                                int backtickIndex = typeName.IndexOf('`');
+                                if (backtickIndex > 0)
                                 {
-                                    constructorDeclaration = declaration
-                                };
+                                    typeName = typeName.Substring(0, backtickIndex);
+                                }
+                                GUILayout.Label($"{typeName}({parameterDescriptions})");
 
-                                declaration.graph.units.Add(functionUnit);
+                                if (GUILayout.Button("Add", GUILayout.Width(60)))
+                                {
+                                    int undoGroup = Undo.GetCurrentGroup();
+                                    Undo.SetCurrentGroupName("Added Required Constructor");
 
-                                var listOfVariables = variables.value as List<TFieldDeclaration>;
-                                declaration.scope = parameterizedConstructors[index].GetScope();
-                                declaration.initializerType = ConstructorInitializer.Base;
-                                declaration.parameters = parameterizedConstructors[index]
-                                    .GetParameters()
-                                    .Select(param => new TypeParam(param.ParameterType, param.Name)
+                                    Undo.RegisterCompleteObjectUndo(Target, "Added Required Constructor");
+
+                                    var declaration = CreateInstance<TConstructorDeclaration>();
+                                    Undo.RegisterCreatedObjectUndo(declaration, "Created Constructor Declaration");
+                                    declaration.parentAsset = Target;
+                                    declaration.hideFlags = HideFlags.HideInHierarchy;
+                                    AssetDatabase.AddObjectToAsset(declaration, Target);
+
+                                    listOfConstructors.Add(declaration);
+                                    declaration.name = $"Constructor {listOfConstructors.IndexOf(declaration)}";
+
+                                    var functionUnit = new FunctionNode(FunctionType.Constructor)
                                     {
-                                        useInInitializer = !inheritedType.IsAbstract && inheritedType.IsClass
-                                    })
-                                    .ToList();
-                                declaration.modifier = parameterizedConstructors[index].GetModifier();
+                                        constructorDeclaration = declaration
+                                    };
 
-                                UpdatePreview();
-                                Undo.CollapseUndoOperations(undoGroup);
-                                AssetDatabase.SaveAssets();
-                                AssetDatabase.Refresh();
-                            }
-                        }, true);
+                                    declaration.graph.units.Add(functionUnit);
 
-                        GUILayout.Space(4);
+                                    var listOfVariables = variables.value as List<TFieldDeclaration>;
+                                    declaration.scope = parameterizedConstructors[index].GetScope();
+                                    declaration.initializerType = ConstructorInitializer.Base;
+                                    declaration.parameters = parameterizedConstructors[index]
+                                        .GetParameters()
+                                        .Select(param => new TypeParam(param.ParameterType, param.Name)
+                                        {
+                                            useInInitializer = !inheritedType.IsAbstract && inheritedType.IsClass
+                                        })
+                                        .ToList();
+                                    declaration.modifier = parameterizedConstructors[index].GetModifier();
+
+                                    UpdatePreview();
+                                    Undo.CollapseUndoOperations(undoGroup);
+                                    AssetDatabase.SaveAssets();
+                                    AssetDatabase.Refresh();
+                                }
+                            }, true);
+
+                            GUILayout.Space(4);
+                        }
                     }
                 });
             });
@@ -458,7 +499,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     var inheritedType = classAsset.inheritsType ? classAsset.inherits?.type ?? typeof(object) : typeof(object);
 
                     var nonFinalMethods = inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Where(m => m.IsValidOverridableMethod() && !MethodExists(m))
+                    .Where(m => m.IsValidOverridableMethod(false) && !MethodExists(m))
                     .ToArray();
                     for (int i = 0; i < nonFinalMethods.Length; i++)
                     {
@@ -937,9 +978,9 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
                 {
-                    var listOfConstructors = constructors.value as List<TConstructorDeclaration>;
+                    var listOfConstructors = constructors?.value as List<TConstructorDeclaration>;
 
-                    for (int i = 0; i < listOfConstructors.Count; i++)
+                    for (int i = 0; i < listOfConstructors?.Count; i++)
                     {
                         var index = i;
                         if (listOfConstructors[index].parentAsset == null) listOfConstructors[index].parentAsset = Target;
@@ -1001,14 +1042,38 @@ namespace Unity.VisualScripting.Community.CSharp
                                 EditorGUILayout.EndHorizontal();
                                 EditorGUILayout.BeginHorizontal();
                                 //HUMEditor.Image(PathUtil.Load("scope_32", CommunityEditorPath.Code).Single(), 16, 16);
-                                EditorGUI.BeginChangeCheck();
-                                var initializerType = (ConstructorInitializer)EditorGUILayout.EnumPopup("Initializer Type", listOfConstructors[index].initializerType);
-                                if (EditorGUI.EndChangeCheck())
+                                GUILayout.Label("Initializer Type");
+                                if (GUILayout.Button(listOfConstructors[index].initializerType.ToString(), EditorStyles.popup))
                                 {
-                                    Undo.RegisterCompleteObjectUndo(listOfConstructors[index], "Changed Constructor Initializer Type");
-                                    UpdatePreview();
-                                    listOfConstructors[index].initializerType = initializerType;
+                                    var menu = new GenericMenu();
+                                    menu.AddItem(new GUIContent("None"), listOfConstructors[index].initializerType == ConstructorInitializer.None, (constructor) =>
+                                    {
+                                        Undo.RegisterCompleteObjectUndo(listOfConstructors[index], "Changed Constructor Initializer Type");
+                                        (constructor as TConstructorDeclaration).initializerType = ConstructorInitializer.None;
+                                        UpdatePreview();
+                                    }, listOfConstructors[index]);
+                                    menu.AddItem(new GUIContent("This"), listOfConstructors[index].initializerType == ConstructorInitializer.This, (constructor) =>
+                                    {
+                                        Undo.RegisterCompleteObjectUndo(listOfConstructors[index], "Changed Constructor Initializer Type");
+                                        (constructor as TConstructorDeclaration).initializerType = ConstructorInitializer.This;
+                                        UpdatePreview();
+                                    }, listOfConstructors[index]);
+                                    if (typeof(TMemberTypeAsset) != typeof(StructAsset))
+                                    {
+                                        menu.AddItem(new GUIContent("Base"), listOfConstructors[index].initializerType == ConstructorInitializer.Base, (constructor) =>
+                                        {
+                                            Undo.RegisterCompleteObjectUndo(listOfConstructors[index], "Changed Constructor Initializer Type");
+                                            (constructor as TConstructorDeclaration).initializerType = ConstructorInitializer.Base;
+                                            UpdatePreview();
+                                        }, listOfConstructors[index]);
+                                    }
+                                    else
+                                    {
+                                        menu.AddDisabledItem(new GUIContent("Base"));
+                                    }
+                                    menu.ShowAsContext();
                                 }
+
                                 EditorGUILayout.EndHorizontal();
                                 GUILayout.Space(4);
 
@@ -1739,9 +1804,9 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
                 {
-                    var listOfMethods = methods.value as List<TMethodDeclaration>;
+                    var listOfMethods = methods?.value as List<TMethodDeclaration>;
 
-                    for (int i = 0; i < listOfMethods.Count; i++)
+                    for (int i = 0; i < listOfMethods?.Count; i++)
                     {
                         var index = i;
                         if (listOfMethods[index].parentAsset == null) listOfMethods[index].parentAsset = Target;
@@ -2102,9 +2167,9 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
                 {
-                    var listOfVariables = variables.value as List<TFieldDeclaration>;
+                    var listOfVariables = variables?.value as List<TFieldDeclaration>;
 
-                    for (int i = 0; i < listOfVariables.Count; i++)
+                    for (int i = 0; i < listOfVariables?.Count; i++)
                     {
                         var getterReference = listOfVariables[i].getter.GetReference().AsReference();
                         var setterReference = listOfVariables[i].setter.GetReference().AsReference();

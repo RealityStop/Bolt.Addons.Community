@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.Humility;
@@ -99,17 +100,17 @@ namespace Unity.VisualScripting.Community
             return type.Namespace?.PartBefore('.');
         }
 
-        public static bool IsValidOverridableMethod(this MethodInfo m)
+        public static bool IsValidOverridableMethod(this MethodInfo m, bool required)
         {
             if (m == null) return false;
+
+            if (m.IsSpecialName)
+                return false;
 
             if (!m.Overridable())
                 return false;
 
             if (!(m.IsPublic || m.IsFamily))
-                return false;
-
-            if (m.IsSpecialName)
                 return false;
 
             if (m.Name == "Finalize")
@@ -118,10 +119,30 @@ namespace Unity.VisualScripting.Community
             if (m.IsConstructor && m.IsStatic)
                 return false;
 
-            return true;
+            return !required || m.IsAbstract;
         }
 
-        public static bool IsValidOverridableProperty(this PropertyInfo p)
+        public static IEnumerable<Type> GetAllInterfacesRecursive(Type type)
+        {
+            var seen = new HashSet<Type>();
+            void Add(Type t)
+            {
+                if (t == null) return;
+                if (t.IsInterface) seen.Add(t);
+                foreach (var i in t.GetInterfaces())
+                {
+                    if (seen.Add(i))
+                    {
+                        Add(i);
+                    }
+                }
+                if (t.BaseType != null) Add(t.BaseType);
+            }
+            Add(type);
+            return seen;
+        }
+
+        public static bool IsValidOverridableProperty(this PropertyInfo p, bool required)
         {
             if (p == null) return false;
 
@@ -131,7 +152,7 @@ namespace Unity.VisualScripting.Community
             var getter = p.GetMethod;
             var setter = p.SetMethod;
 
-            if (p.Overridable())
+            if (!p.Overridable())
                 return false;
 
             bool visible =
@@ -141,7 +162,9 @@ namespace Unity.VisualScripting.Community
             if (!visible)
                 return false;
 
-            return true;
+            return !required ||
+            (p.GetMethod != null && p.GetMethod.IsAbstract) ||
+            (p.SetMethod != null && p.SetMethod.IsAbstract);
         }
     }
 }

@@ -16,7 +16,6 @@ namespace Unity.VisualScripting.Community
         {
             var @struct = StructGenerator.Struct(RootAccessModifier.Public, StructModifier.None, Data.title.LegalMemberName());
             CreateGenerationData();
-            @struct.beforeUsings = "#pragma warning disable\n".ConstructHighlight();
             if (Data.definedEvent) @struct.ImplementInterface(typeof(IDefinedEvent));
             if (Data.inspectable) @struct.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
             if (Data.serialized) @struct.AddAttribute(AttributeGenerator.Attribute<SerializableAttribute>());
@@ -158,6 +157,7 @@ namespace Unity.VisualScripting.Community
 
                         for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
                         {
+                            
                             AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
                             foreach (var param in attributes[attrIndex].parameters)
                             {
@@ -340,12 +340,6 @@ namespace Unity.VisualScripting.Community
                     {
                         var field = FieldGenerator.Field(Data.variables[i].scope, Data.variables[i].fieldModifier, Data.variables[i].type, Data.variables[i].name);
 
-                        if (Data.serialized)
-                        {
-                            if (Data.variables[i].inspectable) field.AddAttribute(AttributeGenerator.Attribute<InspectableAttribute>());
-                            if (!Data.variables[i].serialized) field.AddAttribute(AttributeGenerator.Attribute<NonSerializedAttribute>());
-                        }
-
                         for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
                         {
                             AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
@@ -387,7 +381,7 @@ namespace Unity.VisualScripting.Community
                 {
                     var method = MethodGenerator.Method(Data.methods[i].scope, Data.methods[i].modifier, Data.methods[i].returnType, Data.methods[i].name);
                     var attributes = Data.methods[i].attributes;
-
+                    method.AddGenerics(Data.methods[i].genericParameters.ToArray());
                     for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
                     {
                         AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
@@ -485,7 +479,7 @@ namespace Unity.VisualScripting.Community
                         var unit = Data.methods[i].graph.units[0] as FunctionNode;
                         data.EnterMethod();
                         data.SetReturns(Data.methods[i].returnType);
-                        data.SetGraphPointer(Data.constructors[i].GetReference().AsReference());
+                        data.SetGraphPointer(Data.methods[i].GetReference().AsReference());
                         foreach (var param in Data.methods[i].parameters)
                         {
                             data.AddLocalNameInScope(param.name, param.type);

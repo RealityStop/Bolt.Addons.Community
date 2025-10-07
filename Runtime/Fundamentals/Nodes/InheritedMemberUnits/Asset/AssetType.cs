@@ -7,12 +7,12 @@ namespace Unity.VisualScripting.Community
     {
         [Obsolete(Serialization.ConstructorWarning)]
         public AssetType() { }
-        public AssetType(ClassAsset asset)
+        public AssetType(CodeAsset asset)
         {
             this.asset = asset;
         }
 
-        public ClassAsset asset;
+        public CodeAsset asset;
 
         [DoNotSerialize]
         [PortLabelHidden]

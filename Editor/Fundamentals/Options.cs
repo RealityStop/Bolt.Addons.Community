@@ -185,10 +185,10 @@ namespace Unity.VisualScripting.Community.Variables.Editor
 
         private static IEnumerable<IUnitOption> InheritedMembersOptions(GraphReference reference)
         {
-            if (IsClassAsset(reference.macro))
+            if (IsMemberAsset(reference.macro))
             {
-                var classAsset = GetClassAsset(reference.macro);
-                if (classAsset != null)
+                var asset = GetMemberAsset(reference.macro);
+                if (asset is ClassAsset classAsset)
                 {
                     yield return new AssetTypeOption(new AssetType(classAsset));
                     foreach (var method in classAsset.methods)
@@ -205,10 +205,15 @@ namespace Unity.VisualScripting.Community.Variables.Editor
                         }
                     }
 
-                    foreach (var field in classAsset.variables)
+                    foreach (var variable in classAsset.variables)
                     {
-                        yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Get));
-                        yield return new AssetFieldUnitOption(new AssetFieldUnit(field.FieldName, field, ActionDirection.Set));
+                        bool isConst = variable.fieldModifier == Libraries.CSharp.FieldModifier.Constant;
+
+                        if ((variable.isProperty && variable.get) || !variable.isProperty)
+                            yield return new AssetFieldUnitOption(new AssetFieldUnit(variable.FieldName, variable, ActionDirection.Get));
+
+                        if ((variable.isProperty && variable.set) || (!variable.isProperty && !isConst))
+                            yield return new AssetFieldUnitOption(new AssetFieldUnit(variable.FieldName, variable, ActionDirection.Set));
                     }
 
                     var inheritedType = classAsset.GetInheritedType();
@@ -268,35 +273,64 @@ namespace Unity.VisualScripting.Community.Variables.Editor
                         }
                     }
                 }
+                else if (asset is StructAsset structAsset)
+                {
+                    yield return new AssetTypeOption(new AssetType(structAsset));
+                    foreach (var method in structAsset.methods)
+                    {
+                        yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.Invoke));
+                        if (!method.returnType.Is().Void())
+                        {
+                            yield return new AssetMethodCallUnitOption(new AssetMethodCallUnit(method.methodName, method, MethodType.ReturnValue));
+                            yield return new AssetFuncUnitOption(new AssetFuncUnit(method));
+                        }
+                        else
+                        {
+                            yield return new AssetActionUnitOption(new AssetActionUnit(method));
+                        }
+                    }
+
+                    foreach (var variable in structAsset.variables)
+                    {
+                        bool isConst = variable.fieldModifier == Libraries.CSharp.FieldModifier.Constant;
+
+                        if ((variable.isProperty && variable.get) || !variable.isProperty)
+                            yield return new AssetFieldUnitOption(new AssetFieldUnit(variable.FieldName, variable, ActionDirection.Get));
+
+                        if ((variable.isProperty && variable.set) || (!variable.isProperty && !isConst))
+                            yield return new AssetFieldUnitOption(new AssetFieldUnit(variable.FieldName, variable, ActionDirection.Set));
+                    }
+
+                }
             }
         }
 
-        private static bool IsClassAsset(IMacro macro)
+        private static bool IsMemberAsset(IMacro macro)
         {
             if (macro is ConstructorDeclaration || macro is PropertyGetterMacro || macro is PropertySetterMacro || macro is MethodDeclaration)
             {
-                return GetClassAsset(macro) != null;
+                return GetMemberAsset(macro) != null;
             }
             return false;
         }
 
-        private static ClassAsset GetClassAsset(IMacro macro)
+        private static CodeAsset GetMemberAsset(IMacro macro)
         {
             if (macro is ConstructorDeclaration constructorDeclaration)
             {
-                return constructorDeclaration.parentAsset as ClassAsset;
+                return constructorDeclaration.parentAsset;
             }
             else if (macro is PropertyGetterMacro propertyGetterMacro)
             {
-                return propertyGetterMacro.parentAsset as ClassAsset;
+                return propertyGetterMacro.parentAsset;
             }
             else if (macro is PropertySetterMacro propertySetterMacro)
             {
-                return propertySetterMacro.parentAsset as ClassAsset;
+                return propertySetterMacro.parentAsset;
             }
             else if (macro is MethodDeclaration methodDeclaration)
             {
-                return methodDeclaration.parentAsset as ClassAsset;
+                return methodDeclaration.parentAsset;
             }
             return null;
         }
