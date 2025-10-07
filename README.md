@@ -202,7 +202,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 > > - [**Class** (Experimental)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Classes)
 > > - [**Delegates**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Delegates)
 > > - [**Enums**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Enums)
-> > - **Interface** (Experimental)
+> > - [**Interface** (Experimental)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Interfaces)
 > > - [**Struct** (Experimental)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Structs)
 > 
 > > Editor
