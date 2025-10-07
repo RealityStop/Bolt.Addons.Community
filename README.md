@@ -66,14 +66,14 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 
 > ### NODES
 > 
->  [Variables](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Variables) 
+>  Variables
 >  - [Increment Variable](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Increment-Variable)
 >  - [Decrement Variable](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Decrement-Variable)
 >  - [Plus Equals](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---PlusEquals)
 >  - [Reset Saved Variables](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ResetSavedVariables)
 >  - [Clear Saved Variables](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ClearSavedVariables)
 >
->  [Events](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Events)
+>  Events
 >  - [On Every X Seconds](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---OnEveryXSecondsNode)
 >  - [On Variable Changed](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---OnVariableChangedNode)
 >  - [Manual Event](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ManualEvent)
@@ -90,14 +90,14 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 >  - [ChannelEvent](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ChannelEvent)
 >  - [TriggerChannelEvent](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---TriggerChannelEvent)
 >
->  [Documentation](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Documentation)
+>  Documentation
 >   - [Comment](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---CommentNode)  
 >   - [Arrow](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Arrow)  
 >   - [Todo](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Todo)  
 >   - [Stuff Happens](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---StuffHappens)  
 >   - [Some Value](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---SomeValue) 
 >
->  [Collections](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Collections)
+>  Collections
 >   - [Query Node](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---QueryNode)  
 >   - [Random Element](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---RandomElementNode)  
 >   - [Random Numbers](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---RandomNumbersv2)   
@@ -105,7 +105,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 >   - [SetArrayItem](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---SetArrayItem)  
 >   - [GetArrayItem](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---GetArrayItem)  
 >
->  [Control](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Control)
+>  Control
 >  - [Branch (Params)](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---BranchParams)
 >  - [Gate](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Gate)
 >  - [Edge Trigger](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Edge-Trigger)
@@ -125,7 +125,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 >  - [Flow Reroute](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---FlowReroute)
 >  - [Value Reroute](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ValueReroute)
 >
->  [Logic](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Logic)
+>  Logic
 >   - [Logic Params](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---LogicParams)  
 >   - [Log Node](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---LogNode)  
 >   - [Toggle Bool](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ToggleBool)  
@@ -135,7 +135,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 >   - [Edge Trigger](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Edge-Trigger)  
 >   - [Latch](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Latch)
 >
->  [Utility](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Utility)
+>  Utility
 >  - [Convert](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ConvertNode)
 >  - [As](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---AsUnit)
 >  - [Copy To Clipboard](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---CopyToClipboardUnit)
@@ -154,7 +154,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 >  - [Random String](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---RandomStringNode)
 >  - [Multiline String](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---MultilineStringNode)
 >
->  [Object Pooling](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Pooling)
+>  Object Pooling
 >  - [Initialize Object Pool](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---InitializePoolNode)
 >  - [Retrieve Object](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---RetrieveObjectNode)
 >  - [Return Object](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---ReturnObjectNode)
@@ -171,7 +171,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 >   - **Set Machine Variable**
 >   - **Has Machine Variable**
 >
->  [Time](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Time)
+>  Time
 >  - [Yield](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---YieldNode)
 >  - [Enumerator](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---EnumeratorNode)
 >  - [Stopwatch](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---StopwatchUnit)
@@ -181,7 +181,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 >   - **Get Window Variable**
 >   - **Set Window Variable**
 >
->  [Math](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#Math)
+>  Math
 >  - [Math Op](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---MathParamNode)
 >  - [Negate Value](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---NegativeValueNode)
 >  - Functions:
