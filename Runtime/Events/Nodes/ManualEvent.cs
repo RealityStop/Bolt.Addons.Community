@@ -38,11 +38,6 @@ namespace Unity.VisualScripting.Community
         [InspectorLabel("Ingore Graph State", "Trigger even if the State or Machine is inactive.")]
         public bool IngoreGraphState;
 
-        [DoNotSerialize]
-        [UnitHeaderInspectable]
-        [NodeButton("TriggerButton")]
-        public NodeButton triggerButton;
-        
         //Tracked class-wide (because it updates outside of the graph scope)
         [DoNotSerialize]
         public int shouldTriggerNextUpdateTicker;
@@ -68,12 +63,27 @@ namespace Unity.VisualScripting.Community
 
             if (immediate || (IngoreGraphState && (!reference?.GetElementData<Data>(this)?.isListening ?? false)))
             {
+                bool wasCoroutine = coroutine;
+
                 //In the editor, we just fire immediately.
+                if (coroutine && immediate)
+                {
+                    Debug.LogWarning("This manual event is marked as a coroutine, but Unity coroutines are only valid during Play mode.  Attempting non-coroutine activation!");
+                    coroutine = false;
+                }
+
+                Flow flow = Flow.New(reference);
 
                 if (coroutine)
-                    Debug.LogWarning("This manual event is marked as a coroutine, but Unity coroutines are only valid during Play mode.  Attempting non-coroutine activation!");
-                Flow flow = Flow.New(reference);
-                flow.Run(trigger);
+                {
+                    flow.StartCoroutine(trigger, flow.stack.GetElementData<Data>(this).activeCoroutines);
+                }
+                else
+                {
+                    flow.Run(trigger);
+                }
+
+                coroutine = wasCoroutine;
             }
             else
             {

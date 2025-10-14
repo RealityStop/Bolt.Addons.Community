@@ -247,14 +247,15 @@ namespace Unity.VisualScripting.Community
                 }
 
                 EditorGUILayout.EndScrollView();
-                EditorGUI.BeginDisabledGroup(!IsValidType(baseType, false));
-                if (!IsValidType(baseType, false))
+                var isValid = IsValidType(baseType, true);
+                EditorGUI.BeginDisabledGroup(!isValid);
+                if (!isValid)
                 {
                     if (baseType != null)
                         EditorGUILayout.HelpBox($"Can not create arrays of Open Generics, e.g {baseType.As().CSharpName(false, false, false).RemoveHighlights().RemoveMarkdown()} is invalid it has to have a types set for {string.Join(", ", GetInvalidParameters(baseType))}", MessageType.Error);
                 }
-
-                if (GUILayout.Button("Create Type"))
+                var e = Event.current;
+                if (GUILayout.Button("Create Type") || (isValid && e != null && focusedWindow == this && e.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return))
                 {
                     if (targetMetadata != null)
                         ConstructType(targetMetadata);
@@ -464,7 +465,7 @@ namespace Unity.VisualScripting.Community
                 {
                     if (isBaseType && genericParameter != null)
                     {
-                        if (baseType.IsArray || (baseType is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType.isArrayType))
+                        if (baseType.IsArray || (baseType is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType.IsArray))
                         {
                             baseType = baseType.GetElementType();
                             genericParameter.type.type = baseType;
@@ -472,7 +473,7 @@ namespace Unity.VisualScripting.Community
                     }
                     else
                     {
-                        if (generic.type.type.IsArray || (generic.type.type is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType.isArrayType))
+                        if (generic.type.type.IsArray || (generic.type.type is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType.IsArray))
                         {
                             generic.type.type = generic.type.type.GetElementType();
                             generic.parent.type.type = generic.parent.ConstructType();

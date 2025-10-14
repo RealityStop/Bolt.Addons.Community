@@ -261,6 +261,8 @@ namespace Unity.VisualScripting.Community
 
             return null;
         }
+
+        public static Action<object> updateStubwriterCall;
 #if VISUAL_SCRIPTING_1_7
         public override IEnumerable<object> GetAotStubs(HashSet<object> visited)
         {
@@ -276,6 +278,10 @@ namespace Unity.VisualScripting.Community
                     {
                         if (member != null && visited.Add(member))
                         {
+                            if (member.isConstructor)
+                            {
+                                updateStubwriterCall?.Invoke(member.constructorInfo);
+                            }
                             yield return member.info;
                         }
                     }
@@ -297,6 +303,10 @@ namespace Unity.VisualScripting.Community
                     {
                         if (member != null)
                         {
+                            if (member.isConstructor)
+                            {
+                                updateStubwriterCall?.Invoke(member.constructorInfo);
+                            }
                             yield return member.info;
                         }
                     }

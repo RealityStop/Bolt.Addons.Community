@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEditor;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
@@ -24,6 +25,13 @@ namespace Unity.VisualScripting.Community
             else
             {
                 LudiqGUI.Inspector(metadata["conversion"], new Rect(headerAddonPosition.x, headerAddonPosition.y, GetHeaderAddonWidth(), 18), GUIContent.none);
+                // var type = metadata["type"].value as Type;
+                // GUIContent content = new GUIContent(type?.DisplayName() ?? "(Select Type)", EditorTypeUtility.GetTypeIcon(type));
+                // var buttonPos = new Rect(headerAddonPosition.x, headerAddonPosition.y + 20, GetHeaderAddonWidth(), 18);
+                // if (GUI.Button(buttonPos, content, EditorStyles.popup))
+                // {
+                //     TypeBuilderWindow.ShowWindow(buttonPos, metadata["type"], true, new Type[0]);
+                // }
                 LudiqGUI.Inspector(metadata["type"], new Rect(headerAddonPosition.x, headerAddonPosition.y + 20, GetHeaderAddonWidth(), 18), GUIContent.none);
             }
 
@@ -52,4 +60,4 @@ namespace Unity.VisualScripting.Community
             return 40;
         }
     }
-} 
+}

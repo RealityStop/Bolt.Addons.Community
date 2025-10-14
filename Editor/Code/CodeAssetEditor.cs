@@ -3,6 +3,7 @@ using UnityEditor;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -21,6 +22,14 @@ namespace Unity.VisualScripting.Community.CSharp
             Method,
             Parameter
         }
+
+        // protected Type[] SearchableAllTypes
+        // {
+        //     get
+        //     {
+        //         return Target.WithFakeTypes(Codebase.settingsAssembliesTypes.ToList()).Where(t => t != null && !NameUtility.TypeHasSpecialName(t)).ToArray();
+        //     }
+        // }
 
         protected TAsset Target;
 
@@ -94,9 +103,14 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     EditorGUI.BeginChangeCheck();
                     string newTitle = EditorGUILayout.TextField(Target.title);
+                    //Target.AssetType = FakeTypeRegistry.GetOrCreate(Target, newTitle, Target.category, GetInterfaces());
                     if (EditorGUI.EndChangeCheck())
                     {
                         Undo.RegisterCompleteObjectUndo(Target, "Change Asset Title");
+                        // if (Target.title != newTitle)
+                        // {
+                        //     FakeTypeRegistry.RemoveType(Target);
+                        // }
                         Target.title = newTitle;
                         EditorUtility.SetDirty(Target);
                         UpdatePreview();
@@ -122,6 +136,14 @@ namespace Unity.VisualScripting.Community.CSharp
                     }
                 });
             }
+        }
+
+        private List<Type> GetInterfaces()
+        {
+            if (Target is ClassAsset classAsset) return classAsset.interfaces.Select(t => t.type).ToList();
+            if (Target is StructAsset structAsset) return structAsset.interfaces.Select(t => t.type).ToList();
+            if (Target is InterfaceAsset interfaceAsset) return interfaceAsset.interfaces.Select(t => t.type).ToList();
+            return new List<Type>();
         }
 
         public override void OnInspectorGUI()

@@ -42,6 +42,7 @@ namespace Unity.VisualScripting.Community
                 }
                 SurroundWithWindow.ShowWindow((surroundCommand) =>
                 {
+                    UndoUtility.RecordEditedObject($"Surrounded units with {surroundCommand.DisplayName}");
                     ApplySurround(graph, canvas, surroundCommand);
                 });
             }
@@ -150,32 +151,17 @@ namespace Unity.VisualScripting.Community
             if (surroundCommand.autoConnectPort != null)
             {
                 canvas.connectionSource = surroundCommand.autoConnectPort;
-                GraphUtility.AddNewUnitContextual(graph, canvas, (element) =>
+                GraphUtility.AddNewPositionedUnit(graph, canvas, surroundCommand.autoConnectPort,
+                (_) =>
                 {
-                    var unit = element as Unit;
-                    if (unit == null) return;
-
-                    if (surroundCommand.autoConnectPort is ValueInput)
-                    {
-                        var surroundPos = surroundCommand.autoConnectPort.unit.position;
-                        unit.position = new Vector2(surroundPos.x - 150, surroundPos.y + 150);
-                    }
-                    else if (surroundCommand.autoConnectPort is ValueOutput)
-                    {
-                        var surroundPos = surroundCommand.autoConnectPort.unit.position;
-                        unit.position = new Vector2(surroundPos.x + 150, surroundPos.y + 150);
-                    }
-                    else if (surroundCommand.autoConnectPort is ControlOutput)
-                    {
-                        var surroundPos = surroundCommand.autoConnectPort.unit.position;
-                        unit.position = new Vector2(surroundPos.x + 250, surroundPos.y + 150);
-                    }
-                    else if (surroundCommand.autoConnectPort is ControlOutput)
-                    {
-                        var surroundPos = surroundCommand.autoConnectPort.unit.position;
-                        unit.position = new Vector2(surroundPos.x - 250, surroundPos.y + 150);
-                    }
-                });
+                    GraphUtility.CleanGraphFrom(surroundCommand.SequenceExit ? surroundCommand.sequenceUnit : surroundUnit);
+                    LudiqGraphsEditorUtility.editedContext.value.DescribeAnalyzeAndDefineFlowGraph();
+                },
+                () => GraphUtility.CleanGraphFrom(surroundCommand.SequenceExit ? surroundCommand.sequenceUnit : surroundUnit));
+            }
+            else
+            {
+                GraphUtility.CleanGraphFrom(surroundCommand.SequenceExit ? surroundCommand.sequenceUnit : surroundUnit);
             }
         }
     }

@@ -77,9 +77,4 @@ namespace Unity.VisualScripting.Community
             return baseType;
         }
     }
-
-    public partial struct SClassAsset
-    {
-        
-    }
 }

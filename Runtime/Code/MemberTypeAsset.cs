@@ -46,6 +46,16 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public int order;
 
+        public override List<Type> WithFakeTypes(List<Type> types)
+        {
+            base.WithFakeTypes(types);
+            foreach (var method in methods)
+            {
+                types.AddRange(method.GetFakeTypes());
+            }
+            return types;
+        }
+
 #if UNITY_EDITOR
         public Texture2D icon;
         public bool constructorsOpened;

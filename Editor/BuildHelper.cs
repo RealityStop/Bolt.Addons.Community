@@ -1,20 +1,21 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+using JetBrains.Annotations;
+using Unity.VisualScripting.Community;
+using UnityEditor;
+using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
+using UnityEditor.Callbacks;
+using UnityEditor.PackageManager;
+using UnityEditor.PackageManager.Requests;
+using UnityEngine;
+
 namespace RealityStop.LinkMerge
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using System.Xml.Linq;
-    using JetBrains.Annotations;
-    using UnityEditor;
-    using UnityEditor.Build;
-    using UnityEditor.Build.Reporting;
-    using UnityEditor.Callbacks;
-    using UnityEditor.PackageManager;
-    using UnityEditor.PackageManager.Requests;
-    using UnityEngine;
-
     public class PackagesLinkXmlExtractor : IPreprocessBuildWithReport
     {
         public static string TemporaryFolder => $"{Application.dataPath}/Temporary-Build/";
@@ -99,6 +100,7 @@ namespace RealityStop.LinkMerge
         {
             try
             {
+                ProviderPatcher.EnsurePatched();
                 BuildPlayerWindow.DefaultBuildMethods.BuildPlayer(buildOptions);
             }
             catch (Exception ex)

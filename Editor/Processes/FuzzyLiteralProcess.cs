@@ -27,6 +27,42 @@ namespace Unity.VisualScripting.Community
             Options.dynamicLiteralOptions[typeof(string)].unit.value = query;
             Options.dynamicLiteralOptions[typeof(string)].Update(query);
 
+            GraphUtility.WaitForNewUnit(graph, (element) =>
+            {
+                if (element is Unit unit)
+                {
+                    if (@event == null) return;
+
+                    if (@event.shift)
+                    {
+                        var controlOutput = unit.controlOutputs.FirstOrDefault();
+                        if (controlOutput != null)
+                        {
+                            canvas.connectionSource = controlOutput;
+                            GraphUtility.AddNewPositionedUnit(graph, canvas, controlOutput, null);
+                        }
+                    }
+                    else if (@event.shift && @event.alt)
+                    {
+                        var valueOutput = unit.valueOutputs.FirstOrDefault();
+                        if (valueOutput != null)
+                        {
+                            canvas.connectionSource = valueOutput;
+                            GraphUtility.AddNewPositionedUnit(graph, canvas, valueOutput, null);
+                        }
+                    }
+                    else if (@event.alt)
+                    {
+                        var valueInput = unit.valueInputs.FirstOrDefault();
+                        if (valueInput != null)
+                        {
+                            canvas.connectionSource = valueInput;
+                            GraphUtility.AddNewPositionedUnit(graph, canvas, valueInput, null);
+                        }
+                    }
+                }
+            });
+            
             if (TryParseValue(query, out var value))
             {
                 foreach (var optionType in Options.dynamicLiteralOptions.Keys)

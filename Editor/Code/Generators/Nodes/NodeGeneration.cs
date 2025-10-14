@@ -155,8 +155,8 @@ namespace Unity.VisualScripting.Community
 
             return source.unit switch
             {
-                GraphInput graphInput => FindConnectedInput(GetGenerator(graphInput), source.key),
-                SUnit subgraph => FindConnectedSubgraphOutput(subgraph, source.key),
+                GraphInput graphInput => FindConnectedInput(GetGenerator(graphInput), source.key) ?? source,
+                SUnit subgraph => FindConnectedSubgraphOutput(subgraph, source.key) ?? source,
                 _ => source
             };
         }

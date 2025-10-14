@@ -55,10 +55,18 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             public struct With
             {
                 public Types types;
+                public object value;
 
                 public With(Types types)
                 {
                     this.types = types;
+                    value = null;
+                }
+
+                public With(object value)
+                {
+                    this.value = value;
+                    types = default;
                 }
             }
 

@@ -3,6 +3,7 @@
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
     [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.ParameterModifier")]
+    [Flags]
     public enum ParameterModifier
     {
         None = 0,

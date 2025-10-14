@@ -13,7 +13,7 @@ namespace Unity.VisualScripting.Community
     {
         public InheritedMethodUnitOption(InheritedMethodCall unit) : base(unit)
         {
-            sourceScriptGuids =  Unity.VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.member.targetType));
+            sourceScriptGuids = Unity.VisualScripting.LinqUtility.ToHashSet(UnitBase.GetScriptGuids(unit.member.targetType));
         }
 
         private Member _member;
@@ -44,7 +44,7 @@ namespace Unity.VisualScripting.Community
         protected override string Label(bool human)
         {
             string[] parameters = unit.member.parameterTypes.Select(type => type.CSharpName()).ToArray();
-            return GetInvocationType($"({string.Join(", ", parameters)})");
+            return GetInvocationType($"({string.Join(", ", parameters)})", human);
         }
 
         public override bool favoritable => false;
@@ -57,12 +57,12 @@ namespace Unity.VisualScripting.Community
         public override string SearchResultLabel(string query)
         {
             string[] parameters = unit.member.parameterTypes.Select(type => type.CSharpName()).ToArray();
-            return GetInvocationType($"({string.Join(", ", parameters)})");
+            return GetInvocationType($"({string.Join(", ", parameters)})", BoltCore.Configuration.humanNaming);
         }
 
         protected override string Haystack(bool human)
         {
-            return $"this.{targetType.CSharpName(direction)}{(human ? ": " : ".")}{Label(human)}";
+            return Label(human);
         }
 
         protected override void FillFromUnit()
@@ -110,9 +110,9 @@ namespace Unity.VisualScripting.Community
             base.OnPopulate();
         }
 
-        private string GetInvocationType(string parameters)
+        private string GetInvocationType(string parameters, bool human)
         {
-            return "this." + unit.member.info.CSharpName(direction) + parameters + (unit.methodType == MethodType.Invoke ? " (Invoke) " : " (Return) ");
+            return "this." + (human ? unit.member.info.HumanName(direction) : unit.member.info.CSharpName(direction)) + parameters + (unit.methodType == MethodType.Invoke ? " (Invoke) " : " (Return) ");
         }
     }
 }

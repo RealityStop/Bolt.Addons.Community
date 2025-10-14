@@ -17,8 +17,8 @@ namespace Unity.VisualScripting.Community
             {
                 if (selection.Count > 0)
                 {
-                    yield return new GraphContextMenuItem(ConvertToEmbed, "To Embed Subgraph");
-                    yield return new GraphContextMenuItem(ConvertToMacro, "To Macro Subgraph");
+                    yield return new GraphContextMenuItem(ConvertToEmbed, "Selection/To Embed Subgraph");
+                    yield return new GraphContextMenuItem(ConvertToMacro, "Selection/To Macro Subgraph");
                 }
 
                 foreach (var item in base.contextMenuItems)
@@ -26,10 +26,10 @@ namespace Unity.VisualScripting.Community
                     yield return item;
                 }
 
-                yield return new GraphContextMenuItem(OpenNodeFinder, "Open NodeFinder Window");
-                yield return new GraphContextMenuItem(OpenUtilityWindow, "Open Utility Window");
-                yield return new GraphContextMenuItem(OpenKeyboardControlsWindow, "Open Keyboard Controls Window");
-                yield return new GraphContextMenuItem(OpenGraphSnippetPopup, "Open Graph Snippets Window");
+                yield return new GraphContextMenuItem(OpenNodeFinder, "Windows/Open NodeFinder Window");
+                yield return new GraphContextMenuItem(OpenUtilityWindow, "Windows/Open Utility Window");
+                yield return new GraphContextMenuItem(OpenKeyboardControlsWindow, "Windows/Open Keyboard Controls Window");
+                yield return new GraphContextMenuItem(OpenGraphSnippetPopup, "Windows/Open Graph Snippets Window");
             }
         }
 

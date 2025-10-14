@@ -20,9 +20,18 @@ namespace Unity.VisualScripting.Community
         public bool preview;
         public List<string> lastCompiledNames = new List<string>();
 
-        #if UNITY_EDITOR
+        [FullSerializer.fsProperty(Converter = typeof(FakeGenericParameterTypeConverter))]
+        public Type AssetType;
+
+#if UNITY_EDITOR
         public bool shouldRefresh;
-        #endif
+#endif
+
+        public virtual List<Type> WithFakeTypes(List<Type> types)
+        {
+            types.Add(AssetType);
+            return types;
+        }
 
         public string GetFullTypeName()
         {

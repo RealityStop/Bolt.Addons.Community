@@ -14,19 +14,25 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             var _fields = type.GetFields();
             var _methods = type.GetMethods();
 
-            for (int i = 0; i < _fields.Length; i++)
+            if (fields)
             {
-                if (_fields[i].FieldType == typeof(T))
+                for (int i = 0; i < _fields.Length; i++)
                 {
-                    return true;
+                    if (_fields[i].FieldType == typeof(T))
+                    {
+                        return true;
+                    }
                 }
             }
 
-            for (int i = 0; i < _methods.Length; i++)
+            if (methods)
             {
-                if (_methods[i].ReturnType == typeof(T))
+                for (int i = 0; i < _methods.Length; i++)
                 {
-                    return true;
+                    if (_methods[i].ReturnType == typeof(T))
+                    {
+                        return true;
+                    }
                 }
             }
 

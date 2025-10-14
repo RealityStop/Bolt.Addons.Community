@@ -51,7 +51,7 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            if (@event.CtrlOrCmd() && @event.keyCode == KeyCode.Tab)
+            if (@event.CtrlOrCmd() && @event.keyCode == KeyCode.Tab && !@event.shift)
             {
                 if (canvas.selection.Count > 0 && selectedElement != canvas.selection.FirstOrDefault())
                 {
@@ -117,6 +117,43 @@ namespace Unity.VisualScripting.Community
 
             if (IsAnyArrowKey(@event.keyCode) && @event.type == EventType.KeyDown)
             {
+                if (@event.CtrlOrCmd())
+                {
+                    canvas.CancelConnection();
+                    if (@event.keyCode == KeyCode.LeftArrow)
+                    {
+                        foreach (var element in canvas.selection)
+                        {
+                            MoveElement(element, new Vector2(-20, 0), canvas);
+                        }
+                        return;
+                    }
+                    else if (@event.keyCode == KeyCode.RightArrow)
+                    {
+                        foreach (var element in canvas.selection)
+                        {
+                            MoveElement(element, new Vector2(20, 0), canvas);
+                        }
+                        return;
+                    }
+                    else if (@event.keyCode == KeyCode.UpArrow)
+                    {
+                        foreach (var element in canvas.selection)
+                        {
+                            MoveElement(element, new Vector2(0, -20), canvas);
+                        }
+                        return;
+                    }
+                    else if (@event.keyCode == KeyCode.DownArrow)
+                    {
+                        foreach (var element in canvas.selection)
+                        {
+                            MoveElement(element, new Vector2(0, 20), canvas);
+                        }
+                        return;
+                    }
+                }
+                
                 bool isRight = @event.keyCode == KeyCode.RightArrow;
 
                 if (IsArrowKey(@event.keyCode))
@@ -137,7 +174,7 @@ namespace Unity.VisualScripting.Community
                         NavigatePortList(ports, canvas, isRight);
                         return;
                     }
-                    else if (@event.CtrlOrCmd())
+                    else
                     {
                         ResetStateExcept(ref wasAll);
                         var ports = new List<IUnitPort>();
@@ -151,38 +188,9 @@ namespace Unity.VisualScripting.Community
                 }
                 else if (@event.keyCode == KeyCode.UpArrow && @event.type == EventType.KeyDown && canvas.isCreatingConnection)
                 {
-                    GraphUtility.OverrideContextIfNeeded(() => canvas.NewUnitContextual());
+                    if (FuzzyWindow.instance == null)
+                        GraphUtility.OverrideContextIfNeeded(() => canvas.NewUnitContextual());
                     return;
-                }
-
-                canvas.CancelConnection();
-                if (@event.keyCode == KeyCode.LeftArrow)
-                {
-                    foreach (var element in canvas.selection)
-                    {
-                        MoveElement(element, new Vector2(-20, 0), canvas);
-                    }
-                }
-                else if (@event.keyCode == KeyCode.RightArrow)
-                {
-                    foreach (var element in canvas.selection)
-                    {
-                        MoveElement(element, new Vector2(20, 0), canvas);
-                    }
-                }
-                else if (@event.keyCode == KeyCode.UpArrow)
-                {
-                    foreach (var element in canvas.selection)
-                    {
-                        MoveElement(element, new Vector2(0, -20), canvas);
-                    }
-                }
-                else if (@event.keyCode == KeyCode.DownArrow)
-                {
-                    foreach (var element in canvas.selection)
-                    {
-                        MoveElement(element, new Vector2(0, 20), canvas);
-                    }
                 }
             }
         }
@@ -202,7 +210,22 @@ namespace Unity.VisualScripting.Community
             if (element == null) return;
 
             if (element is Unit unit)
+            {
+                if (BoltCore.Configuration.carryChildren)
+                {
+                    var targets = HashSetPool<IGraphElement>.New();
+                    canvas.Widget<IUnitWidget>(element).ExpandDragGroup(targets);
+                    targets.Add(unit);
+                    foreach (var unitToMove in targets.Cast<Unit>())
+                    {
+                        unitToMove.position += delta;
+                        canvas.Widget(unitToMove).Reposition();
+                    }
+                    HashSetPool<IGraphElement>.Free(targets);
+                    return;
+                }
                 unit.position += delta;
+            }
             else if (element is GraphGroup group)
                 group.position = new Rect(group.position.position + delta, group.position.size);
             else if (element is StickyNote note)

@@ -19,6 +19,34 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return new HUMType.Data.With(types);
         }
 
+        /// <summary>
+        /// Begins a type string operation.
+        /// </summary>
+        public static HUMType.Data.With With(this string str)
+        {
+            return new HUMType.Data.With(str);
+        }
+
+        public static string StringBefore(this HUMType.Data.With with, string @string)
+        {
+            if (with.value is string str)
+            {
+                return string.IsNullOrEmpty(@string) ? str : @string + str;
+            }
+            var _str = with.value.ToString();
+            return string.IsNullOrEmpty(@string) ? _str : @string + _str;
+        }
+
+        public static string StringAfter(this HUMType.Data.With with, string @string)
+        {
+            if (with.value is string str)
+            {
+                return string.IsNullOrEmpty(@string) ? str : str + @string;
+            }
+            var _str = with.value.ToString();
+            return string.IsNullOrEmpty(@string) ? _str : _str + @string;
+        }
+
         public static T New<T>(this HUMType.Data.As @as)
         {
             return (T)HUMType.New(@as.type);
@@ -110,10 +138,10 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
             if (type is FakeGenericParameterType fake)
             {
-                if (fake.isArrayType)
+                if (fake.IsArray)
                 {
                     var temp = type;
-                    while (((FakeGenericParameterType)temp).isArrayType)
+                    while (((FakeGenericParameterType)temp).IsArray)
                         temp = temp.GetElementType();
 
                     var coreName = ((FakeGenericParameterType)temp).Name.TypeHighlight();
@@ -129,14 +157,6 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 if (fullName && !string.IsNullOrEmpty(type.Namespace))
                     return $"{type.Namespace.NamespaceHighlight()}.{coreName}";
                 return coreName;
-            }
-
-            if (type.IsEnum)
-            {
-                var prefix = fullName && !string.IsNullOrEmpty(type.Namespace)
-                    ? type.Namespace.NamespaceHighlight() + "."
-                    : "";
-                return prefix + type.Name.TypeHighlight();
             }
 
             if (type.IsInterface)
@@ -162,12 +182,10 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
             if (string.IsNullOrEmpty(type.Name))
                 return "UnknownType".WarningHighlight();
-            if (string.IsNullOrEmpty(type.Namespace))
-                return type.CSharpName().TypeHighlight();
+            if (fullName && string.IsNullOrEmpty(type.Namespace))
+                return type.CSharpName(true, true);
 
-            return fullName
-                ? $"{type.Namespace.NamespaceHighlight()}.{type.Name.TypeHighlight()}"
-                : type.CSharpName().TypeHighlight();
+            return fullName ? type.CSharpFullName(true, true) : type.CSharpName(true, true);
         }
 
         public enum HighlightType
@@ -1401,30 +1419,9 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
 
         public static string GenericDeclaration(Type type, bool fullName = true, bool highlight = true)
         {
-            var output = string.Empty;
-
             if (!type.IsConstructedGenericType && !type.IsGenericType) throw new Exception("Type is not a generic type but you are trying to declare a generic.");
-            if (highlight)
-            {
-                output += (fullName && !string.IsNullOrEmpty(type.Namespace) ? type.Namespace.NamespaceHighlight() + "." : "") + (type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type) : type.Name.WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type));
-            }
-            else
-            {
-                output += (fullName && !string.IsNullOrEmpty(type.Namespace) ? type.Namespace + "." : "") + (type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")) : type.Name);
-            }
-            output += "<";
 
-            var args = type.GetGenericArguments();
-
-            for (int i = 0; i < args.Length; i++)
-            {
-                output += args[i].As().CSharpName(false, fullName, highlight);
-                if (i < args.Length - 1) output += ", ";
-            }
-
-            output += ">";
-
-            return output;
+            return fullName ? type.CSharpFullName(true, highlight) : type.CSharpName(true, highlight);
         }
 
         public static string GenericDeclaration(Type type, List<Type> parameters, bool fullName = true, bool highlight = true)
@@ -1609,14 +1606,14 @@ namespace Unity.VisualScripting.Community
             return member.Name;
         }
 
-        public static string CSharpName(this Type type, bool includeGenericParameters = true)
+        public static string CSharpName(this Type type, bool includeGenericParameters = true, bool highlight = false)
         {
-            return type.CSharpName(TypeQualifier.Name, includeGenericParameters);
+            return type.CSharpName(TypeQualifier.Name, includeGenericParameters, highlight);
         }
 
-        public static string CSharpFullName(this Type type, bool includeGenericParameters = true)
+        public static string CSharpFullName(this Type type, bool includeGenericParameters = true, bool highlight = false)
         {
-            return type.CSharpName(TypeQualifier.Namespace, includeGenericParameters);
+            return type.CSharpName(TypeQualifier.Namespace, includeGenericParameters, highlight);
         }
 
         public static string CSharpUniqueName(this Type type, bool includeGenericParameters = true)
@@ -1640,23 +1637,23 @@ namespace Unity.VisualScripting.Community
             return fileName;
         }
 
-        private static string CSharpName(this Type type, TypeQualifier qualifier, bool includeGenericParameters = true)
+        private static string CSharpName(this Type type, TypeQualifier qualifier, bool includeGenericParameters = true, bool highlight = false)
         {
             if (type == null) return "";
 
             if (primitives.ContainsKey(type))
             {
-                return primitives[type];
+                return highlight ? primitives[type].ConstructHighlight() : primitives[type];
             }
             else if (type.IsGenericParameter)
             {
-                return includeGenericParameters ? type.Name : "";
+                return includeGenericParameters ? highlight ? type.Name.TypeHighlight() : type.Name : "";
             }
             else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 var nonNullable = Nullable.GetUnderlyingType(type);
 
-                var underlyingName = nonNullable?.CSharpName(qualifier, includeGenericParameters) ?? "Unknown";
+                var underlyingName = nonNullable?.CSharpName(qualifier, includeGenericParameters, highlight) ?? (highlight ? "Unknown".WarningHighlight() : "Unknown");
 
                 return underlyingName + "?";
             }
@@ -1670,7 +1667,7 @@ namespace Unity.VisualScripting.Community
                     arrayString += "[]";
                 }
 
-                var tempTypeName = tempType.CSharpName(qualifier, includeGenericParameters);
+                var tempTypeName = tempType.CSharpName(qualifier, includeGenericParameters, highlight);
                 return tempTypeName + arrayString;
             }
             else
@@ -1679,14 +1676,18 @@ namespace Unity.VisualScripting.Community
 
                 if (type.IsGenericType && name.Contains('`'))
                 {
-                    name = name.Substring(0, name.IndexOf('`'));
+                    name = highlight ? name.Substring(0, name.IndexOf('`')).TypeHighlight() : name.Substring(0, name.IndexOf('`'));
+                }
+                else
+                {
+                    name = highlight ? name.TypeHighlight() : name;
                 }
 
                 var genericArguments = (IEnumerable<Type>)type.GetGenericArguments();
 
                 if (type.IsNested)
                 {
-                    name = type.DeclaringType.CSharpName(qualifier, includeGenericParameters) + "." + name;
+                    name = type.DeclaringType.CSharpName(qualifier, includeGenericParameters, highlight) + "." + (highlight ? name.TypeHighlight() : name);
 
                     if (type.DeclaringType.IsGenericType)
                     {
@@ -1698,19 +1699,19 @@ namespace Unity.VisualScripting.Community
                 {
                     if ((qualifier == TypeQualifier.Namespace || qualifier == TypeQualifier.GlobalNamespace) && !string.IsNullOrEmpty(type.Namespace))
                     {
-                        name = type.Namespace + "." + name;
+                        name = (highlight ? type.Namespace.NamespaceHighlight() : type.Namespace) + "." + (highlight ? name.TypeHighlight() : name);
                     }
 
                     if (qualifier == TypeQualifier.GlobalNamespace)
                     {
-                        name = "global::" + name;
+                        name = (highlight ? "global::".ConstructHighlight() : "global::") + (highlight ? name.TypeHighlight() : name);
                     }
                 }
 
                 if (genericArguments.Any())
                 {
                     name += "<";
-                    name += string.Join(includeGenericParameters ? ", " : ",", genericArguments.Select(t => t.CSharpName(qualifier, includeGenericParameters)).ToArray());
+                    name += string.Join(includeGenericParameters ? ", " : ",", genericArguments.Select(t => t.CSharpName(qualifier, includeGenericParameters, highlight)).ToArray());
                     name += ">";
                 }
 

@@ -13,14 +13,31 @@ namespace Unity.VisualScripting.Community
 {
     public class GraphSnippetProcess : GraphProcess<FlowGraph, FlowCanvas>
     {
+        private static readonly FieldInfo QueryField = typeof(FuzzyWindow).GetField("query", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static List<ControlGraphSnippet> _controlSnippets;
+        private static List<ValueGraphSnippet> _valueSnippets;
+
+        private static void EnsureSnippetsCached()
+        {
+            if (_controlSnippets == null || _valueSnippets == null)
+            {
+                _controlSnippets = AssetDatabase.FindAssets($"t:{typeof(ControlGraphSnippet)}")
+                    .Select(guid => AssetDatabase.LoadAssetAtPath<ControlGraphSnippet>(AssetDatabase.GUIDToAssetPath(guid)))
+                    .ToList();
+                _valueSnippets = AssetDatabase.FindAssets($"t:{typeof(ValueGraphSnippet)}")
+                    .Select(guid => AssetDatabase.LoadAssetAtPath<ValueGraphSnippet>(AssetDatabase.GUIDToAssetPath(guid)))
+                    .ToList();
+            }
+        }
+
         public override void Process(FlowGraph graph, FlowCanvas canvas)
         {
             var __instance = FuzzyWindow.instance;
             if (__instance != null)
             {
+                EnsureSnippetsCached();
                 var fuzzyWindowType = typeof(FuzzyWindow);
-                var queryField = fuzzyWindowType.GetField("query", BindingFlags.Instance | BindingFlags.NonPublic);
-                var currentQuery = (string)queryField.GetValue(__instance);
+                var currentQuery = (string)QueryField.GetValue(__instance);
 
                 if (@event != null && @event.keyCode == KeyCode.Tab && canvas.connectionSource != null)
                 {
@@ -43,9 +60,7 @@ namespace Unity.VisualScripting.Community
 
                     if (canvas.connectionSource is ControlOutput)
                     {
-                        var snippets = AssetDatabase.FindAssets($"t:{typeof(ControlGraphSnippet)}")
-                            .Select(guid => AssetDatabase.GUIDToAssetPath(guid))
-                            .Select(path => AssetDatabase.LoadAssetAtPath<ControlGraphSnippet>(path)).Where(snippet => snippet.snippetArguments.Count == argumentValues.Length)
+                        var snippets = _controlSnippets.Where(snippet => snippet.snippetArguments.Count == argumentValues.Length)
                             .Where(snippet =>
                             {
                                 for (int i = 0; i < snippet.snippetArguments.Count; i++)
@@ -74,10 +89,7 @@ namespace Unity.VisualScripting.Community
                     }
                     else if (canvas.connectionSource is ValueInput)
                     {
-                        var snippets = AssetDatabase.FindAssets($"t:{typeof(ValueGraphSnippet)}")
-                            .Select(guid => AssetDatabase.GUIDToAssetPath(guid))
-                            .Select(path => AssetDatabase.LoadAssetAtPath<ValueGraphSnippet>(path))
-                            .Where(snippet => snippet.snippetArguments.Count == argumentValues.Length)
+                        var snippets = _valueSnippets.Where(snippet => snippet.snippetArguments.Count == argumentValues.Length)
                                 .Where(snippet =>
                                 {
                                     for (int i = 0; i < snippet.snippetArguments.Count; i++)
@@ -119,7 +131,6 @@ namespace Unity.VisualScripting.Community
         {
             var snippet = orderedSnippets.FirstOrDefault(s => s.result != null);
             if (snippet.result == null) return false;
-
 
             var sourceUnitCandidate = snippet.result.graph.units.FirstOrDefault(unit => unit is SnippetControlSourceUnit || unit is SnippetValueSourceUnit);
             if (!(sourceUnitCandidate is Unit sourceUnit))

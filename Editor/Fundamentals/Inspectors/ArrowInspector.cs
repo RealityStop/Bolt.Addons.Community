@@ -42,7 +42,7 @@ namespace Unity.VisualScripting.Community
             arrow.Color = EditorGUI.ColorField(lineColorRect, new GUIContent("Line Color"), arrow.Color);
             IncreaseHeight();
             Rect lengthRect = new Rect(position.x, height, position.width, EditorGUIUtility.singleLineHeight);
-            arrow.Length = Mathf.Clamp(EditorGUI.FloatField(lengthRect, new GUIContent("Length"), arrow.Length), 0f, 1000f);
+            arrow.Length = Mathf.Clamp(EditorGUI.FloatField(lengthRect, new GUIContent("Length"), arrow.Length), 0f, 2000f);
             IncreaseHeight();
             Rect rotationRect = new Rect(position.x, height, position.width, EditorGUIUtility.singleLineHeight);
             EditorGUI.BeginChangeCheck();
@@ -57,7 +57,7 @@ namespace Unity.VisualScripting.Community
             arrow.Text = EditorGUI.TextField(textRect, new GUIContent("Text"), arrow.Text);
             IncreaseHeight();
             Rect showSquareRect = new Rect(position.x, height, position.width, EditorGUIUtility.singleLineHeight);
-            arrow.ShowSquare = EditorGUI.Toggle(showSquareRect, new GUIContent("Show Point", "Shows the point of the arrow that is interactable"), arrow.ShowSquare);
+            arrow.ShowCenter = EditorGUI.Toggle(showSquareRect, new GUIContent("Show Center", "Draws a point at the center of the arrow"), arrow.ShowCenter);
             IncreaseHeight();
             Rect showBottomArrowRect = new Rect(position.x, height, position.width, EditorGUIUtility.singleLineHeight);
             arrow.ShowBottomArrow = EditorGUI.Toggle(showBottomArrowRect, new GUIContent("Show Bottom Arrow"), arrow.ShowBottomArrow);

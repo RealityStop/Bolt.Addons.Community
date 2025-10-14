@@ -14,7 +14,7 @@ namespace Unity.VisualScripting.Community
         }
         protected override EditorTexture DefinedIcon()
         {
-            return PathUtil.Load("ArrowIcon", CommunityEditorPath.Fundamentals);
+            return PathUtil.Load("Arrow", CommunityEditorPath.Fundamentals);
         }
     } 
 }

@@ -14,7 +14,7 @@ namespace Unity.VisualScripting.Community
         private UnitOptionTree unitOptionTree;
 
         private FuzzyGroup csharpGroup = new FuzzyGroup("CSharp", typeof(ClassAsset).Icon());
-        private FuzzyGroup snippetsGroup = new FuzzyGroup("Snippet", typeof(SnippetInputNode).Icon());
+        private FuzzyGroup snippetsInfoGroup = new FuzzyGroup("Snippet", typeof(SnippetInputNode).Icon());
 
         #region Inherited
         private FuzzyGroup inheritedMembersGroup = new FuzzyGroup("Inherited", typeof(ClassAsset).Icon());
@@ -55,7 +55,7 @@ namespace Unity.VisualScripting.Community
 
             if (unitOptionTree.reference.macro is GraphSnippet)
             {
-                yield return snippetsGroup;
+                yield return snippetsInfoGroup;
             }
             var assetTypeOption = options.FirstOrDefault(option => option is AssetTypeOption assetTypeOption && assetTypeOption.codeAsset != null && assetTypeOption.unit.asset != null) as AssetTypeOption;
             if (assetTypeOption != null)
@@ -113,7 +113,7 @@ namespace Unity.VisualScripting.Community
                     yield return assetMembersGroup;
                 }
             }
-            else if (parent == snippetsGroup)
+            else if (parent == snippetsInfoGroup)
             {
                 foreach (var option in GetOptionsOfType<SnippetInputNode, SnippetInputNodeOption>())
                     yield return option;
@@ -231,7 +231,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (dynmaicOutputMembersGroup.data is Type type)
                 {
-                    foreach (var member in type.GetSafeMembers())
+                    foreach (var member in type.GetSafeExtendedMembers())
                     {
                         foreach (var constructedMember in ConstructMemberUnit(member))
                         {
@@ -245,7 +245,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (dynmaicInputMembersGroup.data is Type type)
                 {
-                    foreach (var member in type.GetSafeMembers())
+                    foreach (var member in type.GetSafeExtendedMembers())
                     {
                         foreach (var constructedMember in ConstructMemberUnit(member))
                         {

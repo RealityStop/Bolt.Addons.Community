@@ -12,22 +12,23 @@ namespace Unity.VisualScripting.Community
     [TypeIcon(typeof(Type))]
     public class FakeGenericParameterType : Type
     {
-        public string name;
-        public TypeParameterConstraints constraints;
-        public Type baseTypeConstraint;
-        public List<Type> interfaceConstraints = new List<Type>();
-        public readonly bool isArrayType;
-        public int arrayRank;
-        public Type elementType;
-        public int position;
-
-        public FakeGenericParameterType(
+        private string name;
+        private TypeParameterConstraints constraints;
+        private Type baseTypeConstraint;
+        private List<Type> interfaceConstraints = new List<Type>();
+        private readonly bool isArrayType;
+        private int arrayRank; // For now we use this to support Type[][] instead of Type[,] which is not supported.
+        private Type elementType;
+        private int position;
+        public readonly IGenericContainer container;
+        internal FakeGenericParameterType(IGenericContainer container,
             string name,
             int position,
             TypeParameterConstraints constraints = TypeParameterConstraints.None,
             Type baseTypeConstraint = null,
             List<Type> interfaceConstraints = null)
         {
+            this.container = container;
             this.name = name;
             this.position = position;
             this.constraints = constraints;
@@ -35,13 +36,14 @@ namespace Unity.VisualScripting.Community
             this.interfaceConstraints = interfaceConstraints ?? new List<Type>();
         }
 
-        private FakeGenericParameterType(FakeGenericParameterType elementType, int rank)
+        private FakeGenericParameterType(IGenericContainer container, FakeGenericParameterType elementType, int rank)
         {
+            this.container = container;
             isArrayType = true;
             arrayRank = rank;
             this.elementType = elementType;
         }
-        public void ChangeName(string newName)
+        public void UpdateName(string newName)
         {
             name = newName;
         }
@@ -64,9 +66,9 @@ namespace Unity.VisualScripting.Community
 
         public override Type GetElementType() => isArrayType ? elementType : throw new InvalidOperationException();
 
-        public override Type MakeArrayType() => new FakeGenericParameterType(this, 1);
+        public override Type MakeArrayType() => new FakeGenericParameterType(container, this, 1);
 
-        public override Type MakeArrayType(int rank) => new FakeGenericParameterType(this, rank);
+        public override Type MakeArrayType(int rank) => new FakeGenericParameterType(container, this, rank);
         public override int GetArrayRank()
         {
             return isArrayType ? arrayRank : 0;

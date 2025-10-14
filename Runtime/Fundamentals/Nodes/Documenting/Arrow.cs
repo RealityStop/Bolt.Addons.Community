@@ -3,9 +3,7 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community
 {
     /// <summary>
-    /// A purely visual documentation node for graph organization.  
-    /// The Arrow node has no functional behavior in execution and exists only  
-    /// to provide directional arrows, labels, and separators that improve graph readability.  
+    /// A purely visual documentation node for graph organization.
     /// </summary>
     [UnitCategory("Community\\Documentation")]
     [UnitTitle("Arrow")]
@@ -26,13 +24,13 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public string Text;
 
-        public bool ShowSquare = true;
+        public bool ShowCenter = false;
 
         public bool ShowBottomArrow = true;
 
         public bool ShowTopArrow = true;
 
-        public LineType lineType = LineType.Normal;
+        public LineType lineType = LineType.Dotted;
 
         public override bool isControlRoot { get { return true; } }
         protected override void Definition()

@@ -83,7 +83,7 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            if (unitToRestoreTo.position != null)
+            if (unitToRestoreTo?.position != null)
             {
                 unitToRestoreTo.position += offsetPosition;
             }

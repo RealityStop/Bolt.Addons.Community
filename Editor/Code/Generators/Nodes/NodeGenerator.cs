@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
     {
         public Unit unit;
         /// <summary>
-        /// Seperate each namespace with ',' if ',' is required in the namespace it's self use '`'
+        /// Seperate each namespace with ','. If ',' is required in the namespace it's self use '`'
         /// </summary>
         public string NameSpaces = "";
 
@@ -103,12 +103,12 @@ namespace Unity.VisualScripting.Community
                     return true;
                 }
 
-                if (!IsCastingRequired(sourceType, targetType, ignoreInputType))
+                if (!RuntimeTypeUtility.IsCastingRequired(sourceType, targetType, ignoreInputType))
                 {
                     return false;
                 }
 
-                return IsCastingPossible(sourceType, targetType);
+                return RuntimeTypeUtility.IsCastingPossible(sourceType, targetType);
             }
 
             return false;
@@ -126,114 +126,38 @@ namespace Unity.VisualScripting.Community
                 return valueInput.type;
             }
             var pseudoSource = valueInput.GetPesudoSource();
-            if (valueInput.hasValidConnection && data.TryGetSymbol(pseudoSource?.unit as Unit, out var symbol))
-            {
-                return symbol.Type;
-            }
-
-            if (data != null && valueInput.hasValidConnection && pseudoSource != null && data.TryGetVariableType((pseudoSource.unit as Unit).GetGenerator().variableName, out Type type))
-            {
-                return type;
-            }
-
-            if (valueInput.hasValidConnection && pseudoSource != null && (pseudoSource.unit as Unit).GetGenerator() is LocalVariableGenerator localVariable && localVariable.variableType != null)
-            {
-                return localVariable.variableType;
-            }
-
-            if (valueInput.hasValidConnection && pseudoSource != null && pseudoSource?.type != typeof(object))
-            {
-                return pseudoSource.type;
-            }
-
             if (valueInput.hasValidConnection)
             {
-                return valueInput.connection.source.type;
+                if (data.TryGetSymbol(pseudoSource?.unit as Unit, out var symbol))
+                {
+                    return symbol.Type;
+                }
+
+                if (data != null && pseudoSource != null && data.TryGetVariableType((pseudoSource.unit as Unit).GetGenerator().variableName, out Type type))
+                {
+                    return type;
+                }
+
+                if (pseudoSource != null && (pseudoSource.unit as Unit).GetGenerator() is LocalVariableGenerator localVariable && localVariable.variableType != null)
+                {
+                    return localVariable.variableType;
+                }
+
+                if (pseudoSource != null && pseudoSource?.type != typeof(object))
+                {
+                    return pseudoSource.type;
+                }
+
+                if (valueInput.hasValidConnection)
+                {
+                    return valueInput.connection.source.type;
+                }
             }
 
-            return null;
+            return valueInput.type;
         }
 
-        private bool IsCastingRequired(Type sourceType, Type targetType, bool ignoreInputType)
-        {
-            bool isRequired = true;
-            if (!ignoreInputType && targetType == typeof(object))
-            {
-                isRequired = false;
-            }
-
-            if (sourceType == targetType)
-            {
-                isRequired = false;
-            }
-
-            if (targetType.IsAssignableFrom(sourceType))
-            {
-                isRequired = false;
-            }
-
-            if (sourceType == typeof(object) && targetType != typeof(object))
-            {
-                isRequired = true;
-            }
-
-            return isRequired;
-        }
-
-        private bool IsCastingPossible(Type sourceType, Type targetType)
-        {
-            if (targetType.IsAssignableFrom(sourceType))
-            {
-                return true;
-            }
-
-            if (targetType.IsInterface && targetType.IsAssignableFrom(sourceType))
-            {
-                return true;
-            }
-
-            if (IsNumericConversionCompatible(targetType, sourceType))
-            {
-                return true;
-            }
-
-            if (IsNullableConversionCompatible(sourceType, targetType))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool IsNumericConversionCompatible(Type targetType, Type sourceType)
-        {
-            Type[] numericTypes = { typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal) };
-
-            if (Array.Exists(numericTypes, t => t == targetType) &&
-                Array.Exists(numericTypes, t => t == sourceType))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool IsNullableConversionCompatible(Type sourceType, Type targetType)
-        {
-            if (Nullable.GetUnderlyingType(targetType) != null)
-            {
-                Type underlyingTargetType = Nullable.GetUnderlyingType(targetType);
-                return underlyingTargetType.IsAssignableFrom(sourceType);
-            }
-
-            if (Nullable.GetUnderlyingType(sourceType) != null)
-            {
-                Type underlyingSourceType = Nullable.GetUnderlyingType(sourceType);
-                return targetType.IsAssignableFrom(underlyingSourceType);
-            }
-            return false;
-        }
-
+        
         public string MakeClickableForThisUnit(string code, bool condition = true)
         {
             if (condition)

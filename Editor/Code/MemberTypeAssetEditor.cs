@@ -55,7 +55,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         protected override void BeforePreview()
         {
-            var context = GraphWindow.active?.context;
+            var context = GraphWindow.active != null ? GraphWindow.active.context : null;
             try
             {
                 context?.BeginEdit();
@@ -64,12 +64,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 Variables();
                 GUILayout.Space(4);
                 Methods();
-                if (Target is ClassAsset classAsset && classAsset.inheritsType)
-                {
-                    GUILayout.Space(4);
-                    RequiredInfo();
-                }
-                else if (Target is StructAsset)
+                if ((Target is ClassAsset classAsset && classAsset.inheritsType) || Target is StructAsset)
                 {
                     GUILayout.Space(4);
                     RequiredInfo();
@@ -119,7 +114,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     allTypes.Add(classAsset.inherits); // Interface requirements should already be met by the inherited class
             }
 
-            foreach (var @interface in allTypes.Select(i => i.type).SelectMany(EditorTypeUtility.GetAllInterfacesRecursive))
+            foreach (var @interface in allTypes.Select(i => i.type).SelectMany(RuntimeTypeUtility.GetAllInterfacesRecursive))
             {
                 if (@interface.GetMethods().Any(m => m.IsValidOverridableMethod(true) && !MethodExists(m)))
                 {
@@ -232,13 +227,13 @@ namespace Unity.VisualScripting.Community.CSharp
                     var listOfConstructors = constructors.value as List<TConstructorDeclaration>;
                     var listOfMethods = methods.value as List<TMethodDeclaration>;
                     var listOfVariables = variables.value as List<TFieldDeclaration>;
-                    List<Type> types = new List<Type>(Target.interfaces.SelectMany(t => EditorTypeUtility.GetAllInterfacesRecursive(t.type)));
+                    List<Type> types = new List<Type>(Target.interfaces.SelectMany(t => RuntimeTypeUtility.GetAllInterfacesRecursive(t.type)));
                     if (Target is ClassAsset classAsset)
                     {
                         var inheritedType = classAsset.inherits.type;
                         if (classAsset.inheritsType && !classAsset.inherits.type.IsClass) // Interface requirements should already be met by the inherited class
                         {
-                            types.AddRange(EditorTypeUtility.GetAllInterfacesRecursive(inheritedType));
+                            types.AddRange(RuntimeTypeUtility.GetAllInterfacesRecursive(inheritedType));
                         }
 
                         if (classAsset.inheritsType)
@@ -1529,17 +1524,10 @@ namespace Unity.VisualScripting.Community.CSharp
                             GUILayout.BeginHorizontal();
                             GUILayout.Label("Type");
                             var lastRect = GUILayoutUtility.GetLastRect();
-                            List<FakeGenericParameterType> fakeGenericParameterTypes = new List<FakeGenericParameterType>();
-                            if (target is MethodDeclaration methodDeclaration)
-                            {
-                                foreach (var generic in methodDeclaration.genericParameters)
-                                {
-                                    fakeGenericParameterTypes.Add(new FakeGenericParameterType(generic.name, methodDeclaration.genericParameters.IndexOf(generic), generic.typeParameterConstraints, generic.baseTypeConstraint, generic.constraints?.ToList()));
-                                }
-                            }
+                            List<FakeGenericParameterType> types = target is MethodDeclaration methodDeclaration ? methodDeclaration.GetFakeTypes() : new List<FakeGenericParameterType>();
                             if (TypeBuilderWindow.Button(currentParam["type"].value as Type))
                             {
-                                TypeBuilderWindow.ShowWindow(lastRect, (type) => { currentParam["type"].value = type; }, parameters[i].type, true, fakeGenericParameterTypes, null, (t) =>
+                                TypeBuilderWindow.ShowWindow(lastRect, (type) => { currentParam["type"].value = type; }, parameters[i].type, true, types, null, (t) =>
                                 {
                                     Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Type");
                                     UpdatePreview();
@@ -1548,13 +1536,16 @@ namespace Unity.VisualScripting.Community.CSharp
                             }
                             context?.BeginEdit();
                             GUILayout.EndHorizontal();
-                            EditorGUI.BeginChangeCheck();
+
                             GUILayout.BeginHorizontal();
+
                             GUILayout.Label("Modifiers");
+
                             var modifiers = (ParameterModifier)currentParam["modifier"].value;
                             if ((param.modifier & (ParameterModifier.Params)) != 0 && !param.type.IsArray)
                             {
                                 param.modifier &= ~ParameterModifier.Params;
+                                UpdatePreview();
                             }
                             if (GUILayout.Button(modifiers.GetEnumString(ParameterModifier.None, "None"), EditorStyles.popup, GUILayout.MaxHeight(19f)))
                             {
@@ -1563,6 +1554,9 @@ namespace Unity.VisualScripting.Community.CSharp
                                 {
                                     var _param = obj as TypeParam;
                                     _param.modifier = ParameterModifier.None;
+                                    Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                    UpdatePreview();
+                                    context?.DescribeAnalyzeAndDefineFlowGraph();
                                 }, param);
                                 menu.AddSeparator("");
                                 bool canUseIn = (param.modifier & (ParameterModifier.Out | ParameterModifier.Ref)) == 0;
@@ -1574,6 +1568,9 @@ namespace Unity.VisualScripting.Community.CSharp
                                     {
                                         var _param = obj as TypeParam;
                                         _param.modifier ^= ParameterModifier.In;
+                                        Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                        UpdatePreview();
+                                        context?.DescribeAnalyzeAndDefineFlowGraph();
                                     }, param);
                                 }
                                 else
@@ -1587,6 +1584,9 @@ namespace Unity.VisualScripting.Community.CSharp
                                     {
                                         var _param = obj as TypeParam;
                                         _param.modifier ^= ParameterModifier.Out;
+                                        Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                        UpdatePreview();
+                                        context?.DescribeAnalyzeAndDefineFlowGraph();
                                     }, param);
                                 }
                                 else
@@ -1600,6 +1600,9 @@ namespace Unity.VisualScripting.Community.CSharp
                                     {
                                         var _param = obj as TypeParam;
                                         _param.modifier ^= ParameterModifier.Ref;
+                                        Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                        UpdatePreview();
+                                        context?.DescribeAnalyzeAndDefineFlowGraph();
                                     }, param);
                                 }
                                 else
@@ -1620,6 +1623,9 @@ namespace Unity.VisualScripting.Community.CSharp
                                         {
                                             _param.modifier &= ~ParameterModifier.Params;
                                         }
+                                        Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                        UpdatePreview();
+                                        context?.DescribeAnalyzeAndDefineFlowGraph();
                                     }, param);
                                 }
                                 else
@@ -1627,7 +1633,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                     menu.AddDisabledItem(new GUIContent("Params"));
                                 }
 
-                                if (target is ClassMethodDeclaration classMethodDeclaration && classMethodDeclaration.modifier == MethodModifier.Static && (classMethodDeclaration.parentAsset as ClassAsset).classModifier == ClassModifier.Static)
+                                if (target is ClassMethodDeclaration classMethodDeclaration && classMethodDeclaration.parentAsset is ClassAsset asset && classMethodDeclaration.modifier == MethodModifier.Static && asset.classModifier == ClassModifier.Static)
                                 {
                                     menu.AddItem(new GUIContent("This"), (modifiers & ParameterModifier.This) != 0, (obj) =>
                                     {
@@ -1640,6 +1646,9 @@ namespace Unity.VisualScripting.Community.CSharp
                                         {
                                             _param.modifier &= ~ParameterModifier.This;
                                         }
+                                        Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                        UpdatePreview();
+                                        context?.DescribeAnalyzeAndDefineFlowGraph();
                                     }, param);
                                 }
                                 else
@@ -1650,12 +1659,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 menu.ShowAsContext();
                             }
                             GUILayout.EndHorizontal();
-                            if (EditorGUI.EndChangeCheck())
-                            {
-                                Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
-                                UpdatePreview();
-                                context?.DescribeAnalyzeAndDefineFlowGraph();
-                            }
+
                             GUILayout.Space(4);
                             if (parameters[i].showInitalizer)
                             {
@@ -1878,11 +1882,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 var lastRect = GUILayoutUtility.GetLastRect();
                                 if (TypeBuilderWindow.Button(methods[index]["returnType"].value as Type))
                                 {
-                                    var types = new List<FakeGenericParameterType>();
-                                    foreach (var generic in listOfMethods[index].genericParameters)
-                                    {
-                                        types.Add(new FakeGenericParameterType(generic.name, listOfMethods[index].genericParameters.IndexOf(generic), generic.typeParameterConstraints, generic.baseTypeConstraint, generic.constraints?.ToList()));
-                                    }
+                                    var types = listOfMethods[index].GetFakeTypes();
                                     TypeBuilderWindow.ShowWindow(lastRect, methods[index]["returnType"], true, types, () =>
                                     {
                                         Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Changed Method Return Type");
@@ -1895,7 +1895,8 @@ namespace Unity.VisualScripting.Community.CSharp
 
                                     if (!subscribedEvents[methods[index]["returnType"]].Contains(0))
                                     {
-                                        methods[index]["returnType"].valueChanged += (val) => context.DescribeAnalyzeAndDefineFlowGraph();
+                                        methods[index]["returnType"].valueChanged += (val) =>
+                                        context.DescribeAnalyzeAndDefineFlowGraph();
                                         subscribedEvents[methods[index]["returnType"]].Add(0);
                                     }
                                 }
@@ -1929,21 +1930,24 @@ namespace Unity.VisualScripting.Community.CSharp
                                                 EditorGUI.BeginChangeCheck();
                                                 var previousName = listOfMethods[index].genericParameters[gIndex].name;
                                                 var name = GUILayout.TextField(listOfMethods[index].genericParameters[gIndex].name).GenericName(gIndex);
+
                                                 listOfMethods[index].genericParameters[gIndex].SetName(name);
-                                                if (EditorGUI.EndChangeCheck() && RuntimeTypeUtility.GetInstanceOfGenericFromMethod(listOfMethods[index], previousName) != null)
+
+                                                if (EditorGUI.EndChangeCheck() && FakeTypeRegistry.TryGet(listOfMethods[index], gIndex, out var result))
                                                 {
-                                                    var param = RuntimeTypeUtility.GetInstanceOfGenericFromMethod(listOfMethods[index], previousName);
-                                                    param?.ChangeName(name);
+                                                    result?.UpdateName(name);
                                                 }
 
                                                 if (GUILayout.Button("...", GUILayout.Width(19)))
                                                 {
+                                                    var pos = gIndex;
                                                     GenericMenu menu = new GenericMenu();
                                                     menu.AddItem(new GUIContent("Delete"), false, (obj) =>
                                                     {
                                                         GenericParameter paramToRemove = obj as GenericParameter;
                                                         Undo.RegisterCompleteObjectUndo(target, $"Deleted {paramToRemove} generic parameter");
                                                         listOfMethods[index].genericParameters.Remove(paramToRemove);
+                                                        FakeTypeRegistry.RemoveAtPosition(listOfMethods[index], pos);
                                                         UpdatePreview();
                                                     }, listOfMethods[index].genericParameters[gIndex]);
 
@@ -1998,10 +2002,12 @@ namespace Unity.VisualScripting.Community.CSharp
                                                             Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Changed Generic Base Type Constraint");
                                                         }, (t) =>
                                                         {
-                                                            var fakeGeneric = RuntimeTypeUtility.GetInstanceOfGenericFromMethod(listOfMethods[index], listOfMethods[index].genericParameters[iv].name);
-                                                            fakeGeneric.ChangeBaseTypeConstraint(t);
-                                                            context.DescribeAnalyzeAndDefineFlowGraph();
-                                                            UpdatePreview();
+                                                            if (FakeTypeRegistry.TryGet(listOfMethods[index], iv, out var result))
+                                                            {
+                                                                result.ChangeBaseTypeConstraint(t);
+                                                                context.DescribeAnalyzeAndDefineFlowGraph();
+                                                                UpdatePreview();
+                                                            }
                                                         });
                                                     }
                                                     GUILayout.EndHorizontal();
@@ -2019,14 +2025,14 @@ namespace Unity.VisualScripting.Community.CSharp
                                                         HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
                                                         {
                                                             var interfaceConstraints = listOfMethods[index].genericParameters[gIndex].constraints ?? new Type[0];
-                                                            for (int _i = 0; _i < interfaceConstraints.Length; _i++)
+                                                            for (int iIndex = 0; iIndex < interfaceConstraints.Length; iIndex++)
                                                             {
                                                                 GUILayout.BeginHorizontal();
-                                                                GUILayout.Label("Constraint" + _i);
+                                                                GUILayout.Label("Constraint" + iIndex);
                                                                 var lastRect = GUILayoutUtility.GetLastRect();
-                                                                if (TypeBuilderWindow.Button(interfaceConstraints[_i]))
+                                                                if (TypeBuilderWindow.Button(interfaceConstraints[iIndex]))
                                                                 {
-                                                                    TypeBuilderWindow.ShowWindow(lastRect, methods[index]["genericParameters"][gIndex]["constraints"][_i], true, allTypes.Where(t => t.IsInterface && t.IsPublic).ToArray(), () =>
+                                                                    TypeBuilderWindow.ShowWindow(lastRect, methods[index]["genericParameters"][gIndex]["constraints"][iIndex], true, allTypes.Where(t => t.IsInterface && t.IsPublic).ToArray(), () =>
                                                                     {
                                                                         Undo.RegisterCompleteObjectUndo(listOfMethods[index], "Changed Generic Interface Type Constraint");
                                                                         UpdatePreview();
@@ -2044,9 +2050,9 @@ namespace Unity.VisualScripting.Community.CSharp
                                                                         list.Remove(paramToRemove);
                                                                         listOfMethods[index].genericParameters[iv].constraints = list.ToArray();
                                                                         UpdatePreview();
-                                                                    }, listOfMethods[index].genericParameters[gIndex].constraints[_i]);
+                                                                    }, listOfMethods[index].genericParameters[gIndex].constraints[iIndex]);
 
-                                                                    if (_i > 0)
+                                                                    if (iIndex > 0)
                                                                     {
                                                                         menu.AddItem(new GUIContent("Move Up"), false, (obj) =>
                                                                         {
@@ -2061,10 +2067,10 @@ namespace Unity.VisualScripting.Community.CSharp
                                                                                 listOfMethods[index].genericParameters[iv].constraints = list.ToArray();
                                                                                 UpdatePreview();
                                                                             }
-                                                                        }, listOfMethods[index].genericParameters[gIndex].constraints[_i]);
+                                                                        }, listOfMethods[index].genericParameters[gIndex].constraints[iIndex]);
                                                                     }
 
-                                                                    if (_i < listOfMethods[index].genericParameters[gIndex].constraints.Length - 1)
+                                                                    if (iIndex < listOfMethods[index].genericParameters[gIndex].constraints.Length - 1)
                                                                     {
                                                                         menu.AddItem(new GUIContent("Move Down"), false, (obj) =>
                                                                         {
@@ -2079,7 +2085,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                                                                 listOfMethods[index].genericParameters[iv].constraints = list.ToArray();
                                                                                 UpdatePreview();
                                                                             }
-                                                                        }, listOfMethods[index].genericParameters[gIndex].constraints[_i]);
+                                                                        }, listOfMethods[index].genericParameters[gIndex].constraints[iIndex]);
                                                                     }
                                                                     menu.ShowAsContext();
                                                                 }
@@ -2110,6 +2116,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                             parameter.baseTypeConstraint = typeof(object);
                                             listOfMethods[index].genericParameters.Add(parameter);
                                             UpdatePreview();
+                                            FakeTypeRegistry.GetOrCreate(listOfMethods[i], listOfMethods[index].genericParameters.IndexOf(parameter), name, TypeParameterConstraints.None, typeof(object));
                                         }
                                     });
                                 });

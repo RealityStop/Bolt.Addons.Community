@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using UnityEditor;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
+    [InitializeOnLoad]
     public static class EditorTypeUtility
     {
         public static Texture GetTypeIcon(this Type type)
@@ -37,7 +38,35 @@ namespace Unity.VisualScripting.Community
             {
                 return typeof(object).Icon()[IconSize.Small];
             }
+        }
 
+        public static EditorTexture GetTypeIconAsEditorTexture(this Type type)
+        {
+            try
+            {
+                return type.Icon();
+
+            }
+            catch (NotSupportedException)
+            {
+                if (type is FakeGenericParameterType fakeGenericParameterType)
+                {
+                    return fakeGenericParameterType.BaseType.Icon();
+                }
+                else if (type.IsArray)
+                {
+                    return typeof(Array).Icon();
+                }
+                else if (type.IsGenericType)
+                {
+                    return type.GetGenericTypeDefinition().Icon();
+                }
+                return typeof(object).Icon();
+            }
+            catch (Exception)
+            {
+                return typeof(object).Icon();
+            }
         }
 
         private static Texture2D ScaleIcon(Texture2D icon, int size = 16)
@@ -120,26 +149,6 @@ namespace Unity.VisualScripting.Community
                 return false;
 
             return !required || m.IsAbstract;
-        }
-
-        public static IEnumerable<Type> GetAllInterfacesRecursive(Type type)
-        {
-            var seen = new HashSet<Type>();
-            void Add(Type t)
-            {
-                if (t == null) return;
-                if (t.IsInterface) seen.Add(t);
-                foreach (var i in t.GetInterfaces())
-                {
-                    if (seen.Add(i))
-                    {
-                        Add(i);
-                    }
-                }
-                if (t.BaseType != null) Add(t.BaseType);
-            }
-            Add(type);
-            return seen;
         }
 
         public static bool IsValidOverridableProperty(this PropertyInfo p, bool required)

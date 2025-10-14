@@ -165,7 +165,7 @@ namespace Unity.VisualScripting.Community
                 @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(void), "Combine").
                     AddParameter(ParameterGenerator.Parameter("other", typeof(Delegate), Libraries.CSharp.ParameterModifier.None))
                     .Body(
-                        $"{"if".ControlHighlight()} ({"other".VariableHighlight()} {"is not".ConstructHighlight()} {type}) {"throw".ControlHighlight()} {"new".ConstructHighlight()} {"Exception".TypeHighlight()}(" + "$".StringHighlight() + warning + ");" + "\n" +
+                        $"{"if".ControlHighlight()} (!({"other".VariableHighlight()} {"is".ConstructHighlight()} {type})) {"throw".ControlHighlight()} {"new".ConstructHighlight()} {"Exception".TypeHighlight()}(" + "$".StringHighlight() + warning + ");" + "\n" +
                     $"{"callback".VariableHighlight()} = (" + type + $"){"Delegate".TypeHighlight()}.Combine({"callback".VariableHighlight()}, {"other".VariableHighlight()});"
                     ));
 

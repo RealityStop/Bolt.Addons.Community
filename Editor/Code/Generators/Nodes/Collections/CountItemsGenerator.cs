@@ -17,7 +17,7 @@ namespace Unity.VisualScripting.Community
         {
             var type = GetSourceType(Unit.collection, data);
             data.SetExpectedType(typeof(ICollection));
-            if (type != null && type.IsArray)
+            if (type != null && (type.IsArray || type == typeof(string)))
             {
                 var code = GenerateValue(Unit.collection, data) + MakeClickableForThisUnit("." + "Length".VariableHighlight());
                 data.RemoveExpectedType();

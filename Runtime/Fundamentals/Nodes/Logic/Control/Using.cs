@@ -24,6 +24,8 @@ namespace Unity.VisualScripting.Community
             exit = ControlOutput(nameof(exit));
             body = ControlOutput(nameof(body));
             value = ValueInput<IDisposable>(nameof(value), default);
+
+            Requirement(value, enter);
             Succession(enter, exit);
             Succession(enter, body);
         }

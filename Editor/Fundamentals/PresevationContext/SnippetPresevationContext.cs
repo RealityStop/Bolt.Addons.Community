@@ -183,12 +183,10 @@ namespace Unity.VisualScripting.Community
                 sourcePort = sourcePort
             };
 
-            var fuzzyWindowPosition = canvas.connectionEnd;
-            var offsetPosition = fuzzyWindowPosition;
-
+            var sourcePosition = sourcePort.unit.position;
             canvas.CancelConnection();
             canvas.selection.Clear();
-            preservation.AddToGraph(offsetPosition);
+            preservation.AddToGraph(sourcePosition);
             var firstUnit = preservation.addedUnits.FirstOrDefault();
             if (firstUnit != null)
                 canvas.selection.Add(firstUnit);

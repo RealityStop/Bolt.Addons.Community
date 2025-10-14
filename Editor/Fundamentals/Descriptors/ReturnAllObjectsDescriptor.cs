@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community
 
         protected override EditorTexture DefinedIcon()
         {
-            return PathUtil.Load("ReturnAll", CommunityEditorPath.Fundamentals);
+            return PathUtil.Load("ReturnObject", CommunityEditorPath.Fundamentals);
         }
         protected override string DefinedSummary()
         {

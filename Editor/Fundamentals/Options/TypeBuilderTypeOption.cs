@@ -34,7 +34,7 @@ namespace Unity.VisualScripting.Community
                             .Where(s => !string.IsNullOrEmpty(s))) + ")"
                     : "");
 
-            UnityAPI.Async(() => icon = type.Icon());
+            UnityAPI.Async(() => icon = EditorTypeUtility.GetTypeIconAsEditorTexture(type));
             documentation = type.Documentation();
             zoom = true;
         }

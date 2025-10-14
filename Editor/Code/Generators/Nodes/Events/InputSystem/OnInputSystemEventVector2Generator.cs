@@ -122,7 +122,7 @@ namespace Unity.VisualScripting.Community
                 }
                 else
                 {
-                    if (input.unit.defaultValues[input.key] is not InputAction value)
+                    if (!(input.unit.defaultValues[input.key] is InputAction value))
                     {
                         return MakeClickableForThisUnit(CodeUtility.ErrorTooltip("The problem could be that the player input component could not be found.", "Could not generate Input Action", "null".ConstructHighlight()));
                     }

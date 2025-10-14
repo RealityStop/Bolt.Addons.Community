@@ -12,46 +12,25 @@ namespace Unity.VisualScripting.Community
 {
     public static class RuntimeTypeUtility
     {
-        public static FakeGenericParameterType GetInstanceOfGenericFromMethod(MethodDeclaration method, string name)
+        public static IEnumerable<Type> GetAllInterfacesRecursive(Type type)
         {
-            if (method.returnType is FakeGenericParameterType returnFakeGeneric && returnFakeGeneric.Name == name)
+            var seen = new HashSet<Type>();
+            void Add(Type t)
             {
-                return returnFakeGeneric;
-            }
-            else if (GetArrayBase(method.returnType).IsGenericType)
-            {
-                var nestedFakeGenerics = GetNestedFakeGenerics(GetArrayBase(method.returnType));
-                foreach (var fakeGeneric in nestedFakeGenerics)
+                if (t == null) return;
+                if (t.IsInterface) seen.Add(t);
+                foreach (var i in t.GetInterfaces())
                 {
-                    if (fakeGeneric.Name == name)
+                    if (seen.Add(i))
                     {
-                        return fakeGeneric;
+                        Add(i);
                     }
                 }
+                if (t.BaseType != null) Add(t.BaseType);
             }
-
-            foreach (var parameter in method.parameters)
-            {
-                if (parameter.type is FakeGenericParameterType paramFakeGeneric && paramFakeGeneric.Name == name)
-                {
-                    return paramFakeGeneric;
-                }
-
-                var baseType = GetArrayBase(parameter.type);
-                if (baseType.IsGenericType)
-                {
-                    var nestedFakeGenerics = GetNestedFakeGenerics(parameter.type);
-                    var matchingNestedGeneric = nestedFakeGenerics.FirstOrDefault(t => t.Name == name);
-                    if (matchingNestedGeneric != null)
-                    {
-                        return matchingNestedGeneric;
-                    }
-                }
-            }
-
-            return null;
+            Add(type);
+            return seen;
         }
-
         public static IEnumerable<FakeGenericParameterType> GetNestedFakeGenerics(Type type)
         {
             if (!type.IsGenericType && !(type is FakeGenericParameterType))
@@ -127,7 +106,7 @@ namespace Unity.VisualScripting.Community
         public static int GetArrayDepth(Type type)
         {
             var depth = 0;
-            while (type.IsArray || (type is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType.isArrayType))
+            while (type.IsArray || (type is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType.IsArray))
             {
                 type = type.GetElementType();
                 depth++;
@@ -141,10 +120,10 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         public static Type GetArrayBase(Type type)
         {
-            if (type.IsArray || (type is FakeGenericParameterType fakeGenericParameterType && fakeGenericParameterType.isArrayType))
+            if (type.IsArray)
             {
                 var tempType = type.GetElementType();
-                while (tempType.IsArray || (tempType is FakeGenericParameterType tempfakeGenericParameterType && tempfakeGenericParameterType.isArrayType))
+                while (tempType.IsArray)
                 {
                     tempType = tempType.GetElementType();
                 }
@@ -193,5 +172,86 @@ namespace Unity.VisualScripting.Community
             }
             return type.Namespace;
         }
+
+        public static bool IsCastingRequired(Type sourceType, Type targetType, bool ignoreInputType)
+        {
+            bool isRequired = true;
+            if (!ignoreInputType && targetType == typeof(object))
+            {
+                isRequired = false;
+            }
+
+            if (sourceType == targetType)
+            {
+                isRequired = false;
+            }
+
+            if (targetType.IsConvertibleTo(sourceType, true))
+            {
+                isRequired = false;
+            }
+
+            if (sourceType == typeof(object) && targetType != typeof(object))
+            {
+                isRequired = true;
+            }
+
+            return isRequired;
+        }
+
+        public static bool IsCastingPossible(Type sourceType, Type targetType)
+        {
+            if (targetType.IsAssignableFrom(sourceType))
+            {
+                return true;
+            }
+
+            if (targetType.IsInterface && targetType.IsAssignableFrom(sourceType))
+            {
+                return true;
+            }
+
+            if (IsNumericConversionCompatible(targetType, sourceType))
+            {
+                return true;
+            }
+
+            if (IsNullableConversionCompatible(sourceType, targetType))
+            {
+                return true;
+            }
+
+            return targetType.IsConvertibleTo(sourceType, true);
+        }
+
+        public static bool IsNumericConversionCompatible(Type targetType, Type sourceType)
+        {
+            Type[] numericTypes = { typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal) };
+
+            if (Array.Exists(numericTypes, t => t == targetType) &&
+                Array.Exists(numericTypes, t => t == sourceType))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool IsNullableConversionCompatible(Type sourceType, Type targetType)
+        {
+            if (Nullable.GetUnderlyingType(targetType) != null)
+            {
+                Type underlyingTargetType = Nullable.GetUnderlyingType(targetType);
+                return underlyingTargetType.IsAssignableFrom(sourceType);
+            }
+
+            if (Nullable.GetUnderlyingType(sourceType) != null)
+            {
+                Type underlyingSourceType = Nullable.GetUnderlyingType(sourceType);
+                return targetType.IsAssignableFrom(underlyingSourceType);
+            }
+            return false;
+        }
+
     }
 }

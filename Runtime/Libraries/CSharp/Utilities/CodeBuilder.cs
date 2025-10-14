@@ -4,6 +4,7 @@ using System;
 using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Linq;
+using Unity.VisualScripting.Community.Utility;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -359,6 +360,31 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
                 return getMethodAccess.GetLessRestrictive(setMethodAccess);
             }
+        }
+
+        public static ParameterAttributes ToAttributes(this TypeParam parameter)
+        {
+            var attributes = ParameterAttributes.None;
+
+            switch (parameter.modifier)
+            {
+                case ParameterModifier.In:
+                    attributes |= ParameterAttributes.In;
+                    break;
+                case ParameterModifier.Out:
+                    attributes |= ParameterAttributes.Out;
+                    break;
+                case ParameterModifier.Ref:
+                    attributes |= ParameterAttributes.In | ParameterAttributes.Out;
+                    break;
+            }
+
+            if (parameter.hasDefault)
+            {
+                attributes |= ParameterAttributes.HasDefault;
+            }
+
+            return attributes;
         }
 
         public static MethodModifier GetModifier(this MethodInfo method)

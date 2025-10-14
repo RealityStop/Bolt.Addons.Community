@@ -13,7 +13,7 @@ namespace Unity.VisualScripting.Community
     [Inspectable]
     [TypeIcon(typeof(Method))]
     [RenamedFrom("Bolt.Addons.Community.Code.MethodDeclaration")]
-    public abstract class MethodDeclaration : Macro<FlowGraph>
+    public abstract class MethodDeclaration : Macro<FlowGraph>, IGenericContainer
     {
         [Inspectable]
         public string methodName;
@@ -129,6 +129,29 @@ namespace Unity.VisualScripting.Community
             foreach (var param in parameters)
             {
                 param.OnBeforeSerialize();
+            }
+        }
+
+        public FakeGenericParameterType GetGeneric(int position)
+        {
+            if (genericParameters.Count - 1 < position) throw new MemberAccessException($"Invalid position argument : {position}");
+            var parameter = genericParameters[position];
+            return FakeTypeRegistry.GetOrCreate(this, position, parameter.name, parameter.typeParameterConstraints, parameter.baseTypeConstraint, parameter.constraints?.ToList());
+        }
+
+        public List<FakeGenericParameterType> GetFakeTypes()
+        {
+            if (FakeTypeRegistry.Has(this))
+                return FakeTypeRegistry.GetAll(this).ToList();
+            else
+            {
+                var list = ListPool<FakeGenericParameterType>.New();
+                for (int i = 0; i < genericParameterCount; i++)
+                {
+                    var generic = genericParameters[i];
+                    list.Add(FakeTypeRegistry.GetOrCreate(this, i, generic.name, generic.typeParameterConstraints, generic.baseTypeConstraint, generic.constraints?.ToList()));
+                }
+                return list;
             }
         }
     }

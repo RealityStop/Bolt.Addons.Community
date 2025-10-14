@@ -9,7 +9,7 @@ namespace Unity.VisualScripting.Community
     public class GraphSnippetsPopup : PopupWindowContent
     {
         private Vector2 scrollPosition;
-        private Dictionary<string, bool> foldoutStates = new Dictionary<string, bool>();
+        private readonly Dictionary<string, bool> foldoutStates = new Dictionary<string, bool>();
 
         private struct SnippetInfo
         {
@@ -34,7 +34,7 @@ namespace Unity.VisualScripting.Community
                 .Where(snippet => snippet != null)
                 .Select(snippet => new SnippetInfo(
                     snippet.SnippetName,
-                    string.Join(", ", snippet.snippetArguments.Select(a => a.argumentName))
+                    string.Join(", ", snippet.snippetArguments.Select(a => a.argumentType.DisplayName() + " : " + a.argumentName))
                 ))
                 .ToList();
 
@@ -44,14 +44,14 @@ namespace Unity.VisualScripting.Community
                 .Where(snippet => snippet != null)
                 .Select(snippet => new SnippetInfo(
                     snippet.SnippetName,
-                    string.Join(", ", snippet.snippetArguments.Select(a => a.argumentName))
+                    string.Join(", ", snippet.snippetArguments.Select(a => a.argumentType.DisplayName() + " : " + a.argumentName))
                 ))
                 .ToList();
         }
 
         public override Vector2 GetWindowSize()
         {
-            return new Vector2(350, (controlSnippets.Count + valueSnippets.Count) * 20);
+            return new Vector2(350, Mathf.Min(500, (controlSnippets.Count + valueSnippets.Count) * 20));
         }
 
         public override void OnGUI(Rect rect)
@@ -67,13 +67,14 @@ namespace Unity.VisualScripting.Community
                     GUILayout.Label("Graph Snippets", EditorStyles.boldLabel);
                     GUILayout.Space(8);
 
-                    GUILayout.Label("Control Snippets", EditorStyles.boldLabel);
-                    foreach (var snippet in controlSnippets)
-                        DrawSnippetRow(snippet);
+                    GUILayout.Label("Control Snippets", EditorStyles.miniBoldLabel);
+                    foreach (var group in controlSnippets.GroupBy(s => s.Name).OrderBy(g => g.Key))
+                        DrawSnippetGroup(group.Key, group);
 
-                    GUILayout.Label("Value Snippets", EditorStyles.boldLabel);
-                    foreach (var snippet in valueSnippets)
-                        DrawSnippetRow(snippet);
+                    GUILayout.Space(6);
+                    GUILayout.Label("Value Snippets", EditorStyles.miniBoldLabel);
+                    foreach (var group in valueSnippets.GroupBy(s => s.Name).OrderBy(g => g.Key))
+                        DrawSnippetGroup(group.Key, group);
 
                     GUILayout.EndScrollView();
                 },
@@ -81,15 +82,19 @@ namespace Unity.VisualScripting.Community
             );
         }
 
-        private void DrawSnippetRow(SnippetInfo snippet)
+        private void DrawSnippetGroup(string name, IEnumerable<SnippetInfo> overloads)
         {
-            var name = snippet.Name + snippet.Parameters;
-            if (!foldoutStates.TryGetValue(name, out bool isOpen))
+            var overloadList = overloads.ToList();
+            string key = name;
+
+            if (!foldoutStates.TryGetValue(key, out bool isOpen))
                 isOpen = false;
 
-            foldoutStates[name] = HUMEditor.Foldout(
+            string foldoutLabel = $"{name} ({overloadList.Count})";
+
+            foldoutStates[key] = HUMEditor.Foldout(
                 isOpen,
-                new GUIContent(snippet.Name),
+                new GUIContent(foldoutLabel),
                 HUMEditorColor.DefaultEditorBackground.Darken(0.15f),
                 Color.black,
                 1,
@@ -102,10 +107,27 @@ namespace Unity.VisualScripting.Community
                         new RectOffset(1, 1, 0, 1),
                         () =>
                         {
-                            if (!string.IsNullOrEmpty(snippet.Parameters))
-                                GUILayout.Label($"Parameters: {snippet.Parameters}", EditorStyles.wordWrappedLabel);
-                            else
-                                GUILayout.Label("No parameters", EditorStyles.miniLabel);
+                            GUILayout.Label("Optional Parameters:", EditorStyles.boldLabel);
+                            foreach (var overload in overloadList)
+                            {
+                                string paramText;
+
+                                if (string.IsNullOrEmpty(overload.Parameters))
+                                {
+                                    paramText = "(no parameters)";
+                                }
+                                else
+                                {
+                                    var formatted = overload.Parameters
+                                        .Split(',')
+                                        .Select(p => p.Trim())
+                                        .ToArray();
+
+                                    paramText = "(" + string.Join(", ", formatted) + ")";
+                                }
+
+                                GUILayout.Label(paramText, EditorStyles.miniLabel);
+                            }
                         });
                 });
         }

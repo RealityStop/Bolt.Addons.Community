@@ -6,7 +6,7 @@ namespace Unity.VisualScripting.Community
 {
     [CreateAssetMenu(fileName = "New Editor Window", menuName = "Visual Scripting/Community/Editor/Editor Window")]
     [Inspectable]
-    public sealed class EditorWindowAsset : Macro<FlowGraph>, IAotStubbable
+    public sealed class EditorWindowAsset : Macro<FlowGraph>
     {
         [Serialize]
         [Inspectable]
@@ -15,11 +15,6 @@ namespace Unity.VisualScripting.Community
         public override FlowGraph DefaultGraph()
         {
             return new FlowGraph();
-        }
-
-        IEnumerable<object> IAotStubbable.GetAotStubs(HashSet<object> visited)
-        {
-            yield break;
         }
     }
 }

@@ -137,7 +137,7 @@ namespace Unity.VisualScripting.Community
                     constructor.Body(unit.GenerateControl(null, data, 0));
                     for (int pIndex = 0; pIndex < Data.constructors[i].parameters.Count; pIndex++)
                     {
-                        if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(false, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, Libraries.CSharp.ParameterModifier.None));
+                        if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(false, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, Data.constructors[i].parameters[pIndex].modifier, Data.constructors[i].parameters[pIndex].hasDefault, Data.constructors[i].parameters[pIndex].defaultValue));
                     }
                     data.ExitMethod();
                 }
@@ -157,7 +157,7 @@ namespace Unity.VisualScripting.Community
 
                         for (int attrIndex = 0; attrIndex < attributes.Count; attrIndex++)
                         {
-                            
+
                             AttributeGenerator attrGenerator = AttributeGenerator.Attribute(attributes[attrIndex].GetAttributeType());
                             foreach (var param in attributes[attrIndex].parameters)
                             {
@@ -488,7 +488,7 @@ namespace Unity.VisualScripting.Community
                         data.ExitMethod();
                         for (int pIndex = 0; pIndex < Data.methods[i].parameters.Count; pIndex++)
                         {
-                            if (!string.IsNullOrEmpty(Data.methods[i].parameters[pIndex].name)) method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, ParameterModifier.None));
+                            if (!string.IsNullOrEmpty(Data.methods[i].parameters[pIndex].name)) method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, Data.methods[i].parameters[pIndex].modifier, Data.methods[i].parameters[pIndex].hasDefault, Data.methods[i].parameters[pIndex].defaultValue));
                         }
                     }
 

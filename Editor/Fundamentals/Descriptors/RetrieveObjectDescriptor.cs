@@ -13,7 +13,7 @@ namespace Unity.VisualScripting.Community
 
         protected override EditorTexture DefinedIcon()
         {
-            return PathUtil.Load("RetrievePool", CommunityEditorPath.Fundamentals);
+            return PathUtil.Load("RetrieveObject", CommunityEditorPath.Fundamentals);
         }
         protected override string DefinedSummary()
         {

@@ -51,11 +51,11 @@ namespace Unity.VisualScripting.Community
             return null;
         }
 
-        public static IEnumerable<Member> GetSafeMembers(this Type type, bool nonPublic = false)
+        public static IEnumerable<Member> GetSafeExtendedMembers(this Type type, bool nonPublic = false)
         {
             if (type is FakeGenericParameterType fakeGeneric)
             {
-                type = fakeGeneric.BaseTypeConstraint ??
+                type = fakeGeneric.BaseType ??
                                  fakeGeneric.InterfaceConstraints.FirstOrDefault() ??
                                  typeof(object);
             }
@@ -65,6 +65,69 @@ namespace Unity.VisualScripting.Community
 
                 if (member == null)
                     continue;
+
+                try
+                {
+                    member.EnsureReflected();
+                }
+                catch (ArgumentNullException)
+                {
+                    continue;
+                }
+                catch (MissingMemberException)
+                {
+                    continue;
+                }
+
+                switch (member.info)
+                {
+                    case MethodInfo methodInfo:
+                        if (type.IsArray &&
+                            (methodInfo.Name == "Get" ||
+                             methodInfo.Name == "Set" ||
+                             methodInfo.Name == "Address"))
+                            continue;
+
+                        if (methodInfo.ReturnType.IsByRef) continue;
+                        if (methodInfo.ContainsGenericParameters) continue;
+                        break;
+
+                    case ConstructorInfo ctorInfo:
+                        if (ctorInfo.ContainsGenericParameters) continue;
+                        break;
+                }
+
+                yield return member;
+            }
+        }
+
+        public static IEnumerable<Member> GetSafeMembers(this Type type, bool nonPublic = false)
+        {
+            if (type is FakeGenericParameterType fakeGeneric)
+            {
+                type = fakeGeneric.BaseType ??
+                                 fakeGeneric.InterfaceConstraints.FirstOrDefault() ??
+                                 typeof(object);
+            }
+            foreach (var memberInfo in type.GetMembers(Member.SupportedBindingFlags))
+            {
+                var member = memberInfo.ToManipulatorSafe(type, nonPublic);
+
+                if (member == null)
+                    continue;
+
+                try
+                {
+                    member.EnsureReflected();
+                }
+                catch (ArgumentNullException)
+                {
+                    continue;
+                }
+                catch (MissingMemberException)
+                {
+                    continue;
+                }
 
                 switch (member.info)
                 {
