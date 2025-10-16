@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 #if VISUAL_SCRIPTING_1_7
 using SUnit = Unity.VisualScripting.SubgraphUnit;
@@ -144,6 +145,70 @@ namespace Unity.VisualScripting.Community
                 throw new InvalidOperationException($"{node.GetType()} is not a local variable generator.");
             else
                 return null;
+        }
+
+        public static string GetComponent(this ValueInput input, Type sourceType, Type requiredType, bool includeDot, bool includeParentheses)
+        {
+            if (requiredType == typeof(GameObject))
+            {
+                return string.Empty;
+            }
+
+            if (!input.hasValidConnection)
+            {
+                // If required is a Component (or subclass), we need GetComponent on the implicit gameObject.
+                if (typeof(Component).IsStrictlyAssignableFrom(requiredType))
+                {
+                    return (includeDot ? "." : "") + $"GetComponent<{requiredType.As().CSharpName(false, true)}>" + (includeParentheses ? "()" : "");
+                }
+
+                return string.Empty;
+            }
+
+            // If the source already returns something assignable to the required type -> NO GetComponent
+            if (sourceType != null && requiredType.IsStrictlyAssignableFrom(sourceType))
+            {
+                return string.Empty;
+            }
+
+            // If the source is a GameObject -> we need GetComponent<T>()
+            if (sourceType == typeof(GameObject) && typeof(Component).IsStrictlyAssignableFrom(requiredType))
+            {
+                return (includeDot ? "." : "") + $"GetComponent<{requiredType.As().CSharpName(false, true)}>" + (includeParentheses ? "()" : "");
+            }
+
+            // If the source unit is a MemberUnit that is already a GetComponent call, don't add another one.
+            // This guards against chained GetComponent calls.
+            if (input.connection?.source?.unit is MemberUnit srcMemberUnit)
+            {
+                var srcMember = srcMemberUnit.member;
+                if (srcMember != null && string.Equals(srcMember.name, "GetComponent", StringComparison.Ordinal) &&
+                (srcMember.declaringType == typeof(GameObject) || srcMember.declaringType.IsStrictlyAssignableFrom(typeof(Component))))
+                {
+                    return string.Empty;
+                }
+            }
+
+            // If the source unit is a InheritedMemberUnit that is already a GetComponent call, don't add another one.
+            // This guards against chained GetComponent calls.
+            if (input.connection?.source?.unit is InheritedMemberUnit inheritedMember)
+            {
+                var srcMember = inheritedMember.member;
+                if (srcMember != null && string.Equals(srcMember.name, "GetComponent", StringComparison.Ordinal) &&
+                (srcMember.declaringType == typeof(GameObject) || srcMember.declaringType.IsStrictlyAssignableFrom(typeof(Component))))
+                {
+                    return string.Empty;
+                }
+            }
+
+            // As a cautious fallback: if the required type is a Component (and we haven't proven the source satisfies it),
+            // return GetComponent to be safe.
+            if (typeof(Component).IsStrictlyAssignableFrom(requiredType))
+            {
+                return (includeDot ? "." : "") + $"GetComponent<{requiredType.As().CSharpName(false, true)}>" + (includeParentheses ? "()" : "");
+            }
+
+            return string.Empty;
         }
 
         public static IUnitValuePort GetPesudoSource(this ValueInput input)

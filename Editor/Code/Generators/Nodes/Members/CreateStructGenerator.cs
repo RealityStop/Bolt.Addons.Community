@@ -24,5 +24,13 @@ namespace Unity.VisualScripting.Community
             }
             else return "";
         }
+
+        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        {
+            data.SetExpectedType(input.type);
+            var code = base.GenerateValue(input, data);
+            data.RemoveExpectedType();
+            return code;
+        }
     }
 }

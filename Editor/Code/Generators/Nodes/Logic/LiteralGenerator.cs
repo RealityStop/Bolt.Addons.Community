@@ -21,7 +21,19 @@ namespace Unity.VisualScripting.Community
             }
             if (Unit.value != null)
                 NameSpaces = Unit.value.GetType().Namespace;
-            return Unit.value.As().Code(true, Unit, true, true, "", false, true);
+            var fromType = Unit.type;
+            var toType = data.GetExpectedType();
+
+            data.CreateSymbol(Unit, Unit.type);
+
+            var code = Unit.value.As().Code(true, Unit, true, true, "", false, true);
+
+            if (toType != null && fromType != null)
+            {
+                code = TypeConversionUtility.CastTo(code, fromType, toType, Unit);
+            }
+
+            return code;
         }
     }
 }

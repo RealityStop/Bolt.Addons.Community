@@ -4,6 +4,7 @@ using Unity.VisualScripting;
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
@@ -18,7 +19,7 @@ namespace Unity.VisualScripting.Community
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             List<string> result = new List<string>();
-            foreach (ValueInput item in this.Unit.multiInputs)
+            foreach (ValueInput item in Unit.multiInputs)
             {
                 result.Add(base.GenerateValue(item, data));
             }

@@ -6,6 +6,8 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
+using System;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community
 {
@@ -14,7 +16,7 @@ namespace Unity.VisualScripting.Community
     {
         public SetMemberGenerator(SetMember unit) : base(unit)
         {
-            NameSpaces = Unit.member.declaringType.Namespace;
+            NameSpaces = Unit.member.pseudoDeclaringType.Namespace;
         }
 
         public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
@@ -22,14 +24,19 @@ namespace Unity.VisualScripting.Community
             if (input == Unit.assign)
             {
                 var output = string.Empty;
-                var memberName = Unit.member.name;
+                var memberName = Unit.member.name.VariableHighlight();
+                data.SetExpectedType(Unit.input.type);
                 var inputValue = GenerateValue(Unit.input, data);
+                data.RemoveExpectedType();
 
                 if (Unit.target != null)
                 {
+                    data.SetExpectedType(Unit.target.type);
                     var targetValue = GenerateValue(Unit.target, data);
+                    data.RemoveExpectedType();
+                    var code = Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true);
 
-                    output += CodeBuilder.Indent(indent) + targetValue + MakeClickableForThisUnit($".{memberName} = ") + $"{inputValue}{MakeClickableForThisUnit(";")}\n";
+                    output += CodeBuilder.Indent(indent) + targetValue + MakeClickableForThisUnit(code + $".{memberName} = ") + $"{inputValue}{MakeClickableForThisUnit(";")}\n";
                 }
                 else
                 {
@@ -45,7 +52,18 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-            return Unit.CreateClickableString().Ignore(GenerateValue(Unit.target, data)).Cast(Unit.target.type, ShouldCast(Unit.target, data)).Dot().Clickable(Unit.member.name);
+            var builder = Unit.CreateClickableString();
+            data.SetExpectedType(Unit.target.type);
+            var targetValue = GenerateValue(Unit.target, data);
+            data.RemoveExpectedType();
+            var code = Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true);
+
+            return builder.Ignore(targetValue).Clickable(code).GetMember(Unit.member.name);
+        }
+
+        private Type SourceType(ValueInput valueInput, ControlGenerationData data)
+        {
+            return GetSourceType(valueInput, data) ?? valueInput.connection?.source?.type ?? valueInput.type;
         }
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
@@ -72,52 +90,23 @@ namespace Unity.VisualScripting.Community
             {
                 if (input.hasValidConnection)
                 {
-                    if (typeof(Component).IsAssignableFrom(input.type) || input.type == typeof(GameObject))
-                    {
-                        var inputCode = GetNextValueUnit(input, data);
-                        return Unit.CreateClickableString().Ignore(inputCode).Cast(typeof(GameObject), ShouldCast(input, data)).Clickable(GetComponent(Unit.target, data));
-                    }
-                    return GetNextValueUnit(input, data);
+                    data.SetExpectedType(input.type);
+                    var connectedCode = GetNextValueUnit(input, data);
+                    var shouldCast = ShouldCast(input, data, false);
+                    data.RemoveExpectedType();
+                    return connectedCode.CastAs(input.type, Unit, shouldCast);
                 }
                 else
                 {
                     if (Unit.target.nullMeansSelf)
                     {
-                        if (typeof(Component).IsAssignableFrom(input.type))
-                        {
-                            return MakeClickableForThisUnit("gameObject".VariableHighlight() + GetComponent(Unit.target, data));
-                        }
-                        else
-                        {
-                            return MakeClickableForThisUnit("gameObject".VariableHighlight());
-                        }
+                        return MakeClickableForThisUnit("gameObject".VariableHighlight());
                     }
                     else
                     {
                         return Unit.defaultValues[input.key].As().Code(true, Unit, true, true, "", false, true);
                     }
                 }
-            }
-        }
-
-        string GetComponent(ValueInput valueInput, ControlGenerationData data)
-        {
-            if (valueInput.hasValidConnection)
-            {
-                if (valueInput.type == valueInput.connection.source.type &&
-                    (valueInput.connection.source.unit is MemberUnit ||
-                     valueInput.connection.source.unit is CodeAssetUnit))
-                {
-                    return "";
-                }
-                else
-                {
-                    return (valueInput.connection.source.unit is MemberUnit memberUnit && memberUnit.member.name != "GetComponent") || (GetSourceType(valueInput, data) == typeof(GameObject)) && Unit.member.declaringType != typeof(GameObject) ? $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()" : string.Empty;
-                }
-            }
-            else
-            {
-                return $".GetComponent<{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}>()";
             }
         }
     }

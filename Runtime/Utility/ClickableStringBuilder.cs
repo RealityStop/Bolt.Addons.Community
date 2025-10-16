@@ -639,12 +639,23 @@ namespace Unity.VisualScripting.Community
             var builder = CreateString(unit, null, true)
                 .Ignore(convertType
                     ? CodeBuilder.CastAs(code, castType, ignoreContextActive ? null : unit, true)
-                    : CodeBuilder.Cast(code, castType, ignoreContextActive ? null : unit));
+                    : CodeBuilder.CastTo(code, castType, ignoreContextActive ? null : unit));
 
             builder.ignoreContextActive = ignoreContextActive;
             return builder;
         }
 
+        /// <summary>
+        /// Wraps the current built string in a cast expression, if required.
+        /// </summary>
+        /// <param name="targetType">The type to cast to.</param>
+        /// <param name="shouldCast">Whether to apply the cast.</param>
+        /// <param name="convertType">If true, wraps the cast in parentheses; otherwise, uses direct cast syntax.</param>
+        public ClickableStringBuilder ConvertTo(Type targetType, bool shouldConvert)
+        {
+            if (targetType == null || !shouldConvert) return this;
+            return Dot().MethodCall("ConvertTo", targetType);
+        }
 
         /// <summary>
         /// Generate code for calling a extensition method in the CSharpUtility class

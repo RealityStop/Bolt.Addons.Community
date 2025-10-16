@@ -173,55 +173,19 @@ namespace Unity.VisualScripting.Community
             return type.Namespace;
         }
 
-        public static bool IsCastingRequired(Type sourceType, Type targetType, bool ignoreInputType)
+        public static bool IsStrictlyAssignableFrom(this Type target, Type source)
         {
-            bool isRequired = true;
-            if (!ignoreInputType && targetType == typeof(object))
-            {
-                isRequired = false;
-            }
+            if (target == null || source == null)
+                return false;
 
-            if (sourceType == targetType)
-            {
-                isRequired = false;
-            }
+            // Ignore 'object' on either side, it's too generic to be meaningful
+            if (target == typeof(object) || source == typeof(object))
+                return false;
 
-            if (targetType.IsConvertibleTo(sourceType, true))
-            {
-                isRequired = false;
-            }
+            if (target == typeof(void) || source == typeof(void))
+                return false;
 
-            if (sourceType == typeof(object) && targetType != typeof(object))
-            {
-                isRequired = true;
-            }
-
-            return isRequired;
-        }
-
-        public static bool IsCastingPossible(Type sourceType, Type targetType)
-        {
-            if (targetType.IsAssignableFrom(sourceType))
-            {
-                return true;
-            }
-
-            if (targetType.IsInterface && targetType.IsAssignableFrom(sourceType))
-            {
-                return true;
-            }
-
-            if (IsNumericConversionCompatible(targetType, sourceType))
-            {
-                return true;
-            }
-
-            if (IsNullableConversionCompatible(sourceType, targetType))
-            {
-                return true;
-            }
-
-            return targetType.IsConvertibleTo(sourceType, true);
+            return target.IsAssignableFrom(source);
         }
 
         public static bool IsNumericConversionCompatible(Type targetType, Type sourceType)
@@ -236,22 +200,5 @@ namespace Unity.VisualScripting.Community
 
             return false;
         }
-
-        public static bool IsNullableConversionCompatible(Type sourceType, Type targetType)
-        {
-            if (Nullable.GetUnderlyingType(targetType) != null)
-            {
-                Type underlyingTargetType = Nullable.GetUnderlyingType(targetType);
-                return underlyingTargetType.IsAssignableFrom(sourceType);
-            }
-
-            if (Nullable.GetUnderlyingType(sourceType) != null)
-            {
-                Type underlyingSourceType = Nullable.GetUnderlyingType(sourceType);
-                return targetType.IsAssignableFrom(underlyingSourceType);
-            }
-            return false;
-        }
-
     }
 }

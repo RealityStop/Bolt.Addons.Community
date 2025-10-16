@@ -111,12 +111,11 @@ namespace Unity.VisualScripting.Community
                 GraphUtility.OverrideContextIfNeeded(() => canvas.ViewElements(canvas.selection));
             }
 
-            var units = canvas.selection.Where(e => e is Unit).OrderBy(u => (u as Unit).position.x);
-            if (!units.Any()) return;
-            var unit = units.First() as Unit;
-
             if (IsAnyArrowKey(@event.keyCode) && @event.type == EventType.KeyDown)
             {
+                var units = canvas.selection.Where(e => e is Unit).OrderBy(u => (u as Unit).position.x);
+                if (!units.Any()) return;
+                var unit = units.First() as Unit;
                 if (@event.CtrlOrCmd())
                 {
                     canvas.CancelConnection();
@@ -153,7 +152,7 @@ namespace Unity.VisualScripting.Community
                         return;
                     }
                 }
-                
+
                 bool isRight = @event.keyCode == KeyCode.RightArrow;
 
                 if (IsArrowKey(@event.keyCode))

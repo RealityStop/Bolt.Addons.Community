@@ -88,27 +88,12 @@ namespace Unity.VisualScripting.Community
                 Type sourceType = GetSourceType(input, data);
                 Type targetType = input.type;
 
-                if (sourceType == null || targetType == null)
-                {
-                    return false;
-                }
-
                 if (data.IsCurrentExpectedTypeMet())
                 {
                     return false;
                 }
 
-                if (sourceType == typeof(object) && targetType != typeof(object))
-                {
-                    return true;
-                }
-
-                if (!RuntimeTypeUtility.IsCastingRequired(sourceType, targetType, ignoreInputType))
-                {
-                    return false;
-                }
-
-                return RuntimeTypeUtility.IsCastingPossible(sourceType, targetType);
+                return TypeConversionUtility.ShouldCast(sourceType, targetType);
             }
 
             return false;
@@ -153,11 +138,15 @@ namespace Unity.VisualScripting.Community
                     return valueInput.connection.source.type;
                 }
             }
+            else if (IsSourceLiteral(valueInput, out var result))
+            {
+                return result;
+            }
 
             return valueInput.type;
         }
 
-        
+
         public string MakeClickableForThisUnit(string code, bool condition = true)
         {
             if (condition)

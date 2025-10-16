@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -31,7 +32,7 @@ namespace Unity.VisualScripting.Community
             var active = GraphWindow.active;
             return reference != null && active != null && active.hasFocus;
         }
-         
+
         public override void OnBind()
         {
             for (int i = 0; i < processes.Count; i++)
@@ -50,7 +51,7 @@ namespace Unity.VisualScripting.Community
 
         public override void OnInitialize()
         {
-            types = typeof(GraphProcess).Get().Derived(false);
+            types = Codebase.editorTypes.Where(t => t != typeof(GraphProcess) && t.IsConcrete() && typeof(GraphProcess).IsAssignableFrom(t)).ToArray();
 
             for (int i = 0; i < types.Length; i++)
             {

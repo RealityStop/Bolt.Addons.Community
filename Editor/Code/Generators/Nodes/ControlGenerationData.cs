@@ -55,11 +55,27 @@ namespace Unity.VisualScripting.Community
             else return false;
         }
 
+        public bool IsCurrentExpectedTypeMet(out Type metAs)
+        {
+            if (expectedTypes.Count > 0)
+            {
+                var expected = expectedTypes.Peek();
+                if (expected.isMet)
+                {
+                    metAs = expected.type;
+                    return true;
+                }
+            }
+
+            metAs = null;
+            return false;
+        }
+
         public bool SetCurrentExpectedTypeMet(bool isMet, Type metAs)
         {
             if (expectedTypes.Count > 0)
             {
-                var type = metAs ?? expectedTypes.Peek().type;
+                var type = isMet ? metAs ?? expectedTypes.Peek().type : expectedTypes.Peek().type;
                 var currentExpectedType = expectedTypes.Pop();
                 currentExpectedType.isMet = isMet;
                 currentExpectedType.type = type;

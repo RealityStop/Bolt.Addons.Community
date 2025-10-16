@@ -10,9 +10,9 @@ namespace Unity.VisualScripting.Community
 
         public ControlGenerationData data { get; protected set; }
 
-        public virtual ControlGenerationData GetGenerationData()
+        public virtual ControlGenerationData GetGenerationData(bool newIfDisposed = true)
         {
-            if (data == null || data.isDisposed)
+            if (data == null || (newIfDisposed && data.isDisposed))
             {
                 data = CreateGenerationData();
             }

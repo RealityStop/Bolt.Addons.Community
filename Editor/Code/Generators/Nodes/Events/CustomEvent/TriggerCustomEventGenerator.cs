@@ -37,7 +37,7 @@ namespace Unity.VisualScripting.Community
                 var sourceIsComponent = typeof(Component).IsAssignableFrom(sourceType);
                 if (sourceIsComponent)
                 {
-                    return base.GenerateValue(Unit.target, data) + MakeClickableForThisUnit("." + "gameObject".VariableHighlight());
+                    return base.GenerateValue(Unit.target, data).GetConvertToString<GameObject>();
                 }
                 else
                 {

@@ -518,7 +518,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string Assign(this string member, string value, Type castedType)
         {
-            return member + " = " + value.Cast(castedType) + ";";
+            return member + " = " + value.CastTo(castedType) + ";";
         }
 
         public static string Assign(this string member, string value)
@@ -565,14 +565,28 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
         }
 
-        public static string Cast(this string value, Type type)
+        public static string GetConvertToString<T>(this string str)
         {
-            return $"({type.As().CSharpName(false, true)}){value}";
+            return str + $".ConvertTo<{typeof(T).As().CSharpName(false, true)}>()";
         }
 
-        public static string Cast(this string value, Type type, Unit unit)
+        public static string GetConvertToString(this string str, Type type)
         {
-            return $"({type.As().CSharpName(false, true)})".MakeClickable(unit) + value;
+            return str + $".ConvertTo<{type.As().CSharpName(false, true)}>()";
+        }
+
+        public static string CastTo(this string value, Type type, bool shouldCast = true)
+        {
+            if (shouldCast)
+                return $"({type.As().CSharpName(false, true)}){value}";
+            return value;
+        }
+
+        public static string CastTo(this string value, Type type, Unit unit, bool shouldCast = true)
+        {
+            if (shouldCast)
+                return $"({type.As().CSharpName(false, true)})".MakeClickable(unit) + value;
+            return value;
         }
 
         public static string CastAs(this string value, Type type, bool shouldCast)

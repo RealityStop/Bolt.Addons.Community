@@ -144,8 +144,8 @@ namespace Unity.VisualScripting.Community
                 {
                     var declaration = GetVariableDeclaration(data, name);
 #if VISUAL_SCRIPTING_1_7
-                    return declaration?.typeHandle.Identification != null 
-                        ? Type.GetType(declaration.typeHandle.Identification) 
+                    return declaration?.typeHandle.Identification != null
+                        ? Type.GetType(declaration.typeHandle.Identification)
                         : null;
 #else
                     return declaration?.value != null
@@ -153,6 +153,10 @@ namespace Unity.VisualScripting.Community
                         : null;
 #endif
 
+                }
+                else if (data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet())
+                {
+                    return data.GetExpectedType();
                 }
             }
             return data.TryGetVariableType(data.GetVariableName(name), out Type targetType) ? targetType : data.GetExpectedType() ?? typeof(object);
@@ -207,7 +211,7 @@ namespace Unity.VisualScripting.Community
                         catch (InvalidOperationException ex)
                         {
                             Debug.LogError(ex);
-                            return null; // Don't break code view so just log the error and return null.
+                            return null;
                         }
                     }
                     else

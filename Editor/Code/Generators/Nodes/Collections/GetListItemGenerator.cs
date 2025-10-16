@@ -7,14 +7,16 @@ namespace Unity.VisualScripting.Community
     [NodeGenerator(typeof(GetListItem))]
     public class GetListItemGenerator : NodeGenerator<GetListItem>
     {
-        private Dictionary<Type, Type> typeCache = new Dictionary<Type, Type>();
+        private static Dictionary<Type, Type> typeCache = new Dictionary<Type, Type>();
         public GetListItemGenerator(Unit unit) : base(unit)
         {
         }
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
+            data.SetExpectedType(typeof(int));
             var code = MakeClickableForThisUnit($"[") + GenerateValue(Unit.index, data) + MakeClickableForThisUnit("]");
+            data.RemoveExpectedType();
             data.CreateSymbol(Unit, typeof(object));
             data.SetExpectedType(Unit.list.type);
             var listCode = GenerateValue(Unit.list, data);
@@ -29,8 +31,14 @@ namespace Unity.VisualScripting.Community
                 var _isMet = data.GetExpectedType().IsAssignableFrom(collectionType);
                 data.SetCurrentExpectedTypeMet(_isMet, collectionType);
             }
-
-            return Unit.CreateIgnoreString(listCode + code).EndIgnoreContext().Cast(data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && !data.GetExpectedType().IsAssignableFrom(GetCollectionType(type)));
+            var expectedType = data.GetExpectedType();
+            var expectedTypeNotMet = expectedType != null && !data.IsCurrentExpectedTypeMet() && !expectedType.IsStrictlyAssignableFrom(GetCollectionType(type));
+            if (expectedType != null && expectedTypeNotMet)
+            {
+                data.SetCurrentExpectedTypeMet(true, expectedType); // Met because it will cast
+                data.SetSymbolType(Unit, expectedType);
+            }
+            return Unit.CreateClickableString().Ignore(listCode + code).ConvertTo(expectedType, expectedType != null && expectedTypeNotMet);
         }
 
         private Type GetCollectionType(Type type)

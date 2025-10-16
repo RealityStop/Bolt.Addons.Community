@@ -102,6 +102,7 @@ namespace Unity.VisualScripting.Community
             if (GetFlowGraph().units.Any(u => u is GraphInput || u is GraphOutput))
             {
                 @class.beforeUsings = CodeUtility.ErrorTooltip("Direct generation of subgraphs will ignore the GraphInput and GraphOutput ports", "Warning: This graph appears to be a subgraph.", "\n");
+                @class.beforeUsings += "#pragma warning disable".ConstructHighlight() + "\n";
             }
             data = GetGenerationData();
             @class.generateUsings = true;

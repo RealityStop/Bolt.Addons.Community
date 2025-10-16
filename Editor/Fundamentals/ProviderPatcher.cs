@@ -11,7 +11,6 @@ namespace Unity.VisualScripting.Community
     {
         static ProviderPatcher()
         {
-            patchedProviders = new HashSet<object>();
             EnsurePatched();
         }
 
@@ -43,8 +42,8 @@ namespace Unity.VisualScripting.Community
 
             if (definedField != null && resolvedField != null)
             {
-                var defined = (Dictionary<Type, Type>)definedField.GetValue(providerInstance);
-                var resolved = (Dictionary<Type, Type>)resolvedField.GetValue(providerInstance);
+                var defined = (Dictionary<Type, Type>)definedField.GetValueOptimized(providerInstance);
+                var resolved = (Dictionary<Type, Type>)resolvedField.GetValueOptimized(providerInstance);
 
                 defined[targetType] = typeof(TPatcherType);
                 resolved[targetType] = typeof(TPatcherType);
@@ -57,8 +56,8 @@ namespace Unity.VisualScripting.Community
             {
                 triggerInstancePatch += (v) =>
                 {
-                    var decorators = (Dictionary<TDecorated, TDecorator>)decoratorsField.GetValue(providerInstance);
-                    var decorateds = (Dictionary<TDecorator, TDecorated>)decoratedsField.GetValue(providerInstance);
+                    var decorators = (Dictionary<TDecorated, TDecorator>)decoratorsField.GetValueOptimized(providerInstance);
+                    var decorateds = (Dictionary<TDecorator, TDecorated>)decoratedsField.GetValueOptimized(providerInstance);
 
                     if (!decorators.ContainsKey(v))
                     {

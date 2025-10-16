@@ -11,9 +11,26 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
-
+            var shouldExpectDivisorType = IsSourceLiteral(Unit.divisor, out var divisorType) && Unit.dividend.hasValidConnection;
+            if (shouldExpectDivisorType)
+            {
+                data.SetExpectedType(divisorType);
+            }
             var dividend = GenerateValue(Unit.dividend, data);
+            if (shouldExpectDivisorType)
+            {
+                data.RemoveExpectedType();
+            }
+            var shouldExpectDividendType = IsSourceLiteral(Unit.dividend, out var dividendType) && Unit.divisor.hasValidConnection;
+            if (shouldExpectDividendType)
+            {
+                data.SetExpectedType(dividendType);
+            }
             var divisor = GenerateValue(Unit.divisor, data);
+            if (shouldExpectDividendType)
+            {
+                data.RemoveExpectedType();
+            }
             return MakeClickableForThisUnit("(") + dividend + MakeClickableForThisUnit(" / ") + divisor + MakeClickableForThisUnit(")");
         }
 

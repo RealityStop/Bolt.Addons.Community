@@ -20,13 +20,14 @@ namespace Unity.VisualScripting.Community
 
         private readonly Dictionary<object, ControlGenerationData> datas = new Dictionary<object, ControlGenerationData>();
 
-        public override ControlGenerationData GetGenerationData()
+        public override ControlGenerationData GetGenerationData(bool newIfDisposed = true)
         {
-            if (datas.TryGetValue(current, out var data) && !data.isDisposed)
+            if (datas.TryGetValue(current, out var data))
             {
-                return data;
+                if (!data.isDisposed || !newIfDisposed)
+                    return data;
             }
-            
+
             datas[current] = CreateGenerationData();
             return datas[current];
         }
