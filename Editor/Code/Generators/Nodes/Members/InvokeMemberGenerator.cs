@@ -8,7 +8,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 using System;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(InvokeMember))]
     public sealed class InvokeMemberGenerator : LocalVariableGenerator
@@ -69,7 +69,15 @@ namespace Unity.VisualScripting.Community
                 }
                 else
                 {
-                    if (Unit.target == null)
+                    if (Unit.member.isInvokedAsExtension)
+                    {
+                        return GenerateValue(Unit.target, data) + MakeClickableForThisUnit($".{Unit.member.name}(") + GenerateArguments(data) + MakeClickableForThisUnit(")");
+                    }
+                    else if (Unit.member.isExtension)
+                    {
+                        return GenerateValue(Unit.inputParameters[0], data) + MakeClickableForThisUnit($".{Unit.member.name}(") + GenerateArguments(data) + MakeClickableForThisUnit(")");
+                    }
+                    else if (Unit.target == null)
                     {
                         return MakeClickableForThisUnit(Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeClickableForThisUnit(")");
                     }
@@ -79,9 +87,10 @@ namespace Unity.VisualScripting.Community
                         {
                             return GenerateValue(Unit.target, data) + MakeClickableForThisUnit(Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true) + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeClickableForThisUnit(")");
                         }
-                        else if (typeof(Component).IsStrictlyAssignableFrom(Unit.member.pseudoDeclaringType) && !data.IsCurrentExpectedTypeMet() && Unit.member.pseudoDeclaringType.IsConvertibleTo(data.GetExpectedType(), true))
+                        else if (typeof(Component).IsStrictlyAssignableFrom(Unit.member.pseudoDeclaringType) && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != Unit.member.pseudoDeclaringType && Unit.member.pseudoDeclaringType.IsConvertibleTo(data.GetExpectedType(), true))
                         {
-                            return (GenerateValue(Unit.target, data) + MakeClickableForThisUnit(Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true) + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeClickableForThisUnit(")")).GetConvertToString(data.GetExpectedType());
+                            data.SetCurrentExpectedTypeMet(true, data.GetExpectedType());
+                            return (GenerateValue(Unit.target, data) + MakeClickableForThisUnit(Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true) + "." + Unit.member.name + "(") + GenerateArguments(data) + MakeClickableForThisUnit(")")).GetConvertToString(data.GetExpectedType(), Unit);
                         }
                         else
                         {
@@ -167,7 +176,17 @@ namespace Unity.VisualScripting.Community
             }
             else
             {
-                if (Unit.target == null)
+                if (Unit.member.isInvokedAsExtension)
+                {
+                    var target = GenerateValue(Unit.target, data);
+                    output += lineIndent + target + MakeClickableForThisUnit($".{Unit.member.name}(") + GenerateArguments(data) + MakeClickableForThisUnit(");") + "\n";
+                }
+                else if (Unit.member.isExtension)
+                {
+                    var target = GenerateValue(Unit.inputParameters[0], data);
+                    output += lineIndent + target + MakeClickableForThisUnit($".{Unit.member.name}(") + GenerateArguments(data) + MakeClickableForThisUnit(");") + "\n";
+                }
+                else if (Unit.target == null)
                 {
                     output += lineIndent + MakeClickableForThisUnit($"{Unit.member.pseudoDeclaringType.As().CSharpName(false, true)}.{Unit.member.name}(") + $"{GenerateArguments(data)}{MakeClickableForThisUnit(");")}" + "\n";
                 }
@@ -182,9 +201,9 @@ namespace Unity.VisualScripting.Community
                     {
                         output += lineIndent + target + MakeClickableForThisUnit($"{Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true)}.{Unit.member.name}(") + GenerateArguments(data) + MakeClickableForThisUnit(");") + "\n";
                     }
-                    else if (typeof(Component).IsStrictlyAssignableFrom(Unit.member.pseudoDeclaringType) && !data.IsCurrentExpectedTypeMet() && Unit.member.pseudoDeclaringType.IsConvertibleTo(data.GetExpectedType(), true))
+                    else if (typeof(Component).IsStrictlyAssignableFrom(Unit.member.pseudoDeclaringType) && data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && Unit.member.pseudoDeclaringType.IsConvertibleTo(data.GetExpectedType(), true))
                     {
-                        output += (lineIndent + target + MakeClickableForThisUnit($"{Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true)}.{Unit.member.name}(") + GenerateArguments(data) + MakeClickableForThisUnit(");")).GetConvertToString(data.GetExpectedType()) + "\n";
+                        output += (lineIndent + target + MakeClickableForThisUnit($"{Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true)}.{Unit.member.name}(") + GenerateArguments(data) + MakeClickableForThisUnit(");")).GetConvertToString(data.GetExpectedType(), Unit) + "\n";
                     }
                     else
                     {
@@ -199,6 +218,7 @@ namespace Unity.VisualScripting.Community
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
         {
+            if (input == null) return MakeClickableForThisUnit($"Error");
             if (input.hasValidConnection)
             {
                 // if (input.type.IsSubclassOf(typeof(Component))) return GetNextValueUnit(input, data).CastAs(typeof(GameObject), Unit, shouldCast);
@@ -251,13 +271,17 @@ namespace Unity.VisualScripting.Community
             if (data != null && Unit.member.isMethod)
             {
                 var output = new List<string>();
-                int count = parameters.Length;
+                int startIndex = Unit.member.isExtension && !Unit.member.isInvokedAsExtension ? 1 : 0;
 
-                for (int i = 0; i < count; i++)
+                for (int i = startIndex; i < (Unit.member.isInvokedAsExtension ? parameters.Length - 1 : parameters.Length); i++)
                 {
                     var parameter = parameters[i];
                     var input = Unit.inputParameters.TryGetValue(i, out var p) ? p : null;
-                    if (parameter.HasOutModifier())
+                    if (input == null)
+                    {
+                        continue;
+                    }
+                    else if (parameter.HasOutModifier())
                     {
                         var name = data.AddLocalNameInScope(parameter.Name, parameter.ParameterType).VariableHighlight();
                         output.Add(MakeClickableForThisUnit("out var".ConstructHighlight() + name));
@@ -288,7 +312,7 @@ namespace Unity.VisualScripting.Community
                     {
                         bool hasLaterConnection = false;
 
-                        for (int j = i + 1; j < count; j++)
+                        for (int j = i + 1; j < parameters.Length; j++)
                         {
                             var laterParam = Unit.inputParameters[j];
                             if (laterParam != null && (laterParam.hasValidConnection || laterParam.hasDefaultValue))

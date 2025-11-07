@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Vector4Average))]
     public class Vector4AverageGenerator : BaseAverageGenerator<Vector4>

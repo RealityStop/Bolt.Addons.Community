@@ -105,7 +105,7 @@ namespace Unity.VisualScripting.Community
 
         public static void DescribeAnalyzeAndDefineFlowGraph(this IGraphContext context)
         {
-            if (context.graph is FlowGraph graph)
+            if (context?.graph is FlowGraph graph)
             {
                 context.DescribeAndAnalyze();
                 foreach (var unit in graph.units)

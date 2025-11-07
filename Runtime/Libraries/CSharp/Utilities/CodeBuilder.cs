@@ -565,14 +565,14 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
         }
 
-        public static string GetConvertToString<T>(this string str)
+        public static string GetConvertToString<T>(this string str, Unit unit = null)
         {
-            return str + $".ConvertTo<{typeof(T).As().CSharpName(false, true)}>()";
+            return str + $".ConvertTo<{typeof(T).As().CSharpName(false, true)}>()".MakeClickable(unit);
         }
 
-        public static string GetConvertToString(this string str, Type type)
+        public static string GetConvertToString(this string str, Type type, Unit unit = null)
         {
-            return str + $".ConvertTo<{type.As().CSharpName(false, true)}>()";
+            return str + $".ConvertTo<{type.As().CSharpName(false, true)}>()".MakeClickable(unit);
         }
 
         public static string CastTo(this string value, Type type, bool shouldCast = true)

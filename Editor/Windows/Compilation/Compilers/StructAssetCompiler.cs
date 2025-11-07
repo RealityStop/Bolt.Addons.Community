@@ -3,7 +3,7 @@ using System.IO;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEditor;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public class StructAssetCompiler : BaseCompiler
     {

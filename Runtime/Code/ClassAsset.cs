@@ -30,6 +30,11 @@ namespace Unity.VisualScripting.Community
         [SerializeField]
         private SerializationData typeParametersSerialization;
 
+        public bool IsStatic()
+        {
+            return classModifier == ClassModifier.Static || classModifier == ClassModifier.StaticPartial;
+        }
+
         public void OnAfterDeserialize()
         {
             typeParameters = (List<GenericParameter>)typeParametersSerialization.Deserialize();

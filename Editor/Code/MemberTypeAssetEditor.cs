@@ -64,12 +64,12 @@ namespace Unity.VisualScripting.Community.CSharp
                 Variables();
                 GUILayout.Space(4);
                 Methods();
-                if ((Target is ClassAsset classAsset && classAsset.inheritsType) || Target is StructAsset)
+                if ((Target is ClassAsset classAsset && classAsset.inheritsType && !IsStatic()) || Target is StructAsset)
                 {
                     GUILayout.Space(4);
                     RequiredInfo();
                 }
-                if (typeof(TMemberTypeAsset) == typeof(ClassAsset))
+                if (typeof(TMemberTypeAsset) == typeof(ClassAsset) && !IsStatic())
                 {
                     GUILayout.Space(4);
                     OverridableMembersInfo();
@@ -79,6 +79,11 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 context?.EndEdit();
             }
+        }
+
+        private bool IsStatic()
+        {
+            return Target is ClassAsset classAsset && (classAsset.classModifier == ClassModifier.Static || classAsset.classModifier == ClassModifier.StaticPartial);
         }
 
         private bool RequiresInfo()
@@ -203,7 +208,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void RequiredInfo()
         {
-            Target.requiredInfoOpened = HUMEditor.Foldout(Target.requiredInfoOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            Target.requiredInfoOpened = HUMEditor.Foldout(Target.requiredInfoOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
             {
                 if (RequiresInfo())
                 {
@@ -216,7 +221,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 GUILayout.Label("Required Info");
             }, () =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                 {
                     if (!RequiresInfo())
                     {
@@ -249,7 +254,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     for (int i = 0; i < requiredMethods.Length; i++)
                     {
                         var index = i;
-                        HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        HUMEditor.Horizontal().Box(CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                         {
                             GUILayout.Label(requiredMethods[index].Name);
 
@@ -301,7 +306,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     for (int i = 0; i < requiredProperties.Length; i++)
                     {
                         var index = i;
-                        HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        HUMEditor.Horizontal().Box(CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                         {
                             var property = requiredProperties[index];
                             GUILayout.Label(property.DeclaringType.Name + "." + property.Name);
@@ -388,7 +393,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         for (int i = 0; i < parameterizedConstructors.Length; i++)
                         {
                             var index = i;
-                            HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                            HUMEditor.Horizontal().Box(CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                             {
                                 var parameters = parameterizedConstructors[index].GetParameters();
                                 var parameterDescriptions = string.Join(", ", parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"));
@@ -472,14 +477,14 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void OverridableMembersInfo()
         {
-            Target.overridableMembersInfoOpened = HUMEditor.Foldout(Target.overridableMembersInfoOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            Target.overridableMembersInfoOpened = HUMEditor.Foldout(Target.overridableMembersInfoOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
             {
                 HUMEditor.Image(PathUtil.Load("okay_32", CommunityEditorPath.Code).Single(), 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
 
                 GUILayout.Label("Overridable Members");
             }, () =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                 {
                     if (!OverridableMembers())
                     {
@@ -499,7 +504,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     for (int i = 0; i < nonFinalMethods.Length; i++)
                     {
                         var index = i;
-                        HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        HUMEditor.Horizontal().Box(CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                         {
                             var labelStyle = new GUIStyle(GUI.skin.label)
                             {
@@ -584,7 +589,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     for (int i = 0; i < nonFinalProperties.Length; i++)
                     {
                         var index = i;
-                        HUMEditor.Horizontal().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        HUMEditor.Horizontal().Box(CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                         {
                             GUILayout.Label(nonFinalProperties[index].Name);
                             var property = nonFinalProperties[index];
@@ -668,7 +673,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 });
             });
         }
-
 
         protected virtual Texture2D DefaultIcon() { return null; }
 
@@ -773,7 +777,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
             Target.attributesOpened = HUMEditor.Foldout(
             Target.attributesOpened,
-            HUMEditorColor.DefaultEditorBackground.Darken(0f),
+            HUMEditorColor.DefaultEditorBackground,
             Color.black,
             1,
             () =>
@@ -826,7 +830,7 @@ namespace Unity.VisualScripting.Community.CSharp
             }
             OnExtendedOptionsGUI();
 
-            if (Target is ClassAsset || Target is StructAsset || Target is InterfaceAsset)
+            if (Target is ClassAsset || Target is StructAsset)
             {
                 Interfaces();
             }
@@ -834,13 +838,13 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void Interfaces()
         {
-            Target.interfacesOpened = HUMEditor.Foldout(Target.interfacesOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            Target.interfacesOpened = HUMEditor.Foldout(Target.interfacesOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
             {
                 HUMEditor.Image(typeof(IAction).Icon()[IconSize.Small], 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
                 GUILayout.Label("Interfaces");
             }, () =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                 {
                     var listOfInterfaces = Target.interfaces;
 
@@ -965,13 +969,13 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void Constructors()
         {
-            Target.constructorsOpened = HUMEditor.Foldout(Target.constructorsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            Target.constructorsOpened = HUMEditor.Foldout(Target.constructorsOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
             {
                 HUMEditor.Image(PathUtil.Load("constructor_32", CommunityEditorPath.Code).Single(), 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
                 GUILayout.Label("Constructors");
             }, () =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                 {
                     var listOfConstructors = constructors?.value as List<TConstructorDeclaration>;
 
@@ -979,7 +983,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     {
                         var index = i;
                         if (listOfConstructors[index].parentAsset == null) listOfConstructors[index].parentAsset = Target;
-                        listOfConstructors[index].opened = HUMEditor.Foldout(listOfConstructors[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        listOfConstructors[index].opened = HUMEditor.Foldout(listOfConstructors[index].opened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                         {
                             GUILayout.Label($"Constructor {i}");
                             if (string.IsNullOrEmpty(listOfConstructors[i].name)) listOfConstructors[i].name = $"Constructor {i}";
@@ -1035,6 +1039,20 @@ namespace Unity.VisualScripting.Community.CSharp
                                     listOfConstructors[index].scope = scope;
                                 }
                                 EditorGUILayout.EndHorizontal();
+
+                                EditorGUILayout.BeginHorizontal();
+                                EditorGUI.BeginChangeCheck();
+                                //HUMEditor.Image(PathUtil.Load("scope_32", CommunityEditorPath.Code).Single(), 16, 16);
+                                var modifier = (ConstructorModifier)EditorGUILayout.EnumPopup("Modifier", listOfConstructors[index].modifier);
+                                if (EditorGUI.EndChangeCheck())
+                                {
+                                    Undo.RegisterCompleteObjectUndo(listOfConstructors[index], "Changed Constructor Modifier");
+                                    UpdatePreview();
+                                    listOfConstructors[index].modifier = modifier;
+                                }
+                                EditorGUILayout.EndHorizontal();
+
+
                                 EditorGUILayout.BeginHorizontal();
                                 //HUMEditor.Image(PathUtil.Load("scope_32", CommunityEditorPath.Code).Single(), 16, 16);
                                 GUILayout.Label("Initializer Type");
@@ -1072,7 +1090,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 EditorGUILayout.EndHorizontal();
                                 GUILayout.Space(4);
 
-                                listOfConstructors[index].parametersOpened = HUMEditor.Foldout(listOfConstructors[index].parametersOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                listOfConstructors[index].parametersOpened = HUMEditor.Foldout(listOfConstructors[index].parametersOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                                 {
                                     GUILayout.Label("Parameters");
                                 }, () =>
@@ -1085,7 +1103,15 @@ namespace Unity.VisualScripting.Community.CSharp
 
                         GUILayout.Space(4);
                     }
-                    if (GUILayout.Button("+ Add Constructor"))
+
+                    bool canAddConstructor = true;
+
+                    if (Target is ClassAsset classAsset)
+                    {
+                        canAddConstructor = !IsStatic() || classAsset.constructors.Count == 0;
+                    }
+
+                    if (canAddConstructor && GUILayout.Button("+ Add Constructor"))
                     {
                         int undoGroup = Undo.GetCurrentGroup();
                         Undo.SetCurrentGroupName("Added Constructor");
@@ -1122,7 +1148,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void DrawAttributes(Metadata attributesMeta, List<AttributeDeclaration> attributeList, AttributeUsageType attributeUsageType, UnityEngine.Object target, string undoName)
         {
-            HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+            HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
             {
                 for (int attrIndex = 0; attrIndex < attributeList.Count; attrIndex++)
                 {
@@ -1131,7 +1157,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     attribute.opened = HUMEditor.Foldout(
                         attribute.opened,
-                        HUMEditorColor.DefaultEditorBackground.Darken(0f),
+                        CommunityStyles.foldoutHeaderColor,
                         Color.black,
                         1,
                         () =>
@@ -1214,7 +1240,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         },
                     () =>
                     {
-                        HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                        HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                         {
                             var attributeParamMeta = attributesMeta[attrIndex]["parameters"];
                             var constructors = attribute?.GetAttributeType()?.GetConstructors();
@@ -1455,11 +1481,11 @@ namespace Unity.VisualScripting.Community.CSharp
                     reference = GraphTraversal.GetReferenceWithGraph(reference, functionUnit.graph) ?? reference;
                 context = reference.Context();
             }
-            HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+            HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
             {
                 for (int i = 0; i < parameters.Count; i++)
                 {
-                    parameters[i].opened = HUMEditor.Foldout(parameters[i].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                    parameters[i].opened = HUMEditor.Foldout(parameters[i].opened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                     {
                         EditorGUI.BeginChangeCheck();
                         var paramName = GUILayout.TextField(parameters[i].name);
@@ -1541,123 +1567,38 @@ namespace Unity.VisualScripting.Community.CSharp
 
                             GUILayout.Label("Modifiers");
 
-                            var modifiers = (ParameterModifier)currentParam["modifier"].value;
+                            var modifier = (ParameterModifier)currentParam["modifier"].value;
                             if ((param.modifier & (ParameterModifier.Params)) != 0 && !param.type.IsArray)
                             {
                                 param.modifier &= ~ParameterModifier.Params;
                                 UpdatePreview();
                             }
-                            if (GUILayout.Button(modifiers.GetEnumString(ParameterModifier.None, "None"), EditorStyles.popup, GUILayout.MaxHeight(19f)))
+
+                            HUMEditor.DrawEnumField(modifier, (menu, value) =>
                             {
-                                GenericMenu menu = new GenericMenu();
-                                menu.AddItem(new GUIContent("None"), modifiers == ParameterModifier.None, (obj) =>
+                                menu.AddItem(new GUIContent("None"), value == ParameterModifier.None, () => currentParam["modifier"].value = ParameterModifier.None);
+                                menu.AddSeparator("");
+
+                                void UpdateValue(ParameterModifier val)
                                 {
-                                    var _param = obj as TypeParam;
-                                    _param.modifier = ParameterModifier.None;
                                     Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
+                                    currentParam["modifier"].value = val;
+                                    GUI.changed = true;
                                     UpdatePreview();
                                     context?.DescribeAnalyzeAndDefineFlowGraph();
-                                }, param);
+                                }
+
+                                HUMEditor.AddItem(value, "In", ParameterModifier.In, UpdateValue, menu, CodeConverter.parameterModifierConflicts[ParameterModifier.In]);
+                                HUMEditor.AddItem(value, "Out", ParameterModifier.Out, UpdateValue, menu, CodeConverter.parameterModifierConflicts[ParameterModifier.Out]);
+                                HUMEditor.AddItem(value, "Ref", ParameterModifier.Ref, UpdateValue, menu, CodeConverter.parameterModifierConflicts[ParameterModifier.Ref]);
                                 menu.AddSeparator("");
-                                bool canUseIn = (param.modifier & (ParameterModifier.Out | ParameterModifier.Ref)) == 0;
-                                bool canUseOut = (param.modifier & (ParameterModifier.In | ParameterModifier.Ref)) == 0;
-                                bool canUseRef = (param.modifier & (ParameterModifier.In | ParameterModifier.Out)) == 0;
-                                if (canUseIn)
-                                {
-                                    menu.AddItem(new GUIContent("In"), (param.modifier & ParameterModifier.In) != 0, (obj) =>
-                                    {
-                                        var _param = obj as TypeParam;
-                                        _param.modifier ^= ParameterModifier.In;
-                                        Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
-                                        UpdatePreview();
-                                        context?.DescribeAnalyzeAndDefineFlowGraph();
-                                    }, param);
-                                }
-                                else
-                                {
-                                    menu.AddDisabledItem(new GUIContent("In"));
-                                }
+                                HUMEditor.AddItem(value, "Params", ParameterModifier.Params, UpdateValue, menu, () => param.type.IsArray,
+                                CodeConverter.parameterModifierConflicts[ParameterModifier.Params]);
+                                HUMEditor.AddItem(value, "This", ParameterModifier.This, UpdateValue, menu, () => Target is ClassAsset classAsset && classAsset.IsStatic(),
+                                CodeConverter.parameterModifierConflicts[ParameterModifier.This]);
+                                return value;
+                            });
 
-                                if (canUseOut)
-                                {
-                                    menu.AddItem(new GUIContent("Out"), (param.modifier & ParameterModifier.Out) != 0, (obj) =>
-                                    {
-                                        var _param = obj as TypeParam;
-                                        _param.modifier ^= ParameterModifier.Out;
-                                        Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
-                                        UpdatePreview();
-                                        context?.DescribeAnalyzeAndDefineFlowGraph();
-                                    }, param);
-                                }
-                                else
-                                {
-                                    menu.AddDisabledItem(new GUIContent("Out"));
-                                }
-
-                                if (canUseRef)
-                                {
-                                    menu.AddItem(new GUIContent("Ref"), (param.modifier & ParameterModifier.Ref) != 0, (obj) =>
-                                    {
-                                        var _param = obj as TypeParam;
-                                        _param.modifier ^= ParameterModifier.Ref;
-                                        Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
-                                        UpdatePreview();
-                                        context?.DescribeAnalyzeAndDefineFlowGraph();
-                                    }, param);
-                                }
-                                else
-                                {
-                                    menu.AddDisabledItem(new GUIContent("Ref"));
-                                }
-                                menu.AddSeparator("");
-                                if (param.type.IsArray)
-                                {
-                                    menu.AddItem(new GUIContent("Params"), (modifiers & ParameterModifier.Params) != 0, (obj) =>
-                                    {
-                                        var _param = obj as TypeParam;
-                                        if ((_param.modifier & ParameterModifier.Params) == 0)
-                                        {
-                                            _param.modifier |= ParameterModifier.Params;
-                                        }
-                                        else
-                                        {
-                                            _param.modifier &= ~ParameterModifier.Params;
-                                        }
-                                        Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
-                                        UpdatePreview();
-                                        context?.DescribeAnalyzeAndDefineFlowGraph();
-                                    }, param);
-                                }
-                                else
-                                {
-                                    menu.AddDisabledItem(new GUIContent("Params"));
-                                }
-
-                                if (target is ClassMethodDeclaration classMethodDeclaration && classMethodDeclaration.parentAsset is ClassAsset asset && classMethodDeclaration.modifier == MethodModifier.Static && asset.classModifier == ClassModifier.Static)
-                                {
-                                    menu.AddItem(new GUIContent("This"), (modifiers & ParameterModifier.This) != 0, (obj) =>
-                                    {
-                                        var _param = obj as TypeParam;
-                                        if ((_param.modifier & ParameterModifier.This) == 0)
-                                        {
-                                            _param.modifier |= ParameterModifier.This;
-                                        }
-                                        else
-                                        {
-                                            _param.modifier &= ~ParameterModifier.This;
-                                        }
-                                        Undo.RegisterCompleteObjectUndo(target, "Changed Parameter Modifier");
-                                        UpdatePreview();
-                                        context?.DescribeAnalyzeAndDefineFlowGraph();
-                                    }, param);
-                                }
-                                else
-                                {
-                                    menu.AddDisabledItem(new GUIContent("This"));
-                                }
-
-                                menu.ShowAsContext();
-                            }
                             GUILayout.EndHorizontal();
 
                             GUILayout.Space(4);
@@ -1712,7 +1653,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             }
 
                             if (parameters[i].attributes == null) parameters[i].attributes = new List<AttributeDeclaration>();
-                            parameters[i].attributesOpened = HUMEditor.Foldout(parameters[i].attributesOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                            parameters[i].attributesOpened = HUMEditor.Foldout(parameters[i].attributesOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                             {
                                 HUMEditor.Image(PathUtil.Load("attributes_16", CommunityEditorPath.Code).Single(), 16, 16);
                                 GUILayout.Label("Attributes");
@@ -1800,13 +1741,13 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void Methods()
         {
-            Target.methodsOpened = HUMEditor.Foldout(Target.methodsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            Target.methodsOpened = HUMEditor.Foldout(Target.methodsOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
             {
                 HUMEditor.Image(PathUtil.Load("method_16", CommunityEditorPath.Code).Single(), 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
                 GUILayout.Label("Methods");
             }, () =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                 {
                     var listOfMethods = methods?.value as List<TMethodDeclaration>;
 
@@ -1815,7 +1756,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         var index = i;
                         if (listOfMethods[index].parentAsset == null) listOfMethods[index].parentAsset = Target;
                         var context = listOfMethods[index].GetReference().AsReference().Context();
-                        listOfMethods[index].opened = HUMEditor.Foldout(listOfMethods[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        listOfMethods[index].opened = HUMEditor.Foldout(listOfMethods[index].opened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                         {
                             HUMEditor.Changed(() =>
                             {
@@ -1873,9 +1814,46 @@ namespace Unity.VisualScripting.Community.CSharp
                                 listOfMethods[index].scope = (AccessModifier)EditorGUILayout.EnumPopup("Scope", listOfMethods[index].scope);
                                 shouldUpdate = EditorGUI.EndChangeCheck();
                                 EditorGUILayout.EndHorizontal();
-                                EditorGUI.BeginChangeCheck();
-                                listOfMethods[index].modifier = (MethodModifier)EditorGUILayout.EnumPopup("Modifier", listOfMethods[index].modifier);
-                                shouldUpdate = EditorGUI.EndChangeCheck();
+
+                                GUILayout.BeginHorizontal();
+                                GUILayout.Label("Modifiers");
+
+                                var modifier = listOfMethods[index].modifier;
+
+                                if (Target is ClassAsset classAsset && classAsset.IsStatic())
+                                {
+                                    modifier |= MethodModifier.Static;
+                                }
+
+                                HUMEditor.DrawEnumField(modifier, (menu, value) =>
+                                {
+                                    menu.AddItem(new GUIContent("None"), value == MethodModifier.None, () => listOfMethods[index].modifier = MethodModifier.None);
+                                    menu.AddSeparator("");
+
+                                    void UpdateValue(MethodModifier val)
+                                    {
+                                        Undo.RegisterCompleteObjectUndo(target, "Changed Method Modifier");
+                                        listOfMethods[index].modifier = val;
+                                        GUI.changed = true;
+                                        UpdatePreview();
+                                        context?.DescribeAnalyzeAndDefineFlowGraph();
+                                    }
+
+                                    HUMEditor.AddItem(value, "Abstract", MethodModifier.Abstract, UpdateValue, menu, () => Target is ClassAsset classAsset && classAsset.classModifier != ClassModifier.Sealed,
+                                    CodeConverter.methodModifierConflicts[MethodModifier.Abstract]);
+                                    HUMEditor.AddItem(value, "Async", MethodModifier.Async, UpdateValue, menu, CodeConverter.methodModifierConflicts[MethodModifier.Async]);
+                                    HUMEditor.AddItem(value, "Extern", MethodModifier.Extern, UpdateValue, menu, CodeConverter.methodModifierConflicts[MethodModifier.Extern]);
+                                    HUMEditor.AddItem(value, "Override", MethodModifier.Override, UpdateValue, menu, () => Target is ClassAsset classAsset && !classAsset.IsStatic() && classAsset.inheritsType,
+                                    CodeConverter.methodModifierConflicts[MethodModifier.Override]);
+                                    HUMEditor.AddItem(value, "Sealed", MethodModifier.Sealed, UpdateValue, menu, CodeConverter.methodModifierConflicts[MethodModifier.Sealed]);
+                                    HUMEditor.AddItem(value, "Static", MethodModifier.Static, UpdateValue, menu, CodeConverter.methodModifierConflicts[MethodModifier.Static]);
+                                    HUMEditor.AddItem(value, "Unsafe", MethodModifier.Unsafe, UpdateValue, menu, CodeConverter.methodModifierConflicts[MethodModifier.Unsafe]);
+                                    HUMEditor.AddItem(value, "Virtual", MethodModifier.Virtual, UpdateValue, menu, () => Target is ClassAsset classAsset && classAsset.classModifier != ClassModifier.Sealed,
+                                    CodeConverter.methodModifierConflicts[MethodModifier.Virtual]);
+                                    return value;
+                                });
+
+                                GUILayout.EndHorizontal();
 
                                 GUILayout.BeginHorizontal();
                                 GUILayout.Label("Returns");
@@ -1904,7 +1882,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                                 GUILayout.Space(4);
 
-                                listOfMethods[index].attributesOpened = HUMEditor.Foldout(listOfMethods[index].attributesOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                listOfMethods[index].attributesOpened = HUMEditor.Foldout(listOfMethods[index].attributesOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                                 {
                                     HUMEditor.Image(PathUtil.Load("attributes_16", CommunityEditorPath.Code).Single(), 16, 16);
                                     GUILayout.Label("Attributes");
@@ -1914,18 +1892,18 @@ namespace Unity.VisualScripting.Community.CSharp
                                 });
 
                                 GUILayout.Space(4);
-                                listOfMethods[index].genericsOpened = HUMEditor.Foldout(listOfMethods[index].genericsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                listOfMethods[index].genericsOpened = HUMEditor.Foldout(listOfMethods[index].genericsOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                                 {
                                     HUMEditor.Image(typeof(Type).Icon()[IconSize.Small], 16, 16);
 
                                     GUILayout.Label(new GUIContent("Generics", "This feature is experimental and may cause issues in your graphs or behave unpredictably."));
                                 }, () =>
                                 {
-                                    HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                                    HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                                     {
                                         for (int gIndex = 0; gIndex < listOfMethods[index].genericParameterCount; gIndex++)
                                         {
-                                            listOfMethods[index].genericParameters[gIndex].isOpen = HUMEditor.Foldout(listOfMethods[index].genericParameters[gIndex].isOpen, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+                                            listOfMethods[index].genericParameters[gIndex].isOpen = HUMEditor.Foldout(listOfMethods[index].genericParameters[gIndex].isOpen, CommunityStyles.foldoutBackgroundColor, Color.black, 1, () =>
                                             {
                                                 EditorGUI.BeginChangeCheck();
                                                 var previousName = listOfMethods[index].genericParameters[gIndex].name;
@@ -1986,7 +1964,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                                 }
                                             }, () =>
                                             {
-                                                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                                                HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                                                 {
                                                     GUILayout.BeginHorizontal();
                                                     GUILayout.Label("Base Type Constraint");
@@ -2016,13 +1994,13 @@ namespace Unity.VisualScripting.Community.CSharp
                                                     var constraints = listOfMethods[index].genericParameters[gIndex].typeParameterConstraints;
                                                     listOfMethods[index].genericParameters[gIndex].typeParameterConstraints = (TypeParameterConstraints)EditorGUILayout.EnumFlagsField(constraints);
                                                     GUILayout.EndHorizontal();
-                                                    listOfMethods[index].genericParameters[gIndex].interfaceConstraintsOpen = HUMEditor.Foldout(listOfMethods[index].genericParameters[gIndex].interfaceConstraintsOpen, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                                    listOfMethods[index].genericParameters[gIndex].interfaceConstraintsOpen = HUMEditor.Foldout(listOfMethods[index].genericParameters[gIndex].interfaceConstraintsOpen, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                                                     {
                                                         HUMEditor.Image(typeof(IAction).Icon()[IconSize.Small], 16, 16);
                                                         GUILayout.Label("Interface Constraints");
                                                     }, () =>
                                                     {
-                                                        HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                                                        HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                                                         {
                                                             var interfaceConstraints = listOfMethods[index].genericParameters[gIndex].constraints ?? new Type[0];
                                                             for (int iIndex = 0; iIndex < interfaceConstraints.Length; iIndex++)
@@ -2122,7 +2100,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 });
                                 GUILayout.Space(4);
 
-                                listOfMethods[index].parametersOpened = HUMEditor.Foldout(listOfMethods[index].parametersOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                listOfMethods[index].parametersOpened = HUMEditor.Foldout(listOfMethods[index].parametersOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                                 {
                                     HUMEditor.Image(PathUtil.Load("parameters_16", CommunityEditorPath.Code).Single(), 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
                                     GUILayout.Label("Parameters");
@@ -2166,13 +2144,13 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void Variables()
         {
-            Target.fieldsOpened = HUMEditor.Foldout(Target.fieldsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            Target.fieldsOpened = HUMEditor.Foldout(Target.fieldsOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
             {
                 HUMEditor.Image(PathUtil.Load("variables_16", CommunityEditorPath.Code).Single(), 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
                 GUILayout.Label("Variables");
             }, () =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                 {
                     var listOfVariables = variables?.value as List<TFieldDeclaration>;
 
@@ -2189,7 +2167,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             listOfVariables[index].getter.parentAsset = Target;
                             listOfVariables[index].setter.parentAsset = Target;
                         }
-                        listOfVariables[index].opened = HUMEditor.Foldout(listOfVariables[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        listOfVariables[index].opened = HUMEditor.Foldout(listOfVariables[index].opened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                         {
                             EditorGUI.BeginChangeCheck();
                             var fieldName = GUILayout.TextField(listOfVariables[index].name);
@@ -2249,47 +2227,92 @@ namespace Unity.VisualScripting.Community.CSharp
                         {
                             HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, new RectOffset(6, 6, 6, 6), new RectOffset(1, 1, 0, 1), () =>
                             {
+                                float labelWidth = 70f; // Adjust to taste for alignment
+
+                                // --- Scope ---
                                 EditorGUILayout.BeginHorizontal();
-                                //HUMEditor.Image(PathUtil.Load("scope_32", CommunityEditorPath.Code).Single(), 16, 16);
                                 EditorGUI.BeginChangeCheck();
-                                var scope = (AccessModifier)EditorGUILayout.EnumPopup("Scope", listOfVariables[index].scope);
+                                EditorGUILayout.LabelField("Scope", GUILayout.Width(labelWidth));
+                                var scope = (AccessModifier)EditorGUILayout.EnumPopup(listOfVariables[index].scope);
                                 if (EditorGUI.EndChangeCheck())
                                 {
                                     Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Scope");
-                                    UpdatePreview();
                                     listOfVariables[index].scope = scope;
+                                    UpdatePreview();
                                 }
                                 EditorGUILayout.EndHorizontal();
+
+                                // --- Modifier ---
+                                EditorGUILayout.BeginHorizontal();
+                                EditorGUILayout.LabelField("Modifier", GUILayout.Width(labelWidth));
+
                                 if (!listOfVariables[index].isProperty)
                                 {
-                                    EditorGUI.BeginChangeCheck();
-                                    var fieldModifier = (FieldModifier)EditorGUILayout.EnumPopup("Modifier", listOfVariables[index].fieldModifier);
-                                    if (EditorGUI.EndChangeCheck())
+                                    var modifier = listOfVariables[index].fieldModifier;
+                                    if (IsStatic()) modifier |= FieldModifier.Static;
+
+                                    HUMEditor.DrawEnumField(modifier, (menu, value) =>
                                     {
-                                        Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Modifier");
-                                        UpdatePreview();
-                                        listOfVariables[index].fieldModifier = fieldModifier;
-                                    }
+                                        menu.AddItem(new GUIContent("None"), value == FieldModifier.None, () => listOfVariables[index].fieldModifier = FieldModifier.None);
+                                        menu.AddSeparator("");
+
+                                        void UpdateValue(FieldModifier val)
+                                        {
+                                            Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Modifier");
+                                            listOfVariables[index].fieldModifier = val;
+                                            GUI.changed = true;
+                                            UpdatePreview();
+                                        }
+
+                                        HUMEditor.AddItem(value, "Constant", FieldModifier.Constant, UpdateValue, menu, CodeConverter.fieldModifierConflicts[FieldModifier.Constant]);
+                                        HUMEditor.AddItem(value, "Static", FieldModifier.Static, UpdateValue, menu, CodeConverter.fieldModifierConflicts[FieldModifier.Static]);
+                                        HUMEditor.AddItem(value, "Unsafe", FieldModifier.Unsafe, UpdateValue, menu, CodeConverter.fieldModifierConflicts[FieldModifier.Unsafe]);
+                                        HUMEditor.AddItem(value, "Volatile", FieldModifier.Volatile, UpdateValue, menu, CodeConverter.fieldModifierConflicts[FieldModifier.Volatile]);
+                                        menu.AddSeparator("");
+                                        HUMEditor.AddItem(value, "Readonly", FieldModifier.Readonly, UpdateValue, menu, CodeConverter.fieldModifierConflicts[FieldModifier.Readonly]);
+                                        HUMEditor.AddItem(value, "New", FieldModifier.New, UpdateValue, menu, CodeConverter.fieldModifierConflicts[FieldModifier.New]);
+                                        return value;
+                                    });
                                 }
                                 else
                                 {
-                                    EditorGUI.BeginChangeCheck();
-                                    var propertyModifier = (PropertyModifier)EditorGUILayout.EnumPopup("Modifier", listOfVariables[index].propertyModifier);
-                                    if (EditorGUI.EndChangeCheck())
+                                    var modifier = listOfVariables[index].propertyModifier;
+                                    if (IsStatic()) modifier |= PropertyModifier.Static;
+
+                                    HUMEditor.DrawEnumField(modifier, (menu, value) =>
                                     {
-                                        Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Modifier");
-                                        UpdatePreview();
-                                        listOfVariables[index].propertyModifier = propertyModifier;
-                                    }
+                                        menu.AddItem(new GUIContent("None"), value == PropertyModifier.None, () => listOfVariables[index].propertyModifier = PropertyModifier.None);
+                                        menu.AddSeparator("");
+
+                                        void UpdateValue(PropertyModifier val)
+                                        {
+                                            Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Modifier");
+                                            listOfVariables[index].propertyModifier = val;
+                                            GUI.changed = true;
+                                            UpdatePreview();
+                                        }
+
+                                        HUMEditor.AddItem(value, "Abstract", PropertyModifier.Abstract, UpdateValue, menu, CodeConverter.propertyModifierConflicts[PropertyModifier.Abstract]);
+                                        HUMEditor.AddItem(value, "Override", PropertyModifier.Override, UpdateValue, menu, CodeConverter.propertyModifierConflicts[PropertyModifier.Override]);
+                                        HUMEditor.AddItem(value, "Sealed", PropertyModifier.Sealed, UpdateValue, menu, CodeConverter.propertyModifierConflicts[PropertyModifier.Sealed]);
+                                        HUMEditor.AddItem(value, "Static", PropertyModifier.Static, UpdateValue, menu, CodeConverter.propertyModifierConflicts[PropertyModifier.Static]);
+                                        HUMEditor.AddItem(value, "Unsafe", PropertyModifier.Unsafe, UpdateValue, menu, CodeConverter.propertyModifierConflicts[PropertyModifier.Unsafe]);
+                                        HUMEditor.AddItem(value, "Volatile", PropertyModifier.Volatile, UpdateValue, menu, CodeConverter.propertyModifierConflicts[PropertyModifier.Volatile]);
+                                        menu.AddSeparator("");
+                                        HUMEditor.AddItem(value, "New", PropertyModifier.New, UpdateValue, menu, CodeConverter.propertyModifierConflicts[PropertyModifier.New]);
+                                        return value;
+                                    });
                                 }
+                                EditorGUILayout.EndHorizontal();
+
+                                EditorGUILayout.BeginHorizontal();
+                                EditorGUILayout.LabelField("Type", GUILayout.Width(labelWidth));
 
                                 GUIContent TypebuilderButtonContent = new GUIContent(
-                                (variables[index]["type"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
-                                (variables[index]["type"].value as Type)?.Icon()?[IconSize.Small]
+                                    (variables[index]["type"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                                    (variables[index]["type"].value as Type)?.Icon()?[IconSize.Small]
                                 );
 
-                                GUILayout.BeginHorizontal();
-                                GUILayout.Label("Type");
                                 var lastRect = GUILayoutUtility.GetLastRect();
                                 if (GUILayout.Button(TypebuilderButtonContent, EditorStyles.popup, GUILayout.MaxHeight(19f)))
                                 {
@@ -2297,19 +2320,27 @@ namespace Unity.VisualScripting.Community.CSharp
                                     {
                                         Undo.RegisterCompleteObjectUndo(listOfVariables[index], "Changed Variable Type");
                                         UpdatePreview();
-                                    }, (t) =>
+                                    },
+                                    (t) =>
                                     {
                                         listOfVariables[index].OnChanged?.Invoke();
                                         getterContext.DescribeAnalyzeAndDefineFlowGraph();
                                         setterContext.DescribeAnalyzeAndDefineFlowGraph();
                                     });
                                 }
-                                GUILayout.EndHorizontal();
+                                EditorGUILayout.EndHorizontal();
 
                                 if (target is ClassAsset)
                                 {
-                                    if (!listOfVariables[index].isProperty || (listOfVariables[index].get && !(listOfVariables[index].getter.graph.units[0] as FunctionNode).invoke.hasValidConnection) ||
-                                    (listOfVariables[index].set && !(listOfVariables[index].setter.graph.units[0] as FunctionNode).invoke.hasValidConnection))
+                                    EditorGUILayout.BeginHorizontal();
+                                    EditorGUILayout.LabelField("Has Default", GUILayout.Width(labelWidth));
+                                    variables[index]["hasDefault"].value = EditorGUILayout.Toggle((bool)variables[index]["hasDefault"].value);
+                                    EditorGUILayout.EndHorizontal();
+
+                                    if ((bool)variables[index]["hasDefault"].value &&
+                                        (!listOfVariables[index].isProperty ||
+                                         (listOfVariables[index].get && !(listOfVariables[index].getter.graph.units[0] as FunctionNode).invoke.hasValidConnection) ||
+                                         (listOfVariables[index].set && !(listOfVariables[index].setter.graph.units[0] as FunctionNode).invoke.hasValidConnection)))
                                     {
                                         if (typeChangedLookup.TryGetValue(variables[index]["type"], out var type))
                                         {
@@ -2320,10 +2351,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                                 typeChangedLookup[variables[index]["type"]] = currentType;
                                             }
                                         }
-                                        else
-                                        {
-                                            typeChangedLookup[variables[index]["type"]] = (Type)variables[index]["type"].value;
-                                        }
+                                        else typeChangedLookup[variables[index]["type"]] = (Type)variables[index]["type"].value;
 
                                         var inspector = variables[index]["defaultValue"].Inspector();
                                         typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).SetValueOptimized(inspector, ValueInspectorType.Instantiate(true, inspector));
@@ -2339,7 +2367,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                                 GUILayout.Space(4);
 
-                                listOfVariables[index].attributesOpened = HUMEditor.Foldout(listOfVariables[index].attributesOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                listOfVariables[index].attributesOpened = HUMEditor.Foldout(listOfVariables[index].attributesOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                                 {
                                     HUMEditor.Image(PathUtil.Load("attributes_16", CommunityEditorPath.Code).Single(), 16, 16);
                                     GUILayout.Label("Attributes");
@@ -2350,7 +2378,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                                 GUILayout.Space(4);
 
-                                listOfVariables[index].propertyOpened = HUMEditor.Foldout(listOfVariables[index].propertyOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                listOfVariables[index].propertyOpened = HUMEditor.Foldout(listOfVariables[index].propertyOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                                 {
                                     HUMEditor.Image(PathUtil.Load("property_16", CommunityEditorPath.Code).Single(), 16, 16);
                                     EditorGUI.BeginChangeCheck();

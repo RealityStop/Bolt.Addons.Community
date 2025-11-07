@@ -8,7 +8,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 using System.Reflection;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SelectExpose))]
     public sealed class SelectExposeGenerator : NodeGenerator<SelectExpose>

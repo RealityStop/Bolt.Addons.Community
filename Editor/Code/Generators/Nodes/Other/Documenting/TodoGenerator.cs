@@ -5,9 +5,9 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
-	[NodeGenerator(typeof(Todo))]
+    [NodeGenerator(typeof(Todo))]
 	public sealed class TodoGenerator : NodeGenerator<Todo>
 	{
 		public TodoGenerator(Todo Unit) : base(Unit)

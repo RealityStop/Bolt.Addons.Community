@@ -16,7 +16,7 @@ namespace Unity.VisualScripting.Community
             UpdateDefineSymbol();
         }
 
-        private static void UpdateDefineSymbol()
+        public static void UpdateDefineSymbol()
         {
             bool shouldEnable = CommunityOptionFetcher.DefinedEvent_RestrictEventTypes;
 

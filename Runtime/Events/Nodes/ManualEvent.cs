@@ -33,6 +33,10 @@ namespace Unity.VisualScripting.Community
         }
 
         protected override string hookName => EventHooks.Update;
+        [Inspectable]
+        [UnitHeaderInspectable]
+        [NodeButton("TriggerButton")]
+        public NodeButton button;
 
         [Inspectable]
         [InspectorLabel("Ingore Graph State", "Trigger even if the State or Machine is inactive.")]

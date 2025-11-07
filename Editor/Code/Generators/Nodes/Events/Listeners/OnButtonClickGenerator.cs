@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Utility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnButtonClick))]
     public class OnButtonClickGenerator : EventListenerMethodGenerator<OnButtonClick>

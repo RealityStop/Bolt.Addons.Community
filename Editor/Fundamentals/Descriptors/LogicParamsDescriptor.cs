@@ -9,11 +9,11 @@
         {
             switch (unit.BranchingType)
             {
-                case LogicParamNode.BranchType.And: return typeof(Unity.VisualScripting.And).Icon();
-                case LogicParamNode.BranchType.Or: return typeof(Unity.VisualScripting.Or).Icon();
-                case LogicParamNode.BranchType.GreaterThan: return typeof(Unity.VisualScripting.Greater).Icon();
-                case LogicParamNode.BranchType.LessThan: return typeof(Unity.VisualScripting.Less).Icon();
-                case LogicParamNode.BranchType.Equal: return typeof(Unity.VisualScripting.Equal).Icon();
+                case LogicParamNode.BranchType.And: return typeof(And).Icon();
+                case LogicParamNode.BranchType.Or: return typeof(Or).Icon();
+                case LogicParamNode.BranchType.GreaterThan: return unit.AllowEquals ? typeof(GreaterOrEqual).Icon() : typeof(Greater).Icon();
+                case LogicParamNode.BranchType.LessThan: return unit.AllowEquals ? typeof(LessOrEqual).Icon() : typeof(Less).Icon();
+                case LogicParamNode.BranchType.Equal: return typeof(Equal).Icon();
                 default: return base.DefinedIcon();
             }
         }

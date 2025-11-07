@@ -44,6 +44,7 @@ namespace Unity.VisualScripting.Community
             If = ControlOutput(nameof(If));
             Succession(Enter, If);
             condition = ValueInput<bool>(nameof(condition));
+            relations.Add(new UnitRelation(condition, If));
 
             for (int i = 0; i < amount; i++)
             {

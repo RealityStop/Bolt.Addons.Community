@@ -216,6 +216,8 @@ namespace Unity.VisualScripting.Community.Variables.Editor
                             yield return new AssetFieldUnitOption(new AssetFieldUnit(variable.FieldName, variable, ActionDirection.Set));
                     }
 
+                    if (classAsset.IsStatic()) yield break;
+
                     var inheritedType = classAsset.GetInheritedType();
                     if (inheritedType == null) yield break;
 

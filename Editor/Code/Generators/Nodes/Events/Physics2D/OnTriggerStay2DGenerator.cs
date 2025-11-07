@@ -4,7 +4,7 @@ using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
 #if MODULE_PHYSICS_2D_EXISTS
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnTriggerStay2D))]
     public class OnTriggerStay2DGenerator : UnityMethodGenerator<OnTriggerStay2D, Collider2D>

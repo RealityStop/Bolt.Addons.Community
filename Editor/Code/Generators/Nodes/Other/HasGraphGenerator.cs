@@ -3,7 +3,7 @@ using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class HasGraphGenerator<TGraph, TMacro, TMachine> : LocalVariableGenerator
         where TGraph : class, IGraph, new()

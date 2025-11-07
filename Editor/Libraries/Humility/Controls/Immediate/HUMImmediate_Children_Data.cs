@@ -27,6 +27,19 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 }
             }
 
+            public struct StyledImage
+            {
+                public HUMEditor.Data.Immediate immediate;
+                public GUIStyle style;
+                public GUIContent content;
+                public StyledImage(HUMEditor.Data.Immediate immediate, GUIStyle style, GUIContent content)
+                {
+                    this.immediate = immediate;
+                    this.style = style;
+                    this.content = content;
+                }
+            }
+
             public struct Button
             {
                 public Image image;

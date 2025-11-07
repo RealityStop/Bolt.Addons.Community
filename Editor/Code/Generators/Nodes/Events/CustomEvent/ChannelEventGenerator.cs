@@ -6,7 +6,7 @@ using UnityEngine;
 using Unity.VisualScripting.Community.Utility;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ChannelEvent))]
     public class ChannelEventGenerator : AwakeMethodNodeGenerator

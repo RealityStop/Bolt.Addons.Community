@@ -6,7 +6,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(MergeLists))]
     public class MergeListsGenerator : NodeGenerator<MergeLists>

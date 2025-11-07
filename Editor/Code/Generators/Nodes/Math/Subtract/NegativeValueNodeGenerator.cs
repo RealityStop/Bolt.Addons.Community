@@ -1,6 +1,6 @@
 using System;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(NegativeValueNode))]
     public class NegativeValueNodeGenerator : NodeGenerator<NegativeValueNode>

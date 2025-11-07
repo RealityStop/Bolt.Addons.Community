@@ -11,7 +11,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine.InputSystem;
 using Unity.VisualScripting.InputSystem;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnInputSystemEventVector2))]
     public sealed class OnInputSystemEventVector2Generator : MethodNodeGenerator

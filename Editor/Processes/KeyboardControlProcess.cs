@@ -51,17 +51,53 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            if (@event.CtrlOrCmd() && @event.keyCode == KeyCode.Tab && !@event.shift)
+            if (@event.CtrlOrCmd() && @event.keyCode == KeyCode.Tab && FuzzyWindow.instance == null)
             {
                 if (canvas.selection.Count > 0 && selectedElement != canvas.selection.FirstOrDefault())
                 {
                     visitedElements.Clear(); // Most likely the selection was manually changed so just reset visited
                     selectedElement = null;
                 }
+
                 if (EditorApplication.timeSinceStartup - lastTabTime < 0.2f)
                     return;
 
                 lastTabTime = EditorApplication.timeSinceStartup;
+
+                if (canvas.isCreatingConnection && canvas.connectionSource.hasValidConnection)
+                {
+                    var source = canvas.connectionSource;
+                    if (source is ControlOutput controlOutput)
+                    {
+                        canvas.selection.Select(controlOutput.connection.destination.unit);
+                        GraphUtility.OverrideContextIfNeeded(() => canvas.ViewElements(canvas.selection));
+                        canvas.connectionSource = controlOutput.connection.destination;
+                        return;
+                    }
+                    else if (source is ValueInput valueInput)
+                    {
+                        canvas.selection.Select(valueInput.connection.source.unit);
+                        GraphUtility.OverrideContextIfNeeded(() => canvas.ViewElements(canvas.selection));
+                        canvas.connectionSource = valueInput.connection.source;
+                        return;
+                    }
+                    else if (source is ValueOutput valueOutput)
+                    {
+                        canvas.selection.Select(valueOutput.connections.FirstOrDefault()?.destination.unit);
+                        GraphUtility.OverrideContextIfNeeded(() => canvas.ViewElements(canvas.selection));
+                        canvas.connectionSource = valueOutput.connections.FirstOrDefault()?.destination;
+                        return;
+                    }
+                    else if (source is ControlInput controlInput)
+                    {
+                        canvas.selection.Select(controlInput.connections.FirstOrDefault()?.source.unit);
+                        GraphUtility.OverrideContextIfNeeded(() => canvas.ViewElements(canvas.selection));
+                        canvas.connectionSource = controlInput.connections.FirstOrDefault()?.source;
+                        return;
+                    }
+                }
+
+                canvas.CancelConnection();
 
                 var allElements = graph.elements
                     .Except(graph.valueConnections)
@@ -113,17 +149,15 @@ namespace Unity.VisualScripting.Community
 
             if (IsAnyArrowKey(@event.keyCode) && @event.type == EventType.KeyDown)
             {
-                var units = canvas.selection.Where(e => e is Unit).OrderBy(u => (u as Unit).position.x);
-                if (!units.Any()) return;
-                var unit = units.First() as Unit;
-                if (@event.CtrlOrCmd())
+                if (@event.CtrlOrCmd() && !@event.shift)
                 {
                     canvas.CancelConnection();
+                    var visited = new HashSet<IGraphElement>();
                     if (@event.keyCode == KeyCode.LeftArrow)
                     {
                         foreach (var element in canvas.selection)
                         {
-                            MoveElement(element, new Vector2(-20, 0), canvas);
+                            MoveElement(element, new Vector2(-20, 0), canvas, visited);
                         }
                         return;
                     }
@@ -131,7 +165,7 @@ namespace Unity.VisualScripting.Community
                     {
                         foreach (var element in canvas.selection)
                         {
-                            MoveElement(element, new Vector2(20, 0), canvas);
+                            MoveElement(element, new Vector2(20, 0), canvas, visited);
                         }
                         return;
                     }
@@ -139,7 +173,7 @@ namespace Unity.VisualScripting.Community
                     {
                         foreach (var element in canvas.selection)
                         {
-                            MoveElement(element, new Vector2(0, -20), canvas);
+                            MoveElement(element, new Vector2(0, -20), canvas, visited);
                         }
                         return;
                     }
@@ -147,11 +181,15 @@ namespace Unity.VisualScripting.Community
                     {
                         foreach (var element in canvas.selection)
                         {
-                            MoveElement(element, new Vector2(0, 20), canvas);
+                            MoveElement(element, new Vector2(0, 20), canvas, visited);
                         }
                         return;
                     }
                 }
+
+                var units = canvas.selection.Where(e => e is Unit).OrderBy(u => (u as Unit).position.x);
+                if (!units.Any()) return;
+                var unit = units.First() as Unit;
 
                 bool isRight = @event.keyCode == KeyCode.RightArrow;
 
@@ -204,9 +242,9 @@ namespace Unity.VisualScripting.Community
             return 0f;
         }
 
-        private void MoveElement(IGraphElement element, Vector2 delta, FlowCanvas canvas)
+        private void MoveElement(IGraphElement element, Vector2 delta, FlowCanvas canvas, HashSet<IGraphElement> visited)
         {
-            if (element == null) return;
+            if (element == null || !visited.Add(element)) return;
 
             if (element is Unit unit)
             {
@@ -226,10 +264,21 @@ namespace Unity.VisualScripting.Community
                 unit.position += delta;
             }
             else if (element is GraphGroup group)
+            {
+                foreach (var graphElement in canvas.graph.elements.OfType<IGraphElement>())
+                {
+                    if (group.position.Encompasses(canvas.Widget(graphElement).position))
+                    {
+                        MoveElement(graphElement, delta, canvas, visited);
+                    }
+                }
+
                 group.position = new Rect(group.position.position + delta, group.position.size);
+            }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
             else if (element is StickyNote note)
                 note.position = new Rect(note.position.position + delta, note.position.size);
-
+#endif
             canvas.Widget(element).Reposition();
         }
 

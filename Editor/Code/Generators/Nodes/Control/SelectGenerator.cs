@@ -1,6 +1,6 @@
 ﻿using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SelectUnit))]
     public sealed class SelectGenerator : NodeGenerator<SelectUnit>

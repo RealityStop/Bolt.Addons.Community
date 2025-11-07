@@ -1,7 +1,7 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Vector3Round))]
     public class Vector3RoundGenerator : BaseRoundGenerator<Vector3, Vector3>

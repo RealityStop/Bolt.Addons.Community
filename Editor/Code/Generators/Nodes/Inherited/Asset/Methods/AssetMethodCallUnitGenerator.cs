@@ -6,9 +6,8 @@ using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
-
     [NodeGenerator(typeof(AssetMethodCallUnit))]
     public class AssetMethodCallUnitGenerator : NodeGenerator<AssetMethodCallUnit>
     {

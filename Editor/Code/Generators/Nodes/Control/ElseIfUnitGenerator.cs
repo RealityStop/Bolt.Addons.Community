@@ -2,7 +2,7 @@ using System.Text;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ElseIfUnit))]
     public sealed class ElseIfUnitGenerator : NodeGenerator<ElseIfUnit>

@@ -3,7 +3,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Literal))]
     public sealed class LiteralGenerator : NodeGenerator<Literal>

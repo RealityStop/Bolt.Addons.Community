@@ -1,5 +1,5 @@
 ﻿using Unity.VisualScripting.Community.Libraries.CSharp;
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(FunctionNode))]
     public sealed class FunctionNodeGenerator : NodeGenerator<FunctionNode>

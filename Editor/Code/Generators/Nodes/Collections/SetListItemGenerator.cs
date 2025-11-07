@@ -1,7 +1,7 @@
 using Unity.VisualScripting;
 using System;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SetListItem))]
     public class SetListItemGenerator : NodeGenerator<SetListItem>

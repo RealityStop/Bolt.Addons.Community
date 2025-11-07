@@ -16,8 +16,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             typeof(float), typeof(double), typeof(decimal)
         };
 
-        private static readonly Dictionary<(Type from, Type to), bool> _implicitCache = new();
-        private static readonly Dictionary<(Type from, Type to), bool> _explicitCache = new();
+        private static readonly Dictionary<(Type from, Type to), bool> _implicitCache = new Dictionary<(Type from, Type to), bool>();
+        private static readonly Dictionary<(Type from, Type to), bool> _explicitCache = new Dictionary<(Type from, Type to), bool>();
 
         /// <summary>
         /// Determines if C# allows an implicit conversion between two types.
@@ -165,11 +165,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             // If both are numeric and conversion is valid > cast required (e.g., int > float)
             if (sourceType.IsNumeric() && targetType.IsNumeric() && !ConversionUtility.HasImplicitNumericConversion(sourceType, targetType))
-                return true;
+                return IsCastingPossible(sourceType, targetType);
 
             // If nullable conversion is valid > cast required
             if (IsNullableConversion(sourceType, targetType))
-                return true;
+                return IsCastingPossible(sourceType, targetType);
 
             // If we can safely cast via reference or boxing/unboxing > cast required
             if (IsCastingPossible(sourceType, targetType))
@@ -189,13 +189,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 if (targetType.IsAssignableFrom(sourceType))
                     return true;
 
-                if (targetType.IsInterface && sourceType.GetInterfaces().Contains(targetType))
-                    return true;
-
-                if (sourceType.IsValueType && (targetType == typeof(object) || targetType.IsInterface))
-                    return true;
-
-                if (targetType.IsValueType && sourceType == typeof(object))
+                if (IsExplicitlyConvertible(sourceType, targetType))
                     return true;
 
                 if (ConversionUtility.HasExplicitNumericConversion(sourceType, targetType))
@@ -224,27 +218,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 return sourceUnderlying == targetUnderlying;
 
             if (sourceUnderlying != null)
-                return targetType.IsAssignableFrom(sourceUnderlying);
+                return targetType.IsStrictlyAssignableFrom(sourceUnderlying);
 
             if (targetUnderlying != null)
-                return targetUnderlying.IsAssignableFrom(sourceType);
+                return targetUnderlying.IsStrictlyAssignableFrom(sourceType);
 
-            return false;
-        }
-
-        public static bool IsNullableConversionCompatible(Type sourceType, Type targetType)
-        {
-            if (Nullable.GetUnderlyingType(targetType) != null)
-            {
-                Type underlyingTargetType = Nullable.GetUnderlyingType(targetType);
-                return underlyingTargetType.IsStrictlyAssignableFrom(sourceType);
-            }
-
-            if (Nullable.GetUnderlyingType(sourceType) != null)
-            {
-                Type underlyingSourceType = Nullable.GetUnderlyingType(sourceType);
-                return targetType.IsStrictlyAssignableFrom(underlyingSourceType);
-            }
             return false;
         }
     }

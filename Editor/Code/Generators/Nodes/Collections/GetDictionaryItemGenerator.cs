@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(GetDictionaryItem))]
     public class GetDictionaryItemGenerator : NodeGenerator<GetDictionaryItem>

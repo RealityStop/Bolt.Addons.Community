@@ -3,7 +3,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class BaseLerpGenerator<T> : NodeGenerator<Lerp<T>>
     {

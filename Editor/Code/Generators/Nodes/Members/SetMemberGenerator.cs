@@ -9,7 +9,7 @@ using UnityEngine;
 using System;
 using Unity.VisualScripting.Community.CSharp;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SetMember))]
     public sealed class SetMemberGenerator : NodeGenerator<SetMember>
@@ -33,8 +33,8 @@ namespace Unity.VisualScripting.Community
                 {
                     data.SetExpectedType(Unit.target.type);
                     var targetValue = GenerateValue(Unit.target, data);
-                    data.RemoveExpectedType();
-                    var code = Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true);
+                    var result = data.RemoveExpectedType();
+                    var code = !result.isMet ? Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true) : "";
 
                     output += CodeBuilder.Indent(indent) + targetValue + MakeClickableForThisUnit(code + $".{memberName} = ") + $"{inputValue}{MakeClickableForThisUnit(";")}\n";
                 }
@@ -55,8 +55,8 @@ namespace Unity.VisualScripting.Community
             var builder = Unit.CreateClickableString();
             data.SetExpectedType(Unit.target.type);
             var targetValue = GenerateValue(Unit.target, data);
-            data.RemoveExpectedType();
-            var code = Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true);
+            var result = data.RemoveExpectedType();
+            var code = !result.isMet ? Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true) : "";
 
             return builder.Ignore(targetValue).Clickable(code).GetMember(Unit.member.name);
         }
@@ -72,9 +72,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (input.hasValidConnection)
                 {
-                    data.SetExpectedType(input.type);
                     var connectedCode = GetNextValueUnit(input, data);
-                    data.RemoveExpectedType();
                     return connectedCode;
                 }
                 else if (input.hasDefaultValue)
@@ -90,10 +88,8 @@ namespace Unity.VisualScripting.Community
             {
                 if (input.hasValidConnection)
                 {
-                    data.SetExpectedType(input.type);
                     var connectedCode = GetNextValueUnit(input, data);
                     var shouldCast = ShouldCast(input, data, false);
-                    data.RemoveExpectedType();
                     return connectedCode.CastAs(input.type, Unit, shouldCast);
                 }
                 else

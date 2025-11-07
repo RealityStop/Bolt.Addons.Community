@@ -149,20 +149,19 @@ namespace Unity.VisualScripting.Community.CSharp
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            HUMEditor.Vertical(() =>
+            HUMEditor.Vertical().Box(CommunityStyles.backgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 1, 1), () =>
             {
                 HUMEditor.Changed(() =>
                 {
-                    HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 2, 2), () =>
+                    HUMEditor.Vertical().Box(CommunityStyles.foldoutHeaderColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 1, 1), () =>
                     {
                         OnTypeHeaderGUI();
                         AfterCategoryGUI();
                     });
 
-                    EditorGUILayout.Space(4);
-
                     if (warningPresent)
                     {
+                        EditorGUILayout.Space(4);
                         EditorGUILayout.HelpBox("Code Assets are an in preview feature. " +
                             "Not all functionality is present, and not all nodes have working generators. " +
                             "There is no guarentee assets will remain in tact. " +
@@ -177,13 +176,12 @@ namespace Unity.VisualScripting.Community.CSharp
                         }
                     }
 
-                    EditorGUILayout.Space(4);
-
                     if (showOptions)
                     {
-                        Target.optionsOpened = HUMEditor.Foldout(Target.optionsOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () => { GUILayout.Label("Options"); }, () =>
+                        EditorGUILayout.Space(4);
+                        Target.optionsOpened = HUMEditor.Foldout(Target.optionsOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () => { GUILayout.Label("Options"); }, () =>
                         {
-                            HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                            HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                             {
                                 OptionsGUI();
                             });
@@ -194,7 +192,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     BeforePreview();
 
-                    EditorGUILayout.Space(4);
+                    EditorGUILayout.Space(2);
 
                 }, () =>
                 {

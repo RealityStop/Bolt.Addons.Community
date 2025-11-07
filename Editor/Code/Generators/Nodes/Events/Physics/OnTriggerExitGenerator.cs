@@ -4,7 +4,7 @@ using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
 #if MODULE_PHYSICS_EXISTS
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnTriggerExit))]
     public class OnTriggerExitGenerator : UnityMethodGenerator<OnTriggerExit, Collider>

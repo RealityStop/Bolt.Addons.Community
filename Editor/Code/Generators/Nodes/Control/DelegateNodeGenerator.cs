@@ -7,7 +7,7 @@ using System.Linq;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(DelegateNode))]
     public class DelegateNodeGenerator : NodeGenerator<DelegateNode>

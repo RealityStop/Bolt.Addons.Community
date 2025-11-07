@@ -1,7 +1,7 @@
 using System;
 using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ListContainsItem))]
     public class ListContainsItemGenerator : NodeGenerator<ListContainsItem>

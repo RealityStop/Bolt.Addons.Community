@@ -25,21 +25,22 @@ namespace Unity.VisualScripting.Community
         {
             new KeyboardControl("[Ctrl] + [/] + [/]", "Create comment"),
             new KeyboardControl("[Ctrl] + [Tab]", "Cycle through graph elements"),
+            new KeyboardControl("[←] [→] [↑] [↓]", "Pan Graph"),
         };
 
         private readonly List<KeyboardControl> selectionControls = new List<KeyboardControl>()
         {
             new KeyboardControl("[Ctrl] + [Shift] + [T]", "Open Surround with Commands"),
             new KeyboardControl("[Ctrl] + [/] + [/]", "Create comment with connections"),
-            new KeyboardControl("[←] [→] [↑] [↓]", "Move Selected Units"),
-            new KeyboardControl("[Ctrl/Cmd] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through all ports"),
+            new KeyboardControl("[Ctrl/Cmd] + [←] [→] [↑] [↓]", "Move Selected Elements"),
+            new KeyboardControl("[←] [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through all ports"),
             new KeyboardControl("[Shift] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through Control ports"),
             new KeyboardControl("[Alt] + [←] or [→]\nSingle Unit Only\nUse ↑ to add Unit", "Cycle through Value ports"),
         };
 
         private readonly List<KeyboardControl> creatingConnectionControls = new List<KeyboardControl>()
         {
-            new KeyboardControl("[Tab]\nIn Fuzzy Finder\nSnippet Layout:\n[Name],[Parameters(Separated by ',')]", "Add Graph Snippet"),
+            new KeyboardControl("[Tab]\nIn Fuzzy Finder\nSnippet Layout:\n[ Name ],[ Parameter1,Parameter2... ]", "Add Graph Snippet"),
             new KeyboardControl("[Space]", "Create Reroute")
         };
 

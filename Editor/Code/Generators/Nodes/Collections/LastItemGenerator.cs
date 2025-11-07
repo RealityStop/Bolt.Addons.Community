@@ -3,7 +3,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections;
 using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(LastItem))]
     public class LastItemGenerator : NodeGenerator<LastItem>

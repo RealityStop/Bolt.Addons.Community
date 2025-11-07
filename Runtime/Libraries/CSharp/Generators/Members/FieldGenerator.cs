@@ -19,6 +19,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public string stringDefault;
         public HighlightType highlightType;
         public Type type;
+        public bool hasDefault;
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
         private bool isLiteral = true;
         private bool isNewlineLiteral = true;
@@ -26,7 +27,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         private FieldGenerator() { }
 
-        public static FieldGenerator Field(AccessModifier scope, FieldModifier modifier, Type type, string name, object defaultValue)
+        public static FieldGenerator Field(AccessModifier scope, FieldModifier modifier, Type type, string name, object defaultValue, bool hasDefault = false)
         {
             var field = new FieldGenerator();
             field.scope = scope;
@@ -34,6 +35,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             field.type = type;
             field.name = name.LegalMemberName();
             field.defaultValue = defaultValue;
+            field.hasDefault = hasDefault;
             return field;
         }
 
@@ -47,7 +49,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             field.defaultValue = type.Default();
             return field;
         }
-
 
         public static FieldGenerator Field(AccessModifier scope, FieldModifier modifier, string typeName, string typeNamespace, string name, string defaultValue = null, HighlightType highlightType = HighlightType.None)
         {
@@ -99,7 +100,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (attributes.Count > 0) _attributes += "\n";
             var modSpace = (modifier == FieldModifier.None) ? string.Empty : " ";
             var definition = CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + (typeIsString ? stringType.WithHighlight(highlightType) : type.As().CSharpName()) + " " + name.LegalMemberName().VariableHighlight();
-            var output = !isString && (defaultValue == null || (!(typeIsString ? stringType == nameof(Type) : type == typeof(Type)) && defaultValue.Equals(type.PseudoDefault()))) ? ";" : " = " + (isString ? stringDefault + ";" : defaultValue.As().Code(isNew, isLiteral, true, "", isNewlineLiteral, true, false) + ";");
+            var output = !isString && (!hasDefault || defaultValue == null || (!(typeIsString ? stringType == nameof(Type) : type == typeof(Type)) && defaultValue.Equals(type.PseudoDefault()))) ? ";" : " = " + (isString ? stringDefault + ";" : defaultValue.As().Code(isNew, isLiteral, true, "", isNewlineLiteral, true, false) + ";");
             return _attributes + definition + output;
         }
 

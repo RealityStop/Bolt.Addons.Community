@@ -4,7 +4,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class BaseProjectGenerator<TVector> : NodeGenerator<Project<TVector>>
     {

@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using Unity.VisualScripting.Community.Utility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnApplicationQuit))]
     public class OnApplicationQuitGenerator : UnityMethodGenerator<OnApplicationQuit, EmptyEventArgs>

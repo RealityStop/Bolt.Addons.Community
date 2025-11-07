@@ -35,7 +35,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         private PropertyGenerator() { }
 
-        public static PropertyGenerator Property(AccessModifier scope, PropertyModifier modifier, Type returnType, string name, bool hasDefault, AccessModifier getterScope, AccessModifier setterScope)
+        public static PropertyGenerator Property(AccessModifier scope, PropertyModifier modifier, Type returnType, string name, bool hasDefault, object defaultValue, AccessModifier getterScope, AccessModifier setterScope)
         {
             var prop = new PropertyGenerator();
             prop.scope = scope;
@@ -44,6 +44,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             prop.returnType = returnType;
             prop.getterScope = getterScope;
             prop.setterScope = setterScope;
+            prop.hasDefault = hasDefault;
+            prop.defaultValue = defaultValue;
             return prop;
         }
 
@@ -54,6 +56,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             prop.modifier = modifier;
             prop.name = name;
             prop.returnType = returnType;
+            prop.hasDefault = hasDefault;
             return prop;
         }
 
@@ -67,6 +70,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             prop.useAssemblyQualifiedReturnType = true;
             prop.assemblyQualifiedIsPrimitive = isPrimitive;
             prop.assemblyQualifiedIsValueType = isValueType;
+            prop.hasDefault = hasDefault;
             return prop;
         }
 
@@ -132,7 +136,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         {
             var getterscope = getterScope != scope && getterScope != AccessModifier.None ? getterScope.AsString().ConstructHighlight() + " " : string.Empty;
             var setterscope = setterScope != scope && setterScope != AccessModifier.None ? setterScope.AsString().ConstructHighlight() + " " : string.Empty;
-            var modifierStr = modifier != PropertyModifier.None ? modifier.AsString().ConstructHighlight() + " " : string.Empty;
+            var modifierStr = modifier.AsString().ConstructHighlight() + " ";
             var scopeStr = scope != AccessModifier.None ? scope.AsString().ConstructHighlight() + " " : string.Empty;
             var typeStr = useAssemblyQualifiedReturnType ? assemblyQualifiedReturnType : returnType.As().CSharpName();
 

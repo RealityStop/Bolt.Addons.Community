@@ -5,7 +5,7 @@ using SMachine = Unity.VisualScripting.ScriptMachine;
 #else
 using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(GetMachineNode))]
     public class GetMachineNodeGenerator : NodeGenerator<GetMachineNode>

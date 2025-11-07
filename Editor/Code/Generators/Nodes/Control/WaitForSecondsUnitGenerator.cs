@@ -2,7 +2,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(WaitForSecondsUnit))]
     public sealed class WaitForSecondsUnitGenerator : NodeGenerator<WaitForSecondsUnit>

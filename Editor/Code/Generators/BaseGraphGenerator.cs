@@ -12,7 +12,7 @@ using Unity.VisualScripting.InputSystem;
 using UnityEngine.InputSystem;
 #endif
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class BaseGraphGenerator<T> : CodeGenerator<T> where T : UnityEngine.Object
     {

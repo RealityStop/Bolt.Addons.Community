@@ -1,11 +1,9 @@
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
 using System.Linq;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class MathFunctionGenerator<TUnit> : NodeGenerator<TUnit> where TUnit : Unit
     {

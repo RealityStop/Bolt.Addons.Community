@@ -4,7 +4,7 @@ using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
 #if MODULE_PHYSICS_2D_EXISTS
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnCollisionEnter2D))]
     public class OnCollisionEnter2DGenerator : UnityMethodGenerator<OnCollisionEnter2D, Collision2D>

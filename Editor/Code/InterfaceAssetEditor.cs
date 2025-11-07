@@ -96,13 +96,13 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void Interfaces()
         {
-            Target.interfacesOpened = HUMEditor.Foldout(Target.interfacesOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            Target.interfacesOpened = HUMEditor.Foldout(Target.interfacesOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
             {
                 HUMEditor.Image(typeof(IAction).Icon()[IconSize.Small], 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
                 GUILayout.Label("Interfaces");
             }, () =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                 {
                     var listOfInterfaces = Target.interfaces;
 
@@ -175,11 +175,11 @@ namespace Unity.VisualScripting.Community.CSharp
         private void DrawParameters(Metadata paramMeta, UnityEngine.Object target)
         {
             var parameters = paramMeta.value as List<TypeParam>;
-            HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+            HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
             {
                 for (int i = 0; i < parameters.Count; i++)
                 {
-                    parameters[i].opened = HUMEditor.Foldout(parameters[i].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                    parameters[i].opened = HUMEditor.Foldout(parameters[i].opened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                     {
                         EditorGUI.BeginChangeCheck();
                         var paramName = GUILayout.TextField(parameters[i].name);
@@ -235,7 +235,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         }
                     }, () =>
                     {
-                        HUMEditor.Vertical().Box(HUMColor.Grey(0.15f), Color.black, new RectOffset(6, 6, 6, 6), new RectOffset(1, 1, 0, 1), () =>
+                        HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(6, 6, 6, 6), new RectOffset(1, 1, 0, 1), () =>
                         {
                             Inspector.BeginBlock(paramMeta, new Rect());
                             var currentParam = paramMeta[i];
@@ -262,7 +262,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             }
                             if (GUILayout.Button(modifiers.GetEnumString(ParameterModifier.None, "None"), EditorStyles.popup, GUILayout.MaxHeight(19f)))
                             {
-                                GenericMenu menu = new GenericMenu();//
+                                GenericMenu menu = new GenericMenu();
                                 menu.AddItem(new GUIContent("None"), modifiers == ParameterModifier.None, (obj) =>
                                 {
                                     var _param = obj as TypeParam;
@@ -400,7 +400,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             }
 
                             if (parameters[i].attributes == null) parameters[i].attributes = new List<AttributeDeclaration>();
-                            parameters[i].attributesOpened = HUMEditor.Foldout(parameters[i].attributesOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                            parameters[i].attributesOpened = HUMEditor.Foldout(parameters[i].attributesOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                             {
                                 HUMEditor.Image(PathUtil.Load("attributes_16", CommunityEditorPath.Code).Single(), 16, 16);
                                 GUILayout.Label("Attributes");
@@ -475,7 +475,7 @@ namespace Unity.VisualScripting.Community.CSharp
         }
         private void DrawAttributes(Metadata attributesMeta, List<AttributeDeclaration> attributeList, AttributeUsageType attributeUsageType, UnityEngine.Object target, string undoName)
         {
-            HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+            HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
             {
                 for (int attrIndex = 0; attrIndex < attributeList.Count; attrIndex++)
                 {
@@ -484,7 +484,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     attribute.opened = HUMEditor.Foldout(
                         attribute.opened,
-                        HUMEditorColor.DefaultEditorBackground.Darken(0f),
+                        CommunityStyles.foldoutHeaderColor,
                         Color.black,
                         1,
                         () =>
@@ -567,7 +567,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         },
                     () =>
                     {
-                        HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                        HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                         {
                             var attributeParamMeta = attributesMeta[attrIndex]["parameters"];
                             var constructors = attribute?.GetAttributeType()?.GetConstructors();
@@ -837,17 +837,17 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void Variables()
         {
-            Target.propertiesOpen = HUMEditor.Foldout(Target.propertiesOpen, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            Target.propertiesOpen = HUMEditor.Foldout(Target.propertiesOpen, ColorPalette.unityBackgroundLight.color.Darken(0.1f), Color.black, 1, () =>
             {
                 HUMEditor.Image(PathUtil.Load("variables_16", CommunityEditorPath.Code).Single(), 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
                 GUILayout.Label("Variables");
             }, () =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                HUMEditor.Vertical().Box(ColorPalette.unityBackgroundLight.color.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                 {
                     for (int i = 0; i < Target.variables.Count; i++)
                     {
-                        Target.variables[i].isOpen = HUMEditor.Foldout(Target.variables[i].isOpen, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        Target.variables[i].isOpen = HUMEditor.Foldout(Target.variables[i].isOpen, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                         {
                             GUILayout.BeginHorizontal();
                             variables[i]["name"].value = EditorGUILayout.TextField((string)variables[i]["name"].value);
@@ -886,7 +886,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             GUILayout.EndHorizontal();
                         }, () =>
                         {
-                            HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                            HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                             {
                                 GUILayout.BeginHorizontal();
                                 GUILayout.Label("Type");
@@ -936,20 +936,20 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void Methods()
         {
-            Target.methodsOpen = HUMEditor.Foldout(Target.methodsOpen, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () =>
+            Target.methodsOpen = HUMEditor.Foldout(Target.methodsOpen, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
             {
                 HUMEditor.Image(PathUtil.Load("method_16", CommunityEditorPath.Code).Single(), 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
                 GUILayout.Label("Methods");
             }, () =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                 {
                     var listOfMethods = methods.value as List<InterfaceMethodItem>;
 
                     for (int i = 0; i < listOfMethods.Count; i++)
                     {
                         var index = i;
-                        listOfMethods[index].opened = HUMEditor.Foldout(listOfMethods[index].opened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                        listOfMethods[index].opened = HUMEditor.Foldout(listOfMethods[index].opened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                         {
                             HUMEditor.Changed(() =>
                             {
@@ -1004,7 +1004,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 GUILayout.EndHorizontal();
                                 GUILayout.Space(4);
 
-                                listOfMethods[index].parametersOpened = HUMEditor.Foldout(listOfMethods[index].parametersOpened, HUMEditorColor.DefaultEditorBackground.Darken(0.15f), Color.black, 1, () =>
+                                listOfMethods[index].parametersOpened = HUMEditor.Foldout(listOfMethods[index].parametersOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
                                 {
                                     GUILayout.Label("Parameters");
                                 }, () =>

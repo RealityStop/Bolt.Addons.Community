@@ -10,7 +10,7 @@ namespace Unity.VisualScripting.Community
 {
     [IncludeInSettings(true)]
     [Serializable]
-    public sealed class EditorWindowView : EditorWindow
+    public sealed class EditorWindowView : EditorWindow, IHasCustomMenu
     {
         public EditorWindowAsset asset;
         VisualElement header;
@@ -26,23 +26,6 @@ namespace Unity.VisualScripting.Community
             window.showReferencePicker = true;
             window.titleContent = new GUIContent("Editor Window View");
             window.Show();
-        }
-
-        [MenuItem("Window/Community Addons/Toggle Reference picker &r")]
-        public static void ToggleReferencePicker()
-        {
-            if (HasOpenInstances<EditorWindowView>())
-            {
-                var focused = focusedWindow as EditorWindowView;
-
-                if (focused != null)
-                {
-                    focused.showReferencePicker = !focused.showReferencePicker;
-                    return;
-                }
-            }
-
-            Debug.LogWarning("No EditorWindowView open or focused cannot toggle reference picker.");
         }
 
         public static EditorWindowView CreateWindow(EditorWindowAsset windowType, bool showReferencePicker = false)
@@ -237,6 +220,14 @@ namespace Unity.VisualScripting.Community
             {
                 variables.Clear();
             }
+        }
+
+        public void AddItemsToMenu(GenericMenu menu)
+        {
+            menu.AddItem(new GUIContent("Show Reference Picker"), showReferencePicker, () =>
+            {
+                showReferencePicker = !showReferencePicker;
+            });
         }
     }
 }

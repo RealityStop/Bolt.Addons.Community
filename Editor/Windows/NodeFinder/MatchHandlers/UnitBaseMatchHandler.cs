@@ -7,7 +7,6 @@ namespace Unity.VisualScripting.Community
 {
     public abstract class UnitBaseMatchHandler : BaseMatchHandler
     {
-
         public override Type SupportedType => typeof(Unit);
 
         public override bool CanHandle(IGraphElement element)

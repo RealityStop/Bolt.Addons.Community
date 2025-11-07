@@ -8,7 +8,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using System.Linq;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [CodeGenerator(typeof(DelegateAsset))]
     [Serializable]

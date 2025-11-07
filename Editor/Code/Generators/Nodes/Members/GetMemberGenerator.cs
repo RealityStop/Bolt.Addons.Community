@@ -8,7 +8,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 using System;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Unity.VisualScripting.GetMember))]
     public sealed class GetMemberGenerator : NodeGenerator<Unity.VisualScripting.GetMember>
@@ -22,7 +22,7 @@ namespace Unity.VisualScripting.Community
         {
             var builder = Unit.CreateClickableString();
 
-            data.CreateSymbol(Unit, Unit.member.type);
+            data.CreateSymbol(Unit, output.type);
 
             if (Unit.target == null)
                 return builder.GetMember(Unit.member.targetType, Unit.member.name);
@@ -44,15 +44,17 @@ namespace Unity.VisualScripting.Community
             {
                 name = Unit.member.ToDeclarer().ToString(); // I don't think this should be possible through normal usage.
             }
-
+            data.SetExpectedType(Unit.target.type);
+            var targetCode = GenerateValue(Unit.target, data);
+            var result = data.RemoveExpectedType();
             if (!typeof(Component).IsAssignableFrom(Unit.member.pseudoDeclaringType))
-                return builder.GetMember(t => t.Ignore(GenerateValue(Unit.target, data)), name);
+                return builder.GetMember(t => t.Ignore(targetCode), name);
 
-            var code = Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, false, false);
+            var code = !result.isMet ? Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, false, false) : "";
             if (!string.IsNullOrEmpty(code))
-                return builder.InvokeMember(t => t.Ignore(GenerateValue(Unit.target, data)), code).GetMember(name);
+                return builder.InvokeMember(t => t.Ignore(targetCode), code).GetMember(name);
             else
-                return builder.GetMember(t => t.Ignore(GenerateValue(Unit.target, data)), name);
+                return builder.GetMember(t => t.Ignore(targetCode), name);
         }
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
@@ -64,14 +66,12 @@ namespace Unity.VisualScripting.Community
                 {
                     if (Unit.target.hasValidConnection)
                     {
-                        data.SetExpectedType(Unit.member.pseudoDeclaringType);
                         var connectedCode = GetNextValueUnit(input, data);
-                        data.RemoveExpectedType();
                         // if (typeof(Component).IsStrictlyAssignableFrom(Unit.member.pseudoDeclaringType))
                         // {
                         //     return connectedCode.CastAs(typeof(GameObject), Unit, ShouldCast(input, data));
                         // }
-                        return ShouldCast(input, data) ? connectedCode.GetConvertToString(input.type) : connectedCode;
+                        return ShouldCast(input, data) ? connectedCode.GetConvertToString(input.type, Unit) : connectedCode;
                     }
                     else if (Unit.target.hasDefaultValue)
                     {

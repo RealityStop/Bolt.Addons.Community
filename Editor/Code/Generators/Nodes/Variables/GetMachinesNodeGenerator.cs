@@ -1,7 +1,7 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(GetMachinesNode))]
     public class GetMachineNodesGenerator : NodeGenerator<GetMachinesNode>

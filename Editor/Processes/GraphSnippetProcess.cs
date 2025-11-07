@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
+using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
 using UnityEngine;
 
@@ -117,6 +117,11 @@ namespace Unity.VisualScripting.Community
                             .OrderableSearchFilter(snippetName, snippet => snippet.SnippetName)
                             .ToList();
                         matchFound = HandleSnippetSelection<ValueGraphSnippet, SnippetValueSourceUnit>(orderedSnippets, graph, canvas, currentQuery);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Connection source is neither ControlOutput nor ValueInput.");
+                        return;
                     }
 
                     if (!matchFound)

@@ -1,9 +1,8 @@
 using System;
 using System.IO;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using UnityEditor.Compilation;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public class EnumAssetCompiler : BaseCompiler
     {

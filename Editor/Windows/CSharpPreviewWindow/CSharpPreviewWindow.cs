@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using Unity.VisualScripting.Community;
-using Unity.VisualScripting;
 using System.Text.RegularExpressions;
 #if VISUAL_SCRIPTING_1_7
 using SMachine = Unity.VisualScripting.ScriptMachine;
@@ -180,7 +178,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 Mathf.CeilToInt((scrollPosition.y + position.height) / lineHeight) + BufferLines);
 
             float maxLineWidth = 0f;
-
+            elementWasClicked = false;
             for (int i = firstVisible; i <= lastVisible; i++)
             {
                 Rect lineRect = new Rect(0, i * lineHeight, contentWidth, lineHeight);
@@ -191,6 +189,26 @@ namespace Unity.VisualScripting.Community.CSharp
             if (lineWidths != null && lineWidths.Length > 0)
             {
                 contentWidth = Mathf.Max(position.width, maxLineWidth) + 20f;
+            }
+
+            var e = Event.current;
+            if (e.type == EventType.MouseDown && e.button == 0)
+            {
+                Rect codeAreaRect = GUILayoutUtility.GetLastRect();
+
+                if (codeAreaRect.Contains(e.mousePosition))
+                {
+                    if (!elementWasClicked)
+                    {
+                        selectedRegions.Clear();
+                        selectedLines.Clear();
+                        selectedUnitID = "";
+                        allCodeSelected = false;
+                        GUI.FocusControl(null);
+                        e.Use();
+                        Repaint();
+                    }
+                }
             }
 
             EditorGUILayout.EndScrollView();
@@ -376,6 +394,9 @@ namespace Unity.VisualScripting.Community.CSharp
             string cleanText = CodeUtility.CleanCode(toolTipText, false);
             return RemoveColorTags(cleanText);
         }
+
+        private bool elementWasClicked = false;
+
         private float DrawLine(Rect rect, int index)
         {
             float x = rect.x - scrollPosition.x;
@@ -394,7 +415,47 @@ namespace Unity.VisualScripting.Community.CSharp
             Vector2 numberSize = baseStyle.CalcSize(new GUIContent(lineNumberText));
             float lineNumberWidth = Mathf.Max(LineNumberWidth, numberSize.x);
             Rect lineNumberRect = new Rect(x, rect.y, lineNumberWidth, rect.height);
-            GUI.Label(lineNumberRect, $"{index + 1,4}: ", baseStyle);
+            var e = Event.current;
+            GUI.Label(lineNumberRect, lineNumberText, baseStyle);
+
+            if (e.type == EventType.MouseDown && e.button == 0 && lineNumberRect.Contains(e.mousePosition))
+            {
+                if (e.CtrlOrCmd())
+                {
+                    if (selectedLines.Contains(index))
+                        selectedLines.Remove(index);
+                    else
+                    {
+                        if (cachedRegions != null && cachedRegions.TryGetValue(index, out var _regions) && _regions.Count > 0)
+                        {
+                            var first = _regions.FirstOrDefault();
+                            if (first != null)
+                                selectedUnitID = first.unitId;
+                            else selectedUnitID = "";
+                        }
+                        else
+                            selectedUnitID = "";
+                        selectedLines.Add(index);
+                    }
+                }
+                else
+                {
+                    selectedLines.Clear();
+                    selectedRegions.Clear();
+                    selectedLines.Add(index);
+                    if (cachedRegions != null && cachedRegions.TryGetValue(index, out var _regions) && _regions.Count > 0)
+                    {
+                        var first = _regions.FirstOrDefault();
+                        if (first != null)
+                            selectedUnitID = first.unitId;
+                        else selectedUnitID = "";
+                    }
+                    else
+                        selectedUnitID = "";
+                }
+                e.Use();
+            }
+
             x += lineNumberWidth;
 
             float lineHeight = LineHeight * visualZoom;
@@ -440,6 +501,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         selectedUnitID = region.unitId;
                         HandleClick(index, region);
                         HandleClickableRegionClick(region.unitId, index);
+                        elementWasClicked = true;
                     }
 
                     x += size.x;
@@ -475,6 +537,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 {
                     selectedUnitID = "";
                     HandleClick(index, null);
+                    elementWasClicked = true;
                 }
 
                 x += size.x;
@@ -507,7 +570,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 }
 
                 lastClickTime = time; lastClickedLine = index;
-                bool ctrl = e.control || e.command;
+                bool ctrl = e.CtrlOrCmd();
 
                 if (clickCount == 2)
                 {
@@ -940,7 +1003,9 @@ namespace Unity.VisualScripting.Community.CSharp
                     var compiler = info.compiler as BaseCompiler;
                     if (compiler == null) continue;
 
+#if UNITY_2023_1_OR_NEWER
                     if (!AssetDatabase.AssetPathExists(info.relativePath)) continue;
+#endif
 
                     var type = AssetDatabase.LoadAssetAtPath<MonoScript>(info.relativePath)?.GetClass();
                     try

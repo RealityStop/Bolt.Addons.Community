@@ -6,7 +6,7 @@ using UnityEngine;
 using Unity.VisualScripting.Community.Utility;
 using UnityEngine.EventSystems;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnMove))]
     public class OnMoveGenerator : InterfaceNodeGenerator

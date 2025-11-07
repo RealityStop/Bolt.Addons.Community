@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(GraphOutput))]
     public sealed class GraphOutputGenerator : NodeGenerator<GraphOutput>

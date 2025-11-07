@@ -3,7 +3,7 @@ using System.Text;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(RandomElementNode))]
     public class RandomElementNodeGenerator : LocalVariableGenerator

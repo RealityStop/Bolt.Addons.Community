@@ -2,7 +2,7 @@ using System;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(BasePropertyGetterUnit))]
     public class BasePropertyGetterGenerator : NodeGenerator<BasePropertyGetterUnit>

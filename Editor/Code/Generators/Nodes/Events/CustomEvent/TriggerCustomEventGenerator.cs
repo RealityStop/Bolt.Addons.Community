@@ -5,7 +5,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(TriggerCustomEvent))]
     public sealed class TriggerCustomEventGenerator : NodeGenerator<TriggerCustomEvent>
@@ -37,7 +37,7 @@ namespace Unity.VisualScripting.Community
                 var sourceIsComponent = typeof(Component).IsAssignableFrom(sourceType);
                 if (sourceIsComponent)
                 {
-                    return base.GenerateValue(Unit.target, data).GetConvertToString<GameObject>();
+                    return base.GenerateValue(Unit.target, data).GetConvertToString<GameObject>(Unit);
                 }
                 else
                 {

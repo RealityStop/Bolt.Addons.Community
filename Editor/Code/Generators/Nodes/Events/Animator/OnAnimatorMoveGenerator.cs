@@ -5,7 +5,7 @@ using Unity.VisualScripting.Community.Utility;
 using System.Collections;
 using System.Linq;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnAnimatorMove))]
     public class OnAnimatorMoveGenerator : MethodNodeGenerator

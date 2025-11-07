@@ -53,7 +53,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             var showBrackets = parameterList.Count > 0;
 
             return CodeBuilder.Indent(indent) + "[" +
-                type.Name.Replace("Attribute", string.Empty).TypeHighlight() +
+                type.As().CSharpName(false, true) +
                 (showBrackets ? "(" + parameters + ")" : string.Empty) +
                 "]";
         }

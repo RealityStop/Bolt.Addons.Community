@@ -1,4 +1,4 @@
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Vector4ListAverage))]
     public class Vector4ListAverageGenerator : BaseListAverage<Vector4ListAverage, float>

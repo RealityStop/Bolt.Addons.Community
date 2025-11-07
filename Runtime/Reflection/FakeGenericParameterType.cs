@@ -127,7 +127,7 @@ namespace Unity.VisualScripting.Community
         public override string FullName => BaseType.As().CSharpName(false, true, false);
         public override Guid GUID => BaseType.GUID;
 
-        public override Type UnderlyingSystemType => BaseType;
+        public override Type UnderlyingSystemType => this;
         public override GenericParameterAttributes GenericParameterAttributes
         {
             get

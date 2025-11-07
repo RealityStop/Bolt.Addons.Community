@@ -3,7 +3,7 @@ using System;
 using Unity.VisualScripting;
 using System.Linq;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [CodeGenerator(typeof(InterfaceAsset))]
     [Serializable]

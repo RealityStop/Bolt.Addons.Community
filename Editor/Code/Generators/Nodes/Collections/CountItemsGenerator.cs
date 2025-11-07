@@ -3,7 +3,7 @@ using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(CountItems))]
     public class CountItemsGenerator : NodeGenerator<CountItems>

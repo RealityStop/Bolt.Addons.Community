@@ -60,7 +60,7 @@ namespace Unity.VisualScripting.Community
 
                 TypeParameterConstraints constraints = TypeParameterConstraints.None;
                 Type baseType = typeof(object);
-                List<Type> interfaces = new();
+                List<Type> interfaces = new List<Type>();
                 IGenericContainer container = null;
 
                 Serializer.TryDeserialize(dict["Constraints"], ref constraints);

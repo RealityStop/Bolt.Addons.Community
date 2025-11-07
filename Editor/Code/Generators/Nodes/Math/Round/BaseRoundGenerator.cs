@@ -3,7 +3,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class BaseRoundGenerator<TInput, TOutput> : NodeGenerator<Round<TInput, TOutput>>
     {

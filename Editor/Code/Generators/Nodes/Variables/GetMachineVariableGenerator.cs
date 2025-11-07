@@ -13,7 +13,7 @@ using SMachine = Unity.VisualScripting.ScriptMachine;
 using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(GetMachineVariableNode))]
     public class GetMachineVariableNodeGenerator : LocalVariableGenerator

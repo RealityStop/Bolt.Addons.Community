@@ -262,7 +262,7 @@ namespace Unity.VisualScripting.Community
             return null;
         }
 
-        public static Action<object> updateStubwriterCall;
+        public static Action<object> updateStubwriterCall; // This might not be needed but I want to Ensure that nothing is missing
 #if VISUAL_SCRIPTING_1_7
         public override IEnumerable<object> GetAotStubs(HashSet<object> visited)
         {

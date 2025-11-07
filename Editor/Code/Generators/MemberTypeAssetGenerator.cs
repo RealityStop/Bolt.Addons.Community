@@ -3,7 +3,7 @@ using System;
 using Unity.VisualScripting;
 using System.Linq;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [Serializable]
     public abstract class MemberTypeAssetGenerator<TMemberTypeAsset, TFieldDeclaration, TMethodDeclaration, TConstructorDeclaration> : CodeGenerator<TMemberTypeAsset>

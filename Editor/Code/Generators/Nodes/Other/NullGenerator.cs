@@ -3,7 +3,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Null))]
     public class NullGenerator : NodeGenerator<Null>

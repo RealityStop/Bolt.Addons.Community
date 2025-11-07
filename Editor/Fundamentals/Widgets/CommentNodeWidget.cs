@@ -41,9 +41,7 @@ namespace Unity.VisualScripting.Community
 
         int hash;
 
-        GUIStyle
-            textGUI = new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true },
-            titleGUI = new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true, alignment = TextAnchor.MiddleLeft, fontSize = 10 };
+        GUIStyle textGUI, titleGUI;
 
         public override Rect position
         {
@@ -65,9 +63,18 @@ namespace Unity.VisualScripting.Community
                 textRect = default;
             }
         }
-
+        private bool createdStyles;
         public override void DrawBackground()
         {
+            if (!createdStyles)
+            {
+                createdStyles = true;
+                // Move creation of styles here stop GUI errors since this widget could be created on load
+                // Not during OnGUI
+                textGUI = new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true };
+                titleGUI = new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true, alignment = TextAnchor.MiddleLeft, fontSize = 10 };
+            }
+
             if (hash == 0) hash = unit.GetHashCode();
 
             // If first time running, create a palette.

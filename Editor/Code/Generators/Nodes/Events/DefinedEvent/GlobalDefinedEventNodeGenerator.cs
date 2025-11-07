@@ -8,7 +8,7 @@ using System.Linq;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(GlobalDefinedEventNode))]
     [RequiresMethods]

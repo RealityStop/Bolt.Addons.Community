@@ -7,7 +7,7 @@ using System.Linq;
 using UnityEngine;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnReturned))]
     [RequiresMethods]

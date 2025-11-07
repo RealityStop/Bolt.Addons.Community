@@ -1,20 +1,16 @@
-
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
-using UnityEditor.Compilation;
 using UnityEngine;
 #if VISUAL_SCRIPTING_1_7
 using SMachine = Unity.VisualScripting.ScriptMachine;
 #else
 using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public class ScriptMachineCompiler : BaseCompiler
     {

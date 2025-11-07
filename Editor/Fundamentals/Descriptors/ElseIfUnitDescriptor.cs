@@ -11,25 +11,25 @@ namespace Unity.VisualScripting.Community
         {
             switch (port.key)
             {
-                case "elseif0" : description.label = "Else If";
+                case "elseif0" : description.showLabel = false;
                 break; 
-                case "elseif1" : description.label = "Else If";
+                case "elseif1" : description.showLabel = false;
                 break; 
-                case "elseif2" : description.label = "Else If";
+                case "elseif2" : description.showLabel = false;
                 break; 
-                case "elseif3" : description.label = "Else If";
+                case "elseif3" : description.showLabel = false;
                 break; 
-                case "elseif4" : description.label = "Else If";
+                case "elseif4" : description.showLabel = false;
                 break; 
-                case "elseif5" : description.label = "Else If";
+                case "elseif5" : description.showLabel = false;
                 break; 
-                case "elseif6" : description.label = "Else If";
+                case "elseif6" : description.showLabel = false;
                 break; 
-                case "elseif7" : description.label = "Else If";
+                case "elseif7" : description.showLabel = false;
                 break; 
-                case "elseif8" : description.label = "Else If";
+                case "elseif8" : description.showLabel = false;
                 break; 
-                case "elseif9" : description.label = "Else If";
+                case "elseif9" : description.showLabel = false;
                 break; 
                 case "0" : description.label = "Condition0";
                 break;

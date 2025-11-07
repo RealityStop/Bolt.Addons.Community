@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class SetGraphGenerator<TGraph, TMacro, TMachine> : NodeGenerator<SetGraph<TGraph, TMacro, TMachine>>
         where TGraph : class, IGraph, new()

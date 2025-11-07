@@ -6,7 +6,7 @@ using UnityEngine;
 using Unity.VisualScripting.Community.Utility;
 using System.Linq;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnUnityEvent))]
     public class OnUnityEventGenerator : AwakeMethodNodeGenerator

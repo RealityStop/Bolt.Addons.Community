@@ -13,7 +13,7 @@ using UnityEditor;
 using UnityEngine.InputSystem;
 using Unity.VisualScripting.InputSystem;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnInputSystemEventButton))]
     public sealed class OnInputSystemEventButtonGenerator : MethodNodeGenerator

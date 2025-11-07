@@ -3,7 +3,7 @@ using System.IO;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [Serializable]
     public class PathConfig

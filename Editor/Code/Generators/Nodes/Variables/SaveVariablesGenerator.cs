@@ -1,6 +1,6 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SaveVariables))]
     public class SaveVariablesGenerator : NodeGenerator<SaveVariables>

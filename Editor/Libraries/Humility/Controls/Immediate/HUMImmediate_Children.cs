@@ -221,6 +221,24 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         }
 
         /// <summary>
+        /// A button that has no content and is drawn only using textures. Note that the style backgrounds will be overridden.
+        /// </summary>
+        public static bool TintedButton(this Data.StyledImage image, ref bool isBeingPressed, Event e, Texture2D texture, Color active, Color pressed)
+        {
+            Texture2D current = texture.Copy();
+            bool wasPressed = false;
+
+            image.immediate.rect.Draw().Selection().Area(ref isBeingPressed, false, out wasPressed, e, () => { }, () => { current = current.Tint(active, 0.5f); }, () => { current = current.Tint(pressed, 0.5f); });
+            
+            image.style.normal.background = current;
+
+            if (e != null && e.type == EventType.Repaint)
+                image.style.Draw(image.immediate.rect, image.content, false, false, false, false);
+
+            return wasPressed;
+        }
+
+        /// <summary>
         /// Begins the chain of Selection based controls.
         /// </summary>
         public static Data.Selection Selection(this HUMEditor.Data.Immediate draw)
@@ -234,6 +252,14 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         public static Data.Image Image(this HUMEditor.Data.Immediate immediate)
         {
             return new HUMEditor_Immediate_Children.Data.Image(immediate);
+        }
+
+        /// <summary>
+        /// Begins te chain of Image based controls.
+        /// </summary>
+        public static Data.StyledImage Image(this HUMEditor.Data.Immediate immediate, GUIStyle style, GUIContent content)
+        {
+            return new HUMEditor_Immediate_Children.Data.StyledImage(immediate, style, content);
         }
 
         /// <summary>

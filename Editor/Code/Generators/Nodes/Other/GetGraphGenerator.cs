@@ -1,9 +1,7 @@
 #if VISUAL_SCRIPTING_1_7
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class GetGraphGenerator<TGraph, TGraphAsset, TMachine> : NodeGenerator<GetGraph<TGraph, TGraphAsset, TMachine>>
         where TGraph : class, IGraph, new()

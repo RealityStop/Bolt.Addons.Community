@@ -9,7 +9,7 @@ using SUnit = Unity.VisualScripting.SubgraphUnit;
 #else
 using SUnit = Unity.VisualScripting.SuperUnit;
 #endif
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public static class NodeGeneration
     {

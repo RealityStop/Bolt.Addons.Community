@@ -56,38 +56,64 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         }
 
         /// <summary>
-        /// Changes the color of a texture.
+        /// Tints or recolors the entire texture with the given color.
         /// </summary>
         public static Texture2D Color(this Texture2D texture, Color color)
         {
-            var count = texture.texelSize;
+            int width = texture.width;
+            int height = texture.height;
 
-            for (int x = 0; x < count.x; x++)
+            for (int x = 0; x < width; x++)
             {
-                for (int y = 0; y < count.y; y++)
+                for (int y = 0; y < height; y++)
                 {
                     texture.SetPixel(x, y, color);
                 }
             }
 
             texture.Apply();
+            return texture;
+        }
+
+        /// <summary>
+        /// Applies a color tint to the texture.
+        /// </summary>
+        public static Texture2D Tint(this Texture2D texture, Color tint, float strength = 1f, bool tintAlpha = false)
+        {
+            Color[] pixels = texture.GetPixels();
+
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                pixels[i].r = Mathf.Lerp(pixels[i].r, tint.r, Mathf.Clamp(strength, 0, 1));
+                pixels[i].g = Mathf.Lerp(pixels[i].g, tint.g, Mathf.Clamp(strength, 0, 1));
+                pixels[i].b = Mathf.Lerp(pixels[i].b, tint.b, Mathf.Clamp(strength, 0, 1));
+
+                if (tintAlpha)
+                {
+                    pixels[i].a = Mathf.Lerp(pixels[i].a, tint.a, Mathf.Clamp(strength, 0, 1));
+                }
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
 
             return texture;
         }
 
         /// <summary>
-        /// Changes the color of a texture with a specific amount of tinting.
+        /// Applies a color tint to the texture by multiplying each pixel's color with the given tint.
         /// </summary>
-        public static Texture2D Tint(this Texture2D texture, Color color, float amount)
+        public static Texture2D Tint(this Texture2D texture, Color tint)
         {
-            Color[] textureColors = texture.GetPixels();
+            Color[] pixels = texture.GetPixels();
 
-            for (int i = 0; i < textureColors.Length; i++)
+            for (int i = 0; i < pixels.Length; i++)
             {
-                textureColors[i] = UnityEngine.Color.Lerp(textureColors[i], color, Mathf.Clamp(amount, 0, 1));
+                pixels[i].r *= tint.r;
+                pixels[i].g *= tint.g;
+                pixels[i].b *= tint.b;
             }
 
-            texture.SetPixels(textureColors);
+            texture.SetPixels(pixels);
             texture.Apply();
 
             return texture;

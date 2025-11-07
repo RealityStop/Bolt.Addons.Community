@@ -237,7 +237,7 @@ namespace Unity.VisualScripting.Community
                     name = name.Substring(0, name.IndexOf('`'));
                 }
 
-                var genericArguments = (IEnumerable<Type>)type.GetGenericArguments();
+                var genericArguments = includeGenericParameters ? (IEnumerable<Type>)type.GetGenericArguments() : Enumerable.Empty<Type>();
 
                 if (type.IsNested)
                 {

@@ -1,11 +1,6 @@
-
-using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class PerSecondGenerator<T> : NodeGenerator<PerSecond<T>>
     {

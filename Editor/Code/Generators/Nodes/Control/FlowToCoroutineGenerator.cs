@@ -6,7 +6,7 @@ using UnityEngine;
 using Unity.VisualScripting.Community.Utility;
 using System.Collections;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(FlowToCoroutine))]
     public class FlowToCoroutineGenerator : MethodNodeGenerator

@@ -5,7 +5,7 @@ using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Throw))]
     public class ThrowGenerator : NodeGenerator<Throw>

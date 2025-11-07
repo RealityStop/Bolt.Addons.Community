@@ -30,9 +30,9 @@ namespace Unity.VisualScripting.Community
             };
 #endif
         }
-
+#if UNITY_EDITOR
         private static bool isLoaded = false;
-
+#endif
         private static HashSet<string> currentlyGeneratedVariables = new HashSet<string>();
 
         private static void EnsureLoaded()

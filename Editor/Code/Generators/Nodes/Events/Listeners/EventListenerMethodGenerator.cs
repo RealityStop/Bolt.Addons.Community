@@ -6,7 +6,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class EventListenerMethodGenerator<TUnit> : AwakeMethodNodeGenerator where TUnit : Unit
     {

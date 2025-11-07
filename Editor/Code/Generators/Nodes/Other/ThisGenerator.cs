@@ -1,6 +1,6 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(This))]
     public sealed class ThisGenerator : NodeGenerator<This>

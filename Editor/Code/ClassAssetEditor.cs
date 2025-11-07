@@ -40,6 +40,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         Target.classModifier = (ClassModifier)EditorGUILayout.EnumPopup(Target.classModifier);
                         GUILayout.EndHorizontal();
                     });
+            GUILayout.Space(1);
         }
 
         private void GetAllInheritableTypes()

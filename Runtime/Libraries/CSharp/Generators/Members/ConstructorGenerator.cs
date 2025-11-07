@@ -43,20 +43,22 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             var modSpace = modifier == ConstructorModifier.None ? string.Empty : " ";
             var parameters = string.Empty;
 
-            for (int i = 0; i < this.parameters.Count; i++)
+            if (modifier != ConstructorModifier.Static)
             {
-                parameters += this.parameters[i].generator.Generate(0);
-                if (i < this.parameters.Count - 1) parameters += ", ";
-                if (this.parameters[i].useInCall)
+                for (int i = 0; i < this.parameters.Count; i++)
                 {
-                    callChainParameters.Add(this.parameters[i].generator.name.VariableHighlight());
+                    parameters += this.parameters[i].generator.Generate(0);
+                    if (i < this.parameters.Count - 1) parameters += ", ";
+                    if (this.parameters[i].useInCall)
+                    {
+                        callChainParameters.Add(this.parameters[i].generator.name.VariableHighlight());
+                    }
                 }
             }
-
-            var _callChainParameters = string.Empty;
-            _callChainParameters = string.Join(", ", callChainParameters);
-            string callChain = callType != ConstructorInitializer.None ? $" : {(callType == ConstructorInitializer.Base ? "base" : "this").ConstructHighlight()}(" + _callChainParameters + ")" : string.Empty;
-            return attributes + CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + name.LegalMemberName().TypeHighlight() + "(" + parameters + ")" + callChain;
+            
+            string _callChainParameters = string.Join(", ", callChainParameters);
+            string callChain = callType != ConstructorInitializer.None && modifier != ConstructorModifier.Static ? $" : {(callType == ConstructorInitializer.Base ? "base" : "this").ConstructHighlight()}(" + _callChainParameters + ")" : string.Empty;
+            return attributes + CodeBuilder.Indent(indent) + (scope == AccessModifier.None || modifier == ConstructorModifier.Static ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + name.LegalMemberName().TypeHighlight() + "(" + parameters + ")" + callChain;
         }
 
         protected override sealed string GenerateBody(int indent)

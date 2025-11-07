@@ -1,5 +1,5 @@
 using System.Text;
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Sequence))]
     public sealed class SequenceGenerator : NodeGenerator<Sequence>

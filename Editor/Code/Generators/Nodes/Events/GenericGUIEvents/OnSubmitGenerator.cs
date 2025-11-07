@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnSubmit))]
     public class OnSubmitGenerator : GenericGuiEventUnitGenerator<OnSubmit, ISubmitHandler>

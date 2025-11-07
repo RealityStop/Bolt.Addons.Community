@@ -4,7 +4,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public sealed class ControlGenerationData
     {
@@ -104,7 +104,7 @@ namespace Unity.VisualScripting.Community
         }
         #endregion
 
-        public string AddLocalNameInScope(string name, Type type = null)
+        public string AddLocalNameInScope(string name, Type type = null, bool checkAnscestorsOnly = false)
         {
             if (scopes.Count > 0)
             {
@@ -113,7 +113,7 @@ namespace Unity.VisualScripting.Community
 
                 var scope = PeekScope();
 
-                while (ContainsNameInAnyScope(newName))
+                while (checkAnscestorsOnly ? ContainsNameInAncestorScope(newName) : ContainsNameInAnyScope(newName))
                 {
                     count++;
                     newName = name + count;
@@ -127,7 +127,7 @@ namespace Unity.VisualScripting.Community
             else
             {
                 NewScope();
-                return AddLocalNameInScope(name, type);
+                return AddLocalNameInScope(name, type, checkAnscestorsOnly);
             }
         }
         #region Scope Management
@@ -242,17 +242,25 @@ namespace Unity.VisualScripting.Community
             return false;
         }
 
+        public bool ContainsNameInAncestorScope(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return false;
+            foreach (var scope in scopes)
+            {
+                if (scope.scopeVariables.ContainsKey(name)) return true;
+            }
+            return false;
+        }
+
         #endregion
 
         #region Variable Management
         public string GetVariableName(string name, bool errorIfNotFound = false, string error = "")
         {
-            bool exists = false;
             foreach (var scope in scopes)
             {
                 if (scope.nameMapping.TryGetValue(name, out string variableName))
                 {
-                    exists = true;
                     return variableName;
                 }
             }
@@ -261,12 +269,11 @@ namespace Unity.VisualScripting.Community
             {
                 if (preservedScope.nameMapping.TryGetValue(name, out string variableName))
                 {
-                    exists = true;
                     return variableName;
                 }
             }
 
-            if (errorIfNotFound && !exists)
+            if (errorIfNotFound)
             {
                 return error;
             }

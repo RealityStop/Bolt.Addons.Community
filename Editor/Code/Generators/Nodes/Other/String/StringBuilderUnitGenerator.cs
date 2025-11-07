@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(StringBuilderUnit))]
     public class StringBuilderGenerator : NodeGenerator<StringBuilderUnit>

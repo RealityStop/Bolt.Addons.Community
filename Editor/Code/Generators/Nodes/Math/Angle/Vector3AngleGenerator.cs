@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Vector3Angle))]
     public class Vector3AngleGenerator : BaseAngleGenerator<Vector3>

@@ -14,7 +14,7 @@ using UnityEditor;
 
 using Unity.VisualScripting.InputSystem;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnInputSystemEventFloat))]
     public sealed class OnInputSystemEventFloatGenerator : MethodNodeGenerator

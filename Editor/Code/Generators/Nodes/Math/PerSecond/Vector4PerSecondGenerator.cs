@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Vector4PerSecond))]
     public class Vector4PerSecondGenerator : PerSecondGenerator<Vector4>

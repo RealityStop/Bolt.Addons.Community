@@ -3,7 +3,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnScrollRectValueChanged))]
     public class OnScrollRectValueChangedGenerator : EventListenerMethodGenerator<OnScrollRectValueChanged>

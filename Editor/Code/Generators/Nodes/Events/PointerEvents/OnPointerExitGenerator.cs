@@ -1,6 +1,6 @@
 using UnityEngine.EventSystems;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnPointerExit))]
     public class OnPointerExitGenerator : PointerEventUnitGenerator<OnPointerExit, IPointerExitHandler>

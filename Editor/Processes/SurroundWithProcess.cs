@@ -154,14 +154,15 @@ namespace Unity.VisualScripting.Community
                 GraphUtility.AddNewPositionedUnit(graph, canvas, surroundCommand.autoConnectPort,
                 (_) =>
                 {
-                    GraphUtility.CleanGraphFrom(surroundCommand.SequenceExit ? surroundCommand.sequenceUnit : surroundUnit);
+                    // It might be better to not position the Units as this can get quite bad with alot of Units
+                    // GraphUtility.CleanGraphFrom(surroundCommand.SequenceExit ? surroundCommand.sequenceUnit : surroundUnit);
                     LudiqGraphsEditorUtility.editedContext.value.DescribeAnalyzeAndDefineFlowGraph();
-                },
-                () => GraphUtility.CleanGraphFrom(surroundCommand.SequenceExit ? surroundCommand.sequenceUnit : surroundUnit));
+                }/*,
+                () => GraphUtility.CleanGraphFrom(surroundCommand.SequenceExit ? surroundCommand.sequenceUnit : surroundUnit)*/);
             }
             else
             {
-                GraphUtility.CleanGraphFrom(surroundCommand.SequenceExit ? surroundCommand.sequenceUnit : surroundUnit);
+                // GraphUtility.CleanGraphFrom(surroundCommand.SequenceExit ? surroundCommand.sequenceUnit : surroundUnit);
             }
         }
     }

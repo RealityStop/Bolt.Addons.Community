@@ -14,7 +14,7 @@ using SUnit = Unity.VisualScripting.SubgraphUnit;
 using SUnit = Unity.VisualScripting.SuperUnit;
 #endif
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SUnit))]
     [RequiresVariables]

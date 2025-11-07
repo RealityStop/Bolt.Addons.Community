@@ -114,6 +114,15 @@ namespace Unity.VisualScripting.Community
             return window;
         }
 
+        public static NodeFinderWindow Open(string searchQuery, SearchMode searchMode = SearchMode.StartsWith)
+        {
+            var window = Open();
+            window._searchQuery = searchQuery;
+            window._searchMode = searchMode;
+            window.Search();
+            return window;
+        }
+
         private void Init()
         {
             LoadStates();
@@ -122,7 +131,7 @@ namespace Unity.VisualScripting.Community
                 alignment = TextAnchor.MiddleLeft,
                 richText = true,
                 wordWrap = false,
-#if UNITY_2021_2_OR_NEWER
+#if UNITY_2023_1_OR_NEWER
                 clipping = TextClipping.Ellipsis
 #else
                 clipping = TextClipping.Clip
@@ -352,7 +361,7 @@ namespace Unity.VisualScripting.Community
 
                 string fullText = cached.RowContent.text;
                 float textWidth = _buttonStyle.CalcSize(Temp(fullText, null)).x;
-#if UNITY_2021_2_OR_NEWER
+#if UNITY_2023_1_OR_NEWER
                 _buttonStyle.clipping = TextClipping.Ellipsis;
 #else
                 _buttonStyle.clipping = TextClipping.Clip;
@@ -571,7 +580,7 @@ namespace Unity.VisualScripting.Community
 
             GUIContent rowContent = new GUIContent(match.MatchString(_searchQuery, _searchMode, match.Element is Unit unit ? unit : null), GetElementIcon(element), "ElementPath: " + sourceInfo.text);
 
-            GUIContent groupContent = inGroup ? new GUIContent(GroupMatchHandler.GetGroupFullName(group), GetElementIcon(group)) : null;
+            GUIContent groupContent = inGroup ? new GUIContent(SearchUtility.GetSearchName(group), GetElementIcon(group)) : null;
 
             GUIContent pathContent = new GUIContent("<i>" + match.GraphPath + "</i>", sourceInfo.image);
 

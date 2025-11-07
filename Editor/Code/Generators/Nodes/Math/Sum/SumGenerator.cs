@@ -9,7 +9,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class SumGenerator<T> : NodeGenerator<T> where T : Unit, IMultiInputUnit
     {
@@ -33,9 +33,14 @@ namespace Unity.VisualScripting.Community
                 values.Add(code);
             }
 
-            return (MakeClickableForThisUnit("(")
-                 + string.Join(MakeClickableForThisUnit(" + "), values)
-                 + MakeClickableForThisUnit(")")).CastTo(data.GetExpectedType(), Unit, data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType().IsNumeric());
+            return TypeConversionUtility.CastTo(
+                MakeClickableForThisUnit("(") +
+                string.Join(MakeClickableForThisUnit(" + "), values) +
+                MakeClickableForThisUnit(")"),
+                inferredType,
+                data.GetExpectedType(),
+                Unit
+            );
         }
 
         public override string GenerateValue(ValueInput input, ControlGenerationData data)
@@ -77,42 +82,117 @@ namespace Unity.VisualScripting.Community
 
         private static Type InferType(IEnumerable<Type> types)
         {
-            var list = types.Where(t => t != null).ToList();
-            if (list.Count == 0) return null;
+            List<Type> list = types.Where(t => t != null).ToList();
+            if (list.Count == 0)
+                return null;
 
-            foreach (var t in list)
+            if (list.Count == 1)
+                return list[0];
+
+            Type first = list[0];
+            
+            if (list.All(t => t == first))
+                return first;
+
+            for (int i = 0; i < list.Count; i++)
             {
-                if (HasAdditionOperator(t))
-                    return t;
+                for (int j = i; j < list.Count; j++)
+                {
+                    Type result;
+                    if (HasAdditionOperator(list[i], list[j], out result))
+                        return result ?? list[i];
+                }
             }
 
-            Type[] order = { typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal), typeof(T) };
-            var best = list.FirstOrDefault();
-            foreach (var t in list)
+            Type[] order = new Type[]
             {
-                if (order.Contains(t) && order.ToList().IndexOf(t) > order.ToList().IndexOf(best))
+                typeof(int),
+                typeof(long),
+                typeof(float),
+                typeof(double),
+                typeof(decimal)
+            };
+
+            Type best = list.First();
+            foreach (Type t in list)
+            {
+                int bestIndex = Array.IndexOf(order, best);
+                int tIndex = Array.IndexOf(order, t);
+                if (tIndex > bestIndex && tIndex != -1)
                     best = t;
             }
 
             return best;
         }
-        private static readonly Dictionary<Type, bool> hasOperatorCache = new Dictionary<Type, bool>();
 
-        private static bool HasAdditionOperator(Type type)
+        private static readonly Dictionary<(Type, Type), (bool, Type)> additionOperatorCache =
+            new Dictionary<(Type, Type), (bool, Type)>();
+
+        private static readonly Dictionary<Type, MethodInfo[]> methodCache =
+            new Dictionary<Type, MethodInfo[]>();
+
+        private static readonly HashSet<(Type, Type)> knownAddPairs =
+            new HashSet<(Type, Type)>
+            {
+                (typeof(int), typeof(int)),
+                (typeof(long), typeof(long)),
+                (typeof(float), typeof(float)),
+                (typeof(double), typeof(double)),
+                (typeof(decimal), typeof(decimal))
+            };
+
+        private static MethodInfo[] GetCachedMethods(Type type)
         {
-            if (type == null)
+            MethodInfo[] methods;
+            if (!methodCache.TryGetValue(type, out methods))
+            {
+                methods = type.GetMethods(BindingFlags.Public | BindingFlags.Static);
+                methodCache[type] = methods;
+            }
+            return methods;
+        }
+
+        private static bool HasAdditionOperator(Type left, Type right, out Type returnType)
+        {
+            returnType = null;
+
+            if (left == null || right == null)
                 return false;
 
-            if (hasOperatorCache.TryGetValue(type, out var cachedResult))
-                return cachedResult;
+            if (knownAddPairs.Contains((left, right)))
+            {
+                returnType = left;
+                return true;
+            }
 
-            bool hasOperator = type.GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .Any(m => m.Name == "op_Addition" && m.GetParameters().Length == 2 &&
-                          m.GetParameters()[0].ParameterType == type &&
-                          m.GetParameters()[1].ParameterType == type);
+            (bool, Type) cached;
+            if (additionOperatorCache.TryGetValue((left, right), out cached))
+            {
+                returnType = cached.Item2;
+                return cached.Item1;
+            }
 
-            hasOperatorCache[type] = hasOperator;
+            MethodInfo[] methods = GetCachedMethods(left);
+            MethodInfo op = null;
 
+            for (int i = 0; i < methods.Length; i++)
+            {
+                MethodInfo m = methods[i];
+                if (m.Name == "op_Addition")
+                {
+                    ParameterInfo[] p = m.GetParameters();
+                    if (p.Length == 2 && p[0].ParameterType == left && p[1].ParameterType == right)
+                    {
+                        op = m;
+                        break;
+                    }
+                }
+            }
+
+            bool hasOperator = op != null;
+            returnType = hasOperator ? op.ReturnType : null;
+
+            additionOperatorCache[(left, right)] = (hasOperator, returnType);
             return hasOperator;
         }
     }

@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class BaseAverageGenerator<T> : NodeGenerator<Average<T>>
     {
         protected BaseAverageGenerator(Unit unit) : base(unit)
         {
         }
-    
+
         public override string GenerateValue(ValueOutput output, ControlGenerationData data)
         {
             List<string> values = new List<string>();
@@ -20,5 +20,5 @@ namespace Unity.VisualScripting.Community
             }
             return CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("CalculateAverage"), string.Join(MakeClickableForThisUnit(", "), values));
         }
-    } 
+    }
 }

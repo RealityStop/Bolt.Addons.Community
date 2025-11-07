@@ -1,7 +1,7 @@
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(CounterNode))]
     public class CounterNodeGenerator : VariableNodeGenerator

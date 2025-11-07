@@ -6,7 +6,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections;
 using System;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ForEach))]
     public sealed class ForEachGenerator : LocalVariableGenerator

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Unit))]
     public class NodeGenerator : Decorator<NodeGenerator, NodeGeneratorAttribute, Unit>

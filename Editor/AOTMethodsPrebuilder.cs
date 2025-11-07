@@ -10,6 +10,7 @@ using UnityEditor;
 using System.IO;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using ParameterModifier = Unity.VisualScripting.Community.Libraries.CSharp.ParameterModifier;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community
 {

@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(GetVariable))]
     public class GetVariableGenerator : LocalVariableGenerator
@@ -154,12 +154,14 @@ namespace Unity.VisualScripting.Community
 #endif
 
                 }
-                else if (data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet())
-                {
-                    return data.GetExpectedType();
-                }
             }
-            return data.TryGetVariableType(data.GetVariableName(name), out Type targetType) ? targetType : data.GetExpectedType() ?? typeof(object);
+            var type = data.TryGetVariableType(data.GetVariableName(name), out Type targetType) ? targetType : data.GetExpectedType();
+
+            if (type == null && data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet())
+            {
+                return data.GetExpectedType();
+            }
+            return type ?? typeof(object);
         }
 
         private bool IsVariableDefined(ControlGenerationData data, string name)

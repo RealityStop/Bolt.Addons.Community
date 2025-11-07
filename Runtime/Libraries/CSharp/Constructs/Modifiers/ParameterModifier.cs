@@ -13,5 +13,4 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         Params = 1 << 3,
         This = 1 << 4
     }
-
 }

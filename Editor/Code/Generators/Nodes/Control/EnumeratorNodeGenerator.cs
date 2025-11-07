@@ -6,7 +6,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(EnumeratorNode))]
     public class EnumeratorNodeGenerator : MethodNodeGenerator

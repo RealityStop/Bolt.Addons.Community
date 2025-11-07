@@ -6,7 +6,7 @@ using UnityEngine;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(WaitForFlow))]
     public class WaitForFlowGenerator : VariableNodeGenerator

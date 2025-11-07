@@ -3,6 +3,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using UnityEditor;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.Libraries.Humility
 {
@@ -142,9 +143,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         public static bool Foldout(Rect positionClosed, Rect positionOpened, bool isOpen, Color backgroundColor, Color borderColor, int border = 1, Action header = null, Action whileOpen = null)
         {
             var foldout = false;
-            if (isOpen) {
+            if (isOpen)
+            {
             }
-            else {
+            else
+            {
                 HUMEditor.Draw().Area(positionClosed, () =>
                 {
                     Vertical().Box(backgroundColor, borderColor, new RectOffset(2, 2, 2, 2), TextAnchor.MiddleLeft, border, () =>
@@ -157,7 +160,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                     });
                 });
             }
-           
+
 
             if (!foldout)
             {
@@ -294,6 +297,87 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         public static T SerializedValue<T>(this SerializedProperty prop) where T : class
         {
             return prop.serializedObject.targetObject as T;
+        }
+        
+        public static T DrawEnumField<T>(T value, Func<GenericMenu, T, T> optionsBuilder) where T : Enum
+        {
+            if (GUILayout.Button(GetDisplayString(value), EditorStyles.popup))
+            {
+                var menu = new GenericMenu();
+                value = optionsBuilder(menu, value);
+                menu.ShowAsContext();
+            }
+
+            return value;
+        }
+
+        private static string GetDisplayString<T>(T value) where T : Enum
+        {
+            var names = value.ToString().Split(',');
+            for (int i = 0; i < names.Length; i++)
+                names[i] = names[i].Trim();
+
+            return names.Length == 0 ? "None" : string.Join(", ", names);
+        }
+
+        public static void AddItem<T>(T value, string name, T flag, Action<T> updateValue, GenericMenu menu, params T[] cannotCombineWith) where T : Enum
+        {
+            var underlyingValue = Convert.ToUInt64(value);
+            var underlyingFlag = Convert.ToUInt64(flag);
+
+            bool isOn = (underlyingValue & underlyingFlag) != 0;
+            bool isDisabled = cannotCombineWith.Any(c => (underlyingValue & Convert.ToUInt64(c)) != 0);
+
+            if (isDisabled)
+            {
+                menu.AddDisabledItem(new GUIContent(name));
+                return;
+            }
+
+            menu.AddItem(new GUIContent(name), isOn, () =>
+            {
+                var val = Convert.ToUInt64(value);
+
+                if (isOn)
+                    val &= ~underlyingFlag;
+                else
+                    val |= underlyingFlag;
+
+                foreach (var c in cannotCombineWith)
+                    val &= ~Convert.ToUInt64(c);
+
+                updateValue((T)Enum.ToObject(typeof(T), val));
+            });
+        }
+
+        public static void AddItem<T>(T value, string name, T flag, Action<T> updateValue, GenericMenu menu, Func<bool> isValid, params T[] cannotCombineWith) where T : Enum
+        {
+            var underlyingValue = Convert.ToUInt64(value);
+            var underlyingFlag = Convert.ToUInt64(flag);
+
+            bool isOn = (underlyingValue & underlyingFlag) != 0;
+            bool isDisabled = cannotCombineWith.Any(c => (underlyingValue & Convert.ToUInt64(c)) != 0);
+
+            if (!isValid() || isDisabled)
+            {
+                menu.AddDisabledItem(new GUIContent(name));
+                return;
+            }
+
+            menu.AddItem(new GUIContent(name), isOn, () =>
+            {
+                var val = Convert.ToUInt64(value);
+
+                if (isOn)
+                    val &= ~underlyingFlag;
+                else
+                    val |= underlyingFlag;
+
+                foreach (var c in cannotCombineWith)
+                    val &= ~Convert.ToUInt64(c);
+
+                updateValue((T)Enum.ToObject(typeof(T), val));
+            });
         }
     }
 }

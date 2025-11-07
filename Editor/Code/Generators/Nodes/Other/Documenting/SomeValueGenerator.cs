@@ -1,6 +1,6 @@
 using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SomeValue))]
     public class SomeValueGenerator : NodeGenerator<SomeValue>

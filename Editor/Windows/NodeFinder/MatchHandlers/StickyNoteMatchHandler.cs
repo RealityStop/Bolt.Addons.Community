@@ -20,7 +20,7 @@ namespace Unity.VisualScripting.Community
         {
             if (element is StickyNote note)
             {
-                var name = GetStickyNoteFullName(note);
+                var name = SearchUtility.GetSearchName(note);
                 if (SearchUtility.SearchMatches(pattern, name, searchMode, out _))
                 {
                     var matchRecord = new MatchObject(note, name);
@@ -29,24 +29,6 @@ namespace Unity.VisualScripting.Community
             }
             return null;
         }
-
-        private string GetStickyNoteFullName(StickyNote note)
-        {
-            if (!string.IsNullOrEmpty(note.title) && !string.IsNullOrEmpty(note.body))
-            {
-                return note.title + "." + note.body;
-            }
-            else if (!string.IsNullOrEmpty(note.title))
-            {
-                return note.title;
-            }
-            else if (!string.IsNullOrEmpty(note.body))
-            {
-                return note.body;
-            }
-            return "Empty StickyNote";
-        }
-
     }
 }
 #endif

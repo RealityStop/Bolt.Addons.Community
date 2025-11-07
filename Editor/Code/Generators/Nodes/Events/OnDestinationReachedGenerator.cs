@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Utility;
 using System.Collections;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnDestinationReached))]
     public class OnDestinationReachedGenerator : UpdateMethodNodeGenerator

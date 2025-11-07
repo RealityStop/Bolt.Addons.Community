@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Utility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnDestroy))]
     public class OnDestroyGenerator : UnityMethodGenerator<OnDestroy, EmptyEventArgs>

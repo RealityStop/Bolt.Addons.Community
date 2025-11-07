@@ -11,7 +11,7 @@ using Unity.VisualScripting.Community.Utility;
 using UnityEngine.InputSystem;
 using Unity.VisualScripting.InputSystem;
 #endif
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [Serializable]
     [CodeGenerator(typeof(ClassAsset))]
@@ -111,16 +111,21 @@ namespace Unity.VisualScripting.Community
                 @class.ImplementInterface(@interface.type);
             }
 
+            bool addedStatic = false;
+
             foreach (var constructorData in Data.constructors)
             {
                 var parameters = constructorData.parameters;
-                if (@class.constructors.Any(f => f.parameters.Select(param => param.generator.type).SequenceEqual(parameters.Select(param => param.type))))
+                if (addedStatic || @class.constructors.Any(f => f.parameters.Select(param => param.generator.type).SequenceEqual(parameters.Select(param => param.type))))
                 {
                     continue;
                 }
 
-                var constructor = ConstructorGenerator.Constructor(constructorData.scope, constructorData.modifier, constructorData.initializerType, className);
-
+                var constructor = ConstructorGenerator.Constructor(constructorData.scope, Data.IsStatic() ? ConstructorModifier.Static : constructorData.modifier, constructorData.initializerType, className);
+                if (Data.IsStatic())
+                {
+                    addedStatic = true;
+                }
                 if (constructorData.graph.units.Count == 0) continue;
                 @class.AddUsings(ProcessGraphUnits(constructorData.graph, @class));
                 data.EnterMethod();
@@ -169,7 +174,22 @@ namespace Unity.VisualScripting.Community
                         continue;
                     }
                     if (methodData.graph.units.Count == 0) continue;
-                    var method = MethodGenerator.Method(methodData.scope, methodData.modifier, methodData.returnType, methodData.name);
+                    var modifier = methodData.modifier;
+
+                    if (Data.IsStatic())
+                    {
+                        modifier |= MethodModifier.Static;
+
+                        if (CodeConverter.methodModifierConflicts.TryGetValue(MethodModifier.Static, out var conflicts))
+                        {
+                            foreach (var conflict in conflicts)
+                            {
+                                modifier &= ~conflict;
+                            }
+                        }
+                    }
+
+                    var method = MethodGenerator.Method(methodData.scope, modifier, methodData.returnType, methodData.name);
                     method.AddGenerics(methodData.genericParameters.ToArray());
                     AddMethodAttributes(method, methodData);
                     data.EnterMethod();
@@ -277,7 +297,7 @@ namespace Unity.VisualScripting.Community
             foreach (var variable in values)
             {
                 var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, variable.Value != null ? variable.Value.GetType() : typeof(UnityEngine.Object), variable.Key.LegalMemberName());
-                
+
                 var attribute = AttributeGenerator.Attribute(typeof(FoldoutAttribute));
                 attribute.AddParameter("ObjectReferences");
                 field.AddAttribute(attribute);
@@ -288,7 +308,7 @@ namespace Unity.VisualScripting.Community
             @namespace.AddClass(@class);
             return @class;
         }
-        
+
         private HashSet<string> ProcessGraphUnits(FlowGraph graph, ClassGenerator @class)
         {
             HashSet<string> usings = new HashSet<string>();
@@ -356,8 +376,23 @@ namespace Unity.VisualScripting.Community
 
         private void ProcessProperty(ClassFieldDeclaration variableData, ClassGenerator @class)
         {
-            var property = PropertyGenerator.Property(variableData.scope, variableData.propertyModifier, variableData.type, variableData.name, variableData.defaultValue != null, variableData.getterScope, variableData.setterScope);
-            property.Default(variableData.defaultValue);
+            var modifier = variableData.propertyModifier;
+
+            if (Data.IsStatic())
+            {
+                modifier |= PropertyModifier.Static;
+
+                if (CodeConverter.propertyModifierConflicts.TryGetValue(PropertyModifier.Static, out var conflicts))
+                {
+                    foreach (var conflict in conflicts)
+                    {
+                        modifier &= ~conflict;
+                    }
+                }
+            }
+
+            var property = PropertyGenerator.Property(variableData.scope, modifier, variableData.type, variableData.name, variableData.defaultValue != null && variableData.hasDefault, variableData.defaultValue, variableData.getterScope, variableData.setterScope);
+
             AddAttributesToProperty(property, variableData.attributes);
 
             // Handle getter
@@ -389,7 +424,23 @@ namespace Unity.VisualScripting.Community
 
         private void ProcessField(ClassFieldDeclaration variableData, ClassGenerator @class)
         {
-            var field = FieldGenerator.Field(variableData.scope, variableData.fieldModifier, variableData.type, variableData.name, variableData.defaultValue);
+            var modifier = variableData.fieldModifier;
+
+            if (Data.IsStatic())
+            {
+                modifier |= FieldModifier.Static;
+
+                if (CodeConverter.fieldModifierConflicts.TryGetValue(FieldModifier.Static, out var conflicts))
+                {
+                    foreach (var conflict in conflicts)
+                    {
+                        modifier &= ~conflict;
+                    }
+                }
+            }
+
+            var field = FieldGenerator.Field(variableData.scope, modifier, variableData.type, variableData.name, variableData.defaultValue, variableData.hasDefault);
+
             AddAttributesToField(field, variableData.attributes);
             @class.AddField(field);
         }

@@ -1,7 +1,7 @@
 ﻿using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Break))]
     public sealed class BreakGenerator : NodeGenerator<Break>

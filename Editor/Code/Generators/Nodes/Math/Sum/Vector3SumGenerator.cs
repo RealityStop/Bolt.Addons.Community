@@ -1,4 +1,4 @@
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Vector3Sum))]
     public class Vector3SumGenerator : SumGenerator<Vector3Sum>

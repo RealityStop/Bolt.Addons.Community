@@ -311,6 +311,57 @@ namespace Unity.VisualScripting.Community
 
         private static readonly Dictionary<Type, MemberInfo> NameMemberCache = new Dictionary<Type, MemberInfo>();
 
+        public static string GetSearchName(IGraphElement element)
+        {
+            if (element is Unit unit)
+            {
+                return GetSearchName(unit);
+            }
+            else if (element is GraphGroup group)
+            {
+                return GetSearchName(group);
+            }
+            else if (element is StickyNote note)
+            {
+                return GetSearchName(note);
+            }
+            return GetElementDisplayName(element);
+        }
+
+        public static string GetSearchName(StickyNote note)
+        {
+            if (!string.IsNullOrEmpty(note.title) && !string.IsNullOrEmpty(note.body))
+            {
+                return note.title + "." + note.body;
+            }
+            else if (!string.IsNullOrEmpty(note.title))
+            {
+                return note.title;
+            }
+            else if (!string.IsNullOrEmpty(note.body))
+            {
+                return note.body;
+            }
+            return "Empty StickyNote";
+        }
+
+        public static string GetSearchName(GraphGroup group)
+        {
+            if (!string.IsNullOrEmpty(group.label) && !string.IsNullOrEmpty(group.comment))
+            {
+                return group.label + "." + group.comment;
+            }
+            else if (!string.IsNullOrEmpty(group.label))
+            {
+                return group.label;
+            }
+            else if (!string.IsNullOrEmpty(group.comment))
+            {
+                return group.comment;
+            }
+            return "Unnamed Graph Group";
+        }
+
         public static string GetSearchName(Unit unit)
         {
             if (unit == null) return string.Empty;

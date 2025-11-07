@@ -1,6 +1,6 @@
 using UnityEngine.EventSystems;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnPointerDown))]
     public class OnPointerDownGenerator : PointerEventUnitGenerator<OnPointerDown, IPointerDownHandler>

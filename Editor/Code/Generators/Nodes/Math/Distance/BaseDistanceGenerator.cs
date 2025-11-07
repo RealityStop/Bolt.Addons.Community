@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class BaseDistanceGenerator<T> : NodeGenerator<Distance<T>>
     {

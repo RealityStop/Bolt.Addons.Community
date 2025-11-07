@@ -108,13 +108,16 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             var canShowInherits = !(inherits == null && string.IsNullOrEmpty(assemblyQualifiedInheritanceType) || inherits == typeof(object) && inherits.BaseType == null);
             output += CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + (modifier == ClassModifier.None ? string.Empty : " " + modifier.AsString().ConstructHighlight()) + " class ".ConstructHighlight() + name.LegalMemberName().TypeHighlight();
-            output += (canShowInherits || interfaces.Count > 0) && SupportsInheritance() ? " : " : string.Empty;
-            output += (canShowInherits || interfaces.Count > 0) && SupportsInheritance() ? (inherits == null ? assemblyQualifiedInheritanceType : inherits != typeof(object) ? inherits.As().CSharpName() + (interfaces.Count > 0 ? ", " : string.Empty): string.Empty)  : string.Empty;
-
-            for (int i = 0; i < interfaces.Count; i++)
+            if ((canShowInherits || interfaces.Count > 0) && SupportsInheritance())
             {
-                output += interfaces[i].As().CSharpName();
-                output += i < interfaces.Count - 1 ? ", " : string.Empty;
+                output += " : ";
+                output += inherits == null ? assemblyQualifiedInheritanceType : inherits != typeof(object) ? inherits.As().CSharpName() + (interfaces.Count > 0 ? ", " : string.Empty) : string.Empty;
+
+                for (int i = 0; i < interfaces.Count; i++)
+                {
+                    output += interfaces[i].As().CSharpName();
+                    output += i < interfaces.Count - 1 ? ", " : string.Empty;
+                }
             }
 
             return output;

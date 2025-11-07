@@ -31,9 +31,9 @@ namespace Unity.VisualScripting.Community.CSharp
 
         protected override void BeforePreview()
         {
-            Target.itemsOpen = HUMEditor.Foldout(Target.itemsOpen, HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, 2, () => { GUILayout.Label("Items"); }, () =>
+            Target.itemsOpen = HUMEditor.Foldout(Target.itemsOpen, CommunityStyles.foldoutHeaderColor, Color.black, 1, () => { GUILayout.Label("Items"); }, () =>
             {
-                HUMEditor.Vertical().Box(HUMEditorColor.DefaultEditorBackground.Darken(0.1f), Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(2, 2, 0, 2), () =>
+                HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>
                 {
                     LudiqGUI.InspectorLayout(items, GUIContent.none);
                 });

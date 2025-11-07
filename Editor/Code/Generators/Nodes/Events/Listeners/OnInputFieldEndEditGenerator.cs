@@ -7,7 +7,7 @@ using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnInputFieldEndEdit))]
     public class OnInputFieldEndEditGeneratorGenerator : EventListenerMethodGenerator<OnInputFieldEndEdit>

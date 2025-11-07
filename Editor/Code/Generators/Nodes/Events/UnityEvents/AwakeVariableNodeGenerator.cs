@@ -6,7 +6,7 @@ using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     /// <summary>
     /// Used for generating nodes that require a variable and the awake method to function.
@@ -26,5 +26,5 @@ namespace Unity.VisualScripting.Community
         }
 
         protected abstract string GenerateCode(ControlInput input, ControlGenerationData data, int indent);
-    } 
+    }
 }

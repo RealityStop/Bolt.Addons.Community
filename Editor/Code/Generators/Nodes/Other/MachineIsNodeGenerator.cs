@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(MachineIsNode))]
     public class MachineIsNodeGenerator : NodeGenerator<MachineIsNode>

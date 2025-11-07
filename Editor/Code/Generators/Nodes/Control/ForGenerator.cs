@@ -3,7 +3,7 @@ using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(For))]
     public sealed class ForGenerator : LocalVariableGenerator
@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community
                 var condition = GenerateValue(Unit.lastIndex, data);
                 var iterator = GenerateValue(Unit.step, data);
     
-                variableName = data.AddLocalNameInScope("i", typeof(int));
+                variableName = data.AddLocalNameInScope("i", typeof(int), true);
                 variableType = typeof(int);
     
                 string varName = MakeClickableForThisUnit(variableName.VariableHighlight());

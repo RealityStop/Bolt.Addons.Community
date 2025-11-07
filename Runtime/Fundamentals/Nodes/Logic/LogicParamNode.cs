@@ -7,7 +7,6 @@ namespace Unity.VisualScripting.Community
     {
         public enum BranchType { And, Or, GreaterThan, LessThan, Equal }
 
-
         [SerializeAs(nameof(BranchingType))]
         private BranchType _branchingType;
 
@@ -15,24 +14,16 @@ namespace Unity.VisualScripting.Community
         [Inspectable, UnitHeaderInspectable("Condition")]
         public BranchType BranchingType { get { return _branchingType; } set { _branchingType = value; } }
 
-
-
         [DoNotSerialize]
         public bool supportsEqual => BranchingType == BranchType.LessThan || BranchingType == BranchType.GreaterThan;
-
-
-
 
         /// <summary>
         /// Adds Equals to the comparison such that a Less comparison becomes a Less Than or Equals and a Greater comparison becomes a Greater Than or Equals.  Has no effect on other comparison modes.
         /// </summary>
         [Serialize]
-        [InspectorLabel("[[<,>]] Allow Equals")]
+        [InspectorLabel("[[<,>]] Allow Equals", "Adds Equals to the comparison such that a Less comparison becomes a Less Than or Equals and a Greater comparison becomes a Greater Than or Equals.  Has no effect on other comparison modes.")]
         [Inspectable]
-        [InspectorExpandTooltip]
         public bool AllowEquals = false;
-
-
 
         [DoNotSerialize]
         public bool supportsNumeric => BranchingType == BranchType.Equal;
@@ -42,10 +33,9 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         [Serialize]
         [Inspectable]
-        [InspectorLabel("[[ = ]] Numeric")]
+        [InspectorLabel("[[ = ]] Numeric", "Makes an Equals comparison a Numeric comparison, allowing approximately close values to match.")]
         [InspectableIf(nameof(supportsNumeric))]
         public bool Numeric = false;
-
 
         protected override void Definition()
         {
@@ -71,7 +61,6 @@ namespace Unity.VisualScripting.Community
                     break;
             }
         }
-
 
         protected override int ArgumentLimit()
         {

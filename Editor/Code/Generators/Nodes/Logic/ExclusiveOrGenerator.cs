@@ -1,6 +1,6 @@
 ﻿using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ExclusiveOr))]
     public sealed class ExclusiveOrGenerator : NodeGenerator<ExclusiveOr>

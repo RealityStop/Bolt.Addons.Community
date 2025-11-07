@@ -1,7 +1,7 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Unity.VisualScripting.Once))]
     public sealed class OnceGenerator : VariableNodeGenerator

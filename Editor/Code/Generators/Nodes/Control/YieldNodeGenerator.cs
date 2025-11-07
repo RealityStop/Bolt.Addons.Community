@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using System.Collections;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(YieldNode))]
     public class YieldNodeGenerator : NodeGenerator<YieldNode>

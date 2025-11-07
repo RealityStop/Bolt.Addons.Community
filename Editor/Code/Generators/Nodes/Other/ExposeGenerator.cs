@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Unity.VisualScripting.Expose))]
     public sealed class ExposeGenerator : NodeGenerator<Unity.VisualScripting.Expose>

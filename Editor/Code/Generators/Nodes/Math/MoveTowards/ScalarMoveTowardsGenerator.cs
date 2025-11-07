@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ScalarMoveTowards))]
     public class ScalarMoveTowardsGenerator : BaseMoveTowardsGenerator<float>

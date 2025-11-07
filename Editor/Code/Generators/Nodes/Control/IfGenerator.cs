@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(If))]
     public sealed class IfGenerator : NodeGenerator<If>

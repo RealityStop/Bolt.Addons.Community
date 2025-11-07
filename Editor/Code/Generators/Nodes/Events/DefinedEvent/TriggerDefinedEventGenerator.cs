@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(TriggerDefinedEvent))]
     public class TriggerDefinedEventGenerator : NodeGenerator<TriggerDefinedEvent>

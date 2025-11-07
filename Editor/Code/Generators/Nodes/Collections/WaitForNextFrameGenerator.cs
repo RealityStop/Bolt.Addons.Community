@@ -4,7 +4,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(WaitForNextFrameUnit))]
     public class WaitForNextFrameGenerator : NodeGenerator<WaitForNextFrameUnit>

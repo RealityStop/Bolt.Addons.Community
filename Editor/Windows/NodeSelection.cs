@@ -398,6 +398,15 @@ namespace Unity.VisualScripting.Community
                     superUnitCanvas?.graph.groups.Add(copy);
                     continue;
                 }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+                else if (elements[i] is StickyNote stickyNote)
+                {
+                    var copy = stickyNote.CloneViaFakeSerialization();
+                    copy.position = stickyNote.position;
+                    superUnitCanvas?.graph.sticky.Add(copy);
+                    continue;
+                }
+#endif
                 superUnitCanvas?.AddUnit(((IUnit)elements[i]).CloneViaFakeSerialization(), ((Unit)elements[i]).position);
             }
         }
@@ -557,7 +566,13 @@ namespace Unity.VisualScripting.Community
                     superUnitPosition = new Vector2(superUnitPosition.x + ((GraphGroup)elements[i]).position.x, superUnitPosition.y + ((GraphGroup)elements[i]).position.y);
                     continue;
                 }
-
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
+                else if (elements[i] is StickyNote stickyNote)
+                {
+                    superUnitPosition = new Vector2(superUnitPosition.x + stickyNote.position.x, superUnitPosition.y + stickyNote.position.y);
+                    continue;
+                }
+#endif
                 superUnitPosition = new Vector2(superUnitPosition.x + ((IUnit)elements[i]).position.x, superUnitPosition.y + ((IUnit)elements[i]).position.y);
             }
 

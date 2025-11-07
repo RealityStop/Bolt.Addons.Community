@@ -2,7 +2,7 @@ using Unity.VisualScripting;
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(RemoveListItemAt))]
     public class RemoveListItemAtGenerator : NodeGenerator<RemoveListItemAt>

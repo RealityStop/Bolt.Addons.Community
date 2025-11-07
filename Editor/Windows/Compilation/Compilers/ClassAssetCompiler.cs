@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public class ClassAssetCompiler : BaseCompiler
     {

@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     /// <summary>
     /// Abstract base class for generating nodes that require a class-wide variable.

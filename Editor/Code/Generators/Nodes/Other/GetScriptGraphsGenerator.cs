@@ -1,5 +1,5 @@
 #if VISUAL_SCRIPTING_1_7
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(GetScriptGraphs))]
     public class GetScriptGraphsGenerator : GetGraphsGenerator<FlowGraph, ScriptGraphAsset, ScriptMachine>

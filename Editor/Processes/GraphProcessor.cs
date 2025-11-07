@@ -30,7 +30,7 @@ namespace Unity.VisualScripting.Community
         {
             reference = GraphWindow.activeReference;
             var active = GraphWindow.active;
-            return reference != null && active != null && active.hasFocus;
+            return reference != null && active != null && GraphWindow.activeContext != null && active.hasFocus;
         }
 
         public override void OnBind()
