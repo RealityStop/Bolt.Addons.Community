@@ -1,4 +1,4 @@
-#if ENABLE_VERTICAL_FLOW
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -889,4 +889,3 @@ namespace Unity.VisualScripting.Community
         protected override Edge edge => Edge.Left;
     }
 }
-#endif

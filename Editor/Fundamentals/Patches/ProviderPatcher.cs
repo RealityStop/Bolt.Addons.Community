@@ -14,9 +14,7 @@ namespace Unity.VisualScripting.Community
         static ProviderPatcher()
         {
             EnsurePatched();
-#if ENABLE_VERTICAL_FLOW
             PatchWidgets();
-#endif
             // PatchGraphContext();
 #if NEW_VARIABLES_UI
             PatchVariablesDeclarationsInspector();
@@ -35,7 +33,9 @@ namespace Unity.VisualScripting.Community
             PatchGlobalProvider(provider, typeof(IEventUnit), typeof(EventUnitDescriptor<>));
             GraphWindow.activeContextChanged += context =>
             {
+#if ENABLE_VERTICAL_FLOW
                 PatchUnitWidgets(context);
+#endif
                 PatchUnitPortWidgets(context);
                 PatchUnitConnectionWidgets(context);
             };
@@ -77,10 +77,10 @@ namespace Unity.VisualScripting.Community
             if (context != null && context.graph is FlowGraph)
             {
                 var provider = context.canvas.widgetProvider;
-                // Ensure that new ports will use the new widget.
-                // Needed for units that can change their amount of ports.
+#if ENABLE_VERTICAL_FLOW
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlInputWidget>(provider, typeof(ControlInput));
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlOutputWidget>(provider, typeof(ControlOutput));
+#endif
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ValueInputWidget>(provider, typeof(ValueInput));
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ValueOutputWidget>(provider, typeof(ValueOutput));
             }
@@ -91,7 +91,9 @@ namespace Unity.VisualScripting.Community
             if (context != null && context.graph is FlowGraph)
             {
                 var provider = context.canvas.widgetProvider;
+#if ENABLE_VERTICAL_FLOW
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlConnectionWidget>(provider, typeof(ControlConnection));
+#endif
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ValueConnectionWidget>(provider, typeof(ValueConnection));
             }
         }

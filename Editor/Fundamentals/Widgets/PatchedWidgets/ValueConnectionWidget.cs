@@ -71,6 +71,11 @@ namespace Unity.VisualScripting.Community
                     {
                         hideConnection = false;
                     }
+                    else if (canvas.hoveredWidget != null)
+                    {
+                        var hoveredItem = canvas.hoveredWidget.item;
+                        hideConnection = !(hoveredItem == destinationReroute || hoveredItem == connection.source.unit || hoveredItem == connection.source || hoveredItem == connection.destination);
+                    }
                 }
             }
 
