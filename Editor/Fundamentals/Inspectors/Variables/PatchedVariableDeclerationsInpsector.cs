@@ -140,6 +140,9 @@ namespace Unity.VisualScripting.Community
                                 menu.AddItem(new GUIContent("Vector 2"), false, () => AddQuickVariable(isRight ? typeof(List<Vector2>) : typeof(Vector2)));
                                 menu.AddItem(new GUIContent("Vector 3"), false, () => AddQuickVariable(isRight ? typeof(List<Vector3>) : typeof(Vector3)));
                                 menu.AddItem(new GUIContent("Vector 4"), false, () => AddQuickVariable(isRight ? typeof(List<Vector4>) : typeof(Vector4)));
+                                menu.AddSeparator("");
+                                menu.AddItem(new GUIContent("Vector 2 Int"), false, () => AddQuickVariable(isRight ? typeof(List<Vector2Int>) : typeof(Vector2Int)));
+                                menu.AddItem(new GUIContent("Vector 3 Int"), false, () => AddQuickVariable(isRight ? typeof(List<Vector3Int>) : typeof(Vector3Int)));
                                 menu.DropDown(buttonRect);
                                 break;
                             }

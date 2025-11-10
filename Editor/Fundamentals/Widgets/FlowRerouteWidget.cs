@@ -19,12 +19,12 @@ namespace Unity.VisualScripting.Community
 
 #if VISUAL_SCRIPTING_1_7_3
             _position.width = 26;
-            GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height-4), NodeShape.Square, NodeColor.Gray, isSelected);
+            GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height-4), NodeShape.Square, color, isSelected);
 #else
             if (isSelected || mouseIsOver || !inputHasConnection || !outputHasConnection)
             {
                 _position.width = 26;
-                GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height - 4), NodeShape.Square, NodeColor.Gray, isSelected);
+                GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height - 4), NodeShape.Square, color, isSelected);
                 GUI.DrawTexture(new Rect(_position.center.x - 8, _position.y + 5, 16, 16), typeof(Flow).Icon()?[IconSize.Small]);
             }
             else
@@ -99,12 +99,12 @@ namespace Unity.VisualScripting.Community
 
 #if VISUAL_SCRIPTING_1_7_3
             _position.width = 26;
-            GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height-4), NodeShape.Square, NodeColor.Gray, isSelected);
+            GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height-4), NodeShape.Square, color, isSelected);
 #else
             if (isSelected || mouseIsOver || !inputHasConnection || !outputHasConnection)
             {
                 _position.width = 26;
-                GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height - 4), NodeShape.Square, NodeColor.Gray, isSelected);
+                GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height - 4), NodeShape.Square, color, isSelected);
             }
             else
             {

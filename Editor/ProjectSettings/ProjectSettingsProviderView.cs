@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEditor;
-using UnityEditor.Compilation;
 
 namespace Unity.VisualScripting.Community
 {
@@ -20,7 +19,20 @@ namespace Unity.VisualScripting.Community
         public const string NewListUIKey = "Community_Settings_NewListUI";
         public const string NewDictionaryUIKey = "Community_Settings_NewDictionaryUI";
 
-        private readonly GUIStyle marginStyle = new GUIStyle() { margin = new RectOffset(10, 10, 10, 10) };
+        private readonly GUIStyle marginStyle = new GUIStyle { margin = new RectOffset(10, 10, 10, 10) };
+
+        private GraphLayout _graphLayout;
+        private bool _unitStyle;
+        private bool _newToolbar;
+        private bool _graphMinimap;
+        private bool _darkerUI;
+        private bool _newVariablesUI;
+        private bool _showVariablesQuickbar;
+        private bool _newListUI;
+        private bool _newDictionaryUI;
+
+        private bool _hasPendingChanges;
+        private bool _isInitialized;
 
         public ProjectSettingsProviderView() : base(Path, SettingsScope.Project)
         {
@@ -29,87 +41,142 @@ namespace Unity.VisualScripting.Community
 
         public override void OnGUI(string searchContext)
         {
+            if (!_isInitialized)
+            {
+                _isInitialized = true;
+                LoadValues();
+            }
+
             GUILayout.BeginVertical(marginStyle);
 
             GUILayout.Label("Graph", EditorStyles.boldLabel);
 
-            var currentLayout = (GraphLayout)EditorPrefs.GetInt(GraphLayoutKey, (int)GraphLayout.Horizontal);
-            var newGraphLayout = (GraphLayout)EditorGUILayout.EnumPopup("Graph Layout", currentLayout);
-            if (newGraphLayout != currentLayout)
-            {
-                EditorPrefs.SetInt(GraphLayoutKey, (int)newGraphLayout);
-                ScriptingDefinesHandler.UpdateVerticalFlow();
-            }
+            DrawEnumField("Graph Layout", ref _graphLayout);
+            DrawToggle("New Unit Style", ref _unitStyle);
+            DrawToggle("New Toolbar Style", ref _newToolbar);
+            DrawToggle("Graph Minimap", ref _graphMinimap);
 
-            var currentStyle = EditorPrefs.GetBool(UnitStyleKey, false);
-            var newStyle = EditorGUILayout.Toggle("New Unit Style", currentStyle);
-            if (newStyle != currentStyle)
-            {
-                EditorPrefs.SetBool(UnitStyleKey, newStyle);
-                ScriptingDefinesHandler.UpdateUnitStyle();
-            }
-
-            var currentToolbar = EditorPrefs.GetBool(NewToolbarKey, false);
-            var newToolbar = EditorGUILayout.Toggle("New Toolbar Style", currentToolbar);
-            if (newToolbar != currentToolbar)
-            {
-                EditorPrefs.SetBool(NewToolbarKey, newToolbar);
-                ScriptingDefinesHandler.UpdateToolbarStyle();
-            }
-
-            var currentGraphMinimap = EditorPrefs.GetBool(GraphMinimapKey, false);
-            var newGraphMinimap = EditorGUILayout.Toggle("Graph Minimap", currentGraphMinimap);
-            if (newGraphMinimap != currentGraphMinimap)
-            {
-                EditorPrefs.SetBool(GraphMinimapKey, newGraphMinimap);
-                ScriptingDefinesHandler.UpdateGraphMiniMap();
-            }
-
+            GUILayout.Space(10);
             GUILayout.Label("UI", EditorStyles.boldLabel);
 
-            var currentDarkUI = EditorPrefs.GetBool(DarkerUIKey, false);
-            var newDarkUI = EditorGUILayout.Toggle("Darker UI", currentDarkUI);
-            if (newDarkUI != currentDarkUI)
+            DrawToggle("Darker UI", ref _darkerUI);
+            DrawToggle("New Variables UI", ref _newVariablesUI);
+
+            if (_newVariablesUI)
             {
-                EditorPrefs.SetBool(DarkerUIKey, newDarkUI);
-                ScriptingDefinesHandler.UpdateDarkUI();
+                DrawToggle("Show Variables Quickbar", ref _showVariablesQuickbar);
             }
 
-            var currentVariablesUI = EditorPrefs.GetBool(NewVariablesUIKey, false);
-            var newVariablesUI = EditorGUILayout.Toggle("New Variables UI", currentVariablesUI);
-            if (newVariablesUI != currentVariablesUI)
-            {
-                EditorPrefs.SetBool(NewVariablesUIKey, newVariablesUI);
-                ScriptingDefinesHandler.UpdateVariablesUI();
-            }
+            DrawToggle("New List UI", ref _newListUI);
+            DrawToggle("New Dictionary UI", ref _newDictionaryUI);
 
-            if (newVariablesUI)
+            GUILayout.Space(15);
+            DrawBottomButtons();
+
+            GUILayout.EndVertical();
+        }
+
+        private void LoadValues()
+        {
+            _graphLayout = (GraphLayout)EditorPrefs.GetInt(GraphLayoutKey, (int)GraphLayout.Horizontal);
+            _unitStyle = EditorPrefs.GetBool(UnitStyleKey, false);
+            _newToolbar = EditorPrefs.GetBool(NewToolbarKey, false);
+            _graphMinimap = EditorPrefs.GetBool(GraphMinimapKey, false);
+
+            _darkerUI = EditorPrefs.GetBool(DarkerUIKey, false);
+            _newVariablesUI = EditorPrefs.GetBool(NewVariablesUIKey, false);
+            _showVariablesQuickbar = EditorPrefs.GetBool(ShowVariablesQuickbarKey, false);
+            _newListUI = EditorPrefs.GetBool(NewListUIKey, false);
+            _newDictionaryUI = EditorPrefs.GetBool(NewDictionaryUIKey, false);
+        }
+
+        private void DrawEnumField<T>(string label, ref T value) where T : struct
+        {
+            var newValue = (T)(object)EditorGUILayout.EnumPopup(label, (System.Enum)(object)value);
+            if (!Equals(newValue, value))
             {
-                var currentQuickbar = EditorPrefs.GetBool(ShowVariablesQuickbarKey, false);
-                var newQuickbar = EditorGUILayout.Toggle("Show Variables Quickbar", currentQuickbar);
-                if (newQuickbar != currentQuickbar)
+                value = newValue;
+                _hasPendingChanges = true;
+            }
+        }
+
+        private void DrawToggle(string label, ref bool value)
+        {
+            var newValue = EditorGUILayout.Toggle(label, value);
+            if (newValue != value)
+            {
+                value = newValue;
+                _hasPendingChanges = true;
+            }
+        }
+
+        private void DrawBottomButtons()
+        {
+            GUILayout.BeginHorizontal();
+
+            using (new EditorGUI.DisabledScope(!_hasPendingChanges))
+            {
+                if (GUILayout.Button("Apply", GUILayout.Height(18), GUILayout.Width(50)))
                 {
-                    EditorPrefs.SetBool(ShowVariablesQuickbarKey, newQuickbar);
+                    ApplyAllChanges();
                 }
             }
 
-            var currentListUI = EditorPrefs.GetBool(NewListUIKey, false);
-            var newListUI = EditorGUILayout.Toggle("New List UI", currentListUI);
-            if (newListUI != currentListUI)
+            GUILayout.Space(5);
+
+            if (GUILayout.Button("Reset to Defaults", GUILayout.Height(18), GUILayout.Width(120)))
             {
-                EditorPrefs.SetBool(NewListUIKey, newListUI);
-                ScriptingDefinesHandler.UpdateListUI();
+                if (EditorUtility.DisplayDialog(
+                    "Reset to Defaults",
+                    "Are you sure you want to reset all customisation settings to their default values?",
+                    "Yes, Reset",
+                    "Cancel"))
+                {
+                    ResetToDefaults();
+                }
             }
 
-            var currentDictionaryUI = EditorPrefs.GetBool(NewDictionaryUIKey, false);
-            var newDictionaryUI = EditorGUILayout.Toggle("New Dictionary UI", currentDictionaryUI);
-            if (newDictionaryUI != currentDictionaryUI)
-            {
-                EditorPrefs.SetBool(NewDictionaryUIKey, newDictionaryUI);
-                ScriptingDefinesHandler.UpdateDictionaryUI();
-            }
+            GUILayout.EndHorizontal();
+        }
 
-            GUILayout.EndVertical();
+        private void ApplyAllChanges()
+        {
+            EditorPrefs.SetInt(GraphLayoutKey, (int)_graphLayout);
+            EditorPrefs.SetBool(UnitStyleKey, _unitStyle);
+            EditorPrefs.SetBool(NewToolbarKey, _newToolbar);
+            EditorPrefs.SetBool(GraphMinimapKey, _graphMinimap);
+            EditorPrefs.SetBool(DarkerUIKey, _darkerUI);
+            EditorPrefs.SetBool(NewVariablesUIKey, _newVariablesUI);
+            EditorPrefs.SetBool(ShowVariablesQuickbarKey, _showVariablesQuickbar);
+            EditorPrefs.SetBool(NewListUIKey, _newListUI);
+            EditorPrefs.SetBool(NewDictionaryUIKey, _newDictionaryUI);
+
+            ScriptingDefinesHandler.UpdateVerticalFlow();
+            ScriptingDefinesHandler.UpdateUnitStyle();
+            ScriptingDefinesHandler.UpdateToolbarStyle();
+            ScriptingDefinesHandler.UpdateGraphMiniMap();
+            ScriptingDefinesHandler.UpdateDarkUI();
+            ScriptingDefinesHandler.UpdateVariablesUI();
+            ScriptingDefinesHandler.UpdateListUI();
+            ScriptingDefinesHandler.UpdateDictionaryUI();
+
+            _hasPendingChanges = false;
+        }
+
+        private void ResetToDefaults()
+        {
+            // Default values
+            _graphLayout = GraphLayout.Horizontal;
+            _unitStyle = false;
+            _newToolbar = false;
+            _graphMinimap = false;
+            _darkerUI = false;
+            _newVariablesUI = false;
+            _showVariablesQuickbar = false;
+            _newListUI = false;
+            _newDictionaryUI = false;
+
+            _hasPendingChanges = true;
         }
     }
 }

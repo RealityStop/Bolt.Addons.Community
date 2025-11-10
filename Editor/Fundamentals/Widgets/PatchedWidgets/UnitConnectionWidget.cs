@@ -197,13 +197,13 @@ namespace Unity.VisualScripting.Community
 
         #region Droplets
 
-        private readonly List<float> droplets = new List<float>();
+        protected readonly List<float> droplets = new List<float>();
 
         private float dropTime;
 
         private float lastInvokeTime;
 
-        private const float handleAlignmentMargin = 0.1f;
+        protected const float handleAlignmentMargin = 0.1f;
 
         protected virtual bool showDroplets => true;
 

@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -42,15 +44,120 @@ namespace Unity.VisualScripting.Community
                         value = Flow.Predict(connection.source, reference);
                     }
 
-                    var label = new GUIContent(value.ToShortString(), Icons.Type(value?.GetType())?[IconSize.Small]);
-                    var labelSize = Styles.prediction.CalcSize(label);
-                    var labelPosition = new Rect(position.position - labelSize / 2, labelSize);
+                    var valueString = value.ToShortString();
+                    if (value is Color colorValue)
+                    {
+                        var label = new GUIContent(valueString, Icons.Type(typeof(Color))?[IconSize.Small]);
+                        var labelSize = Styles.prediction.CalcSize(label);
+                        var labelPosition = new Rect(position.position - labelSize / 2, labelSize);
 
-                    BeginDim();
+                        BeginDim();
+                        GUI.Label(labelPosition, label, Styles.prediction);
+                        EndDim();
 
-                    GUI.Label(labelPosition, label, Styles.prediction);
+                        if (labelPosition.Contains(Event.current.mousePosition))
+                        {
+                            const float size = 20f;
+                            var rect = new Rect(labelPosition.xMax + 6, labelPosition.center.y - size / 2, size, size);
 
-                    EndDim();
+                            EditorGUI.DrawRect(rect, Color.black);
+                            var innerRect = new Rect(rect.x + 1, rect.y + 1, rect.width - 2, rect.height - 2);
+                            EditorGUI.DrawRect(innerRect, colorValue);
+
+                            var colorText = $"RGBA({colorValue.r:F2}, {colorValue.g:F2}, {colorValue.b:F2}, {colorValue.a:F2})";
+                            var textSize = Styles.prediction.CalcSize(new GUIContent(colorText));
+                            var textRect = new Rect(rect.x + rect.width + 6, rect.center.y - textSize.y / 2, textSize.x, textSize.y);
+
+                            GUI.Label(textRect, colorText, Styles.prediction);
+                        }
+                    }
+                    else if (string.IsNullOrEmpty(valueString))
+                    {
+                        var type = value.GetType();
+                        var label = new GUIContent(valueString, Icons.Type(type)?[IconSize.Small]);
+                        var labelSize = Styles.prediction.CalcSize(label);
+                        var labelPosition = new Rect(position.position - labelSize / 2, labelSize);
+
+                        BeginDim();
+                        GUI.Label(labelPosition, label, Styles.prediction);
+                        EndDim();
+
+                        if (labelPosition.Contains(Event.current.mousePosition))
+                        {
+                            var inspectableMembers = type
+                                .GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                                .Where(m =>
+                                {
+                                    if (m is FieldInfo f)
+                                    {
+                                        return f.IsPublic ||
+                                               f.GetCustomAttribute<SerializeField>() != null ||
+                                               f.GetCustomAttribute<SerializeAttribute>() != null ||
+                                               f.GetCustomAttribute<InspectableAttribute>() != null;
+                                    }
+                                    else if (m is PropertyInfo p)
+                                    {
+                                        return (p.GetCustomAttribute<InspectableAttribute>() != null ||
+                                               p.GetCustomAttribute<SerializeAttribute>() != null || p.IsPubliclyGettable()) && p.CanRead;
+                                    }
+                                    return false;
+                                })
+                                .ToList();
+
+                            if (inspectableMembers.Count > 0)
+                            {
+                                float maxWidth = 0;
+                                float lineHeight = 16f;
+                                string[] lines = new string[inspectableMembers.Count];
+
+                                for (int i = 0; i < inspectableMembers.Count; i++)
+                                {
+                                    var member = inspectableMembers[i];
+                                    object memberValue = null;
+
+                                    try
+                                    {
+                                        if (member is FieldInfo fi)
+                                            memberValue = fi.GetValue(value);
+                                        else if (member is PropertyInfo pi && pi.CanRead)
+                                            memberValue = pi.GetValue(value);
+                                    }
+                                    catch { /* ignore inaccessible members */ }
+
+                                    string str = $"{member.Name}: {memberValue?.ToString() ?? "null"}";
+                                    lines[i] = str;
+
+                                    var size = Styles.prediction.CalcSize(new GUIContent(str));
+                                    maxWidth = Mathf.Max(maxWidth, size.x);
+                                }
+
+                                float tooltipHeight = lineHeight * inspectableMembers.Count + 6;
+                                var tooltipRect = new Rect(
+                                    labelPosition.xMax + 3,
+                                    labelPosition.center.y - tooltipHeight / 2,
+                                    maxWidth + 16,
+                                    tooltipHeight
+                                );
+
+                                float textY = tooltipRect.y + 3;
+                                foreach (var line in lines)
+                                {
+                                    GUI.Label(new Rect(tooltipRect.x + 6, textY, tooltipRect.width - 12, lineHeight), line, Styles.prediction);
+                                    textY += lineHeight;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var label = new GUIContent(valueString, Icons.Type(value?.GetType())?[IconSize.Small]);
+                        var labelSize = Styles.prediction.CalcSize(label);
+                        var labelPosition = new Rect(position.position - labelSize / 2, labelSize);
+
+                        BeginDim();
+                        GUI.Label(labelPosition, label, Styles.prediction);
+                        EndDim();
+                    }
 
                     EditorGUIUtility.SetIconSize(previousIconSize);
                 }
@@ -111,6 +218,37 @@ namespace Unity.VisualScripting.Community
             }
 
             return minDist < threshold;
+        }
+
+        protected override void DrawDroplets()
+        {
+            foreach (var droplet in droplets)
+            {
+                Vector2 position;
+
+                if (droplet < handleAlignmentMargin)
+                {
+                    var t = droplet / handleAlignmentMargin;
+                    position = Vector2.Lerp(sourceHandlePosition.center, sourceHandleEdgeCenter, t);
+                }
+                else if (droplet > 1 - handleAlignmentMargin)
+                {
+                    var t = (droplet - (1 - handleAlignmentMargin)) / handleAlignmentMargin;
+                    position = Vector2.Lerp(destinationHandleEdgeCenter, destinationHandlePosition.center, t);
+                }
+                else
+                {
+                    var t = (droplet - handleAlignmentMargin) / (1 - 2 * handleAlignmentMargin);
+                    position = GraphGUI.GetPointOnConnection(t, sourceHandleEdgeCenter, destinationHandleEdgeCenter, Edge.Right, Edge.Left, UnitConnectionStyles.relativeBend, UnitConnectionStyles.minBend);
+                }
+
+                var size = GetDropletSize();
+
+                using (LudiqGUI.color.Override(GUI.color * color))
+                {
+                    DrawDroplet(new Rect(position.x - size.x / 2, position.y - size.y / 2, size.x, size.y));
+                }
+            }
         }
 
         public static Color DetermineColor(Type source, Type destination)

@@ -1,7 +1,6 @@
 using System;
 using UnityEditor;
 using UnityEngine;
-using Unity.VisualScripting;
 using System.Linq;
 
 namespace Unity.VisualScripting.Community
@@ -51,6 +50,10 @@ namespace Unity.VisualScripting.Community
 
         protected override void OnGUI()
         {
+#if DARKER_UI
+            if (BoltCore.instance != null && !EditorApplication.isCompiling)
+                EditorGUI.DrawRect(new Rect(0, 0, position.width, position.height), CommunityStyles.backgroundColor);
+#endif
             if (GraphWindow.tabs.Count() > 0 && needsOpen)
             {
                 try

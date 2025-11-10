@@ -29,7 +29,7 @@ namespace Unity.VisualScripting.Community
                     width = UnitPortWidget<ValueInput>.Styles.label.CalcSize(inputDescription.ToGUIContent(IconSize.Small)).x + 50f;
                 }
                 _position.width = width;
-                GraphGUI.Node(new Rect(position.x, position.y + 3, width, _position.height - 4), NodeShape.Square, NodeColor.Gray, isSelected);
+                GraphGUI.Node(new Rect(position.x, position.y + 3, width, _position.height - 4), NodeShape.Square, color, isSelected);
                 if (inputDescription != null)
                     GUI.Label(new Rect(position.x + 24, position.y + 5, width, _position.height - 4), inputDescription.label);
             }
