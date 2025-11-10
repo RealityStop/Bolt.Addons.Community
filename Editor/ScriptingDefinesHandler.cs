@@ -9,46 +9,96 @@ namespace Unity.VisualScripting.Community
     [InitializeOnLoad]
     public static class ScriptingDefinesHandler
     {
-        private const string DEFINE_SYMBOL = "RESTRICT_EVENT_TYPES";
+        private const string RESTRICT_EVENT_TYPES_SYMBOL = "RESTRICT_EVENT_TYPES";
+
+        private const string VERTICAL_FLOW = "ENABLE_VERTICAL_FLOW";
+        private const string UNIT_STYLE = "NEW_UNIT_STYLE";
+        private const string TOOLBAR_STYLE = "NEW_TOOLBAR_STYLE";
+        private const string GRAPH_MINIMAP = "ENABLE_GRAPH_MINIMAP";
+        private const string DARK_UI = "DARKER_UI";
+        private const string NEW_VARIABLES_UI = "NEW_VARIABLES_UI";
+        private const string NEW_LIST_UI = "NEW_LIST_UI";
+        private const string NEW_DICTIONARY_UI = "NEW_DICTIONARY_UI";
 
         static ScriptingDefinesHandler()
         {
-            UpdateDefineSymbol();
+            SetDefine(RESTRICT_EVENT_TYPES_SYMBOL, CommunityOptionFetcher.DefinedEvent_RestrictEventTypes);
         }
 
-        public static void UpdateDefineSymbol()
+        public static void UpdateVerticalFlow()
         {
-            bool shouldEnable = CommunityOptionFetcher.DefinedEvent_RestrictEventTypes;
+            SetDefine(VERTICAL_FLOW, (GraphLayout)EditorPrefs.GetInt(ProjectSettingsProviderView.GraphLayoutKey, (int)GraphLayout.Horizontal) == GraphLayout.Vertical);
+        }
+
+        public static void UpdateUnitStyle()
+        {
+            SetDefine(UNIT_STYLE, EditorPrefs.GetBool(ProjectSettingsProviderView.UnitStyleKey, false));
+        }
+
+        public static void UpdateToolbarStyle()
+        {
+            SetDefine(TOOLBAR_STYLE, EditorPrefs.GetBool(ProjectSettingsProviderView.NewToolbarKey, false));
+        }
+
+        public static void UpdateGraphMiniMap()
+        {
+            SetDefine(GRAPH_MINIMAP, EditorPrefs.GetBool(ProjectSettingsProviderView.GraphMinimapKey, false));
+        }
+
+        public static void UpdateDarkUI()
+        {
+            SetDefine(DARK_UI, EditorPrefs.GetBool(ProjectSettingsProviderView.DarkerUIKey, false));
+        }
+
+        public static void UpdateVariablesUI()
+        {
+            SetDefine(NEW_VARIABLES_UI, EditorPrefs.GetBool(ProjectSettingsProviderView.NewVariablesUIKey, false));
+        }
+
+        public static void UpdateListUI()
+        {
+            SetDefine(NEW_LIST_UI, EditorPrefs.GetBool(ProjectSettingsProviderView.NewListUIKey, false));
+        }
+
+        public static void UpdateDictionaryUI()
+        {
+            SetDefine(NEW_DICTIONARY_UI, EditorPrefs.GetBool(ProjectSettingsProviderView.NewDictionaryUIKey, false));
+        }
+
+        public static void SetDefine(string symbol, bool enabled)
+        {
+            if (string.IsNullOrWhiteSpace(symbol)) return;
 
 #if UNITY_2022_1_OR_NEWER
             var target = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
             string defines = PlayerSettings.GetScriptingDefineSymbols(target);
 #else
-            BuildTargetGroup target = EditorUserBuildSettings.selectedBuildTargetGroup;
+            var target = EditorUserBuildSettings.selectedBuildTargetGroup;
             string defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(target);
 #endif
 
-            List<string> defineList = defines.Split(';').Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
+            List<string> list = defines.Split(';').Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
+            bool changed = false;
 
-            if (shouldEnable && !defineList.Contains(DEFINE_SYMBOL))
+            if (enabled && !list.Contains(symbol))
             {
-                defineList.Add(DEFINE_SYMBOL);
+                list.Add(symbol);
+                changed = true;
             }
-            else if (!shouldEnable && defineList.Contains(DEFINE_SYMBOL))
+            else if (!enabled && list.Contains(symbol))
             {
-                defineList.Remove(DEFINE_SYMBOL);
-            }
-            else
-            {
-                return;
+                list.Remove(symbol);
+                changed = true;
             }
 
-            string newDefines = string.Join(";", defineList);
+            if (!changed) return;
+
+            string result = string.Join(";", list);
 
 #if UNITY_2022_1_OR_NEWER
-            PlayerSettings.SetScriptingDefineSymbols(target, newDefines);
+            PlayerSettings.SetScriptingDefineSymbols(target, result);
 #else
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(target, newDefines);
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(target, result);
 #endif
         }
     }

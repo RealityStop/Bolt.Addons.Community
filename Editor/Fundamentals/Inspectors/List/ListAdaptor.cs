@@ -57,15 +57,12 @@ namespace Unity.VisualScripting.Community
             return total + 4f;
         }
 
+#if DARKER_UI
         // I have to do this setup to change the color of the add button
         // It's very hacky but seems to work better than tinting the background Texture.
         private Color _previousBackgroundColor;
         private bool _tintApplied;
 
-        /// <summary>
-        /// Called before list elements are drawn.
-        /// Ensures the GUI color is reset properly.
-        /// </summary>
         public override void BeginGUI()
         {
             if (_tintApplied)
@@ -75,27 +72,30 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        /// <summary>
-        /// Called after all list elements are drawn.
-        /// Tints the Add button only.
-        /// </summary>
         public override void EndGUI()
         {
             _previousBackgroundColor = GUI.backgroundColor;
             GUI.backgroundColor = CommunityStyles.backgroundColor.Brighten(0.36f);
             _tintApplied = true;
         }
+#endif
 
         private void EnsureFoldoutCount(int index)
         {
             while (foldoutStates.Count <= index)
+            {
                 foldoutStates.Add(false);
+                parentInspector.SetHeightDirty();
+            }
         }
 
         public override void DrawItemBackground(Rect position, int index)
         {
+#if DARKER_UI
             EditorGUI.DrawRect(position, CommunityStyles.backgroundColor);
-
+#else
+            EditorGUI.DrawRect(position, ColorPalette.unityBackgroundLight);
+#endif
             var restoredColor = Handles.color;
             Handles.color = Color.gray * 0.6f;
             Handles.DrawAAPolyLine(2f, new Vector3[]
@@ -116,7 +116,11 @@ namespace Unity.VisualScripting.Community
             var element = metadata[index];
 
             var oldHandleRect = new Rect(position.x + 4, position.y + position.height / 2f - 3, 9, 7);
+#if DARKER_UI
             EditorGUI.DrawRect(oldHandleRect, CommunityStyles.backgroundColor);
+#else
+            EditorGUI.DrawRect(oldHandleRect, ColorPalette.unityBackgroundLight);
+#endif
             EnsureFoldoutCount(index);
             bool expanded = foldoutStates[index];
 
@@ -160,6 +164,7 @@ namespace Unity.VisualScripting.Community
             if (Event.current.type == EventType.MouseDown && arrowRect.Contains(Event.current.mousePosition))
             {
                 foldoutStates[index] = !foldoutStates[index];
+                parentInspector.SetHeightDirty();
                 Event.current.Use();
             }
 
@@ -227,9 +232,8 @@ namespace Unity.VisualScripting.Community
 
         public override void Add()
         {
-            base.Add();
-
             foldoutStates.Add(true);
+            base.Add();
         }
 
         public override void Move(int sourceIndex, int destIndex)
@@ -279,6 +283,38 @@ namespace Unity.VisualScripting.Community
             }
 
             base.ProcessDropInsertion(insertionIndex);
+        }
+
+        public override float GetItemAdaptiveWidth(int index)
+        {
+            var element = metadata[index];
+            EnsureFoldoutCount(index);
+
+            const float foldoutArrowWidth = 12f;
+
+            GUIContent label = CommunityStyles.GetCollectionDisplayName(element, index);
+            float labelWidth = GUI.skin.label.CalcSize(label).x;
+
+            float baseWidth = DragHandleWidth + foldoutArrowWidth + labelWidth + DeleteButtonWidth;
+
+            float inspectorWidth = 0f;
+            if (foldoutStates[index])
+            {
+                try
+                {
+                    var inspector = element.Inspector();
+                    if (inspector != null)
+                    {
+                        float contentWidth = inspector.GetAdaptiveWidth();
+                        inspectorWidth = contentWidth + 10f;
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            }
+
+            return Mathf.Max(baseWidth, inspectorWidth);
         }
     }
 }

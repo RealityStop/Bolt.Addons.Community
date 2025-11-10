@@ -1,3 +1,4 @@
+#if ENABLE_VERTICAL_FLOW
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -263,11 +264,11 @@ namespace Unity.VisualScripting.Community
 
         public Rect handlePosition { get; protected set; }
 
-        public Rect labelPosition { get; private set; }
+        public Rect labelPosition { get; protected set; }
 
-        public Rect iconPosition { get; private set; }
+        public Rect iconPosition { get; protected set; }
 
-        public Rect inspectorPosition { get; private set; }
+        public Rect inspectorPosition { get; protected set; }
 
         public Rect identifierPosition { get; protected set; }
 
@@ -332,7 +333,7 @@ namespace Unity.VisualScripting.Community
             {
                 var labelPosition = new Rect(
                     handlePosition.center.x - GetLabelWidth() / 2f,
-                    unitWidget.position.GetEdgeCenter(edge).y - Styles.spaceAfterEdge - 7,
+                    unitWidget.position.GetEdgeCenter(edge).y - Styles.spaceAfterEdge - 5,
                     GetLabelWidth(),
                     GetLabelHeight()
                 );
@@ -396,7 +397,7 @@ namespace Unity.VisualScripting.Community
             return width;
         }
 
-        private float GetLabelWidth()
+        protected float GetLabelWidth()
         {
             return Mathf.Min(Styles.label.CalcSize(labelContent).x, Styles.maxLabelWidth);
         }
@@ -423,7 +424,7 @@ namespace Unity.VisualScripting.Community
             return height;
         }
 
-        private float GetLabelHeight()
+        protected float GetLabelHeight()
         {
             return Styles.label.CalcSize(labelContent).y;
         }
@@ -455,7 +456,7 @@ namespace Unity.VisualScripting.Community
 
         protected bool showIcon => false;
 
-        protected virtual bool showLabel => description.showLabel;
+        public virtual bool showLabel => description.showLabel;
 
         public virtual Color color => Color.white;
 
@@ -889,3 +890,4 @@ namespace Unity.VisualScripting.Community
         protected override Edge edge => Edge.Left;
     }
 }
+#endif

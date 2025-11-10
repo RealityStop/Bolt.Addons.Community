@@ -3,7 +3,9 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
+#if NEW_DICTIONARY_UI
     [Inspector(typeof(IDictionary))]
+#endif
     public class DictionaryInspector : Inspector
     {
         public DictionaryInspector(Metadata metadata) : base(metadata)

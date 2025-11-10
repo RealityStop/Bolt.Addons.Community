@@ -13,6 +13,9 @@ namespace Unity.VisualScripting.Community
         public ControlInput Start { get; private set; }
 
         [DoNotSerialize]
+        public ControlInput Reset { get; private set; }
+
+        [DoNotSerialize]
         public ControlInput Stop { get; private set; }
 
         [DoNotSerialize]
@@ -49,6 +52,7 @@ namespace Unity.VisualScripting.Community
 
             Start = ControlInput("Start", StartStopwatch);
             Stop = ControlInput("Stop", StopStopwatch);
+            Reset = ControlInput("Reset", ResetStopwatch);
 
             if (milliseconds)
             {
@@ -81,6 +85,12 @@ namespace Unity.VisualScripting.Community
             Stopwatch ??= new Stopwatch();
             Stopwatch.Start();
             return Started;
+        }
+
+        private ControlOutput ResetStopwatch(Flow flow)
+        {
+            Stopwatch?.Reset();
+            return null;
         }
 
         private ControlOutput StopStopwatch(Flow flow)

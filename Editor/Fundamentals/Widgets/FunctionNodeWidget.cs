@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
         public override bool canCopy => false;
         protected override IEnumerable<DropdownOption> contextOptions => Enumerable.Empty<DropdownOption>();
 
-        protected override NodeColorMix color => new NodeColorMix(NodeColor.Green);
+        protected override NodeColorMix color => NodeColor.Green;
 
         public override void HandleInput()
         {

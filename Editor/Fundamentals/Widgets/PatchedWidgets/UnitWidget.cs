@@ -1,3 +1,4 @@
+#if ENABLE_VERTICAL_FLOW
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -216,16 +217,23 @@ namespace Unity.VisualScripting.Community
 
         public override void CachePosition()
         {
-            var inputsWidth = 0f;
-            var outputsWidth = 0f;
+            const float compactY = 0.5f;
+            const float compactX = 0.8f;
 
-            foreach (var input in inputs)
-                inputsWidth = Mathf.Max(inputsWidth, input.GetInnerWidth());
+            var valueInputs = inputs.OfType<ValueInputWidget>();
+            var valueOutputs = outputs.OfType<ValueOutputWidget>();
+            var controlInputs = inputs.OfType<ControlInputWidget>().ToList();
+            var controlOutputs = outputs.OfType<ControlOutputWidget>().ToList();
 
-            foreach (var output in outputs)
-                outputsWidth = Mathf.Max(outputsWidth, output.GetInnerWidth());
+            var valueInputsWidth = valueInputs.Any() ? valueInputs.Max(p => p.GetInnerWidth()) : 0f;
+            var outputsWidth = valueOutputs.Any() ? valueOutputs.Max(p => p.GetInnerWidth()) : 0f;
 
-            var portsWidth = inputsWidth + Styles.spaceBetweenInputsAndOutputs + outputsWidth;
+            var portsWidth = valueInputsWidth + Styles.spaceBetweenInputsAndOutputs + outputsWidth;
+
+            const float spaceBetweenControlPorts = 10;
+
+            portsWidth = Mathf.Max(portsWidth, (controlInputs.Any() ? controlInputs.Max(p => p.GetInnerWidth()) + spaceBetweenControlPorts : 0f) * controlInputs.Count);
+            portsWidth = Mathf.Max(portsWidth, (controlOutputs.Any() ? controlOutputs.Max(p => p.GetInnerWidth()) + spaceBetweenControlPorts : 0f) * controlOutputs.Count);
 
             settingsPositions.Clear();
             var settingsWidth = 0f;
@@ -234,8 +242,8 @@ namespace Unity.VisualScripting.Community
             {
                 foreach (var setting in settings)
                 {
-                    var settingWidth = 0f;
                     var settingLabelContent = settingLabelsContents[setting];
+                    var settingWidth = 0f;
 
                     if (settingLabelContent != null)
                         settingWidth += Styles.settingLabel.CalcSize(settingLabelContent).x;
@@ -249,13 +257,11 @@ namespace Unity.VisualScripting.Community
             }
 
             var headerAddonWidth = showHeaderAddon ? GetHeaderAddonWidth() : 0f;
-
             var titleWidth = Styles.title.CalcSize(titleContent).x;
             var headerTextWidth = titleWidth;
 
             if (showSurtitle)
                 headerTextWidth = Mathf.Max(headerTextWidth, Styles.surtitle.CalcSize(surtitleContent).x);
-
             if (showSubtitle)
                 headerTextWidth = Mathf.Max(headerTextWidth, Styles.subtitle.CalcSize(subtitleContent).x);
 
@@ -263,11 +269,11 @@ namespace Unity.VisualScripting.Community
             if (showIcons)
             {
                 var iconsColumns = Mathf.Ceil((float)description.icons.Length / Styles.iconsPerColumn);
-                iconsWidth = iconsColumns * Styles.iconsSize + ((iconsColumns - 1) * Styles.iconsSpacing);
+                iconsWidth = iconsColumns * Styles.iconsSize + ((iconsColumns - 1) * Styles.iconsSpacing * compactX);
             }
 
-            var headerWidth = Mathf.Max(headerTextWidth + iconsWidth, Mathf.Max(settingsWidth, headerAddonWidth))
-                                + Styles.iconSize + Styles.spaceAfterIcon;
+            var headerWidth = Mathf.Max(headerTextWidth + iconsWidth,
+                Mathf.Max(settingsWidth, headerAddonWidth)) + Styles.iconSize + (Styles.spaceAfterIcon * compactX);
 
             var innerWidth = Mathf.Max(portsWidth, headerWidth);
             var edgeWidth = InnerToEdgePosition(new Rect(0, 0, innerWidth, 0)).width;
@@ -280,54 +286,68 @@ namespace Unity.VisualScripting.Community
             var innerX = innerOrigin.x;
             var innerY = innerOrigin.y;
 
-            iconPosition = new Rect(innerX, innerY, Styles.iconSize, Styles.iconSize);
-            var headerTextX = iconPosition.xMax + Styles.spaceAfterIcon;
-
             var y = innerY;
             var headerHeight = 0f;
 
+#if NEW_UNIT_STYLE
+            var controlInputsHeight = controlInputs.Any(c => c.showLabel) ? controlInputs.Max(p => p.GetHeight()) : 0f;
+#else
+            var controlInputsHeight = controlInputs.Any(c => c.showLabel) ? controlInputs.Max(p => p.GetHeight()) + 4 : 0f;
+#endif
+            headerHeight += controlInputsHeight;
+            y += controlInputsHeight;
+
+            iconPosition = new Rect(innerX, y, Styles.iconSize, Styles.iconSize);
+            var headerTextX = iconPosition.xMax + Styles.spaceAfterIcon * compactX;
+
             if (showSurtitle)
             {
-                var surtitleHeight = Styles.surtitle.CalcHeight(surtitleContent, headerTextWidth);
-                surtitlePosition = new Rect(headerTextX, y, headerTextWidth, surtitleHeight);
-                headerHeight += surtitleHeight + Styles.spaceAfterSurtitle;
-                y += surtitleHeight + Styles.spaceAfterSurtitle;
+                var h = Styles.surtitle.CalcHeight(surtitleContent, headerTextWidth);
+                surtitlePosition = new Rect(headerTextX, y, headerTextWidth, h);
+                headerHeight += h + Styles.spaceAfterSurtitle * compactY;
+                y += h + Styles.spaceAfterSurtitle * compactY;
             }
 
             if (showTitle)
             {
-                var titleHeight = Styles.title.CalcHeight(titleContent, headerTextWidth);
-                titlePosition = new Rect(headerTextX, y, headerTextWidth, titleHeight);
-                headerHeight += titleHeight;
-                y += titleHeight;
+                var h = Styles.title.CalcHeight(titleContent, headerTextWidth);
+                titlePosition = new Rect(headerTextX, y, headerTextWidth, h);
+                headerHeight += h;
+                y += h;
             }
 
             if (showSubtitle)
             {
-                headerHeight += Styles.spaceBeforeSubtitle;
-                y += Styles.spaceBeforeSubtitle;
+                headerHeight += Styles.spaceBeforeSubtitle * compactY;
+                y += Styles.spaceBeforeSubtitle * compactY;
 
-                var subtitleHeight = Styles.subtitle.CalcHeight(subtitleContent, headerTextWidth);
-                subtitlePosition = new Rect(headerTextX, y, headerTextWidth, subtitleHeight);
-                headerHeight += subtitleHeight;
-                y += subtitleHeight;
+                var h = Styles.subtitle.CalcHeight(subtitleContent, headerTextWidth);
+                subtitlePosition = new Rect(headerTextX, y, headerTextWidth, h);
+                headerHeight += h;
+                y += h;
             }
 
             iconsPositions.Clear();
+
             if (showIcons)
             {
                 var iconRow = 0;
                 var iconCol = 0;
+
                 for (int i = 0; i < description.icons.Length; i++)
                 {
-                    var iconPos = new Rect(
-                        innerX + innerWidth - ((iconCol + 1) * Styles.iconsSize) - (iconCol * Styles.iconsSpacing),
+                    var iconPosition = new Rect
+                        (
+                        innerX + innerWidth - ((iconCol + 1) * Styles.iconsSize) - ((iconCol) * Styles.iconsSpacing),
                         innerY + (iconRow * (Styles.iconsSize + Styles.iconsSpacing)),
                         Styles.iconsSize,
                         Styles.iconsSize
-                    );
-                    iconsPositions.Add(iconPos);
+                        );
+
+                    iconsPositions.Add(iconPosition);
+
                     iconRow++;
+
                     if (iconRow % Styles.iconsPerColumn == 0)
                     {
                         iconCol++;
@@ -336,10 +356,11 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            var settingsHeight = 0f;
             if (showSettings)
             {
-                headerHeight += Styles.spaceBeforeSettings;
+                headerHeight += Styles.spaceBeforeSettings * compactY;
+                y += Styles.spaceBeforeSettings * compactY;
+                var last = settings.Last();
                 foreach (var setting in settings)
                 {
                     var settingWidth = settingsPositions[setting].width;
@@ -347,76 +368,50 @@ namespace Unity.VisualScripting.Community
                     {
                         var settingHeight = LudiqGUI.GetInspectorHeight(null, setting, settingWidth, settingLabelsContents[setting] ?? GUIContent.none);
                         settingsPositions[setting] = new Rect(headerTextX, y, settingWidth, settingHeight);
-                        settingsHeight += settingHeight + Styles.spaceBetweenSettings;
-                        y += settingHeight + Styles.spaceBetweenSettings;
+                        if (setting != last)
+                        {
+                            y += settingHeight + Styles.spaceBetweenSettings * compactY;
+                            headerHeight += settingHeight + Styles.spaceBetweenSettings * compactY;
+                        }
+                        else
+                        {
+
+                            y += settingHeight * compactY;
+                            headerHeight += settingHeight * compactY;
+                        }
                     }
                 }
-                settingsHeight -= Styles.spaceBetweenSettings;
-                headerHeight += settingsHeight + Styles.spaceAfterSettings;
-                y += Styles.spaceAfterSettings;
             }
 
             if (showHeaderAddon)
             {
                 var addonHeight = GetHeaderAddonHeight(headerAddonWidth);
                 headerAddonPosition = new Rect(headerTextX, y, headerAddonWidth, addonHeight);
-                headerHeight += addonHeight;
                 y += addonHeight;
+                headerHeight += addonHeight;
             }
 
-            if (headerHeight < Styles.iconSize)
-            {
-                var offset = (Styles.iconSize - headerHeight) / 2f;
-                headerHeight = Styles.iconSize;
-            }
+            headerHeight = Mathf.Max(headerHeight, Styles.iconSize * 0.7f);
 
-            y = innerY + headerHeight;
+            y = innerY + headerHeight + Styles.spaceBeforePorts;
             var innerHeight = headerHeight;
 
             var controlOutputsHeight = 0f;
-
             if (showPorts)
             {
-                var hasValuePorts = ports.Any(p => p.port is ValueInput or ValueOutput);
+                bool hasValuePorts = ports.Any(p => p.port is ValueInput or ValueOutput);
+
                 if (hasValuePorts)
                 {
-                    innerHeight += Styles.spaceBeforePorts;
-                    y += Styles.spaceBeforePorts;
+                    innerHeight += Styles.spaceBeforePorts * compactY;
+                    y += Styles.spaceBeforePorts * compactY;
                 }
 
-                var portsBackgroundY = y;
-
-                float portsBackgroundHeight = Styles.portsBackground.padding.top;
-                if (hasValuePorts)
-                {
-                    innerHeight += Styles.portsBackground.padding.top;
-                    y += Styles.portsBackground.padding.top;
-                }
+                float portsBackgroundY = y;
+                float portsBackgroundHeight = hasValuePorts ? Styles.portsBackground.padding.top * compactY : 0f;
+                y += portsBackgroundHeight;
 
                 var portStartY = y;
-
-                var controlInputs = inputs.OfType<ControlInputWidget>().ToList();
-                var controlOutputs = outputs.OfType<ControlOutputWidget>().ToList();
-
-                float requiredWidth = 0f;
-
-                if (controlInputs.Count > 0)
-                {
-                    float totalWidth = controlInputs.Sum(p => p.GetInnerWidth()) +
-                                       (controlInputs.Count - 1) * Styles.spaceBetweenPorts;
-                    requiredWidth = Mathf.Max(requiredWidth, totalWidth);
-                }
-
-                if (controlOutputs.Count > 0)
-                {
-                    float minPortPadding = Styles.spaceBeforePorts * 2;
-                    float totalPackedWidth = controlOutputs.Sum(p => p.GetInnerWidth()) +
-                                             controlOutputs.Count * minPortPadding;
-                    float minRequiredWidth = totalPackedWidth + 2 * minPortPadding;
-                    requiredWidth = Mathf.Max(requiredWidth, minRequiredWidth);
-                }
-
-                edgeWidth = Mathf.Max(edgeWidth, requiredWidth) + Styles.spaceBeforePorts;
 
                 float inputsHeight = 0f;
                 foreach (var input in inputs)
@@ -424,46 +419,39 @@ namespace Unity.VisualScripting.Community
                     if (input is ControlInputWidget) continue;
                     float h = input.GetHeight();
                     input.y = y;
-                    y += h + Styles.spaceBetweenPorts;
-                    inputsHeight += h + Styles.spaceBetweenPorts;
+                    y += h + Styles.spaceBetweenPorts * compactY;
+                    inputsHeight += h + Styles.spaceBetweenPorts * compactY;
                 }
 
-                if (inputsHeight > 0)
-                    inputsHeight -= Styles.spaceBetweenPorts;
-
-                y = portStartY;
                 float outputsHeight = 0f;
                 foreach (var output in outputs)
                 {
                     if (output is ControlOutputWidget) continue;
                     float h = output.GetHeight();
-                    output.y = y;
-                    y += h + Styles.spaceBetweenPorts;
-                    outputsHeight += h + Styles.spaceBetweenPorts;
+                    output.y = portStartY + outputsHeight;
+                    outputsHeight += h + Styles.spaceBetweenPorts * compactY;
                 }
 
-                if (outputsHeight > 0)
-                    outputsHeight -= Styles.spaceBetweenPorts;
-
                 float portsHeight = Mathf.Max(inputsHeight, outputsHeight);
-
                 if (hasValuePorts)
                 {
-                    portsBackgroundHeight += portsHeight + Styles.portsBackground.padding.bottom;
-                    innerHeight += portsHeight + Styles.portsBackground.padding.bottom;
+                    portsBackgroundHeight += portsHeight + Styles.portsBackground.padding.bottom * compactY;
+                    innerHeight += portsHeight + Styles.portsBackground.padding.bottom * compactY;
                 }
 
                 if (controlInputs.Count > 0)
                 {
                     int portCount = controlInputs.Count;
-                    float controlY = edgeY - Styles.spaceBeforePorts - 23f;
+
+                    float controlY = edgeY - Styles.spaceBeforePorts - Styles.spaceAfterControlInputs;
+
                     float totalSlotSpace = edgeWidth;
                     float slotWidth = totalSlotSpace / portCount;
 
                     for (int i = 0; i < portCount; i++)
                     {
                         var widget = controlInputs[i];
-                        float slotCenter = edgeX + (slotWidth * (i + 0.5f)) - Styles.spaceBeforePorts * 0.5f;
+                        float slotCenter = edgeX + (slotWidth * (i + 0.5f)) - Styles.spaceBeforePorts;
                         widget.x = slotCenter;
                         widget.y = controlY;
                     }
@@ -479,24 +467,24 @@ namespace Unity.VisualScripting.Community
                         maxHeight = Mathf.Max(maxHeight, widget.GetHeight());
                     }
 
-                    controlOutputsHeight = maxHeight;
-                    float controlY = innerY + innerHeight + Styles.spaceBeforePorts + controlOutputsHeight + 10f;
+                    controlOutputsHeight = maxHeight + 3;
+
+                    float controlY = innerY + innerHeight + Styles.spaceBeforePorts + controlOutputsHeight + Styles.spaceBeforeControlOutputs;
+
                     float totalSlotSpace = edgeWidth;
                     float slotWidth = totalSlotSpace / portCount;
 
                     for (int i = 0; i < portCount; i++)
                     {
                         var widget = controlOutputs[i];
-                        float slotCenter = edgeX + (slotWidth * (i + 0.5f)) - Styles.spaceBeforePorts * 0.5f;
+                        float slotCenter = edgeX + (slotWidth * (i + 0.5f)) - Styles.spaceBeforePorts;
                         widget.x = slotCenter;
                         widget.y = controlY;
                     }
                 }
-
-                edgeWidth += Styles.spaceBeforePorts * 2; // Extra padding after controloutputs
-
                 portsBackgroundPosition = new Rect(edgeX, portsBackgroundY, edgeWidth, portsBackgroundHeight);
             }
+
             var edgeHeight = InnerToEdgePosition(new Rect(0, 0, 0, innerHeight)).height;
             _position = new Rect(edgeX, edgeY, edgeWidth, edgeHeight + controlOutputsHeight);
         }
@@ -796,7 +784,23 @@ namespace Unity.VisualScripting.Community
             {
                 if (e.IsRepaint && ports.Count(p => p.port is ValueInput or ValueOutput) > 0)
                 {
+#if NEW_UNIT_STYLE
+                    var isSpecial = color.orange == new NodeColorMix(NodeColor.Orange).orange || color.red == new NodeColorMix(NodeColor.Red).red;
+
+                    var previous = GUI.backgroundColor;
+
+                    if (isSpecial)
+                    {
+                        GUI.backgroundColor = color.ToColor();
+                    }
+
                     Styles.portsBackground.Draw(portsBackgroundPosition, false, false, false, false);
+
+                    if (isSpecial)
+                        GUI.backgroundColor = previous;
+#else
+                    Styles.portsBackground.Draw(portsBackgroundPosition, false, false, false, false);
+#endif
                 }
             }
         }
@@ -928,6 +932,7 @@ namespace Unity.VisualScripting.Community
                 subtitleInverted = new GUIStyle(subtitle);
                 subtitleInverted.normal.textColor = ColorPalette.unityBackgroundDark;
 
+#if NEW_UNIT_STYLE
                 if (EditorGUIUtility.isProSkin)
                 {
                     portsBackground = new GUIStyle
@@ -946,7 +951,9 @@ namespace Unity.VisualScripting.Community
                         padding = new RectOffset(0, 0, 6, 5)
                     };
                 }
-
+#else
+                portsBackground = VisualScripting.UnitWidget<Unit>.Styles.portsBackground;
+#endif
                 settingLabel = new GUIStyle(BoltCore.Styles.nodeLabel);
                 settingLabel.padding.left = 0;
                 settingLabel.padding.right = 5;
@@ -970,8 +977,15 @@ namespace Unity.VisualScripting.Community
 
             public static readonly float spaceAroundLineIcon = 5;
 
-            public static readonly float spaceBeforePorts = 5;
+            public static readonly float spaceBeforePorts = 8;
+#if NEW_UNIT_STYLE
+            public static readonly float spaceBeforeControlOutputs = 10;
 
+            public static readonly float spaceAfterControlInputs = 23;
+#else
+            public static readonly float spaceBeforeControlOutputs = 5;
+            public static readonly float spaceAfterControlInputs = 17;
+#endif
             public static readonly float spaceBetweenInputsAndOutputs = 8;
 
             public static readonly float spaceBeforeSettings = 2;
@@ -1046,3 +1060,4 @@ namespace Unity.VisualScripting.Community
         }
     }
 }
+#endif

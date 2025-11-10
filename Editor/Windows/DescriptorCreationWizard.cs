@@ -209,7 +209,7 @@ namespace Unity.VisualScripting.Community
 
             string defaultPath = EditorUtility.SaveFilePanelInProject(
                 "Save Descriptor Script (It needs to be in a folder named Editor)",
-                unitType.HumanName(true) + "Descriptor.cs",
+                unitType.HumanName(true).Replace(" ", "") + "Descriptor.cs",
                 "cs",
                 "Enter a file name to save the descriptor script as"
             );
@@ -227,6 +227,8 @@ namespace Unity.VisualScripting.Community
                 $"UnitDescriptor<{unitName}>",
                 unitNamespace, new List<string> { "Unity.VisualScripting", "UnityEditor", "UnityEngine", "System" }
             );
+
+            descriptorClass.AddAttribute(AttributeGenerator.Attribute<DescriptorAttribute>().AddParameter(unitType));
 
             descriptorClass.generateUsings = true;
             if (!string.IsNullOrEmpty(unitNamespace)) descriptorClass.AddUsings(unitNamespace.Yield().ToList());

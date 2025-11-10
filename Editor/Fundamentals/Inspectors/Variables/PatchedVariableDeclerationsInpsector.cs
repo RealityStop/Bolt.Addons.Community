@@ -51,10 +51,14 @@ namespace Unity.VisualScripting.Community
                 position.x = 0;
                 position.width += LudiqGUIUtility.scrollBarWidth;
             }
-            DrawQuickAddToolbar(position);
+            
+            if (EditorPrefs.GetBool(ProjectSettingsProviderView.ShowVariablesQuickbarKey, false))
+            {
+                DrawQuickAddToolbar(position);
 
-            position.y += (ButtonHeight * 2) + ButtonSpacingY + (ToolbarPadding * 2);
-            position.height -= (ButtonHeight * 2) + ButtonSpacingY + (ToolbarPadding * 2);
+                position.y += (ButtonHeight * 2) + ButtonSpacingY + (ToolbarPadding * 2);
+                position.height -= (ButtonHeight * 2) + ButtonSpacingY + (ToolbarPadding * 2);
+            }
 
             var normal = GUI.backgroundColor;
             adaptor.Field(position, label);
@@ -98,9 +102,11 @@ namespace Unity.VisualScripting.Community
             int rows = 2;
             float totalHeight = (ButtonHeight * rows) + ButtonSpacingY + (ToolbarPadding * 2);
             Rect toolbarRect = new Rect(position.x, position.y, position.width, totalHeight);
-
+#if DARKER_UI
             EditorGUI.DrawRect(toolbarRect, CommunityStyles.backgroundColor);
-
+#else
+            EditorGUI.DrawRect(toolbarRect, ColorPalette.unityBackgroundLight);
+#endif
             float availableWidth = toolbarRect.width - ToolbarPadding * 2;
 
             float totalSpacingX = ButtonSpacingX * (columns - 1);
@@ -308,6 +314,7 @@ namespace Unity.VisualScripting.Community
                 return base.CanDrop(item);
             }
 
+#if DARKER_UI
             // I have to do this setup to change the color of the add button
             // It's very hacky but seems to work better than tinting the background Texture.
             private Color _previousBackgroundColor;
@@ -336,6 +343,7 @@ namespace Unity.VisualScripting.Community
                 GUI.backgroundColor = CommunityStyles.backgroundColor.Brighten(0.36f);
                 _tintApplied = true;
             }
+#endif
 
             public override float GetItemHeight(float width, int index)
             {
@@ -359,7 +367,11 @@ namespace Unity.VisualScripting.Community
 
             public override void DrawItemBackground(Rect position, int index)
             {
+#if DARKER_UI
                 EditorGUI.DrawRect(position, CommunityStyles.backgroundColor);
+#else
+                EditorGUI.DrawRect(position, ColorPalette.unityBackgroundLight);
+#endif
 
                 var restoredColor = Handles.color;
                 Handles.color = Color.gray * 0.6f;
@@ -380,8 +392,11 @@ namespace Unity.VisualScripting.Community
                 position.width += 20;
 
                 var oldHandleRect = new Rect(position.x + 4, position.y + position.height / 2f - 3, 9, 7);
+#if DARKER_UI
                 EditorGUI.DrawRect(oldHandleRect, CommunityStyles.backgroundColor);
-
+#else
+                EditorGUI.DrawRect(oldHandleRect, ColorPalette.unityBackgroundLight);
+#endif
                 var element = metadata[index];
                 var declaration = (VariableDeclaration)element.value;
 
@@ -519,7 +534,9 @@ namespace Unity.VisualScripting.Community
             {
                 namePosition = BeginLabeledBlock(nameMetadata, namePosition, GUIContent.none);
                 var restoreColor = GUI.backgroundColor;
+#if DARKER_UI
                 GUI.backgroundColor = EditorGUIUtility.isProSkin ? restoreColor.Darken(0.25f) : restoreColor;
+#endif
                 var newName = EditorGUI.DelayedTextField(namePosition, (string)nameMetadata.value, new GUIStyle(EditorStyles.textField) { fontStyle = FontStyle.Bold });
                 GUI.backgroundColor = restoreColor;
 

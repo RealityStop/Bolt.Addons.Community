@@ -1,13 +1,14 @@
 using UnityEngine;
-using Unity.VisualScripting;
 using System.Collections;
-using Unity.VisualScripting.Community.Libraries.Humility;
+
 namespace Unity.VisualScripting.Community
 {
+#if NEW_LIST_UI
     [Inspector(typeof(IList))]
+#endif
     public class ListInspector : VisualScripting.ListInspector
     {
-        private new ListAdaptor adaptor;
+        public new ListAdaptor adaptor { get; private set; }
 
         public ListInspector(Metadata metadata) : base(metadata)
         {

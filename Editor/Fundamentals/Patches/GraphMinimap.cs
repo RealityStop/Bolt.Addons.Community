@@ -69,8 +69,10 @@ namespace Unity.VisualScripting.Community
 
         static GraphMiniMap()
         {
+#if ENABLE_GRAPH_MINIMAP
             GraphMiniMapStorage.Load();
             EditorApplication.update += OnEditorUpdate;
+#endif
         }
 
         private static void OnEditorUpdate()
@@ -176,7 +178,11 @@ namespace Unity.VisualScripting.Community
                 style =
                 {
                     position = Position.Absolute,
+#if NEW_TOOLBAR_STYLE
                     top = 60,
+#else
+                    top = 30,
+#endif
                     right = 10,
                     width = Mathf.Min(MinimapSize.x, instance.context.canvas.viewport.width - 25),
                     height = Mathf.Min(MinimapSize.y, instance.context.canvas.viewport.height - 25),
@@ -512,7 +518,7 @@ namespace Unity.VisualScripting.Community
             return Color.white;
         }
 
-        private static Color ToColor(this NodeColorMix mix)
+        public static Color ToColor(this NodeColorMix mix)
         {
             mix = mix.normalized;
             Color result = Color.black;

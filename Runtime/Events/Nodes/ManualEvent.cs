@@ -33,10 +33,13 @@ namespace Unity.VisualScripting.Community
         }
 
         protected override string hookName => EventHooks.Update;
+
+#if ENABLE_VERTICAL_FLOW
         [Inspectable]
         [UnitHeaderInspectable]
         [NodeButton("TriggerButton")]
         public NodeButton button;
+#endif
 
         [Inspectable]
         [InspectorLabel("Ingore Graph State", "Trigger even if the State or Machine is inactive.")]
@@ -77,6 +80,14 @@ namespace Unity.VisualScripting.Community
                 }
 
                 Flow flow = Flow.New(reference);
+
+                if (flow.enableDebug)
+                {
+                    var editorData = flow.stack.GetElementDebugData<IUnitDebugData>(this);
+
+                    editorData.lastInvokeFrame = EditorTimeBinding.frame;
+                    editorData.lastInvokeTime = EditorTimeBinding.time;
+                }
 
                 if (coroutine)
                 {

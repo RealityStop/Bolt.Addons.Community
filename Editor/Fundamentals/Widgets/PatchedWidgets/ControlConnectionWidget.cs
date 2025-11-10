@@ -1,4 +1,4 @@
-using System.Reflection;
+#if ENABLE_VERTICAL_FLOW
 using UnityEditor;
 using UnityEngine;
 
@@ -98,3 +98,4 @@ namespace Unity.VisualScripting.Community
         }
     }
 }
+#endif

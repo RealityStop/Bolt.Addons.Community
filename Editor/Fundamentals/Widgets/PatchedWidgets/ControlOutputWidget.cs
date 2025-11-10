@@ -1,3 +1,4 @@
+#if ENABLE_VERTICAL_FLOW
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
@@ -28,3 +29,4 @@ namespace Unity.VisualScripting.Community
         // }
     }
 }
+#endif

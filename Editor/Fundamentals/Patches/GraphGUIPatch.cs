@@ -6,6 +6,7 @@ using UnityEngine.UIElements;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Reflection;
+using UnityEditor.UIElements;
 
 namespace Unity.VisualScripting.Community
 {
@@ -58,6 +59,7 @@ namespace Unity.VisualScripting.Community
         }
         private static void OnEditorUpdate()
         {
+#if NEW_TOOLBAR_STYLE
             var tabs = GraphWindow.tabs;
             if (tabs == null || tabs.Count() == 0)
                 return;
@@ -90,6 +92,27 @@ namespace Unity.VisualScripting.Community
                 }
                 KeepToolbarAnchored(window);
             }
+#else
+            var tabs = GraphWindow.tabs;
+            if (tabs == null || tabs.Count() == 0)
+                return;
+            var window = tabs.FirstOrDefault();
+            if (window != null)
+            {
+                var IMGUI = new IMGUIContainer();
+                IMGUI.onGUIHandler += () =>
+                {
+                    InitializeNewGUI();
+                };
+                window.rootVisualElement.Add(IMGUI);
+
+                if (isInitialized)
+                {
+                    EditorApplication.update -= OnEditorUpdate;
+                    IMGUI.RemoveFromHierarchy();
+                }
+            }
+#endif
         }
 
         private static void PatchGraphGUI(VisualElement root, GraphWindow window)
@@ -126,7 +149,7 @@ namespace Unity.VisualScripting.Community
             FloatingToolbar.style.justifyContent = Justify.SpaceBetween;
             FloatingToolbar.style.flexShrink = 0;
 
-            var imgui = new IMGUIContainer(() =>
+            Action gui = () =>
             {
                 var reference = window.reference;
                 if (reference == null) return;
@@ -309,8 +332,9 @@ namespace Unity.VisualScripting.Community
                     GUIUtility.ExitGUI();
                 }
                 GUILayout.EndHorizontal();
-            });
-
+            };
+            var imgui = new IMGUIContainer(gui);
+            imgui.delegatesFocus = true;
             imgui.style.flexGrow = 1;
             imgui.style.flexShrink = 1;
             imgui.style.flexBasis = 0;
@@ -393,7 +417,11 @@ namespace Unity.VisualScripting.Community
             Toolbar.style.flexDirection = FlexDirection.Row;
             Toolbar.style.alignItems = Align.Center;
             Toolbar.style.justifyContent = Justify.SpaceBetween;
+#if DARKER_UI
             Toolbar.style.backgroundColor = CommunityStyles.backgroundColor;
+#else
+            Toolbar.style.backgroundColor = ColorPalette.unityBackgroundLight.color;
+#endif
             Toolbar.style.flexShrink = 0;
 
             var imgui = new IMGUIContainer(() =>
@@ -433,8 +461,9 @@ namespace Unity.VisualScripting.Community
                     var style = breadcrumb.isRoot ? Styles.toolbarBreadcrumbRoot : Styles.toolbarBreadcrumb;
                     var isCurrent = breadcrumb == window.reference;
                     var restored = GUI.backgroundColor;
-
+#if DARKER_UI
                     if (isCurrent) GUI.backgroundColor = EditorGUIUtility.isProSkin ? Color.gray : Color.white;
+#endif
                     if (GUILayout.Toggle(isCurrent, title, style, GUILayout.MinWidth(80), GUILayout.Height(20)) && !isCurrent)
                     {
                         window.reference = breadcrumb;
@@ -465,15 +494,21 @@ namespace Unity.VisualScripting.Community
 
                     Search(window, state);
                 }
-
+#if DARKER_UI
                 if (GUILayout.Button("Previous", CommunityStyles.ToolbarButton, GUILayout.Width(60), GUILayout.Height(18)) && state.matches.Count > 0)
+#else
+                if (GUILayout.Button("Previous", LudiqStyles.toolbarButton, GUILayout.Width(60), GUILayout.Height(18)) && state.matches.Count > 0)
+#endif
                 {
                     state.currentIndex--;
                     if (state.currentIndex < 0) state.currentIndex = state.matches.Count - 1;
                     HighlightCurrentMatch(window);
                 }
-
+#if DARKER_UI
                 if (GUILayout.Button("Next", CommunityStyles.ToolbarButton, GUILayout.Width(40), GUILayout.Height(18)) && state.matches.Count > 0)
+#else
+                if (GUILayout.Button("Next", LudiqStyles.toolbarButton, GUILayout.Width(40), GUILayout.Height(18)) && state.matches.Count > 0)
+#endif
                 {
                     state.currentIndex++;
                     if (state.currentIndex >= state.matches.Count) state.currentIndex = 0;
@@ -620,6 +655,7 @@ namespace Unity.VisualScripting.Community
             {
                 isInitialized = true;
 
+#if DARKER_UI
                 // Sidebar
                 var bg = sidebarpanelStylesType.GetField("background", BindingFlags.Public | BindingFlags.Static).GetValue(null) as GUIStyle;
                 var title = sidebarpanelStylesType.GetField("title", BindingFlags.Public | BindingFlags.Static).GetValue(null) as GUIStyle;
@@ -629,7 +665,9 @@ namespace Unity.VisualScripting.Community
 
                 // Headers
                 LudiqStyles.headerBackground.normal.background = CommunityStyles.backgroundColor.GetPixel();
-
+#if !NEW_TOOLBAR_STYLE
+                LudiqStyles.toolbarBackground.normal.background = CommunityStyles.backgroundColor.GetPixel();
+#endif
                 // Variables Panel 
                 var tab = VariablesPanel.Styles.tab;
                 var tabField = typeof(VariablesPanel.Styles).GetField("tab", BindingFlags.Static | BindingFlags.Public);
@@ -666,27 +704,27 @@ namespace Unity.VisualScripting.Community
                 LudiqStyles.toolbarButton.onNormal = CommunityStyles.ToolbarButton.onNormal;
                 LudiqStyles.toolbarButton.onHover = CommunityStyles.ToolbarButton.onHover;
                 LudiqStyles.toolbarButton.onActive = CommunityStyles.ToolbarButton.onActive;
+#endif
 
-                // typeof(LudiqStyles).GetField("toolbarButton", BindingFlags.Static | BindingFlags.Public).SetValue(null, new GUIStyle(CommunityStyles.ToolbarButton));
-
+#if NEW_UNIT_STYLE
                 var green = GraphGUI.GetNodeStyle(NodeShape.Square, NodeColor.Green);
                 green.normal.background = PathUtil.Load("GreenNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                green.active.background = PathUtil.Load("GreenNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                green.focused.background = PathUtil.Load("GreenNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                green.hover.background = PathUtil.Load("GreenNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                green.active.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                green.focused.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                green.hover.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
                 green.padding = new RectOffset(5, 5, 5, 5);
 
                 var gray = GraphGUI.GetNodeStyle(NodeShape.Square, NodeColor.Gray);
                 gray.normal.background = PathUtil.Load("GrayNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                gray.active.background = PathUtil.Load("GrayNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                gray.focused.background = PathUtil.Load("GrayNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                gray.hover.background = PathUtil.Load("GrayNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                gray.active.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                gray.focused.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                gray.hover.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
 
                 var yellow = GraphGUI.GetNodeStyle(NodeShape.Square, NodeColor.Yellow);
                 yellow.normal.background = PathUtil.Load("YellowNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                yellow.active.background = PathUtil.Load("YellowNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                yellow.focused.background = PathUtil.Load("YellowNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                yellow.hover.background = PathUtil.Load("YellowNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                yellow.active.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                yellow.focused.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                yellow.hover.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
 
                 var orange = GraphGUI.GetNodeStyle(NodeShape.Square, NodeColor.Orange);
                 orange.normal.background = PathUtil.Load("OrangeNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
@@ -696,21 +734,58 @@ namespace Unity.VisualScripting.Community
 
                 var teal = GraphGUI.GetNodeStyle(NodeShape.Square, NodeColor.Teal);
                 teal.normal.background = PathUtil.Load("TealNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                teal.active.background = PathUtil.Load("TealNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                teal.focused.background = PathUtil.Load("TealNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                teal.hover.background = PathUtil.Load("TealNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                teal.active.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                teal.focused.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                teal.hover.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
 
                 var blue = GraphGUI.GetNodeStyle(NodeShape.Square, NodeColor.Blue);
                 blue.normal.background = PathUtil.Load("BlueNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                blue.active.background = PathUtil.Load("BlueNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                blue.focused.background = PathUtil.Load("BlueNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
-                blue.hover.background = PathUtil.Load("BlueNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                blue.active.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                blue.focused.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                blue.hover.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
 
                 var red = GraphGUI.GetNodeStyle(NodeShape.Square, NodeColor.Red);
                 red.normal.background = PathUtil.Load("RedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
                 red.active.background = PathUtil.Load("RedNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
                 red.focused.background = PathUtil.Load("RedNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
                 red.hover.background = PathUtil.Load("RedNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+
+#if !ENABLE_VERTICAL_FLOW
+                var unitWidgetGeneric = typeof(Unity.VisualScripting.UnitWidget<>);
+
+                var normalType = VisualScripting.UnitWidget<IUnit>.Styles.portsBackground;
+
+                var baseColor = CommunityStyles.backgroundColor;
+                var tex = EditorGUIUtility.isProSkin
+                    ? CommunityStyles.MakeBorderedTexture(baseColor, baseColor.Darken(0.05f))
+                    : CommunityStyles.MakeBorderedTexture(baseColor, baseColor.Brighten(0.05f));
+
+                normalType.normal.background = tex;
+
+                foreach (var type in Codebase.editorTypes)
+                {
+                    if (!type.InheritsFromGeneric(unitWidgetGeneric, out var result))
+                        continue;
+
+                    var stylesType = unitWidgetGeneric.GetNestedType("Styles", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static).MakeGenericType(result.GetGenericArguments());
+                    if (stylesType == null || stylesType.ContainsGenericParameters)
+                    {
+                        continue;
+                    }
+
+                    var field = stylesType.GetField("portsBackground", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                    if (field == null)
+                        continue;
+
+                    var portsBackground = field.GetValue(null) as GUIStyle;
+                    if (portsBackground == null)
+                        continue;
+
+                    portsBackground.normal.background = tex;
+                }
+#endif
+
+#endif
             }
         }
     }

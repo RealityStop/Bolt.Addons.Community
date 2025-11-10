@@ -858,11 +858,19 @@ namespace Unity.VisualScripting.Community
             return new string(chars);
         }
 
+        private static readonly char[] chars =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".ToCharArray();
+
+        private static System.Text.StringBuilder sb = new System.Text.StringBuilder(10);
+
         public static string RandomString()
         {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            return new string(Enumerable.Repeat(chars, 10)
-                .Select(s => s[UnityEngine.Random.Range(0, s.Length)]).ToArray());
+            sb.Length = 0;
+            for (int i = 0; i < 10; i++)
+            {
+                sb.Append(chars[UnityEngine.Random.Range(0, chars.Length)]);
+            }
+            return sb.ToString();
         }
 
         #endregion

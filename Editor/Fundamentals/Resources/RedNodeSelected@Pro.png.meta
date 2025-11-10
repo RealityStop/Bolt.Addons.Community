@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 2b09c76d64dfc0a4794d1d580c38fcb0
+guid: 2b47272953feac74b846e969c2a08e7f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8434964045721742098
-    second: YellowNodeSelected_0
+      213: 6058224919682867474
+    second: NodeRedbackgroundFocused_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: YellowNodeSelected_0
+      name: NodeRedbackgroundFocused_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ee4509904ecf0fa80800000000000000
-      internalID: -8434964045721742098
+      spriteID: 211ed137773231450800000000000000
+      internalID: 6058224919682867474
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      YellowNodeSelected_0: -8434964045721742098
+      NodeRedbackgroundFocused_0: 6058224919682867474
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -175,5 +175,51 @@ namespace Unity.VisualScripting.Community
             (p.GetMethod != null && p.GetMethod.IsAbstract) ||
             (p.SetMethod != null && p.SetMethod.IsAbstract);
         }
+
+        public static bool InheritsFromGeneric(this Type type, Type genericBase)
+        {
+            if (type == null || genericBase == null)
+                return false;
+
+            if (!genericBase.IsGenericTypeDefinition)
+                throw new ArgumentException("genericBase must be a generic type definition, e.g. typeof(MyClass<>)");
+
+            while (type != null && type != typeof(object))
+            {
+                var current = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
+                if (current == genericBase)
+                    return true;
+
+                type = type.BaseType;
+            }
+
+            return false;
+        }
+
+        public static bool InheritsFromGeneric(this Type type, Type genericBase, out Type result)
+        {
+            if (type == null || genericBase == null)
+            {
+                result = null;
+                return false;
+            }
+
+            if (!genericBase.IsGenericTypeDefinition)
+                throw new ArgumentException("genericBase must be a generic type definition, e.g. typeof(MyClass<>)");
+
+            while (type != null && type != typeof(object))
+            {
+                var current = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
+                if (current == genericBase)
+                {
+                    result = type;
+                    return true;
+                }
+
+                type = type.BaseType;
+            }
+            result = null;
+            return false;
+        }
     }
 }

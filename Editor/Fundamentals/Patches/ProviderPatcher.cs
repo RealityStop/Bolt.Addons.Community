@@ -13,19 +13,25 @@ namespace Unity.VisualScripting.Community
         static ProviderPatcher()
         {
             EnsurePatched();
+#if ENABLE_VERTICAL_FLOW
+            PatchWidgets();
+#endif
+            // PatchGraphContext();
+#if NEW_VARIABLES_UI
+            PatchVariablesDeclarationsInspector();
+#endif
         }
 
         public static void EnsurePatched()
         {
             PatchConstructorStubWriter();
-            PatchContextWidgets();
-            // PatchGraphContext();
-            PatchVariablesDeclarationsInspector();
         }
 
-        private static void PatchContextWidgets()
+        private static void PatchWidgets()
         {
             IGraphContext current = null;
+            var provider = DescriptorProvider.instance;
+            PatchGlobalProvider(provider, typeof(IEventUnit), typeof(EventUnitDescriptor<>));
             GraphWindow.activeContextChanged += context =>
             {
                 PatchUnitWidgets(context);
@@ -57,6 +63,8 @@ namespace Unity.VisualScripting.Community
                 PatchGlobalProvider(provider, typeof(UnifiedVariableUnit), typeof(UnifiedVariableUnitWidget));
                 PatchGlobalProvider(provider, typeof(Literal), typeof(LiteralWidget));
                 PatchGlobalProvider(provider, typeof(MissingType), typeof(MissingTypeUnitWidget));
+                PatchGlobalProvider(provider, typeof(GraphInput), typeof(GraphInputWidget));
+                PatchGlobalProvider(provider, typeof(GraphOutput), typeof(GraphOutputWidget));
             }
         }
 

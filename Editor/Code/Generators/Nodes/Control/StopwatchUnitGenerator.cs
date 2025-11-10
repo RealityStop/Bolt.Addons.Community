@@ -63,6 +63,10 @@ namespace Unity.VisualScripting.Community.CSharp
                 builder.InvokeMember(Name.VariableHighlight(), "Stop", Array.Empty<string>()).EndLine();
                 builder.Ignore(GetNextUnit(Unit.Stopped, data, indent));
             }
+            else if (input == Unit.Reset)
+            {
+                builder.InvokeMember(Name.VariableHighlight(), "Reset", Array.Empty<string>()).EndLine();
+            }
             return builder;
         }
     }

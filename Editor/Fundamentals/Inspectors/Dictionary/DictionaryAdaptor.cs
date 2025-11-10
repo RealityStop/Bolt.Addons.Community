@@ -40,7 +40,6 @@ namespace Unity.VisualScripting.Community
                 Initialize();
             };
 
-            Initialize();
             if (listControlFieldInfo != null)
             {
                 listControl = listControlFieldInfo.GetValue(this) as ReorderableListControl;
@@ -55,15 +54,12 @@ namespace Unity.VisualScripting.Community
             }
         }
 
+#if DARKER_UI
         // I have to do this setup to change the color of the add button
         // It's very hacky but seems to work better than tinting the background Texture.
         private Color _previousBackgroundColor;
         private bool _tintApplied;
 
-        /// <summary>
-        /// Called before list elements are drawn.
-        /// Ensures the GUI color is reset properly.
-        /// </summary>
         public override void BeginGUI()
         {
             if (_tintApplied)
@@ -73,17 +69,13 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        /// <summary>
-        /// Called after all list elements are drawn.
-        /// Tints the Add button only.
-        /// </summary>
         public override void EndGUI()
         {
             _previousBackgroundColor = GUI.backgroundColor;
             GUI.backgroundColor = CommunityStyles.backgroundColor.Brighten(0.36f);
             _tintApplied = true;
         }
-
+#endif
         private void Initialize()
         {
             if (!metadata.isDictionary)
@@ -103,6 +95,8 @@ namespace Unity.VisualScripting.Community
             // so we make sure to give it a new name
             var guid = GUID.Generate().ToString();
 
+            // Todo: Find a way to overwrite the key and value
+            // instead of use a new key. 
             newKeyMetadata = metadata.Object($"newKey_{guid}", ConstructKey(), metadata.dictionaryKeyType);
             newValueMetadata = metadata.Object($"newValue_{guid}", ConstructValue(), metadata.dictionaryValueType);
 
@@ -113,11 +107,13 @@ namespace Unity.VisualScripting.Community
 
         protected override object ConstructKey()
         {
+            if (metadata.dictionaryKeyType == typeof(object)) return null;
             return metadata.dictionaryKeyType.PseudoDefault() ?? metadata.dictionaryKeyType.Instantiate(false) ?? base.ConstructKey();
         }
 
         protected override object ConstructValue()
         {
+            if (metadata.dictionaryValueType == typeof(object)) return null;
             return metadata.dictionaryValueType.PseudoDefault() ?? metadata.dictionaryValueType.Instantiate(false) ?? base.ConstructKey();
         }
 
@@ -129,7 +125,8 @@ namespace Unity.VisualScripting.Community
 
             while (foldoutStates.Count <= index)
             {
-                foldoutStates.Add(true);
+                foldoutStates.Add(false);
+                parentInspector.SetHeightDirty();
             }
         }
 
@@ -150,7 +147,11 @@ namespace Unity.VisualScripting.Community
 
         public override void DrawItemBackground(Rect position, int index)
         {
+#if DARKER_UI
             EditorGUI.DrawRect(position, CommunityStyles.backgroundColor);
+#else
+            EditorGUI.DrawRect(position, ColorPalette.unityBackgroundLight);
+#endif
 
             var restoredColor = Handles.color;
             Handles.color = Color.gray * 0.6f;
@@ -208,6 +209,8 @@ namespace Unity.VisualScripting.Community
                 else
                     foldoutStates[index] = !expanded;
 
+                parentInspector.SetHeightDirty();
+
                 Event.current.Use();
             }
 
@@ -248,20 +251,20 @@ namespace Unity.VisualScripting.Community
 
                     break;
 
-                    // case EventType.MouseDrag:
-                    //     if (GUIUtility.hotControl == controlID)
-                    //     {
-                    //         var item = this[index];
-                    //         GUIUtility.hotControl = 0;
-                    //         DragAndDrop.PrepareStartDrag();
-                    //         DragAndDrop.objectReferences = new UnityEngine.Object[0];
-                    //         DragAndDrop.paths = new string[0];
-                    //         DragAndDrop.SetGenericData(DraggedDictionaryItem.TypeName, new DraggedDictionaryItem(this, index, KeyValuePair.Create(metadata.KeyMetadata(index).value, item), foldoutStates[index]));
-                    //         DragAndDrop.StartDrag(metadata.path);
-                    //         Event.current.Use();
-                    //     }
+                case EventType.MouseDrag:
+                    if (GUIUtility.hotControl == controlID)
+                    {
+                        var item = this[index];
+                        GUIUtility.hotControl = 0;
+                        DragAndDrop.PrepareStartDrag();
+                        DragAndDrop.objectReferences = new UnityEngine.Object[0];
+                        DragAndDrop.paths = new string[0];
+                        DragAndDrop.SetGenericData(DraggedDictionaryItem.TypeName, new DraggedDictionaryItem(this, index, KeyValuePair.Create(metadata.KeyMetadata(index).value, item), foldoutStates[index]));
+                        DragAndDrop.StartDrag(metadata.path);
+                        Event.current.Use();
+                    }
 
-                    //     break;
+                    break;
             }
         }
 
@@ -270,13 +273,13 @@ namespace Unity.VisualScripting.Community
 
         public override void Add()
         {
+            var newKey = newKeyMetadata.value;
+            var newValue = newValueMetadata.value;
+
             if (!CanAdd())
             {
                 return;
             }
-
-            var newKey = newKeyMetadata.value;
-            var newValue = newValueMetadata.value;
 
             metadata.RecordUndo();
             metadata.Add(newKey, newValue);
@@ -459,6 +462,54 @@ namespace Unity.VisualScripting.Community
                     }
                 }
             }
+        }
+
+        public override float GetItemAdaptiveWidth(int index)
+        {
+            EnsureFoldoutCount(index);
+
+            bool isNewItem = index == Count - 1;
+            bool expanded = isNewItem ? newItemExpanded : foldoutStates[index];
+
+            const float foldoutArrowWidth = 12f;
+            const float padding = 10f;
+
+            GUIContent label = isNewItem
+                ? new GUIContent("New Item")
+                : CommunityStyles.GetCollectionDisplayName(metadata.KeyMetadata(index), index, true);
+
+            float labelWidth = GUI.skin.label.CalcSize(label).x;
+
+            float baseWidth = foldoutArrowWidth + labelWidth + DeleteButtonWidth + padding;
+
+            float keyWidth = 0f;
+            float valueWidth = 0f;
+
+            if (expanded)
+            {
+                try
+                {
+                    var keyInspector = metadata.KeyMetadata(index).Inspector();
+                    var valueInspector = metadata.ValueMetadata(index).Inspector();
+
+                    if (keyInspector != null)
+                    {
+                        keyWidth = keyInspector.GetAdaptiveWidth();
+                    }
+
+                    if (valueInspector != null)
+                    {
+                        valueWidth = valueInspector.GetAdaptiveWidth();
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            }
+
+            float contentWidth = keyWidth + valueWidth + spaceBetweenKeyAndValue + itemPadding * 2;
+
+            return Mathf.Max(baseWidth, contentWidth + padding);
         }
     }
 }

@@ -9,20 +9,20 @@ namespace Unity.VisualScripting.Community
         {
 
         }
-        protected override NodeColorMix color => NodeColor.Green;
+        protected override NodeColorMix baseColor => NodeColor.Green;
+#if !ENABLE_VERTICAL_FLOW
+        public override bool foregroundRequiresInput => true;
+        public override void DrawForeground()
+        {
+            base.DrawForeground();
 
-        // public override bool foregroundRequiresInput => true;
-        // public override void DrawForeground()
-        // {
-        //     base.DrawForeground();
+            var buttonPosition = new Rect(position.x + 1, position.y + 40 + 5, position.width - 8 + 6, 24);
 
-        //     var buttonPosition = new Rect(position.x + 1, position.y + 40 + 5, position.width - 8 + 6, 24);
-
-        //     if (GUI.Button(buttonPosition, "Trigger"))
-        //     {
-        //         unit.TriggerButton(GraphWindow.activeReference);
-        //         e.Use();
-        //     }
-        // }
+            if (GUI.Button(buttonPosition, "Trigger"))
+            {
+                unit.TriggerButton(GraphWindow.activeReference);
+            }
+        }
+#endif
     }
 }

@@ -34,6 +34,8 @@ namespace Unity.VisualScripting.Community
         [PortLabelHidden]
         public List<ValueInput> elseIfConditions;
 
+        [Inspectable]
+        public bool showElse = true;
         protected override void Definition()
         {
             amount = Mathf.Clamp(amount, 1, 10);
@@ -57,8 +59,11 @@ namespace Unity.VisualScripting.Community
                 Requirement(valueInput, Enter);
             }
 
-            Else = ControlOutput(nameof(Else));
-            Succession(Enter, Else);
+            if (showElse)
+            {
+                Else = ControlOutput(nameof(Else));
+                Succession(Enter, Else);
+            }
         }
         public ControlOutput ElseIf(Flow flow)
         {
@@ -82,7 +87,7 @@ namespace Unity.VisualScripting.Community
                     }
                 }
             }
-            return Else;
+            return showElse ? Else : null;
         }
     }
 }

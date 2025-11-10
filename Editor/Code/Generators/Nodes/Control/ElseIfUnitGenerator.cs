@@ -84,7 +84,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     output.AppendLine(cachedIndent + MakeClickableForThisUnit("}"));
                 }
 
-                if (Unit.Else.hasValidConnection)
+                if (Unit.showElse && Unit.Else.hasValidConnection)
                 {
                     output.Append(cachedIndent)
                           .AppendLine(MakeClickableForThisUnit("else".ControlHighlight()))

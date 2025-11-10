@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: f0f5b0656823af94bbf87d1ff2d106ac
+guid: 0f0cf966b9d37ca44ac1fff90a81a9fa
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1573610505946023775
-    second: NodeTealbackground_0
+      213: -4568370667941508154
+    second: TealNode_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: NodeTealbackground_0
+      name: TealNode_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1a8b34a0599692ae0800000000000000
-      internalID: -1573610505946023775
+      spriteID: 6cb480fe413e990c0800000000000000
+      internalID: -4568370667941508154
       vertices: []
       indices: 
       edges: []
@@ -147,8 +147,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      NodeTealbackground_0: -1573610505946023775
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

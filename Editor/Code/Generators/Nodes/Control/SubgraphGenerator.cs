@@ -251,6 +251,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private static Type GetCachedType(string typeId)
         {
+            if (string.IsNullOrEmpty(typeId)) return typeof(object);
             if (!typeCache.TryGetValue(typeId, out var type))
             {
                 type = Type.GetType(typeId) ?? typeof(object);

@@ -1,3 +1,4 @@
+#if ENABLE_VERTICAL_FLOW
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -246,3 +247,4 @@ namespace Unity.VisualScripting.Community
         #endregion
     }
 }
+#endif

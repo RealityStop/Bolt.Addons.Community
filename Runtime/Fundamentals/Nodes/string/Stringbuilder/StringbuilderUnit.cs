@@ -38,8 +38,9 @@ namespace Unity.VisualScripting.Community
 
         [DoNotSerialize]
         public List<ValueInput> inputPorts { get; private set; } = new List<ValueInput>();
-        
+
         [DoNotSerialize]
+        [PortLabelHidden]
         public ValueOutput result;
 
         private StringBuilder stringBuilder = new StringBuilder();
