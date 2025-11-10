@@ -20,6 +20,9 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public bool SnapToGrid;
 
+        [Inspectable]
+        public bool hideConnection;
+
         protected override void Definition()
         {
             input = ValueInput(portType, "in");

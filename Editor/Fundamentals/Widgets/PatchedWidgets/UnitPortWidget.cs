@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Unity.VisualScripting.Analytics;
 using UnityEditor;
 using UnityEngine;
 
@@ -383,7 +382,7 @@ namespace Unity.VisualScripting.Community
             return width;
         }
 
-        private float GetInspectorWidth()
+        protected float GetInspectorWidth()
         {
             var width = inspector.GetAdaptiveWidth();
 
@@ -429,7 +428,7 @@ namespace Unity.VisualScripting.Community
             return Styles.label.CalcSize(labelContent).y;
         }
 
-        private float GetInspectorHeight()
+        protected float GetInspectorHeight()
         {
             var width = GetInspectorWidth();
 
@@ -454,7 +453,7 @@ namespace Unity.VisualScripting.Community
 
         protected virtual bool showInspector => false;
 
-        protected bool showIcon => false;
+        protected virtual bool showIcon => false;
 
         public virtual bool showLabel => description.showLabel;
 

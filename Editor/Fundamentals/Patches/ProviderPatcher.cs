@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Linq;
+using Unity.VisualScripting.InputSystem;
 namespace Unity.VisualScripting.Community
 {
     [InitializeOnLoad]
@@ -65,6 +66,9 @@ namespace Unity.VisualScripting.Community
                 PatchGlobalProvider(provider, typeof(MissingType), typeof(MissingTypeUnitWidget));
                 PatchGlobalProvider(provider, typeof(GraphInput), typeof(GraphInputWidget));
                 PatchGlobalProvider(provider, typeof(GraphOutput), typeof(GraphOutputWidget));
+#if PACKAGE_INPUT_SYSTEM_EXISTS
+                PatchGlobalProvider(provider, typeof(OnInputSystemEvent), typeof(InputSystemWidget));
+#endif
             }
         }
 
@@ -77,6 +81,8 @@ namespace Unity.VisualScripting.Community
                 // Needed for units that can change their amount of ports.
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlInputWidget>(provider, typeof(ControlInput));
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlOutputWidget>(provider, typeof(ControlOutput));
+                PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ValueInputWidget>(provider, typeof(ValueInput));
+                PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ValueOutputWidget>(provider, typeof(ValueOutput));
             }
         }
 
@@ -86,6 +92,7 @@ namespace Unity.VisualScripting.Community
             {
                 var provider = context.canvas.widgetProvider;
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlConnectionWidget>(provider, typeof(ControlConnection));
+                PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ValueConnectionWidget>(provider, typeof(ValueConnection));
             }
         }
 

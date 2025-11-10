@@ -6,8 +6,8 @@ namespace Unity.VisualScripting.Community
 {
     internal class ProjectSettingsProviderView : SettingsProvider
     {
-        private const string Path = "Project/Visual Scripting Community";
-        private const string Title = "Visual Scripting Community";
+        private const string Path = "Project/Visual Scripting/Customisation";
+        private const string Title = "Customisation";
 
         public const string GraphLayoutKey = "Community_Settings_GraphLayout";
         public const string UnitStyleKey = "Community_Settings_UnitStyle";
