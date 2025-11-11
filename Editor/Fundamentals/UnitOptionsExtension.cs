@@ -233,7 +233,9 @@ namespace Unity.VisualScripting.Community
                 {
                     foreach (var member in type.GetSafeExtendedMembers())
                     {
-                        foreach (var constructedMember in ConstructMemberUnit(member))
+                        foreach (var constructedMember in ConstructMemberUnit(member).OrderBy(option => BoltCore.Configuration.groupInheritedMembers && ((MemberUnit)option.unit).member.isPseudoInherited)
+                        .ThenBy(option => option.order)
+                        .ThenBy(option => option.label))
                         {
                             if (unitOptionTree.filter.ValidateOption(constructedMember))
                                 yield return constructedMember;
@@ -247,7 +249,9 @@ namespace Unity.VisualScripting.Community
                 {
                     foreach (var member in type.GetSafeExtendedMembers())
                     {
-                        foreach (var constructedMember in ConstructMemberUnit(member))
+                        foreach (var constructedMember in ConstructMemberUnit(member).OrderBy(option => BoltCore.Configuration.groupInheritedMembers && ((MemberUnit)option.unit).member.isPseudoInherited)
+                        .ThenBy(option => option.order)
+                        .ThenBy(option => option.label))
                         {
                             if (unitOptionTree.filter.ValidateOption(constructedMember))
                                 yield return constructedMember;

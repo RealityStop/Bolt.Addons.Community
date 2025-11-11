@@ -6,6 +6,7 @@ using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.ReorderableList;
 using Unity.VisualScripting.ReorderableList.Internal;
+using System.Collections;
 
 namespace Unity.VisualScripting.Community
 {
@@ -51,7 +52,7 @@ namespace Unity.VisualScripting.Community
                 position.x = 0;
                 position.width += LudiqGUIUtility.scrollBarWidth;
             }
-            
+
             if (EditorPrefs.GetBool(ProjectSettingsProviderView.ShowVariablesQuickbarKey, false))
             {
                 DrawQuickAddToolbar(position);
@@ -130,32 +131,78 @@ namespace Unity.VisualScripting.Community
                     bool isRight = mouse == MouseButton.Right;
                     switch (quickTypes[i])
                     {
-                        case "Float": AddQuickVariable(isRight ? typeof(List<float>) : typeof(float)); break;
-                        case "Int": AddQuickVariable(isRight ? typeof(List<int>) : typeof(int)); break;
-                        case "String": AddQuickVariable(isRight ? typeof(List<string>) : typeof(string)); break;
-                        case "Bool": AddQuickVariable(isRight ? typeof(List<bool>) : typeof(bool)); break;
-                        case "Vector":
+                        case "Float":
                             {
                                 var menu = new GenericMenu();
-                                menu.AddItem(new GUIContent("Vector 2"), false, () => AddQuickVariable(isRight ? typeof(List<Vector2>) : typeof(Vector2)));
-                                menu.AddItem(new GUIContent("Vector 3"), false, () => AddQuickVariable(isRight ? typeof(List<Vector3>) : typeof(Vector3)));
-                                menu.AddItem(new GUIContent("Vector 4"), false, () => AddQuickVariable(isRight ? typeof(List<Vector4>) : typeof(Vector4)));
-                                menu.AddSeparator("");
-                                menu.AddItem(new GUIContent("Vector 2 Int"), false, () => AddQuickVariable(isRight ? typeof(List<Vector2Int>) : typeof(Vector2Int)));
-                                menu.AddItem(new GUIContent("Vector 3 Int"), false, () => AddQuickVariable(isRight ? typeof(List<Vector3Int>) : typeof(Vector3Int)));
+                                menu.AddItem(new GUIContent("float"), false, () => AddQuickVariable(isRight ? typeof(List<float>) : typeof(float), true));
+                                menu.AddItem(new GUIContent("double"), false, () => AddQuickVariable(isRight ? typeof(List<double>) : typeof(double), true));
+                                menu.AddItem(new GUIContent("decimal"), false, () => AddQuickVariable(isRight ? typeof(List<decimal>) : typeof(decimal), true));
                                 menu.DropDown(buttonRect);
                                 break;
                             }
+
+                        case "Int":
+                            {
+                                var menu = new GenericMenu();
+                                menu.AddItem(new GUIContent("int"), false, () => AddQuickVariable(isRight ? typeof(List<int>) : typeof(int)));
+                                menu.AddItem(new GUIContent("short"), false, () => AddQuickVariable(isRight ? typeof(List<short>) : typeof(short), true));
+                                menu.AddItem(new GUIContent("long"), false, () => AddQuickVariable(isRight ? typeof(List<long>) : typeof(long), true));
+                                menu.AddItem(new GUIContent("byte"), false, () => AddQuickVariable(isRight ? typeof(List<byte>) : typeof(byte), true));
+                                menu.AddItem(new GUIContent("sbyte"), false, () => AddQuickVariable(isRight ? typeof(List<sbyte>) : typeof(sbyte), true));
+                                menu.AddSeparator("");
+                                menu.AddItem(new GUIContent("uint"), false, () => AddQuickVariable(isRight ? typeof(List<uint>) : typeof(uint), true));
+                                menu.AddItem(new GUIContent("ushort"), false, () => AddQuickVariable(isRight ? typeof(List<ushort>) : typeof(ushort), true));
+                                menu.AddItem(new GUIContent("ulong"), false, () => AddQuickVariable(isRight ? typeof(List<ulong>) : typeof(ulong), true));
+                                menu.DropDown(buttonRect);
+                                break;
+                            }
+
+                        case "String":
+                            AddQuickVariable(isRight ? typeof(List<string>) : typeof(string), true);
+                            break;
+
+                        case "Bool":
+                            AddQuickVariable(isRight ? typeof(List<bool>) : typeof(bool), true);
+                            break;
+
+                        case "Vector":
+                            {
+                                var menu = new GenericMenu();
+                                menu.AddItem(new GUIContent("Vector 2"), false, () => AddQuickVariable(isRight ? typeof(List<Vector2>) : typeof(Vector2), true));
+                                menu.AddItem(new GUIContent("Vector 3"), false, () => AddQuickVariable(isRight ? typeof(List<Vector3>) : typeof(Vector3), true));
+                                menu.AddItem(new GUIContent("Vector 4"), false, () => AddQuickVariable(isRight ? typeof(List<Vector4>) : typeof(Vector4), true));
+                                menu.AddSeparator("");
+                                menu.AddItem(new GUIContent("Vector 2 Int"), false, () => AddQuickVariable(isRight ? typeof(List<Vector2Int>) : typeof(Vector2Int), true));
+                                menu.AddItem(new GUIContent("Vector 3 Int"), false, () => AddQuickVariable(isRight ? typeof(List<Vector3Int>) : typeof(Vector3Int), true));
+                                menu.DropDown(buttonRect);
+                                break;
+                            }
+
                         case "Color":
                             {
                                 var menu = new GenericMenu();
                                 menu.AddItem(new GUIContent("Color"), false, () => AddQuickVariable(isRight ? typeof(List<Color>) : typeof(Color)));
-                                menu.AddItem(new GUIContent("HDRColor"), false, () => AddQuickVariable(isRight ? typeof(List<HDRColor>) : typeof(HDRColor)));
+                                menu.AddItem(new GUIContent("HDRColor"), false, () => AddQuickVariable(isRight ? typeof(List<HDRColor>) : typeof(HDRColor), true));
+                                menu.AddItem(new GUIContent("Gradient"), false, () => AddQuickVariable(isRight ? typeof(List<Gradient>) : typeof(Gradient), true));
                                 menu.DropDown(buttonRect);
                                 break;
                             }
-                        case "Object": AddQuickVariable(isRight ? typeof(List<GameObject>) : typeof(GameObject)); break;
-                        case "Other": TypeBuilderWindow.ShowWindow(buttonRect, (t) => AddQuickVariable(t), typeof(object), true, Array.Empty<Type>()); break;
+
+                        case "Object":
+                            AddQuickVariable(isRight ? typeof(List<GameObject>) : typeof(GameObject), true);
+                            break;
+
+                        case "Other":
+                            TypeBuilderWindow.ShowWindow(buttonRect, (t) =>
+                            {
+                                bool ask = false;
+                                if (e.shift)
+                                {
+                                    ask = true;
+                                }
+                                AddQuickVariable(t, ask);
+                            }, typeof(object), true, Array.Empty<Type>());
+                            break;
                     }
                 }
             }
@@ -201,8 +248,46 @@ namespace Unity.VisualScripting.Community
             return false;
         }
 
-        private void AddQuickVariable(Type type)
+        private void AddQuickVariable(Type type, bool ask = false)
         {
+            string typeKey = $"Community_ShowTypePopup_{type.AssemblyQualifiedName}";
+
+            bool hasSeenPopup = EditorPrefs.GetBool(typeKey, false);
+
+            if (ask && !Codebase.settingsTypes.Contains(type) && !hasSeenPopup)
+            {
+                int choice = EditorUtility.DisplayDialogComplex(
+                    "Add Type to Settings",
+                    $"The type '{type.Name}' is not currently in your settings types.\n\nWould you like to add it?",
+                    "Add",
+                    "No",
+                    "Add && Regenerate"
+                );
+
+                var coreConfig = BoltCore.Configuration;
+
+                switch (choice)
+                {
+                    case 0:
+                        coreConfig.typeOptions.Add(type);
+                        SaveCoreConfig(coreConfig);
+                        Codebase.UpdateSettings();
+                        break;
+
+                    case 1:
+                        break;
+
+                    case 2:
+                        coreConfig.typeOptions.Add(type);
+                        SaveCoreConfig(coreConfig);
+                        Codebase.UpdateSettings();
+                        UnitBase.Rebuild();
+                        break;
+                }
+
+                EditorPrefs.SetBool(typeKey, true);
+            }
+
             var variableDecls = (VariableDeclarations)metadata.value;
 
             var collection = (VariableDeclarationCollection)metadata["collection"].value;
@@ -216,7 +301,7 @@ namespace Unity.VisualScripting.Community
                 newVarName = $"{baseName} ({counter++})";
             }
 
-            var newVar = new VariableDeclaration(newVarName, type.PseudoDefault());
+            var newVar = new VariableDeclaration(newVarName, Default(type));
             newVar.typeHandle = new SerializableType(type.AssemblyQualifiedName);
             collection.Add(newVar);
 
@@ -225,6 +310,24 @@ namespace Unity.VisualScripting.Community
             foldouts.Add(new VariableFoldout(newVarName, true));
             adaptor.foldouts.Add(newVarName, new VariableFoldout(newVarName, true));
             SetHeightDirty();
+        }
+
+        private object Default(Type type)
+        {
+            var value = type.PseudoDefault();
+
+            if (value == null && type == typeof(Gradient)) return new Gradient();
+            if (value == null && type == typeof(HDRColor)) return new HDRColor();
+            return value;
+        }
+
+        private void SaveCoreConfig(BoltCoreConfiguration coreConfig)
+        {
+            var metadata = coreConfig.GetMetadata(nameof(coreConfig.typeOptions));
+            metadata.Inspector().SetHeightDirty();
+            metadata.GetType()
+                .GetMethod("SaveImmediately", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(metadata, new object[] { true });
         }
 
         private bool highlightPlaceholder;
@@ -453,10 +556,12 @@ namespace Unity.VisualScripting.Community
                 Rect typeRect = new Rect(nameRect.xMax + spacing, lineY - 2f, halfWidth, FieldHeight);
 
                 OnNameGUI(nameRect, element["name"]);
-                adaptiveWidth.BeginOverride(true);
-                var typeInspector = element["typeHandle"].Inspector();
-                typeInspector.Draw(typeRect, GUIContent.none);
-                adaptiveWidth.EndOverride();
+
+                using (adaptiveWidth.Override(true)) // Hide the Type label
+                {
+                    var typeInspector = element["typeHandle"].Inspector();
+                    typeInspector.Draw(typeRect, GUIContent.none);
+                }
 
                 Rect deleteRect = new Rect(position.x + position.width - DeleteButtonWidth - 4, lineY - 2f, DeleteButtonWidth, FieldHeight);
                 if (GUI.Button(deleteRect, "", new GUIStyle(EditorStyles.whiteLabel)
