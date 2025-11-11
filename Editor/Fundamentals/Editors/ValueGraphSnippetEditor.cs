@@ -1,10 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using GluonGui.Dialog;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEditor;
 using UnityEngine;
 
@@ -61,7 +55,6 @@ namespace Unity.VisualScripting.Community
                 GraphWindow.OpenActive(GraphReference.New(snippet, true));
             }
 
-            // Apply changes
             if (GUI.changed)
             {
                 EditorUtility.SetDirty(snippet);

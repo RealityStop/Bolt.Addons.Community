@@ -25,7 +25,6 @@ namespace Unity.VisualScripting.Community
             {
                 metadata.RecordUndo();
 
-                // Update the color value in the HDRColor struct
                 hdrColor.color = newValue;
                 metadata.value = hdrColor;
             }

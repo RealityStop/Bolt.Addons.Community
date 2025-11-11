@@ -13,13 +13,16 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize]
         [PortLabelHidden]
         public ControlOutput output;
-        
+
         [Inspectable]
         public bool SnapToGrid;
 
         protected override void Definition()
         {
-            input = ControlInput("in", (flow) => { return output; });
+            input = ControlInput("in", (flow) =>
+            {
+                return output;
+            });
             output = ControlOutput("out");
             Succession(input, output);
         }
