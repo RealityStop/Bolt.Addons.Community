@@ -250,7 +250,7 @@ namespace Unity.VisualScripting.Community
 
         private void AddQuickVariable(Type type, bool ask = false)
         {
-            string typeKey = $"Community_ShowTypePopup_{type.AssemblyQualifiedName}";
+            string typeKey = Application.dataPath + $"_Community_ShowTypePopup_{type.AssemblyQualifiedName}";
 
             bool hasSeenPopup = EditorPrefs.GetBool(typeKey, false);
 

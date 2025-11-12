@@ -51,6 +51,9 @@ namespace Unity.VisualScripting.Community
             return null;
         }
 
+        /// <summary>
+        /// Gets the type's members including ExtendedMembers.
+        /// </summary>
         public static IEnumerable<Member> GetSafeExtendedMembers(this Type type, bool nonPublic = false)
         {
             if (type is FakeGenericParameterType fakeGeneric)
@@ -68,7 +71,7 @@ namespace Unity.VisualScripting.Community
 
                 try
                 {
-                    member.EnsureReflected();
+                    member.Reflect();
                 }
                 catch (ArgumentNullException)
                 {
@@ -101,6 +104,9 @@ namespace Unity.VisualScripting.Community
             }
         }
 
+        /// <summary>
+        /// Gets the type's members excluding ExtendedMembers.
+        /// </summary>
         public static IEnumerable<Member> GetSafeMembers(this Type type, bool nonPublic = false)
         {
             if (type is FakeGenericParameterType fakeGeneric)
@@ -118,7 +124,7 @@ namespace Unity.VisualScripting.Community
 
                 try
                 {
-                    member.EnsureReflected();
+                    member.Reflect();
                 }
                 catch (ArgumentNullException)
                 {

@@ -14,8 +14,36 @@ namespace Unity.VisualScripting.Community
         private double lastTabTime;
         private static HashSet<IGraphElement> visitedElements = new HashSet<IGraphElement>();
         private IGraphElement selectedElement;
+        private HashSet<FlowGraph> registeredGraphs = new HashSet<FlowGraph>();
+        private bool currentlyCreatingConnection = false;
         public override void Process(FlowGraph graph, FlowCanvas canvas)
         {
+            if (registeredGraphs.Add(graph))
+            {
+                graph.valueConnections.ItemAdded += c =>
+                {
+                    var source = c.source;
+                    var destination = c.destination;
+                    if (canvas.isCreatingConnection && canvas.connectionSource == source && @event.alt && !currentlyCreatingConnection)
+                    {
+                        currentlyCreatingConnection = true;
+                        var reroute = new ValueReroute() { hideConnection = true };
+                        graph.units.Add(reroute);
+                        var portPosition = canvas.Widget(destination).position.position;
+                        reroute.position = portPosition - new Vector2(130, 4);
+                        if (Mathf.Approximately(portPosition.x, 0) && Mathf.Approximately(portPosition.y, 0))
+                        {
+                            canvas.Cache();
+                            canvas.Widget(reroute).Reposition();
+                            reroute.position = canvas.Widget(destination).position.position - new Vector2(130, 4);
+                        }
+                        source.ValidlyConnectTo(reroute.input);
+                        destination.ValidlyConnectTo(reroute.output);
+                        currentlyCreatingConnection = false;
+                    }
+                };
+            }
+
             if (canvas.selection.Count == 0 && visitedElements.Count > 0) visitedElements.Clear(); // Most likely the selection was manually stopped so just reset visited
             if (@event == null || GraphWindow.active == null || EditorWindow.focusedWindow != GraphWindow.active) return;
 

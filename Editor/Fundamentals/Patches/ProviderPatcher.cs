@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
-using UnityEngine;
-using Unity.VisualScripting.Community.Libraries.Humility;
-using System.Linq;
+#if PACKAGE_INPUT_SYSTEM_EXISTS
 using Unity.VisualScripting.InputSystem;
+#endif
 namespace Unity.VisualScripting.Community
 {
     [InitializeOnLoad]
@@ -45,7 +44,9 @@ namespace Unity.VisualScripting.Community
             if (current == null)
             {
                 var context = GraphWindow.activeContext;
+#if ENABLE_VERTICAL_FLOW
                 PatchUnitWidgets(context);
+#endif
                 PatchUnitPortWidgets(context);
                 PatchUnitConnectionWidgets(context);
             }
@@ -66,6 +67,7 @@ namespace Unity.VisualScripting.Community
                 PatchGlobalProvider(provider, typeof(MissingType), typeof(MissingTypeUnitWidget));
                 PatchGlobalProvider(provider, typeof(GraphInput), typeof(GraphInputWidget));
                 PatchGlobalProvider(provider, typeof(GraphOutput), typeof(GraphOutputWidget));
+                PatchGlobalProvider(provider, typeof(TriggerStateTransition), typeof(TriggerStateTransitionWidget));
 #if PACKAGE_INPUT_SYSTEM_EXISTS
                 PatchGlobalProvider(provider, typeof(OnInputSystemEvent), typeof(InputSystemWidget));
 #endif

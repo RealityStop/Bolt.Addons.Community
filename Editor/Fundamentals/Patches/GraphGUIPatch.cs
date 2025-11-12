@@ -692,7 +692,7 @@ namespace Unity.VisualScripting.Community
                 tabStyle.stretchWidth = true;
 
                 var subTabField = typeof(VariablesPanel.Styles).GetField("subTab", BindingFlags.Static | BindingFlags.Public);
-                subTabField.SetValue(null, tabStyle);
+                subTabField.SetValue(null, tabStyle ?? new GUIStyle(CommunityStyles.ToolbarButton));
 
                 UnitEditor.Styles.inspectorBackground.normal.background = CommunityStyles.background;
                 UnitEditor.Styles.portsBackground.normal.background = CommunityStyles.background;
