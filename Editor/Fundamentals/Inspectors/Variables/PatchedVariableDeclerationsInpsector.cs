@@ -212,6 +212,11 @@ namespace Unity.VisualScripting.Community
         {
             var rectborder = CommunityStyles.OutlineTexture;
 
+            if (rectborder == null)
+            {
+                Debug.LogWarning("Variables toolbar item border could not be found!");
+            }
+
             var style = new GUIStyle(GUI.skin.box)
             {
                 border = new RectOffset((int)radius, (int)radius, (int)radius, (int)radius),
