@@ -258,7 +258,7 @@ namespace Unity.VisualScripting.Community
             {
                 int choice = EditorUtility.DisplayDialogComplex(
                     "Add Type to Settings",
-                    $"The type '{type.Name}' is not currently in your settings types.\n\nWould you like to add it?",
+                    $"The type '{type.As().CSharpName(false, false, false)}' is not currently in your settings types.\n\nWould you like to add it?",
                     "Add",
                     "No",
                     "Add && Regenerate"
@@ -317,7 +317,6 @@ namespace Unity.VisualScripting.Community
             var value = type.PseudoDefault();
 
             if (value == null && type == typeof(Gradient)) return new Gradient();
-            if (value == null && type == typeof(HDRColor)) return new HDRColor();
             return value;
         }
 

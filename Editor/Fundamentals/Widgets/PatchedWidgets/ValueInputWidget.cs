@@ -44,17 +44,9 @@ namespace Unity.VisualScripting.Community
 
             float minBend = 20f;
 
-            Vector2 size =  new Vector2(9, 12);
+            Vector2 size = new Vector2(9, 12);
 
-            var connection = port.connection;
-            if (connection != null && connection.destination.unit is ValueReroute valueReroute)
-            {
-                if (valueReroute.hideConnection)
-                {
-                    size = new Vector2(16, 16);
-                }
-            }
-            else if (e.alt) size = new Vector2(16, 16);
+            if (e.alt) size = new Vector2(16, 16);
 
             GraphGUI.DrawConnection
                 (
@@ -63,7 +55,7 @@ namespace Unity.VisualScripting.Community
                     canvas.connectionEnd,
                     edge,
                     null,
-                    e.alt ? PathUtil.Load("PortalConnectionIn", CommunityEditorPath.Fundamentals)?[16] : handleTextureConnected,
+                    e.alt ? PathUtil.Load("PortalConnectionIn", CommunityEditorPath.Fundamentals)?[16] : BoltFlow.Icons.valuePortConnected?[12],
                     size,
                     UnitConnectionStyles.relativeBend,
                     minBend

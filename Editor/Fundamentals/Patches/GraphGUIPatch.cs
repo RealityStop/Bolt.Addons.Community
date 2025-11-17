@@ -706,7 +706,7 @@ namespace Unity.VisualScripting.Community
                 LudiqStyles.toolbarButton.onActive = CommunityStyles.ToolbarButton.onActive;
 #endif
 
-#if NEW_UNIT_STYLE && NEW_UNIT_UI
+#if NEW_UNIT_STYLE
                 var green = GraphGUI.GetNodeStyle(NodeShape.Square, NodeColor.Green);
                 green.normal.background = PathUtil.Load("GreenNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
                 green.active.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
@@ -750,7 +750,7 @@ namespace Unity.VisualScripting.Community
                 red.focused.background = PathUtil.Load("RedNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
                 red.hover.background = PathUtil.Load("RedNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
 
-#if !ENABLE_VERTICAL_FLOW
+#if !ENABLE_VERTICAL_FLOW || !NEW_UNIT_UI
                 var unitWidgetGeneric = typeof(Unity.VisualScripting.UnitWidget<>);
 
                 var normalType = VisualScripting.UnitWidget<IUnit>.Styles.portsBackground;
