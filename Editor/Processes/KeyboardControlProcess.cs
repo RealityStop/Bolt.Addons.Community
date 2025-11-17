@@ -16,30 +16,68 @@ namespace Unity.VisualScripting.Community
         private IGraphElement selectedElement;
         private HashSet<FlowGraph> registeredGraphs = new HashSet<FlowGraph>();
         private bool currentlyCreatingConnection = false;
+        private CanvasControlScheme? _originalScheme = null;
+        private bool _connectionModeActive = false;
         public override void Process(FlowGraph graph, FlowCanvas canvas)
         {
+            bool creating = canvas.isCreatingConnection;
+
+            if (creating && !_connectionModeActive)
+            {
+                _connectionModeActive = true;
+
+                _originalScheme = BoltCore.Configuration.controlScheme;
+
+                BoltCore.Configuration.controlScheme = CanvasControlScheme.Default;
+            }
+            else if (!creating && _connectionModeActive)
+            {
+                _connectionModeActive = false;
+
+                if (_originalScheme.HasValue)
+                {
+                    BoltCore.Configuration.controlScheme = _originalScheme.Value;
+                    _originalScheme = null;
+                }
+            }
+            
             if (registeredGraphs.Add(graph))
             {
                 graph.valueConnections.ItemAdded += c =>
                 {
+                    if (Serialization.isSerializing) return;
+
                     var source = c.source;
                     var destination = c.destination;
-                    if (canvas.isCreatingConnection && canvas.connectionSource == source && @event.alt && !currentlyCreatingConnection)
+                    if (@event.alt)
                     {
-                        currentlyCreatingConnection = true;
-                        var reroute = new ValueReroute() { hideConnection = true };
-                        graph.units.Add(reroute);
-                        var portPosition = canvas.Widget(destination).position.position;
-                        reroute.position = portPosition - new Vector2(130, 4);
-                        if (Mathf.Approximately(portPosition.x, 0) && Mathf.Approximately(portPosition.y, 0))
+                        if (canvas.isCreatingConnection && (canvas.connectionSource == source || canvas.connectionSource == destination) && !currentlyCreatingConnection)
                         {
-                            canvas.Cache();
-                            canvas.Widget(reroute).Reposition();
-                            reroute.position = canvas.Widget(destination).position.position - new Vector2(130, 4);
+                            currentlyCreatingConnection = true;
+
+                            var reroute = new ValueReroute() { hideConnection = true };
+
+                            graph.units.Add(reroute);
+
+                            var destinationWidget = canvas.Widget(destination);
+
+                            var portPosition = destinationWidget.position.position;
+                            reroute.position = portPosition - new Vector2(130, 4);
+
+                            if (Mathf.Approximately(portPosition.x, 0) && Mathf.Approximately(portPosition.y, 0))
+                            {
+                                canvas.Cache();
+                                var rerouteWidget = canvas.Widget(reroute);
+                                rerouteWidget.Reposition();
+                                reroute.position = destinationWidget.position.position - new Vector2(130, 4);
+                            }
+
+                            source.ValidlyConnectTo(reroute.input);
+                            destination.ValidlyConnectTo(reroute.output);
+
+                            currentlyCreatingConnection = false;
                         }
-                        source.ValidlyConnectTo(reroute.input);
-                        destination.ValidlyConnectTo(reroute.output);
-                        currentlyCreatingConnection = false;
+                        @event.Use();
                     }
                 };
             }

@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
         public override Color color => DetermineColor(connection.source.type, connection.destination.type);
 
         protected override bool colorIfActive => !BoltFlow.Configuration.animateControlConnections || !BoltFlow.Configuration.animateValueConnections;
-        private bool hideConnection;
+        public bool hideConnection { get; private set; }
         public override void DrawForeground()
         {
             base.DrawForeground();

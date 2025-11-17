@@ -29,10 +29,12 @@ namespace Unity.VisualScripting.Community
         {
             IGraphContext current = null;
             var provider = DescriptorProvider.instance;
+#if ENABLE_VERTICAL_FLOW
             PatchGlobalProvider(provider, typeof(IEventUnit), typeof(EventUnitDescriptor<>));
+#endif
             GraphWindow.activeContextChanged += context =>
             {
-#if ENABLE_VERTICAL_FLOW
+#if NEW_UNIT_UI
                 PatchUnitWidgets(context);
 #endif
                 PatchUnitPortWidgets(context);
@@ -44,7 +46,7 @@ namespace Unity.VisualScripting.Community
             if (current == null)
             {
                 var context = GraphWindow.activeContext;
-#if ENABLE_VERTICAL_FLOW
+#if NEW_UNIT_UI
                 PatchUnitWidgets(context);
 #endif
                 PatchUnitPortWidgets(context);
@@ -79,7 +81,7 @@ namespace Unity.VisualScripting.Community
             if (context != null && context.graph is FlowGraph)
             {
                 var provider = context.canvas.widgetProvider;
-#if ENABLE_VERTICAL_FLOW
+#if ENABLE_VERTICAL_FLOW && NEW_UNIT_UI
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlInputWidget>(provider, typeof(ControlInput));
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlOutputWidget>(provider, typeof(ControlOutput));
 #endif
@@ -93,7 +95,7 @@ namespace Unity.VisualScripting.Community
             if (context != null && context.graph is FlowGraph)
             {
                 var provider = context.canvas.widgetProvider;
-#if ENABLE_VERTICAL_FLOW
+#if ENABLE_VERTICAL_FLOW && NEW_UNIT_UI
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlConnectionWidget>(provider, typeof(ControlConnection));
 #endif
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ValueConnectionWidget>(provider, typeof(ValueConnection));

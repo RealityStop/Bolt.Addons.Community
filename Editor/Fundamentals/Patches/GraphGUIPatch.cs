@@ -649,7 +649,7 @@ namespace Unity.VisualScripting.Community
         private static Type sidebarpanelStylesType = typeof(SidebarPanel).GetNestedType("Styles", BindingFlags.NonPublic);
 
         private static bool isInitialized;
-        private static void InitializeNewGUI()
+        public static void InitializeNewGUI()
         {
             if (!isInitialized)
             {
@@ -706,7 +706,7 @@ namespace Unity.VisualScripting.Community
                 LudiqStyles.toolbarButton.onActive = CommunityStyles.ToolbarButton.onActive;
 #endif
 
-#if NEW_UNIT_STYLE
+#if NEW_UNIT_STYLE && NEW_UNIT_UI
                 var green = GraphGUI.GetNodeStyle(NodeShape.Square, NodeColor.Green);
                 green.normal.background = PathUtil.Load("GreenNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];
                 green.active.background = PathUtil.Load("SelectedNode", CommunityEditorPath.Fundamentals)?[IconSize.Large];

@@ -362,6 +362,11 @@ namespace Unity.VisualScripting.Community
             return "Unnamed Graph Group";
         }
 
+        private static readonly List<string> SearchablePorts = new List<string>()
+        {
+            "name", "Name", "label", "Label", "key", "Key"
+        };
+
         public static string GetSearchName(Unit unit)
         {
             if (unit == null) return string.Empty;
@@ -383,46 +388,55 @@ namespace Unity.VisualScripting.Community
 
             if (unit is Literal l)
                 return $"{l.value} [{GetElementDisplayName(unit)}: {l.type?.SelectedName(BoltCore.Configuration.humanNaming) ?? l.value?.GetType().SelectedName(BoltCore.Configuration.humanNaming) ?? "Type Unknown"}]";
-
-            var type = unit.GetType();
-            if (!NameMemberCache.TryGetValue(type, out var member))
+            
+            foreach (var portKey in SearchablePorts)
             {
-                foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                if (unit.valueInputs.TryGetValue(portKey, out var input))
                 {
-                    if (field.FieldType == typeof(ValueInput) && string.Equals(field.Name, "name", StringComparison.OrdinalIgnoreCase))
-                    {
-                        member = field;
-                        break;
-                    }
+                    if (input != null && input.hasDefaultValue && !input.hasValidConnection)
+                        return $"{GetDefaultValue(input)} [{GetElementDisplayName(unit).Trim()}]";
                 }
-
-                if (member == null)
-                {
-                    foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
-                    {
-                        if (prop.PropertyType == typeof(ValueInput) && string.Equals(prop.Name, "name", StringComparison.OrdinalIgnoreCase))
-                        {
-                            member = prop;
-                            break;
-                        }
-                    }
-                }
-
-                NameMemberCache[type] = member;
             }
 
-            if (member != null)
-            {
-                ValueInput valueInput = member switch
-                {
-                    FieldInfo fi => fi.GetValue(unit) as ValueInput,
-                    PropertyInfo pi => pi.GetValue(unit) as ValueInput,
-                    _ => null
-                };
+            // var type = unit.GetType();
+            // if (!NameMemberCache.TryGetValue(type, out var member))
+            // {
+            //     foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            //     {
+            //         if (field.FieldType == typeof(ValueInput) && string.Equals(field.Name, "name", StringComparison.OrdinalIgnoreCase))
+            //         {
+            //             member = field;
+            //             break;
+            //         }
+            //     }
 
-                if (valueInput != null && valueInput.hasDefaultValue && !valueInput.hasValidConnection)
-                    return $"{GetDefaultValue(valueInput)} [{GetElementDisplayName(unit).Trim()}]";
-            }
+            //     if (member == null)
+            //     {
+            //         foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            //         {
+            //             if (prop.PropertyType == typeof(ValueInput) && string.Equals(prop.Name, "name", StringComparison.OrdinalIgnoreCase))
+            //             {
+            //                 member = prop;
+            //                 break;
+            //             }
+            //         }
+            //     }
+
+            //     NameMemberCache[type] = member;
+            // }
+
+            // if (member != null)
+            // {
+            //     ValueInput valueInput = member switch
+            //     {
+            //         FieldInfo fi => fi.GetValue(unit) as ValueInput,
+            //         PropertyInfo pi => pi.GetValue(unit) as ValueInput,
+            //         _ => null
+            //     };
+
+            //     if (valueInput != null && valueInput.hasDefaultValue && !valueInput.hasValidConnection)
+            //         return $"{GetDefaultValue(valueInput)} [{GetElementDisplayName(unit).Trim()}]";
+            // }
 
             return GetElementDisplayName(unit);
         }

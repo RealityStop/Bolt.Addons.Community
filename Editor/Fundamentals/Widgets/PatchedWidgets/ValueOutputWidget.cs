@@ -35,6 +35,44 @@ namespace Unity.VisualScripting.Community
 
         protected override Texture handleTextureUnconnected => BoltFlow.Icons.valuePortUnconnected?[12];
 
+        protected override void DrawConnectionSource()
+        {
+            var start = handlePosition.GetEdgeCenter(edge);
+
+            if (window.IsFocused())
+            {
+                canvas.connectionEnd = mousePosition;
+            }
+
+            float minBend = 20f;
+
+            Vector2 size = new Vector2(9, 12);
+
+            var connections = port.connections;
+            if (connections.Any(c => c.destination.unit is ValueReroute))
+            {
+                if (connections.FirstOrDefault(c => c.destination?.unit is ValueReroute)?.destination?.unit is ValueReroute valueReroute && valueReroute.hideConnection)
+                {
+                    size = new Vector2(16, 16);
+                }
+            }
+            else if (e.alt) size = new Vector2(16, 16);
+
+            GraphGUI.DrawConnection
+                (
+                    color,
+                    start,
+                    canvas.connectionEnd,
+                    edge,
+                    null,
+                    e.alt ? PathUtil.Load("PortalConnectionIn", CommunityEditorPath.Fundamentals)?[16] : handleTextureConnected,
+                    size,
+                    UnitConnectionStyles.relativeBend,
+                    minBend
+                );
+        }
+
+
         public override void CachePosition()
         {
             var unitPosition = unitWidget.position;

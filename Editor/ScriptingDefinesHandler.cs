@@ -11,6 +11,7 @@ namespace Unity.VisualScripting.Community
     {
         private const string RESTRICT_EVENT_TYPES_SYMBOL = "RESTRICT_EVENT_TYPES";
 
+        private const string NEW_UNIT_UI = "NEW_UNIT_UI";
         private const string VERTICAL_FLOW = "ENABLE_VERTICAL_FLOW";
         private const string UNIT_STYLE = "NEW_UNIT_STYLE";
         private const string TOOLBAR_STYLE = "NEW_TOOLBAR_STYLE";
@@ -23,6 +24,20 @@ namespace Unity.VisualScripting.Community
         static ScriptingDefinesHandler()
         {
             SetDefine(RESTRICT_EVENT_TYPES_SYMBOL, CommunityOptionFetcher.DefinedEvent_RestrictEventTypes);
+            UpdateUnitUI();
+            UpdateVerticalFlow();
+            UpdateUnitStyle();
+            UpdateToolbarStyle();
+            UpdateGraphMiniMap();
+            UpdateDarkUI();
+            UpdateVariablesUI();
+            UpdateListUI();
+            UpdateDictionaryUI();
+        }
+
+        public static void UpdateUnitUI()
+        {
+            SetDefine(NEW_UNIT_UI, EditorPrefs.GetBool(ProjectSettingsProviderView.UnitUIKey, false));
         }
 
         public static void UpdateVerticalFlow()

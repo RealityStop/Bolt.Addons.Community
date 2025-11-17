@@ -38,7 +38,6 @@ namespace Unity.VisualScripting.Community
 
                 if (flip) labelPosition.x -= labelPosition.width;
 
-
                 _position = _position.Encompass(labelPosition);
                 identifierPosition = identifierPosition.Encompass(labelPosition);
                 this.labelPosition = labelPosition;

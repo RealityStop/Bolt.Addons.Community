@@ -312,7 +312,6 @@ namespace Unity.VisualScripting.Community
 
             x += Styles.spaceAfterEdge * inside;
 
-            // Align icon, label, inspector relative to handlePosition.center.x
             if (showIcon)
             {
                 var iconPosition = new Rect(
@@ -345,6 +344,7 @@ namespace Unity.VisualScripting.Community
 
             surroundPosition = Styles.surroundPadding.Add(identifierPosition);
         }
+
         public float GetInnerWidth()
         {
             var width = 0f;
@@ -785,7 +785,7 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private void DrawConnectionSource()
+        protected virtual void DrawConnectionSource()
         {
             var start = handlePosition.GetEdgeCenter(edge);
 

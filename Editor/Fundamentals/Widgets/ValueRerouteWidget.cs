@@ -3,7 +3,7 @@
 namespace Unity.VisualScripting.Community
 {
     [Widget(typeof(ValueReroute))]
-    public sealed class ValueRerouteWidget : VisualScripting.UnitWidget<ValueReroute>
+    public sealed class ValueRerouteWidget : UnitWidget<ValueReroute>
     {
         public ValueRerouteWidget(FlowCanvas canvas, ValueReroute unit) : base(canvas, unit)
         {

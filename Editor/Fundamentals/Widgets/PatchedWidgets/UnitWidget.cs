@@ -1,11 +1,11 @@
-#if ENABLE_VERTICAL_FLOW
+#if NEW_UNIT_UI
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+#if ENABLE_VERTICAL_FLOW
 using Unity.VisualScripting.Community.Libraries.Humility;
-
 namespace Unity.VisualScripting.Community
 {
     public class UnitWidget<TUnit> : NodeWidget<FlowCanvas, TUnit>, IUnitWidget where TUnit : class, IUnit
@@ -140,6 +140,27 @@ namespace Unity.VisualScripting.Community
 
         public override void HandleInput()
         {
+            if (isDragging && e.ctrlOrCmd)
+            {
+                List<Rect> otherRects = graph.elements.Where(e => e != element && !(e is IUnitConnection))
+                    .Select(e => e is Unit unit ? canvas.Widget<INodeWidget>(unit).outerPosition : canvas.Widget(e).position)
+                    .ToList();
+
+                var snapResult = RectUtility.CheckSnap(outerPosition, otherRects, threshold: 15f);
+
+                if (snapResult.snapped)
+                {
+                    var pos = GraphGUI.SnapToGrid(snapResult.snapPosition);
+                    _position = OuterToEdgePosition(new Rect(pos.x, pos.y, _position.width, _position.height));
+                    snapLines = snapResult.snapLines;
+                    Reposition();
+                }
+                else
+                {
+                    snapLines.Clear();
+                }
+            }
+
             if (canvas.isCreatingConnection)
             {
                 if (e.IsMouseDown(MouseButton.Left))
@@ -445,7 +466,7 @@ namespace Unity.VisualScripting.Community
 
                     float controlY = edgeY - Styles.spaceBeforePorts - Styles.spaceAfterControlInputs;
 
-                    float totalSlotSpace = edgeWidth;
+                    float totalSlotSpace = EdgeToOuterPosition(new Rect(edgeX, portsBackgroundY, edgeWidth, portsBackgroundHeight)).width;
                     float slotWidth = totalSlotSpace / portCount;
 
                     for (int i = 0; i < portCount; i++)
@@ -471,7 +492,7 @@ namespace Unity.VisualScripting.Community
 
                     float controlY = innerY + innerHeight + Styles.spaceBeforePorts + controlOutputsHeight + Styles.spaceBeforeControlOutputs;
 
-                    float totalSlotSpace = edgeWidth;
+                    float totalSlotSpace = EdgeToOuterPosition(new Rect(edgeX, portsBackgroundY, edgeWidth, portsBackgroundHeight)).width;
                     float slotWidth = totalSlotSpace / portCount;
 
                     for (int i = 0; i < portCount; i++)
@@ -503,6 +524,19 @@ namespace Unity.VisualScripting.Community
 
 
         #region Drawing
+        private List<RectUtility.SnapResult.Line> snapLines = new List<RectUtility.SnapResult.Line>();
+
+        protected void DrawSnapLines()
+        {
+            if (snapLines == null || snapLines.Count == 0)
+                return;
+
+            Handles.color = new Color32(64, 113, 156, 255);
+            foreach (var line in snapLines)
+            {
+                Handles.DrawLine(line.start, line.end);
+            }
+        }
 
         protected virtual NodeColorMix baseColor => NodeColor.Gray;
 
@@ -594,7 +628,12 @@ namespace Unity.VisualScripting.Community
                 return dim;
             }
         }
-
+        public override void DrawOverlay()
+        {
+            base.DrawOverlay();
+            if (isDragging && e.ctrlOrCmd)
+                DrawSnapLines();
+        }
         public override void DrawForeground()
         {
             BeginDim();
@@ -1060,4 +1099,138 @@ namespace Unity.VisualScripting.Community
         }
     }
 }
+#else
+namespace Unity.VisualScripting.Community
+{
+    public class UnitWidget<TUnit> : VisualScripting.UnitWidget<TUnit>, IUnitWidget where TUnit : class, IUnit
+    {
+        public UnitWidget(FlowCanvas canvas, TUnit unit) : base(canvas, unit)
+        {
+        }
+
+        private List<RectUtility.SnapResult.Line> snapLines = new List<RectUtility.SnapResult.Line>();
+
+        protected void DrawSnapLines()
+        {
+            if (snapLines == null || snapLines.Count == 0)
+                return;
+
+            Handles.color = new Color32(64, 113, 156, 255);
+            foreach (var line in snapLines)
+            {
+                Handles.DrawLine(line.start, line.end);
+            }
+        }
+
+        public override void HandleInput()
+        {
+            if (isDragging && e.ctrlOrCmd)
+            {
+                List<Rect> otherRects = graph.elements.Where(e => e != element && !(e is IUnitConnection))
+                    .Select(e => canvas.Widget(e).position)
+                    .ToList();
+
+                var snapResult = RectUtility.CheckSnap(_position, otherRects, threshold: 10f);
+
+                if (snapResult.snapped)
+                {
+                    _position.position = snapResult.snapPosition;
+                    snapLines = snapResult.snapLines;
+                    Reposition();
+                }
+                else
+                {
+                    snapLines.Clear();
+                }
+            }
+            base.HandleInput();
+        }
+
+        public override void DrawForeground()
+        {
+            if (isDragging && e.ctrlOrCmd)
+                DrawSnapLines();
+
+            base.DrawForeground();
+        }
+
+        protected override IEnumerable<DropdownOption> contextOptions
+        {
+            get
+            {
+                yield return new DropdownOption((Action)ReplaceUnit, "Replace...");
+
+                foreach (var baseOption in base.contextOptions)
+                {
+                    yield return baseOption;
+                }
+
+                if (selection.Count > 0)
+                {
+                    yield return new DropdownOption((Action)ConvertToEmbed, "Selection/To Embed Subgraph");
+                    yield return new DropdownOption((Action)ConvertToMacro, "Selection/To Macro Subgraph");
+                }
+            }
+        }
+
+        private void ReplaceUnit()
+        {
+            UnitWidgetHelper.ReplaceUnit(unit, reference, context, selection, e);
+        }
+
+        private void ConvertToEmbed()
+        {
+            NodeSelection.Convert(GraphSource.Embed);
+        }
+
+        private void ConvertToMacro()
+        {
+            NodeSelection.Convert(GraphSource.Macro);
+        }
+
+        internal class UnitWidgetHelper
+        {
+            internal static void ReplaceUnit(IUnit unit, GraphReference reference, IGraphContext context, GraphSelection selection, EventWrapper eventWrapper)
+            {
+                var oldUnit = unit;
+                var unitPosition = oldUnit.position;
+                var preservation = UnitPreservation.Preserve(oldUnit);
+
+                var options = new UnitOptionTree(new GUIContent("Node"));
+                options.filter = UnitOptionFilter.Any;
+                options.filter.NoConnection = false;
+                options.reference = reference;
+
+                var activatorPosition = new Rect(eventWrapper.mousePosition, new Vector2(200, 1));
+
+                LudiqGUI.FuzzyDropdown
+                (
+                    activatorPosition,
+                    options,
+                    null,
+                    delegate (object _option)
+                    {
+                        var option = (IUnitOption)_option;
+
+                        context.BeginEdit();
+                        UndoUtility.RecordEditedObject("Replace Node");
+                        var graph = oldUnit.graph;
+                        oldUnit.graph.units.Remove(oldUnit);
+                        var newUnit = option.InstantiateUnit();
+                        newUnit.guid = Guid.NewGuid();
+                        newUnit.position = unitPosition;
+                        graph.units.Add(newUnit);
+                        preservation.RestoreTo(newUnit);
+                        option.PreconfigureUnit(newUnit);
+                        selection.Select(newUnit);
+                        GUI.changed = true;
+                        context.EndEdit();
+                    }
+                );
+            }
+        }
+    }
+}
+#endif
+
 #endif

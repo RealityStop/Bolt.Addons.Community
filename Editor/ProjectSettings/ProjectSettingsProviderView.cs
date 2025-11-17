@@ -8,6 +8,7 @@ namespace Unity.VisualScripting.Community
         private const string Path = "Project/Visual Scripting/Customisation";
         private const string Title = "Customisation";
 
+        public const string UnitUIKey = "Community_Settings_UnitUI";
         public const string GraphLayoutKey = "Community_Settings_GraphLayout";
         public const string UnitStyleKey = "Community_Settings_UnitStyle";
         public const string NewToolbarKey = "Community_Settings_NewToolbar";
@@ -22,6 +23,7 @@ namespace Unity.VisualScripting.Community
         private readonly GUIStyle marginStyle = new GUIStyle { margin = new RectOffset(10, 10, 10, 10) };
 
         private GraphLayout _graphLayout;
+        private bool _unitUI;
         private bool _unitStyle;
         private bool _newToolbar;
         private bool _graphMinimap;
@@ -51,8 +53,34 @@ namespace Unity.VisualScripting.Community
 
             GUILayout.Label("Graph", EditorStyles.boldLabel);
 
+            DrawToggle("New Unit UI", ref _unitUI, () =>
+            {
+                if (!_unitUI)
+                {
+                    var enable = EditorUtility.DisplayDialog(
+                        "Enable New Unit UI?",
+                        "Enabling this feature will modify ALL Unit widgets globally.\n\n" +
+                        "If your project includes custom Unit widgets, they may no longer function correctly. " +
+                        "To ensure compatibility, enable this then make them inherit from:\n\n" +
+                        "Unity.VisualScripting.Community.UnitWidget<> instead of Unity.VisualScripting.UnitWidget<>.\n\n" +
+                        "If you do not have any custom widgets, this should be safe to enable.\n\n" +
+                        "Are you sure you want to proceed?",
+                        "Enable",
+                        "Cancel"
+                    );
+
+                    EditorPrefs.SetBool(UnitUIKey, enable);
+                    ScriptingDefinesHandler.UpdateUnitUI();
+                    return enable;
+                }
+                EditorPrefs.SetBool(UnitUIKey, false);
+                ScriptingDefinesHandler.UpdateUnitUI();
+                return true;
+            });
+            EditorGUI.BeginDisabledGroup(!_unitUI);
             DrawEnumField("Graph Layout", ref _graphLayout);
             DrawToggle("New Unit Style", ref _unitStyle);
+            EditorGUI.EndDisabledGroup();
             DrawToggle("New Toolbar Style", ref _newToolbar);
             DrawToggle("Graph Minimap", ref _graphMinimap);
 
@@ -78,6 +106,7 @@ namespace Unity.VisualScripting.Community
 
         private void LoadValues()
         {
+            _unitUI = EditorPrefs.GetBool(UnitUIKey, false);
             _graphLayout = (GraphLayout)EditorPrefs.GetInt(GraphLayoutKey, (int)GraphLayout.Horizontal);
             _unitStyle = EditorPrefs.GetBool(UnitStyleKey, false);
             _newToolbar = EditorPrefs.GetBool(NewToolbarKey, false);
@@ -100,13 +129,14 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        private void DrawToggle(string label, ref bool value)
+        private void DrawToggle(string label, ref bool value, System.Func<bool> shouldChange = null)
         {
             var newValue = EditorGUILayout.Toggle(label, value);
-            if (newValue != value)
+            if (newValue != value && (shouldChange?.Invoke() ?? true))
             {
                 value = newValue;
-                _hasPendingChanges = true;
+                if (shouldChange == null)
+                    _hasPendingChanges = true;
             }
         }
 
@@ -141,6 +171,7 @@ namespace Unity.VisualScripting.Community
 
         private void ApplyAllChanges()
         {
+            EditorPrefs.SetBool(UnitUIKey, _unitUI);
             EditorPrefs.SetInt(GraphLayoutKey, (int)_graphLayout);
             EditorPrefs.SetBool(UnitStyleKey, _unitStyle);
             EditorPrefs.SetBool(NewToolbarKey, _newToolbar);
@@ -151,6 +182,7 @@ namespace Unity.VisualScripting.Community
             EditorPrefs.SetBool(NewListUIKey, _newListUI);
             EditorPrefs.SetBool(NewDictionaryUIKey, _newDictionaryUI);
 
+            ScriptingDefinesHandler.UpdateUnitUI();
             ScriptingDefinesHandler.UpdateVerticalFlow();
             ScriptingDefinesHandler.UpdateUnitStyle();
             ScriptingDefinesHandler.UpdateToolbarStyle();
@@ -166,6 +198,7 @@ namespace Unity.VisualScripting.Community
         private void ResetToDefaults()
         {
             // Default values
+            _unitUI = false;
             _graphLayout = GraphLayout.Horizontal;
             _unitStyle = false;
             _newToolbar = false;

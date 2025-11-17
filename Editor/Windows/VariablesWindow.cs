@@ -50,6 +50,7 @@ namespace Unity.VisualScripting.Community
 
         protected override void OnGUI()
         {
+            GraphGUIPatch.InitializeNewGUI();
 #if DARKER_UI
             if (BoltCore.instance != null && !EditorApplication.isCompiling)
                 EditorGUI.DrawRect(new Rect(0, 0, position.width, position.height), CommunityStyles.backgroundColor);
