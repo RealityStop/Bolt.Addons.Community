@@ -321,13 +321,15 @@ namespace Unity.VisualScripting.Community
             {
                 return GetSearchName(group);
             }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
             else if (element is StickyNote note)
             {
                 return GetSearchName(note);
             }
+#endif
             return GetElementDisplayName(element);
         }
-
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
         public static string GetSearchName(StickyNote note)
         {
             if (!string.IsNullOrEmpty(note.title) && !string.IsNullOrEmpty(note.body))
@@ -344,7 +346,7 @@ namespace Unity.VisualScripting.Community
             }
             return "Empty StickyNote";
         }
-
+#endif
         public static string GetSearchName(GraphGroup group)
         {
             if (!string.IsNullOrEmpty(group.label) && !string.IsNullOrEmpty(group.comment))
@@ -388,7 +390,7 @@ namespace Unity.VisualScripting.Community
 
             if (unit is Literal l)
                 return $"{l.value} [{GetElementDisplayName(unit)}: {l.type?.SelectedName(BoltCore.Configuration.humanNaming) ?? l.value?.GetType().SelectedName(BoltCore.Configuration.humanNaming) ?? "Type Unknown"}]";
-            
+
             foreach (var portKey in SearchablePorts)
             {
                 if (unit.valueInputs.TryGetValue(portKey, out var input))

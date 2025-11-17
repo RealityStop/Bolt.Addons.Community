@@ -38,8 +38,9 @@ namespace Unity.VisualScripting.Community
 #pragma warning disable 618
             kind = metadata.GetAttribute<VariableKindAttribute>()?.kind;
 #pragma warning restore 618
+#if VISUAL_SCRIPTING_1_7
             kind ??= variableDecls.Kind;
-
+#endif
             adaptor = new VariableDeclarationsAdaptor(collection, this, foldouts ?? new List<VariableFoldout>());
         }
 
@@ -302,7 +303,9 @@ namespace Unity.VisualScripting.Community
             }
 
             var newVar = new VariableDeclaration(newVarName, Default(type));
+#if VISUAL_SCRIPTING_1_7
             newVar.typeHandle = new SerializableType(type.AssemblyQualifiedName);
+#endif
             collection.Add(newVar);
 
             metadata.RecordUndo();
@@ -323,10 +326,15 @@ namespace Unity.VisualScripting.Community
         private void SaveCoreConfig(BoltCoreConfiguration coreConfig)
         {
             var metadata = coreConfig.GetMetadata(nameof(coreConfig.typeOptions));
+
             metadata.Inspector().SetHeightDirty();
+#if VISUAL_SCRIPTING_1_9_0_OR_GREATER
             metadata.GetType()
                 .GetMethod("SaveImmediately", BindingFlags.Instance | BindingFlags.NonPublic)
                 .Invoke(metadata, new object[] { true });
+#else
+            metadata.Save();
+#endif
         }
 
         private bool highlightPlaceholder;

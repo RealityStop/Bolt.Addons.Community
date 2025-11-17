@@ -1,12 +1,16 @@
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-
+#if VISUAL_SCRIPTING_1_7
+using SUnit = Unity.VisualScripting.SubgraphUnit;
+#else
+using SUnit = Unity.VisualScripting.SuperUnit;
+#endif
 namespace Unity.VisualScripting.Community
 {
-    public class SubgraphUnitWidget : NesterUnitWidget<SubgraphUnit>, IDragAndDropHandler
+    public class SubgraphUnitWidget : NesterUnitWidget<SUnit>, IDragAndDropHandler
     {
-        public SubgraphUnitWidget(FlowCanvas canvas, SubgraphUnit unit) : base(canvas, unit) { }
+        public SubgraphUnitWidget(FlowCanvas canvas, SUnit unit) : base(canvas, unit) { }
 
         protected override NodeColorMix baseColor
         {

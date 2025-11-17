@@ -77,7 +77,11 @@ namespace Unity.VisualScripting.Community
             {
                 _connectionModeActive = true;
                 _originalScheme = BoltCore.Configuration.controlScheme;
+#if VISUAL_SCRIPTING_1_7
                 BoltCore.Configuration.controlScheme = CanvasControlScheme.Default;
+#else
+                BoltCore.Configuration.controlScheme = CanvasControlScheme.Unity;
+#endif
             }
             else if (!creating && _connectionModeActive)
             {

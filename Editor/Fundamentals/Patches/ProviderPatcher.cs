@@ -5,6 +5,13 @@ using UnityEditor;
 #if PACKAGE_INPUT_SYSTEM_EXISTS
 using Unity.VisualScripting.InputSystem;
 #endif
+
+#if VISUAL_SCRIPTING_1_7
+using SUnit = Unity.VisualScripting.SubgraphUnit;
+#else
+using SUnit = Unity.VisualScripting.SuperUnit;
+#endif
+
 namespace Unity.VisualScripting.Community
 {
     [InitializeOnLoad]
@@ -61,12 +68,14 @@ namespace Unity.VisualScripting.Community
                 var provider = context.canvas.widgetProvider;
                 // No need to instance patch the provider will construct the generic type.
                 PatchGlobalProvider(provider, typeof(IUnit), typeof(UnitWidget<>));
-                PatchGlobalProvider(provider, typeof(SubgraphUnit), typeof(SubgraphUnitWidget));
+                PatchGlobalProvider(provider, typeof(SUnit), typeof(SubgraphUnitWidget));
                 PatchGlobalProvider(provider, typeof(StateUnit), typeof(StateUnitWidget));
                 PatchGlobalProvider(provider, typeof(IEventUnit), typeof(EventUnitWidget));
                 PatchGlobalProvider(provider, typeof(UnifiedVariableUnit), typeof(UnifiedVariableUnitWidget));
                 PatchGlobalProvider(provider, typeof(Literal), typeof(LiteralWidget));
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
                 PatchGlobalProvider(provider, typeof(MissingType), typeof(MissingTypeUnitWidget));
+#endif
                 PatchGlobalProvider(provider, typeof(GraphInput), typeof(GraphInputWidget));
                 PatchGlobalProvider(provider, typeof(GraphOutput), typeof(GraphOutputWidget));
                 PatchGlobalProvider(provider, typeof(TriggerStateTransition), typeof(TriggerStateTransitionWidget));

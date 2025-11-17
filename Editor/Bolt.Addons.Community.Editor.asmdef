@@ -42,6 +42,11 @@
             "define": "VISUAL_SCRIPTING_1_8_0_OR_GREATER"
         },
         {
+            "name": "com.unity.visualscripting",
+            "expression": "1.9.0",
+            "define": "VISUAL_SCRIPTING_1_9_0_OR_GREATER"
+        },
+        {
             "name": "com.unity.inputsystem",
             "expression": "1.0.1",
             "define": "PACKAGE_INPUT_SYSTEM_EXISTS"

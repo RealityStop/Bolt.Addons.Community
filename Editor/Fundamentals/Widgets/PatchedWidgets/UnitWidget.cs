@@ -1067,7 +1067,9 @@ namespace Unity.VisualScripting.Community
 
             var options = new UnitOptionTree(new GUIContent("Node"));
             options.filter = UnitOptionFilter.Any;
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
             options.filter.NoConnection = false;
+#endif
             options.reference = reference;
 
             var activatorPosition = new Rect(eventWrapper.mousePosition, new Vector2(200, 1));

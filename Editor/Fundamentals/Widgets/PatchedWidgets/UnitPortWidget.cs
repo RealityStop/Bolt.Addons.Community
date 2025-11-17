@@ -91,10 +91,11 @@ namespace Unity.VisualScripting.Community
         public bool willDisconnect => wouldDisconnect && isMouseOver;
 
         protected virtual bool canStartConnection => true;
-
+#if VISUAL_SCRIPTING_1_7
         static Type type = typeof(GraphWindow).Assembly.GetTypes().FirstOrDefault(t => t.Name == "HotkeyUsageAnalytics");
         static MethodInfo method = type.GetMethod("HotkeyUsed", BindingFlags.NonPublic | BindingFlags.Static);
         static Enum @enum = (Enum)type.GetNestedType("Hotkey", BindingFlags.NonPublic).GetField("RmbRemoveConnections", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+#endif
         public override void HandleInput()
         {
             if (!canvas.isCreatingConnection)
@@ -116,8 +117,9 @@ namespace Unity.VisualScripting.Community
                 {
                     if (isMouseOver)
                     {
+#if VISUAL_SCRIPTING_1_7
                         method.Invoke(null, new object[] { @enum });
-
+#endif
                         // HotkeyUsageAnalytics.HotkeyUsed(HotkeyUsageAnalytics.Hotkey.RmbRemoveConnections);
 
                         RemoveConnections();
@@ -820,7 +822,6 @@ namespace Unity.VisualScripting.Community
 
         #endregion
 
-
         public static class Styles
         {
             private static byte[] t;
@@ -833,7 +834,7 @@ namespace Unity.VisualScripting.Community
                 label.padding = new RectOffset(0, 0, 0, 0);
 
                 TextureResolution[] textureResolution = { 2 };
-
+#if VISUAL_SCRIPTING_1_7
                 surround = new GUIStyle
                 {
                     normal =
@@ -841,6 +842,15 @@ namespace Unity.VisualScripting.Community
                         background = BoltCore.Resources.LoadTexture($"Surround.png", textureResolution, CreateTextureOptions.Scalable).Single()
                     }
                 };
+#else
+                surround = new GUIStyle
+                {
+                    normal =
+                    {
+                        background = BoltCore.Resources.LoadTexture($"Nodes/Surround.png", textureResolution, CreateTextureOptions.Scalable).Single()
+                    }
+                };
+#endif
             }
 
             public const float highlightScaling = 1f;

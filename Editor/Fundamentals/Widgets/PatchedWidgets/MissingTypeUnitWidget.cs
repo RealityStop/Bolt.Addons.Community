@@ -1,3 +1,4 @@
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
 namespace Unity.VisualScripting.Community
 {
     public class MissingTypeUnitWidget : UnitWidget<MissingType>
@@ -25,3 +26,4 @@ namespace Unity.VisualScripting.Community
         }
     }
 }
+#endif
