@@ -24,8 +24,20 @@ namespace Unity.VisualScripting.Community
                 {
                     yield return baseOption;
                 }
+
+                if (unit.nest.source == GraphSource.Macro && !unit.nest.macro.IsUnityNull())
+                {
+                    yield return new DropdownOption((Action)FindAll, "Find/All");
+                }
+                
             }
         }
+
+        private void FindAll()
+        {
+            NodeFinderWindow.Open(SearchUtility.GetElementDisplayName(unit));
+        }
+
 
         protected override void OnDoubleClick()
         {

@@ -241,8 +241,19 @@ namespace Unity.VisualScripting.Community
             const float compactY = 0.5f;
             const float compactX = 0.8f;
 
-            var valueInputs = inputs.OfType<ValueInputWidget>();
-            var valueOutputs = outputs.OfType<ValueOutputWidget>();
+            // TODO: Make invalid control ports vertical.
+            var valueInputs = inputs
+                .Where(p =>
+                    p is ValueInputWidget ||
+                    p is InvalidInputWidget)
+                .Cast<IUnitPortWidget>();
+
+            var valueOutputs = outputs
+                .Where(p =>
+                    p is ValueOutputWidget ||
+                    p is InvalidOutputWidget)
+                .Cast<IUnitPortWidget>();
+
             var controlInputs = inputs.OfType<ControlInputWidget>().ToList();
             var controlOutputs = outputs.OfType<ControlOutputWidget>().ToList();
 
@@ -420,7 +431,7 @@ namespace Unity.VisualScripting.Community
             var controlOutputsHeight = 0f;
             if (showPorts)
             {
-                bool hasValuePorts = ports.Any(p => p.port is ValueInput or ValueOutput);
+                bool hasValuePorts = ports.Any(p => p.port is ValueInput or ValueOutput or InvalidInput or InvalidOutput);
 
                 if (hasValuePorts)
                 {

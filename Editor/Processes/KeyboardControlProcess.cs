@@ -126,7 +126,7 @@ namespace Unity.VisualScripting.Community
         {
             currentlyCreatingConnection = true;
 
-            var reroute = new ValueReroute() { hideConnection = true };
+            var reroute = new ValueReroute() { hideConnection = true, SnapToGrid = BoltCore.Configuration.snapToGrid };
             graph.units.Add(reroute);
 
             var destinationWidget = canvas.Widget(destination);

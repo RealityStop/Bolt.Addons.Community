@@ -3,9 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using UnityEngine;
 using static Unity.VisualScripting.Community.NodeFinderWindow;
-
+#if VISUAL_SCRIPTING_1_7
+using SUnit = Unity.VisualScripting.SubgraphUnit;
+#else
+using SUnit = Unity.VisualScripting.SuperUnit;
+#endif
 namespace Unity.VisualScripting.Community
 {
     public static class SearchUtility
@@ -388,13 +391,16 @@ namespace Unity.VisualScripting.Community
 
             if (unit is Literal l)
                 return $"{l.value} [{GetElementDisplayName(unit)}: {l.type?.SelectedName(BoltCore.Configuration.humanNaming) ?? l.value?.GetType().SelectedName(BoltCore.Configuration.humanNaming) ?? "Type Unknown"}]";
-            
-            foreach (var portKey in SearchablePorts)
+
+            if (!(unit is SUnit))
             {
-                if (unit.valueInputs.TryGetValue(portKey, out var input))
+                foreach (var portKey in SearchablePorts)
                 {
-                    if (input != null && input.hasDefaultValue && !input.hasValidConnection)
-                        return $"{GetDefaultValue(input)} [{GetElementDisplayName(unit).Trim()}]";
+                    if (unit.valueInputs.TryGetValue(portKey, out var input))
+                    {
+                        if (input != null && input.hasDefaultValue && !input.hasValidConnection)
+                            return $"{GetDefaultValue(input)} [{GetElementDisplayName(unit).Trim()}]";
+                    }
                 }
             }
 
@@ -451,9 +457,9 @@ namespace Unity.VisualScripting.Community
             if (element is MemberUnit m) return (m.member.targetType.SelectedName(BoltCore.Configuration.humanNaming) + "." + m.member.info.SelectedName(BoltCore.Configuration.humanNaming, GetActionDirection(m))) ?? element.GetType().Name;
             if (element is UnifiedVariableUnit v) return $"{v.GetType().Name}";
             if (element is Literal) return $"Literal";
-            if (element is INesterUnit nesterUnit) return GraphTraversal.GetNesterUnitName(nesterUnit);
-            if (element is INesterState nesterState) return GraphTraversal.GetNesterStateName(nesterState);
-            if (element is INesterStateTransition nesterStateTransition) return GraphTraversal.GetNesterStateTransitionName(nesterStateTransition);
+            if (element is INesterUnit nesterUnit) return GraphTraversal.GetNesterUnitName(nesterUnit) + $" [{element.GetType().CSharpName()}]";
+            if (element is INesterState nesterState) return GraphTraversal.GetNesterStateName(nesterState) + $" [{element.GetType().CSharpName()}]";
+            if (element is INesterStateTransition nesterStateTransition) return GraphTraversal.GetNesterStateTransitionName(nesterStateTransition) + $" [{element.GetType().CSharpName()}]";
             return element.Descriptor()?.description?.title ?? element.GetType().Name;
         }
 

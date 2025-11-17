@@ -26,7 +26,7 @@ namespace Unity.VisualScripting.Community
 
             Options.dynamicLiteralOptions[typeof(string)].unit.value = query;
             Options.dynamicLiteralOptions[typeof(string)].Update(query);
-
+            var isCreatingConnection = canvas.isCreatingConnection;
             GraphUtility.WaitForNewUnit(graph, (element) =>
             {
                 if (element is Unit unit)
@@ -42,27 +42,31 @@ namespace Unity.VisualScripting.Community
                             GraphUtility.AddNewPositionedUnit(graph, canvas, controlOutput, null);
                         }
                     }
-                    else if (@event.shift && @event.alt)
+                    // Don't want to conflict with the auto reroute/portal connection
+                    else if (!isCreatingConnection)
                     {
-                        var valueOutput = unit.valueOutputs.FirstOrDefault();
-                        if (valueOutput != null)
+                        if (@event.shift && @event.alt)
                         {
-                            canvas.connectionSource = valueOutput;
-                            GraphUtility.AddNewPositionedUnit(graph, canvas, valueOutput, null);
+                            var valueOutput = unit.valueOutputs.FirstOrDefault();
+                            if (valueOutput != null)
+                            {
+                                canvas.connectionSource = valueOutput;
+                                GraphUtility.AddNewPositionedUnit(graph, canvas, valueOutput, null);
+                            }
                         }
-                    }
-                    else if (@event.alt)
-                    {
-                        var valueInput = unit.valueInputs.FirstOrDefault();
-                        if (valueInput != null)
+                        else if (@event.alt)
                         {
-                            canvas.connectionSource = valueInput;
-                            GraphUtility.AddNewPositionedUnit(graph, canvas, valueInput, null);
+                            var valueInput = unit.valueInputs.FirstOrDefault();
+                            if (valueInput != null)
+                            {
+                                canvas.connectionSource = valueInput;
+                                GraphUtility.AddNewPositionedUnit(graph, canvas, valueInput, null);
+                            }
                         }
                     }
                 }
             });
-            
+
             if (TryParseValue(query, out var value))
             {
                 foreach (var optionType in Options.dynamicLiteralOptions.Keys)
