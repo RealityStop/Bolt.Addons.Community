@@ -324,13 +324,15 @@ namespace Unity.VisualScripting.Community
             {
                 return GetSearchName(group);
             }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
             else if (element is StickyNote note)
             {
                 return GetSearchName(note);
             }
+#endif
             return GetElementDisplayName(element);
         }
-
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
         public static string GetSearchName(StickyNote note)
         {
             if (!string.IsNullOrEmpty(note.title) && !string.IsNullOrEmpty(note.body))
@@ -347,7 +349,7 @@ namespace Unity.VisualScripting.Community
             }
             return "Empty StickyNote";
         }
-
+#endif
         public static string GetSearchName(GraphGroup group)
         {
             if (!string.IsNullOrEmpty(group.label) && !string.IsNullOrEmpty(group.comment))
