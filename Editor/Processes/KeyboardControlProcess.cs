@@ -28,8 +28,40 @@ namespace Unity.VisualScripting.Community
 
         #endregion
 
+        private bool IsRightMouseButton(Event e)
+        {
+            if (e.button == (int)MouseButton.Right)
+                return true;
+
+            if (Application.platform == RuntimePlatform.OSXEditor && e.control && e.button == (int)MouseButton.Left)
+                return true;
+
+            if (e.pointerType == PointerType.Pen)
+            {
+                if (e.button == 1) return true;
+
+                if (e.button == 2) return true;
+            }
+
+            return false;
+        }
+
         public override void Process(FlowGraph graph, FlowCanvas canvas)
         {
+            if (@event != null && @event.alt && IsRightMouseButton(@event) && @event.type == EventType.MouseDrag)
+            {
+                var zoomDelta = MathfEx.NearestMultiple(-@event.delta.y * BoltCore.Configuration.zoomSpeed, GraphGUI.ZoomSteps);
+                zoomDelta = Mathf.Clamp(graph.zoom + zoomDelta, GraphGUI.MinZoom, GraphGUI.MaxZoom) - graph.zoom;
+                if (zoomDelta != 0)
+                {
+                    var oldZoom = graph.zoom;
+                    var newZoom = graph.zoom + zoomDelta;
+
+                    var matrix = MathfEx.ScaleAroundPivot(canvas.mousePosition, (oldZoom / newZoom) * Vector3.one);
+                    graph.pan = matrix.MultiplyPoint(graph.pan);
+                    graph.zoom = newZoom;
+                }
+            }
             HandleControlSchemeOverride(canvas);
 
             RegisterGraphEventsIfNeeded(graph, canvas);
