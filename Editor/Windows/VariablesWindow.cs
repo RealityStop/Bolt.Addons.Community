@@ -74,6 +74,9 @@ namespace Unity.VisualScripting.Community
                 EditorGUILayout.HelpBox("Open a Graph to display it's variables.", MessageType.Info);
                 return;
             }
+
+            if (panel?.context?.reference?.serializedObject.IsUnityNull() ?? true) return;
+            
             base.OnGUI();
         }
     }

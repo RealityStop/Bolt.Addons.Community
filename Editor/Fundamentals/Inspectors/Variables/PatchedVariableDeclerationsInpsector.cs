@@ -432,7 +432,7 @@ namespace Unity.VisualScripting.Community
             // It's very hacky but seems to work better than tinting the background Texture.
             private Color _previousBackgroundColor;
             private bool _tintApplied;
-
+            private bool initialized;
             /// <summary>
             /// Called before list elements are drawn.
             /// Ensures the GUI color is reset properly.
@@ -443,6 +443,24 @@ namespace Unity.VisualScripting.Community
                 {
                     GUI.backgroundColor = _previousBackgroundColor;
                     _tintApplied = false;
+                }
+
+                // Ensure that the value is initialized
+
+                if (initialized)
+                {
+                    return;
+                }
+
+                initialized = true;
+
+                for (int i = 0; i < (metadata.value as VariableDeclarationCollection).Count; i++)
+                {
+                    var element = metadata[i];
+                    var valueMetadata = element["value"];
+
+                    var inspector = valueMetadata.Inspector();
+                    inspector.Draw(new Rect(0, 0, 0, 0), GUIContent.none);
                 }
             }
 
@@ -457,7 +475,6 @@ namespace Unity.VisualScripting.Community
                 _tintApplied = true;
             }
 #endif
-
             public override float GetItemHeight(float width, int index)
             {
                 var element = metadata[index];

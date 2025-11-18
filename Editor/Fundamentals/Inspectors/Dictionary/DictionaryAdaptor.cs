@@ -96,7 +96,7 @@ namespace Unity.VisualScripting.Community
             var guid = GUID.Generate().ToString();
 
             // Todo: Find a way to overwrite the key and value
-            // instead of use a new key. 
+            // instead of using a new key. 
             newKeyMetadata = metadata.Object($"newKey_{guid}", ConstructKey(), metadata.dictionaryKeyType);
             newValueMetadata = metadata.Object($"newValue_{guid}", ConstructValue(), metadata.dictionaryValueType);
 
@@ -107,14 +107,14 @@ namespace Unity.VisualScripting.Community
 
         protected override object ConstructKey()
         {
-            if (metadata.dictionaryKeyType == typeof(object)) return null;
-            return metadata.dictionaryKeyType.PseudoDefault() ?? metadata.dictionaryKeyType.Instantiate(false) ?? base.ConstructKey();
+            return base.ConstructKey();
         }
 
         protected override object ConstructValue()
         {
             if (metadata.dictionaryValueType == typeof(object)) return null;
-            return metadata.dictionaryValueType.PseudoDefault() ?? metadata.dictionaryValueType.Instantiate(false) ?? base.ConstructKey();
+            if (typeof(UnityEngine.Object).IsAssignableFrom(metadata.dictionaryValueType)) return null;
+            return metadata.dictionaryValueType.PseudoDefault() ?? metadata.dictionaryValueType.TryInstantiate(false) ?? base.ConstructKey();
         }
 
         public Metadata Metadata;

@@ -150,7 +150,7 @@ namespace Unity.VisualScripting.Community
 
                 if (snapResult.snapped)
                 {
-                    var pos = GraphGUI.SnapToGrid(snapResult.snapPosition);
+                    var pos = BoltCore.Configuration.snapToGrid ? GraphGUI.SnapToGrid(snapResult.snapPosition) : snapResult.snapPosition;
                     _position = OuterToEdgePosition(new Rect(pos.x, pos.y, _position.width, _position.height));
                     snapLines = snapResult.snapLines;
                     Reposition();
@@ -477,13 +477,13 @@ namespace Unity.VisualScripting.Community
 
                     float controlY = edgeY - Styles.spaceBeforePorts - Styles.spaceAfterControlInputs;
 
-                    float totalSlotSpace = EdgeToOuterPosition(new Rect(edgeX, portsBackgroundY, edgeWidth, portsBackgroundHeight)).width;
+                    float totalSlotSpace = OuterToEdgePosition(new Rect(edgeX, portsBackgroundY, edgeWidth, portsBackgroundHeight)).width  - Styles.spaceBeforePorts;
                     float slotWidth = totalSlotSpace / portCount;
 
                     for (int i = 0; i < portCount; i++)
                     {
                         var widget = controlInputs[i];
-                        float slotCenter = edgeX + (slotWidth * (i + 0.5f)) - Styles.spaceBeforePorts;
+                        float slotCenter = edgeX + (slotWidth * (i + 0.5f));
                         widget.x = slotCenter;
                         widget.y = controlY;
                     }
@@ -503,13 +503,13 @@ namespace Unity.VisualScripting.Community
 
                     float controlY = innerY + innerHeight + Styles.spaceBeforePorts + controlOutputsHeight + Styles.spaceBeforeControlOutputs;
 
-                    float totalSlotSpace = EdgeToOuterPosition(new Rect(edgeX, portsBackgroundY, edgeWidth, portsBackgroundHeight)).width;
+                    float totalSlotSpace = OuterToEdgePosition(new Rect(edgeX, portsBackgroundY, edgeWidth, portsBackgroundHeight)).width - Styles.spaceBeforePorts;
                     float slotWidth = totalSlotSpace / portCount;
 
                     for (int i = 0; i < portCount; i++)
                     {
                         var widget = controlOutputs[i];
-                        float slotCenter = edgeX + (slotWidth * (i + 0.5f)) - Styles.spaceBeforePorts;
+                        float slotCenter = edgeX + (slotWidth * (i + 0.5f));
                         widget.x = slotCenter;
                         widget.y = controlY;
                     }
@@ -1140,14 +1140,15 @@ namespace Unity.VisualScripting.Community
             if (isDragging && e.ctrlOrCmd)
             {
                 List<Rect> otherRects = graph.elements.Where(e => e != element && !(e is IUnitConnection))
-                    .Select(e => canvas.Widget(e).position)
+                    .Select(e => e is Unit unit ? canvas.Widget<INodeWidget>(unit).outerPosition : canvas.Widget(e).position)
                     .ToList();
 
-                var snapResult = RectUtility.CheckSnap(_position, otherRects, threshold: 10f);
+                var snapResult = RectUtility.CheckSnap(outerPosition, otherRects, threshold: 15f);
 
                 if (snapResult.snapped)
                 {
-                    _position.position = snapResult.snapPosition;
+                    var pos = BoltCore.Configuration.snapToGrid ? GraphGUI.SnapToGrid(snapResult.snapPosition) : snapResult.snapPosition;
+                    _position = OuterToEdgePosition(new Rect(pos.x, pos.y, _position.width, _position.height));
                     snapLines = snapResult.snapLines;
                     Reposition();
                 }
@@ -1211,7 +1212,9 @@ namespace Unity.VisualScripting.Community
 
                 var options = new UnitOptionTree(new GUIContent("Node"));
                 options.filter = UnitOptionFilter.Any;
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
                 options.filter.NoConnection = false;
+#endif
                 options.reference = reference;
 
                 var activatorPosition = new Rect(eventWrapper.mousePosition, new Vector2(200, 1));
