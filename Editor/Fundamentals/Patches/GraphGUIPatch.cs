@@ -331,6 +331,18 @@ namespace Unity.VisualScripting.Community
                     GUIUtility.keyboardControl = 0;
                     GUIUtility.ExitGUI();
                 }
+
+                if (BoltCore.Configuration.developerMode)
+                {
+                    EditorGUI.BeginChangeCheck();
+
+                    BoltCore.Configuration.debug = GUILayout.Toggle(BoltCore.Configuration.debug, new GUIContent(typeof(Debug).Icon()?[16]), ToggleStyle(MaximizeStyle, BoltCore.Configuration.debug));
+
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        BoltCore.Configuration.Save();
+                    }
+                }
                 GUILayout.EndHorizontal();
             };
             var imgui = new IMGUIContainer(gui);
@@ -378,13 +390,20 @@ namespace Unity.VisualScripting.Community
 
         private static float GetCanvasToolbarWidth(ICanvas canvas)
         {
+            var size = 0;
+            if (BoltCore.Configuration.developerMode)
+            {
+                size = 1;
+            }
             if (canvas is FlowCanvas)
             {
-                return (FloatingToolbarButtonSize * 8) + 10;
+                size += 8;
+                return (FloatingToolbarButtonSize * size) + 10;
             }
             else if (canvas is StateCanvas)
             {
-                return (FloatingToolbarButtonSize * 6) + 10;
+                size += 6;
+                return (FloatingToolbarButtonSize * size) + 10;
             }
             return 0;
         }
@@ -692,7 +711,9 @@ namespace Unity.VisualScripting.Community
                 tabStyle.stretchWidth = true;
 
                 var subTabField = typeof(VariablesPanel.Styles).GetField("subTab", BindingFlags.Static | BindingFlags.Public);
-                subTabField.SetValue(null, tabStyle ?? new GUIStyle(CommunityStyles.ToolbarButton));
+                var subTabStyle = new GUIStyle(tabStyle ?? new GUIStyle(CommunityStyles.ToolbarButton));
+                subTabStyle.alignment = TextAnchor.MiddleCenter;
+                subTabField.SetValue(null, subTabStyle);
 
                 UnitEditor.Styles.inspectorBackground.normal.background = CommunityStyles.background;
                 UnitEditor.Styles.portsBackground.normal.background = CommunityStyles.background;

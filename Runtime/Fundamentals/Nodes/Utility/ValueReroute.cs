@@ -21,6 +21,7 @@ namespace Unity.VisualScripting.Community
         public bool SnapToGrid;
 
         [Inspectable]
+        [InspectorLabel("Enable Portal")]
         public bool hideConnection;
 
         protected override void Definition()

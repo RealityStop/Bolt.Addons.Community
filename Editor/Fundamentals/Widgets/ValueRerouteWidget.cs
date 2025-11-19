@@ -30,6 +30,7 @@ namespace Unity.VisualScripting.Community
                 }
                 _position.width = width;
                 GraphGUI.Node(new Rect(position.x, position.y + 3, width, _position.height - 4), NodeShape.Square, color, isSelected);
+                
                 if (inputDescription != null)
                     GUI.Label(new Rect(position.x + 24, position.y + 5, width, _position.height - 4), inputDescription.label);
             }
@@ -54,8 +55,8 @@ namespace Unity.VisualScripting.Community
         {
             var inputPort = inputs[0].port as ValueInput;
             var outputPort = outputs[0].port;
-            var inputHasConnection = inputPort.hasAnyConnection;
-            var outputHasConnection = outputPort.hasAnyConnection;
+            var inputHasConnection = inputPort.hasValidConnection;
+            var outputHasConnection = outputPort.hasValidConnection;
             _position.x = unit.position.x;
             _position.y = unit.position.y;
 

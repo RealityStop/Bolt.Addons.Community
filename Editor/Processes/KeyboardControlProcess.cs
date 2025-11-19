@@ -2,6 +2,7 @@ using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEditor;
+using System.Reflection;
 
 namespace Unity.VisualScripting.Community
 {
@@ -28,29 +29,22 @@ namespace Unity.VisualScripting.Community
 
         #endregion
 
-        private bool IsRightMouseButton(Event e)
+        private bool IsMiddleMouseButton(Event e)
         {
-            if (e.button == (int)MouseButton.Right)
-                return true;
-
-            if (Application.platform == RuntimePlatform.OSXEditor && e.control && e.button == (int)MouseButton.Left)
-                return true;
-
-            if (e.pointerType == PointerType.Pen)
-            {
-                if (e.button == 1) return true;
-
-                if (e.button == 2) return true;
-            }
-
-            return false;
+            return e.button == (int)MouseButton.Middle;
         }
-
+        bool wasZooming;
+        Vector2 originalPan;
         public override void Process(FlowGraph graph, FlowCanvas canvas)
         {
-            if (@event != null && @event.alt && IsRightMouseButton(@event) && @event.type == EventType.MouseDrag)
+            if (@event != null && @event.alt && IsMiddleMouseButton(@event))
             {
-                var zoomDelta = MathfEx.NearestMultiple(-@event.delta.y * BoltCore.Configuration.zoomSpeed, GraphGUI.ZoomSteps);
+                if (!wasZooming)
+                {
+                    wasZooming = true;
+                    originalPan = graph.pan;
+                }
+                var zoomDelta = MathfEx.NearestMultiple(@event.delta.y * BoltCore.Configuration.zoomSpeed, GraphGUI.ZoomSteps) * 0.1f;
                 zoomDelta = Mathf.Clamp(graph.zoom + zoomDelta, GraphGUI.MinZoom, GraphGUI.MaxZoom) - graph.zoom;
                 if (zoomDelta != 0)
                 {
@@ -58,9 +52,14 @@ namespace Unity.VisualScripting.Community
                     var newZoom = graph.zoom + zoomDelta;
 
                     var matrix = MathfEx.ScaleAroundPivot(canvas.mousePosition, (oldZoom / newZoom) * Vector3.one);
-                    graph.pan = matrix.MultiplyPoint(graph.pan);
+                    graph.pan = matrix.MultiplyPoint(originalPan);
                     graph.zoom = newZoom;
                 }
+            }
+            else
+            {
+                wasZooming = false;
+                originalPan = graph.pan;
             }
             HandleControlSchemeOverride(canvas);
 
