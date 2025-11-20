@@ -173,7 +173,7 @@ namespace Unity.VisualScripting.Community
                         RebuildToolbar();
                         return;
                     }
-                    
+
                     var reference = window.reference;
                     var erroredElementsDebugData = ListPool<IGraphElementDebugData>.New();
 
@@ -231,16 +231,11 @@ namespace Unity.VisualScripting.Community
                 floatingToolbar.Add(CreateOverviewButton(PathUtil.Load("Overview", CommunityEditorPath.Fundamentals)?[IconSize.Small], "Overview", () =>
                 {
                     GraphUtility.OverrideContextIfNeeded(() =>
-                    canvas.ViewElements(reference.graph.elements)
-                    );
+                    canvas.ViewElements(reference.graph.elements));
                 }));
-                floatingToolbar.Add(CreateToggleButton(PathUtil.Load("Maximize", CommunityEditorPath.Fundamentals)?[IconSize.Small], "Maximize", window.maximized, v =>
-                {
-                    window.maximized = v;
-                    GUIUtility.hotControl = 0;
-                    GUIUtility.keyboardControl = 0;
-                    GUIUtility.ExitGUI();
-                }));
+
+                floatingToolbar.Add(CreateWindowMaximizeButton(PathUtil.Load("Maximize", CommunityEditorPath.Fundamentals)?[IconSize.Small], "Maximize", window));
+
                 if (BoltCore.Configuration.developerMode)
                 {
                     floatingToolbar.Add(CreateToggleButton(typeof(Debug).Icon()?[IconSize.Small], "Debug", BoltCore.Configuration.debug, v =>
@@ -306,6 +301,38 @@ namespace Unity.VisualScripting.Community
             btn.Add(new IMGUIContainer(() =>
             {
                 btn.style.backgroundImage = !isOn ? LudiqStyles.spinnerButton.normal.background : LudiqStyles.spinnerButton.active.background;
+            }));
+
+            return btn;
+        }
+
+        private static ToolbarButton CreateWindowMaximizeButton(Texture icon, string tooltip, GraphWindow window)
+        {
+            ToolbarButton btn = null;
+            btn = new ToolbarButton(() =>
+            {
+                window.maximized = !window.maximized;
+                GUIUtility.hotControl = 0;
+                GUIUtility.keyboardControl = 0;
+                GUIUtility.ExitGUI();
+            })
+            {
+                tooltip = tooltip,
+                focusable = false,
+                style =
+                {
+                    width = FloatingToolbarButtonSize,
+                    height = FloatingToolbarButtonSize,
+                    backgroundSize = new BackgroundSize(Length.Percent(100), Length.Percent(100))
+                }
+            };
+
+            if (icon != null)
+                btn.iconImage = icon as Texture2D;
+
+            btn.Add(new IMGUIContainer(() =>
+            {
+                btn.style.backgroundImage = !window.maximized ? LudiqStyles.spinnerButton.normal.background : LudiqStyles.spinnerButton.active.background;
             }));
 
             return btn;

@@ -824,7 +824,7 @@ namespace Unity.VisualScripting.Community
                         end,
                         startTangent,
                         endTangent,
-                        CommunityStyles.backgroundColor,
+                        ColorPalette.unityBackgroundMid,
                         null,
                         3
                     );
