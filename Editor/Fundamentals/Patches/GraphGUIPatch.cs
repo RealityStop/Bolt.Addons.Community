@@ -3,10 +3,10 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Reflection;
 using UnityEditor.UIElements;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community
 {
@@ -57,6 +57,7 @@ namespace Unity.VisualScripting.Community
             }
             return result;
         }
+
         private static void OnEditorUpdate()
         {
 #if NEW_TOOLBAR_STYLE
@@ -77,7 +78,7 @@ namespace Unity.VisualScripting.Community
                     else
                         continue;
                 }
-                var disableUI = BoltCore.instance == null || EditorApplication.isCompiling;
+                var disableUI = BoltCore.instance == null || EditorApplication.isCompiling || PluginContainer.anyVersionMismatch;
                 if (!disableUI && !patchedRoots.Contains(window.rootVisualElement))
                 {
                     PatchGraphGUI(window.rootVisualElement, window);
@@ -140,223 +141,230 @@ namespace Unity.VisualScripting.Community
             };
         }
         public const float FloatingToolbarButtonSize = 27;
+        private static bool previousDeveloperMode = BoltCore.Configuration.developerMode;
         private static void FloatingToolbarGUI(VisualElement root, GraphWindow window)
         {
-            var FloatingToolbar = GetFloatingToolbar(window);
-
-            FloatingToolbar.style.flexDirection = FlexDirection.Row;
-            FloatingToolbar.style.alignItems = Align.FlexEnd;
-            FloatingToolbar.style.justifyContent = Justify.SpaceBetween;
-            FloatingToolbar.style.flexShrink = 0;
-
-            Action gui = () =>
+            var floatingToolbar = GetFloatingToolbar(window);
+            floatingToolbar.style.flexDirection = FlexDirection.Row;
+            floatingToolbar.style.alignItems = Align.FlexEnd;
+            floatingToolbar.style.justifyContent = Justify.SpaceBetween;
+            floatingToolbar.style.flexShrink = 0;
+            void RebuildToolbar()
             {
+                floatingToolbar.Clear();
                 var reference = window.reference;
                 if (reference == null) return;
-                var graph = reference.graph;
                 var canvas = reference.Context().canvas;
-                var floatingButtonStyle = new GUIStyle(LudiqStyles.spinnerButton)
+                floatingToolbar.style.width = GetCanvasToolbarWidth(canvas);
+                ToolbarButton errorButton = null;
+                errorButton = CreateFloatingButton(EditorGUIUtility.IconContent("console.erroricon").image, "Clear Errors", () =>
                 {
-                    imagePosition = ImagePosition.ImageAbove,
-                    alignment = TextAnchor.MiddleCenter,
-                    padding = new RectOffset(4, 4, 4, 4),
-                    margin = new RectOffset(2, 2, 2, 2)
-                };
-
-                GUILayout.BeginHorizontal();
-
-                var carryIcon = EditorGUIUtility.IconContent("MoveTool").image;
-                var dimIcon = EditorGUIUtility.IconContent("animationvisibilitytoggleoff").image;
-                var valuesIcon = EditorGUIUtility.IconContent("UnityEditor.ConsoleWindow").image;
-                var relationsIcon = EditorGUIUtility.IconContent("UnityEditor.HierarchyWindow").image;
-                FloatingToolbar.style.width = GetCanvasToolbarWidth(canvas);
-
-                var debugData = reference.debugData;
-
-                var erroredElementsDebugData = ListPool<IGraphElementDebugData>.New();
-
-                foreach (var elementDebugData in debugData.elementsData)
-                {
-                    if (elementDebugData.runtimeException != null)
+                    var reference = window.reference;
+                    foreach (var ed in reference.debugData.elementsData.Where(e => e.runtimeException != null))
                     {
-                        erroredElementsDebugData.Add(elementDebugData);
+                        ed.runtimeException = null;
                     }
-                }
-
-                if (erroredElementsDebugData.Count > 0)
+                }, () =>
                 {
-                    FloatingToolbar.style.width = GetCanvasToolbarWidth(canvas) + FloatingToolbarButtonSize;
-                    var clearIcon = EditorGUIUtility.IconContent("TreeEditor.Trash").image;
-                    var errorIcon = EditorGUIUtility.IconContent("console.erroricon").image;
-
-                    Rect buttonRect = GUILayoutUtility.GetRect(GUIContent.none, floatingButtonStyle, GUILayout.Width(25), GUILayout.Height(25));
-
-                    if (GUI.Button(buttonRect, new GUIContent("", "Clear Errors"), floatingButtonStyle))
+                    // Using this so I do not need to add another IMGUI container just to detect the developer mode change
+                    if (previousDeveloperMode != BoltCore.Configuration.developerMode)
                     {
-                        foreach (var erroredElementDebugData in erroredElementsDebugData)
+                        previousDeveloperMode = BoltCore.Configuration.developerMode;
+                        RebuildToolbar();
+                        return;
+                    }
+                    
+                    var reference = window.reference;
+                    var erroredElementsDebugData = ListPool<IGraphElementDebugData>.New();
+
+                    foreach (var elementDebugData in reference.debugData.elementsData)
+                    {
+                        if (elementDebugData.runtimeException != null)
                         {
-                            erroredElementDebugData.runtimeException = null;
+                            erroredElementsDebugData.Add(elementDebugData);
                         }
-
-                        FloatingToolbar.style.width = GetCanvasToolbarWidth(canvas);
                     }
 
-                    var iconPadding = 4f;
-                    Rect mainRect = new Rect(
-                        buttonRect.x + iconPadding,
-                        buttonRect.y + iconPadding,
-                        buttonRect.width - iconPadding * 2,
-                        buttonRect.height - iconPadding * 2
-                    );
+                    if (erroredElementsDebugData.Count > 0)
+                    {
+                        errorButton.style.opacity = 1;
+                        errorButton.SetEnabled(true);
+                    }
+                    else
+                    {
+                        errorButton.style.opacity = 0;
+                        errorButton.SetEnabled(false);
+                    }
 
-                    GUI.DrawTexture(mainRect, errorIcon, ScaleMode.ScaleToFit);
-
-                    const float badgeSize = 14f;
-                    Rect badgeRect = new Rect(
-                        mainRect.xMax - badgeSize + 4,
-                        mainRect.yMax - badgeSize + 2,
-                        badgeSize,
-                        badgeSize
-                    );
-                    GUI.DrawTexture(badgeRect, clearIcon, ScaleMode.ScaleToFit);
-                }
-
-                erroredElementsDebugData.Free();
+                    erroredElementsDebugData.Free();
+                });
+                floatingToolbar.Add(errorButton);
 
                 if (canvas is FlowCanvas flowCanvas)
                 {
-                    flowCanvas.showRelations = GUILayout.Toggle(flowCanvas.showRelations, new GUIContent(relationsIcon, "Relations"), ToggleStyle(floatingButtonStyle, flowCanvas.showRelations), GUILayout.Width(25), GUILayout.Height(25));
+                    var relationsButton = CreateToggleButton(EditorGUIUtility.IconContent("UnityEditor.HierarchyWindow").image, "Relations", flowCanvas.showRelations, v => flowCanvas.showRelations = v);
+                    var valuesButton = CreateToggleButton(EditorGUIUtility.IconContent("UnityEditor.ConsoleWindow").image, "Values", BoltFlow.Configuration.showConnectionValues, v => { BoltFlow.Configuration.showConnectionValues = v; BoltFlow.Configuration.Save(); });
+                    var dimButton = CreateToggleButton(EditorGUIUtility.IconContent("animationvisibilitytoggleoff").image, "Dim", BoltCore.Configuration.dimInactiveNodes, v => { BoltCore.Configuration.dimInactiveNodes = v; BoltCore.Configuration.Save(); });
+                    var carryButton = CreateToggleButton(EditorGUIUtility.IconContent("MoveTool").image, "Carry", BoltCore.Configuration.carryChildren, v => { BoltCore.Configuration.carryChildren = v; BoltCore.Configuration.Save(); });
 
-                    EditorGUI.BeginChangeCheck();
-
-                    BoltFlow.Configuration.showConnectionValues = GUILayout.Toggle(BoltFlow.Configuration.showConnectionValues, new GUIContent(valuesIcon, "Values"), ToggleStyle(floatingButtonStyle, BoltFlow.Configuration.showConnectionValues), GUILayout.Width(25), GUILayout.Height(25));
-
-                    BoltCore.Configuration.dimInactiveNodes = GUILayout.Toggle(BoltCore.Configuration.dimInactiveNodes, new GUIContent(dimIcon, "Dim"), ToggleStyle(floatingButtonStyle, BoltCore.Configuration.dimInactiveNodes), GUILayout.Width(25), GUILayout.Height(25));
-
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        BoltFlow.Configuration.Save();
-
-                        BoltCore.Configuration.Save();
-                    }
+                    floatingToolbar.Add(relationsButton);
+                    floatingToolbar.Add(valuesButton);
+                    floatingToolbar.Add(dimButton);
+                    floatingToolbar.Add(carryButton);
                 }
                 else if (canvas is StateCanvas stateCanvas)
                 {
-                    EditorGUI.BeginChangeCheck();
-
-                    BoltCore.Configuration.dimInactiveNodes = GUILayout.Toggle(BoltCore.Configuration.dimInactiveNodes, new GUIContent(dimIcon, "Dim"), ToggleStyle(floatingButtonStyle, BoltCore.Configuration.dimInactiveNodes), GUILayout.Width(25), GUILayout.Height(25));
-
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        BoltFlow.Configuration.Save();
-                    }
+                    var dimButton = CreateToggleButton(EditorGUIUtility.IconContent("animationvisibilitytoggleoff").image, "Dim", BoltCore.Configuration.dimInactiveNodes, v => { BoltCore.Configuration.dimInactiveNodes = v; BoltFlow.Configuration.Save(); });
+                    floatingToolbar.Add(dimButton);
                 }
 
-                EditorGUI.BeginChangeCheck();
-
-                BoltCore.Configuration.carryChildren = GUILayout.Toggle(BoltCore.Configuration.carryChildren, new GUIContent(carryIcon, "Carry"), ToggleStyle(new GUIStyle(floatingButtonStyle) { contentOffset = new Vector2(0, -1) }, BoltCore.Configuration.carryChildren), GUILayout.Width(25), GUILayout.Height(25));
-
-                if (EditorGUI.EndChangeCheck())
+                floatingToolbar.Add(CreateEnumButton(Icons.Enum(AlignOperation.AlignCenters)?[IconSize.Small], "Align", (operation) =>
                 {
-                    BoltCore.Configuration.Save();
-                }
+                    LudiqGUI.FuzzyDropdown(new Rect(), EnumOptionTree.For<AlignOperation>(), null, op => canvas.Align((AlignOperation)op));
+                }, canvas));
 
-                GUILayout.Space(5);
-
-                if (canvas is FlowCanvas _flowCanvas)
-                    EditorGUI.BeginDisabledGroup(_flowCanvas.alignableAndDistributable.Count() < 2);
-                else if (canvas is StateCanvas stateCanvas)
-                    EditorGUI.BeginDisabledGroup(stateCanvas.alignableAndDistributable.Count() < 2);
-
-                if (GUILayout.Button(new GUIContent(Icons.Enum(AlignOperation.AlignMiddles)?[IconSize.Small], "Align"), floatingButtonStyle, GUILayout.Width(25), GUILayout.Height(25)))
+                floatingToolbar.Add(CreateEnumButton(Icons.Enum(DistributeOperation.DistributeCenters)?[IconSize.Small], "Distribute", (operation) =>
                 {
-                    var lastRect = GUILayoutUtility.GetLastRect();
-                    lastRect.y += 25;
-                    LudiqGUI.FuzzyDropdown
-                    (
-                        lastRect,
-                        EnumOptionTree.For<AlignOperation>(),
-                        null,
-                        (operation) => canvas.Align((AlignOperation)operation)
-                    );
-                }
+                    LudiqGUI.FuzzyDropdown(new Rect(), EnumOptionTree.For<DistributeOperation>(), null, op => canvas.Distribute((DistributeOperation)op));
+                }, canvas));
 
-                if (GUILayout.Button(new GUIContent(Icons.Enum(DistributeOperation.DistributeCenters)?[IconSize.Small], "Distribute"), floatingButtonStyle, GUILayout.Width(25), GUILayout.Height(25)))
-                {
-                    var lastRect = GUILayoutUtility.GetLastRect();
-                    lastRect.y += 25;
-                    LudiqGUI.FuzzyDropdown
-                    (
-                        lastRect,
-                        EnumOptionTree.For<DistributeOperation>(),
-                        null,
-                        (operation) => canvas.Distribute((DistributeOperation)operation)
-                    );
-                }
-
-                EditorGUI.EndDisabledGroup();
-
-                GUILayout.Space(5);
-
-                var OverviewStyle = new GUIStyle(floatingButtonStyle)
-                {
-                    padding = new RectOffset(6, 6, 6, 6)
-                };
-
-                if (GUILayout.Button(new GUIContent(PathUtil.Load("Overview", CommunityEditorPath.Fundamentals)?[IconSize.Small], "Overview"), new GUIStyle(OverviewStyle) { contentOffset = new Vector2(0, -1) }, GUILayout.Width(25), GUILayout.Height(25)))
+                floatingToolbar.Add(CreateOverviewButton(PathUtil.Load("Overview", CommunityEditorPath.Fundamentals)?[IconSize.Small], "Overview", () =>
                 {
                     GraphUtility.OverrideContextIfNeeded(() =>
-                    {
-                        canvas.ViewElements(graph.elements);
-                    });
-                }
-
-                var MaximizeStyle = new GUIStyle(floatingButtonStyle)
+                    canvas.ViewElements(reference.graph.elements)
+                    );
+                }));
+                floatingToolbar.Add(CreateToggleButton(PathUtil.Load("Maximize", CommunityEditorPath.Fundamentals)?[IconSize.Small], "Maximize", window.maximized, v =>
                 {
-                    padding = new RectOffset(6, 5, 5, 6)
-                };
-
-                var newMaximized = GUILayout.Toggle(
-                    window.maximized,
-                    new GUIContent(PathUtil.Load("Maximize", CommunityEditorPath.Fundamentals)?[IconSize.Small], "Maximize"),
-                    ToggleStyle(MaximizeStyle, window.maximized),
-                    GUILayout.Width(25),
-                    GUILayout.Height(25)
-                );
-
-                if (newMaximized != window.maximized)
-                {
-                    window.maximized = newMaximized;
+                    window.maximized = v;
                     GUIUtility.hotControl = 0;
                     GUIUtility.keyboardControl = 0;
                     GUIUtility.ExitGUI();
-                }
-
+                }));
                 if (BoltCore.Configuration.developerMode)
                 {
-                    EditorGUI.BeginChangeCheck();
-
-                    BoltCore.Configuration.debug = GUILayout.Toggle(BoltCore.Configuration.debug, new GUIContent(typeof(Debug).Icon()?[16]), ToggleStyle(MaximizeStyle, BoltCore.Configuration.debug));
-
-                    if (EditorGUI.EndChangeCheck())
+                    floatingToolbar.Add(CreateToggleButton(typeof(Debug).Icon()?[IconSize.Small], "Debug", BoltCore.Configuration.debug, v =>
                     {
-                        BoltCore.Configuration.Save();
-                    }
+                        BoltCore.Configuration.debug = !BoltCore.Configuration.debug;
+                    }));
                 }
-                GUILayout.EndHorizontal();
-            };
-            var imgui = new IMGUIContainer(gui);
-            imgui.delegatesFocus = true;
-            imgui.style.flexGrow = 1;
-            imgui.style.flexShrink = 1;
-            imgui.style.flexBasis = 0;
-            imgui.style.width = new Length(100, LengthUnit.Percent);
+            }
+            RebuildToolbar();
+            GraphWindow.activeContextChanged += _ => RebuildToolbar();
 
-            FloatingToolbar.Add(imgui);
-
-            root.Add(FloatingToolbar);
+            root.Add(floatingToolbar);
         }
 
+        private static ToolbarButton CreateFloatingButton(Texture icon, string tooltip, Action callback, Action imgui)
+        {
+            var btn = new ToolbarButton(() => callback())
+            {
+                tooltip = tooltip,
+                focusable = false,
+                style =
+                {
+                    width = FloatingToolbarButtonSize,
+                    height = FloatingToolbarButtonSize,
+                    backgroundSize = new BackgroundSize(Length.Percent(100), Length.Percent(100))
+                }
+            };
+
+            if (icon != null)
+                btn.iconImage = icon as Texture2D;
+
+            btn.Add(new IMGUIContainer(() =>
+            {
+                btn.style.backgroundImage = LudiqStyles.spinnerButton.normal.background;
+                imgui();
+            }));
+
+            return btn;
+        }
+
+        private static ToolbarButton CreateToggleButton(Texture icon, string tooltip, bool isOn, Action<bool> callback)
+        {
+            ToolbarButton btn = null;
+            btn = new ToolbarButton(() =>
+            {
+                isOn = !isOn;
+                callback(isOn);
+            })
+            {
+                tooltip = tooltip,
+                focusable = false,
+                style =
+                {
+                    width = FloatingToolbarButtonSize,
+                    height = FloatingToolbarButtonSize,
+                    backgroundSize = new BackgroundSize(Length.Percent(100), Length.Percent(100))
+                }
+            };
+
+            if (icon != null)
+                btn.iconImage = icon as Texture2D;
+
+            btn.Add(new IMGUIContainer(() =>
+            {
+                btn.style.backgroundImage = !isOn ? LudiqStyles.spinnerButton.normal.background : LudiqStyles.spinnerButton.active.background;
+            }));
+
+            return btn;
+        }
+
+        private static ToolbarButton CreateOverviewButton(Texture2D icon, string tooltip, Action callback)
+        {
+            var btn = new ToolbarButton(callback)
+            {
+                tooltip = tooltip,
+                focusable = false,
+                style =
+                {
+                    width = FloatingToolbarButtonSize,
+                    height = FloatingToolbarButtonSize,
+                    backgroundSize = new BackgroundSize(Length.Percent(100), Length.Percent(100))
+                }
+            };
+
+            if (icon != null)
+                btn.iconImage = icon;
+
+            btn.Add(new IMGUIContainer(() => btn.style.backgroundImage = LudiqStyles.spinnerButton.normal.background));
+            return btn;
+        }
+
+        private static ToolbarButton CreateEnumButton(Texture2D icon, string tooltip, Action<object> callback, ICanvas canvas)
+        {
+            bool show = false;
+            var btn = new ToolbarButton(() =>
+            {
+                show = true;
+            })
+            {
+                tooltip = tooltip,
+                focusable = false,
+                style =
+                {
+                    width = FloatingToolbarButtonSize,
+                    height = FloatingToolbarButtonSize,
+                    backgroundSize = new BackgroundSize(Length.Percent(100), Length.Percent(100))
+                }
+            };
+
+            btn.Add(new IMGUIContainer(() =>
+            {
+                btn.style.backgroundImage = LudiqStyles.spinnerButton.normal.background;
+                btn.SetEnabled(canvas.selection.Count > 1);
+
+                if (show)
+                {
+                    show = false;
+                    callback?.Invoke(null);
+                }
+            }));
+            if (icon != null)
+                btn.iconImage = icon;
+            return btn;
+        }
         private static FieldInfo sidebarsField = typeof(GraphWindow).GetField("sidebars", BindingFlags.NonPublic | BindingFlags.Instance);
 
         private static void KeepToolbarAnchored(GraphWindow window)
@@ -426,127 +434,175 @@ namespace Unity.VisualScripting.Community
         private static void ToolbarGUI(VisualElement root, GraphWindow window)
         {
             var state = GetSearchState(window);
+
             Toolbar = new VisualElement
             {
-                name = "CustomGraphToolbar"
-            };
-            Toolbar.style.top = 0;
-            Toolbar.style.right = 0;
-            Toolbar.style.height = 20;
-            Toolbar.style.flexDirection = FlexDirection.Row;
-            Toolbar.style.alignItems = Align.Center;
-            Toolbar.style.justifyContent = Justify.SpaceBetween;
+                name = "CustomGraphToolbar",
+                style =
+                {
+                    top = 0,
+                    right = 0,
+                    height = 20,
+                    flexDirection = FlexDirection.Row,
+                    alignItems = Align.Center,
+                    flexShrink = 0,
 #if DARKER_UI
-            Toolbar.style.backgroundColor = CommunityStyles.backgroundColor;
+                    backgroundColor = CommunityStyles.backgroundColor
 #else
-            Toolbar.style.backgroundColor = ColorPalette.unityBackgroundLight.color;
+                    backgroundColor = ColorPalette.unityBackgroundLight.color
 #endif
-            Toolbar.style.flexShrink = 0;
+                }
+            };
 
-            var imgui = new IMGUIContainer(() =>
+            var disabledColor = GetDisabledColor();
+
+            Texture2D lockedIconTex = null;
+            ToolbarButton lockedButton = null;
+            lockedButton = CreateToggleButton("", 20, 20, !window.locked ? disabledColor : ColorPalette.unityBackgroundMid, () =>
+            {
+                window.locked = !window.locked;
+                lockedButton.style.backgroundColor = !window.locked ? disabledColor : ColorPalette.unityBackgroundMid;
+            });
+            IMGUIContainer extractor = null;
+            extractor = new IMGUIContainer(() =>
             {
                 InitializeNewGUI();
-
-                if (window == null || window.reference == null) return;
-
-                LudiqGUI.BeginHorizontal();
-
-                if (!LudiqGUIUtility.newSkin)
+                if (lockedIconTex != null) return;
+                try
                 {
-                    LudiqGUI.Space(-6);
+                    lockedIconTex = GraphGUI.Styles.lockIcon.image as Texture2D;
                 }
+                catch { }
+                lockedButton.style.backgroundImage = lockedIconTex;
+                extractor.schedule.Execute(() => extractor.RemoveFromHierarchy());
+            });
 
-                EditorGUI.BeginChangeCheck();
+            ToolbarButton inspectorButton = null;
+            inspectorButton = CreateToggleButton("", 20, 20, !window.graphInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid, () =>
+            {
+                window.graphInspectorEnabled = !window.graphInspectorEnabled;
+                inspectorButton.style.backgroundColor = !window.graphInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid;
+                window.MatchSelection();
+            }, BoltCore.Icons.inspectorWindow?[IconSize.Small]);
 
-                window.locked = GUILayout.Toggle(window.locked, GraphGUI.Styles.lockIcon, LudiqStyles.toolbarButton);
+            ToolbarButton variablesButton = null;
+            variablesButton = CreateToggleButton("", 30, 20, !window.variablesInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid, () =>
+            {
+                window.variablesInspectorEnabled = !window.variablesInspectorEnabled;
+                variablesButton.style.backgroundColor = !window.variablesInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid;
+                window.MatchSelection();
+            }, BoltCore.Icons.variablesWindow?[IconSize.Small]);
 
-                if (window.showSidebars)
+            var breadcrumbContainer = new VisualElement
+            {
+                style =
                 {
-                    window.graphInspectorEnabled = GUILayout.Toggle(window.graphInspectorEnabled, BoltCore.Icons.inspectorWindow?[IconSize.Small], LudiqStyles.toolbarButton);
-                    window.variablesInspectorEnabled = GUILayout.Toggle(window.variablesInspectorEnabled, BoltCore.Icons.variablesWindow?[IconSize.Small], LudiqStyles.toolbarButton);
+                    flexDirection = FlexDirection.Row,
+                    height = 20,
+                    paddingLeft = 0,
+                    paddingRight = 0,
+                    marginLeft = 0,
+                    marginRight = 0,
                 }
+            };
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    window.MatchSelection();
-                }
+            var searchContainer = CreateSearchContainer(window, state);
+            Sprite breadCrumbRootIcon = null;
+            Sprite breadCrumbIcon = null;
 
-                LudiqGUI.Space(6);
+            RebuildBreadcrumbs();
+
+            Toolbar.Add(lockedButton);
+            Toolbar.Add(inspectorButton);
+            Toolbar.Add(variablesButton);
+            Toolbar.Add(breadcrumbContainer);
+            Toolbar.Add(searchContainer);
+            Toolbar.Add(CreateZoomContainer(window));
+
+            root.Add(extractor);
+            root.Add(Toolbar);
+            Toolbar.style.position = Position.Relative;
+            Toolbar.style.width = new Length(100, LengthUnit.Percent);
+
+            GraphWindow.activeContextChanged += v => RebuildBreadcrumbs();
+
+            void RebuildBreadcrumbs()
+            {
+                state.reference = window.reference;
+                state.highlightTimers.Clear();
+                state.matches.Clear();
+                state.currentIndex = -1;
+                Search(window, state, false);
+                breadcrumbContainer.Clear();
 
                 foreach (var breadcrumb in window.reference.GetBreadcrumbs())
                 {
-                    var title = breadcrumb.parent.Description().ToGUIContent(IconSize.Small);
-                    title.text = " " + title.text;
-                    var style = breadcrumb.isRoot ? Styles.toolbarBreadcrumbRoot : Styles.toolbarBreadcrumb;
-                    var isCurrent = breadcrumb == window.reference;
-                    var restored = GUI.backgroundColor;
-#if DARKER_UI
-                    if (isCurrent) GUI.backgroundColor = EditorGUIUtility.isProSkin ? Color.gray : Color.white;
-#endif
-                    if (GUILayout.Toggle(isCurrent, title, style, GUILayout.MinWidth(80), GUILayout.Height(20)) && !isCurrent)
+                    bool isCurrent = breadcrumb == window.reference;
+                    var btn = new ToolbarButton(() =>
                     {
-                        window.reference = breadcrumb;
-                    }
-                    GUI.backgroundColor = restored;
+                        if (!isCurrent)
+                        {
+                            window.reference = breadcrumb;
+                            state.reference = window.reference;
+                            state.highlightTimers.Clear();
+                            state.matches.Clear();
+                            state.currentIndex = -1;
+                            Search(window, state, false);
+                            RebuildBreadcrumbs();
+                        }
+                    });
+
+                    if (breadcrumb.isRoot)
+                        btn.style.marginLeft = 0;
+                    else
+                        btn.style.marginLeft = -10;
+
+                    btn.style.marginRight = 0;
+                    btn.style.paddingLeft = 10;
+                    btn.style.paddingRight = 10;
+                    btn.style.borderLeftWidth = 0;
+                    btn.style.borderRightWidth = 0;
+
+                    btn.style.borderRightWidth = 0;
+                    btn.style.borderLeftWidth = 0;
+                    btn.style.flexWrap = Wrap.NoWrap;
+
+                    btn.Add(new IMGUIContainer(() =>
+                    {
+                        if (breadCrumbRootIcon == null || breadCrumbIcon == null)
+                        {
+                            var root = Styles.toolbarBreadcrumbRoot.normal.background;
+                            var child = Styles.toolbarBreadcrumb.normal.background;
+                            breadCrumbRootIcon = Sprite.Create(root, new Rect(0, 0, root.width, root.height),
+                                                       new Vector2(0.5f, 0.5f), 100, 0, SpriteMeshType.FullRect,
+                                                       new Vector4(10, 0, 10, 0));
+                            breadCrumbIcon = Sprite.Create(child, new Rect(0, 0, child.width, child.height),
+                                                       new Vector2(0.5f, 0.5f), 100, 0, SpriteMeshType.FullRect,
+                                                       new Vector4(10, 0, 10, 0));
+                        }
+                        Sprite bgSprite = breadcrumb.isRoot ? breadCrumbRootIcon : breadCrumbIcon;
+                        btn.style.backgroundImage = Background.FromSprite(bgSprite);
+                        var title = breadcrumb.parent.Description().ToGUIContent(IconSize.Small);
+                        btn.text = " " + title.text;
+                        btn.schedule.Execute(() =>
+                        {
+                            if (title.image is Texture2D iconTex)
+                                btn.iconImage = iconTex;
+                        });
+                    }));
+                    btn.style.unityFontStyleAndWeight = isCurrent ? FontStyle.Bold : FontStyle.Normal;
+                    btn.style.backgroundColor = Color.clear;
+                    btn.style.minWidth = 80;
+                    btn.style.height = 20;
+                    btn.style.fontSize = 9;
+                    btn.focusable = false;
+                    breadcrumbContainer.Add(btn);
                 }
+            }
 
-                if (state.reference != window.reference)
-                {
-                    state.reference = window.reference;
-                    state.highlightTimers.Clear();
-                    state.matches.Clear();
-                    state.currentIndex = -1;
-                    Search(window, state);
-                }
-
-                GUILayout.Space(10);
-
-                GUILayout.BeginHorizontal(GUILayout.Width(400));
-
-                var newSearchText = GUILayout.TextField(state.text ?? "", EditorStyles.toolbarSearchField, GUILayout.Height(18));
-                if (newSearchText != state.text)
-                {
-                    state.text = newSearchText;
-                    state.matches.Clear();
-                    state.currentIndex = -1;
-                    state.highlightTimers.Clear();
-
-                    Search(window, state);
-                }
-#if DARKER_UI
-                if (GUILayout.Button("Previous", CommunityStyles.ToolbarButton, GUILayout.Width(60), GUILayout.Height(18)) && state.matches.Count > 0)
-#else
-                if (GUILayout.Button("Previous", LudiqStyles.toolbarButton, GUILayout.Width(60), GUILayout.Height(18)) && state.matches.Count > 0)
-#endif
-                {
-                    state.currentIndex--;
-                    if (state.currentIndex < 0) state.currentIndex = state.matches.Count - 1;
-                    HighlightCurrentMatch(window);
-                }
-#if DARKER_UI
-                if (GUILayout.Button("Next", CommunityStyles.ToolbarButton, GUILayout.Width(40), GUILayout.Height(18)) && state.matches.Count > 0)
-#else
-                if (GUILayout.Button("Next", LudiqStyles.toolbarButton, GUILayout.Width(40), GUILayout.Height(18)) && state.matches.Count > 0)
-#endif
-                {
-                    state.currentIndex++;
-                    if (state.currentIndex >= state.matches.Count) state.currentIndex = 0;
-                    HighlightCurrentMatch(window);
-                }
-
-                GUILayout.Label((state.matches.Count == 0 ? 0 : state.currentIndex + 1) + "/" + state.matches.Count);
-
-                GUILayout.EndHorizontal();
-
-                LudiqGUI.FlexibleSpace();
-
-                GUILayout.Label("Zoom", LudiqStyles.toolbarLabel);
-                window.context.graph.zoom = GUILayout.HorizontalSlider(window.context.graph.zoom, GraphGUI.MinZoom, GraphGUI.MaxZoom, GUILayout.Width(100));
-                GUILayout.Label(window.context.graph.zoom.ToString("0.#") + "x", LudiqStyles.toolbarLabel);
-
-                LudiqGUI.EndHorizontal();
-
-                if (window?.context?.canvas == null) return;
+            Toolbar.Add(new IMGUIContainer(() =>
+            {
+                if (window == null || window.context?.canvas == null) return;
 
                 var canvas = window.context.canvas;
                 foreach (var kvp in state.highlightTimers.ToList())
@@ -584,22 +640,195 @@ namespace Unity.VisualScripting.Community
                     Handles.DrawSolidRectangleWithOutline(screenRect, Color.clear, new Color(0.3f, 0.8f, 1f, alpha * 0.6f));
                     Handles.EndGUI();
                 }
-            });
-
-            imgui.style.flexGrow = 1;
-            imgui.style.flexShrink = 1;
-            imgui.style.flexBasis = 0;
-            imgui.style.width = new Length(100, LengthUnit.Percent);
-
-            Toolbar.Add(imgui);
-
-            root.Add(Toolbar);
-
-            Toolbar.style.position = Position.Relative;
-            Toolbar.style.width = new Length(100, LengthUnit.Percent);
+            }));
         }
 
-        private static void Search(GraphWindow window, SearchState state)
+        private static ToolbarButton CreateToggleButton(string text, float width, float height, Color backgroundColor, Action callback, Texture2D icon = null)
+        {
+            var btn = new ToolbarButton(callback)
+            {
+                text = text,
+                focusable = false,
+                style =
+                {
+                    width = width,
+                    height = height,
+                    backgroundColor = backgroundColor,
+                    backgroundSize = new BackgroundSize(16f, 16f)
+                }
+            };
+            if (icon != null) btn.style.backgroundImage = icon;
+            return btn;
+        }
+
+        private static VisualElement CreateSearchContainer(GraphWindow window, dynamic state)
+        {
+            var container = new VisualElement
+            {
+                style =
+                {
+                    flexDirection = FlexDirection.Row,
+                    alignItems = Align.Center
+                }
+            };
+
+            var searchField = new ToolbarSearchField
+            {
+                value = state.text ?? "",
+                style =
+                {
+                    height = 15,
+                    width = 180
+                }
+            };
+
+            ToolbarButton prevButton = null;
+            ToolbarButton nextButton = null;
+            var counterLabel = new Label
+            {
+                style =
+                {
+                    unityTextAlign = TextAnchor.MiddleCenter,
+                    width = 50,
+                    height = 20
+                }
+            };
+
+            void UpdateCounter()
+            {
+                prevButton.SetEnabled(state.matches.Count > 0);
+                nextButton.SetEnabled(state.matches.Count > 0);
+                counterLabel.text = state.matches.Count == 0 ? "0/0" : $"{state.currentIndex + 1}/{state.matches.Count}";
+            }
+
+            searchField.RegisterValueChangedCallback(ev =>
+            {
+                state.text = ev.newValue;
+                state.matches.Clear();
+                state.currentIndex = -1;
+                state.highlightTimers.Clear();
+                Search(window, state);
+                UpdateCounter();
+            });
+
+            container.Add(searchField);
+
+            prevButton = CreateNavigationButton("Previous", 65, 20, () =>
+            {
+                if (state.matches.Count == 0) return;
+                state.currentIndex--;
+                if (state.currentIndex < 0) state.currentIndex = state.matches.Count - 1;
+                HighlightCurrentMatch(window);
+                UpdateCounter();
+            });
+
+            nextButton = CreateNavigationButton("Next", 45, 20, () =>
+            {
+                if (state.matches.Count == 0) return;
+                state.currentIndex++;
+                if (state.currentIndex >= state.matches.Count) state.currentIndex = 0;
+                HighlightCurrentMatch(window);
+                UpdateCounter();
+            });
+
+            container.Add(prevButton);
+            container.Add(nextButton);
+            container.Add(counterLabel);
+
+            UpdateCounter();
+
+            return container;
+        }
+
+        private static ToolbarButton CreateNavigationButton(string text, float width, float height, Action callback)
+        {
+            var btn = new ToolbarButton(callback)
+            {
+                text = text,
+                focusable = false,
+                style =
+                {
+                    width = width,
+                    height = height,
+                    fontSize = 11,
+                    backgroundColor = Color.clear
+                }
+            };
+            btn.RegisterCallback<MouseEnterEvent>(evt => btn.style.backgroundColor = new Color(0.3f, 0.3f, 0.3f, 0.5f));
+            btn.RegisterCallback<MouseLeaveEvent>(evt => btn.style.backgroundColor = Color.clear);
+            return btn;
+        }
+
+        private static VisualElement CreateZoomContainer(GraphWindow window)
+        {
+            var container = new VisualElement
+            {
+                style =
+                {
+                    flexDirection = FlexDirection.Row,
+                    alignItems = Align.Center,
+                    justifyContent = Justify.FlexEnd,
+                    flexGrow = 1
+                }
+            };
+
+            var zoomLabel = new Label("Zoom")
+            {
+                style =
+                {
+                    unityTextAlign = TextAnchor.MiddleLeft,
+                    marginRight = 2,
+                    fontSize = 11
+                }
+            };
+            container.Add(zoomLabel);
+
+            var zoomSlider = new Slider
+            {
+                lowValue = GraphGUI.MinZoom,
+                highValue = GraphGUI.MaxZoom,
+                value = window.context.graph.zoom,
+                style = { width = 100 }
+            };
+            container.Add(zoomSlider);
+
+            var zoomValue = new Label($"{window.context.graph.zoom:0.#}x")
+            {
+                style =
+                {
+                    unityTextAlign = TextAnchor.MiddleLeft,
+                    marginLeft = 2,
+                    fontSize = 11
+                }
+            };
+
+            container.Add(zoomValue);
+
+            container.Add(new IMGUIContainer(() =>
+            {
+                zoomValue.text = $"{window.context.graph.zoom:0.#}x";
+                zoomSlider.value = window.context.graph.zoom;
+            }));
+
+            zoomSlider.RegisterValueChangedCallback(ev =>
+            {
+                window.context.graph.zoom = ev.newValue;
+                zoomValue.text = $"{ev.newValue:0.#}x";
+            });
+
+            return container;
+        }
+
+        private static Color GetDisabledColor()
+        {
+#if DARKER_UI
+            return CommunityStyles.backgroundColor;
+#else
+            return ColorPalette.unityBackgroundLight.color;
+#endif
+        }
+
+        private static void Search(GraphWindow window, SearchState state, bool tween = true)
         {
             if (!string.IsNullOrEmpty(state.text))
             {
@@ -614,7 +843,7 @@ namespace Unity.VisualScripting.Community
                     }
                 }
 
-                if (state.matches.Count > 0)
+                if (state.matches.Count > 0 && tween)
                 {
                     state.currentIndex = 0;
                     HighlightCurrentMatch(window);
@@ -770,6 +999,15 @@ namespace Unity.VisualScripting.Community
                 red.active.background = PathUtil.Load("RedNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
                 red.focused.background = PathUtil.Load("RedNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
                 red.hover.background = PathUtil.Load("RedNodeSelected", CommunityEditorPath.Fundamentals)?[IconSize.Large];
+
+                var stateBackground = VisualScripting.StateWidget<FlowState>.Styles.contentBackground;
+
+                var baseColor = CommunityStyles.backgroundColor;
+                var tex = EditorGUIUtility.isProSkin
+                    ? CommunityStyles.MakeBorderedTexture(baseColor, baseColor.Darken(0.05f))
+                    : CommunityStyles.MakeBorderedTexture(baseColor, baseColor.Brighten(0.05f));
+
+                stateBackground.normal.background = tex;
 
 #if !ENABLE_VERTICAL_FLOW || !NEW_UNIT_UI
                 var unitWidgetGeneric = typeof(Unity.VisualScripting.UnitWidget<>);

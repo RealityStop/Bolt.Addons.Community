@@ -5,7 +5,7 @@ namespace Unity.VisualScripting.Community
 {
     internal class ProjectSettingsProviderView : SettingsProvider
     {
-        private const string Path = "Project/Visual Scripting/Customisation";
+        private const string Path = "Preferences/Visual Scripting/Customisation";
         private const string Title = "Customisation";
 
         public const string UnitUIKey = "Community_Settings_UnitUI";
@@ -36,7 +36,7 @@ namespace Unity.VisualScripting.Community
         private bool _hasPendingChanges;
         private bool _isInitialized;
 
-        public ProjectSettingsProviderView() : base(Path, SettingsScope.Project)
+        public ProjectSettingsProviderView() : base(Path, SettingsScope.User)
         {
             label = Title;
         }
