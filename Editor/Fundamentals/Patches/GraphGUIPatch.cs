@@ -355,7 +355,11 @@ namespace Unity.VisualScripting.Community
             if (icon != null)
                 btn.iconImage = icon;
 
-            btn.Add(new IMGUIContainer(() => btn.style.backgroundImage = LudiqStyles.spinnerButton.normal.background));
+            btn.Add(new IMGUIContainer(() =>
+            {
+                btn.style.backgroundImage = LudiqStyles.spinnerButton.normal.background;
+            }));
+
             return btn;
         }
 
@@ -944,33 +948,39 @@ namespace Unity.VisualScripting.Community
                 LudiqStyles.toolbarBackground.normal.background = CommunityStyles.backgroundColor.GetPixel();
 #endif
                 // Variables Panel 
-                var tab = VariablesPanel.Styles.tab;
+                var baseStyle = new GUIStyle(EditorStyles.toolbarButton);
+
+                var finalTabStyle = new GUIStyle(baseStyle);
+
+                GUIStyle src = CommunityStyles.ToolbarButton;
+                if (src != null)
+                {
+                    if (src.normal.background) finalTabStyle.normal = src.normal;
+                    if (src.hover.background) finalTabStyle.hover = src.hover;
+                    if (src.active.background) finalTabStyle.active = src.active;
+                    if (src.focused.background) finalTabStyle.focused = src.focused;
+                    if (src.onNormal.background) finalTabStyle.onNormal = src.onNormal;
+                    if (src.onHover.background) finalTabStyle.onHover = src.onHover;
+                    if (src.onActive.background) finalTabStyle.onActive = src.onActive;
+                    if (src.onFocused.background) finalTabStyle.onFocused = src.onFocused;
+                }
+
+                finalTabStyle.alignment = TextAnchor.MiddleLeft;
+                finalTabStyle.padding = new RectOffset(4, 4, 2, 2);
+                finalTabStyle.border = new RectOffset(2, 10, 0, 0);
+                finalTabStyle.overflow = new RectOffset(0, 1, 0, 0);
+                finalTabStyle.clipping = TextClipping.Clip;
+                finalTabStyle.fixedHeight = 22;
+                finalTabStyle.stretchWidth = true;
+
                 var tabField = typeof(VariablesPanel.Styles).GetField("tab", BindingFlags.Static | BindingFlags.Public);
-                tabField.SetValue(null, new GUIStyle(CommunityStyles.ToolbarButton));
-                var tabStyle = VariablesPanel.Styles.tab;
-                tabStyle.normal = CommunityStyles.ToolbarButton.normal;
-                tabStyle.hover = CommunityStyles.ToolbarButton.hover;
-                tabStyle.active = CommunityStyles.ToolbarButton.active;
-                tabStyle.focused = CommunityStyles.ToolbarButton.focused;
-                tabStyle.onNormal = CommunityStyles.ToolbarButton.onNormal;
-                tabStyle.onHover = CommunityStyles.ToolbarButton.onHover;
-                tabStyle.onActive = CommunityStyles.ToolbarButton.onActive;
-                tabStyle.onFocused = CommunityStyles.ToolbarButton.onFocused;
-                tabStyle.alignment = TextAnchor.MiddleLeft;
-                tabStyle.padding = new RectOffset(4, 4, 2, 2);
-                tabStyle.border = new RectOffset(2, 10, 0, 0);
-                tabStyle.overflow = new RectOffset(0, 1, 0, 0);
-                tabStyle.clipping = TextClipping.Clip;
-                tabStyle.fontSize = 12;
-                tabStyle.fontStyle = FontStyle.Normal;
-                tabStyle.fixedHeight = 22;
-                tabStyle.stretchWidth = true;
+                tabField.SetValue(null, finalTabStyle);
 
                 var subTabField = typeof(VariablesPanel.Styles).GetField("subTab", BindingFlags.Static | BindingFlags.Public);
-                var subTabStyle = new GUIStyle(tabStyle ?? new GUIStyle(CommunityStyles.ToolbarButton));
-                subTabStyle.alignment = TextAnchor.MiddleCenter;
-                subTabField.SetValue(null, subTabStyle);
-
+                subTabField.SetValue(null, new GUIStyle(finalTabStyle)
+                {
+                    alignment = TextAnchor.MiddleCenter
+                });
                 UnitEditor.Styles.inspectorBackground.normal.background = CommunityStyles.background;
                 UnitEditor.Styles.portsBackground.normal.background = CommunityStyles.background;
                 StateEditor.Styles.inspectorBackground.normal.background = CommunityStyles.background;

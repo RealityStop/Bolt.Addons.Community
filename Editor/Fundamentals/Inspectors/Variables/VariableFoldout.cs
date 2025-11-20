@@ -4,6 +4,7 @@ namespace Unity.VisualScripting.Community
     {
         public string name;
         public bool isExpanded;
+        public double? hoverStartTime;
         public VariableFoldout(string name, bool expanded) { this.name = name; this.isExpanded = expanded; }
     }
 }

@@ -555,20 +555,72 @@ namespace Unity.VisualScripting.Community
                     Event.current.Use();
                 }
 
-                // Icon
-                //                 const float iconSize = 16f;
-                //                 Rect iconRect = new Rect(foldoutRect.xMax + 4, lineY - 1f, iconSize, iconSize);
-                // #if VISUAL_SCRIPTING_1_7
-                //                 Texture2D icon = !string.IsNullOrEmpty(declaration.typeHandle.Identification)
-                //                     ? Type.GetType(declaration.typeHandle.Identification)?.Icon()?[IconSize.Small]
-                //                     : typeof(Null)?.Icon()?[IconSize.Small];
-                // #else
-                //                 Texture2D icon = declaration.value != null
-                //                     ? declaration.value.GetType()?.Icon()?[IconSize.Small]
-                //                     : typeof(Null)?.Icon()?[IconSize.Small];
-                // #endif
-                //                 if (icon != null)
-                //                     GUI.DrawTexture(iconRect, icon);
+                var e = Event.current;
+
+                bool draggingObjects =
+                    DragAndDrop.objectReferences != null &&
+                    DragAndDrop.objectReferences.Length > 0;
+
+                if (draggingObjects && boxRect.Contains(e.mousePosition))
+                {
+                    const float expandDelay = 0.35f;
+                    if (!foldout.hoverStartTime.HasValue)
+                        foldout.hoverStartTime = EditorApplication.timeSinceStartup;
+
+                    if (EditorApplication.timeSinceStartup - foldout.hoverStartTime.Value > expandDelay)
+                        foldout.isExpanded = true;
+
+                    parentInspector.SetHeightDirty();
+                    GUI.changed = true;
+                }
+                else
+                {
+                    foldout.hoverStartTime = null;
+                }
+
+                UnityEngine.Object[] dragged = DragAndDrop.objectReferences;
+
+                Type variableType =
+#if VISUAL_SCRIPTING_1_7
+                    !string.IsNullOrEmpty(declaration.typeHandle.Identification)
+                        ? Type.GetType(declaration.typeHandle.Identification)
+                        : null;
+#else
+                declaration.value != null ? declaration.value.GetType() : null;
+#endif
+
+                bool variableAcceptsObject =
+                    variableType == null ||
+                    typeof(UnityEngine.Object).IsAssignableFrom(variableType);
+
+                bool canAssignDraggedObject =
+                    draggingObjects &&
+                    variableAcceptsObject &&
+                    dragged[0] != null &&
+                    variableType.IsAssignableFrom(dragged[0].GetType());
+
+                if (boxRect.Contains(e.mousePosition) && canAssignDraggedObject)
+                {
+                    switch (e.type)
+                    {
+                        case EventType.DragUpdated:
+                            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                            e.Use();
+                            break;
+
+                        case EventType.DragPerform:
+                            DragAndDrop.AcceptDrag();
+                            e.Use();
+
+                            foldout.isExpanded = true;
+                            parentInspector.SetHeightDirty();
+                            GUI.changed = true;
+
+                            element["value"].RecordUndo();
+                            declaration.value = dragged[0];
+                            break;
+                    }
+                }
 
                 float spacing = 4f;
                 float startX = foldoutRect.xMax + spacing;
