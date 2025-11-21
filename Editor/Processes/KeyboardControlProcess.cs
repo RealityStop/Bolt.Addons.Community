@@ -139,7 +139,7 @@ namespace Unity.VisualScripting.Community
                 var source = c.source;
                 var destination = c.destination;
 
-                if (!@event.alt)
+                if (@event == null || !@event.alt)
                 {
                     return;
                 }

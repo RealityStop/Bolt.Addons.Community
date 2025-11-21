@@ -1,12 +1,63 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
     [Widget(typeof(ValueReroute))]
     public sealed class ValueRerouteWidget : UnitWidget<ValueReroute>
     {
+        // Data is stored instead of the unit itself because if the unit is deleted after copying,
+        // the data we need from it is also deleted.
+        private class RerouteCopyData
+        {
+            public Guid copyID;
+            public IUnitConnection sourceConnection;
+            public IGraph graph;
+            // Store a reference incase it was not deleted so we can reset its copyID
+            public ValueReroute reroute;
+        }
+
+        private static List<RerouteCopyData> copyDataList = new List<RerouteCopyData>();
         public ValueRerouteWidget(FlowCanvas canvas, ValueReroute unit) : base(canvas, unit)
         {
+            var data = copyDataList.FirstOrDefault(d => d.copyID == unit.copyID);
+
+            if (data != null)
+            {
+                if (unit.hideConnection && data.sourceConnection != null && data.graph == unit.graph)
+                {
+                    var source = data.sourceConnection.source;
+                    unit.input.ValidlyConnectTo(source);
+                }
+
+                if (data.reroute != null)
+                {
+                    data.reroute.copyID = default;
+                }
+            }
+
+            unit.copyID = default;
+        }
+
+        public override void ExpandCopyGroup(HashSet<IGraphElement> copyGroup)
+        {
+            var copyID = unit.guid;
+            if (!copyDataList.Any(c => c.copyID == copyID))
+            {
+                var copy = new RerouteCopyData
+                {
+                    copyID = copyID,
+                    graph = unit.graph,
+                    sourceConnection = unit.input.hasValidConnection ? unit.input.connection : null
+                };
+                unit.copyID = copyID;
+
+                copyDataList.Add(copy);
+            }
+
+            base.ExpandCopyGroup(copyGroup);
         }
 
         public override void DrawForeground()
@@ -30,7 +81,7 @@ namespace Unity.VisualScripting.Community
                 }
                 _position.width = width;
                 GraphGUI.Node(new Rect(position.x, position.y + 3, width, _position.height - 4), NodeShape.Square, color, isSelected);
-                
+
                 if (inputDescription != null)
                     GUI.Label(new Rect(position.x + 24, position.y + 5, width, _position.height - 4), inputDescription.label);
             }

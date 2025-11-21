@@ -20,6 +20,10 @@ namespace Unity.VisualScripting.Community
         [Inspectable]
         public bool SnapToGrid;
 
+        // Used for copy-paste tracking
+        // To preserve the source connection
+        public Guid copyID;
+
         [Inspectable]
         [InspectorLabel("Enable Portal")]
         public bool hideConnection;
