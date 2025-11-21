@@ -955,14 +955,14 @@ namespace Unity.VisualScripting.Community
                 GUIStyle src = CommunityStyles.ToolbarButton;
                 if (src != null)
                 {
-                    if (src.normal.background) finalTabStyle.normal = src.normal;
-                    if (src.hover.background) finalTabStyle.hover = src.hover;
-                    if (src.active.background) finalTabStyle.active = src.active;
-                    if (src.focused.background) finalTabStyle.focused = src.focused;
-                    if (src.onNormal.background) finalTabStyle.onNormal = src.onNormal;
-                    if (src.onHover.background) finalTabStyle.onHover = src.onHover;
-                    if (src.onActive.background) finalTabStyle.onActive = src.onActive;
-                    if (src.onFocused.background) finalTabStyle.onFocused = src.onFocused;
+                    if (src.normal.background) finalTabStyle.normal.background = src.normal.background;
+                    if (src.hover.background) finalTabStyle.hover.background = src.hover.background;
+                    if (src.active.background) finalTabStyle.active.background = src.active.background;
+                    if (src.focused.background) finalTabStyle.focused.background = src.focused.background;
+                    if (src.onNormal.background) finalTabStyle.onNormal.background = src.onNormal.background;
+                    if (src.onHover.background) finalTabStyle.onHover.background = src.onHover.background;
+                    if (src.onActive.background) finalTabStyle.onActive.background = src.onActive.background;
+                    if (src.onFocused.background) finalTabStyle.onFocused.background = src.onFocused.background;
                 }
 
                 finalTabStyle.alignment = TextAnchor.MiddleLeft;
@@ -971,7 +971,7 @@ namespace Unity.VisualScripting.Community
                 finalTabStyle.overflow = new RectOffset(0, 1, 0, 0);
                 finalTabStyle.clipping = TextClipping.Clip;
                 finalTabStyle.fixedHeight = 22;
-                finalTabStyle.stretchWidth = true;
+                finalTabStyle.fixedWidth = baseStyle.fixedWidth;
 
                 var tabField = typeof(VariablesPanel.Styles).GetField("tab", BindingFlags.Static | BindingFlags.Public);
                 tabField.SetValue(null, finalTabStyle);
