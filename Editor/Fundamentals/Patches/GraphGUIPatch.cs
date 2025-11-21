@@ -948,36 +948,27 @@ namespace Unity.VisualScripting.Community
                 LudiqStyles.toolbarBackground.normal.background = CommunityStyles.backgroundColor.GetPixel();
 #endif
                 // Variables Panel 
-                var baseStyle = new GUIStyle(EditorStyles.toolbarButton);
 
-                var finalTabStyle = new GUIStyle(baseStyle);
-
-                GUIStyle src = CommunityStyles.ToolbarButton;
-                if (src != null)
-                {
-                    if (src.normal.background) finalTabStyle.normal.background = src.normal.background;
-                    if (src.hover.background) finalTabStyle.hover.background = src.hover.background;
-                    if (src.active.background) finalTabStyle.active.background = src.active.background;
-                    if (src.focused.background) finalTabStyle.focused.background = src.focused.background;
-                    if (src.onNormal.background) finalTabStyle.onNormal.background = src.onNormal.background;
-                    if (src.onHover.background) finalTabStyle.onHover.background = src.onHover.background;
-                    if (src.onActive.background) finalTabStyle.onActive.background = src.onActive.background;
-                    if (src.onFocused.background) finalTabStyle.onFocused.background = src.onFocused.background;
-                }
-
-                finalTabStyle.alignment = TextAnchor.MiddleLeft;
-                finalTabStyle.padding = new RectOffset(4, 4, 2, 2);
-                finalTabStyle.border = new RectOffset(2, 10, 0, 0);
-                finalTabStyle.overflow = new RectOffset(0, 1, 0, 0);
-                finalTabStyle.clipping = TextClipping.Clip;
-                finalTabStyle.fixedHeight = 22;
-                finalTabStyle.fixedWidth = baseStyle.fixedWidth;
-
+                var pro = EditorGUIUtility.isProSkin;
                 var tabField = typeof(VariablesPanel.Styles).GetField("tab", BindingFlags.Static | BindingFlags.Public);
-                tabField.SetValue(null, finalTabStyle);
+                var tab = tabField.GetValue(null) as GUIStyle;
+                tab.normal.background = CommunityStyles.toolbarButtonBackground;
+
+                tab.hover.background = CommunityStyles.MakeBorderedTexture(CommunityStyles.backgroundColor.Brighten(0.07f),
+                pro ? CommunityStyles.backgroundColor.Darken(0.1f) : CommunityStyles.backgroundColor.Brighten(0.1f), BorderSide.LeftRight);
+
+                tab.onNormal.background = CommunityStyles.MakeBorderedTexture(CommunityStyles.backgroundColor.Brighten(0.07f),
+                pro ? CommunityStyles.backgroundColor.Darken(0.1f) : CommunityStyles.backgroundColor.Brighten(0.1f), BorderSide.LeftRight);
+
+                tab.alignment = TextAnchor.MiddleLeft;
+                tab.padding = new RectOffset(4, 4, 2, 2);
+                tab.border = new RectOffset(2, 10, 0, 0);
+                tab.overflow = new RectOffset(0, 1, 0, 0);
+                tab.clipping = TextClipping.Clip;
+                tab.fixedHeight = 22;
 
                 var subTabField = typeof(VariablesPanel.Styles).GetField("subTab", BindingFlags.Static | BindingFlags.Public);
-                subTabField.SetValue(null, new GUIStyle(finalTabStyle)
+                subTabField.SetValue(null, new GUIStyle(tab)
                 {
                     alignment = TextAnchor.MiddleCenter
                 });
