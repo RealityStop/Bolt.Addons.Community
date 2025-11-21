@@ -85,6 +85,7 @@ namespace Unity.VisualScripting.Community
             while (foldoutStates.Count <= index)
             {
                 foldoutStates.Add(false);
+                foldoutHoverStartTimes.Add(null);
                 parentInspector.SetHeightDirty();
             }
         }
@@ -108,7 +109,7 @@ namespace Unity.VisualScripting.Community
             });
             Handles.color = restoredColor;
         }
-
+        private List<double?> foldoutHoverStartTimes = new List<double?>();
         public override void DrawItem(Rect position, int index)
         {
             position.x -= 20;
@@ -166,6 +167,29 @@ namespace Unity.VisualScripting.Community
                 foldoutStates[index] = !foldoutStates[index];
                 parentInspector.SetHeightDirty();
                 Event.current.Use();
+            }
+
+            var e = Event.current;
+
+            bool draggingObjects = (DragAndDrop.objectReferences != null && DragAndDrop.objectReferences.Length > 0) || 
+            DragAndDrop.GetGenericData(VisualScripting.DraggedListItem.TypeName) != null || 
+            DragAndDrop.GetGenericData(DraggedDictionaryItem.TypeName) != null;
+
+            if (draggingObjects && boxRect.Contains(e.mousePosition))
+            {
+                const float expandDelay = 0.35f;
+                if (!foldoutHoverStartTimes[index].HasValue)
+                    foldoutHoverStartTimes[index] = EditorApplication.timeSinceStartup;
+
+                if (EditorApplication.timeSinceStartup - foldoutHoverStartTimes[index].Value > expandDelay)
+                foldoutStates[index] = true;
+
+                parentInspector.SetHeightDirty();
+                GUI.changed = true;
+            }
+            else
+            {
+                foldoutHoverStartTimes[index] = null;
             }
 
             Rect deleteRect = new Rect(position.x + position.width - DeleteButtonWidth - 4, lineY - 2f, DeleteButtonWidth - 2, FieldHeight - 2);

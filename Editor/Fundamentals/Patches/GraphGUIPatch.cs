@@ -7,6 +7,7 @@ using System;
 using System.Reflection;
 using UnityEditor.UIElements;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Collections;
 
 namespace Unity.VisualScripting.Community
 {
@@ -43,8 +44,8 @@ namespace Unity.VisualScripting.Community
 
         private static Event e => Event.current;
 
-        private static VisualElement Toolbar;
         private static readonly Dictionary<GraphWindow, VisualElement> floatingToolbars = new Dictionary<GraphWindow, VisualElement>();
+        private static readonly Dictionary<GraphWindow, VisualElement> Toolbars = new Dictionary<GraphWindow, VisualElement>();
 
         static Dictionary<GraphWindow, Sidebars> sidebars = new Dictionary<GraphWindow, Sidebars>();
 
@@ -54,6 +55,16 @@ namespace Unity.VisualScripting.Community
             {
                 result = CreateFloatingToolbar(window);
                 floatingToolbars[window] = result;
+            }
+            return result;
+        }
+
+        private static VisualElement GetToolbar(GraphWindow window)
+        {
+            if (!Toolbars.TryGetValue(window, out var result))
+            {
+                result = CreateToolbar(window);
+                Toolbars[window] = result;
             }
             return result;
         }
@@ -72,7 +83,7 @@ namespace Unity.VisualScripting.Community
                     if (patchedRoots.Contains(window.rootVisualElement))
                     {
                         patchedRoots.Remove(window.rootVisualElement);
-                        Toolbar.RemoveFromHierarchy();
+                        GetToolbar(window).RemoveFromHierarchy();
                         GetFloatingToolbar(window)?.RemoveFromHierarchy();
                     }
                     else
@@ -87,7 +98,7 @@ namespace Unity.VisualScripting.Community
                 else if (disableUI)
                 {
                     patchedRoots.Remove(window.rootVisualElement);
-                    Toolbar.RemoveFromHierarchy();
+                    GetToolbar(window).RemoveFromHierarchy();
                     GetFloatingToolbar(window)?.RemoveFromHierarchy();
                     floatingToolbars.Remove(window);
                 }
@@ -140,6 +151,28 @@ namespace Unity.VisualScripting.Community
                 }
             };
         }
+
+        private static VisualElement CreateToolbar(GraphWindow window)
+        {
+            return new VisualElement
+            {
+                name = "CustomGraphToolbar",
+                style =
+                {
+                    top = 0,
+                    right = 0,
+                    height = 20,
+                    flexDirection = FlexDirection.Row,
+                    alignItems = Align.Center,
+                    flexShrink = 0,
+#if DARKER_UI
+                    backgroundColor = CommunityStyles.backgroundColor
+#else
+                    backgroundColor = ColorPalette.unityBackgroundLight.color
+#endif
+                }
+            };
+        }
         public const float FloatingToolbarButtonSize = 27;
         private static bool previousDeveloperMode = BoltCore.Configuration.developerMode;
         private static void FloatingToolbarGUI(VisualElement root, GraphWindow window)
@@ -166,7 +199,7 @@ namespace Unity.VisualScripting.Community
                     }
                 }, () =>
                 {
-                    // Using this so I do not need to add another IMGUI container just to detect the developer mode change
+                    // A bit hacky but using this so I do not need to add another IMGUI container just to detect the developer mode change
                     if (previousDeveloperMode != BoltCore.Configuration.developerMode)
                     {
                         previousDeveloperMode = BoltCore.Configuration.developerMode;
@@ -202,10 +235,10 @@ namespace Unity.VisualScripting.Community
 
                 if (canvas is FlowCanvas flowCanvas)
                 {
-                    var relationsButton = CreateToggleButton(EditorGUIUtility.IconContent("UnityEditor.HierarchyWindow").image, "Relations", flowCanvas.showRelations, v => flowCanvas.showRelations = v);
-                    var valuesButton = CreateToggleButton(EditorGUIUtility.IconContent("UnityEditor.ConsoleWindow").image, "Values", BoltFlow.Configuration.showConnectionValues, v => { BoltFlow.Configuration.showConnectionValues = v; BoltFlow.Configuration.Save(); });
-                    var dimButton = CreateToggleButton(EditorGUIUtility.IconContent("animationvisibilitytoggleoff").image, "Dim", BoltCore.Configuration.dimInactiveNodes, v => { BoltCore.Configuration.dimInactiveNodes = v; BoltCore.Configuration.Save(); });
-                    var carryButton = CreateToggleButton(EditorGUIUtility.IconContent("MoveTool").image, "Carry", BoltCore.Configuration.carryChildren, v => { BoltCore.Configuration.carryChildren = v; BoltCore.Configuration.Save(); });
+                    var relationsButton = CreateToggleButton(EditorGUIUtility.IconContent("UnityEditor.Graphs.AnimatorControllerTool").image, "Port Relations", flowCanvas.showRelations, v => flowCanvas.showRelations = v);
+                    var valuesButton = CreateToggleButton(EditorGUIUtility.IconContent("UnityEditor.InspectorWindow").image, "Flow Values", BoltFlow.Configuration.showConnectionValues, v => { BoltFlow.Configuration.showConnectionValues = v; BoltFlow.Configuration.Save(); });
+                    var dimButton = CreateToggleButton(EditorGUIUtility.IconContent("animationvisibilitytoggleoff").image, "Dim Nodes", BoltCore.Configuration.dimInactiveNodes, v => { BoltCore.Configuration.dimInactiveNodes = v; BoltCore.Configuration.Save(); });
+                    var carryButton = CreateToggleButton(BoltCore.Icons.window?[IconSize.Small], "Carry Children", BoltCore.Configuration.carryChildren, v => { BoltCore.Configuration.carryChildren = v; BoltCore.Configuration.Save(); });
 
                     floatingToolbar.Add(relationsButton);
                     floatingToolbar.Add(valuesButton);
@@ -214,16 +247,16 @@ namespace Unity.VisualScripting.Community
                 }
                 else if (canvas is StateCanvas stateCanvas)
                 {
-                    var dimButton = CreateToggleButton(EditorGUIUtility.IconContent("animationvisibilitytoggleoff").image, "Dim", BoltCore.Configuration.dimInactiveNodes, v => { BoltCore.Configuration.dimInactiveNodes = v; BoltFlow.Configuration.Save(); });
+                    var dimButton = CreateToggleButton(EditorGUIUtility.IconContent("animationvisibilitytoggleoff").image, "Dim States", BoltCore.Configuration.dimInactiveNodes, v => { BoltCore.Configuration.dimInactiveNodes = v; BoltFlow.Configuration.Save(); });
                     floatingToolbar.Add(dimButton);
                 }
 
-                floatingToolbar.Add(CreateEnumButton(Icons.Enum(AlignOperation.AlignCenters)?[IconSize.Small], "Align", (operation) =>
+                floatingToolbar.Add(CreateEnumButton(PathUtil.Load("Align", CommunityEditorPath.Fundamentals)?[IconSize.Small], "Align", (operation) =>
                 {
                     LudiqGUI.FuzzyDropdown(new Rect(), EnumOptionTree.For<AlignOperation>(), null, op => canvas.Align((AlignOperation)op));
                 }, canvas));
 
-                floatingToolbar.Add(CreateEnumButton(Icons.Enum(DistributeOperation.DistributeCenters)?[IconSize.Small], "Distribute", (operation) =>
+                floatingToolbar.Add(CreateEnumButton(PathUtil.Load("Distribute", CommunityEditorPath.Fundamentals)?[IconSize.Small], "Distribute", (operation) =>
                 {
                     LudiqGUI.FuzzyDropdown(new Rect(), EnumOptionTree.For<DistributeOperation>(), null, op => canvas.Distribute((DistributeOperation)op));
                 }, canvas));
@@ -466,30 +499,55 @@ namespace Unity.VisualScripting.Community
         {
             var state = GetSearchState(window);
 
-            Toolbar = new VisualElement
+            var Toolbar = GetToolbar(window);
+
+            Toolbar.Add(new IMGUIContainer(() =>
             {
-                name = "CustomGraphToolbar",
-                style =
+                if (window == null || window.context?.canvas == null) return;
+
+                var canvas = window.context.canvas;
+                foreach (var kvp in state.highlightTimers.ToList())
                 {
-                    top = 0,
-                    right = 0,
-                    height = 20,
-                    flexDirection = FlexDirection.Row,
-                    alignItems = Align.Center,
-                    flexShrink = 0,
-#if DARKER_UI
-                    backgroundColor = CommunityStyles.backgroundColor
-#else
-                    backgroundColor = ColorPalette.unityBackgroundLight.color
-#endif
+                    var element = kvp.Key;
+                    float timeLeft = kvp.Value - (float)EditorApplication.timeSinceStartup;
+                    if (timeLeft <= 0)
+                    {
+                        state.highlightTimers.Remove(element);
+                        continue;
+                    }
+
+                    var widget = canvas.Widget(element);
+                    if (widget == null) continue;
+
+                    float alpha = Mathf.Clamp01(timeLeft / 1f);
+
+                    var rect = widget.position.ExpandBy(new RectOffset(5, 5, 12, 10));
+                    var zoom = canvas.zoom;
+                    var pan = canvas.pan;
+                    var viewport = canvas.viewport;
+
+                    Vector2 viewportCenter = viewport.size * 0.5f;
+                    Vector2 screenPos = (rect.position - pan + viewportCenter) * zoom;
+                    Rect screenRect = new Rect(screenPos, rect.size * zoom);
+
+                    screenRect.y += 14;
+
+                    var sidebars = GetSidebars(window);
+
+                    if (sidebars.left.show)
+                        screenRect.x += sidebars.left.GetWidth();
+
+                    Handles.BeginGUI();
+                    Handles.DrawSolidRectangleWithOutline(screenRect, Color.clear, new Color(0.3f, 0.8f, 1f, alpha * 0.6f));
+                    Handles.EndGUI();
                 }
-            };
+            }));
 
             var disabledColor = GetDisabledColor();
 
             Texture2D lockedIconTex = null;
             ToolbarButton lockedButton = null;
-            lockedButton = CreateToggleButton("", 20, 20, !window.locked ? disabledColor : ColorPalette.unityBackgroundMid, () =>
+            lockedButton = CreateToggleButton("", 30, 20, () => !window.locked ? disabledColor : ColorPalette.unityBackgroundMid, () =>
             {
                 window.locked = !window.locked;
                 lockedButton.style.backgroundColor = !window.locked ? disabledColor : ColorPalette.unityBackgroundMid;
@@ -509,7 +567,7 @@ namespace Unity.VisualScripting.Community
             });
 
             ToolbarButton inspectorButton = null;
-            inspectorButton = CreateToggleButton("", 20, 20, !window.graphInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid, () =>
+            inspectorButton = CreateToggleButton("", 30, 20, () => !window.graphInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid, () =>
             {
                 window.graphInspectorEnabled = !window.graphInspectorEnabled;
                 inspectorButton.style.backgroundColor = !window.graphInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid;
@@ -517,7 +575,7 @@ namespace Unity.VisualScripting.Community
             }, BoltCore.Icons.inspectorWindow?[IconSize.Small]);
 
             ToolbarButton variablesButton = null;
-            variablesButton = CreateToggleButton("", 30, 20, !window.variablesInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid, () =>
+            variablesButton = CreateToggleButton("", 40, 20, () => !window.variablesInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid, () =>
             {
                 window.variablesInspectorEnabled = !window.variablesInspectorEnabled;
                 variablesButton.style.backgroundColor = !window.variablesInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid;
@@ -630,51 +688,9 @@ namespace Unity.VisualScripting.Community
                     breadcrumbContainer.Add(btn);
                 }
             }
-
-            Toolbar.Add(new IMGUIContainer(() =>
-            {
-                if (window == null || window.context?.canvas == null) return;
-
-                var canvas = window.context.canvas;
-                foreach (var kvp in state.highlightTimers.ToList())
-                {
-                    var element = kvp.Key;
-                    float timeLeft = kvp.Value - (float)EditorApplication.timeSinceStartup;
-                    if (timeLeft <= 0)
-                    {
-                        state.highlightTimers.Remove(element);
-                        continue;
-                    }
-
-                    var widget = canvas.Widget(element);
-                    if (widget == null) continue;
-
-                    float alpha = Mathf.Clamp01(timeLeft / 1f);
-
-                    var rect = widget.position.ExpandBy(new RectOffset(5, 5, 12, 10));
-                    var zoom = canvas.zoom;
-                    var pan = canvas.pan;
-                    var viewport = canvas.viewport;
-
-                    Vector2 viewportCenter = viewport.size * 0.5f;
-                    Vector2 screenPos = (rect.position - pan + viewportCenter) * zoom;
-                    Rect screenRect = new Rect(screenPos, rect.size * zoom);
-
-                    screenRect.y += 24f;
-
-                    var sidebars = GetSidebars(window);
-
-                    if (sidebars.left.show)
-                        screenRect.x += sidebars.left.GetWidth();
-
-                    Handles.BeginGUI();
-                    Handles.DrawSolidRectangleWithOutline(screenRect, Color.clear, new Color(0.3f, 0.8f, 1f, alpha * 0.6f));
-                    Handles.EndGUI();
-                }
-            }));
         }
 
-        private static ToolbarButton CreateToggleButton(string text, float width, float height, Color backgroundColor, Action callback, Texture2D icon = null)
+        private static ToolbarButton CreateToggleButton(string text, float width, float height, Func<Color> backgroundColor, Action callback, Texture2D icon = null)
         {
             var btn = new ToolbarButton(callback)
             {
@@ -684,15 +700,17 @@ namespace Unity.VisualScripting.Community
                 {
                     width = width,
                     height = height,
-                    backgroundColor = backgroundColor,
+                    backgroundColor = backgroundColor(),
                     backgroundSize = new BackgroundSize(16f, 16f)
                 }
             };
             if (icon != null) btn.style.backgroundImage = icon;
+            btn.RegisterCallback<MouseEnterEvent>(evt => btn.style.backgroundColor = new Color(0.3f, 0.3f, 0.3f, 0.5f));
+            btn.RegisterCallback<MouseLeaveEvent>(evt => btn.style.backgroundColor = backgroundColor());
             return btn;
         }
 
-        private static VisualElement CreateSearchContainer(GraphWindow window, dynamic state)
+        private static VisualElement CreateSearchContainer(GraphWindow window, SearchState state)
         {
             var container = new VisualElement
             {

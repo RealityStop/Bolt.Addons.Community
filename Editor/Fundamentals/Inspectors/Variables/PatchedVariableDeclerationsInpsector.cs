@@ -6,7 +6,6 @@ using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.ReorderableList;
 using Unity.VisualScripting.ReorderableList.Internal;
-using System.Collections;
 
 namespace Unity.VisualScripting.Community
 {
@@ -14,7 +13,8 @@ namespace Unity.VisualScripting.Community
     {
         private VariableDeclarationsAdaptor adaptor;
         private string newName;
-        private List<VariableFoldout> foldouts;
+
+        internal Dictionary<string, VariableFoldout> foldouts;
 
         public PatchedVariableDeclarationsInspector(Metadata metadata) : base(metadata)
         {
@@ -31,9 +31,23 @@ namespace Unity.VisualScripting.Community
 
             var collection = metadata["collection"];
 
-            foldouts = new List<VariableFoldout>();
+            var fresh = new Dictionary<string, VariableFoldout>();
+
+            foldouts ??= new Dictionary<string, VariableFoldout>();
+
             foreach (var declaration in variableDecls)
-                foldouts.Add(new VariableFoldout(declaration.name, false));
+            {
+                if (foldouts.TryGetValue(declaration.name, out var existing))
+                {
+                    existing.name = declaration.name;
+                    fresh[declaration.name] = existing;
+                }
+                else
+                {
+                    fresh[declaration.name] = new VariableFoldout(declaration.name, false);
+                }
+            }
+            foldouts = fresh;
 
 #pragma warning disable 618
             kind = metadata.GetAttribute<VariableKindAttribute>()?.kind;
@@ -41,7 +55,7 @@ namespace Unity.VisualScripting.Community
 #if VISUAL_SCRIPTING_1_7
             kind ??= variableDecls.Kind;
 #endif
-            adaptor = new VariableDeclarationsAdaptor(collection, this, foldouts ?? new List<VariableFoldout>());
+            adaptor = new VariableDeclarationsAdaptor(collection, this);
         }
 
         protected override void OnGUI(Rect position, GUIContent label)
@@ -310,8 +324,12 @@ namespace Unity.VisualScripting.Community
 
             metadata.RecordUndo();
 
-            foldouts.Add(new VariableFoldout(newVarName, true));
-            adaptor.foldouts.Add(newVarName, new VariableFoldout(newVarName, true));
+            // Inspector owns foldouts, update it here
+            if (foldouts == null)
+                foldouts = new Dictionary<string, VariableFoldout>();
+
+            foldouts[newVarName] = new VariableFoldout(newVarName, true);
+
             SetHeightDirty();
         }
 
@@ -375,7 +393,6 @@ namespace Unity.VisualScripting.Community
 
         public class VariableDeclarationsAdaptor : MetadataListAdaptor, IReorderableListDropTarget
         {
-            internal readonly Dictionary<string, VariableFoldout> foldouts;
             private const float FoldoutHeight = 30f;
             private const float FieldHeight = 18f;
             private const float VerticalSpacing = 4f;
@@ -386,18 +403,9 @@ namespace Unity.VisualScripting.Community
 
             public new readonly PatchedVariableDeclarationsInspector parentInspector;
 
-            public VariableDeclarationsAdaptor(Metadata metadata, PatchedVariableDeclarationsInspector parent, List<VariableFoldout> initialFoldouts)
-                : base(metadata, parent)
+            public VariableDeclarationsAdaptor(Metadata metadata, PatchedVariableDeclarationsInspector parent) : base(metadata, parent)
             {
                 parentInspector = parent;
-                foldouts = new Dictionary<string, VariableFoldout>();
-                for (int i = 0; i < initialFoldouts.Count; i++)
-                {
-                    if (metadata[i].value is VariableDeclaration decl)
-                    {
-                        foldouts[decl.name] = initialFoldouts[i];
-                    }
-                }
 
                 if (listControlFieldInfo != null)
                 {
@@ -480,10 +488,13 @@ namespace Unity.VisualScripting.Community
                 var element = metadata[index];
                 var declaration = (VariableDeclaration)element.value;
 
-                if (!foldouts.TryGetValue(declaration.name, out var foldout))
+                if (parentInspector.foldouts == null)
+                    parentInspector.foldouts = new Dictionary<string, VariableFoldout>();
+
+                if (!parentInspector.foldouts.TryGetValue(declaration.name, out var foldout))
                 {
                     foldout = new VariableFoldout(declaration.name, false);
-                    foldouts[declaration.name] = foldout;
+                    parentInspector.foldouts[declaration.name] = foldout;
                 }
 
                 if (!foldout.isExpanded)
@@ -530,10 +541,13 @@ namespace Unity.VisualScripting.Community
                 var element = metadata[index];
                 var declaration = (VariableDeclaration)element.value;
 
-                if (!foldouts.TryGetValue(declaration.name, out var foldout))
+                if (parentInspector.foldouts == null)
+                    parentInspector.foldouts = new Dictionary<string, VariableFoldout>();
+
+                if (!parentInspector.foldouts.TryGetValue(declaration.name, out var foldout))
                 {
                     foldout = new VariableFoldout(declaration.name, false);
-                    foldouts[declaration.name] = foldout;
+                    parentInspector.foldouts[declaration.name] = foldout;
                 }
 
                 float y = position.y + 2f;
@@ -552,14 +566,15 @@ namespace Unity.VisualScripting.Community
                 if (Event.current.type == EventType.MouseDown && foldoutRect.Contains(Event.current.mousePosition))
                 {
                     foldout.isExpanded = !foldout.isExpanded;
+                    parentInspector.foldouts[declaration.name] = foldout;
                     Event.current.Use();
                 }
 
                 var e = Event.current;
 
-                bool draggingObjects =
-                    DragAndDrop.objectReferences != null &&
-                    DragAndDrop.objectReferences.Length > 0;
+                bool draggingObjects = (DragAndDrop.objectReferences != null && DragAndDrop.objectReferences.Length > 0) ||
+                DragAndDrop.GetGenericData(VisualScripting.DraggedListItem.TypeName) != null ||
+                DragAndDrop.GetGenericData(DraggedDictionaryItem.TypeName) != null;
 
                 if (draggingObjects && boxRect.Contains(e.mousePosition))
                 {
@@ -568,7 +583,10 @@ namespace Unity.VisualScripting.Community
                         foldout.hoverStartTime = EditorApplication.timeSinceStartup;
 
                     if (EditorApplication.timeSinceStartup - foldout.hoverStartTime.Value > expandDelay)
+                    {
                         foldout.isExpanded = true;
+                        parentInspector.foldouts[declaration.name] = foldout;
+                    }
 
                     parentInspector.SetHeightDirty();
                     GUI.changed = true;
@@ -576,50 +594,6 @@ namespace Unity.VisualScripting.Community
                 else
                 {
                     foldout.hoverStartTime = null;
-                }
-
-                UnityEngine.Object[] dragged = DragAndDrop.objectReferences;
-
-                Type variableType =
-#if VISUAL_SCRIPTING_1_7
-                    !string.IsNullOrEmpty(declaration.typeHandle.Identification)
-                        ? Type.GetType(declaration.typeHandle.Identification)
-                        : null;
-#else
-                declaration.value != null ? declaration.value.GetType() : null;
-#endif
-
-                bool variableAcceptsObject =
-                    variableType == null ||
-                    typeof(UnityEngine.Object).IsAssignableFrom(variableType);
-
-                bool canAssignDraggedObject =
-                    draggingObjects &&
-                    variableAcceptsObject &&
-                    dragged[0] != null &&
-                    variableType.IsAssignableFrom(dragged[0].GetType());
-
-                if (boxRect.Contains(e.mousePosition) && canAssignDraggedObject)
-                {
-                    switch (e.type)
-                    {
-                        case EventType.DragUpdated:
-                            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-                            e.Use();
-                            break;
-
-                        case EventType.DragPerform:
-                            DragAndDrop.AcceptDrag();
-                            e.Use();
-
-                            foldout.isExpanded = true;
-                            parentInspector.SetHeightDirty();
-                            GUI.changed = true;
-
-                            element["value"].RecordUndo();
-                            declaration.value = dragged[0];
-                            break;
-                    }
                 }
 
                 float spacing = 4f;
@@ -706,7 +680,9 @@ namespace Unity.VisualScripting.Community
             public override void Remove(int index)
             {
                 var declaration = (VariableDeclaration)metadata[index].value;
-                foldouts.Remove(declaration.name);
+
+                parentInspector.foldouts?.Remove(declaration.name);
+
                 base.Remove(index);
                 GUIUtility.keyboardControl = 0;
                 GUIUtility.hotControl = 0;
@@ -745,11 +721,11 @@ namespace Unity.VisualScripting.Community
                     variableDeclarations.EditorRename(declaration, newName);
                     nameMetadata.value = newName;
 
-                    if (foldouts.TryGetValue(oldName, out var oldFoldout))
+                    if (parentInspector.foldouts != null && parentInspector.foldouts.TryGetValue(oldName, out var oldFoldout))
                     {
-                        foldouts.Remove(oldName);
+                        parentInspector.foldouts.Remove(oldName);
                         oldFoldout.name = newName;
-                        foldouts[newName] = oldFoldout;
+                        parentInspector.foldouts[newName] = oldFoldout;
                     }
                 }
             }
@@ -794,7 +770,10 @@ namespace Unity.VisualScripting.Community
                             if (!CanDrop(draggedItem.item))
                                 return;
 
-                            foldouts[draggedItem.variableState.Item1] = draggedItem.variableState.Item2;
+                            if (parentInspector.foldouts == null)
+                                parentInspector.foldouts = new Dictionary<string, VariableFoldout>();
+
+                            parentInspector.foldouts[draggedItem.variableState.Item1] = draggedItem.variableState.Item2;
                         }
                     }
                 }

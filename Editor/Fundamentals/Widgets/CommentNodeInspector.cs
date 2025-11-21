@@ -80,12 +80,6 @@ namespace Unity.VisualScripting.Community
         public static bool initialised = false;
 
         ///////////////////////////   Methods   /////////////////////////////////////////////
-
-        public override void Initialize()
-        {
-            base.Initialize();
-        }
-
         // Update the palette colours on change
         public static void UpdatePalette()
         {

@@ -15,8 +15,6 @@ namespace Unity.VisualScripting.Community
             public Guid copyID;
             public IUnitConnection sourceConnection;
             public IGraph graph;
-            // Store a reference incase it was not deleted so we can reset its copyID
-            public ValueReroute reroute;
         }
 
         private static List<RerouteCopyData> copyDataList = new List<RerouteCopyData>();
@@ -31,11 +29,6 @@ namespace Unity.VisualScripting.Community
                     var source = data.sourceConnection.source;
                     unit.input.ValidlyConnectTo(source);
                 }
-
-                if (data.reroute != null)
-                {
-                    data.reroute.copyID = default;
-                }
             }
 
             unit.copyID = default;
@@ -44,7 +37,7 @@ namespace Unity.VisualScripting.Community
         public override void ExpandCopyGroup(HashSet<IGraphElement> copyGroup)
         {
             var copyID = unit.guid;
-            if (!copyDataList.Any(c => c.copyID == copyID))
+            if (!copyDataList.Any(c => c.copyID == copyID) && unit.hideConnection)
             {
                 var copy = new RerouteCopyData
                 {
@@ -53,7 +46,6 @@ namespace Unity.VisualScripting.Community
                     sourceConnection = unit.input.hasValidConnection ? unit.input.connection : null
                 };
                 unit.copyID = copyID;
-
                 copyDataList.Add(copy);
             }
 
@@ -104,8 +96,8 @@ namespace Unity.VisualScripting.Community
 
         public override void CachePosition()
         {
-            var inputPort = inputs[0].port as ValueInput;
-            var outputPort = outputs[0].port;
+            var inputPort = unit.input;
+            var outputPort = unit.output;
             var inputHasConnection = inputPort.hasValidConnection;
             var outputHasConnection = outputPort.hasValidConnection;
             _position.x = unit.position.x;

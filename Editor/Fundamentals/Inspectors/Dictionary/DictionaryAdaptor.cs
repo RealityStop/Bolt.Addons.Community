@@ -126,6 +126,7 @@ namespace Unity.VisualScripting.Community
             while (foldoutStates.Count <= index)
             {
                 foldoutStates.Add(false);
+                foldoutHoverStartTimes.Add(null);
                 parentInspector.SetHeightDirty();
             }
         }
@@ -167,7 +168,7 @@ namespace Unity.VisualScripting.Community
         }
 
         private bool newItemExpanded = false;
-
+        private List<double?> foldoutHoverStartTimes = new List<double?>();
         public override void DrawItem(Rect position, int index)
         {
             EnsureFoldoutCount(index);

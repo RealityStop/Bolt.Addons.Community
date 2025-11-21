@@ -159,28 +159,48 @@ namespace Unity.VisualScripting.Community
 
         private void TryInsertReroute(FlowGraph graph, FlowCanvas canvas, IUnitPort source, IUnitPort destination)
         {
-            currentlyCreatingConnection = true;
-
-            var reroute = new ValueReroute() { hideConnection = true, SnapToGrid = BoltCore.Configuration.snapToGrid };
-            graph.units.Add(reroute);
-
-            var destinationWidget = canvas.Widget(destination);
-            var portPosition = destinationWidget.position.position;
-            reroute.position = portPosition - new Vector2(130, 4);
-
-            // If the destination widget's position seems uninitialized (0,0) we need to Cache and reposition reroute
-            if (Mathf.Approximately(portPosition.x, 0) && Mathf.Approximately(portPosition.y, 0))
+            try
             {
-                canvas.Cache();
+                currentlyCreatingConnection = true;
+                var reroute = new ValueReroute() { hideConnection = true, SnapToGrid = BoltCore.Configuration.snapToGrid };
+                graph.units.Add(reroute);
+
+                var destinationWidget = canvas.Widget(destination);
+                var destinationUnitWidget = canvas.Widget(destination.unit);
                 var rerouteWidget = canvas.Widget(reroute);
+
+                reroute.Define();
+
+                source.ValidlyConnectTo(reroute.input);
+                destination.ValidlyConnectTo(reroute.output);
+
+                canvas.CacheWidgetCollections();
+
+                destinationUnitWidget.Reposition();
                 rerouteWidget.Reposition();
-                reroute.position = destinationWidget.position.position - new Vector2(130, 4);
+                
+                reroute.input.Description<UnitPortDescription>();
+                reroute.output.Description<UnitPortDescription>();
+
+                destination.unit.Description<UnitDescription>();
+
+                foreach (var port in destination.unit.ports)
+                {
+                    port.Description<UnitPortDescription>();
+                } 
+
+                canvas.CacheWidgetPositions();
+
+                var destinationPos = destinationWidget.position;
+                var reroutePos = rerouteWidget.position;
+
+                rerouteWidget.position = new Rect(destinationPos.xMin - reroutePos.width - 35, destinationPos.position.y - 4, reroutePos.width, reroutePos.height);
+                rerouteWidget.Reposition();
             }
-
-            source.ValidlyConnectTo(reroute.input);
-            destination.ValidlyConnectTo(reroute.output);
-
-            currentlyCreatingConnection = false;
+            finally
+            {
+                currentlyCreatingConnection = false;
+            }
         }
 
         private bool HandlePanKeysWhenNoSelection(FlowGraph graph, FlowCanvas canvas)
