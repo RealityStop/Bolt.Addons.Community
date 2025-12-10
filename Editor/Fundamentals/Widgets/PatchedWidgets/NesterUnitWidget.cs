@@ -38,7 +38,6 @@ namespace Unity.VisualScripting.Community
             NodeFinderWindow.Open(SearchUtility.GetElementDisplayName(unit));
         }
 
-
         protected override void OnDoubleClick()
         {
             if (unit.graph.zoom == 1)

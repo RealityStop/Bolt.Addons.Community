@@ -42,12 +42,13 @@ namespace Unity.VisualScripting.Community
 
         public static void UpdateVerticalFlow()
         {
-            SetDefine(VERTICAL_FLOW, (GraphLayout)EditorPrefs.GetInt(ProjectSettingsProviderView.GraphLayoutKey, (int)GraphLayout.Horizontal) == GraphLayout.Vertical);
+            var set = (GraphLayout)EditorPrefs.GetInt(ProjectSettingsProviderView.GraphLayoutKey, (int)GraphLayout.Horizontal) == GraphLayout.Vertical;
+            SetDefine(VERTICAL_FLOW, set && EditorPrefs.GetBool(ProjectSettingsProviderView.UnitUIKey, false));
         }
 
         public static void UpdateUnitStyle()
         {
-            SetDefine(UNIT_STYLE, EditorPrefs.GetBool(ProjectSettingsProviderView.UnitStyleKey, false));
+            SetDefine(UNIT_STYLE, EditorPrefs.GetBool(ProjectSettingsProviderView.UnitStyleKey, false) && EditorPrefs.GetBool(ProjectSettingsProviderView.UnitUIKey, false));
         }
 
         public static void UpdateToolbarStyle()

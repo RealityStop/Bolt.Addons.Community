@@ -38,7 +38,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private string GetSceneKind(ControlGenerationData data, string variables)
         {
-            return typeof(Component).IsAssignableFrom(data.ScriptType) ? variables + ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")" : variables + "." + "Application".VariableHighlight();
+            return typeof(Component).IsAssignableFrom(data.ScriptType) ? variables + ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")" : variables + "." + "ActiveScene".VariableHighlight();
         }
 
         private void SetNamespaceBasedOnVariableKind()
@@ -49,7 +49,7 @@ namespace Unity.VisualScripting.Community.CSharp
         private string GenerateConnectedVariableCode(ControlGenerationData data)
         {
             variableType = GetVariableType(data.TryGetGraphPointer(out var graphPointer) && CanPredictConnection(Unit.name, data) ? Flow.Predict<string>(Unit.name, graphPointer.AsReference()) : "", data, true);
-            if (data.GetExpectedType().IsAssignableFrom(variableType))
+            if (data.GetExpectedType() != null && variableType != null && data.GetExpectedType().IsAssignableFrom(variableType))
                 data.SetCurrentExpectedTypeMet(true, variableType);
             else
                 data.SetCurrentExpectedTypeMet(false, variableType);

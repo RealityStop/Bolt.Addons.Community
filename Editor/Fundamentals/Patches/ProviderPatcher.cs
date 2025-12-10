@@ -41,6 +41,11 @@ namespace Unity.VisualScripting.Community
 #endif
             GraphWindow.activeContextChanged += context =>
             {
+                if (context != null && context.graph is FlowGraph)
+                {
+                    var provider = context.canvas.widgetProvider;
+                    PatchGlobalProvider(provider, typeof(UnifiedVariableUnit), typeof(UnifiedVariableUnitWidget));
+                }
 #if NEW_UNIT_UI
                 PatchUnitWidgets(context);
 #endif
@@ -53,6 +58,11 @@ namespace Unity.VisualScripting.Community
             if (current == null)
             {
                 var context = GraphWindow.activeContext;
+                if (context != null && context.graph is FlowGraph)
+                {
+                    var widgetProvider = context.canvas.widgetProvider;
+                    PatchGlobalProvider(widgetProvider, typeof(UnifiedVariableUnit), typeof(UnifiedVariableUnitWidget));
+                }
 #if NEW_UNIT_UI
                 PatchUnitWidgets(context);
 #endif
@@ -66,12 +76,11 @@ namespace Unity.VisualScripting.Community
             if (context != null && context.graph is FlowGraph)
             {
                 var provider = context.canvas.widgetProvider;
-                // No need to instance patch the provider will construct the generic type.
+
                 PatchGlobalProvider(provider, typeof(IUnit), typeof(UnitWidget<>));
                 PatchGlobalProvider(provider, typeof(SUnit), typeof(SubgraphUnitWidget));
                 PatchGlobalProvider(provider, typeof(StateUnit), typeof(StateUnitWidget));
                 PatchGlobalProvider(provider, typeof(IEventUnit), typeof(EventUnitWidget));
-                PatchGlobalProvider(provider, typeof(UnifiedVariableUnit), typeof(UnifiedVariableUnitWidget));
                 PatchGlobalProvider(provider, typeof(Literal), typeof(LiteralWidget));
 #if VISUAL_SCRIPTING_1_8_0_OR_GREATER
                 PatchGlobalProvider(provider, typeof(MissingType), typeof(MissingTypeUnitWidget));
@@ -90,7 +99,7 @@ namespace Unity.VisualScripting.Community
             if (context != null && context.graph is FlowGraph)
             {
                 var provider = context.canvas.widgetProvider;
-#if ENABLE_VERTICAL_FLOW && NEW_UNIT_UI
+#if ENABLE_VERTICAL_FLOW
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlInputWidget>(provider, typeof(ControlInput));
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlOutputWidget>(provider, typeof(ControlOutput));
 #endif
@@ -104,7 +113,7 @@ namespace Unity.VisualScripting.Community
             if (context != null && context.graph is FlowGraph)
             {
                 var provider = context.canvas.widgetProvider;
-#if ENABLE_VERTICAL_FLOW && NEW_UNIT_UI
+#if ENABLE_VERTICAL_FLOW
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ControlConnectionWidget>(provider, typeof(ControlConnection));
 #endif
                 PatchGlobalProvider<IGraphItem, IWidget, WidgetAttribute, ValueConnectionWidget>(provider, typeof(ValueConnection));

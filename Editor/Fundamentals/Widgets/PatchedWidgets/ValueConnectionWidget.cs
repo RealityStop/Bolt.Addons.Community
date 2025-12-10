@@ -190,6 +190,30 @@ namespace Unity.VisualScripting.Community
                 base.DrawConnection();
         }
 
+        public override void CachePosition()
+        {
+            base.CachePosition();
+
+            var rect = new Rect(sourceHandlePosition);
+
+            if (element.source.unit is ValueReroute srcReroute && srcReroute.hideConnection)
+            {
+                rect.width -= 5;
+            }
+            else if (element.destination.unit is ValueReroute desReroute && desReroute.hideConnection)
+            {
+                rect.width -= 5;
+            }
+            else if (element.source.connections.Any(c => c.destination.unit is ValueReroute desReroute && desReroute.hideConnection))
+            {
+                rect.width -= 5;
+            }
+            else return;
+
+            sourceHandlePosition = rect;
+            sourceHandleEdgeCenter = sourceHandlePosition.GetEdgeCenter(Edge.Right);
+        }
+
         private bool IsMouseOverConnection(Vector2 mousePos, Vector2 start, Vector2 end, float threshold = 8f)
         {
             float distance = Vector2.Distance(start, end);

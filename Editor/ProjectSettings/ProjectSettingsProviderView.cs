@@ -33,7 +33,17 @@ namespace Unity.VisualScripting.Community
         private bool _newListUI;
         private bool _newDictionaryUI;
 
-        private bool _hasPendingChanges;
+        private GraphLayout _originalGraphLayout;
+        private bool _originalUnitUI;
+        private bool _originalUnitStyle;
+        private bool _originalNewToolbar;
+        private bool _originalGraphMinimap;
+        private bool _originalDarkerUI;
+        private bool _originalNewVariablesUI;
+        private bool _originalShowVariablesQuickbar;
+        private bool _originalNewListUI;
+        private bool _originalNewDictionaryUI;
+
         private bool _isInitialized;
 
         public ProjectSettingsProviderView() : base(Path, SettingsScope.User)
@@ -70,11 +80,20 @@ namespace Unity.VisualScripting.Community
                     );
 
                     EditorPrefs.SetBool(UnitUIKey, enable);
+
                     ScriptingDefinesHandler.UpdateUnitUI();
+                    ScriptingDefinesHandler.UpdateVerticalFlow();
+                    ScriptingDefinesHandler.UpdateUnitStyle();
+
                     return enable;
                 }
+
                 EditorPrefs.SetBool(UnitUIKey, false);
+
                 ScriptingDefinesHandler.UpdateUnitUI();
+                ScriptingDefinesHandler.UpdateVerticalFlow();
+                ScriptingDefinesHandler.UpdateUnitStyle();
+
                 return true;
             });
             EditorGUI.BeginDisabledGroup(!_unitUI);
@@ -106,17 +125,32 @@ namespace Unity.VisualScripting.Community
 
         private void LoadValues()
         {
-            _unitUI = EditorPrefs.GetBool(UnitUIKey, false);
-            _graphLayout = (GraphLayout)EditorPrefs.GetInt(GraphLayoutKey, (int)GraphLayout.Horizontal);
-            _unitStyle = EditorPrefs.GetBool(UnitStyleKey, false);
-            _newToolbar = EditorPrefs.GetBool(NewToolbarKey, false);
-            _graphMinimap = EditorPrefs.GetBool(GraphMinimapKey, false);
+            _originalUnitUI = _unitUI = EditorPrefs.GetBool(UnitUIKey, false);
+            _originalGraphLayout = _graphLayout = (GraphLayout)EditorPrefs.GetInt(GraphLayoutKey, (int)GraphLayout.Horizontal);
+            _originalUnitStyle = _unitStyle = EditorPrefs.GetBool(UnitStyleKey, false);
+            _originalNewToolbar = _newToolbar = EditorPrefs.GetBool(NewToolbarKey, false);
+            _originalGraphMinimap = _graphMinimap = EditorPrefs.GetBool(GraphMinimapKey, false);
 
-            _darkerUI = EditorPrefs.GetBool(DarkerUIKey, false);
-            _newVariablesUI = EditorPrefs.GetBool(NewVariablesUIKey, false);
-            _showVariablesQuickbar = EditorPrefs.GetBool(ShowVariablesQuickbarKey, false);
-            _newListUI = EditorPrefs.GetBool(NewListUIKey, false);
-            _newDictionaryUI = EditorPrefs.GetBool(NewDictionaryUIKey, false);
+            _originalDarkerUI = _darkerUI = EditorPrefs.GetBool(DarkerUIKey, false);
+            _originalNewVariablesUI = _newVariablesUI = EditorPrefs.GetBool(NewVariablesUIKey, false);
+            _originalShowVariablesQuickbar = _showVariablesQuickbar = EditorPrefs.GetBool(ShowVariablesQuickbarKey, false);
+            _originalNewListUI = _newListUI = EditorPrefs.GetBool(NewListUIKey, false);
+            _originalNewDictionaryUI = _newDictionaryUI = EditorPrefs.GetBool(NewDictionaryUIKey, false);
+        }
+
+        private bool HasPendingChanges()
+        {
+            return
+                _unitUI != _originalUnitUI ||
+                _graphLayout != _originalGraphLayout ||
+                _unitStyle != _originalUnitStyle ||
+                _newToolbar != _originalNewToolbar ||
+                _graphMinimap != _originalGraphMinimap ||
+                _darkerUI != _originalDarkerUI ||
+                _newVariablesUI != _originalNewVariablesUI ||
+                _showVariablesQuickbar != _originalShowVariablesQuickbar ||
+                _newListUI != _originalNewListUI ||
+                _newDictionaryUI != _originalNewDictionaryUI;
         }
 
         private void DrawEnumField<T>(string label, ref T value) where T : struct
@@ -125,7 +159,6 @@ namespace Unity.VisualScripting.Community
             if (!Equals(newValue, value))
             {
                 value = newValue;
-                _hasPendingChanges = true;
             }
         }
 
@@ -135,8 +168,6 @@ namespace Unity.VisualScripting.Community
             if (newValue != value && (shouldChange?.Invoke() ?? true))
             {
                 value = newValue;
-                if (shouldChange == null)
-                    _hasPendingChanges = true;
             }
         }
 
@@ -144,7 +175,7 @@ namespace Unity.VisualScripting.Community
         {
             GUILayout.BeginHorizontal();
 
-            using (new EditorGUI.DisabledScope(!_hasPendingChanges))
+            using (new EditorGUI.DisabledScope(!HasPendingChanges()))
             {
                 if (GUILayout.Button("Apply", GUILayout.Height(18), GUILayout.Width(50)))
                 {
@@ -192,12 +223,21 @@ namespace Unity.VisualScripting.Community
             ScriptingDefinesHandler.UpdateListUI();
             ScriptingDefinesHandler.UpdateDictionaryUI();
 
-            _hasPendingChanges = false;
+            _originalUnitUI = _unitUI;
+            _originalGraphLayout = _graphLayout;
+            _originalUnitStyle = _unitStyle;
+            _originalNewToolbar = _newToolbar;
+            _originalGraphMinimap = _graphMinimap;
+
+            _originalDarkerUI = _darkerUI;
+            _originalNewVariablesUI = _newVariablesUI;
+            _originalShowVariablesQuickbar = _showVariablesQuickbar;
+            _originalNewListUI = _newListUI;
+            _originalNewDictionaryUI = _newDictionaryUI;
         }
 
         private void ResetToDefaults()
         {
-            // Default values
             _unitUI = false;
             _graphLayout = GraphLayout.Horizontal;
             _unitStyle = false;
@@ -208,8 +248,6 @@ namespace Unity.VisualScripting.Community
             _showVariablesQuickbar = false;
             _newListUI = false;
             _newDictionaryUI = false;
-
-            _hasPendingChanges = true;
         }
     }
 }

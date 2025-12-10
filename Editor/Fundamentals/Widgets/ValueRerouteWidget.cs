@@ -15,14 +15,14 @@ namespace Unity.VisualScripting.Community
             public Guid copyID;
             public IUnitConnection sourceConnection;
             public IGraph graph;
+            public ValueReroute sourceUnit;
         }
 
         private static List<RerouteCopyData> copyDataList = new List<RerouteCopyData>();
         public ValueRerouteWidget(FlowCanvas canvas, ValueReroute unit) : base(canvas, unit)
         {
             var data = copyDataList.FirstOrDefault(d => d.copyID == unit.copyID);
-
-            if (data != null)
+            if (data != null && unit.isCopying)
             {
                 if (unit.hideConnection && data.sourceConnection != null && data.graph == unit.graph)
                 {
@@ -30,7 +30,11 @@ namespace Unity.VisualScripting.Community
                     unit.input.ValidlyConnectTo(source);
                 }
             }
-
+            if (data != null && data.sourceUnit != null)
+            {
+                data.sourceUnit.isCopying = false;
+            }
+            unit.isCopying = false;
             unit.copyID = default;
         }
 
@@ -43,9 +47,11 @@ namespace Unity.VisualScripting.Community
                 {
                     copyID = copyID,
                     graph = unit.graph,
-                    sourceConnection = unit.input.hasValidConnection ? unit.input.connection : null
+                    sourceConnection = unit.input.hasValidConnection ? unit.input.connection : null,
+                    sourceUnit = unit
                 };
                 unit.copyID = copyID;
+                unit.isCopying = true;
                 copyDataList.Add(copy);
             }
 
@@ -131,6 +137,10 @@ namespace Unity.VisualScripting.Community
             else if (unit.hideConnection && inputHasConnection)
             {
                 ((UnitPortDescriptor)inputPort.Descriptor()).description.icon = ((UnitPortDescriptor)inputPort.connection.source.Descriptor()).description.icon;
+            }
+            else
+            {
+                ((UnitPortDescriptor)inputPort.Descriptor()).description.icon = null;
             }
 #endif
         }

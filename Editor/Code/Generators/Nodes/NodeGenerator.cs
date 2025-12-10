@@ -138,7 +138,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     return valueInput.connection.source.type;
                 }
             }
-            else if (IsSourceLiteral(valueInput, out var result))
+            else if (GraphUtility.IsSourceLiteral(valueInput, out var result))
             {
                 return result;
             }
@@ -169,26 +169,6 @@ namespace Unity.VisualScripting.Community.CSharp
             }
 
             return graphPointer != null;
-        }
-
-        protected bool IsSourceLiteral(ValueInput valueInput, out Type sourceType)
-        {
-            var source = valueInput.GetPesudoSource();
-            if (source != null)
-            {
-                if (source.unit is Literal literal)
-                {
-                    sourceType = literal.type;
-                    return true;
-                }
-                else if (source is ValueInput v && !v.hasValidConnection && v.hasDefaultValue)
-                {
-                    sourceType = v.type;
-                    return true;
-                }
-            }
-            sourceType = null;
-            return false;
         }
     }
 

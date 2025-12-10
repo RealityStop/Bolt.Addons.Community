@@ -23,6 +23,7 @@ namespace Unity.VisualScripting.Community
         // Used for copy-paste tracking
         // To preserve the source connection
         public Guid copyID;
+        public bool isCopying;
 
         [Inspectable]
         [InspectorLabel("Enable Portal")]

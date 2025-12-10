@@ -47,7 +47,7 @@ namespace Unity.VisualScripting.Community
 
         protected override bool snapToGrid => false;
 
-        public Rect sourceHandlePosition { get; private set; }
+        public Rect sourceHandlePosition { get; protected set; }
 
         public Rect destinationHandlePosition { get; private set; }
 

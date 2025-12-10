@@ -1478,7 +1478,7 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 var reference = parent.GetReference().AsReference();
                 if (functionUnit != null)
-                    reference = GraphTraversal.GetReferenceWithGraph(reference, functionUnit.graph) ?? reference;
+                    reference = GraphTraversal.GetChildReferenceWithGraph(reference, functionUnit.graph) ?? reference;
                 context = reference.Context();
             }
             HUMEditor.Vertical().Box(CommunityStyles.foldoutBackgroundColor, Color.black, new RectOffset(4, 4, 4, 4), new RectOffset(1, 1, 0, 1), () =>

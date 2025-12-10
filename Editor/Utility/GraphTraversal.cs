@@ -27,18 +27,20 @@ namespace Unity.VisualScripting.Community
             return nodePath;
         }
 
-        public static GraphReference GetReferenceWithGraph(GraphReference reference, IGraph graph)
+        public static GraphReference GetChildReferenceWithGraph(GraphReference reference, IGraph graph)
         {
             if (reference.graph == graph) return reference;
+            
             foreach (var element in graph.elements)
             {
                 if (element is IGraphParentElement graphParent)
                 {
-                    GetReferenceWithGraph(reference.ChildReference(graphParent, false), graph);
+                    var result = GetChildReferenceWithGraph(reference.ChildReference(graphParent, false), graph);
+                    if (result.graph == graph) return result;
                 }
             }
 
-            return null;
+            return reference;
         }
 
         public static string GetElementPath(GraphReference reference, string pathPrefix = " -> ")
@@ -191,16 +193,34 @@ namespace Unity.VisualScripting.Community
             else return $"Embed {nester.GetType().Name}";
         }
 
-
-        public static void TraverseFlowGraph(FlowGraph graph, System.Action<Unit> visit)
+        public static void TraverseGraph(IGraph graph, System.Action<Unit> visit)
         {
             if (graph == null || visit == null) return;
 
-            var visitedGraphs = new HashSet<FlowGraph>();
+            var visitedGraphs = new HashSet<IGraph>();
+            if (graph is FlowGraph flowGraph)
+                TraverseInternal(flowGraph, visit, visitedGraphs, true);
+            else if (graph is StateGraph stateGraph)
+                TraverseInternal(stateGraph, visit, visitedGraphs);
+        }
+
+        public static void TraverseFlowGraph(FlowGraph graph, System.Action<Unit> visit, bool enterStates = false)
+        {
+            if (graph == null || visit == null) return;
+
+            var visitedGraphs = new HashSet<IGraph>();
+            TraverseInternal(graph, visit, visitedGraphs, enterStates);
+        }
+
+        public static void TraverseStateGraph(StateGraph graph, System.Action<Unit> visit)
+        {
+            if (graph == null || visit == null) return;
+
+            var visitedGraphs = new HashSet<IGraph>();
             TraverseInternal(graph, visit, visitedGraphs);
         }
 
-        private static void TraverseInternal(FlowGraph graph, System.Action<Unit> visit, HashSet<FlowGraph> visitedGraphs)
+        private static void TraverseInternal(FlowGraph graph, System.Action<Unit> visit, HashSet<IGraph> visitedGraphs, bool enterStates)
         {
             if (!visitedGraphs.Add(graph))
                 return;
@@ -214,8 +234,126 @@ namespace Unity.VisualScripting.Community
                 {
                     if (subgraph.nest.graph is FlowGraph flowGraph)
                     {
-                        TraverseInternal(flowGraph, visit, visitedGraphs);
+                        TraverseInternal(flowGraph, visit, visitedGraphs, enterStates);
                     }
+                }
+                else if (enterStates && unit is StateUnit stateUnit && stateUnit.nest != null)
+                {
+                    TraverseInternal(stateUnit.nest.graph, visit, visitedGraphs);
+                }
+            }
+        }
+
+        private static void TraverseInternal(StateGraph graph, System.Action<Unit> visit, HashSet<IGraph> visitedGraphs)
+        {
+            if (!visitedGraphs.Add(graph))
+                return;
+
+            foreach (var state in graph.states)
+            {
+                if (state is INesterState nesterState && nesterState.nest != null)
+                {
+                    if (nesterState.nest.graph is FlowGraph flowGraph)
+                        TraverseInternal(flowGraph, visit, visitedGraphs, true);
+                    else if (nesterState.nest.graph is StateGraph stateGraph)
+                        TraverseInternal(stateGraph, visit, visitedGraphs);
+                }
+            }
+
+            foreach (var transition in graph.transitions)
+            {
+                if (transition is INesterStateTransition nesterStateTransition && nesterStateTransition.nest != null)
+                {
+                    if (nesterStateTransition.nest.graph is FlowGraph flowGraph)
+                        TraverseInternal(flowGraph, visit, visitedGraphs, true);
+                    else if (nesterStateTransition.nest.graph is StateGraph stateGraph)
+                        TraverseInternal(stateGraph, visit, visitedGraphs);
+                }
+            }
+        }
+
+        public static IEnumerable<Unit> RetrieveUnits(IGraph graph)
+        {
+            if (graph == null) yield break;
+
+            var visitedGraphs = new HashSet<IGraph>();
+            if (graph is FlowGraph flowGraph)
+                RetrieveInternal(flowGraph, visitedGraphs, true);
+            else if (graph is StateGraph stateGraph)
+                RetrieveInternal(stateGraph, visitedGraphs);
+        }
+
+        public static IEnumerable<Unit> RetrieveFlowGraphUnits(FlowGraph graph, bool enterStates = false)
+        {
+            if (graph == null) yield break;
+
+            var visitedGraphs = new HashSet<IGraph>();
+            RetrieveInternal(graph, visitedGraphs, enterStates);
+        }
+
+        public static IEnumerable<Unit> RetrieveStateGraphUnits(StateGraph graph)
+        {
+            if (graph == null) yield break;
+
+            var visitedGraphs = new HashSet<IGraph>();
+            RetrieveInternal(graph, visitedGraphs);
+        }
+
+        private static IEnumerable<Unit> RetrieveInternal(FlowGraph graph, HashSet<IGraph> visitedGraphs, bool enterStates)
+        {
+            if (!visitedGraphs.Add(graph))
+                yield break;
+
+            foreach (var unit in graph.units)
+            {
+                if (unit == null) continue;
+
+                yield return (Unit)unit;
+
+                if (unit is SUnit subgraph)
+                {
+                    if (subgraph.nest.graph is FlowGraph flowGraph)
+                    {
+                        foreach (var u in RetrieveInternal(flowGraph, visitedGraphs, enterStates))
+                        {
+                            yield return u;
+                        }
+                    }
+                }
+                else if (enterStates && unit is StateUnit stateUnit && stateUnit.nest != null)
+                {
+                    foreach (var u in RetrieveInternal(stateUnit.nest.graph, visitedGraphs))
+                    {
+                        yield return u;
+                    }
+                }
+            }
+        }
+
+        private static IEnumerable<Unit> RetrieveInternal(StateGraph graph, HashSet<IGraph> visitedGraphs)
+        {
+            if (!visitedGraphs.Add(graph))
+                yield break;
+
+            foreach (var state in graph.states)
+            {
+                if (state is INesterState nesterState && nesterState.nest != null)
+                {
+                    if (nesterState.nest.graph is FlowGraph flowGraph)
+                        foreach (var u in RetrieveInternal(flowGraph, visitedGraphs, true)) yield return u;
+                    else if (nesterState.nest.graph is StateGraph stateGraph)
+                        foreach (var u in RetrieveInternal(stateGraph, visitedGraphs)) yield return u;
+                }
+            }
+
+            foreach (var transition in graph.transitions)
+            {
+                if (transition is INesterStateTransition nesterStateTransition && nesterStateTransition.nest != null)
+                {
+                    if (nesterStateTransition.nest.graph is FlowGraph flowGraph)
+                        foreach (var u in RetrieveInternal(flowGraph, visitedGraphs, true)) yield return u;
+                    else if (nesterStateTransition.nest.graph is StateGraph stateGraph)
+                        foreach (var u in RetrieveInternal(stateGraph, visitedGraphs)) yield return u;
                 }
             }
         }

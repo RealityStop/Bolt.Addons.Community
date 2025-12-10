@@ -1,9 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Unity.VisualScripting.Community
 {
@@ -249,6 +252,245 @@ namespace Unity.VisualScripting.Community
         {
             public bool Canceled;
             public IGraphElement Element;
+        }
+
+        public static void UpdateAllGraphVariables(FlowGraph graph, string oldName, string newName)
+        {
+            foreach (var unit in graph.units)
+            {
+                if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == VariableKind.Graph && variableUnit.isDefined)
+                {
+                    if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
+                    {
+                        variableUnit.name.SetDefaultValue(newName);
+                    }
+                }
+            }
+        }
+
+        public static List<UnifiedVariableUnit> GetGraphVariablesRenameTargets(FlowGraph graph, string oldName)
+        {
+            List<UnifiedVariableUnit> variableUnits = new List<UnifiedVariableUnit>();
+            foreach (var unit in graph.units)
+            {
+                if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == VariableKind.Graph && variableUnit.isDefined)
+                {
+                    if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
+                    {
+                        variableUnits.Add(variableUnit);
+                    }
+                }
+            }
+            return variableUnits;
+        }
+
+        public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetObjectVariablesRenameTargets(GameObject gameObject, string oldName)
+        {
+            if (gameObject.scene != null)
+            {
+                var results = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+                foreach (var rootGameObject in gameObject.scene.GetRootGameObjects())
+                {
+                    foreach (var component in rootGameObject.GetComponentsInChildren<IMachine>(true))
+                    {
+                        results.AddRange(GetFromComponent(component));
+                    }
+                }
+                return results;
+            }
+            else if (gameObject != null)
+            {
+                var results = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+                var components = gameObject.GetComponents<IMachine>();
+
+                foreach (var component in components)
+                {
+                    results.AddRange(GetFromComponent(component));
+                }
+                return results;
+            }
+            else
+            {
+                return new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+            }
+
+            List<(UnifiedVariableUnit, UnityEngine.Object)> GetFromComponent(IMachine component)
+            {
+                if (component == null || component.GetReference() == null || component.nest == null) return new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+
+                List<(UnifiedVariableUnit, UnityEngine.Object)> variableUnits = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+
+                GraphTraversal.TraverseGraph(component.GetReference().graph, (unit) =>
+                {
+                    if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == VariableKind.Object && variableUnit.isDefined)
+                    {
+                        if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
+                        {
+                            var reference = GraphTraversal.GetChildReferenceWithGraph(component.GetReference().AsReference(), variableUnit.graph);
+                            if (Flow.CanPredict(variableUnit.@object, reference))
+                            {
+                                var value = Flow.Predict(variableUnit.@object, reference);
+                                if (value is GameObject @object)
+                                {
+                                    if (reference != null && @object == gameObject)
+                                    {
+                                        variableUnits.Add((variableUnit, reference.rootObject));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                return variableUnits;
+            }
+        }
+
+        public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetObjectVariablesRenameTargets(GraphReference reference, GameObject initialValue, string oldName)
+        {
+            if (reference == null || reference.graph == null) return new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+
+            List<(UnifiedVariableUnit, UnityEngine.Object)> variableUnits = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+
+            if (initialValue != null) variableUnits.AddRange(GetObjectVariablesRenameTargets(initialValue, oldName));
+            else
+            {
+                GraphTraversal.TraverseGraph(reference.graph, (unit) =>
+                {
+                    if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == VariableKind.Object && variableUnit.isDefined)
+                    {
+                        if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
+                        {
+                            var graphReference = GraphTraversal.GetChildReferenceWithGraph(reference, variableUnit.graph);
+                            if (Flow.CanPredict(variableUnit.@object, graphReference))
+                            {
+                                var value = Flow.Predict(variableUnit.@object, graphReference);
+                                if (value is GameObject @object)
+                                {
+                                    if (graphReference != null && @object == initialValue)
+                                    {
+                                        variableUnits.Add((variableUnit, reference.rootObject));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            return variableUnits;
+        }
+
+        public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetSceneVariablesRenameTargets(Scene scene, string oldName)
+        {
+            if (scene != null)
+            {
+                var results = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+                foreach (var rootGameObject in scene.GetRootGameObjects())
+                {
+                    foreach (var component in rootGameObject.GetComponentsInChildren<IMachine>(true))
+                    {
+                        results.AddRange(GetFromComponent(component));
+                    }
+                }
+                return results;
+            }
+            else
+            {
+                return new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+            }
+
+            List<(UnifiedVariableUnit, UnityEngine.Object)> GetFromComponent(IMachine component)
+            {
+                if (component == null || component.GetReference() == null || component.nest == null) return new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+
+                List<(UnifiedVariableUnit, UnityEngine.Object)> variableUnits = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+
+                GraphTraversal.TraverseGraph(component.GetReference().graph, (unit) =>
+                {
+                    if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == VariableKind.Scene && variableUnit.isDefined)
+                    {
+                        if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
+                        {
+                            variableUnits.Add((variableUnit, component.GetReference().rootObject));
+                        }
+                    }
+                });
+
+                return variableUnits;
+            }
+        }
+
+        public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetSceneVariablesRenameTargets(GraphReference reference, Scene? scene, string oldName)
+        {
+            if (reference == null || reference.graph == null) return new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+
+            List<(UnifiedVariableUnit, UnityEngine.Object)> variableUnits = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+
+            if (scene != null) variableUnits.AddRange(GetSceneVariablesRenameTargets(scene.Value, oldName));
+            else
+            {
+                GraphTraversal.TraverseGraph(reference.graph, (unit) =>
+                {
+                    if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == VariableKind.Scene && variableUnit.isDefined)
+                    {
+                        if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
+                        {
+                            variableUnits.Add((variableUnit, reference.rootObject));
+                        }
+                    }
+                });
+            }
+
+            return variableUnits;
+        }
+
+        public static bool IsSourceLiteral(ValueInput valueInput, out Type sourceType)
+        {
+            var source = CSharp.NodeGeneration.GetPesudoSource(valueInput);
+            if (source != null)
+            {
+                if (source.unit is Literal literal)
+                {
+                    sourceType = literal.type;
+                    return true;
+                }
+                else if (source is ValueInput v && !v.hasValidConnection && v.hasDefaultValue)
+                {
+                    sourceType = v.type;
+                    return true;
+                }
+            }
+            sourceType = null;
+            return false;
+        }
+
+        public static void UpdateAllObjectVariables(GameObject gameObject, string oldName, string newName)
+        {
+            var group = Undo.GetCurrentGroup();
+            foreach (var target in GetObjectVariablesRenameTargets(gameObject, oldName))
+            {
+                if (target.Item1.name.hasValidConnection) continue;
+
+                Undo.RecordObject(target.Item2, $"Renamed '{oldName}' variable to '{newName}'");
+
+                target.Item1.name.SetDefaultValue(newName);
+            }
+            Undo.CollapseUndoOperations(group);
+        }
+
+        public static void UpdateAllSceneVariables(Scene scene, string oldName, string newName)
+        {
+            var group = Undo.GetCurrentGroup();
+            foreach (var target in GetSceneVariablesRenameTargets(scene, oldName))
+            {
+                if (target.Item1.name.hasValidConnection) continue;
+
+                Undo.RecordObject(target.Item2, $"Renamed '{oldName}' variable to '{newName}'");
+
+                target.Item1.name.SetDefaultValue(newName);
+            }
+            Undo.CollapseUndoOperations(group);
         }
     }
 }

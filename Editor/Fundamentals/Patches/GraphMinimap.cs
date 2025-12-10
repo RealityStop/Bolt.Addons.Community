@@ -97,7 +97,15 @@ namespace Unity.VisualScripting.Community
 
             foreach (var window in tabs)
             {
-                if (window == null && window.context == null && window.reference == null) continue;
+                if (window == null) continue;
+
+                if ((window.reference == null || window.context == null) && instances.TryGetValue(window, out var result))
+                {
+                    Cleanup();
+                    result.container?.RemoveFromHierarchy();
+                    instances.Remove(window);
+                    continue;
+                }
 
                 if (!instances.TryGetValue(window, out var instance))
                 {
@@ -346,7 +354,7 @@ namespace Unity.VisualScripting.Community
 
         private static void CleanupUnusedPrefs()
         {
-            var activeRefs = new HashSet<string>(instances.Values.Where(i => i.window != null).Select(i => i.window.reference.ToString()));
+            var activeRefs = new HashSet<string>(instances.Values.Where(i => i.window != null && i.window.reference != null).Select(i => i.window.reference.ToString()));
             var minimized = GraphMiniMapStorage.Settings.minimized;
 
             var toRemove = minimized.Keys.Where(k => !activeRefs.Contains(k)).ToList();

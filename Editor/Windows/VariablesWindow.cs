@@ -1,14 +1,10 @@
-using System;
 using UnityEditor;
 using UnityEngine;
-using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
     public class VariablesWindow : SidebarPanelWindow<VariablesPanel>
     {
-        private bool needsOpen;
-
         protected override GUIContent defaultTitleContent => new GUIContent("Variables", BoltCore.Icons.variablesWindow?[IconSize.Small]);
 
         [MenuItem("Window/Community Addons/Variables Window")]
@@ -22,14 +18,15 @@ namespace Unity.VisualScripting.Community
         {
             base.OnEnable();
             GraphWindow.activeContextChanged += OnContextChanged;
-
+            
             if (GraphWindow.activeContext != null)
             {
                 panel = new VariablesPanel(GraphWindow.activeContext);
-                needsOpen = false;
             }
             else
-                needsOpen = true;
+            {
+                panel = new VariablesPanel(null);
+            }
         }
 
         protected override void OnDisable()
@@ -45,7 +42,7 @@ namespace Unity.VisualScripting.Community
                 Repaint();
             }
             else
-                panel = null;
+                panel = new VariablesPanel(null);
         }
 
         protected override void OnGUI()
@@ -55,28 +52,9 @@ namespace Unity.VisualScripting.Community
             if (BoltCore.instance != null && !EditorApplication.isCompiling)
                 EditorGUI.DrawRect(new Rect(0, 0, position.width, position.height), CommunityStyles.backgroundColor);
 #endif
-            if (GraphWindow.tabs.Count() > 0 && needsOpen)
-            {
-                try
-                {
-                    var tab = GraphWindow.tabs.First();
-                    if (tab.reference != null)
-                    {
-                        panel = new VariablesPanel(tab.reference.Context());
-                        needsOpen = false;
-                    }
-                }
-                catch (InvalidOperationException) { }
-            }
 
-            if (needsOpen)
-            {
-                EditorGUILayout.HelpBox("Open a Graph to display it's variables.", MessageType.Info);
-                return;
-            }
+            if (panel?.context?.reference?.serializedObject.IsUnityNull() ?? false) return;
 
-            if (panel?.context?.reference?.serializedObject.IsUnityNull() ?? true) return;
-            
             base.OnGUI();
         }
     }

@@ -124,7 +124,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private string GetSceneKind(ControlGenerationData data, string variables)
         {
-            return typeof(Component).IsAssignableFrom(data.ScriptType) ? variables + ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")" : variables + "." + "Application".VariableHighlight();
+            return typeof(Component).IsAssignableFrom(data.ScriptType) ? variables + ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")" : variables + "." + "ActiveScene".VariableHighlight();
         }
 
         private string GetCode(string kind, int indent, ControlGenerationData data)

@@ -112,6 +112,8 @@ namespace Unity.VisualScripting.Community
         private List<double?> foldoutHoverStartTimes = new List<double?>();
         public override void DrawItem(Rect position, int index)
         {
+            if (!foldoutHoverStartTimes.Contains(index)) foldoutHoverStartTimes.Add(null);
+            
             position.x -= 20;
             position.width += 20;
             var element = metadata[index];
@@ -171,18 +173,18 @@ namespace Unity.VisualScripting.Community
 
             var e = Event.current;
 
-            bool draggingObjects = (DragAndDrop.objectReferences != null && DragAndDrop.objectReferences.Length > 0) || 
-            DragAndDrop.GetGenericData(VisualScripting.DraggedListItem.TypeName) != null || 
+            bool draggingObjects = (DragAndDrop.objectReferences != null && DragAndDrop.objectReferences.Length > 0) ||
+            DragAndDrop.GetGenericData(VisualScripting.DraggedListItem.TypeName) != null ||
             DragAndDrop.GetGenericData(DraggedDictionaryItem.TypeName) != null;
 
-            if (draggingObjects && boxRect.Contains(e.mousePosition))
+            if (e != null && draggingObjects && e.type == EventType.MouseDrag && e.button == (int)MouseButton.Left && boxRect.Contains(e.mousePosition))
             {
                 const float expandDelay = 0.35f;
                 if (!foldoutHoverStartTimes[index].HasValue)
                     foldoutHoverStartTimes[index] = EditorApplication.timeSinceStartup;
 
                 if (EditorApplication.timeSinceStartup - foldoutHoverStartTimes[index].Value > expandDelay)
-                foldoutStates[index] = true;
+                    foldoutStates[index] = true;
 
                 parentInspector.SetHeightDirty();
                 GUI.changed = true;

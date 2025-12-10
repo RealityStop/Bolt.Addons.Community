@@ -1,4 +1,4 @@
-﻿#if ENABLE_VERTICAL_FLOW && NEW_UNIT_UI
+﻿#if ENABLE_VERTICAL_FLOW
 using UnityEditor;
 using UnityEngine;
 

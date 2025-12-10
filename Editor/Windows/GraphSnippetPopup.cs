@@ -57,7 +57,7 @@ namespace Unity.VisualScripting.Community
         public override void OnGUI(Rect rect)
         {
             HUMEditor.Vertical().Box(
-                HUMEditorColor.DefaultEditorBackground.Darken(0.15f),
+                CommunityStyles.backgroundColor,
                 Color.black,
                 new RectOffset(4, 4, 4, 4),
                 new RectOffset(1, 1, 1, 1),
@@ -95,13 +95,13 @@ namespace Unity.VisualScripting.Community
             foldoutStates[key] = HUMEditor.Foldout(
                 isOpen,
                 new GUIContent(foldoutLabel),
-                HUMEditorColor.DefaultEditorBackground.Darken(0.15f),
+                CommunityStyles.foldoutHeaderColor,
                 Color.black,
                 1,
                 () =>
                 {
                     HUMEditor.Vertical().Box(
-                        HUMEditorColor.DefaultEditorBackground.Darken(0.15f),
+                        CommunityStyles.foldoutBackgroundColor,
                         Color.black,
                         new RectOffset(4, 4, 4, 4),
                         new RectOffset(1, 1, 0, 1),

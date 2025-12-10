@@ -7,11 +7,11 @@ namespace Unity.VisualScripting.Community
     {
         public ResetVariablesUnitWidget(FlowCanvas canvas, ResetSavedVariables unit) : base(canvas, unit)
         {
-            nameInspectorConstructor = (metadata) => new VariableNameInspector(metadata, GetNameSuggestions);
+            nameInspectorConstructor = (metadata) => new VisualScripting.VariableNameInspector(metadata, GetNameSuggestions);
         }
     
-        private readonly Dictionary<IUnitPort, VariableNameInspector> inspectorCache = new Dictionary<IUnitPort, VariableNameInspector>();
-        private readonly System.Func<Metadata, VariableNameInspector> nameInspectorConstructor;
+        private readonly Dictionary<IUnitPort, VisualScripting.VariableNameInspector> inspectorCache = new Dictionary<IUnitPort, VisualScripting.VariableNameInspector>();
+        private readonly System.Func<Metadata, VisualScripting.VariableNameInspector> nameInspectorConstructor;
     
         protected override NodeColorMix baseColor => NodeColorMix.TealReadable;
     
@@ -21,7 +21,7 @@ namespace Unity.VisualScripting.Community
             {
                 if (!inspectorCache.TryGetValue(port, out var inspector))
                 {
-                    inspector = new VariableNameInspector(metadata, GetNameSuggestions);
+                    inspector = new VisualScripting.VariableNameInspector(metadata, GetNameSuggestions);
                     inspectorCache[port] = inspector;
                 }
                 else

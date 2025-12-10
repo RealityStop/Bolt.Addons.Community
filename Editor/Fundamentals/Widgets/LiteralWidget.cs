@@ -1,4 +1,4 @@
-#if ENABLE_VERTICAL_FLOW && NEW_UNIT_UI
+#if ENABLE_VERTICAL_FLOW
 using UnityEditor;
 using UnityEngine;
 using System.Linq;
@@ -28,7 +28,7 @@ namespace Unity.VisualScripting.Community
             base.BeforeFrame();
             if (showHeaderAddon &&
                 (GetHeaderAddonWidth() != headerAddonPosition.width ||
-                 GetHeaderAddonHeight(headerAddonPosition.width) != headerAddonPosition.height))
+                GetHeaderAddonHeight(headerAddonPosition.width) != headerAddonPosition.height))
             {
                 Reposition();
             }

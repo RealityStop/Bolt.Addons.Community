@@ -12,11 +12,11 @@ namespace Unity.VisualScripting.Community
 
         public OnVariableChangedWidget(FlowCanvas canvas, OnVariableChanged unit) : base(canvas, unit)
         {
-            nameInspectorConstructor = (metadata) => new VariableNameInspector(metadata, GetNameSuggestions);
+            nameInspectorConstructor = (metadata) => new VisualScripting.VariableNameInspector(metadata, GetNameSuggestions);
         }
 
-        private VariableNameInspector nameInspector;
-        private Func<Metadata, VariableNameInspector> nameInspectorConstructor;
+        private VisualScripting.VariableNameInspector nameInspector;
+        private Func<Metadata, VisualScripting.VariableNameInspector> nameInspectorConstructor;
 
         public override Inspector GetPortInspector(IUnitPort port, Metadata metadata)
         {

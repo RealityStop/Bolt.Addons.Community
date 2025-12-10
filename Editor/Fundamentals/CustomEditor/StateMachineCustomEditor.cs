@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    [CustomEditor(typeof(ScriptMachine))]
-    public class ScriptMachineCustomEditor : Editor
+    [CustomEditor(typeof(StateMachine))]
+    public class StateMachineCustomEditor : Editor
     {
         private Metadata metadata;
 

@@ -6,6 +6,7 @@ using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.ReorderableList;
 using Unity.VisualScripting.ReorderableList.Internal;
+using UnityEngine.SceneManagement;
 
 namespace Unity.VisualScripting.Community
 {
@@ -14,7 +15,7 @@ namespace Unity.VisualScripting.Community
         private VariableDeclarationsAdaptor adaptor;
         private string newName;
 
-        internal Dictionary<string, VariableFoldout> foldouts;
+        internal Dictionary<VariableDeclaration, VariableFoldout> foldouts;
 
         public PatchedVariableDeclarationsInspector(Metadata metadata) : base(metadata)
         {
@@ -31,20 +32,20 @@ namespace Unity.VisualScripting.Community
 
             var collection = metadata["collection"];
 
-            var fresh = new Dictionary<string, VariableFoldout>();
+            var fresh = new Dictionary<VariableDeclaration, VariableFoldout>();
 
-            foldouts ??= new Dictionary<string, VariableFoldout>();
+            foldouts ??= new Dictionary<VariableDeclaration, VariableFoldout>();
 
             foreach (var declaration in variableDecls)
             {
-                if (foldouts.TryGetValue(declaration.name, out var existing))
+                if (foldouts.TryGetValue(declaration, out var existing))
                 {
                     existing.name = declaration.name;
-                    fresh[declaration.name] = existing;
+                    fresh[declaration] = existing;
                 }
                 else
                 {
-                    fresh[declaration.name] = new VariableFoldout(declaration.name, false);
+                    fresh[declaration] = new VariableFoldout(declaration.name, false);
                 }
             }
             foldouts = fresh;
@@ -62,13 +63,14 @@ namespace Unity.VisualScripting.Community
         {
             if (metadata.value == null)
                 return;
+
+            position.x = 0;
             if (metadata.parent.definedType == typeof(VisualScripting.Variables))
             {
-                position.x = 0;
-                position.width += LudiqGUIUtility.scrollBarWidth;
+                position.width = LudiqGUIUtility.currentInspectorWidthWithoutScrollbar;
             }
 
-            if (EditorPrefs.GetBool(ProjectSettingsProviderView.ShowVariablesQuickbarKey, false))
+            if (EditorPrefs.GetBool(ProjectSettingsProviderView.ShowVariablesQuickbarKey, false) && !metadata.HasAttribute<HideVariablesQuickbarAttribute>())
             {
                 DrawQuickAddToolbar(position);
 
@@ -81,8 +83,10 @@ namespace Unity.VisualScripting.Community
             // Restore color after tinting add button 
             GUI.backgroundColor = normal;
 
-            position.x = 0;
-            position.width = LudiqGUIUtility.currentInspectorWidthWithoutScrollbar;
+            if (metadata.parent.definedType != typeof(VisualScripting.Variables))
+            {
+                position.width -= 1;
+            }
 
             var newNamePosition = new Rect(position.x, position.yMax - 20, position.width - Styles.addButtonWidth, 18);
 
@@ -324,11 +328,10 @@ namespace Unity.VisualScripting.Community
 
             metadata.RecordUndo();
 
-            // Inspector owns foldouts, update it here
             if (foldouts == null)
-                foldouts = new Dictionary<string, VariableFoldout>();
+                foldouts = new Dictionary<VariableDeclaration, VariableFoldout>();
 
-            foldouts[newVarName] = new VariableFoldout(newVarName, true);
+            foldouts[newVar] = new VariableFoldout(newVarName, true);
 
             SetHeightDirty();
         }
@@ -388,7 +391,7 @@ namespace Unity.VisualScripting.Community
 
         protected override float GetHeight(float width, GUIContent label)
         {
-            return adaptor.GetHeight(width, label) + (ButtonHeight * 2) + ButtonSpacingY + (ToolbarPadding * 2);
+            return adaptor.GetHeight(width, label) + (EditorPrefs.GetBool(ProjectSettingsProviderView.ShowVariablesQuickbarKey, false) && !metadata.HasAttribute<HideVariablesQuickbarAttribute>() ? (ButtonHeight * 2) + ButtonSpacingY + (ToolbarPadding * 2) : 0);
         }
 
         public class VariableDeclarationsAdaptor : MetadataListAdaptor, IReorderableListDropTarget
@@ -419,6 +422,7 @@ namespace Unity.VisualScripting.Community
                         listControl.HorizontalLineAtEnd = true;
                     }
                 }
+
                 alwaysDragAndDrop = true;
             }
 
@@ -453,8 +457,6 @@ namespace Unity.VisualScripting.Community
                     _tintApplied = false;
                 }
 
-                // Ensure that the value is initialized
-
                 if (initialized)
                 {
                     return;
@@ -468,7 +470,8 @@ namespace Unity.VisualScripting.Community
                     var valueMetadata = element["value"];
 
                     var inspector = valueMetadata.Inspector();
-                    inspector.Draw(new Rect(0, 0, 0, 0), GUIContent.none);
+                    var valueInspector = typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(inspector);
+                    valueInspector.GetType().GetMethod("ResolveType", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(valueInspector, Array.Empty<object>());
                 }
             }
 
@@ -489,12 +492,12 @@ namespace Unity.VisualScripting.Community
                 var declaration = (VariableDeclaration)element.value;
 
                 if (parentInspector.foldouts == null)
-                    parentInspector.foldouts = new Dictionary<string, VariableFoldout>();
+                    parentInspector.foldouts = new Dictionary<VariableDeclaration, VariableFoldout>();
 
-                if (!parentInspector.foldouts.TryGetValue(declaration.name, out var foldout))
+                if (!parentInspector.foldouts.TryGetValue(declaration, out var foldout))
                 {
                     foldout = new VariableFoldout(declaration.name, false);
-                    parentInspector.foldouts[declaration.name] = foldout;
+                    parentInspector.foldouts[declaration] = foldout;
                 }
 
                 if (!foldout.isExpanded)
@@ -526,7 +529,7 @@ namespace Unity.VisualScripting.Community
                 });
                 Handles.color = restoredColor;
             }
-
+            private HashSet<Inspector> updatedInspectors = new HashSet<Inspector>();
             public override void DrawItem(Rect position, int index)
             {
                 position.x -= 20;
@@ -542,12 +545,12 @@ namespace Unity.VisualScripting.Community
                 var declaration = (VariableDeclaration)element.value;
 
                 if (parentInspector.foldouts == null)
-                    parentInspector.foldouts = new Dictionary<string, VariableFoldout>();
+                    parentInspector.foldouts = new Dictionary<VariableDeclaration, VariableFoldout>();
 
-                if (!parentInspector.foldouts.TryGetValue(declaration.name, out var foldout))
+                if (!parentInspector.foldouts.TryGetValue(declaration, out var foldout))
                 {
                     foldout = new VariableFoldout(declaration.name, false);
-                    parentInspector.foldouts[declaration.name] = foldout;
+                    parentInspector.foldouts[declaration] = foldout;
                 }
 
                 float y = position.y + 2f;
@@ -566,7 +569,7 @@ namespace Unity.VisualScripting.Community
                 if (Event.current.type == EventType.MouseDown && foldoutRect.Contains(Event.current.mousePosition))
                 {
                     foldout.isExpanded = !foldout.isExpanded;
-                    parentInspector.foldouts[declaration.name] = foldout;
+                    parentInspector.foldouts[declaration] = foldout;
                     Event.current.Use();
                 }
 
@@ -576,7 +579,7 @@ namespace Unity.VisualScripting.Community
                 DragAndDrop.GetGenericData(VisualScripting.DraggedListItem.TypeName) != null ||
                 DragAndDrop.GetGenericData(DraggedDictionaryItem.TypeName) != null;
 
-                if (draggingObjects && boxRect.Contains(e.mousePosition))
+                if (e != null && draggingObjects && e.type == EventType.MouseDrag && e.button == (int)MouseButton.Left && boxRect.Contains(e.mousePosition))
                 {
                     const float expandDelay = 0.35f;
                     if (!foldout.hoverStartTime.HasValue)
@@ -585,7 +588,7 @@ namespace Unity.VisualScripting.Community
                     if (EditorApplication.timeSinceStartup - foldout.hoverStartTime.Value > expandDelay)
                     {
                         foldout.isExpanded = true;
-                        parentInspector.foldouts[declaration.name] = foldout;
+                        parentInspector.foldouts[declaration] = foldout;
                     }
 
                     parentInspector.SetHeightDirty();
@@ -610,6 +613,10 @@ namespace Unity.VisualScripting.Community
                 using (adaptiveWidth.Override(true)) // Hide the Type label
                 {
                     var typeInspector = element["typeHandle"].Inspector();
+                    if (updatedInspectors.Add(typeInspector) && parentInspector.metadata.HasAttribute<TypeFilter>())
+                    {
+                        typeof(TypeHandleInspector).GetProperty("typeFilter", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(typeInspector, parentInspector.metadata.GetAttribute<TypeFilter>());
+                    }
                     typeInspector.Draw(typeRect, GUIContent.none);
                 }
 
@@ -668,7 +675,7 @@ namespace Unity.VisualScripting.Community
                             DragAndDrop.paths = new string[0];
                             DragAndDrop.SetGenericData(
                                 VisualScripting.DraggedListItem.TypeName,
-                                new DraggedListItem(list, index, item, (declaration.name, foldout))
+                                new DraggedListItem(list, index, item, (declaration, foldout))
                             );
                             DragAndDrop.StartDrag(metadata.path);
                             e.Use();
@@ -681,7 +688,7 @@ namespace Unity.VisualScripting.Community
             {
                 var declaration = (VariableDeclaration)metadata[index].value;
 
-                parentInspector.foldouts?.Remove(declaration.name);
+                parentInspector.foldouts?.Remove(declaration);
 
                 base.Remove(index);
                 GUIUtility.keyboardControl = 0;
@@ -697,6 +704,7 @@ namespace Unity.VisualScripting.Community
 #if DARKER_UI
                 GUI.backgroundColor = EditorGUIUtility.isProSkin ? restoreColor.Darken(0.25f) : restoreColor;
 #endif
+                var oldName = (string)nameMetadata.value;
                 var newName = EditorGUI.DelayedTextField(namePosition, (string)nameMetadata.value, new GUIStyle(EditorStyles.textField) { fontStyle = FontStyle.Bold });
                 GUI.backgroundColor = restoreColor;
 
@@ -704,7 +712,6 @@ namespace Unity.VisualScripting.Community
                 {
                     var variableDeclarations = (VariableDeclarationCollection)metadata.value;
                     var declaration = (VariableDeclaration)nameMetadata.parent.value;
-                    var oldName = declaration.name;
 
                     if (StringUtility.IsNullOrWhiteSpace(newName))
                     {
@@ -718,14 +725,110 @@ namespace Unity.VisualScripting.Community
                     }
 
                     nameMetadata.RecordUndo();
+                    if (parentInspector.kind == VariableKind.Scene)
+                    {
+                        if (GraphWindow.activeReference.scene != null)
+                            Undo.RecordObject(SceneVariables.Instance(GraphWindow.activeReference.scene.Value).variables, "Changed Scene variable name");
+                        else
+                        {
+                            Scene? current = null;
+                            for (int i = 0; i < SceneManager.sceneCount; i++)
+                            {
+                                var scene = SceneManager.GetSceneAt(i);
+                                if (!scene.isLoaded) continue;
+
+                                var variables = VisualScripting.Variables.Scene(scene);
+
+                                if (variables == metadata.parent.value)
+                                {
+                                    current = scene;
+                                    break;
+                                }
+                            }
+
+                            if (current != null)
+                            {
+                                Undo.RecordObject(SceneVariables.Instance(current.Value).variables, "Changed Scene variable name");
+                            }
+                        }
+                    }
                     variableDeclarations.EditorRename(declaration, newName);
                     nameMetadata.value = newName;
 
-                    if (parentInspector.foldouts != null && parentInspector.foldouts.TryGetValue(oldName, out var oldFoldout))
+                    // Todo: Add App and Saved variable rename functionality
+                    switch (parentInspector.kind)
                     {
-                        parentInspector.foldouts.Remove(oldName);
-                        oldFoldout.name = newName;
-                        parentInspector.foldouts[newName] = oldFoldout;
+                        case VariableKind.Graph:
+                            if (EditorWindow.focusedWindow == GraphWindow.active)
+                                GraphUtility.UpdateAllGraphVariables((FlowGraph)GraphWindow.activeContext.graph, oldName, newName);
+                            break;
+                        case VariableKind.Object:
+                            {
+                                var ancestor = metadata.Ancestor(m => m.value is VisualScripting.Variables);
+                                if (ancestor != null && ancestor.value != null)
+                                {
+                                    var gameObject = (ancestor.value as VisualScripting.Variables).gameObject;
+                                    GraphUtility.UpdateAllObjectVariables(gameObject, oldName, newName);
+                                }
+                                else if (EditorWindow.focusedWindow == GraphWindow.active && GraphWindow.activeReference != null)
+                                {
+                                    if (GraphWindow.activeReference.gameObject != null)
+                                        GraphUtility.UpdateAllObjectVariables(GraphWindow.activeReference.gameObject, oldName, newName);
+                                }
+                            }
+                            break;
+                        case VariableKind.Scene:
+                            {
+                                var ancestor = metadata.Ancestor(m => m.value is VisualScripting.Variables);
+                                if (ancestor != null && ancestor.value != null)
+                                {
+                                    var scene = (ancestor.value as VisualScripting.Variables).gameObject.scene;
+                                    GraphUtility.UpdateAllSceneVariables(scene, oldName, newName);
+                                }
+                                else if (EditorWindow.focusedWindow == GraphWindow.active && GraphWindow.activeReference != null)
+                                {
+                                    if (GraphWindow.activeReference.scene != null)
+                                        GraphUtility.UpdateAllSceneVariables(GraphWindow.activeReference.scene.Value, oldName, newName);
+                                    else
+                                    {
+                                        Scene? current = null;
+                                        for (int i = 0; i < SceneManager.sceneCount; i++)
+                                        {
+                                            var scene = SceneManager.GetSceneAt(i);
+                                            if (!scene.isLoaded) continue;
+
+                                            var variables = VisualScripting.Variables.Scene(scene);
+
+                                            if (variables == metadata.parent.value)
+                                            {
+                                                current = scene;
+                                                break;
+                                            }
+                                        }
+
+                                        if (current == null)
+                                        {
+                                            Debug.LogWarning(
+                                                $"[Rename Variables] Could not find the scene that this variable is in please ensure that the scene is valid and loaded."
+                                            );
+                                            break;
+                                        }
+
+                                        GraphUtility.UpdateAllSceneVariables(current.Value, oldName, newName);
+                                        var group = Undo.GetCurrentGroup();
+                                        foreach (var target in GraphUtility.GetSceneVariablesRenameTargets(GraphWindow.activeReference, null, oldName))
+                                        {
+                                            if (target.Item1.name.hasValidConnection) continue;
+
+                                            Undo.RecordObject(target.Item2, $"Renamed '{oldName}' variable to '{newName}'");
+
+                                            target.Item1.name.SetDefaultValue(newName);
+                                        }
+                                        Undo.CollapseUndoOperations(group);
+                                    }
+                                }
+                            }
+                            break;
                     }
                 }
             }
@@ -771,7 +874,7 @@ namespace Unity.VisualScripting.Community
                                 return;
 
                             if (parentInspector.foldouts == null)
-                                parentInspector.foldouts = new Dictionary<string, VariableFoldout>();
+                                parentInspector.foldouts = new Dictionary<VariableDeclaration, VariableFoldout>();
 
                             parentInspector.foldouts[draggedItem.variableState.Item1] = draggedItem.variableState.Item2;
                         }

@@ -10,14 +10,14 @@ namespace Unity.VisualScripting.Community
             this.foldoutState = foldoutState;
         }
 
-        public DraggedListItem(MetadataListAdaptor sourceListAdaptor, int index, object item, (string, VariableFoldout) variableState) : base(sourceListAdaptor, index, item)
+        public DraggedListItem(MetadataListAdaptor sourceListAdaptor, int index, object item, (VariableDeclaration, VariableFoldout) variableState) : base(sourceListAdaptor, index, item)
         {
             this.variableState = variableState;
         }
 
         public readonly bool foldoutState;
 
-        public readonly (string, VariableFoldout) variableState;
+        public readonly (VariableDeclaration, VariableFoldout) variableState;
     }
 
     public class DraggedDictionaryItem
