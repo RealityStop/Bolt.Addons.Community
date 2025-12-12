@@ -17,6 +17,7 @@ namespace Unity.VisualScripting.Community
         private MethodInfo setNameMethod = typeof(VariableDeclaration).GetProperty("name", BindingFlags.Instance | BindingFlags.Public).GetSetMethod(true);
 
         private VariableDeclarationCollection collection;
+        private VariableDeclarationCollection savedCollection;
         private GameObject storedObject;
 
         private static UnifiedVariableUnit closestToMouse;
@@ -49,9 +50,21 @@ namespace Unity.VisualScripting.Community
                     if (collection == null && reference.scene != null)
                         collection = (VariableDeclarationCollection)collectionField.GetValue(VisualScripting.Variables.Scene(reference.scene));
                     break;
+                case VariableKind.Application:
+                    if (collection == null)
+                        collection = (VariableDeclarationCollection)collectionField.GetValue(VisualScripting.Variables.Application);
+                    break;
+                case VariableKind.Saved:
+                    if (collection == null)
+                        collection = (VariableDeclarationCollection)collectionField.GetValue(VisualScripting.Variables.Saved);
+                    if (savedCollection == null)
+                        savedCollection = (VariableDeclarationCollection)collectionField.GetValue(SavedVariables.saved);
+                    break;
             }
         }
 
+        private string newProjectName;
+        private string oldProjectName;
         public UnifiedVariableUnitWidget(FlowCanvas canvas, UnifiedVariableUnit unit) : base(canvas, unit)
         {
             controlName = unit.ToString() + "_VariableNameInspector";
@@ -108,6 +121,54 @@ namespace Unity.VisualScripting.Community
                                     collection.EditorRename(declaration, newName);
                                     setNameMethod.Invoke(declaration, new object[] { newName });
                                 }
+                            }
+                            break;
+                        case VariableKind.Application:
+                            {
+                                var declarations = VisualScripting.Variables.Application;
+
+                                if (declarations.IsDefined(oldName))
+                                {
+                                    var declaration = declarations.GetDeclaration(oldName);
+
+                                    newName = OperateOnString(declarations, newName);
+
+                                    collection.EditorRename(declaration, newName);
+                                    setNameMethod.Invoke(declaration, new object[] { newName });
+                                }
+
+                                newProjectName = newName;
+                            }
+                            break;
+                        case VariableKind.Saved:
+                            {
+                                var mainDeclarations = VisualScripting.Variables.Saved;
+
+                                if (mainDeclarations.IsDefined(oldName))
+                                {
+                                    var declaration = mainDeclarations.GetDeclaration(oldName);
+
+                                    newName = OperateOnString(mainDeclarations, newName);
+
+                                    collection.EditorRename(declaration, newName);
+                                    setNameMethod.Invoke(declaration, new object[] { newName });
+                                }
+
+                                if (!Application.isPlaying)
+                                {
+                                    var saved = SavedVariables.saved;
+                                    if (saved.IsDefined(oldName))
+                                    {
+                                        var declaration = saved.GetDeclaration(oldName);
+
+                                        newName = OperateOnString(saved, newName);
+
+                                        savedCollection.EditorRename(declaration, newName);
+                                        setNameMethod.Invoke(declaration, new object[] { newName });
+                                    }
+                                }
+
+                                newProjectName = newName;
                             }
                             break;
                     }
@@ -228,7 +289,17 @@ namespace Unity.VisualScripting.Community
                             isRenaming = true;
                         }
                         break;
-                    default: Debug.LogWarning("[Rename Variables] renaming variables currently only works for Flow, Graph, Object and Scene variables."); break;
+                    default:
+                        if (Application.isPlaying)
+                        {
+                            Debug.LogWarning($"[Rename Variables] Cannot rename all {unit.kind} variables while in play mode!");
+                            break;
+                        }
+                        isRenaming = true;
+                        renameTargets = GraphUtility.GetCurrentlyAccessibleProjectUnits(unit.defaultValues[unit.name.key] as string, unit.kind);
+                        targets = renameTargets.Select(t => t.Item1).ToList();
+                        oldProjectName = unit.defaultValues[unit.name.key] as string;
+                        break;
                 }
             }
             else if (isRenaming && (!selection.Contains(unit) ||
@@ -237,6 +308,45 @@ namespace Unity.VisualScripting.Community
             {
                 isRenaming = false;
                 targets.Clear();
+                switch (unit.kind)
+                {
+                    case VariableKind.Application:
+                        {
+                            bool choice = oldProjectName != newProjectName && EditorUtility.DisplayDialog(
+                                "Update ALL Application Variables?",
+                                "This will go through ALL scenes and macros to find every Variable Unit "
+                                + $"using {oldProjectName} and update it to {newProjectName}.\n\n"
+                                + "This operation is FINAL and cannot be undone!",
+                                "Update All",
+                                "Rename Only"
+                            );
+
+                            if (choice)
+                            {
+                                GraphUtility.RenameApplicationVariables(oldProjectName, newProjectName);
+                            }
+                        }
+                        break;
+                    case VariableKind.Saved:
+                        {
+                            bool choice = oldProjectName != newProjectName && EditorUtility.DisplayDialog(
+                                "Update ALL Saved Variables?",
+                                "This will go through ALL scenes and macros to find every Variable Unit "
+                                + $"using {oldProjectName} and update it to {newProjectName}.\n\n"
+                                + "This operation is FINAL and cannot be undone!",
+                                "Update All",
+                                "Rename Only"
+                            );
+
+                            if (choice)
+                            {
+                                GraphUtility.RenameSavedVariables(oldProjectName, newProjectName);
+                            }
+                        }
+                        break;
+                }
+                oldProjectName = null;
+                newProjectName = null;
             }
             else if (!selection.Contains(unit))
             {

@@ -626,7 +626,8 @@ namespace Unity.VisualScripting.Community
             return variableUnits;
         }
 
-        public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetSceneVariablesRenameTargets(Scene scene, string oldName)
+        public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetSceneVariablesRenameTargets(Scene scene, string oldName,
+        VariableKind kind = VariableKind.Scene, Func<IMachine, bool> predicate = null)
         {
             if (scene != null)
             {
@@ -651,33 +652,34 @@ namespace Unity.VisualScripting.Community
 
                 List<(UnifiedVariableUnit, UnityEngine.Object)> variableUnits = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
 
-                GraphTraversal.TraverseGraph(component.GetReference().graph, (unit) =>
-                {
-                    if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == VariableKind.Scene && variableUnit.isDefined)
+                if (predicate == null || predicate(component))
+                    GraphTraversal.TraverseGraph(component.GetReference().graph, (unit) =>
                     {
-                        if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
+                        if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == kind && variableUnit.isDefined)
                         {
-                            variableUnits.Add((variableUnit, component.GetReference().rootObject));
+                            if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
+                            {
+                                variableUnits.Add((variableUnit, component.GetReference().rootObject));
+                            }
                         }
-                    }
-                });
+                    });
 
                 return variableUnits;
             }
         }
 
-        public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetSceneVariablesRenameTargets(GraphReference reference, Scene? scene, string oldName)
+        public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetSceneVariablesRenameTargets(GraphReference reference, Scene? scene, string oldName, VariableKind kind = VariableKind.Scene)
         {
             if (reference == null || reference.graph == null) return new List<(UnifiedVariableUnit, UnityEngine.Object)>();
 
             List<(UnifiedVariableUnit, UnityEngine.Object)> variableUnits = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
 
-            if (scene != null) variableUnits.AddRange(GetSceneVariablesRenameTargets(scene.Value, oldName));
+            if (scene != null) variableUnits.AddRange(GetSceneVariablesRenameTargets(scene.Value, oldName, kind));
             else
             {
                 GraphTraversal.TraverseGraph(reference.graph, (unit) =>
                 {
-                    if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == VariableKind.Scene && variableUnit.isDefined)
+                    if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == kind && variableUnit.isDefined)
                     {
                         if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
                         {
@@ -688,6 +690,162 @@ namespace Unity.VisualScripting.Community
             }
 
             return variableUnits;
+        }
+
+        private static IEnumerable<string> GetAllScenePaths()
+        {
+            return AssetDatabase.FindAssets("t:Scene").Select(AssetDatabase.GUIDToAssetPath);
+        }
+
+        private static IEnumerable<MacroScriptableObject> GetAllMacros()
+        {
+            return AssetDatabase.FindAssets("t:MacroScriptableObject").Select(AssetDatabase.GUIDToAssetPath).Select(AssetDatabase.LoadMainAssetAtPath)
+            .OfType<MacroScriptableObject>();
+        }
+
+        private static void UpdateProjectVariables(string oldName, string newName, VariableKind kind)
+        {
+            if (kind != VariableKind.Application && kind != VariableKind.Saved)
+                throw new InvalidOperationException();
+
+            try
+            {
+                var scenePaths = GetAllScenePaths().ToList();
+                int totalScenes = scenePaths.Count;
+                int sceneIndex = 0;
+                var active = SceneManager.GetActiveScene().path;
+                var activeReference = GraphPointerData.FromPointer(GraphWindow.activeReference);
+
+                foreach (var scenePath in scenePaths)
+                {
+                    if (!scenePath.StartsWith("Assets/")) continue;
+                    float progress = sceneIndex / totalScenes + 1;
+                    EditorUtility.DisplayProgressBar("Renaming Variables", $"Processing Scene: {scenePath}", progress);
+
+                    var scene = SceneManager.GetSceneByPath(scenePath);
+                    try
+                    {
+                        scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"Failed to open scene '{scenePath}' during Rename Variables, skipping.\n{ex}");
+                    }
+
+                    if (scene == null) continue;
+
+                    bool sceneModified = false;
+
+                    foreach (var (unit, graph) in GetSceneVariablesRenameTargets(scene, oldName, kind, m => m.nest != null && m.nest.source == GraphSource.Embed))
+                    {
+                        if (UpdateVariable(unit, newName))
+                            sceneModified = true;
+                    }
+
+                    if (sceneModified)
+                        EditorSceneManager.SaveScene(scene);
+
+                    sceneIndex++;
+                }
+
+                if (!string.IsNullOrEmpty(active))
+                {
+                    EditorSceneManager.OpenScene(active);
+                    GraphWindow.active.reference = activeReference.ToReference(false);
+                }
+                EditorUtility.DisplayProgressBar("Renaming Variables", "Updating Macros...", 0.95f);
+
+                foreach (var macroScriptableObject in GetAllMacros())
+                {
+                    if (macroScriptableObject is IMacro macro && macro.graph != null)
+                    {
+                        bool modified = false;
+
+                        GraphTraversal.TraverseGraph(macro.graph, unit =>
+                        {
+                            if (unit is UnifiedVariableUnit variableUnit &&
+                                variableUnit.kind == kind &&
+                                variableUnit.isDefined)
+                            {
+                                if (!variableUnit.name.hasValidConnection &&
+                                    (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
+                                {
+                                    if (UpdateVariable(variableUnit, newName))
+                                        modified = true;
+                                }
+                            }
+                        });
+
+                        if (modified)
+                        {
+                            EditorUtility.SetDirty(macroScriptableObject);
+                            AssetDatabase.SaveAssets();
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
+        }
+
+        public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetCurrentlyAccessibleProjectUnits(string oldName, VariableKind kind = VariableKind.Application)
+        {
+            if (kind != VariableKind.Application && kind != VariableKind.Saved)
+                throw new InvalidOperationException();
+
+            List<(UnifiedVariableUnit, UnityEngine.Object)> targets = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+            var scene = SceneManager.GetActiveScene();
+            if (scene != null)
+            {
+                targets.AddRange(GetSceneVariablesRenameTargets(scene, oldName, kind));
+            }
+
+            var activeReference = GraphWindow.activeReference;
+
+            if (activeReference != null)
+            {
+                var refGraph = activeReference.graph;
+                if (refGraph is FlowGraph graph)
+                {
+                    foreach (var unit in graph.units)
+                    {
+                        if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == kind && variableUnit.isDefined)
+                        {
+                            if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
+                            {
+                                targets.Add((variableUnit, null));
+                            }
+                        }
+                    }
+                }
+            }
+            return targets;
+        }
+
+        public static void RenameApplicationVariables(string oldName, string newName)
+        {
+            UpdateProjectVariables(oldName, newName, VariableKind.Application);
+        }
+
+        public static void RenameSavedVariables(string oldName, string newName)
+        {
+            UpdateProjectVariables(oldName, newName, VariableKind.Saved);
+        }
+
+        private static bool UpdateVariable(UnifiedVariableUnit target, string newName)
+        {
+            if (target.name.hasValidConnection)
+                return false;
+
+            string oldValue = (string)target.defaultValues[target.name.key];
+
+            if (oldValue == newName)
+                return false;
+
+            target.name.SetDefaultValue(newName);
+            return true;
         }
 
         public static bool IsSourceLiteral(ValueInput valueInput, out Type sourceType)

@@ -22,11 +22,13 @@ namespace Unity.VisualScripting.Community
             var old = LudiqStyles.headerBackground.normal.background;
 
             LudiqStyles.headerBackground.normal.background = background;
-
-            var inspector = metadata.Editor();
-            inspector.Draw(GUILayoutUtility.GetRect(
-                    EditorGUIUtility.currentViewWidth,
-                    LudiqGUI.GetEditorHeight(null, metadata, EditorGUIUtility.currentViewWidth)));
+            using (LudiqEditorUtility.editedObject.Override(target))
+            {
+                var inspector = metadata.Editor();
+                inspector.Draw(GUILayoutUtility.GetRect(
+                        EditorGUIUtility.currentViewWidth,
+                        LudiqGUI.GetEditorHeight(null, metadata, EditorGUIUtility.currentViewWidth)));
+            }
             LudiqStyles.headerBackground.normal.background = old;
 
             serializedObject.ApplyModifiedProperties();

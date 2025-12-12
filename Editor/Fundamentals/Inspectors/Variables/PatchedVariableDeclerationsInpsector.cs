@@ -755,7 +755,6 @@ namespace Unity.VisualScripting.Community
                     variableDeclarations.EditorRename(declaration, newName);
                     nameMetadata.value = newName;
 
-                    // Todo: Add App and Saved variable rename functionality
                     switch (parentInspector.kind)
                     {
                         case VariableKind.Graph:
@@ -828,6 +827,50 @@ namespace Unity.VisualScripting.Community
                                         }
                                         Undo.CollapseUndoOperations(group);
                                     }
+                                }
+                            }
+                            break;
+                        case VariableKind.Application:
+                            {
+                                if (Application.isPlaying)
+                                {
+                                    Debug.LogWarning($"[Rename Variables] Cannot rename all Application variables while in play mode!");
+                                    break;
+                                }
+                                bool choice = EditorUtility.DisplayDialog(
+                                    "Update ALL Application Variables?",
+                                    "This will go through ALL scenes and macros to find every Variable Unit "
+                                    + $"using {oldName} and update it to {newName}.\n\n"
+                                    + "This operation is FINAL and cannot be undone!",
+                                    "Update All",
+                                    "Rename Only"
+                                );
+
+                                if (choice)
+                                {
+                                    GraphUtility.RenameApplicationVariables(oldName, newName);
+                                }
+                            }
+                            break;
+                        case VariableKind.Saved:
+                            {
+                                if (Application.isPlaying)
+                                {
+                                    Debug.LogWarning($"[Rename Variables] Cannot rename all Saved variables while in play mode!");
+                                    break;
+                                }
+                                bool choice = EditorUtility.DisplayDialog(
+                                    "Update ALL Saved Variables?",
+                                    "This will go through ALL scenes and macros to find every Variable Unit "
+                                    + $"using {oldName} and update it to {newName}.\n\n"
+                                    + "This operation is FINAL and cannot be undone!",
+                                    "Update All",
+                                    "Rename Only"
+                                );
+
+                                if (choice)
+                                {
+                                    GraphUtility.RenameSavedVariables(oldName, newName);
                                 }
                             }
                             break;
