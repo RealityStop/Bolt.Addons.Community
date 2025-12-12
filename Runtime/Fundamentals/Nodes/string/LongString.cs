@@ -2,7 +2,7 @@ using System;
 
 namespace Unity.VisualScripting.Community
 {
-    [TypeIcon(typeof(String))]
+    [TypeIcon(typeof(string))]
     [UnitTitle("Multiline String")] 
     [UnitCategory("Community\\Utility\\string")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.Units.Utility.MultilineStringUnit")]

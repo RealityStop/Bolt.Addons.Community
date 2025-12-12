@@ -761,6 +761,8 @@ namespace Unity.VisualScripting.Community
                         case VariableKind.Graph:
                             if (EditorWindow.focusedWindow == GraphWindow.active)
                                 GraphUtility.UpdateAllGraphVariables((FlowGraph)GraphWindow.activeContext.graph, oldName, newName);
+                            else if (VariablesWindow.isVariablesWindowContext && VariablesWindow.currentGraph != null)
+                                GraphUtility.UpdateAllGraphVariables((FlowGraph)VariablesWindow.currentGraph, oldName, newName);
                             break;
                         case VariableKind.Object:
                             {

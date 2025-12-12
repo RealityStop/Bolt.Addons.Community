@@ -79,26 +79,31 @@ namespace Unity.VisualScripting.Community
                     coroutine = false;
                 }
 
-                Flow flow = Flow.New(reference);
-
-                if (flow.enableDebug)
+                try
                 {
-                    var editorData = flow.stack.GetElementDebugData<IUnitDebugData>(this);
+                    Flow flow = Flow.New(reference);
 
-                    editorData.lastInvokeFrame = EditorTimeBinding.frame;
-                    editorData.lastInvokeTime = EditorTimeBinding.time;
+                    if (flow.enableDebug)
+                    {
+                        var editorData = flow.stack.GetElementDebugData<IUnitDebugData>(this);
+
+                        editorData.lastInvokeFrame = EditorTimeBinding.frame;
+                        editorData.lastInvokeTime = EditorTimeBinding.time;
+                    }
+
+                    if (coroutine)
+                    {
+                        flow.StartCoroutine(trigger, flow.stack.GetElementData<Data>(this).activeCoroutines);
+                    }
+                    else
+                    {
+                        flow.Run(trigger);
+                    }
                 }
-
-                if (coroutine)
+                finally
                 {
-                    flow.StartCoroutine(trigger, flow.stack.GetElementData<Data>(this).activeCoroutines);
+                    coroutine = wasCoroutine;
                 }
-                else
-                {
-                    flow.Run(trigger);
-                }
-
-                coroutine = wasCoroutine;
             }
             else
             {

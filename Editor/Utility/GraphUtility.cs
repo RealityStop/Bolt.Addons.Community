@@ -254,6 +254,251 @@ namespace Unity.VisualScripting.Community
             public IGraphElement Element;
         }
 
+        /// <summary>
+        /// Looks for the root a the flow.
+        /// </summary>
+        /// <param name="unit">The Unit to start searching from</param>
+        /// <param name="reference">Optional: if null it will not check parent graphs if there is one</param>
+        /// <returns>All the root's that were found</returns>
+        public static IEnumerable<Unit> GetFlowSourceUnits(Unit unit, GraphReference reference = null)
+        {
+            return GetFlowSourceUnitsInternal(unit, new HashSet<Unit>(), reference);
+        }
+
+        private static IEnumerable<Unit> GetFlowSourceUnitsInternal(Unit unit, HashSet<Unit> visited = null, GraphReference reference = null, string key = null)
+        {
+            visited ??= new HashSet<Unit>();
+
+            if (unit == null || visited.Contains(unit))
+                yield break;
+
+            visited.Add(unit);
+
+            var flowInputs = unit.controlInputs.Where(i => i.hasValidConnection).ToList();
+            if (flowInputs.Count > 0)
+            {
+                foreach (var input in flowInputs)
+                {
+                    foreach (var conn in input.connections)
+                    {
+                        if (conn?.source?.unit is Unit source)
+                        {
+                            foreach (var upstream in GetFlowSourceUnitsInternal(source, visited, reference, conn.source.key))
+                                yield return upstream;
+                        }
+                    }
+                }
+                yield break;
+            }
+
+            if (unit is GraphInput gi && reference != null && reference.parentElement is INesterUnit nester)
+            {
+                var parent = reference.ParentReference(false);
+
+                var correspondingParentInput = nester.controlInputs.FirstOrDefault(ci => ci.key == key);
+
+                if (!string.IsNullOrEmpty(key) && correspondingParentInput != null && correspondingParentInput.hasValidConnection)
+                {
+                    if (correspondingParentInput != null)
+                    {
+                        foreach (var conn in correspondingParentInput.connections)
+                        {
+                            if (conn?.source?.unit is Unit src)
+                            {
+                                foreach (var upstream in GetFlowSourceUnitsInternal(src, visited, parent, key))
+                                    yield return upstream;
+                            }
+                        }
+                    }
+                }
+                else if (correspondingParentInput != null && !correspondingParentInput.hasValidConnection)
+                {
+                    yield return nester as Unit;
+                }
+                else
+                {
+                    foreach (var upstream in GetFlowSourceUnitsInternal(nester as Unit, visited, parent, key))
+                        yield return upstream;
+                }
+                yield break;
+            }
+
+            var valueOutputs = unit.valueOutputs.Where(v => v.hasValidConnection).ToList();
+            if (valueOutputs.Count > 0)
+            {
+                foreach (var output in valueOutputs)
+                {
+                    foreach (var conn in output.connections)
+                    {
+                        if (conn?.destination?.unit is Unit destination)
+                        {
+                            foreach (var upstream in GetFlowSourceUnitsInternal(destination, visited, reference, key))
+                                yield return upstream;
+                        }
+                    }
+                }
+
+                yield break;
+            }
+
+            yield return unit;
+        }
+
+        public static List<T> GetUnitsOfType<T>(Unit unit, Func<T, bool> predicate = null, bool enterNests = true) where T : Unit
+        {
+            return GetUnitsOfTypeInternal(unit, predicate, new HashSet<Unit>(), enterNests);
+        }
+
+        private static List<T> GetUnitsOfTypeInternal<T>(Unit unit, Func<T, bool> predicate = null, HashSet<Unit> visited = null, bool enterNests = true, string key = null) where T : Unit
+        {
+            var results = new List<T>();
+
+            if (unit == null || visited.Contains(unit))
+                return results;
+
+            visited.Add(unit);
+
+            if (unit is T typedUnit && (predicate == null || predicate(typedUnit)))
+                results.Add(typedUnit);
+
+            if (enterNests && unit is INesterUnit nesterUnit && nesterUnit.nest != null && nesterUnit.nest.graph is FlowGraph graph)
+            {
+                if (graph.units.FirstOrDefault(e => e is GraphInput) is GraphInput graphInput)
+                {
+                    if (graphInput is T typed && (predicate == null || predicate(typed)))
+                        results.Add(typed);
+
+                    var correspondingControlOutput = graphInput.controlOutputs.FirstOrDefault(c => c.key == key);
+                    if (correspondingControlOutput != null && correspondingControlOutput.hasValidConnection)
+                        results.AddRange(GetUnitsOfTypeInternal<T>(correspondingControlOutput.connection.destination.unit as Unit, predicate, visited, enterNests, key));
+                }
+            }
+
+            foreach (var output in unit.controlOutputs)
+            {
+                if (!output.hasValidConnection)
+                    continue;
+
+                var connection = output.connection;
+
+                if (connection?.destination?.unit is Unit destUnit)
+                {
+                    if (destUnit is T typed && (predicate == null || predicate(typed)))
+                        results.Add(typed);
+
+                    results.AddRange(GetUnitsOfTypeInternal<T>(destUnit, predicate, visited, enterNests, connection.destination.key));
+                }
+            }
+
+            foreach (var input in unit.valueInputs)
+            {
+                if (!input.hasValidConnection)
+                    continue;
+
+                var connection = input.connection;
+
+                if (connection?.source?.unit is Unit sourceUnit)
+                {
+                    if (sourceUnit is T typed && (predicate == null || predicate(typed)))
+                        results.Add(typed);
+
+                    results.AddRange(GetUnitsOfTypeInternal<T>(sourceUnit, predicate, visited, enterNests, key));
+                }
+            }
+
+            return results;
+        }
+
+        public static T GetFirstUnitOfType<T>(Unit unit, Func<T, bool> predicate = null, bool enterNests = true) where T : Unit
+        {
+            return GetFirstUnitOfTypeInternal(unit, predicate, new HashSet<Unit>(), enterNests);
+        }
+
+        private static T GetFirstUnitOfTypeInternal<T>(Unit unit, Func<T, bool> predicate = null, HashSet<Unit> visited = null, bool enterNests = true, string key = null) where T : Unit
+        {
+            if (unit == null || visited.Contains(unit))
+                return null;
+
+            visited.Add(unit);
+
+            if (unit is T typedUnit && (predicate == null || predicate(typedUnit)))
+                return typedUnit;
+
+            if (enterNests && unit is INesterUnit nesterUnit && nesterUnit.nest != null && nesterUnit.nest.graph is FlowGraph graph)
+            {
+                if (graph.units.FirstOrDefault(e => e is GraphInput) is GraphInput graphInput)
+                {
+                    if (graphInput is T typed && (predicate == null || predicate(typed)))
+                        return typed;
+                    var correspondingControlOutput = graphInput.controlOutputs.FirstOrDefault(c => c.key == key);
+                    if (correspondingControlOutput != null && correspondingControlOutput.hasValidConnection)
+                    {
+                        var result = GetFirstUnitOfTypeInternal<T>(correspondingControlOutput.connection.destination.unit as Unit, predicate, visited, enterNests, key);
+                        if (result is T _typed && (predicate == null || predicate(_typed)))
+                            return _typed;
+                    }
+                }
+            }
+
+            foreach (var output in unit.controlOutputs)
+            {
+                if (!output.hasValidConnection)
+                    continue;
+
+                var connection = output.connection;
+
+                if (connection?.destination?.unit is Unit destUnit)
+                {
+                    if (destUnit is T typed && (predicate == null || predicate(typed)))
+                        return typed;
+
+                    var result = GetFirstUnitOfTypeInternal<T>(destUnit, predicate, visited, enterNests, connection.destination.key);
+                    if (result != null)
+                        return result;
+                }
+            }
+
+            foreach (var input in unit.valueInputs)
+            {
+                if (!input.hasValidConnection)
+                    continue;
+
+                var connection = input.connection;
+
+                if (connection?.source?.unit is Unit sourceUnit)
+                {
+                    if (sourceUnit is T typed && (predicate == null || predicate(typed)))
+                        return typed;
+
+                    var result = GetFirstUnitOfTypeInternal<T>(sourceUnit, predicate, visited, enterNests, key);
+                    if (result != null)
+                        return result;
+                }
+            }
+
+            return null;
+        }
+
+        public static List<UnifiedVariableUnit> GetFlowVariablesRenameTargets(Unit currentUnit, string oldName, GraphReference reference = null)
+        {
+            List<UnifiedVariableUnit> variableUnits = new List<UnifiedVariableUnit>();
+            foreach (var source in GetFlowSourceUnits(currentUnit, reference))
+            {
+                foreach (var unit in GetUnitsOfType<UnifiedVariableUnit>(source, (v) => v.kind == VariableKind.Flow))
+                {
+                    if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == VariableKind.Flow && variableUnit.isDefined)
+                    {
+                        if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
+                        {
+                            variableUnits.Add(variableUnit);
+                        }
+                    }
+                }
+            }
+
+            return variableUnits;
+        }
+
         public static void UpdateAllGraphVariables(FlowGraph graph, string oldName, string newName)
         {
             foreach (var unit in graph.units)

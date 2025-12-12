@@ -189,14 +189,20 @@ namespace Unity.VisualScripting.Community
                 if (IsSceneRequired() && reference.gameObject == null)
                 {
                     Debug.LogWarning(
-                        $"[Rename Variables] The selected variable is an {unit.kind} variable inside an Asset.\n" +
+                        $"[Rename Variables] The selected variable is an {unit.kind} variable inside an Asset. " +
                         $"{reference.rootObject.GetType().DisplayName()}'s do not have access to the scene this graph is used in. Rename the variable directly from the GameObject or Scene itself."
                     );
+                    return;
                 }
 
                 EditorGUI.FocusTextInControl(controlName);
                 switch (unit.kind)
                 {
+                    case VariableKind.Flow:
+                        targets = GraphUtility.GetFlowVariablesRenameTargets(unit, unit.defaultValues[unit.name.key] as string, reference);
+                        renameTargets = targets.Select<UnifiedVariableUnit, (UnifiedVariableUnit, UnityEngine.Object)>(t => (t, null)).ToList();
+                        isRenaming = true;
+                        break;
                     case VariableKind.Graph:
                         targets = GraphUtility.GetGraphVariablesRenameTargets(graph as FlowGraph, unit.defaultValues[unit.name.key] as string);
                         renameTargets = targets.Select<UnifiedVariableUnit, (UnifiedVariableUnit, UnityEngine.Object)>(t => (t, null)).ToList();
@@ -222,7 +228,7 @@ namespace Unity.VisualScripting.Community
                             isRenaming = true;
                         }
                         break;
-                    default: Debug.LogWarning("[Rename Variables] renaming variables currently only works for Graph, Object and Scene variables."); break;
+                    default: Debug.LogWarning("[Rename Variables] renaming variables currently only works for Flow, Graph, Object and Scene variables."); break;
                 }
             }
             else if (isRenaming && (!selection.Contains(unit) ||
