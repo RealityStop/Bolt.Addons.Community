@@ -798,23 +798,49 @@ namespace Unity.VisualScripting.Community
             {
                 foreach (var relation in unit.relations)
                 {
-                    var start = ports.Single(pw => pw.port == relation.source).handlePosition.center;
-                    var end = ports.Single(pw => pw.port == relation.destination).handlePosition.center;
+                    var sourcePort = relation.source;
+                    var destinationPort = relation.destination;
+
+                    var sourceWidget = ports.Single(pw => pw.port == sourcePort);
+                    var destinationWidget = ports.Single(pw => pw.port == destinationPort);
+
+                    Vector2 start = sourceWidget.handlePosition.center;
+                    Vector2 end = destinationWidget.handlePosition.center;
+
+                    bool valueToControl =
+                        sourcePort is ValueInput &&
+                        destinationPort is ControlInput;
+
+                    // Requirement
+                    if (valueToControl)
+                    {
+                        start = sourceWidget.handlePosition.center;
+
+                        end = new Vector2(
+                            destinationWidget.handlePosition.center.x,
+                            destinationWidget.handlePosition.yMin
+                        );
+                    }
 
                     float distance = Vector2.Distance(start, end);
                     float offset = Mathf.Min(distance * 0.35f, 40f);
 
-                    Vector2 startTangent = start;
-                    Vector2 endTangent = end;
-
                     Vector2 startDir;
                     Vector2 endDir;
 
-                    startDir = PortDirection(relation.source);
-                    endDir = PortDirection(relation.destination);
+                    if (valueToControl)
+                    {
+                        startDir = Vector2.up;
+                        endDir = Vector2.down;
+                    }
+                    else
+                    {
+                        startDir = PortDirection(sourcePort);
+                        endDir = PortDirection(destinationPort);
+                    }
 
-                    startTangent += startDir * offset;
-                    endTangent += endDir * offset;
+                    Vector2 startTangent = start + startDir * offset;
+                    Vector2 endTangent = end + endDir * offset;
 
                     Handles.DrawBezier(
                         start,
@@ -823,7 +849,7 @@ namespace Unity.VisualScripting.Community
                         endTangent,
                         ColorPalette.unityBackgroundMid,
                         null,
-                        3
+                        3f
                     );
                 }
 

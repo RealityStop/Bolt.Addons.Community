@@ -440,6 +440,7 @@ namespace Unity.VisualScripting.Community
                 {
                     yield return option;
                 }
+
                 foreach (var connectedUnit in unit.connectedElements)
                 {
                     Action action = () => { metadata["connectedElements"].RecordUndo(); unit.connectedElements.Remove(connectedUnit); };

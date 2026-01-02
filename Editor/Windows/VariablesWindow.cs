@@ -7,20 +7,20 @@ namespace Unity.VisualScripting.Community
     public class VariablesWindow : SidebarPanelWindow<VariablesPanel>
     {
         protected override GUIContent defaultTitleContent => new GUIContent("Variables", BoltCore.Icons.variablesWindow?[IconSize.Small]);
-        private static IGraph _currentGraph;
-        public static bool isVariablesWindowContext { get; private set; }
-        public static IGraph currentGraph
+        private static IGraphContext _currentContext;
+        internal static bool isVariablesWindowContext { get; private set; }
+        internal static IGraphContext currentContext
         {
             get
             {
                 if (!isVariablesWindowContext) throw new InvalidOperationException(
-                    "currentGraph was accessed from outside the Variables Window's execution flow. " +
+                    "currentContext was accessed from outside the Variables Window's execution flow. " +
                     "This property is only valid when the calling code is triggered by the Variables Window."
                 );
 
-                return _currentGraph;
+                return _currentContext;
             }
-            private set => _currentGraph = value;
+            private set => _currentContext = value;
         }
 
         [MenuItem("Window/Community Addons/Variables Window")]
@@ -38,12 +38,12 @@ namespace Unity.VisualScripting.Community
             if (GraphWindow.activeContext != null)
             {
                 panel = new VariablesPanel(GraphWindow.activeContext);
-                currentGraph = GraphWindow.activeContext.graph;
+                currentContext = GraphWindow.activeContext;
             }
             else
             {
                 panel = new VariablesPanel(null);
-                currentGraph = null;
+                currentContext = null;
             }
         }
 
@@ -57,13 +57,13 @@ namespace Unity.VisualScripting.Community
             if (context != null)
             {
                 panel = new VariablesPanel(context);
-                currentGraph = context.graph;
+                currentContext = context;
                 Repaint();
             }
             else
             {
                 panel = new VariablesPanel(null);
-                currentGraph = null;
+                currentContext = null;
             }
         }
 

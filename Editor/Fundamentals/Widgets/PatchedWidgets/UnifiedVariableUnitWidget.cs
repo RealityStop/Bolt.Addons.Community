@@ -304,7 +304,7 @@ namespace Unity.VisualScripting.Community
             }
             else if (isRenaming && (!selection.Contains(unit) ||
             GUI.GetNameOfFocusedControl() != controlName ||
-            e.keyCode == KeyCode.Return || e.keyCode == KeyCode.Escape))
+            e.keyCode == KeyCode.Return || e.keyCode == KeyCode.Escape || !canvas.isMouseOver))
             {
                 isRenaming = false;
                 targets.Clear();
