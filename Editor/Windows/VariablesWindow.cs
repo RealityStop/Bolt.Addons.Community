@@ -71,7 +71,7 @@ namespace Unity.VisualScripting.Community
         {
             GraphGUIPatch.InitializeNewGUI();
 #if DARKER_UI
-            if (BoltCore.instance != null && !EditorApplication.isCompiling)
+            if (BoltCore.instance != null && !EditorApplication.isCompiling && !PluginContainer.anyVersionMismatch)
                 EditorGUI.DrawRect(new Rect(0, 0, position.width, position.height), CommunityStyles.backgroundColor);
 #endif
 

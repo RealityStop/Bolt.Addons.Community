@@ -168,6 +168,7 @@ namespace Unity.VisualScripting.Community
                 var destinationWidget = canvas.Widget(destination);
                 var destinationUnitWidget = canvas.Widget(destination.unit);
                 var rerouteWidget = canvas.Widget(reroute);
+                _ = canvas.Widget(source.unit);
 
                 reroute.Define();
 
@@ -178,7 +179,7 @@ namespace Unity.VisualScripting.Community
 
                 destinationUnitWidget.Reposition();
                 rerouteWidget.Reposition();
-                
+
                 reroute.input.Description<UnitPortDescription>();
                 reroute.output.Description<UnitPortDescription>();
 
@@ -187,9 +188,16 @@ namespace Unity.VisualScripting.Community
                 foreach (var port in destination.unit.ports)
                 {
                     port.Description<UnitPortDescription>();
-                } 
+                }
+                
+                try
+                {
+                    canvas.CacheWidgetPositions();
+                }
+                catch
+                {
 
-                canvas.CacheWidgetPositions();
+                }
 
                 var destinationPos = destinationWidget.position;
                 var reroutePos = rerouteWidget.position;

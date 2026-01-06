@@ -22,9 +22,7 @@ namespace Unity.VisualScripting.Community
             EnsurePatched();
             PatchWidgets();
             // PatchGraphContext();
-#if NEW_VARIABLES_UI
             PatchVariablesDeclarationsInspector();
-#endif
         }
 
         public static void EnsurePatched()
@@ -53,8 +51,6 @@ namespace Unity.VisualScripting.Community
                 PatchUnitConnectionWidgets(context);
             };
 
-            // This is just to make sure that the patch happens if for what ever reason 
-            // activeContextChanged does not trigger
             if (current == null)
             {
                 var context = GraphWindow.activeContext;
@@ -342,9 +338,13 @@ namespace Unity.VisualScripting.Community
         private static void PatchVariablesDeclarationsInspector()
         {
             var provider = InspectorProvider.instance;
-
+#if NEW_VARIABLES_UI
             PatchGlobalProvider<Metadata, Inspector, InspectorAttribute, PatchedVariableDeclarationsInspector>(provider,
             typeof(VariableDeclarations));
+#else
+            PatchGlobalProvider<Metadata, Inspector, InspectorAttribute, PatchedVariableDeclarationInspector>(provider,
+            typeof(VariableDeclaration));
+#endif
         }
     }
 }

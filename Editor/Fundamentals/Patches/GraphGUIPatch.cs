@@ -215,7 +215,7 @@ namespace Unity.VisualScripting.Community
                     if (previousDeveloperMode != BoltCore.Configuration.developerMode)
                     {
                         previousDeveloperMode = BoltCore.Configuration.developerMode;
-                        RebuildToolbar();
+                        errorButton.schedule.Execute(() => RebuildToolbar());
                         return;
                     }
 

@@ -138,7 +138,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     return valueInput.connection.source.type;
                 }
             }
-            else if (GraphUtility.IsSourceLiteral(valueInput, out var result))
+            else if (NodeGeneration.IsSourceLiteral(valueInput, out var result))
             {
                 return result;
             }

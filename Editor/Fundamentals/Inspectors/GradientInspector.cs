@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community
 
         protected override void OnGUI(Rect position, GUIContent label)
         {
-            var value = metadata.value as Gradient;
+            var value = metadata.value as Gradient ?? new Gradient();
 
             BeginBlock(metadata, position);
             var newValue = EditorGUI.GradientField(position, value);

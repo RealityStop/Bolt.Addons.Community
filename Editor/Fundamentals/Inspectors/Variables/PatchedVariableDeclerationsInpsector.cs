@@ -360,7 +360,7 @@ namespace Unity.VisualScripting.Community
 
         private bool highlightPlaceholder;
         private bool highlightNewNameField;
-        private const string newNameFieldControl = "newNameField";
+        private const string newNameFieldControl = "Community_Variables_newNameField";
 
         private void OnNewNameGUI(Rect newNamePosition)
         {
@@ -727,7 +727,7 @@ namespace Unity.VisualScripting.Community
                     nameMetadata.RecordUndo();
                     if (parentInspector.kind == VariableKind.Scene)
                     {
-                        if (GraphWindow.activeReference.scene != null)
+                        if (GraphWindow.active != null && GraphWindow.activeReference?.scene != null)
                             Undo.RecordObject(SceneVariables.Instance(GraphWindow.activeReference.scene.Value).variables, "Changed Scene variable name");
                         else
                         {
@@ -816,16 +816,6 @@ namespace Unity.VisualScripting.Community
                                         }
 
                                         GraphUtility.UpdateAllSceneVariables(current.Value, oldName, newName);
-                                        var group = Undo.GetCurrentGroup();
-                                        foreach (var target in GraphUtility.GetSceneVariablesRenameTargets(GraphWindow.activeReference, null, oldName))
-                                        {
-                                            if (target.Item1.name.hasValidConnection) continue;
-
-                                            Undo.RecordObject(target.Item2, $"Renamed '{oldName}' variable to '{newName}'");
-
-                                            target.Item1.name.SetDefaultValue(newName);
-                                        }
-                                        Undo.CollapseUndoOperations(group);
                                     }
                                 }
                             }

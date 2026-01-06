@@ -260,6 +260,31 @@ namespace Unity.VisualScripting.Community.CSharp
             return null;
         }
 
+        public static bool IsSourceLiteral(ValueInput valueInput, out Type sourceType)
+        {
+            var source = GetPesudoSource(valueInput);
+            if (source != null)
+            {
+                if (source.unit is Literal literal)
+                {
+                    sourceType = literal.type;
+                    return true;
+                }
+                else if (source.unit is MultilineStringNode)
+                {
+                    sourceType = typeof(string);
+                    return true;
+                }
+                else if (source is ValueInput v && !v.hasValidConnection && v.hasDefaultValue)
+                {
+                    sourceType = v.type;
+                    return true;
+                }
+            }
+            sourceType = null;
+            return false;
+        }
+
         public static bool IsValidRefUnit(this Unit unit)
         {
             return unit is GetVariable || (unit is AssetFieldUnit fieldUnit && fieldUnit.actionDirection == ActionDirection.Get) || (unit is InheritedFieldUnit inheritedField && inheritedField.actionDirection == ActionDirection.Get);

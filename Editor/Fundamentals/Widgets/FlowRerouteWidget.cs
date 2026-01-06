@@ -15,21 +15,22 @@ namespace Unity.VisualScripting.Community
         {
             var inputHasConnection = inputs[0].port.hasAnyConnection;
             var outputHasConnection = outputs[0].port.hasAnyConnection;
-            mouseIsOver = new Rect(_position.x - 20, _position.y - 10, mouseIsOver ? 80 : 40, 40).Contains(mousePosition);
+            mouseIsOver = new Rect(_position.x, _position.y - 10, 26, mouseIsOver ? 80 : 40).Contains(mousePosition);
 
 #if VISUAL_SCRIPTING_1_7_3
-            _position.width = 26;
-            GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height-4), NodeShape.Square, color, isSelected);
+            _position.height = 20;
+            GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height - 4), NodeShape.Square, color, isSelected);
+            GUI.DrawTexture(new Rect(_position.center.x - 8, _position.y + 5, 16, 16), typeof(Flow).Icon()?[IconSize.Small]);
 #else
             if (isSelected || mouseIsOver || !inputHasConnection || !outputHasConnection)
             {
-                _position.width = 26;
+                _position.height = 20;
                 GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height - 4), NodeShape.Square, color, isSelected);
                 GUI.DrawTexture(new Rect(_position.center.x - 8, _position.y + 5, 16, 16), typeof(Flow).Icon()?[IconSize.Small]);
             }
             else
             {
-                _position.width = -19;
+                _position.height = -19;
             }
 #endif
             Reposition();
@@ -55,12 +56,12 @@ namespace Unity.VisualScripting.Community
 
 
 #if VISUAL_SCRIPTING_1_7_3
-            _position.width = 26;
+            _position.height = 20;
 #else
-            _position.width = !inputHasConnection || !outputHasConnection || isSelected || mouseIsOver ? 26 : -19;
+            _position.height = !inputHasConnection || !outputHasConnection || isSelected || mouseIsOver ? 20 : -19;
 #endif
 
-            _position.height = 20;
+            _position.width = 26;
 
             inputs[0].y = !inputHasConnection || !outputHasConnection || isSelected || mouseIsOver ? _position.yMin - 22 : _position.y + 5;
             outputs[0].y = !inputHasConnection || !outputHasConnection || isSelected || mouseIsOver ? _position.yMax + 5 : _position.y + 5;

@@ -14,9 +14,9 @@
         protected override void Definition()
         {
             if (IsInteger)
-                output = ValueOutput<int>(nameof(output), (flow)=> UnityEngine.Random.Range(0,1));
+                output = ValueOutput<object>(nameof(output), (flow)=> UnityEngine.Random.Range(0, 1));
             else
-                output = ValueOutput<float>(nameof(output), (flow) => UnityEngine.Random.Range(0.0f, 1.0f));
+                output = ValueOutput<object>(nameof(output), (flow) => UnityEngine.Random.Range(0.0f, 1.0f));
         }
     }
 }

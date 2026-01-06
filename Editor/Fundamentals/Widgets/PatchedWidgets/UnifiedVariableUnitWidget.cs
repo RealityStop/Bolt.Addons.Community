@@ -22,10 +22,21 @@ namespace Unity.VisualScripting.Community
 
         private static UnifiedVariableUnit closestToMouse;
 
+        private VariableKind previousKind;
         private readonly string controlName;
+
         public override void CachePosition()
         {
             base.CachePosition();
+
+            if (unit.kind != previousKind)
+            {
+                previousKind = unit.kind;
+                collection = null;
+                savedCollection = null;
+                storedObject = null;
+            }
+
             switch (unit.kind)
             {
                 case VariableKind.Graph:
@@ -33,18 +44,20 @@ namespace Unity.VisualScripting.Community
                         collection = (VariableDeclarationCollection)collectionField.GetValue(VisualScripting.Variables.Graph(reference));
                     break;
                 case VariableKind.Object:
-                    if (Flow.CanPredict(unit.@object, reference))
+                    if (collection != null) break;
+
+                    if (!Flow.CanPredict(unit.@object, reference)) break;
+
+                    var value = Flow.Predict(unit.@object, reference);
+                    if (value is GameObject @object)
                     {
-                        var value = Flow.Predict(unit.@object, reference);
-                        if (value is GameObject @object)
+                        if (@object != null && storedObject != @object)
                         {
-                            if (@object != null && storedObject != @object)
-                            {
-                                storedObject = @object;
-                                collection = (VariableDeclarationCollection)collectionField.GetValue(VisualScripting.Variables.Object(@object));
-                            }
+                            storedObject = @object;
+                            collection = (VariableDeclarationCollection)collectionField.GetValue(VisualScripting.Variables.Object(@object));
                         }
                     }
+
                     break;
                 case VariableKind.Scene:
                     if (collection == null && reference.scene != null)
@@ -77,16 +90,7 @@ namespace Unity.VisualScripting.Community
                         case VariableKind.Graph:
                             {
                                 var declarations = VisualScripting.Variables.Graph(reference);
-
-                                if (declarations.IsDefined(oldName))
-                                {
-                                    var declaration = declarations.GetDeclaration(oldName);
-
-                                    newName = OperateOnString(declarations, newName);
-
-                                    collection.EditorRename(declaration, newName);
-                                    setNameMethod.Invoke(declaration, new object[] { newName });
-                                }
+                                RenameVariable(oldName, newName, declarations);
                             }
                             break;
                         case VariableKind.Object:
@@ -94,16 +98,7 @@ namespace Unity.VisualScripting.Community
                                 if (storedObject == null) break;
 
                                 var declarations = VisualScripting.Variables.Object(storedObject);
-
-                                if (declarations.IsDefined(oldName))
-                                {
-                                    var declaration = declarations.GetDeclaration(oldName);
-
-                                    newName = OperateOnString(declarations, newName);
-
-                                    collection.EditorRename(declaration, newName);
-                                    setNameMethod.Invoke(declaration, new object[] { newName });
-                                }
+                                RenameVariable(oldName, newName, declarations);
                             }
                             break;
                         case VariableKind.Scene:
@@ -111,31 +106,13 @@ namespace Unity.VisualScripting.Community
                                 if (reference.scene == null) break;
 
                                 var declarations = VisualScripting.Variables.Scene(reference.scene);
-
-                                if (declarations.IsDefined(oldName))
-                                {
-                                    var declaration = declarations.GetDeclaration(oldName);
-
-                                    newName = OperateOnString(declarations, newName);
-
-                                    collection.EditorRename(declaration, newName);
-                                    setNameMethod.Invoke(declaration, new object[] { newName });
-                                }
+                                RenameVariable(oldName, newName, declarations);
                             }
                             break;
                         case VariableKind.Application:
                             {
                                 var declarations = VisualScripting.Variables.Application;
-
-                                if (declarations.IsDefined(oldName))
-                                {
-                                    var declaration = declarations.GetDeclaration(oldName);
-
-                                    newName = OperateOnString(declarations, newName);
-
-                                    collection.EditorRename(declaration, newName);
-                                    setNameMethod.Invoke(declaration, new object[] { newName });
-                                }
+                                newName = RenameVariable(oldName, newName, declarations);
 
                                 newProjectName = newName;
                             }
@@ -144,28 +121,13 @@ namespace Unity.VisualScripting.Community
                             {
                                 var mainDeclarations = VisualScripting.Variables.Saved;
 
-                                if (mainDeclarations.IsDefined(oldName))
-                                {
-                                    var declaration = mainDeclarations.GetDeclaration(oldName);
-
-                                    newName = OperateOnString(mainDeclarations, newName);
-
-                                    collection.EditorRename(declaration, newName);
-                                    setNameMethod.Invoke(declaration, new object[] { newName });
-                                }
+                                newName = RenameVariable(oldName, newName, mainDeclarations);
 
                                 if (!Application.isPlaying)
                                 {
                                     var saved = SavedVariables.saved;
-                                    if (saved.IsDefined(oldName))
-                                    {
-                                        var declaration = saved.GetDeclaration(oldName);
-
-                                        newName = OperateOnString(saved, newName);
-
-                                        savedCollection.EditorRename(declaration, newName);
-                                        setNameMethod.Invoke(declaration, new object[] { newName });
-                                    }
+                                    
+                                    newName = RenameVariable(oldName, newName, saved);
                                 }
 
                                 newProjectName = newName;
@@ -192,6 +154,20 @@ namespace Unity.VisualScripting.Community
                     }
                 }
             }, controlName);
+        }
+
+        private string RenameVariable(string oldName, string newName, VariableDeclarations declarations)
+        {
+            if (declarations.IsDefined(oldName))
+            {
+                var declaration = declarations.GetDeclaration(oldName);
+
+                newName = OperateOnString(declarations, newName);
+
+                collection.EditorRename(declaration, newName);
+                setNameMethod.Invoke(declaration, new object[] { newName });
+            }
+            return newName;
         }
 
         private string OperateOnString(VariableDeclarations declarations, string newName)

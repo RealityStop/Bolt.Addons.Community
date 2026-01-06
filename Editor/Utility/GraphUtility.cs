@@ -265,18 +265,51 @@ namespace Unity.VisualScripting.Community
             return GetFlowSourceUnitsInternal(unit, new HashSet<Unit>(), reference);
         }
 
-        private static IEnumerable<Unit> GetFlowSourceUnitsInternal(Unit unit, HashSet<Unit> visited = null, GraphReference reference = null, string key = null)
+        private static IEnumerable<Unit> GetFlowSourceUnitsInternal(Unit unit, HashSet<Unit> visited = null, GraphReference reference = null,
+        string key = null)
         {
             visited ??= new HashSet<Unit>();
 
-            if (unit == null || visited.Contains(unit))
+            if (unit == null)
                 yield break;
 
-            visited.Add(unit);
+            if (visited.Contains(unit))
+                yield break;
+
+            if (unit is INesterUnit nesterUnit && reference != null && nesterUnit.nest != null && nesterUnit.nest.graph is FlowGraph graph)
+            {
+                if (graph.units.FirstOrDefault(e => e is GraphOutput) is GraphOutput graphOutput)
+                {
+                    var correspondingControlInput = graphOutput.controlInputs.FirstOrDefault(c => c.key == key);
+                    if (correspondingControlInput != null && correspondingControlInput.hasValidConnection)
+                    {
+                        foreach (var conn in correspondingControlInput.connections)
+                        {
+                            if (conn?.source?.unit is Unit source)
+                            {
+                                foreach (var upstream in GetFlowSourceUnitsInternal(source, visited, reference.ChildReference(nesterUnit, false), conn.source.key))
+                                    yield return upstream;
+                            }
+                        }
+
+                    }
+                    else if (correspondingControlInput != null && !correspondingControlInput.hasValidConnection)
+                    {
+                        yield return graphOutput;
+                    }
+                    else
+                    {
+                        foreach (var upstream in GetFlowSourceUnitsInternal(nesterUnit as Unit, visited, reference, key))
+                            yield return upstream;
+                    }
+                }
+                yield break;
+            }
 
             var flowInputs = unit.controlInputs.Where(i => i.hasValidConnection).ToList();
             if (flowInputs.Count > 0)
             {
+                visited.Add(unit);
                 foreach (var input in flowInputs)
                 {
                     foreach (var conn in input.connections)
@@ -284,10 +317,13 @@ namespace Unity.VisualScripting.Community
                         if (conn?.source?.unit is Unit source)
                         {
                             foreach (var upstream in GetFlowSourceUnitsInternal(source, visited, reference, conn.source.key))
+                            {
                                 yield return upstream;
+                            }
                         }
                     }
                 }
+
                 yield break;
             }
 
@@ -320,6 +356,7 @@ namespace Unity.VisualScripting.Community
                     foreach (var upstream in GetFlowSourceUnitsInternal(nester as Unit, visited, parent, key))
                         yield return upstream;
                 }
+
                 yield break;
             }
 
@@ -337,84 +374,100 @@ namespace Unity.VisualScripting.Community
                         }
                     }
                 }
-
-                yield break;
             }
 
+            visited.Add(unit);
             yield return unit;
         }
 
-        public static List<T> GetUnitsOfType<T>(Unit unit, Func<T, bool> predicate = null, bool enterNests = true) where T : Unit
+        public static List<T> GetUnitsOfType<T>(Unit unit, Func<T, bool> predicate = null, GraphReference reference = null) where T : Unit
         {
-            return GetUnitsOfTypeInternal(unit, predicate, new HashSet<Unit>(), enterNests);
+            return GetUnitsOfTypeInternal(unit, predicate, new HashSet<Unit>(), reference);
         }
 
-        private static List<T> GetUnitsOfTypeInternal<T>(Unit unit, Func<T, bool> predicate = null, HashSet<Unit> visited = null, bool enterNests = true, string key = null) where T : Unit
+        private static List<T> GetUnitsOfTypeInternal<T>(Unit unit, Func<T, bool> predicate = null, HashSet<Unit> visited = null, GraphReference reference = null, string key = null) where T : Unit
         {
             var results = new List<T>();
 
             if (unit == null || visited.Contains(unit))
                 return results;
 
-            visited.Add(unit);
+            if (!(unit is GraphOutput or INesterUnit))
+                visited.Add(unit);
 
             if (unit is T typedUnit && (predicate == null || predicate(typedUnit)))
                 results.Add(typedUnit);
 
-            if (enterNests && unit is INesterUnit nesterUnit && nesterUnit.nest != null && nesterUnit.nest.graph is FlowGraph graph)
+            if (reference != null && (unit is INesterUnit || unit is GraphOutput))
             {
-                if (graph.units.FirstOrDefault(e => e is GraphInput) is GraphInput graphInput)
+                if (unit is INesterUnit nesterUnit && nesterUnit.nest != null && nesterUnit.nest.graph is FlowGraph graph)
                 {
-                    if (graphInput is T typed && (predicate == null || predicate(typed)))
-                        results.Add(typed);
+                    if (graph.units.FirstOrDefault(e => e is GraphInput) is GraphInput graphInput)
+                    {
+                        if (graphInput is T typed && (predicate == null || predicate(typed)))
+                            results.Add(typed);
 
-                    var correspondingControlOutput = graphInput.controlOutputs.FirstOrDefault(c => c.key == key);
-                    if (correspondingControlOutput != null && correspondingControlOutput.hasValidConnection)
-                        results.AddRange(GetUnitsOfTypeInternal<T>(correspondingControlOutput.connection.destination.unit as Unit, predicate, visited, enterNests, key));
+                        var correspondingControlOutput = graphInput.controlOutputs.FirstOrDefault(c => c.key == key);
+                        if (correspondingControlOutput != null && correspondingControlOutput.hasValidConnection)
+                            results.AddRange(GetUnitsOfTypeInternal<T>(correspondingControlOutput.connection.destination.unit as Unit, predicate, visited, reference.ChildReference(nesterUnit, false), correspondingControlOutput.connection.destination.key));
+                    }
+                }
+                else if (unit is GraphOutput graphOutput && reference.isChild && reference.parentElement is INesterUnit parentNester)
+                {
+                    var parent = reference.ParentReference(false);
+
+                    var correspondingParentInput = parentNester.controlOutputs.FirstOrDefault(ci => ci.key == key);
+
+                    if (correspondingParentInput != null && correspondingParentInput.hasValidConnection)
+                    {
+                        results.AddRange(GetUnitsOfTypeInternal<T>(correspondingParentInput.connection.destination.unit as Unit, predicate, visited, parent, correspondingParentInput.connection.destination.key));
+                    }
                 }
             }
-
-            foreach (var output in unit.controlOutputs)
+            else
             {
-                if (!output.hasValidConnection)
-                    continue;
-
-                var connection = output.connection;
-
-                if (connection?.destination?.unit is Unit destUnit)
+                foreach (var output in unit.controlOutputs)
                 {
-                    if (destUnit is T typed && (predicate == null || predicate(typed)))
-                        results.Add(typed);
+                    if (!output.hasValidConnection)
+                        continue;
 
-                    results.AddRange(GetUnitsOfTypeInternal<T>(destUnit, predicate, visited, enterNests, connection.destination.key));
+                    var connection = output.connection;
+
+                    if (connection?.destination?.unit is Unit destUnit)
+                    {
+                        if (destUnit is T typed && (predicate == null || predicate(typed)))
+                            results.Add(typed);
+
+                        results.AddRange(GetUnitsOfTypeInternal<T>(destUnit, predicate, visited, reference, connection.destination.key));
+                    }
                 }
-            }
 
-            foreach (var input in unit.valueInputs)
-            {
-                if (!input.hasValidConnection)
-                    continue;
-
-                var connection = input.connection;
-
-                if (connection?.source?.unit is Unit sourceUnit)
+                foreach (var input in unit.valueInputs)
                 {
-                    if (sourceUnit is T typed && (predicate == null || predicate(typed)))
-                        results.Add(typed);
+                    if (!input.hasValidConnection)
+                        continue;
 
-                    results.AddRange(GetUnitsOfTypeInternal<T>(sourceUnit, predicate, visited, enterNests, key));
+                    var connection = input.connection;
+
+                    if (connection?.source?.unit is Unit sourceUnit)
+                    {
+                        if (sourceUnit is T typed && (predicate == null || predicate(typed)))
+                            results.Add(typed);
+
+                        results.AddRange(GetUnitsOfTypeInternal<T>(sourceUnit, predicate, visited, reference, key));
+                    }
                 }
             }
 
             return results;
         }
 
-        public static T GetFirstUnitOfType<T>(Unit unit, Func<T, bool> predicate = null, bool enterNests = true) where T : Unit
+        public static T GetFirstUnitOfType<T>(Unit unit, Func<T, bool> predicate = null, GraphReference reference = null) where T : Unit
         {
-            return GetFirstUnitOfTypeInternal(unit, predicate, new HashSet<Unit>(), enterNests);
+            return GetFirstUnitOfTypeInternal(unit, predicate, new HashSet<Unit>(), reference);
         }
 
-        private static T GetFirstUnitOfTypeInternal<T>(Unit unit, Func<T, bool> predicate = null, HashSet<Unit> visited = null, bool enterNests = true, string key = null) where T : Unit
+        private static T GetFirstUnitOfTypeInternal<T>(Unit unit, Func<T, bool> predicate = null, HashSet<Unit> visited = null, GraphReference reference = null, string key = null) where T : Unit
         {
             if (unit == null || visited.Contains(unit))
                 return null;
@@ -424,55 +477,75 @@ namespace Unity.VisualScripting.Community
             if (unit is T typedUnit && (predicate == null || predicate(typedUnit)))
                 return typedUnit;
 
-            if (enterNests && unit is INesterUnit nesterUnit && nesterUnit.nest != null && nesterUnit.nest.graph is FlowGraph graph)
+            if (reference != null && (unit is INesterUnit || unit is GraphOutput))
             {
-                if (graph.units.FirstOrDefault(e => e is GraphInput) is GraphInput graphInput)
+                if (unit is INesterUnit nesterUnit && nesterUnit.nest != null && nesterUnit.nest.graph is FlowGraph graph)
                 {
-                    if (graphInput is T typed && (predicate == null || predicate(typed)))
-                        return typed;
-                    var correspondingControlOutput = graphInput.controlOutputs.FirstOrDefault(c => c.key == key);
-                    if (correspondingControlOutput != null && correspondingControlOutput.hasValidConnection)
+                    if (graph.units.FirstOrDefault(e => e is GraphInput) is GraphInput graphInput)
                     {
-                        var result = GetFirstUnitOfTypeInternal<T>(correspondingControlOutput.connection.destination.unit as Unit, predicate, visited, enterNests, key);
+                        if (graphInput is T typed && (predicate == null || predicate(typed)))
+                            return typed;
+
+                        var correspondingControlOutput = graphInput.controlOutputs.FirstOrDefault(c => c.key == key);
+
+                        if (correspondingControlOutput != null && correspondingControlOutput.hasValidConnection)
+                        {
+                            var result = GetFirstUnitOfTypeInternal<T>(correspondingControlOutput.connection.destination.unit as Unit, predicate, visited, reference.ChildReference(nesterUnit, false), correspondingControlOutput.connection.destination.key);
+                            if (result is T _typed && (predicate == null || predicate(_typed)))
+                                return _typed;
+                        }
+                    }
+                }
+                else if (unit is GraphOutput graphOutput && reference.isChild && reference.parentElement is INesterUnit parentNester)
+                {
+                    var parent = reference.ParentReference(false);
+
+                    var correspondingParentInput = parentNester.controlOutputs.FirstOrDefault(ci => ci.key == key);
+
+                    if (correspondingParentInput != null && correspondingParentInput.hasValidConnection)
+                    {
+                        var result = GetFirstUnitOfTypeInternal<T>(correspondingParentInput.connection.destination.unit as Unit, predicate, visited, reference.ParentReference(false), correspondingParentInput.connection.destination.key);
                         if (result is T _typed && (predicate == null || predicate(_typed)))
                             return _typed;
                     }
                 }
             }
-
-            foreach (var output in unit.controlOutputs)
+            else
             {
-                if (!output.hasValidConnection)
-                    continue;
-
-                var connection = output.connection;
-
-                if (connection?.destination?.unit is Unit destUnit)
+                foreach (var output in unit.controlOutputs)
                 {
-                    if (destUnit is T typed && (predicate == null || predicate(typed)))
-                        return typed;
+                    if (!output.hasValidConnection)
+                        continue;
 
-                    var result = GetFirstUnitOfTypeInternal<T>(destUnit, predicate, visited, enterNests, connection.destination.key);
-                    if (result != null)
-                        return result;
+                    var connection = output.connection;
+
+                    if (connection?.destination?.unit is Unit destUnit)
+                    {
+                        if (destUnit is T typed && (predicate == null || predicate(typed)))
+                            return typed;
+
+                        var result = GetFirstUnitOfTypeInternal<T>(destUnit, predicate, visited, reference.ParentReference(false), connection.destination.key);
+                        if (result is T _typed && (predicate == null || predicate(_typed)))
+                            return _typed;
+                    }
                 }
-            }
 
-            foreach (var input in unit.valueInputs)
-            {
-                if (!input.hasValidConnection)
-                    continue;
-
-                var connection = input.connection;
-
-                if (connection?.source?.unit is Unit sourceUnit)
+                foreach (var input in unit.valueInputs)
                 {
-                    if (sourceUnit is T typed && (predicate == null || predicate(typed)))
-                        return typed;
+                    if (!input.hasValidConnection)
+                        continue;
 
-                    var result = GetFirstUnitOfTypeInternal<T>(sourceUnit, predicate, visited, enterNests, key);
-                    if (result != null)
-                        return result;
+                    var connection = input.connection;
+
+                    if (connection?.source?.unit is Unit sourceUnit)
+                    {
+                        if (sourceUnit is T typed && (predicate == null || predicate(typed)))
+                            return typed;
+
+                        var result = GetFirstUnitOfTypeInternal<T>(sourceUnit, predicate, visited, reference.ParentReference(false), key);
+                        if (result is T _typed && (predicate == null || predicate(_typed)))
+                            return _typed;
+                    }
                 }
             }
 
@@ -484,7 +557,7 @@ namespace Unity.VisualScripting.Community
             List<UnifiedVariableUnit> variableUnits = new List<UnifiedVariableUnit>();
             foreach (var source in GetFlowSourceUnits(currentUnit, reference))
             {
-                foreach (var unit in GetUnitsOfType<UnifiedVariableUnit>(source, (v) => v.kind == VariableKind.Flow))
+                foreach (var unit in GetUnitsOfType<UnifiedVariableUnit>(source, (v) => v.kind == VariableKind.Flow, reference))
                 {
                     if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == VariableKind.Flow && variableUnit.isDefined)
                     {
@@ -529,9 +602,9 @@ namespace Unity.VisualScripting.Community
             return variableUnits;
         }
 
-        public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetObjectVariablesRenameTargets(GameObject gameObject, string oldName)
+        public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetObjectVariablesRenameTargets(GameObject gameObject, string oldName, VariableKind kind = VariableKind.Object)
         {
-            if (gameObject.scene != null)
+            if (gameObject.scene != null && gameObject.scene.IsValid())
             {
                 var results = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
                 foreach (var rootGameObject in gameObject.scene.GetRootGameObjects())
@@ -567,21 +640,28 @@ namespace Unity.VisualScripting.Community
 
                 GraphTraversal.TraverseGraph(component.GetReference().graph, (unit) =>
                 {
-                    if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == VariableKind.Object && variableUnit.isDefined)
+                    if (unit is UnifiedVariableUnit variableUnit && variableUnit.kind == kind && variableUnit.isDefined)
                     {
                         if (!variableUnit.name.hasValidConnection && (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
                         {
-                            var reference = GraphTraversal.GetChildReferenceWithGraph(component.GetReference().AsReference(), variableUnit.graph);
-                            if (Flow.CanPredict(variableUnit.@object, reference))
+                            if (kind == VariableKind.Object)
                             {
-                                var value = Flow.Predict(variableUnit.@object, reference);
-                                if (value is GameObject @object)
+                                var reference = GraphTraversal.GetChildReferenceWithGraph(component.GetReference().AsReference(), variableUnit.graph);
+                                if (Flow.CanPredict(variableUnit.@object, reference))
                                 {
-                                    if (reference != null && @object == gameObject)
+                                    var value = Flow.Predict(variableUnit.@object, reference);
+                                    if (value is GameObject @object)
                                     {
-                                        variableUnits.Add((variableUnit, reference.rootObject));
+                                        if (reference != null && @object == gameObject)
+                                        {
+                                            variableUnits.Add((variableUnit, reference.rootObject));
+                                        }
                                     }
                                 }
+                            }
+                            else
+                            {
+                                variableUnits.Add((variableUnit, component as UnityEngine.Object));
                             }
                         }
                     }
@@ -629,7 +709,7 @@ namespace Unity.VisualScripting.Community
         public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetSceneVariablesRenameTargets(Scene scene, string oldName,
         VariableKind kind = VariableKind.Scene, Func<IMachine, bool> predicate = null)
         {
-            if (scene != null)
+            if (scene != null && scene.IsValid())
             {
                 var results = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
                 foreach (var rootGameObject in scene.GetRootGameObjects())
@@ -710,54 +790,95 @@ namespace Unity.VisualScripting.Community
 
             try
             {
-                var scenePaths = GetAllScenePaths().ToList();
+                List<string> scenePaths = GetAllScenePaths().ToList();
                 int totalScenes = scenePaths.Count;
-                int sceneIndex = 0;
-                var active = SceneManager.GetActiveScene().path;
-                var activeReference = GraphPointerData.FromPointer(GraphWindow.activeReference);
 
-                foreach (var scenePath in scenePaths)
+                float scenePhaseWeight = 0.5f;
+                float macroPhaseWeight = 0.3f;
+                float prefabPhaseWeight = 0.2f;
+
+                string[] loadedScenes = new string[SceneManager.loadedSceneCount];
+                int loadedIndex = 0;
+                for (int i = 0; i < SceneManager.sceneCount; i++)
                 {
-                    if (!scenePath.StartsWith("Assets/")) continue;
-                    float progress = sceneIndex / totalScenes + 1;
-                    EditorUtility.DisplayProgressBar("Renaming Variables", $"Processing Scene: {scenePath}", progress);
+                    Scene scene = SceneManager.GetSceneAt(i);
+                    if (!scene.isLoaded) continue;
+                    loadedScenes[loadedIndex++] = scene.path;
+                }
 
-                    var scene = SceneManager.GetSceneByPath(scenePath);
+                for (int sceneIndex = 0; sceneIndex < totalScenes; sceneIndex++)
+                {
+                    string scenePath = scenePaths[sceneIndex];
+                    if (!scenePath.StartsWith("Assets/")) continue;
+
+                    float sceneProgress = (float)sceneIndex / totalScenes;
+                    float progress = sceneProgress * scenePhaseWeight;
+
+                    EditorUtility.DisplayProgressBar(
+                        "Renaming Variables",
+                        "Processing Scene: " + scenePath,
+                        progress
+                    );
+
+                    Scene scene = SceneManager.GetSceneByPath(scenePath);
+
                     try
                     {
-                        scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+                        if (!loadedScenes.Contains(scenePath))
+                            scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        Debug.LogWarning($"Failed to open scene '{scenePath}' during Rename Variables, skipping.\n{ex}");
+                        continue;
                     }
 
-                    if (scene == null) continue;
+                    if (!scene.IsValid())
+                        continue;
 
                     bool sceneModified = false;
 
-                    foreach (var (unit, graph) in GetSceneVariablesRenameTargets(scene, oldName, kind, m => m.nest != null && m.nest.source == GraphSource.Embed))
+                    List<(UnifiedVariableUnit, UnityEngine.Object)> targets =
+                        GetSceneVariablesRenameTargets(scene, oldName, kind, m => m.nest != null && m.nest.source == GraphSource.Embed).ToList();
+
+                    int unitCount = targets.Count;
+                    for (int i = 0; i < unitCount; i++)
                     {
-                        if (UpdateVariable(unit, newName))
+                        float unitProgress = unitCount == 0 ? 0f : (float)i / unitCount;
+                        float combinedProgress = progress + (unitProgress * scenePhaseWeight / totalScenes);
+
+                        EditorUtility.DisplayProgressBar(
+                            "Renaming Variables",
+                            "Processing Scene: " + scenePath,
+                            combinedProgress
+                        );
+
+                        if (UpdateVariable(targets[i].Item1, newName))
                             sceneModified = true;
                     }
 
                     if (sceneModified)
                         EditorSceneManager.SaveScene(scene);
 
-                    sceneIndex++;
+                    if (!loadedScenes.Contains(scenePath))
+                        EditorSceneManager.CloseScene(scene, true);
                 }
 
-                if (!string.IsNullOrEmpty(active))
-                {
-                    EditorSceneManager.OpenScene(active);
-                    GraphWindow.active.reference = activeReference.ToReference(false);
-                }
-                EditorUtility.DisplayProgressBar("Renaming Variables", "Updating Macros...", 0.95f);
+                float macroBase = scenePhaseWeight;
+                List<MacroScriptableObject> macros = GetAllMacros().ToList();
+                int macroCount = macros.Count;
 
-                foreach (var macroScriptableObject in GetAllMacros())
+                for (int i = 0; i < macroCount; i++)
                 {
-                    if (macroScriptableObject is IMacro macro && macro.graph != null)
+                    float progress = macroBase + ((float)i / macroCount) * macroPhaseWeight;
+
+                    EditorUtility.DisplayProgressBar(
+                        "Renaming Variables",
+                        "Processing Macro: " + macros[i].name,
+                        progress
+                    );
+
+                    MacroScriptableObject macroObject = macros[i];
+                    if (macroObject is IMacro macro && macro.graph != null)
                     {
                         bool modified = false;
 
@@ -765,23 +886,38 @@ namespace Unity.VisualScripting.Community
                         {
                             if (unit is UnifiedVariableUnit variableUnit &&
                                 variableUnit.kind == kind &&
-                                variableUnit.isDefined)
+                                variableUnit.isDefined &&
+                                !variableUnit.name.hasValidConnection &&
+                                (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
                             {
-                                if (!variableUnit.name.hasValidConnection &&
-                                    (string)variableUnit.defaultValues[variableUnit.name.key] == oldName)
-                                {
-                                    if (UpdateVariable(variableUnit, newName))
-                                        modified = true;
-                                }
+                                if (UpdateVariable(variableUnit, newName))
+                                    modified = true;
                             }
                         });
 
                         if (modified)
                         {
-                            EditorUtility.SetDirty(macroScriptableObject);
+                            EditorUtility.SetDirty(macroObject);
                             AssetDatabase.SaveAssets();
                         }
                     }
+                }
+
+                float prefabBase = scenePhaseWeight + macroPhaseWeight;
+                List<GameObject> prefabs = AssetUtility.GetAllAssetsOfType<GameObject>().ToList();
+                int prefabCount = prefabs.Count;
+
+                for (int i = 0; i < prefabCount; i++)
+                {
+                    float progress = prefabBase + ((float)i / prefabCount) * prefabPhaseWeight;
+
+                    EditorUtility.DisplayProgressBar(
+                        "Renaming Variables",
+                        "Processing Prefab: " + prefabs[i].name,
+                        progress
+                    );
+
+                    UpdateAllObjectVariables(prefabs[i], oldName, newName, kind);
                 }
             }
             finally
@@ -790,6 +926,7 @@ namespace Unity.VisualScripting.Community
             }
         }
 
+
         public static List<(UnifiedVariableUnit, UnityEngine.Object)> GetCurrentlyAccessibleProjectUnits(string oldName, VariableKind kind = VariableKind.Application)
         {
             if (kind != VariableKind.Application && kind != VariableKind.Saved)
@@ -797,7 +934,7 @@ namespace Unity.VisualScripting.Community
 
             List<(UnifiedVariableUnit, UnityEngine.Object)> targets = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
             var scene = SceneManager.GetActiveScene();
-            if (scene != null)
+            if (scene != null && scene.IsValid())
             {
                 targets.AddRange(GetSceneVariablesRenameTargets(scene, oldName, kind));
             }
@@ -826,11 +963,13 @@ namespace Unity.VisualScripting.Community
 
         public static void RenameApplicationVariables(string oldName, string newName)
         {
+            EditorApplication.delayCall += () =>
             UpdateProjectVariables(oldName, newName, VariableKind.Application);
         }
 
         public static void RenameSavedVariables(string oldName, string newName)
         {
+            EditorApplication.delayCall += () =>
             UpdateProjectVariables(oldName, newName, VariableKind.Saved);
         }
 
@@ -848,30 +987,10 @@ namespace Unity.VisualScripting.Community
             return true;
         }
 
-        public static bool IsSourceLiteral(ValueInput valueInput, out Type sourceType)
-        {
-            var source = CSharp.NodeGeneration.GetPesudoSource(valueInput);
-            if (source != null)
-            {
-                if (source.unit is Literal literal)
-                {
-                    sourceType = literal.type;
-                    return true;
-                }
-                else if (source is ValueInput v && !v.hasValidConnection && v.hasDefaultValue)
-                {
-                    sourceType = v.type;
-                    return true;
-                }
-            }
-            sourceType = null;
-            return false;
-        }
-
-        public static void UpdateAllObjectVariables(GameObject gameObject, string oldName, string newName)
+        public static void UpdateAllObjectVariables(GameObject gameObject, string oldName, string newName, VariableKind kind = VariableKind.Object)
         {
             var group = Undo.GetCurrentGroup();
-            foreach (var target in GetObjectVariablesRenameTargets(gameObject, oldName))
+            foreach (var target in GetObjectVariablesRenameTargets(gameObject, oldName, kind))
             {
                 if (target.Item1.name.hasValidConnection) continue;
 
