@@ -778,7 +778,8 @@ namespace Unity.VisualScripting.Community
                             btn.style.width = 80;
                     });
 
-                    btn.text = " " + title.text;
+                    btn.text = (breadcrumb.isRoot ? "       " : " ") + title.text;
+
                     btn.RegisterCallback<GeometryChangedEvent>(evt =>
                     {
                         var title = breadcrumb.parent.Description().ToGUIContent(IconSize.Small);
@@ -813,7 +814,11 @@ namespace Unity.VisualScripting.Community
                         Sprite bgSprite = breadcrumb.isRoot ? breadCrumbRootIcon : breadCrumbIcon;
                         btn.style.backgroundImage = Background.FromSprite(bgSprite);
                         var title = breadcrumb.parent.Description().ToGUIContent(IconSize.Small);
-                        btn.text = " " + title.text;
+#if !UNITY_2023_2_OR_NEWER
+                        btn.text = (breadcrumb.isRoot ? "       " : " ") + title.text;
+#else
+                        btn.text = title.text;
+#endif
 
 #if UNITY_2023_2_OR_NEWER
                         btn.schedule.Execute(() =>
@@ -828,6 +833,7 @@ namespace Unity.VisualScripting.Community
                     btn.style.height = 20;
                     btn.style.fontSize = 9;
                     btn.focusable = false;
+
                     breadcrumbContainer.Add(btn);
                 }
             }

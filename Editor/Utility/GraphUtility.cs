@@ -797,13 +797,12 @@ namespace Unity.VisualScripting.Community
                 float macroPhaseWeight = 0.3f;
                 float prefabPhaseWeight = 0.2f;
 
-                string[] loadedScenes = new string[SceneManager.loadedSceneCount];
-                int loadedIndex = 0;
+                List<string> loadedScenes = new List<string>();
                 for (int i = 0; i < SceneManager.sceneCount; i++)
                 {
                     Scene scene = SceneManager.GetSceneAt(i);
                     if (!scene.isLoaded) continue;
-                    loadedScenes[loadedIndex++] = scene.path;
+                    loadedScenes.Add(scene.path);
                 }
 
                 for (int sceneIndex = 0; sceneIndex < totalScenes; sceneIndex++)

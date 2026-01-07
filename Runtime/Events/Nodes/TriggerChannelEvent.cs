@@ -43,7 +43,6 @@ namespace Unity.VisualScripting.Community
             catch (Exception ex)
             {
                 Debug.LogException(ex);
-                // Handle the exception or provide fallback behavior
             }
 
             return OutputTrigger;
