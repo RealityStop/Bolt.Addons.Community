@@ -778,7 +778,11 @@ namespace Unity.VisualScripting.Community
                             btn.style.width = 80;
                     });
 
+#if !UNITY_2023_2_OR_NEWER
                     btn.text = (breadcrumb.isRoot ? "       " : " ") + title.text;
+#else
+                    btn.text = title.text;
+#endif
 
                     btn.RegisterCallback<GeometryChangedEvent>(evt =>
                     {
@@ -1142,7 +1146,7 @@ namespace Unity.VisualScripting.Community
 #if !NEW_TOOLBAR_STYLE
                 LudiqStyles.toolbarBackground.normal.background = CommunityStyles.backgroundColor.GetPixel();
 #endif
-                // Variables Panel 
+                // Variables Panel
 
                 var pro = EditorGUIUtility.isProSkin;
                 var tabField = typeof(VariablesPanel.Styles).GetField("tab", BindingFlags.Static | BindingFlags.Public);

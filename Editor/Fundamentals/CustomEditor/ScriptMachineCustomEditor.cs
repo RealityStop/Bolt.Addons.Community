@@ -1,9 +1,14 @@
 using UnityEditor;
 using UnityEngine;
+#if VISUAL_SCRIPTING_1_7
+using SMachine = Unity.VisualScripting.ScriptMachine;
+#else
+using SMachine = Unity.VisualScripting.FlowMachine;
+#endif
 
 namespace Unity.VisualScripting.Community
 {
-    [CustomEditor(typeof(ScriptMachine))]
+    [CustomEditor(typeof(SMachine))]
     public class ScriptMachineCustomEditor : Editor
     {
         private Metadata metadata;

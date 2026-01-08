@@ -8,12 +8,15 @@ namespace Unity.VisualScripting.Community
     {
         private Metadata nameMetadata => metadata[nameof(VariableDeclaration.name)];
         private Metadata valueMetadata => metadata[nameof(VariableDeclaration.value)];
+#if VISUAL_SCRIPTING_1_7
         private Metadata typeMetadata => metadata[nameof(VariableDeclaration.typeHandle)];
-
+#endif
         public PatchedVariableDeclarationInspector(Metadata metadata)
             : base(metadata)
         {
+#if VISUAL_SCRIPTING_1_7
             VSUsageUtility.isVisualScriptingUsed = true;
+#endif
         }
 
         protected override float GetHeight(float width, GUIContent label)
@@ -24,8 +27,10 @@ namespace Unity.VisualScripting.Community
             {
                 height += Styles.padding;
                 height += GetNameHeight(width);
+#if VISUAL_SCRIPTING_1_7
                 height += Styles.spacing;
                 height += GetTypeHeight(width);
+#endif
                 height += Styles.spacing;
                 height += GetValueHeight(width);
                 height += Styles.padding;
@@ -43,12 +48,12 @@ namespace Unity.VisualScripting.Community
         {
             return LudiqGUI.GetInspectorHeight(this, valueMetadata, width);
         }
-
+#if VISUAL_SCRIPTING_1_7
         float GetTypeHeight(float width)
         {
             return LudiqGUI.GetInspectorHeight(this, typeMetadata, width);
         }
-
+#endif
         protected override void OnGUI(Rect position, GUIContent label)
         {
             position = BeginLabeledBlock(metadata, position, label);
@@ -57,14 +62,18 @@ namespace Unity.VisualScripting.Community
             {
                 y += Styles.padding;
                 var namePosition = position.VerticalSection(ref y, GetNameHeight(position.width));
+#if VISUAL_SCRIPTING_1_7
                 y += Styles.spacing;
                 var typePosition = position.VerticalSection(ref y, GetTypeHeight(position.width));
+#endif
                 y += Styles.spacing;
                 var valuePosition = position.VerticalSection(ref y, GetValueHeight(position.width));
                 y += Styles.padding;
 
                 OnNameGUI(namePosition);
+#if VISUAL_SCRIPTING_1_7
                 OnTypeGUI(typePosition);
+#endif
                 OnValueGUI(valuePosition);
             }
 
@@ -247,12 +256,12 @@ namespace Unity.VisualScripting.Community
         {
             LudiqGUI.Inspector(valueMetadata, valuePosition, GUIContent.none);
         }
-
+#if VISUAL_SCRIPTING_1_7
         public void OnTypeGUI(Rect position)
         {
             LudiqGUI.Inspector(typeMetadata, position, GUIContent.none);
         }
-
+#endif
         public static class Styles
         {
             public static readonly float labelWidth = SystemObjectInspector.Styles.labelWidth;

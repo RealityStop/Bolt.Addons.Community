@@ -777,10 +777,9 @@ namespace Unity.VisualScripting.Community
             return AssetDatabase.FindAssets("t:Scene").Select(AssetDatabase.GUIDToAssetPath);
         }
 
-        private static IEnumerable<MacroScriptableObject> GetAllMacros()
+        private static IEnumerable<UnityEngine.Object> GetAllMacros()
         {
-            return AssetDatabase.FindAssets("t:MacroScriptableObject").Select(AssetDatabase.GUIDToAssetPath).Select(AssetDatabase.LoadMainAssetAtPath)
-            .OfType<MacroScriptableObject>();
+            return AssetDatabase.FindAssets("t:LudiqScriptableObject").Select(AssetDatabase.GUIDToAssetPath).Select(AssetDatabase.LoadMainAssetAtPath).Where(asset => asset is IMacro);
         }
 
         private static void UpdateProjectVariables(string oldName, string newName, VariableKind kind)
@@ -863,7 +862,7 @@ namespace Unity.VisualScripting.Community
                 }
 
                 float macroBase = scenePhaseWeight;
-                List<MacroScriptableObject> macros = GetAllMacros().ToList();
+                List<UnityEngine.Object> macros = GetAllMacros().ToList();
                 int macroCount = macros.Count;
 
                 for (int i = 0; i < macroCount; i++)
@@ -876,7 +875,7 @@ namespace Unity.VisualScripting.Community
                         progress
                     );
 
-                    MacroScriptableObject macroObject = macros[i];
+                    UnityEngine.Object macroObject = macros[i];
                     if (macroObject is IMacro macro && macro.graph != null)
                     {
                         bool modified = false;

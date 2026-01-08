@@ -470,8 +470,12 @@ namespace Unity.VisualScripting.Community
                     var valueMetadata = element["value"];
 
                     var inspector = valueMetadata.Inspector();
-                    var valueInspector = typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(inspector);
-                    valueInspector.GetType().GetMethod("ResolveType", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(valueInspector, Array.Empty<object>());
+                    try
+                    {
+                        var valueInspector = typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(inspector);
+                        valueInspector.GetType().GetMethod("ResolveType", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(valueInspector, Array.Empty<object>());
+                    }
+                    catch { }
                 }
             }
 
@@ -529,7 +533,7 @@ namespace Unity.VisualScripting.Community
                 });
                 Handles.color = restoredColor;
             }
-            private HashSet<Inspector> updatedInspectors = new HashSet<Inspector>();
+            // private HashSet<Inspector> updatedInspectors = new HashSet<Inspector>();
             public override void DrawItem(Rect position, int index)
             {
                 position.x -= 20;
@@ -598,28 +602,39 @@ namespace Unity.VisualScripting.Community
                 {
                     foldout.hoverStartTime = null;
                 }
-
+#if !VISUAL_SCRIPTING_1_7
+                var iconPosition = new Rect(foldoutRect.x + 15f, foldoutRect.y - 2, FieldHeight, FieldHeight);
+                var icon = element["value"].value?.GetType().Icon()?[IconSize.Small];
+                if (icon == null)
+                {
+                    icon = typeof(Null).Icon()?[IconSize.Small];
+                }
+                GUI.DrawTexture(iconPosition, icon, ScaleMode.ScaleToFit);
+#endif
                 float spacing = 4f;
                 float startX = foldoutRect.xMax + spacing;
                 float endX = position.x + position.width - DeleteButtonWidth - spacing;
                 float totalAvailable = endX - startX;
+#if VISUAL_SCRIPTING_1_7
                 float halfWidth = (totalAvailable - spacing) / 2f;
 
                 Rect nameRect = new Rect(startX, lineY - 2f, halfWidth, FieldHeight);
                 Rect typeRect = new Rect(nameRect.xMax + spacing, lineY - 2f, halfWidth, FieldHeight);
-
+#else
+                Rect nameRect = new Rect(startX + iconPosition.width, lineY - 2f, totalAvailable - spacing - iconPosition.width, FieldHeight);
+#endif
                 OnNameGUI(nameRect, element["name"]);
-
+#if VISUAL_SCRIPTING_1_7
                 using (adaptiveWidth.Override(true)) // Hide the Type label
                 {
                     var typeInspector = element["typeHandle"].Inspector();
-                    if (updatedInspectors.Add(typeInspector) && parentInspector.metadata.HasAttribute<TypeFilter>())
-                    {
-                        typeof(TypeHandleInspector).GetProperty("typeFilter", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(typeInspector, parentInspector.metadata.GetAttribute<TypeFilter>());
-                    }
+                    // if (updatedInspectors.Add(typeInspector) && parentInspector.metadata.HasAttribute<TypeFilter>())
+                    // {
+                    //     typeof(TypeHandleInspector).GetProperty("typeFilter", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(typeInspector, parentInspector.metadata.GetAttribute<TypeFilter>());
+                    // }
                     typeInspector.Draw(typeRect, GUIContent.none);
                 }
-
+#endif
                 Rect deleteRect = new Rect(position.x + position.width - DeleteButtonWidth - 4, lineY - 2f, DeleteButtonWidth, FieldHeight);
                 if (GUI.Button(deleteRect, "", new GUIStyle(EditorStyles.whiteLabel)
                 {
