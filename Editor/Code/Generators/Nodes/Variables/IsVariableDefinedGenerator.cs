@@ -1,10 +1,9 @@
-using System;
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -16,51 +15,42 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
         {
-
             if (Unit.kind == VariableKind.Scene)
-            {
-                NameSpaces = "UnityEngine.SceneManagement";
-            }
-            else
-            {
-                NameSpaces = string.Empty;
-            }
+                yield return "UnityEngine.SceneManagement";
+        }
 
-            var variables = MakeClickableForThisUnit(typeof(VisualScripting.Variables).As().CSharpName(true, true));
-            var kind = string.Empty;
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
             switch (Unit.kind)
             {
                 case VariableKind.Flow:
-                    return MakeClickableForThisUnit("/* Flow Variables are not supported */".WarningHighlight());
                 case VariableKind.Graph:
-                    return MakeClickableForThisUnit("/* Graph Variables do not support connected names */".WarningHighlight());
+                    writer.Error($"{Unit.kind} Variables do not support connected names");
+                    break;
                 case VariableKind.Object:
-                    kind = MakeClickableForThisUnit($".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeClickableForThisUnit(")")}";
+                    writer.InvokeMember(typeof(VisualScripting.Variables).As().CSharpName(true, true), "Object", writer.Action(() => GenerateValue(Unit.@object, data, writer)));
                     break;
                 case VariableKind.Scene:
-                    kind = MakeClickableForThisUnit($".Scene({"SceneManager".TypeHighlight()}.GetActiveScene())");
+                    writer.Write(typeof(VisualScripting.Variables).As().CSharpName(true, true));
+                    WriteSceneKind(data, writer);
                     break;
                 case VariableKind.Application:
-                    kind = MakeClickableForThisUnit("." + "Application".VariableHighlight());
+                    writer.GetMember(typeof(VisualScripting.Variables).As().CSharpName(true, true), "Application");
                     break;
                 case VariableKind.Saved:
-                    kind = MakeClickableForThisUnit("." + "Saved".VariableHighlight());
+                    writer.GetMember(typeof(VisualScripting.Variables).As().CSharpName(true, true), "Saved");
                     break;
             }
-
-            return $"{variables}{kind}{MakeClickableForThisUnit(".IsDefined(")}{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(")")}";
+            writer.InvokeMember(null, "IsDefined", writer.Action(() => GenerateValue(Unit.name, data, writer)));
         }
 
-
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        private void WriteSceneKind(ControlGenerationData data, CodeWriter writer)
         {
-            if (input == Unit.@object && !input.hasValidConnection)
-            {
-                return MakeClickableForThisUnit("gameObject".VariableHighlight());
-            }
-            return base.GenerateValue(input, data);
+            writer.Write(typeof(Component).IsAssignableFrom(data.ScriptType)
+                ? ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")"
+                : "." + "ActiveScene".VariableHighlight());
         }
     }
 }

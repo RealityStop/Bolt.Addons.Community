@@ -22,7 +22,6 @@ namespace Unity.VisualScripting.Community
         [InspectorLabel("Error on hit")]
         public bool ErrorIfHit { get; set; } = false;
 
-
         [Serialize]
         [Inspectable]
         [UnitHeaderInspectable]

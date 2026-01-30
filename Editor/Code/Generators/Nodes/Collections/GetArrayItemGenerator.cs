@@ -1,8 +1,3 @@
-using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(GetArrayItem))]
@@ -10,27 +5,23 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public GetArrayItemGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            string arrayName = GenerateValue(Unit.array, data);
-            string index = GenerateIndex(Unit.indexes, data);
+            GenerateValue(Unit.array, data, writer);
 
-            return arrayName + MakeClickableForThisUnit("[") + index + MakeClickableForThisUnit("]");
-        }
+            writer.Write("[");
 
-        /// <summary>
-        /// Generates the index part of the syntax, e.g., [2] or [i, j].
-        /// </summary>
-        private string GenerateIndex(List<ValueInput> indexes, ControlGenerationData data)
-        {
-            var indexStrings = new List<string>();
-
-            foreach (var index in indexes)
+            for (int i = 0; i < Unit.indexes.Count; i++)
             {
-                indexStrings.Add(GenerateValue(index, data));
+                GenerateValue(Unit.indexes[i], data, writer);
+
+                if (i < Unit.indexes.Count - 1)
+                {
+                    writer.Write(", ");
+                }
             }
 
-            return string.Join(MakeClickableForThisUnit(", "), indexStrings);
+            writer.Write("]");
         }
     }
 }

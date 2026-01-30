@@ -9,7 +9,6 @@ using System.Collections;
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnEveryXSeconds))]
-    [RequiresVariables]
     public class OnEveryXSecondsGenerator : UpdateMethodNodeGenerator, IRequireVariables
     {
         public OnEveryXSecondsGenerator(Unit unit) : base(unit) { }
@@ -26,14 +25,19 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override List<TypeParam> Parameters => new List<TypeParam>();
 
-        public override string GenerateUpdateCode(ControlGenerationData data, int indent)
+        public override void GenerateUpdateCode(ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if ".ControlHighlight() + "(" + name.VariableHighlight() + ".Update(") + GenerateValue(Unit.seconds, data) + MakeClickableForThisUnit(", ") + GenerateValue(Unit.unscaledTime, data) + MakeClickableForThisUnit(")") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-            output += CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit((Unit.coroutine ? $"StartCoroutine({Name}())" : Name + "()") + ";") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-            return output;
+            writer.WriteIndented("if ".ControlHighlight() + "(" + name.VariableHighlight() + ".Update(");
+            GenerateValue(Unit.seconds, data, writer);
+            writer.Write(", ");
+            GenerateValue(Unit.unscaledTime, data, writer);
+            writer.Write("))").NewLine();
+            writer.WriteLine("{");
+            using (writer.Indented())
+            {
+                writer.WriteIndented((Unit.coroutine ? $"StartCoroutine({Name}())" : Name + "()") + ";").NewLine();
+            }
+            writer.WriteLine("}");
         }
 
         public IEnumerable<FieldGenerator> GetRequiredVariables(ControlGenerationData data)
@@ -45,9 +49,9 @@ namespace Unity.VisualScripting.Community.CSharp
             yield return variable;
         }
 
-        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
     }
 }

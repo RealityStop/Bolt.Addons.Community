@@ -4,13 +4,19 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using Unity.VisualScripting.Community.Utility;
+using UnityEngine.UI;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnDropdownValueChanged))]
     public class OnDropdownValueChangedGenerator : EventListenerMethodGenerator<OnDropdownValueChanged>
     {
-        public OnDropdownValueChangedGenerator(Unit unit) : base(unit) { NameSpaces = "UnityEngine.UI"; }
+        public OnDropdownValueChangedGenerator(Unit unit) : base(unit) { }
+
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "UnityEngine.UI";
+        }
 
         public override ControlOutput OutputPort => Unit.trigger;
         public override List<ValueOutput> OutputValues => new List<ValueOutput>() { Unit.index, Unit.text };
@@ -31,12 +37,17 @@ namespace Unity.VisualScripting.Community.CSharp
             return Unit.coroutine;
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.index)
-                return MakeClickableForThisUnit("value".VariableHighlight());
+            {
+                writer.GetVariable("value");
+            }
             else
-                return GenerateValue(Unit.target, data) + MakeClickableForThisUnit($".GetComponent<{"Dropdown".TypeHighlight()}>()?.{"text".VariableHighlight()}");
+            {
+                GenerateValue(Unit.target, data, writer);
+                writer.GetComponent(typeof(Dropdown)).Write("?").GetMember("text");
+            }
         }
     }
 }

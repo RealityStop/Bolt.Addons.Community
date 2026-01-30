@@ -12,39 +12,27 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public SelectOnEnumGenerator(SelectOnEnum unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var selectorCode = GenerateValue(Unit.selector, data);
-            var currentIndent = CodeBuilder.GetCurrentIndent();
-            var indent = CodeBuilder.GetCurrentIndent(1);
-
-            var cases = Unit.branches.Select(branch =>
+            GenerateValue(Unit.selector, data, writer);
+            writer.Write(" switch".ControlHighlight());
+            writer.NewLine();
+            writer.WriteLine("{");
+            
+            using (writer.Indented())
             {
-                var keyCode = $"{branch.Key.As().Code(false)}";
-
-                var valueCode = GenerateValue(branch.Value, data);
-
-                return indent
-                     + MakeClickableForThisUnit(keyCode + " ")
-                     + MakeClickableForThisUnit("=> ")
-                     + valueCode;
-            });
-
-            var defaultCase = indent
-                            + MakeClickableForThisUnit("_ ".VariableHighlight())
-                            + MakeClickableForThisUnit("=> ")
-                            + MakeClickableForThisUnit("default".ConstructHighlight());
-
-            var body = string.Join(
-                MakeClickableForThisUnit(",") + "\n",
-                cases.Concat(new[] { defaultCase })
-            );
-
-            return selectorCode
-                 + MakeClickableForThisUnit(" switch".ControlHighlight()) + "\n"
-                 + currentIndent + MakeClickableForThisUnit("{") + "\n"
-                 + body + "\n"
-                 + currentIndent + MakeClickableForThisUnit("}");
+                foreach (var branch in Unit.branches)
+                {
+                    writer.WriteIndented();
+                    writer.Write(branch.Key.As().Code(false));
+                    writer.Write(" => ");
+                    GenerateValue(branch.Value, data, writer);
+                    writer.Write(",");
+                    writer.NewLine();
+                }
+            }
+            
+            writer.WriteIndented("}");
         }
     }
 }

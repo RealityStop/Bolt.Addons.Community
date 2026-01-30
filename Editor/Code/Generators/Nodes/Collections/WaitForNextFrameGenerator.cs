@@ -11,14 +11,12 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public WaitForNextFrameGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(output, data);
-        }
+            data.SetHasReturned(true);
+            writer.YieldReturn(writer.Action(() => writer.Null()), WriteOptions.IndentedNewLineAfter);
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-           return CodeBuilder.Indent(indent) + MakeClickableForThisUnit("yield return".ControlHighlight() + " null".ConstructHighlight() + ";");
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

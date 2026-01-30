@@ -1,6 +1,7 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -49,9 +50,9 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return @struct;
         }
 
-        protected override string GenerateBefore(int indent)
+        protected override void GenerateBefore(CodeWriter writer, ControlGenerationData data)
         {
-            var output = beforeUsings;
+            writer.Write(beforeUsings);
 
             if (generateUsings)
             {
@@ -61,96 +62,169 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 {
                     if (!string.IsNullOrEmpty(usings[i]))
                     {
-                        output += "using".ConstructHighlight() + " " + usings[i] + ";" + ((i < usings.Count - 1) ? "\n" : string.Empty);
+                        writer.Write("using".ConstructHighlight() + " " + usings[i] + ";");
+                        if (i < usings.Count - 1)
+                        {
+                            writer.NewLine();
+                        }
                         hasUsings = true;
                     }
                 }
-                if (hasUsings) output += "\n\n";
+                if (hasUsings)
+                {
+                    writer.NewLine();
+                    writer.NewLine();
+                }
             }
 
             for (int i = 0; i < attributes.Count; i++)
             {
-                output += attributes[i].Generate(indent) + "\n";
+                attributes[i].Generate(writer, data);
+                writer.NewLine();
             }
 
-            output += CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + modifier.AsString().ConstructHighlight() + " struct ".ConstructHighlight() + name.LegalMemberName().TypeHighlight();
-            output += interfaces.Count == 0 ? string.Empty : " : ";
+            writer.WriteIndented(scope.AsString().ConstructHighlight() + modifier.AsString().ConstructHighlight() + " struct ".ConstructHighlight() + name.LegalMemberName().TypeHighlight());
+
+            if (interfaces.Count > 0) writer.Write(" : ");
 
             for (int i = 0; i < interfaces.Count; i++)
             {
-                output += interfaces[i].As().CSharpName();
-                output += i < interfaces.Count - 1 ? ", " : string.Empty;
+                writer.Write(interfaces[i]);
+                if (i < interfaces.Count - 1)
+                {
+                    writer.Write(", ");
+                }
             }
-
-            return output;
         }
 
-        protected override string GenerateBody(int indent)
+        protected override void GenerateBody(CodeWriter writer, ControlGenerationData data)
         {
-            var output = string.Empty;
-
             for (int i = 0; i < fields.Count; i++)
             {
-                if (!string.IsNullOrEmpty(fields[i].name)) output += fields[i].Generate(indent) + (i < fields.Count - 1 ? "\n" : string.Empty);
+                if (!string.IsNullOrEmpty(fields[i].name))
+                {
+                    fields[i].Generate(writer, data);
+                    if (i < fields.Count - 1)
+                        writer.NewLine();
+                }
             }
 
-            output += fields.Count > 0 && (properties.Count > 0 || constructors.Count > 0 || methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n\n" : string.Empty;
+            if (fields.Count > 0 && (properties.Count > 0 || constructors.Count > 0 || methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0))
+            {
+                writer.NewLine();
+                writer.NewLine();
+            }
 
             for (int i = 0; i < properties.Count; i++)
             {
-                if (!string.IsNullOrEmpty(properties[i].name)) output += properties[i].Generate(indent) + (i < properties.Count - 1 ? "\n\n" : string.Empty);
+                if (!string.IsNullOrEmpty(properties[i].name))
+                {
+                    properties[i].Generate(writer, data);
+                    if (i < properties.Count - 1)
+                    {
+                        writer.NewLine();
+                        writer.NewLine();
+                    }
+                }
             }
 
-            output += properties.Count > 0 && (constructors.Count > 0 || methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n\n" : string.Empty;
+            if (properties.Count > 0 && (constructors.Count > 0 || methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0))
+            {
+                writer.NewLine();
+                writer.NewLine();
+            }
 
             for (int i = 0; i < constructors.Count; i++)
             {
-                output += constructors[i].Generate(indent) + (i < constructors.Count - 1 ? "\n\n" : string.Empty);
+                constructors[i].Generate(writer, data);
+                if (i < constructors.Count - 1)
+                {
+                    writer.NewLine();
+                    writer.NewLine();
+                }
             }
 
-            output += constructors.Count > 0 && (methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n\n" : string.Empty;
+            if (constructors.Count > 0 && (methods.Count > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0))
+            {
+                writer.NewLine();
+                writer.NewLine();
+            }
 
             for (int i = 0; i < methods.Count; i++)
             {
-                if (!string.IsNullOrEmpty(methods[i].name)) output += methods[i].Generate(indent) + (i < methods.Count - 1 ? "\n\n" : string.Empty);
+                if (!string.IsNullOrEmpty(methods[i].name))
+                {
+                    methods[i].Generate(writer, data);
+                    if (i < methods.Count - 1)
+                    {
+                        writer.NewLine();
+                        writer.NewLine();
+                    }
+                }
             }
 
-            output += methods.Count > 0 && (classes.Count > 0 || structs.Count > 0 || enums.Count > 0) ? "\n\n" : string.Empty;
+            if (methods.Count > 0 &&
+                (classes.Count > 0 || structs.Count > 0 || enums.Count > 0))
+            {
+                writer.NewLine();
+                writer.NewLine();
+            }
 
             for (int i = 0; i < classes.Count; i++)
             {
-                output += classes[i].Generate(indent);
-                output += i < classes.Count - 1 ? "\n\n" : string.Empty;
+                classes[i].Generate(writer, data);
+                if (i < classes.Count - 1)
+                {
+                    writer.NewLine();
+                    writer.NewLine();
+                }
             }
 
-            output += classes.Count > 0 && (structs.Count > 0 || enums.Count > 0) ? "\n\n" : string.Empty;
+            if (classes.Count > 0 && (structs.Count > 0 || enums.Count > 0))
+            {
+                writer.NewLine();
+                writer.NewLine();
+            }
 
             for (int i = 0; i < structs.Count; i++)
             {
-                output += structs[i].Generate(indent);
-                output += i < structs.Count - 1 ? "\n\n" : string.Empty;
+                structs[i].Generate(writer, data);
+                if (i < structs.Count - 1)
+                {
+                    writer.NewLine();
+                    writer.NewLine();
+                }
             }
 
-            output += structs.Count > 0 && enums.Count > 0 ? "\n\n" : string.Empty;
+            if (structs.Count > 0 && enums.Count > 0)
+            {
+                writer.NewLine();
+                writer.NewLine();
+            }
 
             for (int i = 0; i < enums.Count; i++)
             {
-                output += enums[i].Generate(indent);
-                output += i < enums.Count - 1 ? "\n\n" : string.Empty;
+                enums[i].Generate(writer, data);
+                if (i < enums.Count - 1)
+                {
+                    writer.NewLine();
+                    writer.NewLine();
+                }
             }
 
             for (int i = 0; i < subInterfaces.Count; i++)
             {
-                output += subInterfaces[i].Generate(indent);
-                output += i < subInterfaces.Count - 1 ? "\n\n" : string.Empty;
+                subInterfaces[i].Generate(writer, data);
+                if (i < subInterfaces.Count - 1)
+                {
+                    writer.NewLine();
+                    writer.NewLine();
+                }
             }
-
-            return output;
         }
 
-        protected override string GenerateAfter(int indent)
+        protected override void GenerateAfter(CodeWriter writer, ControlGenerationData data)
         {
-            return string.Empty;
         }
 
         public StructGenerator ImplementInterface(Type type)

@@ -14,9 +14,9 @@ namespace Unity.VisualScripting.Community.CSharp
                 value = UnityEngine.Random.Range(0.0f, 1.0f);
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(value.As().Code(false));
+            writer.Write(value.As().Code(false));
         }
     }
 }

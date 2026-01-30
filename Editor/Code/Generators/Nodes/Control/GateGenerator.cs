@@ -21,30 +21,45 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public GateGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            builder.Indent(indent);
             if (input == Unit.enter)
             {
-                builder.Body(before =>
-                before.Clickable("if ".ControlHighlight()).Parentheses(inner =>
-                inner.InvokeMember(Name.VariableHighlight(), "IsOpen", p1 => p1.Ignore(GenerateValue(Unit.initialState, data).TrimEnd()))),
-                (body, indent) => body.Ignore(GetNextUnit(Unit.exit, data, indent)), true, indent);
+                writer.WriteIndented();
+                writer.Write("if".ControlHighlight());
+                writer.Parentheses(inner =>
+                {
+                    writer.InvokeMember(Name.VariableHighlight(), "IsOpen", writer.Action(() => GenerateValue(Unit.initialState, data, writer)));
+                });
+                writer.NewLine();
+                writer.WriteLine("{");
+                using (writer.Indented())
+                {
+                    GenerateChildControl(Unit.exit, data, writer);
+                }
+                writer.WriteLine("}");
             }
             else if (input == Unit.open)
             {
-                builder.InvokeMember(Name.VariableHighlight(), "Open", Array.Empty<string>()).EndLine();
+                writer.WriteIndented();
+                writer.InvokeMember(Name.VariableHighlight(), "Open");
+                writer.Write(";");
+                writer.NewLine();
             }
             else if (input == Unit.close)
             {
-                builder.InvokeMember(Name.VariableHighlight(), "Close", Array.Empty<string>()).EndLine();
+                writer.WriteIndented();
+                writer.InvokeMember(Name.VariableHighlight(), "Close");
+                writer.Write(";");
+                writer.NewLine();
             }
             else if (input == Unit.toggle)
             {
-                builder.InvokeMember(Name.VariableHighlight(), "Toggle", Array.Empty<string>()).EndLine();
+                writer.WriteIndented();
+                writer.InvokeMember(Name.VariableHighlight(), "Toggle");
+                writer.Write(";");
+                writer.NewLine();
             }
-            return builder;
         }
     }
 }

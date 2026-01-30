@@ -1,9 +1,8 @@
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
 using Unity.VisualScripting;
-using UnityEngine;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -12,22 +11,31 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public ReturnAllObjectsToPoolNodeGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            builder.Indent(indent);
-            builder.Clickable(typeof(ObjectPool).As().CSharpName(false, true)).Dot().MethodCall("ReturnAllObjects", p1 => p1.Ignore(GenerateValue(Unit.Pool, data))).Clickable(";");
-            builder.NewLine().Ignore(GetNextUnit(Unit.Exit, data, indent));
-            return builder;
+            writer.WriteIndented();
+            writer.Write(typeof(ObjectPool).As().CSharpName(false, true));
+            writer.Write(".");
+            writer.Write("ReturnAllObjects");
+            writer.Parentheses(w =>
+            {
+                GenerateValue(Unit.Pool, data, w);
+            });
+            writer.Write(";");
+            writer.NewLine();
+
+            GenerateExitControl(Unit.Exit, data, writer);
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input == Unit.Pool && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
             {
-                return MakeClickableForThisUnit("gameObject".VariableHighlight() + ".GetComponent<" + typeof(ObjectPool).As().CSharpName(false, true) + ">()");
+                writer.Write("gameObject".VariableHighlight()).GetComponent(typeof(ObjectPool));
+                return;
             }
-            return base.GenerateValue(input, data);
+
+            base.GenerateValueInternal(input, data, writer);
         }
     }
 }

@@ -26,15 +26,16 @@ namespace Unity.VisualScripting.Community.CSharp
         public override List<TypeParam> Parameters => new TypeParam(typeof(int), "layerIndex").Yield().ToList();
 
         public OnAnimatorIKGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("layerIndex".VariableHighlight());
+            writer.GetVariable("layerIndex");
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
             data.AddLocalNameInScope("layerIndex", typeof(int));
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
     }
 }

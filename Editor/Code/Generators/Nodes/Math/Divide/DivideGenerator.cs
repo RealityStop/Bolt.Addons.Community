@@ -13,24 +13,33 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public DivideGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var inferredType = InferType(GetSourceType(Unit.dividend, data), GetSourceType(Unit.divisor, data)) ?? typeof(object);
-            data.SetExpectedType(inferredType);
-            var dividend = GenerateValue(Unit.dividend, data);
-            data.RemoveExpectedType();
-            data.SetExpectedType(inferredType);
-            var divisor = GenerateValue(Unit.divisor, data);
-            data.RemoveExpectedType();
+            var inferredType = InferType(GetSourceType(Unit.dividend, data, writer, false), GetSourceType(Unit.divisor, data, writer, false)) ?? typeof(object);
+            if (data.GetExpectedType() != null && data.GetExpectedType().IsStrictlyAssignableFrom(inferredType))
+            {
+                data.MarkExpectedTypeMet(inferredType);
+            }
             data.CreateSymbol(Unit, inferredType);
-            return TypeConversionUtility.CastTo(MakeClickableForThisUnit("(") + dividend + MakeClickableForThisUnit(" / ") + divisor + MakeClickableForThisUnit(")"), inferredType, data.GetExpectedType(), Unit);
+            
+            writer.Write("(");
+            using (data.Expect(inferredType))
+            {
+                GenerateValue(Unit.dividend, data, writer);
+            }
+            writer.Write(" / ");
+            using (data.Expect(inferredType))
+            {
+                GenerateValue(Unit.divisor, data, writer);
+            }
+            writer.Write(")");
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input.hasValidConnection)
             {
-                return GetNextValueUnit(input, data);
+                GenerateConnectedValue(input, data, writer, false);
             }
             else if (input.hasDefaultValue)
             {
@@ -38,19 +47,19 @@ namespace Unity.VisualScripting.Community.CSharp
                 var val = unit.defaultValues[input.key];
 
                 if (expectedType == typeof(int))
-                    return MakeClickableForThisUnit($"{val}".NumericHighlight());
-                if (expectedType == typeof(float))
-                    return MakeClickableForThisUnit($"{val}f".Replace(",", ".").NumericHighlight());
-                if (expectedType == typeof(double))
-                    return MakeClickableForThisUnit($"{val}d".Replace(",", ".").NumericHighlight());
-                if (expectedType == typeof(long))
-                    return MakeClickableForThisUnit($"{val}L".Replace(",", ".").NumericHighlight());
-
-                return val.As().Code(true, Unit, true, true, "", false);
+                    writer.Write($"{val}".NumericHighlight());
+                else if (expectedType == typeof(float))
+                    writer.Write($"{val}f".Replace(",", ".").NumericHighlight());
+                else if (expectedType == typeof(double))
+                    writer.Write($"{val}d".Replace(",", ".").NumericHighlight());
+                else if (expectedType == typeof(long))
+                    writer.Write($"{val}L".Replace(",", ".").NumericHighlight());
+                else
+                    writer.Write(val.As().Code(true, true, true, "", false));
             }
             else
             {
-                return $"/* \"{input.key} Requires Input\" */".WarningHighlight();
+                writer.Write($"/* \"{input.key} Requires Input\" */".ErrorHighlight());
             }
         }
 
@@ -58,7 +67,7 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             if (left == null || right == null) return null;
 
-            if (HasMultiplyOperator(left, right, out var result))
+            if (HasDivideOperator(left, right, out var result))
                 return result;
 
             Type[] order = { typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal), typeof(T) };
@@ -73,7 +82,7 @@ namespace Unity.VisualScripting.Community.CSharp
         }
         private static readonly Dictionary<(Type, Type), (bool, Type)> hasOperatorCache = new Dictionary<(Type, Type), (bool, Type)>();
 
-        private static bool HasMultiplyOperator(Type left, Type right, out Type returnType)
+        private static bool HasDivideOperator(Type left, Type right, out Type returnType)
         {
             if (left == null)
             {

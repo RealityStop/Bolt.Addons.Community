@@ -108,7 +108,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         /// <summary>
         /// Generates the proper C# cast syntax when needed.
         /// </summary>
-        public static string CastTo(string code, Type from, Type to, Unit unit)
+        public static string CastTo(string code, Type from, Type to)
         {
             if (to == null || from == null || from == to)
                 return code;
@@ -118,20 +118,10 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             if (IsExplicitlyConvertible(from, to))
             {
-                if (unit != null)
-                    return $"{CodeUtility.MakeClickable(unit, $"({to.As().CSharpName(false, true)})")}{code}";
-                else return $"({to.As().CSharpName(false, true)}{code}";
+                return $"({to.As().CSharpName(false, true)}{code}";
             }
 
             return code;
-        }
-
-        /// <summary>
-        /// Generates the proper C# cast syntax when needed.
-        /// </summary>
-        public static string CastTo(string code, Type from, Type to)
-        {
-            return CastTo(code, from, to, null);
         }
 
         /// <summary>
@@ -140,9 +130,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public static bool ShouldCast(Type sourceType, Type targetType)
         {
             if (sourceType == null || targetType == null)
-                return false;
-
-            if (sourceType == targetType)
                 return false;
 
             if (sourceType == targetType)

@@ -1,10 +1,10 @@
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections;
+using System.Collections.Generic;
 using System;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -13,64 +13,138 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         private ForEach Unit => unit as ForEach;
         private string currentIndex;
-        public ForEachGenerator(ForEach unit) : base(unit)
-        {
-        }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            var output = string.Empty;
+        public ForEachGenerator(ForEach unit) : base(unit) { }
 
-            if (input == Unit.enter)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            if (input != Unit.enter)
+                return;
+
+            bool fallback = false;
+            Type elementType;
+
+            bool usesIndex = Unit.currentIndex.hasValidConnection;
+
+            if (usesIndex)
             {
-                bool fallback = false;
-                Type type;
+                currentIndex = data.AddLocalNameInScope("currentIndex", typeof(int));
+                writer.CreateVariable(typeof(int), currentIndex, writer.Action(() => writer.Int(-1)));
+            }
+
+            using (writer.NewScope(data))
+            {
                 if (Unit.collection.hasValidConnection)
                 {
-                    var connectedValue = GetSourceType(Unit.collection, data);
-                    type = connectedValue != null ? GetElementType(connectedValue, typeof(object)) : GetElementType(Unit.collection.connection.source.type, typeof(object));
-                    variableName = data.AddLocalNameInScope("item", type);
+                    var sourceType = GetSourceType(Unit.collection, data, writer);
+                    elementType = sourceType != null ? GetElementType(sourceType, typeof(object)) : GetElementType(Unit.collection.connection.source.type, typeof(object));
+
+                    variableName = data.AddLocalNameInScope("item", elementType, true);
                 }
                 else
                 {
                     fallback = true;
-                    type = typeof(object);
-                    variableName = data.AddLocalNameInScope("item", typeof(object));
+                    elementType = typeof(object);
+                    variableName = data.AddLocalNameInScope("item", typeof(object), true);
                 }
-                var collection = GenerateValue(Unit.collection, data);
-                bool usesIndex = Unit.currentIndex.hasValidConnection;
-                if (usesIndex)
+
+                writer.WriteIndented("foreach ".ControlHighlight());
+                writer.Parentheses(w =>
                 {
-                    currentIndex = data.AddLocalNameInScope("currentIndex", typeof(int));
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(typeof(int).As().CSharpName() + " " + currentIndex.VariableHighlight() + " = -1;") + "\n";
-                }
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"foreach".ControlHighlight() + " (" + (fallback && type == typeof(object) ? "var".ConstructHighlight() : $"{type.As().CSharpName()}") + $" {variableName}".VariableHighlight() + " in ".ConstructHighlight()) + $"{collection}" + MakeClickableForThisUnit(")");
-                output += "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{");
-                output += "\n";
-                if (usesIndex)
+                    if (fallback && elementType == typeof(object))
+                        w.Write("var".ConstructHighlight());
+                    else
+                        w.Write(elementType.As().CSharpName().TypeHighlight());
+
+                    w.Space();
+                    w.Write(variableName.VariableHighlight());
+                    w.Space();
+                    w.Write("in ".ControlHighlight());
+
+                    using (data.Expect(Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable)))
+                    {
+                        GenerateValue(Unit.collection, data, w);
+                    }
+                }).NewLine();
+
+                writer.WriteLine("{");
+
+                using (writer.Indented())
                 {
-                    output += CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(currentIndex.VariableHighlight() + "++;") + "\n";
+                    if (usesIndex)
+                    {
+                        writer.WriteIndented();
+                        writer.Write(currentIndex.VariableHighlight());
+                        writer.Write("++;");
+                        writer.NewLine();
+                    }
+
+                    if (Unit.body.hasValidConnection)
+                    {
+                        GenerateChildControl(Unit.body, data, writer);
+                    }
                 }
-                if (Unit.body.hasAnyConnection)
-                {
-                    data.NewScope();
-                    output += GetNextUnit(Unit.body, data, indent + 1).TrimEnd();
-                    data.ExitScope();
-                    output += "\n";
-                }
-    
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
-                output += "\n";
+
+                writer.WriteLine("}");
             }
 
-            if (Unit.exit.hasAnyConnection)
+            if (Unit.exit.hasValidConnection)
             {
-                output += "\n";
-                output += GetNextUnit(Unit.exit, data, indent);
+                GenerateExitControl(Unit.exit, data, writer);
+            }
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            if (output == Unit.currentItem)
+            {
+                if (!data.ContainsNameInAncestorScope(variableName))
+                {
+                    writer.WriteErrorDiagnostic($"{variableName}, can only be used inside the loop.", $"Could not find or access {variableName}");
+                    return;
+                }
+                if (Unit.dictionary)
+                {
+                    writer.GetMember(variableName.VariableHighlight(), "Value");
+                }
+                else
+                {
+                    writer.Write(variableName.VariableHighlight());
+                }
+
+                return;
             }
 
-            return output;
+            if (output == Unit.currentKey)
+            {
+                if (!data.ContainsNameInAncestorScope(variableName))
+                {
+                    writer.WriteErrorDiagnostic($"{variableName}, can only be used inside the loop.", $"Could not find or access {variableName}");
+                    return;
+                }
+                writer.GetMember(variableName.VariableHighlight(), "Key");
+                return;
+            }
+
+            writer.Write(currentIndex.VariableHighlight());
+        }
+
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            if (input == Unit.collection && input.hasValidConnection)
+            {
+                var sourceType = GetSourceType(Unit.collection, data, writer);
+                var expected = sourceType == typeof(object) ? (Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable)) : sourceType;
+
+                using (data.Expect(expected))
+                {
+                    GenerateConnectedValue(input, data, writer, false);
+                }
+
+                return;
+            }
+
+            base.GenerateValueInternal(input, data, writer);
         }
 
         private Type GetElementType(Type type, Type fallback)
@@ -78,65 +152,26 @@ namespace Unity.VisualScripting.Community.CSharp
             if (typeof(IDictionary).IsAssignableFrom(type))
             {
                 if (type.IsGenericType)
-                {
                     return typeof(KeyValuePair<,>).MakeGenericType(type.GetGenericArguments());
-                }
+
                 return typeof(DictionaryEntry);
             }
-            else if (type.IsArray)
-            {
+
+            if (type.IsArray)
                 return type.GetElementType();
-            }
-            else if (typeof(IList).IsAssignableFrom(type))
+
+            if (typeof(IList).IsAssignableFrom(type))
             {
                 if (type.IsGenericType)
-                {
                     return type.GetGenericArguments()[0];
-                }
+
                 return typeof(object);
             }
-            else if (type.IsGenericType && typeof(IList<>).IsAssignableFrom(type.GetGenericTypeDefinition()))
-            {
+
+            if (type.IsGenericType && typeof(IList<>).IsAssignableFrom(type.GetGenericTypeDefinition()))
                 return type.GetGenericArguments()[0];
-            }
+
             return fallback;
-        }
-
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-        {
-            if (output == Unit.currentItem)
-            {
-                if (Unit.dictionary)
-                {
-                    return MakeClickableForThisUnit(variableName.VariableHighlight() + "." + "Value".VariableHighlight());
-                }
-                return MakeClickableForThisUnit(variableName.VariableHighlight());
-            }
-            else if (output == Unit.currentKey)
-            {
-                return MakeClickableForThisUnit(variableName.VariableHighlight() + "." + "Key".VariableHighlight());
-            }
-            else
-            {
-                return MakeClickableForThisUnit(currentIndex.VariableHighlight());
-            }
-        }
-
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
-        {
-            if (input == Unit.collection)
-            {
-                if (input.hasValidConnection)
-                {
-                    var sourceType = GetSourceType(Unit.collection, data);
-                    data.SetExpectedType(sourceType == typeof(object) ? (Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable)) : sourceType);
-                    var connectedCode = GetNextValueUnit(input, data);
-                    data.RemoveExpectedType();
-                    return Unit.CreateClickableString().Ignore(connectedCode).Cast(sourceType == typeof(object) ? (Unit.dictionary ? typeof(IDictionary) : typeof(IEnumerable)) : sourceType, ShouldCast(input, data, false));
-                }
-            }
-
-            return base.GenerateValue(input, data);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Unity.VisualScripting;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -10,40 +11,14 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            if (input == Unit.a)
-            {
-                if (Unit.a.hasAnyConnection)
-                {
-                    return (Unit.a.connection.source.unit as Unit).GenerateValue(Unit.a.connection.source, data);
-                }
-            }
-
-            if (input == Unit.b)
-            {
-                if (Unit.b.hasAnyConnection)
-                {
-                    return (Unit.b.connection.source.unit as Unit).GenerateValue(Unit.b.connection.source, data);
-                }
-                else
-                {
-                    return Unit.numeric ? Unit.defaultValues["b"].As().Code(true, Unit) : base.GenerateValue(input, data);
-                }
-            }
-
-            return base.GenerateValue(input, data);
-        }
-
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-        {
-
             if (output == Unit.comparison)
             {
-                return GenerateValue(Unit.a, data) + MakeClickableForThisUnit(" < ") + GenerateValue(Unit.b, data);
+                GenerateValue(Unit.a, data, writer);
+                writer.Write(" < ");
+                GenerateValue(Unit.b, data, writer);
             }
-
-            return base.GenerateValue(output, data);
         }
     }
 }

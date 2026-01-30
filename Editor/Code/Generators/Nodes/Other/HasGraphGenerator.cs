@@ -1,7 +1,5 @@
 #if VISUAL_SCRIPTING_1_7
-using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using UnityEngine;
+using System.Collections.Generic;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -13,48 +11,44 @@ namespace Unity.VisualScripting.Community.CSharp
         protected HasGraph<TGraph, TMacro, TMachine> Unit => unit as HasGraph<TGraph, TMacro, TMachine>;
         public HasGraphGenerator(Unit unit) : base(unit)
         {
-            NameSpaces = "Unity.VisualScripting.Community";
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting.Community";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.hasGraphOutput)
             {
                 if (!Unit.enter.hasValidConnection)
                 {
-                    data.SetExpectedType(typeof(GameObject));
-                    string goExpr = GenerateValue(Unit.target, data);
-                    data.RemoveExpectedType();
-                    data.SetExpectedType(typeof(TMacro));
-                    string macroCode = GenerateValue(Unit.graphInput, data);
-                    data.RemoveExpectedType();
-                    var builder = Unit.CreateClickableString();
-                    builder.InvokeMember(typeof(CSharpUtility), "HasGraph", new Type[] { typeof(TGraph), typeof(TMacro), typeof(TMachine) }, false, p1 => p1.Ignore(goExpr), p2 => p2.Ignore(macroCode));
-                    return builder;
+
+                    writer.CallCSharpUtilityGenericMethod("HasGraph", new CodeWriter.TypeParameter[] { typeof(TGraph), typeof(TMacro), typeof(TMachine) },
+                    writer.Action(() => GenerateValue(Unit.target, data, writer)),
+                    writer.Action(() => GenerateValue(Unit.graphInput, data, writer)));
                 }
-                else return MakeClickableForThisUnit(variableName.VariableHighlight());
+                else writer.GetVariable(variableName);
+                return;
             }
 
-            return base.GenerateValue(output, data);
+            base.GenerateValueInternal(output, data, writer);
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
             variableName = data.AddLocalNameInScope("hasGraphValue", typeof(bool));
             variableType = typeof(bool);
-            data.SetExpectedType(typeof(GameObject));
-            string goExpr = GenerateValue(Unit.target, data);
-            data.RemoveExpectedType();
-            data.SetExpectedType(typeof(TMacro));
-            string macroCode = GenerateValue(Unit.graphInput, data);
-            data.RemoveExpectedType();
-            var builder = Unit.CreateClickableString();
-            builder.Indent(indent);
-            builder.Clickable("bool ".ConstructHighlight()).Clickable(variableName.VariableHighlight()).Equal(true)
-            .InvokeMember(typeof(CSharpUtility), "HasGraph", new Type[] { typeof(TGraph), typeof(TMacro), typeof(TMachine) }, false, p1 => p1.Ignore(goExpr), p2 => p2.Ignore(macroCode))
-            .EndLine();
-            builder.Ignore(GetNextUnit(Unit.exit, data, indent));
-            return builder;
+
+            writer.CreateVariable(typeof(bool), variableName, writer.Action(() =>
+            {
+                writer.CallCSharpUtilityGenericMethod("HasGraph", new CodeWriter.TypeParameter[] { typeof(TGraph), typeof(TMacro), typeof(TMachine) },
+                writer.Action(() => GenerateValue(Unit.target, data, writer)),
+                writer.Action(() => GenerateValue(Unit.graphInput, data, writer)));
+            }), WriteOptions.Indented, EndWriteOptions.LineEnd);
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

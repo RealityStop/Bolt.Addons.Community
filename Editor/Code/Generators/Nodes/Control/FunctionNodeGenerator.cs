@@ -8,15 +8,20 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (!Unit.invoke.hasAnyConnection) return "\n";
-            return GetNextUnit(Unit.invoke, data, indent);
+            if (!Unit.invoke.hasAnyConnection)
+            {
+                writer.NewLine();
+                return;
+            }
+
+            GenerateChildControl(Unit.invoke, data, writer);
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(output.key.LegalMemberName().VariableHighlight());
+            writer.Write(output.key.LegalMemberName().VariableHighlight());
         }
     }
 }

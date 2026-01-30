@@ -1,5 +1,10 @@
 ﻿using System.Text;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+#if VISUAL_SCRIPTING_1_7
+using SUnit = Unity.VisualScripting.SubgraphUnit;
+#else
+using SUnit = Unity.VisualScripting.SuperUnit;
+#endif
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -10,83 +15,73 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = new StringBuilder();
+            if (input != Unit.enter)
+                return;
 
-            if (input == Unit.enter)
+            writer.WriteIndented("if ".ControlHighlight() + "(");
+            GenerateValue(Unit.condition, data, writer);
+
+            var condition = writer.LastGeneratedCode;
+
+            writer.Write(")").NewLine();
+            writer.WriteLine("{");
+
+            using (writer.IndentedScope(data))
             {
-                output.Append(CodeBuilder.Indent(indent))
-                      .Append(MakeClickableForThisUnit("if".ConstructHighlight() + " ("))
-                      .Append(GenerateValue(Unit.condition, data))
-                      .Append(MakeClickableForThisUnit(")"))
-                      .AppendLine()
-                      .Append(CodeBuilder.Indent(indent))
-                      .AppendLine(MakeClickableForThisUnit("{"));
-
-                string trueCode;
                 if (!TrueIsUnreachable())
                 {
-                    data.NewScope();
-                    trueCode = GetNextUnit(Unit.ifTrue, data, indent + 1).TrimEnd();
-                    data.ExitScope();
-                    output.Append(trueCode);
+                    GenerateChildControl(Unit.ifTrue, data, writer);
                 }
                 else
                 {
-                    data.NewScope();
-                    output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"The code in the 'True' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.condition, data))}).", $"Unreachable Code in 'True' Branch: {Unit.ifTrue.key}", "")));
-                    trueCode = GetNextUnit(Unit.ifTrue, data, indent + 1).TrimEnd();
-                    data.ExitScope();
-                    output.Append(trueCode);
-                }
-
-                output.AppendLine()
-                      .Append(CodeBuilder.Indent(indent))
-                      .AppendLine(MakeClickableForThisUnit("}"));
-
-                if (!Unit.ifFalse.hasAnyConnection)
-                {
-                    output.Append("\n");
-                }
-
-                if (Unit.ifFalse.hasAnyConnection)
-                {
-                    output.Append(CodeBuilder.Indent(indent))
-                          .Append(MakeClickableForThisUnit("else".ConstructHighlight()));
-
-                    if (!Unit.ifTrue.hasValidConnection || string.IsNullOrEmpty(trueCode))
+                    using (writer.CodeDiagnosticScope($"The code in the 'True' branch is unreachable due to the output of the condition value: ({condition}).", CodeDiagnosticKind.Error))
                     {
-                        output.Append(MakeClickableForThisUnit(CodeBuilder.MakeRecommendation(
-                            "You should use the negate node and connect the true input instead")));
+                        writer.WriteDiagnosticComment("Unreachable Code in 'True' Branch", CodeDiagnosticKind.Error, WriteOptions.Indented | WriteOptions.NewLineAfter);
+                        GenerateChildControl(Unit.ifTrue, data, writer);
                     }
-
-                    output.AppendLine()
-                          .Append(CodeBuilder.Indent(indent))
-                          .AppendLine(MakeClickableForThisUnit("{"));
-
-                    if (!FalseIsUnreachable())
-                    {
-                        data.NewScope();
-                        output.Append(GetNextUnit(Unit.ifFalse, data, indent + 1).TrimEnd());
-                        data.ExitScope();
-                    }
-                    else
-                    {
-                        data.NewScope();
-                        output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"The code in the 'False' branch is unreachable due to the output of the condition value: ({CodeUtility.CleanCode(GenerateValue(Unit.condition, data))}).", $"Unreachable Code in 'False' Branch: {Unit.ifFalse.key}", "")));
-                        output.Append(GetNextUnit(Unit.ifFalse, data, indent + 1).TrimEnd());
-                        data.ExitScope();
-                    }
-
-                    output.AppendLine()
-                          .Append(CodeBuilder.Indent(indent))
-                          .AppendLine(MakeClickableForThisUnit("}") + "\n");
                 }
             }
 
-            return output.ToString();
+            writer.WriteLine("}");
+
+            if (!Unit.ifFalse.hasValidConnection)
+                return;
+
+            writer.WriteIndented("else".ControlHighlight());
+
+            var ifTrueDestination = Unit.ifTrue.GetPesudoDestination();
+            if (Unit.condition.hasValidConnection && (!Unit.ifTrue.hasValidConnection || (ifTrueDestination.unit is SUnit && !ifTrueDestination.hasValidConnection)))
+            {
+                writer.WriteRecommendationDiagnostic("You can simplify this by negating the condition and using the True output, which improves the generated code.", "Condition can be negated", WriteOptions.NewLineAfter);
+            }
+            else
+            {
+                writer.NewLine();
+            }
+
+            writer.WriteLine("{");
+
+            using (writer.IndentedScope(data))
+            {
+                if (!FalseIsUnreachable())
+                {
+                    GenerateChildControl(Unit.ifFalse, data, writer);
+                }
+                else
+                {
+                    using (writer.CodeDiagnosticScope($"The code in the 'False' branch is unreachable due to the output of the condition value: ({condition}).", CodeDiagnosticKind.Error))
+                    {
+                        writer.WriteDiagnosticComment("Unreachable Code in 'False' Branch", CodeDiagnosticKind.Error, WriteOptions.Indented | WriteOptions.NewLineAfter);
+                        GenerateChildControl(Unit.ifFalse, data, writer);
+                    }
+                }
+            }
+
+            writer.WriteLine("}");
         }
+
 
         private bool TrueIsUnreachable()
         {
@@ -121,22 +116,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 return true;
             }
             return false;
-        }
-
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
-        {
-            if (input == Unit.condition)
-            {
-                if (Unit.condition.hasAnyConnection)
-                {
-                    data.SetExpectedType(typeof(bool));
-                    var code = GetNextValueUnit(Unit.condition, data);
-                    data.RemoveExpectedType();
-                    return code;
-                }
-            }
-
-            return base.GenerateValue(input, data);
         }
     }
 }

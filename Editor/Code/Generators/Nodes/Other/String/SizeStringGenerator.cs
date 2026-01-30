@@ -1,8 +1,3 @@
-using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -11,9 +6,13 @@ namespace Unity.VisualScripting.Community.CSharp
     public class SizeStringGenerator : NodeGenerator<SizeString>
     {
         public SizeStringGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit($"$\"<size={Unit.size.As().Code(false)}>{{") + GenerateValue(Unit.Value, data) + MakeClickableForThisUnit("}</size>\"");
+            writer.CallCSharpUtilityMethod("SizeString", writer.Action(() =>
+            {
+                using (data.Expect(typeof(string)))
+                    GenerateValue(Unit.Value, data, writer);
+            }), Unit.size.As().Code(false));
         }
     }
 }

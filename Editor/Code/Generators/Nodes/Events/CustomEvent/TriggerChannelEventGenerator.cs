@@ -11,14 +11,16 @@ namespace Unity.VisualScripting.Community.CSharp
     public class TriggerChannelEventGenerator : NodeGenerator<TriggerChannelEvent>
     {
         public TriggerChannelEventGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-        {
-            return base.GenerateValue(output, data);
-        }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("EventBus".TypeHighlight() + ".Trigger(" + typeof(CommunityEvents).As().CSharpName(false, true) + "." + "ChannelEvent".VariableHighlight() + ", ") + GenerateValue(Unit.channel, data) + MakeClickableForThisUnit(");") + "\n" + GetNextUnit(Unit.OutputTrigger, data, indent);
+            writer.InvokeMember(typeof(EventBus), "Trigger",
+            writer.Action(() => writer.GetMember(typeof(CommunityEvents), "ChannelEvent")),
+            writer.Action(() => GenerateValue(Unit.channel, data, writer)));
+
+            writer.NewLine();
+
+            GenerateExitControl(Unit.OutputTrigger, data, writer);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
@@ -6,30 +7,35 @@ namespace Unity.VisualScripting.Community.CSharp
     [NodeGenerator(typeof(InsertListItem))]
     public sealed class InsertListItemGenerator : NodeGenerator<InsertListItem>
     {
-        public InsertListItemGenerator(Unit unit) : base(unit)
-        {
-        }
+        public InsertListItemGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-            List<string> t = new List<string>();
-            data.SetExpectedType(Unit.listInput.type);
-            var listCode = GenerateValue(Unit.listInput, data);
-            data.RemoveExpectedType();
-            var sourceType = GetSourceType(Unit.listInput, data);
+            writer.WriteIndented();
+            GenerateValue(Unit.listInput, data, writer);
+
+            var sourceType = GetSourceType(Unit.listInput, data, writer, false);
             var isGenericList = sourceType.IsGenericType && sourceType.GetGenericTypeDefinition() == typeof(List<>);
-            if (isGenericList)
-                data.SetExpectedType(sourceType.GetGenericArguments()[0]);
 
-            var itemCode = GenerateValue(Unit.item, data);
+            IDisposable ExpectedTypeScope = null;
 
             if (isGenericList)
-                data.RemoveExpectedType();
+                ExpectedTypeScope = data.Expect(sourceType.GetGenericArguments()[0]);
 
-            output += CodeBuilder.Indent(indent) + listCode + MakeClickableForThisUnit($".Insert(") + GenerateValue(Unit.index, data) + MakeClickableForThisUnit(", ") + itemCode + MakeClickableForThisUnit(");") + "\n";
-            output += GetNextUnit(Unit.exit, data, indent);
-            return output;
+            writer.Write(".Insert(");
+
+            GenerateValue(Unit.index, data, writer);
+
+            writer.ParameterSeparator();
+
+            GenerateValue(Unit.item, data, writer);
+
+            writer.WriteEnd();
+
+            if (isGenericList)
+                ExpectedTypeScope.Dispose();
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

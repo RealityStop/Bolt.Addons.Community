@@ -1,8 +1,3 @@
-using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -11,9 +6,13 @@ namespace Unity.VisualScripting.Community.CSharp
     public class ColorStringGenerator : NodeGenerator<ColorString>
     {
         public ColorStringGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit($"$\"<color={Unit.color.As().Code(false)}>{{") + GenerateValue(Unit.Value, data) + MakeClickableForThisUnit("}</color>\"");
+            writer.CallCSharpUtilityMethod("ColorString", writer.Action(() =>
+            {
+                using (data.Expect(typeof(string)))
+                    GenerateValue(Unit.Value, data, writer);
+            }), Unit.color.As().Code(false));
         }
     }
 }

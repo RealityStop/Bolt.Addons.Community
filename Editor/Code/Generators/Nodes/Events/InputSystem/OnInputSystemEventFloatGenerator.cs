@@ -37,79 +37,22 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override List<TypeParam> Parameters => new List<TypeParam>();
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
-            {
-                return CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip("OnInputSystemEvents only work with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate OnInputSystemEvent", ""));
-            }
-            var output = new StringBuilder();
-            var inputVariable = data.AddLocalNameInScope("playerInput", typeof(PlayerInput));
-            var actionVariable = data.AddLocalNameInScope("action", typeof(InputAction));
-            output.Append(CodeBuilder.Indent(indent) + MakeClickableForThisUnit("var ".ConstructHighlight() + inputVariable.VariableHighlight() + " = ") + GenerateValue(Unit.Target, data) + MakeClickableForThisUnit(";") + "\n");
-            output.Append(CodeBuilder.Indent(indent) + MakeClickableForThisUnit("var ".ConstructHighlight() + actionVariable.VariableHighlight() + " = " + inputVariable.VariableHighlight() + "." + "actions".VariableHighlight() + $".FindAction(") + GenerateValue(Unit.InputAction, data) + MakeClickableForThisUnit(");") + "\n");
-            output.Append(CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ControlHighlight() + " (" + GetState(actionVariable.VariableHighlight()) + ")"));
-            output.AppendLine();
-            output.AppendLine(CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{"));
-            output.Append(GetNextUnit(Unit.trigger, data, indent + 1));
-            output.AppendLine(CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}"));
-#if !PACKAGE_INPUT_SYSTEM_1_2_0_OR_NEWER_EXISTS
-            output.AppendLine(CodeBuilder.Indent(indent) + MakeSelectableForThisUnit($"{$"float{count}_wasRunning".VariableHighlight()} = {actionVariable.VariableHighlight()}.{"phase".VariableHighlight()} == {InputActionPhase.Started.As().Code(false)};"));
-#endif
-            return output.ToString();
-        }
-
-        private string GetState(string actionVariable)
-        {
-#if PACKAGE_INPUT_SYSTEM_1_2_0_OR_NEWER_EXISTS
-            switch (Unit.InputActionChangeType)
-            {
-                case InputActionChangeOption.OnPressed:
-                    return actionVariable + ".WasPressedThisFrame()";
-                case InputActionChangeOption.OnHold:
-                    return actionVariable + ".IsPressed()";
-                case InputActionChangeOption.OnReleased:
-                    return actionVariable + ".WasReleasedThisFrame()";
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-#else
-            switch (Unit.InputActionChangeType)
-            {
-                case InputActionChangeOption.OnPressed:
-                    return actionVariable + $".{triggered.VariableHighlight()}";
-                case InputActionChangeOption.OnHold:
-                    return actionVariable + $".{phase.VariableHighlight()} == {InputActionPhase.Started.As().Code(false)}";
-                case InputActionChangeOption.OnReleased:
-                    return $"{$"float{count}_wasRunning".VariableHighlight()}" + " && " + actionVariable + $".{phase.VariableHighlight()} != {InputActionPhase.Started.As().Code(false)}";
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-#endif
-        }
-
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input == Unit.Target)
             {
                 if (Unit.Target.hasValidConnection)
                 {
-                    data.SetExpectedType(input.type);
-                    var code = GetNextValueUnit(input, data);
-                    data.RemoveExpectedType();
-                    return code;
+                    base.GenerateValueInternal(input, data, writer);
+                    return;
                 }
                 else
                 {
                     var value = input.unit.defaultValues[input.key];
                     if (value == null)
                     {
-                        return MakeClickableForThisUnit("gameObject".VariableHighlight() + "." + $"GetComponent<{typeof(PlayerInput).As().CSharpName(false, true, true)}>()");
-                    }
-                    else
-                    {
-                        return base.GenerateValue(input, data);
+                        writer.GetVariable("gameObject").GetComponent(typeof(PlayerInput));
+                        return;
                     }
                 }
             }
@@ -117,29 +60,111 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 if (Unit.InputAction.hasValidConnection)
                 {
-                    data.SetExpectedType(input.type);
-                    var code = GetNextValueUnit(input, data);
-                    data.RemoveExpectedType();
-                    return code;
+                    base.GenerateValueInternal(input, data, writer);
+                    return;
                 }
                 else
                 {
                     if (!(input.unit.defaultValues[input.key] is InputAction value))
                     {
-                        return MakeClickableForThisUnit(CodeUtility.ErrorTooltip("The problem could be that the player input component could not be found.", "Could not generate Input Action", "null".ConstructHighlight()));
+                        writer.WriteErrorDiagnostic("The problem could be that the player input component could not be found.", "Could not generate Input Action");
+                        return;
                     }
                     else
                     {
-                        return MakeClickableForThisUnit(value.name.As().Code(false));
+                        writer.Write(value.name.As().Code(false));
+                        return;
                     }
                 }
             }
-            return base.GenerateValue(input, data);
+            base.GenerateValueInternal(input, data, writer);
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return "action".VariableHighlight() + "." + $"ReadValue<{typeof(float).As().CSharpName(false, true)}>()";
+            writer.InvokeMember("action".VariableHighlight(), "ReadValue", new CodeWriter.TypeParameter[] { typeof(float) });
+        }
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
+            {
+                writer.WriteErrorDiagnostic("OnInputSystemEvents only work with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate OnInputSystemEvent", WriteOptions.IndentedNewLineAfter);
+                return;
+            }
+
+            var inputVariable = data.AddLocalNameInScope("playerInput", typeof(PlayerInput));
+            var actionVariable = data.AddLocalNameInScope("action", typeof(InputAction));
+
+            writer.WriteIndented("var".ConstructHighlight());
+            writer.Write(" ");
+            writer.Write(inputVariable.VariableHighlight());
+            writer.Write(" = ");
+            GenerateValue(Unit.Target, data, writer);
+            writer.Write(";");
+            writer.NewLine();
+
+            writer.WriteIndented("var".ConstructHighlight());
+            writer.Write(" ");
+            writer.Write(actionVariable.VariableHighlight());
+            writer.Write(" = ");
+            writer.Write(inputVariable.VariableHighlight());
+            writer.Write(".");
+            writer.Write("actions".VariableHighlight());
+            writer.Write(".");
+            writer.Write("FindAction");
+            writer.Write("(");
+            GenerateValue(Unit.InputAction, data, writer);
+            writer.Write(")");
+            writer.Write(";");
+            writer.NewLine();
+
+            writer.WriteIndented("if".ControlHighlight());
+            writer.Write(" (");
+            writer.Write(GetStateCodeWriter(actionVariable.VariableHighlight()));
+            writer.Write(")");
+            writer.NewLine();
+            writer.WriteLine("{");
+
+            using (writer.IndentedScope(data))
+            {
+                GenerateChildControl(Unit.trigger, data, writer);
+            }
+
+            writer.WriteLine("}");
+
+#if !PACKAGE_INPUT_SYSTEM_1_2_0_OR_NEWER_EXISTS
+            writer.WriteLine($"{$"float{count}_wasRunning".VariableHighlight()} = {actionVariable.VariableHighlight()}.{"phase".VariableHighlight()} == {InputActionPhase.Started.As().Code(false)};");
+#endif
+        }
+
+        private string GetStateCodeWriter(string actionVariable)
+        {
+#if PACKAGE_INPUT_SYSTEM_1_2_0_OR_NEWER_EXISTS
+            switch (Unit.InputActionChangeType)
+            {
+                case InputActionChangeOption.OnPressed:
+                    return actionVariable + "." + "WasPressedThisFrame" + "()";
+                case InputActionChangeOption.OnHold:
+                    return actionVariable + "." + "IsPressed" + "()";
+                case InputActionChangeOption.OnReleased:
+                    return actionVariable + "." + "WasReleasedThisFrame" + "()";
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+#else
+            switch (Unit.InputActionChangeType)
+            {
+                case InputActionChangeOption.OnPressed:
+                    return actionVariable + "." + "triggered".VariableHighlight();
+                case InputActionChangeOption.OnHold:
+                    return actionVariable + "." + "phase".VariableHighlight() + " == " + InputActionPhase.Started.As().Code(false);
+                case InputActionChangeOption.OnReleased:
+                    return $"{$"float{count}_wasRunning".VariableHighlight()}" + " && " + actionVariable + "." + "phase".VariableHighlight() + " != " + InputActionPhase.Started.As().Code(false);
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+#endif
         }
     }
 }

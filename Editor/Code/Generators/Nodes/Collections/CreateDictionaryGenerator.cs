@@ -10,9 +10,15 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public CreateDictionaryGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("new ".ConstructHighlight() + GetDictionaryType(data).As().CSharpName(false, true) + "()");
+            var type = GetDictionaryType(data);
+            var expectedType = data.GetExpectedType();
+            if (expectedType != null && expectedType.IsAssignableFrom(type))
+            {
+                data.MarkExpectedTypeMet(type);
+            }
+            writer.New(type);
         }
 
         Type GetDictionaryType(ControlGenerationData data)

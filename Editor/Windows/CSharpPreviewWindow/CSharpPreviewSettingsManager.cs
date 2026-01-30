@@ -30,6 +30,12 @@ namespace Unity.VisualScripting.Community
             {
                 settings.Initalize();
             }
+
+            CSharpPreviewSettings.ShouldShowRecommendations = settings.showRecommendations;
+            CSharpPreviewSettings.ShouldGenerateTooltips = settings.showTooltips;
+            CSharpPreviewSettings.ShouldShowSubgraphComment = settings.showSubgraphComment;
+            CSharpPreviewSettings.RecursionDepth = settings.recursionDepth;
+
             this.settings = settings;
         }
 

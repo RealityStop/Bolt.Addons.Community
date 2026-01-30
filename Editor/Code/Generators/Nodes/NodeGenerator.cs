@@ -3,6 +3,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -10,26 +11,22 @@ namespace Unity.VisualScripting.Community.CSharp
     public class NodeGenerator : Decorator<NodeGenerator, NodeGeneratorAttribute, Unit>
     {
         public Unit unit;
-        /// <summary>
-        /// Seperate each namespace with ','. If ',' is required in the namespace it's self use '`'
-        /// </summary>
-        public string NameSpaces = "";
+
+        public virtual IEnumerable<string> GetNamespaces()
+        {
+            yield break;
+        }
 
         public string variableName = "";
         private int currentRecursionDepth = CSharpPreviewSettings.RecursionDepth;
-        public Recursion recursion { get; private set; } = Recursion.New(CSharpPreviewSettings.RecursionDepth);
-
-        #region Subgraphs
-        public List<ControlOutput> connectedGraphOutputs = new List<ControlOutput>();
-        public List<ValueInput> connectedValueInputs = new List<ValueInput>();
-        #endregion
+        private Recursion recursion { get; set; } = Recursion.New(CSharpPreviewSettings.RecursionDepth);
 
         public NodeGenerator(Unit unit)
         {
             this.unit = unit;
         }
 
-        public void UpdateRecursion()
+        private void UpdateRecursion()
         {
             if (currentRecursionDepth != CSharpPreviewSettings.RecursionDepth)
             {
@@ -38,54 +35,235 @@ namespace Unity.VisualScripting.Community.CSharp
             }
         }
 
-        public virtual string GenerateValue(ValueInput input, ControlGenerationData data)
+        public void GenerateControl(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (input.hasValidConnection)
+            UpdateRecursion();
+
+            if (!(recursion?.TryEnter(unit) ?? true))
             {
-                return GetNextValueUnit(input, data);
+                using (writer.BeginNode(unit))
+                    writer.WriteDiagnostic("This node appears to cause infinite recursion (the flow is leading back to this node). Consider using a While loop instead or increasing recursion depth in preview settings.", "Infinite recursion detected!", CodeDiagnosticKind.Error, WriteOptions.IndentedNewLineAfter);
+                return;
             }
-            else if (input.hasDefaultValue)
+
+            var commentNode = unit.graph.GetComments().FirstOrDefault(commentNode => commentNode.connectedElements.Any(c => c == unit));
+            if (commentNode != null)
             {
-                if (input.nullMeansSelf && input.unit.defaultValues[input.key] == null && ComponentHolderProtocol.IsComponentHolderType(input.type) && typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
+                using (writer.BeginNode(commentNode))
                 {
-                    if (input.type == typeof(GameObject))
-                    {
-                        return MakeClickableForThisUnit("gameObject".VariableHighlight());
-                    }
-                    else if (typeof(Component).IsAssignableFrom(input.type))
-                    {
-                        return MakeClickableForThisUnit("gameObject".VariableHighlight() + "." + $"GetComponent<{input.type.As().CSharpName(false, true)}>()");
-                    }
+
+                    if (!string.IsNullOrEmpty(commentNode.title))
+                        writer.Comment(commentNode.title + ":\n" + commentNode.comment, WriteOptions.IndentedNewLineAfter);
+                    else
+                        writer.Comment(commentNode.comment, WriteOptions.IndentedNewLineAfter);
                 }
-                return input.unit.defaultValues[input.key].As().Code(true, unit, true, true, "", true, true);
             }
-            else
+
+            try
             {
-                return MakeClickableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
+                using (writer.BeginNode(unit))
+                {
+                    GenerateControlInternal(input, data, writer);
+                }
+            }
+            finally
+            {
+                recursion?.Exit(unit);
             }
         }
 
-        public virtual string GenerateValue(ValueOutput output, ControlGenerationData data) { return MakeClickableForThisUnit($"/* Port '{output.key}' of '{output.unit.GetType().Name}' Missing Generator. */".WarningHighlight()); }
-
-        public virtual string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        public void GenerateValue(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"/*{(input != null ? " Port '" + input.key + "' of " : "")}'{unit.GetType().Name}' Missing Generator. */".WarningHighlight());
+            UpdateRecursion();
+
+            if (!(recursion?.TryEnter(unit) ?? true))
+            {
+                using (writer.BeginNode(unit))
+                    writer.WriteDiagnostic($"{input.key} is infinitely generating itself. Consider reviewing your graph logic or increasing recursion depth in preview settings.", "Infinite recursion detected!", CodeDiagnosticKind.Error);
+
+                return;
+            }
+            try
+            {
+                GenerateValueInternal(input, data, writer);
+            }
+            finally
+            {
+                recursion?.Exit(unit);
+            }
         }
 
-        public string GetNextUnit(ControlOutput controlOutput, ControlGenerationData data, int indent)
+        public void GenerateValue(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return controlOutput.hasValidConnection ? (controlOutput.connection.destination.unit as Unit).GenerateControl(controlOutput.connection.destination, data, indent) : string.Empty;
-        }
-        public string GetNextValueUnit(ValueInput valueInput, ControlGenerationData data)
-        {
-            return valueInput.hasValidConnection ? (valueInput.connection.source.unit as Unit).GenerateValue(valueInput.connection.source, data) : string.Empty;
+            UpdateRecursion();
+
+            if (!(recursion?.TryEnter(unit) ?? true))
+            {
+                using (writer.BeginNode(unit))
+                {
+                    writer.WriteDiagnostic($"{output.key} is infinitely generating itself. Consider reviewing your graph logic or increasing recursion depth in preview settings.", "Infinite recursion detected!", CodeDiagnosticKind.Error);
+                }
+                return;
+            }
+
+            try
+            {
+                using (writer.BeginNode(unit))
+                {
+                    GenerateValueInternal(output, data, writer);
+                }
+            }
+            finally
+            {
+                recursion?.Exit(unit);
+            }
         }
 
-        public bool ShouldCast(ValueInput input, ControlGenerationData data, bool ignoreInputType = false)
+        private void GenerateValueCasted(ValueOutput output, ControlGenerationData data, CodeWriter writer, Type castType, Func<bool> shouldCast, bool wrapInParentheses)
+        {
+            if (!(recursion?.TryEnter(unit) ?? true))
+            {
+                using (writer.BeginNode(unit))
+                    writer.WriteDiagnostic($"{output.key} is infinitely generating itself. Consider reviewing your graph logic or increasing recursion depth in preview settings.", "Infinite recursion detected!", CodeDiagnosticKind.Error);
+
+                return;
+            }
+            try
+            {
+                using (writer.BeginCastNode(unit, castType, shouldCast, wrapInParentheses))
+                {
+                    GenerateValueInternal(output, data, writer);
+                }
+            }
+            finally
+            {
+                recursion?.Exit(unit);
+            }
+        }
+
+        protected virtual void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            writer.WriteLine($"/* Port '{input?.key}' of '{unit.GetType().Name}' Missing Generator. */".ErrorHighlight());
+        }
+
+        protected virtual void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input.hasValidConnection)
             {
-                Type sourceType = GetSourceType(input, data);
+                GenerateConnectedValue(input, data, writer);
+                return;
+            }
+            using (writer.BeginNode(input.unit as Unit))
+            {
+                if (input.hasDefaultValue)
+                {
+                    WriteDefaultValue(input, data, writer);
+                    return;
+                }
+
+                writer.Write($"/* \"{input.key} Requires Input\" */".ErrorHighlight());
+            }
+        }
+
+        protected virtual void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            writer.Write($"/* Port '{output?.key}' of '{unit.GetType().Name}' Missing Generator. */".ErrorHighlight());
+        }
+
+        protected void GenerateChildControl(ControlOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            if (!output.hasValidConnection)
+                return;
+
+            Unit nextUnit = output.connection.destination.unit as Unit;
+            nextUnit.GenerateControl(output.connection.destination, data, writer);
+        }
+
+        protected void GenerateExitControl(ControlOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            if (!output.hasValidConnection)
+                return;
+
+            writer.ExitCurrentNode(unit);
+
+            Unit nextUnit = output.connection.destination.unit as Unit;
+            nextUnit.GenerateControl(output.connection.destination, data, writer);
+        }
+
+        protected void GenerateConnectedValue(ValueInput input, ControlGenerationData data, CodeWriter writer, bool expectInputType = true)
+        {
+            if (!input.hasValidConnection)
+                return;
+
+            Unit sourceUnit = input.connection.source.unit as Unit;
+            if (expectInputType)
+            {
+                using (data.Expect(input.type))
+                {
+                    sourceUnit.GenerateValue(input.connection.source, writer, data);
+                }
+                return;
+            }
+            sourceUnit.GenerateValue(input.connection.source, writer, data);
+        }
+
+        protected void GenerateConnectedValueCasted(ValueInput input, ControlGenerationData data, CodeWriter writer, Type castType, Func<bool> shouldCast, bool wrapInParentheses = true, bool expectInputType = true)
+        {
+            if (!input.hasValidConnection)
+                return;
+
+            Unit sourceUnit = input.connection.source.unit as Unit;
+            if (expectInputType)
+            {
+                using (data.Expect(input.type))
+                {
+                    sourceUnit.GetGenerator().GenerateValueCasted(input.connection.source, data, writer, castType, shouldCast, wrapInParentheses);
+                }
+                return;
+            }
+            sourceUnit.GetGenerator().GenerateValueCasted(input.connection.source, data, writer, castType, shouldCast, wrapInParentheses);
+        }
+
+        protected void GenerateConnectedValueCasted(ValueInput input, ControlGenerationData data, CodeWriter writer, Type castType, bool wrapInParentheses = true, bool expectInputType = true)
+        {
+            GenerateConnectedValueCasted(input, data, writer, castType, () => true, wrapInParentheses, expectInputType);
+        }
+
+        protected void GenerateConnectedValue(ValueInput input, ControlGenerationData data, CodeWriter writer, Type type)
+        {
+            if (!input.hasValidConnection)
+                return;
+
+            Unit sourceUnit = input.connection.source.unit as Unit;
+            using (data.Expect(type))
+            {
+                sourceUnit.GenerateValue(input.connection.source, writer, data);
+            }
+        }
+
+        protected void WriteDefaultValue(ValueInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            if (input.nullMeansSelf && input.unit.defaultValues[input.key] == null &&
+            ComponentHolderProtocol.IsComponentHolderType(input.type) && typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
+            {
+                if (input.type == typeof(GameObject))
+                {
+                    writer.Write("gameObject".VariableHighlight());
+                    return;
+                }
+
+                writer.Write("gameObject".VariableHighlight() + ".GetComponent<" + input.type.As().CSharpName(false, true) + ">()");
+                return;
+            }
+
+            writer.Write(input.unit.defaultValues[input.key].As().Code(true, true, true, "", true, true));
+        }
+
+        public bool ShouldCast(ValueInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            if (input.hasValidConnection)
+            {
+                Type sourceType = GetSourceType(input, data, writer);
                 Type targetType = input.type;
 
                 if (data.IsCurrentExpectedTypeMet())
@@ -99,7 +277,28 @@ namespace Unity.VisualScripting.Community.CSharp
             return false;
         }
 
-        public Type GetSourceType(ValueInput valueInput, ControlGenerationData data)
+        public bool ShouldCast(ValueInput input, ControlGenerationData data, Type targetType, CodeWriter writer)
+        {
+            if (input.hasValidConnection)
+            {
+                Type sourceType = GetSourceType(input, data, writer);
+
+                if (data.IsCurrentExpectedTypeMet())
+                {
+                    return false;
+                }
+
+                return TypeConversionUtility.ShouldCast(sourceType, targetType);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// <tt>resolveTypes:</tt> If true, the generator connected to the <tt>valueInput</tt> will ensure that it is fully initialized so that types can be resolved properly.
+        /// It is not required if you trigger GenerateValue with the <tt>valueInput</tt> before calling this method.
+        /// </summary>
+        public Type GetSourceType(ValueInput valueInput, ControlGenerationData data, CodeWriter writer, bool resolveTypes = true)
         {
             if (valueInput == null)
             {
@@ -110,6 +309,22 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 return valueInput.type;
             }
+
+            // Ensure that the Generator is Initialized so it creates any Symbols, Variables, etc.
+            if (resolveTypes)
+            {
+                using (writer.SuppressRecording(valueInput, out var canSuppress))
+                {
+                    if (canSuppress)
+                        GenerateValueInternal(valueInput, data, writer);
+                }
+            }
+
+            if (NodeGeneration.IsSourceLiteral(valueInput, out var result))
+            {
+                return result;
+            }
+
             var pseudoSource = valueInput.GetPesudoSource();
             if (valueInput.hasValidConnection)
             {
@@ -138,21 +353,8 @@ namespace Unity.VisualScripting.Community.CSharp
                     return valueInput.connection.source.type;
                 }
             }
-            else if (NodeGeneration.IsSourceLiteral(valueInput, out var result))
-            {
-                return result;
-            }
 
             return valueInput.type;
-        }
-
-
-        public string MakeClickableForThisUnit(string code, bool condition = true)
-        {
-            if (condition)
-                return CodeUtility.MakeClickable(unit, code);
-            else
-                return code;
         }
 
         public static bool CanPredictConnection(ValueInput target, ControlGenerationData data)

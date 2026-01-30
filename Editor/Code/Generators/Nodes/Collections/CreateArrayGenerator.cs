@@ -3,6 +3,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -11,33 +12,25 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public CreateArrayGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet())
             {
-                data.SetCurrentExpectedTypeMet(true, Unit.type);
-
+                if (data.GetExpectedType().IsStrictlyAssignableFrom(Unit.type))
+                {
+                    data.MarkExpectedTypeMet(Unit.type);
+                }
             }
-            string typeName = Unit.type.As().CSharpName(false, true);
-            string dimensionString = GenerateDimensions(Unit.dimensions, data);
-            data.CreateSymbol(Unit, Unit.type);
 
-            return MakeClickableForThisUnit("new ".ConstructHighlight() + $"{typeName}") + dimensionString;
-        }
-
-        /// <summary>
-        /// Generates the array dimension part of the syntax, e.g., [10, 5, 2].
-        /// </summary>
-        private string GenerateDimensions(int dimensions, ControlGenerationData data)
-        {
-            var lengthInputs = new List<string>();
-
-            for (int i = 0; i < dimensions; i++)
+            CodeWriter.DimensionParameter[] dimensions = new CodeWriter.DimensionParameter[Unit.dimensions];
+            var index = 0;
+            foreach (var valueInput in Unit.indexes)
             {
-                lengthInputs.Add(GenerateValue(Unit.indexes[i], data));
+                dimensions[index] = writer.Action(w => GenerateValue(valueInput, data, w));
+                index++;
             }
 
-            return MakeClickableForThisUnit("[") + $"{string.Join(MakeClickableForThisUnit(", "), lengthInputs)}" + MakeClickableForThisUnit("]");
+            writer.NewArray(Unit.type, dimensions);
         }
     }
 }

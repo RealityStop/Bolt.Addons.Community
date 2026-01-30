@@ -15,48 +15,40 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public SumGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            List<string> values = new List<string>();
-
             var connectedTypes = Unit.multiInputs
-                .Select(i => GetSourceType(i, data))
+                .Select(i => GetSourceType(i, data, writer, false))
                 .ToList();
 
             var inferredType = InferType(connectedTypes) ?? typeof(object);
+            if (data.GetExpectedType() != null && data.GetExpectedType().IsStrictlyAssignableFrom(inferredType))
+            {
+                data.MarkExpectedTypeMet(inferredType);
+            }
+            data.CreateSymbol(Unit, inferredType);
 
+            writer.Write("(");
+            bool first = true;
             foreach (var item in Unit.multiInputs)
             {
-                data.SetExpectedType(inferredType);
-                var code = GenerateValue(item, data);
-                data.RemoveExpectedType();
-                values.Add(code);
-            }
+                if (!first)
+                    writer.Write(" + ");
+                first = false;
 
-            return TypeConversionUtility.CastTo(
-                MakeClickableForThisUnit("(") +
-                string.Join(MakeClickableForThisUnit(" + "), values) +
-                MakeClickableForThisUnit(")"),
-                inferredType,
-                data.GetExpectedType(),
-                Unit
-            );
+                using (data.Expect(inferredType))
+                {
+                    GenerateValue(item, data, writer);
+                }
+            }
+            writer.Write(")");
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input.hasValidConnection)
             {
-                var expected = data.GetExpectedType();
-                var connectedCode = GetNextValueUnit(input, data);
-                var inputType = GetSourceType(input, data);
-
-                if (expected != null && expected != inputType && !expected.IsAssignableFrom(inputType))
-                {
-                    connectedCode = connectedCode.CastTo(expected, Unit);
-                }
-
-                return connectedCode;
+                GenerateConnectedValue(input, data, writer, false);
             }
             else if (input.hasDefaultValue)
             {
@@ -64,19 +56,19 @@ namespace Unity.VisualScripting.Community.CSharp
                 var val = unit.defaultValues[input.key];
 
                 if (expectedType == typeof(int))
-                    return MakeClickableForThisUnit($"{val}".NumericHighlight());
-                if (expectedType == typeof(float))
-                    return MakeClickableForThisUnit($"{val}f".Replace(",", ".").NumericHighlight());
-                if (expectedType == typeof(double))
-                    return MakeClickableForThisUnit($"{val}d".Replace(",", ".").NumericHighlight());
-                if (expectedType == typeof(long))
-                    return MakeClickableForThisUnit($"{val}L".Replace(",", ".").NumericHighlight());
-
-                return val.As().Code(true, Unit, true, true, "", false);
+                    writer.Write($"{val}".NumericHighlight());
+                else if (expectedType == typeof(float))
+                    writer.Write($"{val}f".Replace(",", ".").NumericHighlight());
+                else if (expectedType == typeof(double))
+                    writer.Write($"{val}d".Replace(",", ".").NumericHighlight());
+                else if (expectedType == typeof(long))
+                    writer.Write($"{val}L".Replace(",", ".").NumericHighlight());
+                else
+                    writer.Write(val.As().Code(true, true, true, "", false));
             }
             else
             {
-                return MakeClickableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
+                writer.Write($"/* \"{input.key} Requires Input\" */".ErrorHighlight());
             }
         }
 
@@ -90,7 +82,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 return list[0];
 
             Type first = list[0];
-            
+
             if (list.All(t => t == first))
                 return first;
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
@@ -10,14 +11,22 @@ namespace Unity.VisualScripting.Community.CSharp
         public WaitForSecondsUnitGenerator(Unit unit) : base(unit)
         {
         }
-    
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        public override IEnumerable<string> GetNamespaces()
         {
-            var output = string.Empty;
-            data.SetHasReturned(true);
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("yield return".ControlHighlight() + " " + "CSharpUtility".TypeHighlight() + ".CreateWaitForSeconds(") + GenerateValue(Unit.seconds, data) + MakeClickableForThisUnit(", ") + GenerateValue(Unit.unscaledTime, data) + MakeClickableForThisUnit(");") + "\n";
-            output += GetNextUnit(Unit.exit, data, indent);
-            return output;
+            yield return "Unity.VisualScripting.Community";
         }
-    } 
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            data.SetHasReturned(true);
+
+            writer.YieldReturn(writer.Action(() =>
+            writer.CallCSharpUtilityMethod("CreateWaitForSeconds",
+            writer.Action(() => GenerateValue(Unit.seconds, data, writer)),
+            writer.Action(() => GenerateValue(Unit.unscaledTime, data, writer)))), WriteOptions.IndentedNewLineAfter);
+
+            GenerateExitControl(Unit.exit, data, writer);
+        }
+    }
 }

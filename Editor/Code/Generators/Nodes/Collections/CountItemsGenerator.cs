@@ -1,31 +1,38 @@
-using Unity.VisualScripting;
-using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(CountItems))]
     public class CountItemsGenerator : NodeGenerator<CountItems>
     {
-        public CountItemsGenerator(Unit unit) : base(unit)
+        public CountItemsGenerator(Unit unit) : base(unit) { }
+
+        public override IEnumerable<string> GetNamespaces()
         {
-            NameSpaces = "System.Collections";
+            yield return "System.Collections";
+            yield return "System.Linq";
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var type = GetSourceType(Unit.collection, data);
-            data.SetExpectedType(typeof(ICollection));
+            GenerateValue(Unit.collection, data, writer);
+
+            var type = GetSourceType(Unit.collection, data, writer, false);
+
             if (type != null && (type.IsArray || type == typeof(string)))
             {
-                var code = GenerateValue(Unit.collection, data) + MakeClickableForThisUnit("." + "Length".VariableHighlight());
-                data.RemoveExpectedType();
-                return code;
+                writer.GetMember(null, "Length");
+                return;
             }
-            var _code = GenerateValue(Unit.collection, data) + MakeClickableForThisUnit("." + "Count".VariableHighlight());
-            data.RemoveExpectedType();
-            return _code;
+            else if (typeof(ICollection).IsStrictlyAssignableFrom(type))
+            {
+                writer.GetMember(null, "Count");
+                return;
+            }
+
+            writer.InvokeMember(null, "Cast", new CodeWriter.TypeParameter[] { typeof(object) })
+            .InvokeMember(null, "Count");
         }
     }
 }

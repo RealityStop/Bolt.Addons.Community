@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -17,51 +18,59 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public bool indexing;
         public bool generateUsings;
 
-        protected override string GenerateBefore(int indent)
+        protected override void GenerateBefore(CodeWriter writer, ControlGenerationData data)
         {
-            var output = string.Empty;
-
             if (generateUsings)
             {
                 var usings = Usings();
                 for (int i = 0; i < usings.Count; i++)
                 {
-                    output += "using".ConstructHighlight() + " " + usings[i] + ";" + ((i < usings.Count - 1) ? "\n" : string.Empty);
+                    writer.Write("using".ConstructHighlight() + " " + usings[i] + ";");
+
+                    if (i < usings.Count - 1)
+                    {
+                        writer.NewLine();
+                    }
                 }
-                output += "\n\n";
+
+                writer.NewLine();
+                writer.NewLine();
             }
 
             for (int i = 0; i < attributes.Count; i++)
             {
-                output += attributes[i].Generate(indent) + "\n";
+                attributes[i].Generate(writer, data);
+                writer.NewLine();
             }
 
-            output += CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + " enum ".ConstructHighlight() + typeName.LegalMemberName().EnumHighlight();
-
-            return output;
+            writer.WriteLine(scope.AsString().ConstructHighlight() + " enum ".ConstructHighlight() + typeName.LegalMemberName().EnumHighlight());
         }
 
-        protected override string GenerateBody(int indent)
+        protected override void GenerateBody(CodeWriter writer, ControlGenerationData data)
         {
-            var output = string.Empty;
-
             for (int i = 0; i < items.Count; i++)
             {
-                if (string.IsNullOrEmpty(items[i].name)) { continue; }
-                output += CodeBuilder.Indent(indent) + items[i].name.LegalMemberName() + (indexing ? " = " + items[i].index.ToString().NumericHighlight() : string.Empty);
+                if (string.IsNullOrEmpty(items[i].name))
+                    continue;
+
+                writer.WriteIndented(items[i].name.LegalMemberName().VariableHighlight());
+
+                if (indexing)
+                {
+                    writer.Write(" = ");
+                    writer.Write(items[i].index.ToString().NumericHighlight());
+                }
+
                 if (i < items.Count - 1)
                 {
-                    output += ",";
-                    output += "\n";
+                    writer.Write(",");
                 }
+                writer.NewLine();
             }
-
-            return output;
         }
-
-        protected override string GenerateAfter(int indent)
+        
+        protected override void GenerateAfter(CodeWriter writer, ControlGenerationData data)
         {
-            return string.Empty;
         }
 
         private EnumGenerator(string name) { this.typeName = name; }

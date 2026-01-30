@@ -1,7 +1,7 @@
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -10,28 +10,32 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public SetArrayItemGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            string arrayName = GenerateValue(Unit.array, data);
-            string indexExpression = GenerateIndex(Unit.indexes, data);
-            string valueExpression = GenerateValue(Unit.value, data);
+            writer.WriteIndented();
+            GenerateValue(Unit.array, data, writer);
 
-            var indexString = MakeClickableForThisUnit("[") + indexExpression + MakeClickableForThisUnit("]");
-            string assignment = $"{arrayName}{indexString}{MakeClickableForThisUnit(" = ")}{valueExpression}{MakeClickableForThisUnit(";")}";
+            writer.Write("[");
+            GenerateIndexes(Unit.indexes, data, writer);
+            writer.Write("]");
 
-            return assignment;
+            writer.Equal();
+            GenerateValue(Unit.value, data, writer);
+
+            writer.WriteEnd(EndWriteOptions.LineEnd);
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
 
-        private string GenerateIndex(List<ValueInput> indexes, ControlGenerationData data)
+        private void GenerateIndexes(List<ValueInput> indexes, ControlGenerationData data, CodeWriter writer)
         {
-            var indexStrings = new List<string>();
-
-            foreach (var index in indexes)
+            for (int i = 0; i < indexes.Count; i++)
             {
-                indexStrings.Add(GenerateValue(index, data));
-            }
+                if (i > 0)
+                    writer.ParameterSeparator();
 
-            return string.Join(MakeClickableForThisUnit(", "), indexStrings);
+                GenerateValue(indexes[i], data, writer);
+            }
         }
     }
 }

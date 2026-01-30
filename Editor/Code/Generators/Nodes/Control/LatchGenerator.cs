@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -8,7 +9,11 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public LatchGenerator(Latch unit) : base(unit)
         {
-            NameSpaces = "Unity.VisualScripting.Community";
+        }
+
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting.Community";
         }
 
         private Latch Unit => unit as Latch;
@@ -25,27 +30,24 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override bool HasDefaultValue => true;
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
             variableName = Name;
 
             if (input == Unit.enter)
             {
-                string set = GenerateValue(Unit.set, data);
-                string reset = GenerateValue(Unit.reset, data);
-                string resetDom = GenerateValue(Unit.resetDominant, data);
-                string methodCall = $"{MakeClickableForThisUnit(variableName.VariableHighlight())}{MakeClickableForThisUnit(".Update(")}{set}{MakeClickableForThisUnit(", ")}{reset}{MakeClickableForThisUnit(", ")}{resetDom}{MakeClickableForThisUnit(");")}";
-
-                return CodeBuilder.Indent(indent) + methodCall + "\n" +
-                       GetNextUnit(Unit.exit, data, indent);
+                writer.WriteIndented().InvokeMember(variableName.VariableHighlight(), "Update",
+                writer.Action(() => GenerateValue(Unit.set, data, writer)),
+                writer.Action(() => GenerateValue(Unit.reset, data, writer)),
+                writer.Action(() => GenerateValue(Unit.resetDominant, data, writer))).NewLine();
+                GenerateExitControl(Unit.exit, data, writer);
             }
 
-            return string.Empty;
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(variableName.VariableHighlight() + "." + "Value".VariableHighlight());
+            writer.GetVariable(variableName).GetMember("Value");
         }
     }
 }

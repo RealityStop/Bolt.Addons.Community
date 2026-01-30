@@ -1,9 +1,8 @@
-
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using System.Linq;
+using Unity.VisualScripting;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
@@ -13,50 +12,63 @@ namespace Unity.VisualScripting.Community.CSharp
     public class DelegateNodeGenerator : NodeGenerator<DelegateNode>
     {
         public DelegateNodeGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.@delegate || output == Unit.Callback)
             {
-                data.CreateSymbol(Unit, Unit._delegate.GetDelegateType());
+                var delegateType = Unit._delegate.GetDelegateType();
+
+                data.CreateSymbol(Unit, delegateType);
                 data.NewScope();
-                List<string> parameters = new List<string>();
-                for (int i = 0; i < Unit._delegate.GetDelegateType().GetGenericArguments().Length; i++)
+
+                var parameters = new List<string>();
+
+                if (Unit._delegate is IFunc func)
                 {
-                    if (Unit._delegate is IFunc func)
+                    data.SetReturns(func.ReturnType);
+
+                    var args = delegateType.GetGenericArguments();
+                    for (int i = 0; i < args.Length - 1; i++)
                     {
-                        data.SetReturns(func.ReturnType);
-                        foreach (var type in func.GetDelegateType().GetGenericArguments())
-                        {
-                            if (i < func.GetDelegateType().GetGenericArguments().Length - 1)
-                            {
-                                parameters.Add(data.AddLocalNameInScope("arg" + i, Unit._delegate.GetDelegateType().GetGenericArguments()[i]).VariableHighlight());
-                            }
-                        }
-                    }
-                    else
-                    {
-                        var action = Unit._delegate as IAction;
-                        data.SetReturns(typeof(void));
-                        foreach (var type in action.GetDelegateType().GetGenericArguments())
-                        {
-                            parameters.Add(data.AddLocalNameInScope("arg" + i, Unit._delegate.GetDelegateType().GetGenericArguments()[i]).VariableHighlight());
-                        }
+                        parameters.Add(data.AddLocalNameInScope("arg" + i, args[i]).VariableHighlight());
                     }
                 }
-                var delegateCode = CodeBuilder.MultiLineLambda(Unit, MakeClickableForThisUnit(string.Join(", ", parameters)), GenerateControl(null, data, CodeBuilder.currentIndent) + (Unit._delegate is IFunc ? "\n" + CodeBuilder.GetCurrentIndent(Unit.invoke.hasValidConnection ? 0 : 1) + MakeClickableForThisUnit("return ".ControlHighlight()) + GenerateValue((Unit as FuncNode).@return, data) + MakeClickableForThisUnit(";") : string.Empty), Unit.invoke.hasValidConnection ? CodeBuilder.currentIndent - 1 : (Unit._delegate is IFunc ? CodeBuilder.currentIndent - 1 : CodeBuilder.currentIndent));
+                else
+                {
+                    var action = Unit._delegate as IAction;
+                    data.SetReturns(typeof(void));
+
+                    var args = delegateType.GetGenericArguments();
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        parameters.Add(data.AddLocalNameInScope("arg" + i, args[i]).VariableHighlight());
+                    }
+                }
+
+                writer.MultilineLambda(writer.Action(() =>
+                {
+                    GenerateControl(null, data, writer);
+                    if (Unit._delegate is IFunc)
+                    {
+                        writer.Return(writer.Action(() => GenerateValue((Unit as FuncNode).@return, data, writer)), WriteOptions.IndentedNewLineAfter);
+                    }
+                }), parameters.Select(p => (CodeWriter.MethodParameter)p).ToArray());
+
                 data.ExitScope();
-                return delegateCode;
+                return;
             }
-            else if (Unit.parameters.Contains(output) && (Unit.@delegate.hasValidConnection || Unit.Callback.hasValidConnection))
+
+            if (Unit.parameters.Contains(output) && (Unit.@delegate.hasValidConnection || Unit.Callback.hasValidConnection))
             {
-                return MakeClickableForThisUnit(data.GetVariableName("arg" + Unit.parameters.IndexOf(output)).VariableHighlight());
+                writer.Write(data.GetVariableName("arg" + Unit.parameters.IndexOf(output)).VariableHighlight());
+                return;
             }
-            else return base.GenerateValue(output, data);
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.invoke, data, indent + 1).TrimEnd();
+            GenerateChildControl(Unit.invoke, data, writer);
         }
     }
 }

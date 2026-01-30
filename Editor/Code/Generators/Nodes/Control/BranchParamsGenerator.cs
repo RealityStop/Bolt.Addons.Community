@@ -1,10 +1,10 @@
-
-using System;
+using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using System.Text;
-
+#if VISUAL_SCRIPTING_1_7
+using SUnit = Unity.VisualScripting.SubgraphUnit;
+#else
+using SUnit = Unity.VisualScripting.SuperUnit;
+#endif
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(BranchParams))]
@@ -12,121 +12,120 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public BranchParamsGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(output, data);
-        }
+            if (input != Unit.enter)
+                return;
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            var output = new StringBuilder();
-            string cachedIndent = CodeBuilder.Indent(indent);
-
-            string trueCode;
-
-            if (input == Unit.enter)
+            writer.WriteIndented("if ".ControlHighlight());
+            writer.Parentheses(w =>
             {
-                output.Append(cachedIndent)
-                      .Append(MakeClickableForThisUnit("if".ConstructHighlight() + " ("))
-                      .Append(GenerateArguments(data))
-                      .Append(MakeClickableForThisUnit(")"))
-                      .AppendLine()
-                      .Append(cachedIndent + MakeClickableForThisUnit("{"))
-                      .AppendLine();
+                GenerateArguments(w, data);
+            }).NewLine();
 
-                data.NewScope();
-                trueCode = GetNextUnit(Unit.exitTrue, data, indent + 1);
-                data.ExitScope();
+            writer.WriteLine("{");
 
-                output.Append(trueCode).AppendLine();
-
-                output.Append(cachedIndent + MakeClickableForThisUnit("}"));
-
-                if (Unit.exitFalse.hasAnyConnection)
-                {
-                    output.AppendLine().Append(cachedIndent).Append(MakeClickableForThisUnit("else".ConstructHighlight()));
-
-                    if (!Unit.exitTrue.hasValidConnection || string.IsNullOrEmpty(trueCode))
-                    {
-                        output.Append(CodeBuilder.MakeRecommendation(
-                            "You should use the negate node and connect the true input instead"));
-                    }
-
-                    output.AppendLine()
-                          .Append(cachedIndent + MakeClickableForThisUnit("{"))
-                          .AppendLine();
-
-                    data.NewScope();
-                    output.Append(GetNextUnit(Unit.exitFalse, data, indent + 1)).AppendLine();
-                    data.ExitScope();
-
-                    output.Append(cachedIndent + MakeClickableForThisUnit("}"));
-                }
-
-                if (Unit.exitNext != null && Unit.exitNext.hasAnyConnection)
-                {
-                    output.AppendLine().Append(GetNextUnit(Unit.exitNext, data, indent));
-                }
+            using (writer.IndentedScope(data))
+            {
+                GenerateChildControl(Unit.exitTrue, data, writer);
             }
 
-            return output.ToString();
+            writer.WriteLine("}");
+
+            if (Unit.exitFalse.hasAnyConnection)
+            {
+                writer.WriteIndented("else".ControlHighlight());
+
+                var ifTrueDestination = Unit.exitTrue.GetPesudoDestination();
+                if (!Unit.exitTrue.hasValidConnection || (ifTrueDestination.unit is SUnit && !ifTrueDestination.hasValidConnection))
+                {
+                    writer.WriteRecommendationDiagnostic("You can simplify this by negating the condition and using the True output, which improves the generated code.", "Condition can be negated", WriteOptions.NewLineAfter);
+                }
+                else
+                {
+                    writer.NewLine();
+                }
+
+                writer.WriteLine("{");
+
+                using (writer.IndentedScope(data))
+                {
+                    GenerateChildControl(Unit.exitFalse, data, writer);
+                }
+
+                writer.WriteLine("}");
+            }
+
+            if (Unit.exitNext != null && Unit.exitNext.hasAnyConnection)
+            {
+                GenerateExitControl(Unit.exitNext, data, writer);
+            }
         }
 
-        private string GenerateArguments(ControlGenerationData data)
+        private void GenerateArguments(CodeWriter writer, ControlGenerationData data)
         {
-            var op = " && ";
-            List<string> values = new List<string>();
+            string op;
+
             switch (Unit.BranchingType)
             {
                 case LogicParamNode.BranchType.And:
                     op = " && ";
-                    data.SetExpectedType(typeof(bool));
-                    foreach (var arg in Unit.arguments)
+                    using (data.Expect(typeof(bool)))
                     {
-                        values.Add(GenerateValue(arg, data));
+                        WriteJoined(writer, data, op);
                     }
-                    data.RemoveExpectedType();
                     break;
+
                 case LogicParamNode.BranchType.Or:
                     op = " || ";
-                    data.SetExpectedType(typeof(bool));
-                    foreach (var arg in Unit.arguments)
+                    using (data.Expect(typeof(bool)))
                     {
-                        values.Add(GenerateValue(arg, data));
+                        WriteJoined(writer, data, op);
                     }
-                    data.RemoveExpectedType();
                     break;
+
                 case LogicParamNode.BranchType.GreaterThan:
                     op = Unit.AllowEquals ? " >= " : " > ";
-                    data.SetExpectedType(typeof(float));
-                    foreach (var arg in Unit.arguments)
+                    using (data.Expect(typeof(float)))
                     {
-                        values.Add(GenerateValue(arg, data));
+                        WriteJoined(writer, data, op);
                     }
-                    data.RemoveExpectedType();
                     break;
+
                 case LogicParamNode.BranchType.LessThan:
-                    op = Unit.AllowEquals ? " <= " : " > ";
-                    data.SetExpectedType(typeof(float));
-                    foreach (var arg in Unit.arguments)
+                    op = Unit.AllowEquals ? " <= " : " < ";
+                    using (data.Expect(typeof(float)))
                     {
-                        values.Add(GenerateValue(arg, data));
+                        WriteJoined(writer, data, op);
                     }
-                    data.RemoveExpectedType();
                     break;
+
                 case LogicParamNode.BranchType.Equal:
                     op = " == ";
                     if (Unit.Numeric)
-                        data.SetExpectedType(typeof(float));
-                    foreach (var arg in Unit.arguments)
                     {
-                        values.Add(GenerateValue(arg, data));
+                        using (data.Expect(typeof(float)))
+                        {
+                            WriteJoined(writer, data, op);
+                        }
                     }
-                    if (Unit.Numeric)
-                        data.RemoveExpectedType();
+                    else
+                    {
+                        WriteJoined(writer, data, op);
+                    }
                     break;
             }
-            return string.Join(MakeClickableForThisUnit(op), values);
+        }
+
+        private void WriteJoined(CodeWriter writer, ControlGenerationData data, string op)
+        {
+            for (int i = 0; i < Unit.arguments.Count; i++)
+            {
+                if (i != 0)
+                    writer.Write(op);
+
+                GenerateValue(Unit.arguments[i], data, writer);
+            }
         }
     }
 }

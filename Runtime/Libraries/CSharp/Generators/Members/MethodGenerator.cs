@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -18,8 +19,28 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public List<ParameterGenerator> parameters = new List<ParameterGenerator>();
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
         public List<GenericDeclaration> generics = new List<GenericDeclaration>();
-        public string body = "";
-        public string beforeBody;
+        private Queue<Action<CodeWriter>> bodyActions = new Queue<Action<CodeWriter>>();
+        private Queue<Action<CodeWriter>> beforeBodyActions = new Queue<Action<CodeWriter>>();
+        public event Action<CodeWriter> bodyAction
+        {
+            add
+            {
+                bodyActions.Enqueue(value);
+            }
+            remove
+            {
+                throw new NotSupportedException("Cannot remove bodyAction");
+            }
+        }
+        public event Action<CodeWriter> beforeBodyAction
+        {
+            add
+            {
+                beforeBodyActions.Enqueue(value);
+            }
+            remove
+            { throw new NotSupportedException("Cannot remove beforeBodyAction"); }
+        }
         public string warning;
         public string summary;
 
@@ -45,27 +66,41 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             method.stringReturnTypeNamespace = returnTypeNamespace;
             return method;
         }
-        protected override sealed string GenerateBefore(int indent)
+
+        
+
+        protected override sealed void GenerateBefore(CodeWriter writer, ControlGenerationData data)
         {
             var attributes = string.Empty;
             foreach (AttributeGenerator attr in this.attributes)
             {
-                attributes += attr.Generate(indent) + "\n";
+                attr.Generate(writer, data);
+                writer.NewLine();
             }
-            var _warning = !string.IsNullOrEmpty(warning) ? CodeBuilder.Indent(indent) + $"/* {warning} */\n".WarningHighlight() : string.Empty;
-            var _summary = string.Empty;
+
+            if (!string.IsNullOrEmpty(warning))
+            {
+                writer.WriteLine($"/* {warning} */".ErrorHighlight());
+                writer.NewLine();
+            }
+
             if (!string.IsNullOrEmpty(summary))
             {
-                _summary = CodeBuilder.Indent(indent) + "/// <summary>".CommentHighlight();
+                writer.WriteIndented("/// <summary>".CommentHighlight());
 
                 //foreach (var line in summary.Split('\n', StringSplitOptions.RemoveEmptyEntries))
 
                 foreach (var line in summary.Split('\n').Where(s => !string.IsNullOrEmpty(s)))
                 {
-                    _summary += "\n" + CodeBuilder.Indent(indent) + $"/// {line}".CommentHighlight();
+                    writer.NewLine();
+                    writer.WriteIndented($"/// {line}".CommentHighlight());
                 }
-                _summary += "\n" + CodeBuilder.Indent(indent) + $"/// </summary>".CommentHighlight() + "\n";
+
+                writer.NewLine();
+                writer.WriteIndented($"/// </summary>".CommentHighlight());
+                writer.NewLine();
             }
+
             var modSpace = modifier == MethodModifier.None ? string.Empty : " ";
             var genericTypes = generics.Count > 0 ? $"<{string.Join(", ", generics.Select(g => g.name.TypeHighlight()))}>" : string.Empty;
             var constraints = generics.Count > 0 && generics.Any(g => g.baseTypeConstraint.type != typeof(object) || g.interfaceConstraints.Count > 0 || g.typeParameterConstraints != TypeParameterConstraints.None) ? $" {"where".ConstructHighlight()} " : "";
@@ -75,11 +110,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 {
                     if (generic.baseTypeConstraint.type != typeof(object))
                     {
-                        constraints += $"{generic.name.TypeHighlight()} : {generic.baseTypeConstraint.type.As().CSharpName(false, true)}" + (generic.interfaceConstraints.Count > 0 ? ", " + string.Join(", ", generic.interfaceConstraints.Select(i => i.type.As().CSharpName(false, true))) : string.Empty) + (generic.typeParameterConstraints != TypeParameterConstraints.None ? ", " + GetSelectedConstraints(generic.typeParameterConstraints) : string.Empty);
+                        constraints += $"{generic.name.TypeHighlight()} : {writer.GetTypeNameHighlighted(generic.baseTypeConstraint.type)}" + (generic.interfaceConstraints.Count > 0 ? ", " + string.Join(", ", generic.interfaceConstraints.Select(i => writer.GetTypeNameHighlighted(i.type))) : string.Empty) + (generic.typeParameterConstraints != TypeParameterConstraints.None ? ", " + GetSelectedConstraints(generic.typeParameterConstraints) : string.Empty);
                     }
                     else if (generic.interfaceConstraints.Count > 0)
                     {
-                        constraints += $"{generic.name.TypeHighlight()} : {string.Join(", ", generic.interfaceConstraints.Select(i => i.type.As().CSharpName(false, true)))}" + (generic.typeParameterConstraints != TypeParameterConstraints.None ? ", " + GetSelectedConstraints(generic.typeParameterConstraints) : string.Empty);
+                        constraints += $"{generic.name.TypeHighlight()} : {string.Join(", ", generic.interfaceConstraints.Select(i => writer.GetTypeNameHighlighted(i.type)))}" + (generic.typeParameterConstraints != TypeParameterConstraints.None ? ", " + GetSelectedConstraints(generic.typeParameterConstraints) : string.Empty);
                     }
                     else if (generic.typeParameterConstraints != TypeParameterConstraints.None)
                     {
@@ -87,7 +122,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                     }
                 }
             }
-            return attributes + _warning + _summary + CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + (string.IsNullOrEmpty(stringReturnType) ? returnType.As().CSharpName(false, true) : stringReturnType) + " " + name.LegalMemberName() + genericTypes + CodeBuilder.Parameters(this.parameters) + constraints;
+            writer.WriteLine((scope == AccessModifier.None ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + (string.IsNullOrEmpty(stringReturnType) ? writer.GetTypeNameHighlighted(returnType) : stringReturnType) + " " + name.LegalMemberName() + genericTypes + CodeBuilder.Parameters(parameters, writer, data) + constraints);
         }
 
         string GetSelectedConstraints(TypeParameterConstraints constraints)
@@ -106,15 +141,24 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return string.Join(", ", selected);
         }
 
-        protected override sealed string GenerateBody(int indent)
+        protected override sealed void GenerateBody(CodeWriter writer, ControlGenerationData data)
         {
-            if (string.IsNullOrEmpty(name)) { return string.Empty; }
-            return string.IsNullOrEmpty(body) ? string.Empty : body.Contains("\n") ? beforeBody + body.Replace("\n", "\n" + CodeBuilder.Indent(indent)).Insert(0, CodeBuilder.Indent(indent)) : CodeBuilder.Indent(indent) + beforeBody + "\n" + CodeBuilder.Indent(indent) + body;
+            if (string.IsNullOrEmpty(name)) return;
+
+            var indent = writer.IndentLevel;
+
+            data.EnterMethod();
+
+            while (beforeBodyActions.Count > 0)
+                beforeBodyActions.Dequeue()?.Invoke(writer);
+            while (bodyActions.Count > 0)
+                bodyActions.Dequeue()?.Invoke(writer);
+
+            data.ExitMethod();
         }
 
-        protected override sealed string GenerateAfter(int indent)
+        protected override sealed void GenerateAfter(CodeWriter writer, ControlGenerationData data)
         {
-            return string.Empty;
         }
 
         public MethodGenerator AddAttribute(AttributeGenerator generator)
@@ -123,18 +167,38 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return this;
         }
 
-        public MethodGenerator Body(string body)
+        public MethodGenerator Body(Action<CodeWriter> bodyAction)
         {
-            this.body = body;
+            bodyActions.Clear();
+            bodyActions.Enqueue(bodyAction);
             return this;
         }
 
-        public MethodGenerator AddToBody(string body)
+        public MethodGenerator AddToBody(Action<CodeWriter> bodyAction)
         {
-            this.body += body;
+            this.bodyAction += bodyAction;
             return this;
         }
 
+        public bool HasBody()
+        {
+            return beforeBodyActions.Count > 0 || bodyActions.Count > 0;
+        }
+
+        public MethodGenerator AppendBodyFrom(MethodGenerator other)
+        {
+            foreach (Action<CodeWriter> action in other.beforeBodyActions)
+            {
+                beforeBodyActions.Enqueue(action);
+            }
+
+            foreach (Action<CodeWriter> action in other.bodyActions)
+            {
+                bodyActions.Enqueue(action);
+            }
+
+            return this;
+        }
 
         public MethodGenerator AddGeneric()
         {

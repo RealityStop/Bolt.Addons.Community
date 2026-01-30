@@ -1,8 +1,4 @@
-using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
 using System.Collections;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -11,56 +7,52 @@ namespace Unity.VisualScripting.Community.CSharp
     public class YieldNodeGenerator : NodeGenerator<YieldNode>
     {
         public YieldNodeGenerator(Unit unit) : base(unit) { }
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (input == Unit.enter)
+            if (input != Unit.enter)
+                return;
+
+            switch (Unit.type)
             {
-                var output = string.Empty;
+                case YieldNode.EnumeratorType.YieldInstruction:
+                case YieldNode.EnumeratorType.CustomYieldInstruction:
+                    writer.YieldReturn(writer.Action(() => GenerateValue(Unit.instruction, data, writer)), WriteOptions.IndentedNewLineAfter);
+                    break;
 
-                switch (Unit.type)
-                {
-                    case YieldNode.EnumeratorType.YieldInstruction:
-                        output += CodeBuilder.Indent(indent);
-                        output += MakeClickableForThisUnit("yield ".ControlHighlight() + "return".ControlHighlight());
-                        output += MakeClickableForThisUnit(" ");
-                        output += GenerateValue(Unit.instruction, data);
-                        output += MakeClickableForThisUnit(";") + "\n";
-                        break;
-
-                    case YieldNode.EnumeratorType.CustomYieldInstruction:
-                        output += CodeBuilder.Indent(indent);
-                        output += MakeClickableForThisUnit("yield ".ControlHighlight() + "return".ControlHighlight());
-                        output += MakeClickableForThisUnit(" ");
-                        output += GenerateValue(Unit.instruction, data);
-                        output += MakeClickableForThisUnit(";") + "\n";
-                        break;
-
-                    case YieldNode.EnumeratorType.Enumerator:
+                case YieldNode.EnumeratorType.Enumerator:
+                    {
                         var enumeratorVar = data.AddLocalNameInScope("enumerator", typeof(IEnumerator));
-                        output += "\n";
-                        output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{"var".ConstructHighlight()} {enumeratorVar.VariableHighlight()} = ");
-                        data.SetExpectedType(typeof(IEnumerator));
-                        output += GenerateValue(Unit.enumerator, data) + MakeClickableForThisUnit(";") + "\n";
-                        data.RemoveExpectedType();
-                        output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{"while".ControlHighlight()} ({enumeratorVar.VariableHighlight()}.MoveNext())") + "\n";
-                        output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                        output += CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit("yield return ".ControlHighlight() + enumeratorVar.VariableHighlight() + $".{"Current".VariableHighlight()};") + "\n";
-                        output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-                        break;
+                        writer.CreateVariable(typeof(IEnumerator), enumeratorVar, writer.Action(w =>
+                        {
+                            using (data.Expect(typeof(IEnumerator)))
+                                GenerateValue(Unit.enumerator, data, w);
+                        }), WriteOptions.Indented, EndWriteOptions.LineEnd);
 
-                    case YieldNode.EnumeratorType.Coroutine:
-                        output += CodeBuilder.Indent(indent);
-                        output += MakeClickableForThisUnit("yield ".ControlHighlight() + "return".ControlHighlight());
-                        output += MakeClickableForThisUnit(" ");
-                        output += GenerateValue(Unit.coroutine, data);
-                        output += MakeClickableForThisUnit(";") + "\n";
+                        writer.WriteIndented("while".ControlHighlight());
+                        writer.Parentheses(w =>
+                        {
+                            w.Write(enumeratorVar.VariableHighlight());
+                            w.Write(".MoveNext()");
+                        });
+                        writer.NewLine();
+                        writer.WriteLine("{");
+
+                        using (writer.Indented())
+                        {
+                            writer.YieldReturn(writer.Action(() => writer.GetMember(enumeratorVar.VariableHighlight(), "Current")), WriteOptions.IndentedNewLineAfter);
+                        }
+
+                        writer.WriteLine("}");
                         break;
-                }
-                output += GetNextUnit(Unit.exit, data, indent);
-                return output;
+                    }
+
+                case YieldNode.EnumeratorType.Coroutine:
+                    writer.YieldReturn(writer.Action(() => GenerateValue(Unit.coroutine, data, writer)), WriteOptions.IndentedNewLineAfter);
+                    break;
             }
 
-            return base.GenerateControl(input, data, indent);
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

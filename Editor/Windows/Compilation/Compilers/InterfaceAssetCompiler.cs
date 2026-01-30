@@ -21,7 +21,8 @@ namespace Unity.VisualScripting.Community.CSharp
         protected override string GenerateCode(UnityEngine.Object asset)
         {
             var interfaceAsset = (InterfaceAsset)asset;
-            return InterfaceAssetGenerator.GetSingleDecorator(interfaceAsset).GenerateClean(0);
+            var generator = InterfaceAssetGenerator.GetSingleDecorator(interfaceAsset);
+            return generator.GenerateClean(new CodeWriter(), generator.GetGenerationData());
         }
 
         public override void PostProcess(UnityEngine.Object asset, PathConfig paths, Type type)

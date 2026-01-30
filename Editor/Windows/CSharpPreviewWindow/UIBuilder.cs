@@ -1,6 +1,5 @@
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
@@ -28,7 +27,7 @@ namespace Unity.VisualScripting.Community
                     onChanged?.Invoke();
                 });
 
-                DrawToggleRow("Show Tooltips :", "Show tooltips in places where there is a problem.", ref settings.showTooltips, () =>
+                DrawToggleRow("Show Tooltips :", "Show extra infomation when hovering over most comments with the (Hover for more info) tag.", ref settings.showTooltips, () =>
                 {
                     CSharpPreviewSettings.ShouldGenerateTooltips = settings.showTooltips;
                     settings.SaveAndDirty();

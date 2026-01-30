@@ -5,6 +5,7 @@ using Unity.VisualScripting.Community.Utility;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -21,14 +22,26 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public List<AttributeDeclaration> attributes = new List<AttributeDeclaration>();
 
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
-            if (!useAssemblyQualifiedType && type == null) return "/* Parameter type is null */".WarningHighlight();
-            var _attributes = attributes != null && attributes.Count > 0 ? string.Join(" ", attributes.Select(attr => AttributeGenerator.Attribute(attr.GetAttributeType()).AddParameters(attr.parameters).Generate(0))) + " " : string.Empty;
+            if (!useAssemblyQualifiedType && type == null)
+            {
+                writer.Error("Parameter type is null");
+                return;
+            }
+            if (attributes != null && attributes.Count > 0)
+            {
+                foreach (var item in attributes.Select(attr => AttributeGenerator.Attribute(attr.GetAttributeType()).AddParameters(attr.parameters)))
+                {
+                    writer.Write(" ");
+                    item.Generate(writer, data);
+                }
+                writer.Write(" ");
+            }
+
             var _modifier = RuntimeTypeUtility.GetModifierAsString(modifier);
             var _default = isLiteral && !useAssemblyQualifiedType ? type.IsBasic() ? " = " + defaultValue.As().Code(true, true) : " = " + (type.IsStruct() && isLiteral && !type.IsBasic() ? "default".ConstructHighlight() : "null".ConstructHighlight()) : "";
-            var parameter = _attributes + (useAssemblyQualifiedType ? _modifier + assemblyQualifiedType + " " + name.VariableHighlight() : _modifier + type.As().CSharpName() + " " + name.LegalMemberName().VariableHighlight()) + _default;
-            return parameter;
+            writer.Write((useAssemblyQualifiedType ? _modifier + assemblyQualifiedType + " " + name.VariableHighlight() : _modifier + writer.GetTypeNameHighlighted(type) + " " + name.LegalMemberName().VariableHighlight()) + _default);
         }
 
         private ParameterGenerator()
@@ -84,7 +97,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         {
             var usings = new List<string>();
             if (type == null) return usings;
-            if (type != typeof(void) && type != typeof(Void) && !type.IsPrimitive)
+            if (!type.Is().NullOrVoid() && !type.IsPrimitive)
             {
                 if (type.Namespace != "Unity.VisualScripting.Community.Generics")
                     usings.Add(type.Namespace);

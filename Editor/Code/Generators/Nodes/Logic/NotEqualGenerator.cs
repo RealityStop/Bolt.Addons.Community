@@ -1,4 +1,6 @@
-﻿using Unity.VisualScripting;
+﻿using System;
+using Unity.VisualScripting;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -10,22 +12,23 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input == Unit.a)
             {
                 if (Unit.a.hasAnyConnection)
                 {
+                    IDisposable expectScope = null;
                     if (Unit.b.hasValidConnection && Unit.b.GetPesudoSource()?.unit is Literal literal)
                     {
-                        data.SetExpectedType(literal.type);
+                        expectScope = data.Expect(literal.type);
                     }
-                    var code = base.GenerateValue(Unit.a, data);
+                    base.GenerateValueInternal(Unit.a, data, writer);
                     if (Unit.b.hasValidConnection && Unit.b.GetPesudoSource()?.unit is Literal)
                     {
-                        data.RemoveExpectedType();
+                        expectScope?.Dispose();
                     }
-                    return code;
+                    return;
                 }
             }
 
@@ -33,35 +36,36 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 if (Unit.b.hasAnyConnection)
                 {
+                    IDisposable expectScope = null;
                     if (Unit.a.hasValidConnection && Unit.a.GetPesudoSource()?.unit is Literal literal)
                     {
-                        data.SetExpectedType(literal.type);
+                        expectScope = data.Expect(literal.type);
                     }
-                    var code = base.GenerateValue(Unit.b, data);
+                    base.GenerateValueInternal(Unit.b, data, writer);
                     if (Unit.a.hasValidConnection && Unit.a.GetPesudoSource()?.unit is Literal)
                     {
-                        data.RemoveExpectedType();
+                        expectScope?.Dispose();
                     }
-                    return code;
+                    return;
                 }
-                else
+                else if (Unit.numeric)
                 {
-                    return Unit.numeric ? Unit.defaultValues["b"].As().Code(true, Unit) : base.GenerateValue(input, data);
+                    writer.Write(Unit.defaultValues["b"].As().Code(true));
+                    return;
                 }
             }
 
-            return base.GenerateValue(input, data);
+            base.GenerateValueInternal(input, data, writer);
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-
             if (output == Unit.comparison)
             {
-                return GenerateValue(Unit.a, data) + MakeClickableForThisUnit(" != ") + GenerateValue(Unit.b, data);
+                GenerateValue(Unit.a, data, writer);
+                writer.Write(" != ");
+                GenerateValue(Unit.b, data, writer);
             }
-
-            return base.GenerateValue(output, data);
         }
     }
 }

@@ -102,11 +102,12 @@ namespace Unity.VisualScripting.Community
         {eventData}
     }});
 }};";
-                method.Body(body);
+                method.Body(w => w.Write(body));
                 @class.AddMethod(method);
             }
             @namespace.AddClass(@class);
-            return @namespace.GenerateClean(0);
+            
+            return @namespace.GenerateClean(new CodeWriter(), new ControlGenerationData(typeof(object), null));
         }
 
         private List<TypeGroup> GetTypesForAOTMethods()

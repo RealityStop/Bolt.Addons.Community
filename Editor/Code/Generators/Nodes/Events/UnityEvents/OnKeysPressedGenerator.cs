@@ -8,7 +8,6 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnMultiKeyPress))]
-    [RequiresVariables]
     public class OnMultiKeyPressGenerator : UpdateMethodNodeGenerator, IRequireVariables
     {
         private OnMultiKeyPress Unit => unit as OnMultiKeyPress;
@@ -30,19 +29,34 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public OnMultiKeyPressGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateUpdateCode(ControlGenerationData data, int indent)
+        public override void GenerateUpdateCode(ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if ".ControlHighlight() + "(" + name.VariableHighlight() + "." + "Check(" + Unit.Delay.As().Code(false) + ", ") + GenerateValue(Unit.Key1, data) + MakeClickableForThisUnit(", ") + GenerateValue(Unit.Key2, data) + MakeClickableForThisUnit(", ") + GenerateValue(Unit.Action, data) + MakeClickableForThisUnit("))") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-            output += CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit((Unit.coroutine ? $"StartCoroutine({Name}())" : Name + "()") + ";") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
-            return output;
+            writer.WriteIndented("if".ControlHighlight());
+            writer.Write(" (");
+            writer.Write(name.VariableHighlight());
+            writer.Write(".Check(");
+            writer.Write(Unit.Delay.As().Code(false));
+            writer.Write(", ");
+            GenerateValue(Unit.Key1, data, writer);
+            writer.Write(", ");
+            GenerateValue(Unit.Key2, data, writer);
+            writer.Write(", ");
+            GenerateValue(Unit.Action, data, writer);
+            writer.Write("))");
+            writer.NewLine();
+            writer.WriteLine("{");
+            using (writer.IndentedScope(data))
+            {
+                writer.WriteIndented(Unit.coroutine ? $"StartCoroutine({Name}())" : Name + "()");
+                writer.Write(";");
+                writer.NewLine();
+            }
+            writer.WriteLine("}");
         }
 
-        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
 
         public IEnumerable<FieldGenerator> GetRequiredVariables(ControlGenerationData data)

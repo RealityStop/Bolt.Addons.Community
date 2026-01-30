@@ -1,5 +1,5 @@
 using System.Collections;
-using System.Text;
+using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
@@ -9,39 +9,56 @@ namespace Unity.VisualScripting.Community.CSharp
     public class RandomNumbersv2Generator : LocalVariableGenerator
     {
         RandomNumbersv2 Unit => (RandomNumbersv2)unit;
-        public RandomNumbersv2Generator(Unit unit) : base(unit) { NameSpaces = "System.Collections,Unity.VisualScripting.Community"; }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public RandomNumbersv2Generator(Unit unit) : base(unit)
+        {
+        }
+
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "System.Collections";
+            yield return "Unity.VisualScripting.Community";
+        }
+
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (Unit.input.hasValidConnection)
             {
-                return MakeClickableForThisUnit(variableName.VariableHighlight());
+                writer.Write(variableName.VariableHighlight());
+                return;
             }
-            else
-            {
-                string count = GenerateValue(Unit.count, data);
-                string minimum = GenerateValue(Unit.minimum, data);
-                string maximum = GenerateValue(Unit.maximum, data);
-                return CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("RandomNumbers"), new string[] { count, minimum, maximum, Unit.integer.As().Code(false, Unit), Unit.aotList.As().Code(false, Unit), Unit.unique.As().Code(false, Unit) });
-            }
+
+            writer.CallCSharpUtilityMethod("RandomNumbers",
+                writer.Action(() => GenerateValue(Unit.count, data, writer)),
+                writer.Action(() => GenerateValue(Unit.minimum, data, writer)),
+                writer.Action(() => GenerateValue(Unit.maximum, data, writer)),
+                Unit.integer.As().Code(false),
+                Unit.aotList.As().Code(false),
+                Unit.unique.As().Code(false)
+            );
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            string indentStr = CodeBuilder.Indent(indent);
             variableName = data.AddLocalNameInScope("randomNumbersList", typeof(IList));
 
-            string count = GenerateValue(Unit.count, data);
-            string min = GenerateValue(Unit.minimum, data);
-            string max = GenerateValue(Unit.maximum, data);
-            string isInt = Unit.integer.As().Code(false, Unit);
-            string isAot = Unit.aotList.As().Code(false, Unit);
-            string isUnique = Unit.unique.As().Code(false, Unit);
+            writer.CreateVariable(typeof(IList), variableName, writer.Action(() =>
+                {
+                    writer.CallCSharpUtilityMethod("RandomNumbers",
+                    writer.Action(() => GenerateValue(Unit.count, data, writer)),
+                    writer.Action(() => GenerateValue(Unit.minimum, data, writer)),
+                    writer.Action(() => GenerateValue(Unit.maximum, data, writer)),
+                    Unit.integer.As().Code(false),
+                    Unit.aotList.As().Code(false),
+                    Unit.unique.As().Code(false)
+                    );
+                })
+            );
 
-            string methodCall = CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("RandomNumbers"), new[] { count, min, max, isInt, isAot, isUnique });
+            writer.WriteEnd(EndWriteOptions.LineEnd);
 
-            return new StringBuilder().Append(indentStr).Append(MakeClickableForThisUnit($"{"IList".TypeHighlight()} {variableName.VariableHighlight()} = ") + $"{methodCall}{MakeClickableForThisUnit(";")}").AppendLine().AppendLine(GetNextUnit(Unit.exit, data, indent)).ToString();
+            GenerateExitControl(Unit.exit, data, writer);
         }
-
     }
 }

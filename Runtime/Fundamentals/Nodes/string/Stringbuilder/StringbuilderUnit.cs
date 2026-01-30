@@ -34,6 +34,7 @@ namespace Unity.VisualScripting.Community
 
         [Inspectable, InspectorLabel("Append Modes", "List to store the modes for each input (Max: 10 items)")]
         [InspectorWide]
+        [InspectorRange(MinInputs, MaxInputs)]
         public List<StringAppendMode> appendModes = new List<StringAppendMode>();
 
         [DoNotSerialize]
@@ -51,8 +52,9 @@ namespace Unity.VisualScripting.Community
         protected override void Definition()
         {
             inputPorts = new List<ValueInput>();
+#if !NEW_LIST_UI
             AdjustAppendModesList();
-
+#endif
             for (int i = 0; i < appendModes.Count; i++)
             {
                 AddInputPort(i);
@@ -64,7 +66,7 @@ namespace Unity.VisualScripting.Community
                 Requirement(input, result);
             }
         }
-
+#if !NEW_LIST_UI
         private void AdjustAppendModesList()
         {
             if (appendModes.Count < MinInputs)
@@ -77,7 +79,7 @@ namespace Unity.VisualScripting.Community
                 appendModes.RemoveAt(appendModes.Count - 1);
             }
         }
-
+#endif
         private void AddInputPort(int index)
         {
             var inputPort = ValueInput($"String {index + 1}", "");
@@ -114,7 +116,7 @@ namespace Unity.VisualScripting.Community
 
                     case AppendMode.Delimiter:
                         stringBuilder.Append(value);
-                        if (i < appendModes.Count - 1) 
+                        if (i < appendModes.Count - 1)
                             stringBuilder.Append(appendModes[i].delimiter);
                         break;
 
@@ -157,7 +159,7 @@ namespace Unity.VisualScripting.Community
 
                     case AppendMode.CommaSeparated:
                         stringBuilder.Append(value);
-                        if (i < appendModes.Count - 1) 
+                        if (i < appendModes.Count - 1)
                             stringBuilder.Append(", ");
                         break;
 

@@ -1,5 +1,6 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections.Generic;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -9,17 +10,15 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         private List<ParameterGenerator> parameters = new List<ParameterGenerator>();
         public int Count => parameters.Count;
 
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
-            var output = string.Empty;
-            
+            writer.Write("(");
             for (int i = 0; i < parameters.Count; i++)
             {
-                output += parameters[i].As().Code(true);
-                if (i < Count - 1) output += ", ";
+                writer.Write(parameters[i].As().Code(true));
+                if (i < Count - 1) writer.Write(", ");
             }
-
-            return "(" + output + ")";
+            writer.Write(")");
         }
 
         private InvokeParametersGenerator()
@@ -54,7 +53,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             for (int i = 0; i < parameters.Count; i++)
             {
-                var @namespace = parameters[i]?.GetType().Namespace;
+                var @namespace = parameters[i]?.type?.Namespace;
 
                 if (!string.IsNullOrEmpty(@namespace) && !usings.Contains(@namespace))
                 {

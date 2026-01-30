@@ -14,39 +14,30 @@ namespace Unity.VisualScripting.Community.CSharp
         public InheritedFieldUnitGenerator(Unit unit) : base(unit)
         {
         }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            var output = string.Empty;
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("this".ConstructHighlight() + "." + Unit.member.name.VariableHighlight() + " = ") + GenerateValue(Unit.value, data) + MakeClickableForThisUnit(";");
-            output += "\n" + GetNextUnit(Unit.exit, data, indent);
-            return output;
-        }
-
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (Unit.actionDirection == ActionDirection.Get)
             {
-                return MakeClickableForThisUnit("this".ConstructHighlight() + "." + Unit.member.name.VariableHighlight());
-            }
-
-            return base.GenerateValue(output, data);
-        }
-
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
-        {
-            if (input.hasValidConnection)
-            {
-                return GetNextValueUnit(input, data);
-            }
-            else if (input.hasDefaultValue)
-            {
-                return input.unit.defaultValues[input.key].As().Code(true, Unit, true, true, "", false);
+                writer.Write("this".ConstructHighlight());
+                writer.Write(".");
+                writer.Write(Unit.member.name.VariableHighlight());
             }
             else
             {
-                return MakeClickableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
+                base.GenerateValueInternal(output, data, writer);
             }
+        }
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            writer.WriteIndented("this".ConstructHighlight());
+            writer.Write(".");
+            writer.Write(Unit.member.name.VariableHighlight());
+            writer.Write(" = ");
+            GenerateValue(Unit.value, data, writer);
+            writer.Write(";");
+            writer.NewLine();
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

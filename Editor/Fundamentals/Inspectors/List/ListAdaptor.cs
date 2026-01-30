@@ -57,6 +57,17 @@ namespace Unity.VisualScripting.Community
             return total + 4f;
         }
 
+        protected override IList ConstructList()
+        {
+            if (metadata.listType == typeof(IList)) return new AotList();
+            else if (metadata.listType.IsGenericType && metadata.listType.GetGenericTypeDefinition() == typeof(IList<>))
+            {
+                var args = metadata.listType.GetGenericArguments();
+                return (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(args[0]));
+            }
+            return base.ConstructList();
+        }
+
 #if DARKER_UI
         // I have to do this setup to change the color of the add button
         // It's very hacky but seems to work better than tinting the background Texture.
@@ -113,7 +124,7 @@ namespace Unity.VisualScripting.Community
         public override void DrawItem(Rect position, int index)
         {
             if (!foldoutHoverStartTimes.Contains(index)) foldoutHoverStartTimes.Add(null);
-            
+
             position.x -= 20;
             position.width += 20;
             var element = metadata[index];
@@ -200,7 +211,8 @@ namespace Unity.VisualScripting.Community
                 normal = { background = CommunityStyles.RemoveItemTexture }
             }))
             {
-                Remove(index);
+                if (CanRemove(index))
+                    Remove(index);
                 return;
             }
 
@@ -246,7 +258,19 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        protected override bool CanAdd() => true;
+        protected override bool CanAdd()
+        {
+            if (metadata.HasAttribute<InspectorRangeAttribute>())
+                return metadata.Count < metadata.GetAttribute<InspectorRangeAttribute>().max;
+            return true;
+        }
+
+        public override bool CanRemove(int index)
+        {
+            if (metadata.HasAttribute<InspectorRangeAttribute>())
+                return metadata.Count > metadata.GetAttribute<InspectorRangeAttribute>().min;
+            return base.CanRemove(index);
+        }
 
         public override void Remove(int index)
         {

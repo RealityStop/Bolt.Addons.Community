@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community.CSharp
             var machine = (SMachine)asset;
             var generator = (GameObjectGenerator)GameObjectGenerator.GetSingleDecorator(machine.gameObject);
             generator.current = machine;
-            var code = generator.GenerateClean(0);
+            var code = generator.GenerateClean(new CodeWriter(), generator.GetGenerationData());
             return code;
         }
 

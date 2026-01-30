@@ -1,13 +1,9 @@
-using Unity;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
-using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
-using UnityEngine;
 using System;
-using Unity.VisualScripting.Community.CSharp;
+using System.Collections.Generic;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -16,92 +12,81 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public SetMemberGenerator(SetMember unit) : base(unit)
         {
-            NameSpaces = Unit.member.pseudoDeclaringType.Namespace;
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return Unit.member.pseudoDeclaringType.Namespace;
+        }
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input == Unit.assign)
             {
-                var output = string.Empty;
                 var memberName = Unit.member.name.VariableHighlight();
-                data.SetExpectedType(Unit.input.type);
-                var inputValue = GenerateValue(Unit.input, data);
-                data.RemoveExpectedType();
 
                 if (Unit.target != null)
                 {
-                    data.SetExpectedType(Unit.target.type);
-                    var targetValue = GenerateValue(Unit.target, data);
-                    var result = data.RemoveExpectedType();
-                    var code = !result.isMet ? Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true) : "";
+                    ExpectedTypeResult result;
+                    using (data.Expect(Unit.target.type, out result))
+                    {
+                        writer.WriteIndented();
+                        GenerateValue(Unit.target, data, writer);
+                    }
 
-                    output += CodeBuilder.Indent(indent) + targetValue + MakeClickableForThisUnit(code + $".{memberName} = ") + $"{inputValue}{MakeClickableForThisUnit(";")}\n";
+                    var code = !result.IsSatisfied ? Unit.target.GetComponent(SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, true, true) : "";
+
+                    writer.GetMember(code, memberName).Equal();
+                    using (data.Expect(Unit.input.type))
+                    {
+                        GenerateValue(Unit.input, data, writer);
+                    }
+                    writer.Write(";").NewLine();
                 }
                 else
                 {
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(Unit.member.pseudoDeclaringType.As().CSharpName(false, true) + $".{memberName} = ") + $"{inputValue}{MakeClickableForThisUnit(";")}\n";
+                    writer.GetMember(Unit.member.pseudoDeclaringType.As().CSharpName(false, true), memberName).Equal();
+                    using (data.Expect(Unit.input.type))
+                    {
+                        GenerateValue(Unit.input, data, writer);
+                    }
+                    writer.Write(";").NewLine();
                 }
-                output += GetNextUnit(Unit.assigned, data, indent);
-
-                return output;
+                GenerateExitControl(Unit.assigned, data, writer);
             }
-
-            return base.GenerateControl(input, data, indent);
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            data.SetExpectedType(Unit.target.type);
-            var targetValue = GenerateValue(Unit.target, data);
-            var result = data.RemoveExpectedType();
-            var code = !result.isMet ? Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, true, true) : "";
-
-            return builder.Ignore(targetValue).Clickable(code).GetMember(Unit.member.name);
+            ExpectedTypeResult result;
+            using (data.Expect(Unit.target.type, out result))
+            {
+                GenerateValue(Unit.target, data, writer);
+            }
+            var code = !result.IsSatisfied ? Unit.target.GetComponent(SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, true, true) : "";
+            writer.Write(code).GetMember(Unit.member.name);
         }
 
-        private Type SourceType(ValueInput valueInput, ControlGenerationData data)
+        private Type SourceType(ValueInput valueInput, ControlGenerationData data, CodeWriter writer)
         {
-            return GetSourceType(valueInput, data) ?? valueInput.connection?.source?.type ?? valueInput.type;
+            return GetSourceType(valueInput, data, writer) ?? valueInput.connection?.source?.type ?? valueInput.type;
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input != Unit.target)
             {
-                if (input.hasValidConnection)
-                {
-                    var connectedCode = GetNextValueUnit(input, data);
-                    return connectedCode;
-                }
-                else if (input.hasDefaultValue)
-                {
-                    return Unit.defaultValues[input.key].As().Code(true, Unit, true, true, "", false, true);
-                }
-                else
-                {
-                    return MakeClickableForThisUnit($"/* {input.key} requires input */".WarningHighlight());
-                }
+                base.GenerateValueInternal(input, data, writer);
             }
             else
             {
                 if (input.hasValidConnection)
                 {
-                    var connectedCode = GetNextValueUnit(input, data);
-                    var shouldCast = ShouldCast(input, data, false);
-                    return connectedCode.CastAs(input.type, Unit, shouldCast);
+                    GenerateConnectedValueCasted(input, data, writer, input.type, () => ShouldCast(input, data, writer), true);
                 }
                 else
                 {
-                    if (Unit.target.nullMeansSelf)
-                    {
-                        return MakeClickableForThisUnit("gameObject".VariableHighlight());
-                    }
-                    else
-                    {
-                        return Unit.defaultValues[input.key].As().Code(true, Unit, true, true, "", false, true);
-                    }
+                    base.GenerateValueInternal(input, data, writer);
                 }
             }
         }

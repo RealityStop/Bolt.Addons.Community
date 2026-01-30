@@ -1,8 +1,4 @@
-
-using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -11,35 +7,62 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public ChanceFlowGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = "";
             if (Unit.trueOutput.hasValidConnection)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ControlHighlight() + " (" + "CSharpUtility".TypeHighlight() + $".Chance(") + GenerateValue(Unit.value, data) + MakeClickableForThisUnit("))");
-                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                data.NewScope();
-                output += GetNextUnit(Unit.trueOutput, data, indent + 1);
-                data.ExitScope();
-                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("else".ControlHighlight());
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                data.NewScope();
-                output += GetNextUnit(Unit.falseOutput, data, indent + 1);
-                data.ExitScope();
-                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-            }
-            else if (!Unit.trueOutput.hasValidConnection && Unit.falseOutput.hasValidConnection)
-            {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ControlHighlight() + " (!" + "CSharpUtility".TypeHighlight() + $".Chance(") + GenerateValue(Unit.value, data) + MakeClickableForThisUnit("))");
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{");
-                data.NewScope();
-                output += GetNextUnit(Unit.falseOutput, data, indent + 1);
-                data.ExitScope();
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
-            }
+                writer.WriteIndented("if ".ControlHighlight());
+                writer.Parentheses(w =>
+                {
+                    w.InvokeMember(
+                        typeof(CSharpUtility),
+                        "Chance",
+                        w.Action(() => GenerateValue(Unit.value, data, w)));
+                }).NewLine();
 
-            return output;
+                writer.WriteLine("{");
+
+                using (writer.IndentedScope(data))
+                {
+                    GenerateChildControl(Unit.trueOutput, data, writer);
+                }
+
+                writer.WriteLine("}");
+
+                if (!Unit.falseOutput.hasValidConnection)
+                    return;
+
+                writer.WriteLine("else".ControlHighlight());
+                writer.WriteLine("{");
+
+                using (writer.IndentedScope(data))
+                {
+                    GenerateChildControl(Unit.falseOutput, data, writer);
+                }
+
+                writer.WriteLine("}");
+            }
+            else if (Unit.falseOutput.hasValidConnection)
+            {
+                writer.WriteIndented("if ".ControlHighlight());
+                writer.Parentheses(w =>
+                {
+                    w.Write("!");
+                    w.InvokeMember(
+                        typeof(CSharpUtility),
+                        "Chance",
+                        w.Action(() => GenerateValue(Unit.value, data, w)));
+                }).NewLine();
+
+                writer.WriteLine("{");
+
+                using (writer.IndentedScope(data))
+                {
+                    GenerateChildControl(Unit.falseOutput, data, writer);
+                }
+
+                writer.WriteLine("}");
+            }
         }
     }
 }

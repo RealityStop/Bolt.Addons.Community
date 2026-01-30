@@ -1,7 +1,4 @@
-﻿using Unity.VisualScripting.Community.Libraries.CSharp;
-using Unity.VisualScripting;
-
-namespace Unity.VisualScripting.Community.CSharp
+﻿namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Break))]
     public sealed class BreakGenerator : NodeGenerator<Break>
@@ -10,15 +7,14 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
             data.SetHasBroke(true);
+
             if (input == Unit.enter)
             {
-                return CodeBuilder.Indent(indent) + MakeClickableForThisUnit("break".ControlHighlight() + ";") + "\n";
+                writer.Break(WriteOptions.Indented);
             }
-
-            return base.GenerateControl(input, data, indent);
         }
     }
 }

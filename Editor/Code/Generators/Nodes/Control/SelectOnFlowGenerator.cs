@@ -31,19 +31,14 @@ namespace Unity.VisualScripting.Community.CSharp
         public override Type ReturnType => typeof(void);
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(0, "value") };
-
-        public override string MethodBody => GetNextUnit(OutputPort, Data, 0);
-
         public override int GenericCount => 1;
 
         public override ControlOutput OutputPort => Unit.exit;
 
-        public override List<ValueOutput> OutputValues => new List<ValueOutput>() {Unit.selection};
+        public override List<ValueOutput> OutputValues => new List<ValueOutput>() { Unit.selection };
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-            Data = data;
             if (Unit.graph.groups.Any(_group => _group.position.Contains(Unit.position)))
             {
                 _name = Unit.graph.groups.First(_group => _group.position.Contains(Unit.position)).label;
@@ -52,13 +47,20 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 _name = "";
             }
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(Name + "(") + GenerateValue(Unit.branches[input], data) + MakeClickableForThisUnit(");") + "\n";
-            return output;
+            writer.WriteIndented();
+            writer.Write(Name + "(");
+            GenerateValue(Unit.branches[input], data, writer);
+            writer.Write(");");
+            writer.NewLine();
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("value".VariableHighlight());
+            writer.GetVariable("value");
+        }
+        public override void GeneratedMethodCode(ControlGenerationData data, CodeWriter writer)
+        {
+            GenerateChildControl(Unit.exit, data, writer);
         }
     }
 }

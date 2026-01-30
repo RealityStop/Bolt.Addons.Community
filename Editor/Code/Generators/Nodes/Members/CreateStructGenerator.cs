@@ -8,29 +8,29 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(CreateStruct))]
-    public class CreateStructGenerator : NodeGenerator<CreateStruct>
+    public class CreateStructGenerator : LocalVariableGenerator
     {
+        private CreateStruct Unit => unit as CreateStruct;
         public CreateStructGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("new ".ConstructHighlight() + Unit.type.As().CSharpName(false, true) + "()");
+            if (!data.scopeGeneratorData.ContainsKey(Unit))
+                writer.New(Unit.type);
+            else
+                writer.GetVariable(variableName);
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (!Unit.output.hasValidConnection)
-            {
-                return MakeClickableForThisUnit("new ".ConstructHighlight() + Unit.type.As().CSharpName(false, true) + "();") + "\n";
-            }
-            else return "";
-        }
+            variableName = data.AddLocalNameInScope(Unit.type.As().CSharpName(false, false, false) + "_Variable", Unit.type);
+            variableType = Unit.type;
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
-        {
-            data.SetExpectedType(input.type);
-            var code = base.GenerateValue(input, data);
-            data.RemoveExpectedType();
-            return code;
+            if (!data.scopeGeneratorData.ContainsKey(Unit))
+                data.scopeGeneratorData.Add(Unit, variableName);
+
+            writer.CreateVariable(Unit.type, variableName, writer.Action(() => writer.New(Unit.type)), WriteOptions.Indented, EndWriteOptions.LineEnd);
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

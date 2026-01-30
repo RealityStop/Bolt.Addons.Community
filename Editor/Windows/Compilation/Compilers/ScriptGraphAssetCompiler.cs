@@ -18,7 +18,8 @@ namespace Unity.VisualScripting.Community.CSharp
         protected override string GenerateCode(UnityEngine.Object asset)
         {
             var graphAsset = (ScriptGraphAsset)asset;
-            var code = CodeUtility.CleanCode(ScriptGraphAssetGenerator.GetSingleDecorator(graphAsset).Generate(0).RemoveHighlights().RemoveMarkdown());
+            var generator = ScriptGraphAssetGenerator.GetSingleDecorator(graphAsset);
+            var code = generator.GenerateClean(new CodeWriter(), generator.GetGenerationData());
             return code;
         }
 

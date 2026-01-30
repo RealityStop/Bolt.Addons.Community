@@ -7,6 +7,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.ReorderableList;
 using Unity.VisualScripting.ReorderableList.Internal;
 using UnityEngine.SceneManagement;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -768,6 +769,7 @@ namespace Unity.VisualScripting.Community
                         }
                     }
                     variableDeclarations.EditorRename(declaration, newName);
+                    (parentInspector.metadata.value as VariableDeclarations).Set(newName, declaration.value);
                     nameMetadata.value = newName;
 
                     switch (parentInspector.kind)

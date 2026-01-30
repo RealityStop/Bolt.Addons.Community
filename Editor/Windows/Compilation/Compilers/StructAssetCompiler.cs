@@ -16,7 +16,8 @@ namespace Unity.VisualScripting.Community.CSharp
         protected override string GenerateCode(UnityEngine.Object asset)
         {
             var structAsset = (StructAsset)asset;
-            return StructAssetGenerator.GetSingleDecorator(structAsset).GenerateClean(0);
+            var generator = StructAssetGenerator.GetSingleDecorator(structAsset);
+            return generator.GenerateClean(new CodeWriter(), generator.GetGenerationData());
         }
 
         protected override string GetRelativeFilePath(UnityEngine.Object asset, PathConfig paths)

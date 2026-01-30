@@ -1,15 +1,14 @@
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using UnityEngine;
-
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(GetMachinesNode))]
     public class GetMachineNodesGenerator : NodeGenerator<GetMachinesNode>
     {
         public GetMachineNodesGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("GetScriptMachines"), GenerateValue(Unit.target, data), GenerateValue(Unit.asset, data));
+            writer.CallCSharpUtilityMethod("GetScriptMachines", 
+            writer.Action(() => GenerateValue(Unit.target, data, writer)), 
+            writer.Action(() => GenerateValue(Unit.asset, data, writer)));
         }
     }
 }

@@ -95,28 +95,27 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 var inheritedType = classAsset.inherits.type;
 
-                if (inheritedType == null)
+                if (inheritedType != null)
                 {
-                    requires = false;
-                }
-                if (inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Any(m => m.IsValidOverridableMethod(true) && !MethodExists(m)))
-                {
-                    requires = true;
-                }
-                if (inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Any(p => p.IsValidOverridableProperty(true) && !PropertyExists(p)))
-                {
-                    requires = true;
-                }
-                if (!inheritedType.IsAbstract && inheritedType.IsClass)
-                {
-                    if (inheritedType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-                        .Any(constructor => constructor.GetParameters().Length > 0 && !ConstructorExists(constructor)))
+                    if (inheritedType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Any(m => m.IsValidOverridableMethod(true) && !MethodExists(m)))
                     {
                         requires = true;
                     }
+                    if (inheritedType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Any(p => p.IsValidOverridableProperty(true) && !PropertyExists(p)))
+                    {
+                        requires = true;
+                    }
+                    if (!inheritedType.IsAbstract && inheritedType.IsClass)
+                    {
+                        if (inheritedType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                            .Any(constructor => constructor.GetParameters().Length > 0 && !ConstructorExists(constructor)))
+                        {
+                            requires = true;
+                        }
+                    }
+                    if (!classAsset.inherits.type.IsClass)
+                        allTypes.Add(classAsset.inherits); // Interface requirements should already be met by the inherited class
                 }
-                if (!classAsset.inherits.type.IsClass)
-                    allTypes.Add(classAsset.inherits); // Interface requirements should already be met by the inherited class
             }
 
             foreach (var @interface in allTypes.Select(i => i.type).SelectMany(RuntimeTypeUtility.GetAllInterfacesRecursive))

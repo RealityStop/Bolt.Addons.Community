@@ -17,26 +17,27 @@ namespace Unity.VisualScripting.Community.CSharp
         protected AwakeMethodNodeGenerator(Unit unit) : base(unit)
         {
         }
-        /// <summary>
-        /// Not used for AwakeMethodNodeGenerator
-        /// </summary>
-        public sealed override string MethodBody => null;
-
+        
         public override MethodModifier MethodModifier => MethodModifier.None;
         public override AccessModifier AccessModifier => AccessModifier.Private;
         public override string Name => unit.GetType().DisplayName().Replace(" ", "") + count;
         public override Type ReturnType => unit is IEventUnit @event ? @event.coroutine ? typeof(IEnumerator) : typeof(void) : typeof(void);
-        public abstract string GenerateAwakeCode(ControlGenerationData data, int indent);
-        public override sealed string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        public abstract void GenerateAwakeCode(ControlGenerationData data, CodeWriter writer);
+        protected override sealed void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
+            {
+                writer.WriteErrorDiagnostic($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", WriteOptions.IndentedNewLineAfter);
+                return;
+            }
+
             foreach (var param in Parameters)
             {
                 data.AddLocalNameInScope(param.name, param.type);
             }
-            return GenerateCode(input, data, indent);
+            GenerateCode(input, data, writer);
         }
 
-        protected abstract string GenerateCode(ControlInput input, ControlGenerationData data, int indent);
+        protected abstract void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer);
     }
 }

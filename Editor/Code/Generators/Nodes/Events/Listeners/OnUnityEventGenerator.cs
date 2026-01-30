@@ -32,22 +32,23 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public OnUnityEventGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(output.key.VariableHighlight());
+            writer.GetVariable(output.key);
         }
 
-        public override string GenerateAwakeCode(ControlGenerationData data, int indent)
+        public override void GenerateAwakeCode(ControlGenerationData data, CodeWriter writer)
         {
-            string output = CodeBuilder.Indent(indent) + GenerateValue(Unit.UnityEvent, data);
+            writer.WriteIndented();
+            GenerateValue(Unit.UnityEvent, data, writer);
             string parameters = string.Join(", ", Unit.valueOutputs.Select(v => v.key.VariableHighlight()));
-            output += MakeClickableForThisUnit(".AddListener((" + parameters + ") => " + (Unit.coroutine ? $"StartCoroutine({Name}({parameters}))" : Name + $"({parameters})") + ");") + "\n";
-            return output;
+            writer.Write(".AddListener((" + parameters + ") => " + (Unit.coroutine ? $"StartCoroutine({Name}({parameters}))" : Name + $"({parameters})") + ");");
+            writer.NewLine();
         }
 
-        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
     }
 }

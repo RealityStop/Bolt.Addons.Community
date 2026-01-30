@@ -21,12 +21,12 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public abstract ControlGenerationData CreateGenerationData();
         
-        public abstract string Generate(int indent);
+        public abstract void Generate(CodeWriter writer, ControlGenerationData data);
 
-        public string GenerateClean(int indent)
+        public string GenerateClean(CodeWriter writer, ControlGenerationData data)
         {
-            var generatedCode = CodeUtility.CleanCode(Generate(indent).RemoveHighlights().RemoveMarkdown());
-            return generatedCode;
+            Generate(writer, data);
+            return writer.ToString();
         }
 
     }

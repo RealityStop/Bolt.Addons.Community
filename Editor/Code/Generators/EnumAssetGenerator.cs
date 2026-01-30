@@ -17,13 +17,12 @@ namespace Unity.VisualScripting.Community.CSharp
             return new ControlGenerationData(typeof(Enum), null);
         }
 
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
             if (Data != null)
             {
-                var output = string.Empty;
                 NamespaceGenerator @namespace = null;
-                if (string.IsNullOrEmpty(Data.title)) return output;
+                if (string.IsNullOrEmpty(Data.title)) return;
 
                 if (!string.IsNullOrEmpty(Data.category))
                 {
@@ -62,13 +61,13 @@ namespace Unity.VisualScripting.Community.CSharp
                 if (@namespace != null)
                 {
                     @namespace.AddEnum(@enum);
-                    return @namespace.Generate(indent);
+                    @namespace.Generate(writer, data);
+                    return;
                 }
 
-                return @enum.Generate(indent);
+                @enum.Generate(writer, data);
+                return;
             }
-
-            return string.Empty;
         }
     }
 }

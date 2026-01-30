@@ -1,5 +1,6 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -10,28 +11,52 @@ namespace Unity.VisualScripting.Community.CSharp
         public GraphInputGenerator(GraphInput unit) : base(unit)
         {
         }
-    
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        internal List<ValueInput> connectedValueInputs = new List<ValueInput>();
+        public SubgraphUnit parent;
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            var matching = unit.controlOutputs.FirstOrDefault(o => o.key.Equals(input.key, StringComparison.OrdinalIgnoreCase));
+
+            if (matching != null)
+                GenerateExitControl(matching, data, writer);
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             var _output = string.Empty;
             var ValueInput = connectedValueInputs.FirstOrDefault(valueInput => valueInput.key == output.key);
-    
+
             if (ValueInput != null)
             {
-                _output += GenerateValue(ValueInput, data);
+                GenerateValue(ValueInput, data, writer);
             }
             else
             {
                 var defaultValue = output.type.PseudoDefault();
                 if (defaultValue == null)
-                    _output += MakeClickableForThisUnit($"/* Missing Value Input: {output.key} */".WarningHighlight());
+                {
+                    writer.Error($"Missing Value Input: {output.key}");
+                }
                 else
                 {
-                    _output += defaultValue.As().Code(true, unit, true, true, "", false, true);
+                    writer.Write(defaultValue.As().Code(true, true, true, "", false, true));
                 }
             }
-    
-            return _output;
         }
-    } 
+
+        public void AddConnectedValueInput(ValueInput input)
+        {
+            if (!connectedValueInputs.Contains(input))
+            {
+                connectedValueInputs.Add(input);
+            }
+        }
+
+        public void ClearConnectedValueInputs()
+        {
+            connectedValueInputs.Clear();
+        }
+    }
 }

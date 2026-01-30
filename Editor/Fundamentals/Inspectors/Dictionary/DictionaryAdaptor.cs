@@ -5,6 +5,7 @@ using UnityEngine;
 using Unity.VisualScripting.ReorderableList;
 using System;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Collections;
 
 namespace Unity.VisualScripting.Community
 {
@@ -103,6 +104,17 @@ namespace Unity.VisualScripting.Community
             // Some Metadata types use this, so we insure that its not null.
             metadataLabelProperty.SetValue(newKeyMetadata, GUIContent.none);
             metadataLabelProperty.SetValue(newValueMetadata, GUIContent.none);
+        }
+
+        protected override IDictionary ConstructDictionary()
+        {
+            if (metadata.dictionaryType == typeof(IDictionary)) return new AotDictionary();
+            else if (metadata.dictionaryType.IsGenericType && metadata.dictionaryType.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+            {
+                var args = metadata.dictionaryType.GetGenericArguments();
+                return (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(args[0], args[1]));
+            }
+            return base.ConstructDictionary();
         }
 
         protected override object ConstructKey()

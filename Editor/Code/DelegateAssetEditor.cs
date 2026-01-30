@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Linq;
+using System.Reflection;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -20,13 +21,52 @@ namespace Unity.VisualScripting.Community.CSharp
         protected override bool showTitle => false;
         protected override bool showCategory => false;
 
+        static Type[] cachedDelegateTypes;
+
         protected override void OnEnable()
         {
             base.OnEnable();
 
-            delegateTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes().Where(type => typeof(Delegate).IsAssignableFrom(type))).ToArray();
+            if (cachedDelegateTypes == null)
+                cachedDelegateTypes = BuildDelegateTypeCache();
 
-            type ??= Metadata.FromProperty(serializedObject.FindProperty("type"))["type"];
+            delegateTypes = cachedDelegateTypes;
+
+            if (type == null)
+                type = Metadata.FromProperty(serializedObject.FindProperty("type"))["type"];
+        }
+
+        static Type[] BuildDelegateTypeCache()
+        {
+            List<Type> list = new List<Type>();
+
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            for (int a = 0; a < assemblies.Length; a++)
+            {
+                Type[] types;
+
+                try
+                {
+                    types = assemblies[a].GetTypes();
+                }
+                catch (ReflectionTypeLoadException e)
+                {
+                    types = e.Types;
+                }
+
+                for (int t = 0; t < types.Length; t++)
+                {
+                    Type type = types[t];
+                    if (type == null)
+                        continue;
+
+                    if (typeof(Delegate).IsAssignableFrom(type))
+                        list.Add(type);
+                }
+            }
+
+            return list.ToArray();
         }
 
         protected override void AfterCategoryGUI()

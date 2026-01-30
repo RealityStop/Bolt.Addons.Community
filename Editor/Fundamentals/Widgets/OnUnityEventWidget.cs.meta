@@ -9,10 +9,3 @@ MonoImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 175821
-  packageName: Bolt Unity Events
-  packageVersion: 1.0
-  assetPath: Assets/Plugins/Bolt Unity Events/Editor/OnUnityEventWidget.cs
-  uploadId: 382012

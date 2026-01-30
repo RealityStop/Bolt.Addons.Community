@@ -14,9 +14,17 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return CodeBuilder.Indent(indent) + MakeClickableForThisUnit("throw ".ControlHighlight()) + (Unit.custom ? GenerateValue(Unit.exception, data) : GenerateValue(Unit.message, data)) + MakeClickableForThisUnit(";") + "\n";
+            writer.WriteIndented();
+            writer.Write("throw".ControlHighlight());
+            writer.Space();
+            if (Unit.custom)
+                GenerateValue(Unit.exception, data, writer);
+            else
+                GenerateValue(Unit.message, data, writer);
+            writer.Write(";");
+            writer.NewLine();
         }
     }
 }

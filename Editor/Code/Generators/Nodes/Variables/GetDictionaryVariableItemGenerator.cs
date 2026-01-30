@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
@@ -15,69 +16,66 @@ namespace Unity.VisualScripting.Community.CSharp
         private GetDictionaryVariableItem Unit => unit as GetDictionaryVariableItem;
         public GetDictionaryVariableItemGenerator(Unit unit) : base(unit)
         {
-            SetNamespaceBasedOnVariableKind();
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            SetNamespaceBasedOnVariableKind();
-
             if (Unit.name.hasValidConnection || Unit.kind == VariableKind.Object)
             {
                 if (Unit.kind == VariableKind.Object && !Unit.name.hasValidConnection)
                 {
-                    return GenerateDisconnectedVariableCode(data);
+                    GenerateDisconnectedVariableCodeInternal(data, writer);
                 }
-                return GenerateConnectedVariableCode(data);
+                else
+                {
+                    GenerateConnectedVariableCodeInternal(data, writer);
+                }
             }
             else
             {
-                return GenerateDisconnectedVariableCode(data);
+                GenerateDisconnectedVariableCodeInternal(data, writer);
             }
         }
-
-        private string GetSceneKind(ControlGenerationData data, string variables)
-        {
-            return typeof(Component).IsAssignableFrom(data.ScriptType) ? variables + ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")" : variables + "." + "ActiveScene".VariableHighlight();
-        }
-
-        private void SetNamespaceBasedOnVariableKind()
-        {
-            NameSpaces = Unit.kind == VariableKind.Scene ? "UnityEngine.SceneManagement" : string.Empty;
-        }
-
-        private string GenerateConnectedVariableCode(ControlGenerationData data)
+        private static string variablesTypeString = typeof(Unity.VisualScripting.Variables).As().CSharpName(true, true);
+        private void GenerateConnectedVariableCodeInternal(ControlGenerationData data, CodeWriter writer)
         {
             variableName = data.TryGetGraphPointer(out var graphPointer) && CanPredictConnection(Unit.name, data) ? Flow.Predict<string>(Unit.name, graphPointer.AsReference()) : "";
             variableType = GetVariableType(variableName, data, true);
-            if (data.GetExpectedType().IsAssignableFrom(variableType))
-                data.SetCurrentExpectedTypeMet(true, variableType);
-            else
-                data.SetCurrentExpectedTypeMet(false, variableType);
-            var kind = GetKind(data);
+            if (data.GetExpectedType()?.IsAssignableFrom(variableType) ?? false)
+                data.MarkExpectedTypeMet(variableType);
 
             data.CreateSymbol(Unit, variableType ?? typeof(object));
-            var builder = Unit.CreateClickableString();
-            return builder.CallCSharpUtilityExtensitionMethod(kind, MakeClickableForThisUnit("GetDictionaryVariable"), GenerateValue(Unit.name, data)).Brackets(inner => inner.Ignore(GenerateValue(Unit.key, data)), false);
+
+            WriteKind(writer, data);
+            writer.Write(".GetDictionaryVariable");
+            writer.Parentheses(inside => GenerateValue(Unit.name, data, inside));
+            writer.Brackets(inside => GenerateValue(Unit.key, data, inside));
         }
 
-        private string GetKind(ControlGenerationData data)
+        private void WriteKind(CodeWriter writer, ControlGenerationData data)
         {
-            var variables = typeof(VisualScripting.Variables).As().CSharpName(true, true);
-            return Unit.kind switch
+            switch (Unit.kind)
             {
-                VariableKind.Object => MakeClickableForThisUnit(variables + $".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeClickableForThisUnit($")")}",
-                VariableKind.Scene => MakeClickableForThisUnit(GetSceneKind(data, variables)),
-                VariableKind.Application => MakeClickableForThisUnit(variables + "." + "Application".VariableHighlight()),
-                VariableKind.Saved => MakeClickableForThisUnit(variables + "." + "Saved".VariableHighlight()),
-                _ => string.Empty,
-            };
+                case VariableKind.Object:
+                    writer.Write(variablesTypeString + ".Object").Parentheses(w => GenerateValue(Unit.@object, data, w));
+                    break;
+                case VariableKind.Scene:
+                    writer.Write(GetSceneKind(data, variablesTypeString));
+                    break;
+                case VariableKind.Application:
+                    writer.Write(variablesTypeString + "." + "Application".VariableHighlight());
+                    break;
+                case VariableKind.Saved:
+                    writer.Write(variablesTypeString + "." + "Saved".VariableHighlight());
+                    break;
+            }
         }
 
-        private string GenerateDisconnectedVariableCode(ControlGenerationData data)
+        private void GenerateDisconnectedVariableCodeInternal(ControlGenerationData data, CodeWriter writer)
         {
             var name = (Unit.defaultValues[Unit.name.key] as string).LegalMemberName();
             variableType = GetVariableType(name, data, true);
+
             if (Unit.kind == VariableKind.Object || Unit.kind == VariableKind.Scene || Unit.kind == VariableKind.Application || Unit.kind == VariableKind.Saved)
             {
                 var expectedType = data.GetExpectedType();
@@ -94,7 +92,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             expectedType.IsAssignableFrom(Type.GetType(declaration.typeHandle.Identification))) ||
                         (data.TryGetVariableType(data.GetVariableName(name), out targetType) &&
                             expectedType.IsAssignableFrom(targetType))
-    );
+                    );
 #else
                 var isExpectedType =
                     hasExpectedType &&
@@ -106,12 +104,25 @@ namespace Unity.VisualScripting.Community.CSharp
                             expectedType.IsAssignableFrom(targetType))
                     );
 #endif
-                data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
+                if (isExpectedType)
+                    data.MarkExpectedTypeMet(variableType);
 
-                if (!IsVariableDefined(data, name)) return Unit.specifyFallback ? GenerateValue(Unit.fallback, data) : MakeClickableForThisUnit($"/* Could not find variable with name \"{variableName}\" */".WarningHighlight());
+                if (!IsVariableDefined(data, name))
+                {
+                    if (Unit.specifyFallback)
+                        GenerateValue(Unit.fallback, data, writer);
+                    else
+                    {
+                        using (writer.CodeDiagnosticScope($"Could not find variable with name \"{name}\"", CodeDiagnosticKind.Warning))
+                            writer.Error($"Variable not found");
+                    }
+                    return;
+                }
 
-                var builder = Unit.CreateClickableString();
-                return builder.CallCSharpUtilityExtensitionMethod(GetKind(data), MakeClickableForThisUnit("GetDictionaryVariable"), GenerateValue(Unit.name, data)).Brackets(inner => inner.Ignore(GenerateValue(Unit.key, data)), false);
+                WriteKind(writer, data);
+                writer.Write(".GetDictionaryVariable");
+                writer.Parentheses(inside => inside.Write(name.As().Code(false)));
+                writer.Brackets(inside => GenerateValue(Unit.key, data, inside));
             }
             else
             {
@@ -139,13 +150,35 @@ namespace Unity.VisualScripting.Community.CSharp
                     || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out targetType) &&
                         expectedType.IsAssignableFrom(targetType));
 #endif
-                data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
+                if (isExpectedType)
+                    data.MarkExpectedTypeMet(variableType);
 
-                if (!data.ContainsNameInAnyScope(variableName)) return Unit.specifyFallback ? GenerateValue(Unit.fallback, data) : MakeClickableForThisUnit($"/* Could not find variable with name \"{variableName}\" */".WarningHighlight());
+                if (!data.ContainsNameInAnyScope(variableName))
+                {
+                    if (Unit.specifyFallback)
+                        GenerateValue(Unit.fallback, data, writer);
+                    else
+                    {
+                        using (writer.CodeDiagnosticScope($"Could not find variable with name \"{name}\"", CodeDiagnosticKind.Warning))
+                            writer.Error($"Variable not found");
+                    }
+                    return;
+                }
 
-                var builder = Unit.CreateClickableString();
-                return builder.Clickable(variableName.VariableHighlight()).Brackets(inner => inner.Ignore(GenerateValue(Unit.key, data)), false);
+                writer.Write(variableName.VariableHighlight());
+                writer.Brackets(inside => GenerateValue(Unit.key, data, inside));
             }
+        }
+
+        private string GetSceneKind(ControlGenerationData data, string variables)
+        {
+            return typeof(Component).IsAssignableFrom(data.ScriptType) ? variables + ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")" : variables + "." + "ActiveScene".VariableHighlight();
+        }
+
+        public override IEnumerable<string> GetNamespaces()
+        {
+            if (Unit.kind == VariableKind.Scene)
+                yield return "UnityEngine.SceneManagement";
         }
 
         private Type GetVariableType(string name, ControlGenerationData data, bool checkDecleration)
@@ -157,8 +190,8 @@ namespace Unity.VisualScripting.Community.CSharp
                 {
                     var declaration = GetVariableDeclaration(data, name);
 #if VISUAL_SCRIPTING_1_7
-                    return declaration?.typeHandle.Identification != null 
-                        ? Type.GetType(declaration.typeHandle.Identification) 
+                    return declaration?.typeHandle.Identification != null
+                        ? Type.GetType(declaration.typeHandle.Identification)
                         : null;
 #else
                     return declaration?.value != null
@@ -230,22 +263,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 }
                 return null;
             }
-        }
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
-        {
-            if (input == Unit.@object && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
-            {
-                return MakeClickableForThisUnit("gameObject".VariableHighlight());
-            }
-
-            if (input == Unit.@object)
-            {
-                data.SetExpectedType(typeof(GameObject));
-                var code = base.GenerateValue(input, data);
-                data.RemoveExpectedType();
-                return code;
-            }
-            return base.GenerateValue(input, data);
         }
     }
 }

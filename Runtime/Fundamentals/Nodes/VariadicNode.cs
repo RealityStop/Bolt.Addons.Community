@@ -13,6 +13,11 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize]
         public List<ValueInput> arguments { get; protected set; }
 
+        /// <summary>
+        /// Enables customization of default behavior, including allowing default types
+        /// that are normally not supported.
+        /// </summary>
+        protected virtual bool customDefaults => false;
 
         [DoNotSerialize]
         [Inspectable, UnitHeaderInspectable("Arguments")]
@@ -42,7 +47,22 @@ namespace Unity.VisualScripting.Community
             for (var i = 0; i < Math.Min(argumentCount, ArgumentLimit()); i++)
             {
                 var argument = ValueInput<T1>(GetArgumentName(i));
-                argument.SetDefaultValue(GetDefaultValue(typeof(T1)));
+                if (!customDefaults)
+                {
+                    argument.SetDefaultValue(GetDefaultValue(typeof(T1)));
+                }
+                else
+                {
+                    var value = GetPortDefaultValue(typeof(T1), argument);
+                    if (defaultValues.ContainsKey(argument.key))
+                    {
+                        defaultValues[argument.key] = value;
+                    }
+                    else
+                    {
+                        defaultValues.Add(argument.key, value);
+                    }
+                }
                 arguments.Add(argument);
                 BuildRelations(argument);
             }
@@ -56,6 +76,15 @@ namespace Unity.VisualScripting.Community
             if (t == typeof(string))
                 return "";
 
+            return null;
+        }
+
+        /// <summary>
+        /// Allows you to manually return the default value for the input.
+        /// Requires <see cref="customDefaults"/> to be true.
+        /// </summary>
+        protected virtual object GetPortDefaultValue(Type t, ValueInput input)
+        {
             return null;
         }
 

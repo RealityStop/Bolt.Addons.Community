@@ -12,11 +12,14 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-
-            return MakeClickableForThisUnit("null".ConstructHighlight());
+            var expected = data.GetExpectedType();
+            if (expected != null && expected.IsReferenceType())
+            {
+                data.MarkExpectedTypeMet(typeof(Null));
+            }
+            writer.Null();
         }
     }
-
 }

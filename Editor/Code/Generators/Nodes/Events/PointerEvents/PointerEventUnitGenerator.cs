@@ -30,15 +30,21 @@ namespace Unity.VisualScripting.Community.CSharp
         };
 
         public PointerEventUnitGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("eventData".VariableHighlight());
+            writer.GetVariable("eventData");
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"{Name} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {Name}", ""));
-            return GetNextUnit(Unit.trigger, data, indent);
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
+            {
+                writer.WriteErrorDiagnostic($"{Name} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {Name}", WriteOptions.IndentedNewLineAfter);
+                return;
+            }
+
+            GenerateChildControl(Unit.trigger, data, writer);
         }
     }
 }

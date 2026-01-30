@@ -10,14 +10,20 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             var parameter = Unit.Method.genericParameters.FirstOrDefault(g => g == Unit.genericParameter);
+            writer.Write("typeof".ConstructHighlight());
+            writer.Write("(");
             if(parameter != null)
             {
-                MakeClickableForThisUnit("typeof".ConstructHighlight() + "(" + parameter.name.TypeHighlight() + ")");
+                writer.Write(parameter.name.TypeHighlight());
             }
-            return MakeClickableForThisUnit("typeof".ConstructHighlight() + "(" + Unit.genericParameter.name.TypeHighlight() + ")");
+            else
+            {
+                writer.Write(Unit.genericParameter.name.TypeHighlight());
+            }
+            writer.Write(")");
         }
     } 
 }

@@ -10,14 +10,11 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public ClearSavedVarsGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(output, data);
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return CodeBuilder.Indent(indent) + CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("ClearSavedVariables")) + MakeClickableForThisUnit(";") + "\n" + GetNextUnit(Unit.Out, data, indent);
+            writer.WriteIndented();
+            writer.CallCSharpUtilityMethod("ClearSavedVariables");
+            writer.WriteEnd(EndWriteOptions.LineEnd);
         }
     }
 }

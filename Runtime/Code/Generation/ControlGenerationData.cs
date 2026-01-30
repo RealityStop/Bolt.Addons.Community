@@ -8,15 +8,16 @@ namespace Unity.VisualScripting.Community.CSharp
 {
     public sealed class ControlGenerationData
     {
+        public readonly SymbolTable Symbols = new SymbolTable();
+        public readonly ExpectedTypeContext ExpectedTypes = new ExpectedTypeContext();
         private readonly Stack<GeneratorScope> scopes = new Stack<GeneratorScope>();
         private readonly Stack<GeneratorScope> preservedScopes = new Stack<GeneratorScope>();
-        private readonly Stack<(Type type, bool isMet)> expectedTypes = new Stack<(Type type, bool isMet)>();
+
         /// <summary>
         /// Store any extra info
         /// </summary>
         public Dictionary<object, object> scopeGeneratorData { get => PeekScope().generatorData; }
         public Dictionary<object, object> globalGeneratorData = new Dictionary<object, object>();
-        private readonly Dictionary<Unit, UnitSymbol> unitSymbols = new Dictionary<Unit, UnitSymbol>();
 
         public bool isDisposed { get; private set; } = false;
 
@@ -27,9 +28,9 @@ namespace Unity.VisualScripting.Community.CSharp
                 isDisposed = true;
                 scopes.Clear();
                 preservedScopes.Clear();
-                expectedTypes.Clear();
+                ExpectedTypes.Clear();
                 globalGeneratorData.Clear();
-                unitSymbols.Clear();
+                Symbols.Clear();
             }
         }
 
@@ -37,71 +38,32 @@ namespace Unity.VisualScripting.Community.CSharp
         public GameObject gameObject { get; set; }
         public Type ScriptType { get; private set; } = typeof(object);
         #region Expected Types
+
         public Type GetExpectedType()
         {
-            if (expectedTypes.Count > 0)
-            {
-                return expectedTypes.Peek().type;
-            }
-            else return null;
+            return ExpectedTypes.Current;
         }
 
         public bool IsCurrentExpectedTypeMet()
         {
-            if (expectedTypes.Count > 0)
-            {
-                return expectedTypes.Peek().isMet;
-            }
-            else return false;
+            return ExpectedTypes.IsSatisfied;
         }
 
-        public bool IsCurrentExpectedTypeMet(out Type metAs)
+        public void MarkExpectedTypeMet(Type resolvedAs = null)
         {
-            if (expectedTypes.Count > 0)
-            {
-                var expected = expectedTypes.Peek();
-                if (expected.isMet)
-                {
-                    metAs = expected.type;
-                    return true;
-                }
-            }
-
-            metAs = null;
-            return false;
+            ExpectedTypes.MarkSatisfied(resolvedAs);
         }
 
-        public bool SetCurrentExpectedTypeMet(bool isMet, Type metAs)
+        public IDisposable Expect(Type type)
         {
-            if (expectedTypes.Count > 0)
-            {
-                var type = isMet ? metAs ?? expectedTypes.Peek().type : expectedTypes.Peek().type;
-                var currentExpectedType = expectedTypes.Pop();
-                currentExpectedType.isMet = isMet;
-                currentExpectedType.type = type;
-                expectedTypes.Push(currentExpectedType);
-                return isMet;
-            }
-            else
-            {
-                return false;
-            }
+            return ExpectedTypes.Expect(type, out _);
         }
 
-        public void SetExpectedType(Type type)
+        public IDisposable Expect(Type type, out ExpectedTypeResult result)
         {
-            if (type != null)
-            {
-                expectedTypes.Push((type, false));
-            }
+            return ExpectedTypes.Expect(type, out result);
         }
 
-        public (Type type, bool isMet) RemoveExpectedType()
-        {
-            if (expectedTypes.Count > 0)
-                return expectedTypes.Pop();
-            return (typeof(object), false);
-        }
         #endregion
 
         public string AddLocalNameInScope(string name, Type type = null, bool checkAnscestorsOnly = false)
@@ -221,6 +183,8 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             var scope = PeekScope();
             if (scope != null) scope.HasBroke = value;
+            if (value)
+                scope.MustBreak = false;
         }
         public void SetReturns(Type type)
         {
@@ -310,10 +274,7 @@ namespace Unity.VisualScripting.Community.CSharp
         #region Symbol Management
         public void CreateSymbol(Unit unit, Type Type, Dictionary<string, object> Metadata = null)
         {
-            if (!unitSymbols.ContainsKey(unit))
-            {
-                unitSymbols.Add(unit, new UnitSymbol(unit, Type, Metadata));
-            }
+            Symbols.CreateSymbol(unit, Type, Metadata);
         }
 
         public bool TryGetSymbol(Unit unit, out UnitSymbol symbol)
@@ -323,12 +284,12 @@ namespace Unity.VisualScripting.Community.CSharp
                 symbol = null;
                 return false;
             }
-            return unitSymbols.TryGetValue(unit, out symbol);
+            return Symbols.TryGet(unit, out symbol);
         }
 
         public void SetSymbolType(Unit unit, Type type)
         {
-            if (unitSymbols.TryGetValue(unit, out var symbol))
+            if (Symbols.TryGet(unit, out var symbol))
             {
                 symbol.Type = type;
             }

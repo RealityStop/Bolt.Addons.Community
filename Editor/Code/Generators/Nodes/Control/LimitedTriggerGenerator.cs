@@ -1,15 +1,21 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
+using System.Collections.Generic;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(LimitedTrigger))]
-    public sealed class TriggerXTimesGenerator : VariableNodeGenerator
+    public sealed class LimitedTriggerGenerator : VariableNodeGenerator
     {
-        public TriggerXTimesGenerator(LimitedTrigger unit) : base(unit)
+        public LimitedTriggerGenerator(LimitedTrigger unit) : base(unit)
         {
-            NameSpaces = "Unity.VisualScripting.Community";
         }
+
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting.Community";
+        }
+
         private LimitedTrigger Unit => unit as LimitedTrigger;
         public override AccessModifier AccessModifier => AccessModifier.Private;
 
@@ -23,37 +29,31 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override bool HasDefaultValue => true;
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-
             if (input == Unit.Input)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(Name.VariableHighlight() + ".Initialize(") + GenerateValue(Unit.Times, data).End(Unit);
-                output += "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"if".ControlHighlight() + $"({Name.VariableHighlight() + ".Trigger()"})");
-                output += "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{");
-                output += "\n";
+                writer.WriteIndented().InvokeMember(Name.VariableHighlight(), "Initialize", writer.Action(() =>
+                {
+                    GenerateValue(Unit.Times, data, writer);
+                })).WriteEnd(EndWriteOptions.LineEnd);
 
-                if (Unit.Exit.hasAnyConnection)
+                writer.WriteIndented("if ".ControlHighlight()).Parentheses(w => w.InvokeMember(Name.VariableHighlight(), "Trigger")).NewLine();
+                writer.WriteLine("{");
+
+                using (writer.IndentedScope(data))
                 {
-                    output += GetNextUnit(Unit.Exit, data, indent + 1);
-                    output += "\n";
+                    GenerateChildControl(Unit.Exit, data, writer);
                 }
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
-                output += "\n";
-                if (Unit.After.hasValidConnection)
-                {
-                    output += GetNextUnit(Unit.After, data, indent);
-                }
+
+                writer.WriteLine("}");
+
+                GenerateExitControl(Unit.After, data, writer);
             }
             else if (input == Unit.Reset)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{Name.VariableHighlight()}.Reset();") + "\n";
+                writer.WriteIndented().InvokeMember(Name.VariableHighlight(), "Reset").WriteEnd(EndWriteOptions.LineEnd);
             }
-
-            return output;
         }
     }
 }

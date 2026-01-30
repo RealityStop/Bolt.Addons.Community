@@ -1,3 +1,4 @@
+
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(NullCoalesce))]
@@ -5,13 +6,11 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public NullCoalesceGenerator(NullCoalesce unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var inputCode = GenerateValue(Unit.input, data);
-            var fallbackCode = GenerateValue(Unit.fallback, data);
-
-            var result = $"{inputCode}{MakeClickableForThisUnit(" ?? ")}{fallbackCode}";
-            return result;
+            GenerateValue(Unit.input, data, writer);
+            writer.Write(" ?? ");
+            GenerateValue(Unit.fallback, data, writer);
         }
     }
 }

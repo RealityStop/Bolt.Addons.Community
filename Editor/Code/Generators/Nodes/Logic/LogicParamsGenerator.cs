@@ -1,8 +1,3 @@
-using System.Linq;
-using System.Text;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using Unity.VisualScripting.Community.Libraries.Humility;
-
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(LogicParams))]
@@ -10,50 +5,68 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public LogicParamsGenerator(LogicParams unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (Unit.arguments.Count == 0)
-                return "";
-
-            string expr = string.Empty;
+                return;
 
             switch (Unit.BranchingType)
             {
                 case LogicParamNode.BranchType.And:
-                    expr = JoinArgs(" && ", data);
+                    WriteJoined(writer, data, " && ");
                     break;
+
                 case LogicParamNode.BranchType.Or:
-                    expr = JoinArgs(" || ", data);
+                    WriteJoined(writer, data, " || ");
                     break;
+
                 case LogicParamNode.BranchType.GreaterThan:
-                    expr = CompareArgs(data, Unit.AllowEquals ? ">=" : ">");
+                    WriteComparison(writer, data, Unit.AllowEquals ? ">=" : ">");
                     break;
+
                 case LogicParamNode.BranchType.LessThan:
-                    expr = CompareArgs(data, Unit.AllowEquals ? "<=" : "<");
+                    WriteComparison(writer, data, Unit.AllowEquals ? "<=" : "<");
                     break;
+
                 case LogicParamNode.BranchType.Equal:
-                    expr = CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("Equal"), Unit.arguments.Skip(1).Select(arg => GenerateValue(arg, data)).ToArray());
+                    WriteEqual(writer, data);
                     break;
             }
-
-            return expr;
         }
 
-        private string JoinArgs(string op, ControlGenerationData data)
+        private void WriteJoined(CodeWriter writer, ControlGenerationData data, string op)
         {
-            var s = "";
-            s = string.Join(MakeClickableForThisUnit(op), Unit.arguments.ConvertAll(arg => GenerateValue(arg, data)));
-            return s;
+            for (int i = 0; i < Unit.arguments.Count; i++)
+            {
+                if (i != 0)
+                    writer.Write(op);
+
+                GenerateValue(Unit.arguments[i], data, writer);
+            }
         }
 
-        private string CompareArgs(ControlGenerationData data, string op)
+        private void WriteComparison(CodeWriter writer, ControlGenerationData data, string op)
         {
             if (Unit.arguments.Count < 2)
-                return "";
+                return;
 
-            var a = GenerateValue(Unit.arguments[0], data);
-            var b = GenerateValue(Unit.arguments[1], data);
-            return $"{a}{MakeClickableForThisUnit(" " + op + " ")}{b}";
+            GenerateValue(Unit.arguments[0], data, writer);
+            writer.Write(" " + op + " ");
+            GenerateValue(Unit.arguments[1], data, writer);
+        }
+
+        private void WriteEqual(CodeWriter writer, ControlGenerationData data)
+        {
+            writer.CallCSharpUtilityMethod("Equal", writer.Action(() =>
+            {
+                for (int i = 1; i < Unit.arguments.Count; i++)
+                {
+                    if (i != 1)
+                        writer.Write(", ");
+
+                    GenerateValue(Unit.arguments[i], data, writer);
+                }
+            }));
         }
     }
 }

@@ -21,34 +21,26 @@ namespace Unity.VisualScripting.Community.CSharp
         protected abstract bool IsCoroutine();
         protected abstract string GetListenerSetupCode();
 
-        public override string GenerateAwakeCode(ControlGenerationData data, int indent)
+        public override void GenerateAwakeCode(ControlGenerationData data, CodeWriter writer)
         {
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
-            return CodeBuilder.Indent(indent) + (GetTargetValueInput() != null ? GenerateValue(GetTargetValueInput(), data) + MakeClickableForThisUnit(GetListenerSetupCode()) : MakeClickableForThisUnit(GetListenerSetupCode()));
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) 
+            {
+                writer.WriteErrorDiagnostic($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}");
+                return;
+            }
+            
+            writer.WriteIndented();
+            if (GetTargetValueInput() != null)
+                GenerateValue(GetTargetValueInput(), data, writer);
+            writer.Write(GetListenerSetupCode());
+            writer.NewLine();
         }
 
         protected abstract ValueInput GetTargetValueInput();
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (input.hasValidConnection)
-            {
-                return GetNextValueUnit(input, data);
-            }
-            else if (input.hasDefaultValue)
-            {
-                if (input.type.Is().UnityObject() && !input.hasValidConnection && input.unit.defaultValues[input.key] == null && input.nullMeansSelf) return MakeClickableForThisUnit("gameObject".VariableHighlight());
-                return input.unit.defaultValues[input.key].As().Code(true, unit, true, true, "", true, true);
-            }
-            else
-            {
-                return MakeClickableForThisUnit($"/* \"{input.key} Requires Input\" */".WarningHighlight());
-            }
-        }
-
-        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return GetNextUnit(OutputPort, data, indent);
+            GenerateChildControl(OutputPort, data, writer);
         }
     }
 }

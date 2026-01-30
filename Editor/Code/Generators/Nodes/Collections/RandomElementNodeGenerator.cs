@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Text;
+using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
@@ -10,47 +9,42 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         RandomElementNode Unit => (RandomElementNode)unit;
 
-        public RandomElementNodeGenerator(Unit unit) : base(unit) { NameSpaces = "Unity.VisualScripting.Community"; }
+        public RandomElementNodeGenerator(Unit unit) : base(unit)
+        {
+        }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting.Community";
+        }
+
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (Unit.enter.hasValidConnection)
             {
-                if (output == Unit.key)
-                    return MakeClickableForThisUnit($"{variableName.VariableHighlight()}.{"key".VariableHighlight()}");
-                else
-                    return MakeClickableForThisUnit($"{variableName.VariableHighlight()}.{"value".VariableHighlight()}");
+                writer.Write(variableName.VariableHighlight());
+                writer.Dot();
+                writer.Write(output == Unit.key ? "key".VariableHighlight() : "value".VariableHighlight());
+                return;
             }
-            else
-            {
-                var collection = GenerateValue(Unit.collection, data);
-                var methodCall = CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("GetRandomElement"), new[]
-                {
-                    collection,
-                    Unit.Dictionary.As().Code(false, Unit)
-                });
 
-                if (output == Unit.key)
-                    return methodCall + $"{MakeClickableForThisUnit($".{"key".VariableHighlight()}")}";
-                else
-                    return methodCall + $"{MakeClickableForThisUnit($".{"value".VariableHighlight()}")}";
-            }
+            writer.CallCSharpUtilityMethod("GetRandomElement", writer.Action(() => GenerateValue(Unit.collection, data, writer)), Unit.Dictionary.As().Code(false));
+
+            writer.Dot();
+            writer.Write(output == Unit.key ? "key".VariableHighlight() : "value".VariableHighlight());
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            string indentStr = CodeBuilder.Indent(indent);
             variableName = data.AddLocalNameInScope("randomElement", typeof((object, object)));
 
-            string collection = GenerateValue(Unit.collection, data);
-            string isDict = Unit.Dictionary.As().Code(false, Unit);
+            writer.CreateVariable(variableName, writer.Action(() =>
+            {
+                writer.CallCSharpUtilityMethod("GetRandomElement", writer.Action(() => GenerateValue(Unit.collection, data, writer)), Unit.Dictionary.As().Code(false));
+            }));
 
-            string methodCall = CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("GetRandomElement"), new[] { collection, isDict });
-
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"{indentStr}{MakeClickableForThisUnit($"{"var".ConstructHighlight()} {variableName.VariableHighlight()} = ")}{methodCall}{MakeClickableForThisUnit(";")}");
-
-            return sb.AppendLine(GetNextUnit(Unit.exit, data, indent)).ToString();
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

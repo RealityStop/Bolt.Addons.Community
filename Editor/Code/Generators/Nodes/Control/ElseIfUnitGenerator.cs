@@ -1,4 +1,3 @@
-using System.Text;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
@@ -9,107 +8,97 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public ElseIfUnitGenerator(ElseIfUnit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = new StringBuilder();
-            string cachedIndent = CodeBuilder.Indent(indent);
+            if (input != Unit.Enter)
+                return;
 
-            if (input == Unit.Enter)
+            bool foundTrue = IsTrueLiteral(Unit.condition);
+
+            writer.WriteIndented("if ".ControlHighlight());
+            writer.Parentheses(w => GenerateValue(Unit.condition, data, w)).NewLine();
+            writer.WriteLine("{");
+
+            using (writer.IndentedScope(data))
             {
-                bool foundTrue = IsTrueLiteral(Unit.condition);
-                output.Append(cachedIndent)
-                      .Append(MakeClickableForThisUnit("if".ControlHighlight() + " ("))
-                      .Append(GenerateValue(Unit.condition, data))
-                      .Append(MakeClickableForThisUnit(")"))
-                      .AppendLine()
-                      .Append(cachedIndent)
-                      .AppendLine(MakeClickableForThisUnit("{"));
-
-                data.NewScope();
                 if (IsFalseLiteral(Unit.condition))
                 {
-                    output.AppendLine(CodeBuilder.Indent(indent + 1) +
-                        MakeClickableForThisUnit(CodeUtility.ErrorTooltip(
-                            $"The code in the 'If' branch is unreachable because the condition is always false.",
-                            $"Unreachable Code in 'If' Branch: {Unit.If.key}", "")));
+                    writer.WriteErrorDiagnostic(
+                        "The code in the 'If' branch is unreachable because the condition is always false.",
+                        $"Unreachable Code in 'If' Branch: {Unit.If.key}",
+                        WriteOptions.IndentedNewLineAfter);
                 }
-                output.Append(GetNextUnit(Unit.If, data, indent + 1));
-                data.ExitScope();
 
-                output.AppendLine(cachedIndent + MakeClickableForThisUnit("}"));
+                GenerateChildControl(Unit.If, data, writer);
+            }
 
-                for (int i = 0; i < Unit.amount; i++)
+            writer.WriteLine("}");
+
+            for (int i = 0; i < Unit.amount; i++)
+            {
+                var conditionInput = Unit.elseIfConditions[i];
+                var controlOutput = Unit.elseIfs[i];
+
+                if (!controlOutput.hasValidConnection)
+                    continue;
+
+                bool isSelfFalse = IsFalseLiteral(conditionInput);
+                bool isSelfTrue = IsTrueLiteral(conditionInput);
+                bool shortCircuited = foundTrue;
+                bool isUnreachable = isSelfFalse || shortCircuited;
+
+                if (isSelfTrue && !foundTrue)
+                    foundTrue = true;
+
+                writer.WriteIndented("else if ".ControlHighlight());
+                writer.Parentheses(w => GenerateValue(conditionInput, data, w)).NewLine();
+                writer.WriteLine("{");
+
+                using (writer.IndentedScope(data))
                 {
-                    var conditionInput = Unit.elseIfConditions[i];
-                    var controlOutput = Unit.elseIfs[i];
-
-                    if (!controlOutput.hasValidConnection) continue;
-
-                    bool isSelfFalse = IsFalseLiteral(conditionInput);
-                    bool isSelfTrue = IsTrueLiteral(conditionInput);
-                    bool shortCircuited = foundTrue;
-                    bool isUnreachable = isSelfFalse || shortCircuited;
-
-                    if (isSelfTrue && !foundTrue)
-                    {
-                        foundTrue = true;
-                    }
-
-                    output.Append(cachedIndent).Append(MakeClickableForThisUnit("else if".ControlHighlight() + " (")).Append(GenerateValue(conditionInput, data)).Append(MakeClickableForThisUnit(")")).AppendLine().Append(cachedIndent).AppendLine(MakeClickableForThisUnit("{"));
-
-                    data.NewScope();
                     if (isUnreachable)
                     {
                         string reason;
-                        if (shortCircuited && isSelfFalse)
-                        {
-                            reason = "This branch is unreachable because a prior condition is always true and this condition is always false.";
-                        }
-                        else if (shortCircuited)
-                        {
-                            reason = "This branch is unreachable because a prior condition is always true.";
-                        }
-                        else
-                        {
-                            reason = "This branch is unreachable because its condition is always false.";
-                        }
 
-                        output.AppendLine(CodeBuilder.Indent(indent + 1) +
-                            MakeClickableForThisUnit(CodeUtility.ErrorTooltip(reason, $"Unreachable Code in 'Else If' Branch: {controlOutput.key}", "")));
+                        if (shortCircuited && isSelfFalse)
+                            reason = "This branch is unreachable because a prior condition is always true and this condition is always false.";
+                        else if (shortCircuited)
+                            reason = "This branch is unreachable because a prior condition is always true.";
+                        else
+                            reason = "This branch is unreachable because its condition is always false.";
+
+                        writer.WriteErrorDiagnostic(
+                            reason,
+                            $"Unreachable Code in 'Else If' Branch: {controlOutput.key}",
+                            WriteOptions.IndentedNewLineAfter);
                     }
 
-                    output.Append(GetNextUnit(controlOutput, data, indent + 1));
-                    data.ExitScope();
-
-                    output.AppendLine(cachedIndent + MakeClickableForThisUnit("}"));
+                    GenerateChildControl(controlOutput, data, writer);
                 }
 
-                if (Unit.showElse && Unit.Else.hasValidConnection)
-                {
-                    output.Append(cachedIndent)
-                          .AppendLine(MakeClickableForThisUnit("else".ControlHighlight()))
-                          .Append(cachedIndent)
-                          .AppendLine(MakeClickableForThisUnit("{"));
-
-                    data.NewScope();
-                    if (foundTrue)
-                        output.AppendLine(CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip("This branch is unreachable because a prior condition is always true.", $"Unreachable Code in 'Else'", "")));
-                    output.Append(GetNextUnit(Unit.Else, data, indent + 1));
-                    data.ExitScope();
-
-                    output.AppendLine(cachedIndent + MakeClickableForThisUnit("}"));
-                }
+                writer.WriteLine("}");
             }
 
-            return output.ToString();
-        }
+            if (Unit.showElse && Unit.Else.hasValidConnection)
+            {
+                writer.WriteLine("else".ControlHighlight());
+                writer.WriteLine("{");
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
-        {
-            data.SetExpectedType(typeof(bool));
-            var result = base.GenerateValue(input, data);
-            data.RemoveExpectedType();
-            return result;
+                using (writer.IndentedScope(data))
+                {
+                    if (foundTrue)
+                    {
+                        writer.WriteErrorDiagnostic(
+                            "This branch is unreachable because a prior condition is always true.",
+                            "Unreachable Code in 'Else'",
+                            WriteOptions.IndentedNewLineAfter);
+                    }
+
+                    GenerateChildControl(Unit.Else, data, writer);
+                }
+
+                writer.WriteLine("}");
+            }
         }
 
         private bool IsTrueLiteral(ValueInput input)
@@ -118,11 +107,11 @@ namespace Unity.VisualScripting.Community.CSharp
                 return true;
 
             if (input.GetPesudoSource() is ValueInput valueInput &&
-                valueInput.hasDefaultValue && !valueInput.hasValidConnection &&
-                valueInput.unit.defaultValues[valueInput.key] is bool condition && condition)
-            {
+                valueInput.hasDefaultValue &&
+                !valueInput.hasValidConnection &&
+                valueInput.unit.defaultValues[valueInput.key] is bool condition &&
+                condition)
                 return true;
-            }
 
             return false;
         }
@@ -133,11 +122,11 @@ namespace Unity.VisualScripting.Community.CSharp
                 return true;
 
             if (input.GetPesudoSource() is ValueInput valueInput &&
-                valueInput.hasDefaultValue && !valueInput.hasValidConnection &&
-                valueInput.unit.defaultValues[valueInput.key] is bool condition && !condition)
-            {
+                valueInput.hasDefaultValue &&
+                !valueInput.hasValidConnection &&
+                valueInput.unit.defaultValues[valueInput.key] is bool condition &&
+                !condition)
                 return true;
-            }
 
             return false;
         }

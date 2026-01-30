@@ -27,26 +27,30 @@ namespace Unity.VisualScripting.Community.CSharp
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(AnimationEvent), "animationEvent") };
 
         public BoltNamedAnimationEventGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.floatParameter)
             {
-                return MakeClickableForThisUnit("animationEvent".VariableHighlight() + "." + "floatParameter".VariableHighlight());
+                writer.GetVariable("animationEvent").GetMember("floatParameter");
             }
             else if (output == Unit.intParameter)
             {
-                return MakeClickableForThisUnit("animationEvent".VariableHighlight() + "." + "intParameter".VariableHighlight());
+                writer.GetVariable("animationEvent").GetMember("intParameter");
             }
             else if (output == Unit.objectReferenceParameter)
             {
-                return MakeClickableForThisUnit("animationEvent".VariableHighlight() + "." + "objectReferenceParameter".VariableHighlight());
+                writer.GetVariable("animationEvent").GetMember("objectReferenceParameter");
             }
-            return base.GenerateValue(output, data);
+            else
+            {
+                base.GenerateValueInternal(output, data, writer);
+            }
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
     }
 }

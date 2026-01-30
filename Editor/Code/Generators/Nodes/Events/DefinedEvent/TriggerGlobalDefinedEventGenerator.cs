@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -11,29 +12,27 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private Type EventType => Unit.IsRestricted ? Unit.RestrictedEventType : Unit.EventType;
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            builder.Indent(indent);
-            void ActionCode(ClickableStringBuilder parameter)
+            writer.WriteIndented(typeof(DefinedEvent).As().CSharpName(false, true));
+            writer.Write(".");
+            writer.Write("TriggerGlobal");
+            writer.Write("(");
+            if (Unit.IsRestricted)
             {
-                if (Unit.IsRestricted)
-                {
-                    parameter.InvokeMember(
-                        typeof(CSharpUtility),
-                        nameof(CSharpUtility.CreateDefinedEventInstance),
-                        new Type[] { EventType },
-                        Unit.inputPorts.Select(port => (Action<ClickableStringBuilder>)(sb => sb.Ignore(GenerateValue(port, data)))).ToArray()
-                    );
-                }
-                else
-                {
-                    parameter.Ignore(GenerateValue(Unit.inputPorts[0], data));
-                }
+                writer.CallCSharpUtilityGenericMethod("CreateDefinedEventInstance", new CodeWriter.TypeParameter[] { EventType },
+                    Unit.inputPorts.Select(port => (CodeWriter.MethodParameter)writer.Action(w => GenerateValue(port, data, w))).ToArray()
+                );
             }
-            builder.InvokeMember(typeof(DefinedEvent), nameof(DefinedEvent.TriggerGlobal), ActionCode).Clickable(";").NewLine();
-            builder.Ignore(GetNextUnit(Unit.exit, data, indent));
-            return builder;
+            else
+            {
+                GenerateValue(Unit.inputPorts[0], data, writer);
+            }
+            writer.Write(")");
+            writer.Write(";");
+            writer.NewLine();
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

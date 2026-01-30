@@ -13,48 +13,56 @@ namespace Unity.VisualScripting.Community.CSharp
         public TriggerCustomEventGenerator(Unit unit) : base(unit)
         {
         }
-    
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-            var customEvent = typeof(CustomEvent).As().CSharpName(false, true);
-    
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(customEvent + ".Trigger(") + GenerateValue(Unit.target, data) + MakeClickableForThisUnit(", ") + $"{GenerateValue(Unit.name, data)}{(Unit.argumentCount > 0 ? MakeClickableForThisUnit(", ") : "")}{string.Join(MakeClickableForThisUnit(", "), Unit.arguments.Select(arg => GenerateValue(arg, data)))}" + MakeClickableForThisUnit(");") + "\n";
-            output += GetNextUnit(Unit.exit, data, indent);
-            return output;
-        }
-    
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
-        {
-            if (input == Unit.target && !Unit.target.hasValidConnection)
+            writer.WriteIndented(typeof(CustomEvent).As().CSharpName(false, true));
+            writer.Write(".");
+            writer.Write("Trigger");
+            writer.Write("(");
+            GenerateValue(Unit.target, data, writer);
+            writer.Write(", ");
+            GenerateValue(Unit.name, data, writer);
+            if (Unit.argumentCount > 0)
             {
-                return MakeClickableForThisUnit("gameObject".VariableHighlight());
+                writer.Write(", ");
+                var args = Unit.arguments;
+                for (int i = 0; i < args.Count; i++)
+                {
+                    GenerateValue(args[i], data, writer);
+                    if (i < args.Count - 1) writer.Write(", ");
+                }
             }
-    
+            writer.Write(")");
+            writer.Write(";");
+            writer.NewLine();
+            GenerateExitControl(Unit.exit, data, writer);
+        }
+
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
+        {
             if (input == Unit.target)
             {
-                var sourceType = GetSourceType(Unit.target, data);
-                var sourceIsComponent = typeof(Component).IsAssignableFrom(sourceType);
-                if (sourceIsComponent)
+                if (!Unit.target.hasValidConnection && Unit.defaultValues[input.key] == null)
                 {
-                    return base.GenerateValue(Unit.target, data).GetConvertToString<GameObject>(Unit);
+                    writer.GetVariable("gameObject");
+                    return;
                 }
                 else
                 {
-                    data.SetExpectedType(typeof(GameObject));
-                    var code = base.GenerateValue(Unit.target, data);
-                    data.RemoveExpectedType();
-                    return code;
+                    var sourceType = GetSourceType(Unit.target, data, writer);
+                    var sourceIsComponent = typeof(Component).IsStrictlyAssignableFrom(sourceType);
+
+                    base.GenerateValueInternal(Unit.target, data, writer);
+
+                    if (sourceIsComponent)
+                    {
+                        writer.WriteConvertTo(typeof(GameObject), true);
+                    }
+                    return;
                 }
             }
-            else if (Unit.arguments.Contains(input))
-            {
-                data.SetExpectedType(typeof(object));
-                var code = base.GenerateValue(input, data);
-                data.RemoveExpectedType();
-                return code;
-            }
-            return base.GenerateValue(input, data);
+            base.GenerateValueInternal(input, data, writer);
         }
-    } 
+    }
 }

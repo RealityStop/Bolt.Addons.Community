@@ -13,22 +13,31 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public CreateListGenerator(Unit unit) : base(unit)
         {
-            NameSpaces = "Unity.VisualScripting";
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
         {
-            List<string> result = new List<string>();
-            foreach (ValueInput item in Unit.multiInputs)
-            {
-                result.Add(base.GenerateValue(item, data));
-            }
+            yield return "Unity.VisualScripting";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
             var Type = typeof(AotList);
-            if(data.GetExpectedType() != null)
+            var expectedType = data.GetExpectedType();
+            if (expectedType != null && (expectedType.IsArray || (typeof(IList).IsAssignableFrom(expectedType) && expectedType.IsConcrete())))
             {
-                Type = data.GetExpectedType();
+                Type = expectedType;
             }
-            return MakeClickableForThisUnit("new ".ConstructHighlight() + Type.As().CSharpName(false, true) + (!Type.IsArray ? "()" : string.Empty) + " { ") + string.Join(MakeClickableForThisUnit(", "), result) + MakeClickableForThisUnit(" }");
+            writer.Write("new ".ConstructHighlight() + Type.As().CSharpName(false, true) + (!Type.IsArray ? "()" : string.Empty)).Space().Braces(w =>
+            {
+                w.Space();
+                for (int i = 0; i < Unit.multiInputs.Count; i++)
+                {
+                    if (i != 0) writer.ParameterSeparator();
+                    GenerateValue(Unit.multiInputs[i], data, writer);
+                }
+                w.Space();
+            });
         }
     }
 }

@@ -96,7 +96,10 @@ namespace Unity.VisualScripting.Community
                     break;
                 case QueryOperation.Skip:
                 case QueryOperation.Take:
+                    showItem = false;
+                    showBody = false;
                     value = ValueInput<int>("value");
+                    value.SetDefaultValue(0);
                     break;
             }
 

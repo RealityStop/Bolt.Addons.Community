@@ -1,7 +1,3 @@
-using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -11,15 +7,19 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public WaitUntilGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-            data.SetExpectedType(typeof(bool));
-            var condition = GenerateValue(Unit.condition, data);
-            data.RemoveExpectedType();
-            output += CodeBuilder.Indent(indent) + typeof(WaitUntil).Create(condition.ExpressionLambda(Unit), true, true, Unit).YieldReturn(true, Unit) + "\n";
-            output += GetNextUnit(Unit.exit, data, indent);
-            return output;
+            data.SetHasReturned(true);
+            using (data.Expect(typeof(bool)))
+            {
+                writer.YieldReturn(writer.Action(() => writer.New(typeof(WaitUntil), writer.Action(() =>
+                {
+                    writer.Write("() => ");
+                    GenerateValue(Unit.condition, data, writer);
+                }))), WriteOptions.IndentedNewLineAfter);
+            }
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

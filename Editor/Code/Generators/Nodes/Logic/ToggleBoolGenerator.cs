@@ -1,5 +1,6 @@
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -20,11 +21,13 @@ namespace Unity.VisualScripting.Community.CSharp
         public override bool HasDefaultValue => true;
 
         public ToggleBoolGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            builder.InvokeMember(Name.VariableHighlight(), "ToggleBool", p1 => p1.Ignore(GenerateValue(Unit.Value, data)));
-            return builder;
+            writer.Write(Name);
+            writer.Write(".ToggleBool(");
+            GenerateValue(Unit.Value, data, writer);
+            writer.Write(")");
         }
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
@@ -7,15 +8,55 @@ namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class BaseDistanceGenerator<T> : NodeGenerator<Distance<T>>
     {
-        public BaseDistanceGenerator(Unit unit) : base(unit) { NameSpaces = "UnityEngine"; }
+        public BaseDistanceGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
         {
-            data.SetExpectedType(typeof(T));
-            string a = GenerateValue(Unit.a, data);
-            string b = GenerateValue(Unit.b, data);
-            data.RemoveExpectedType();
-            return typeof(T).As().CSharpName(false, true) + MakeClickableForThisUnit(".Distance(") + a + MakeClickableForThisUnit(", ") + b + MakeClickableForThisUnit(")");
+            yield return "UnityEngine";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            writer.InvokeMember(typeof(T), "Distance", writer.Action(() =>
+            {
+                using (data.Expect(typeof(T)))
+                {
+                    GenerateValue(Unit.a, data, writer);
+                }
+                writer.Write(", ");
+                using (data.Expect(typeof(T)))
+                {
+                    GenerateValue(Unit.b, data, writer);
+                }
+            }));
+        }
+
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            if (input.hasValidConnection)
+            {
+                GenerateConnectedValue(input, data, writer);
+            }
+            else if (input.hasDefaultValue)
+            {
+                var expectedType = data.GetExpectedType();
+                var val = unit.defaultValues[input.key];
+
+                if (expectedType == typeof(int))
+                    writer.Write($"{val}".NumericHighlight());
+                else if (expectedType == typeof(float))
+                    writer.Write($"{val}f".Replace(",", ".").NumericHighlight());
+                else if (expectedType == typeof(double))
+                    writer.Write($"{val}d".Replace(",", ".").NumericHighlight());
+                else if (expectedType == typeof(long))
+                    writer.Write($"{val}L".Replace(",", ".").NumericHighlight());
+                else
+                    writer.Write(val.As().Code(true, true, true, "", false));
+            }
+            else
+            {
+                writer.Write($"/* \"{input.key} Requires Input\" */".ErrorHighlight());
+            }
         }
     }
 

@@ -739,7 +739,7 @@ namespace Unity.VisualScripting.Community
                 canvas.connectionSource == port ||
                 canvas.isCreatingConnection && canvas.connectionSource.CanValidlyConnectTo(port))
             {
-                using (LudiqGUI.color.Override(color.WithAlphaMultiplied(LudiqGUI.color.value.a * 0.85f))) // Full color is a bit hard on the eyes
+                using (LudiqGUI.color.Override(color.WithAlphaMultiplied(LudiqGUI.color.value.a * 0.85f)))
                 {
                     if (handleTextureConnected != null)
                     {
@@ -760,7 +760,7 @@ namespace Unity.VisualScripting.Community
 
         private void DrawIcon()
         {
-            if (description != null && description.icon[Styles.iconSize])
+            if (description != null && description.icon?[Styles.iconSize])
             {
                 GUI.DrawTexture(iconPosition, description.icon?[Styles.iconSize]);
             }

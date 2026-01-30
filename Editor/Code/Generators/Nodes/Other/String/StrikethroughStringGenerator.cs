@@ -1,18 +1,16 @@
-using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
-
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(StrikethroughString))]
     public class StrikethroughStringGenerator : NodeGenerator<StrikethroughString>
     {
         public StrikethroughStringGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit($"$\"<s>{{") + GenerateValue(Unit.Value, data) + MakeClickableForThisUnit("}</s>\"");
+            writer.CallCSharpUtilityMethod("StrikethroughString", writer.Action(() =>
+            {
+                using (data.Expect(typeof(string)))
+                    GenerateValue(Unit.Value, data, writer);
+            }));
         }
     }
 }

@@ -277,8 +277,8 @@ namespace Unity.VisualScripting.Community
 
             const float spaceBetweenControlPorts = 10;
 
-            portsWidth = Mathf.Max(portsWidth, (controlInputs.Any() ? controlInputs.Max(p => p.GetInnerWidth()) + spaceBetweenControlPorts : 0f) * controlInputs.Count);
-            portsWidth = Mathf.Max(portsWidth, (controlOutputs.Any() ? controlOutputs.Max(p => p.GetInnerWidth()) + spaceBetweenControlPorts : 0f) * controlOutputs.Count);
+            portsWidth = Mathf.Max(portsWidth, (controlInputs.Any() ? Mathf.Min(90f, controlInputs.Max(p => p.GetInnerWidth()) + spaceBetweenControlPorts) : 0f) * controlInputs.Count);
+            portsWidth = Mathf.Max(portsWidth, (controlOutputs.Any() ? Mathf.Min(90f, controlOutputs.Max(p => p.GetInnerWidth()) + spaceBetweenControlPorts) : 0f) * controlOutputs.Count);
 
             settingsPositions.Clear();
             var settingsWidth = 0f;

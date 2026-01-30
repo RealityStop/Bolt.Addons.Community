@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -8,9 +9,9 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public string name = string.Empty;
         public int index = 0;
 
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
-            return CodeBuilder.Indent(indent) + name + " = " + index.ToString();
+            writer.WriteIndented(name + " = " + index.ToString());
         }
 
         public override List<string> Usings()

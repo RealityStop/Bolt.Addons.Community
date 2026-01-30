@@ -6,9 +6,15 @@ namespace Unity.VisualScripting.Community.CSharp
     public class SaveVariablesGenerator : NodeGenerator<SaveVariables>
     {
         public SaveVariablesGenerator(Unit unit) : base(unit) { }
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit($"{"SavedVariables".TypeHighlight()}.SaveDeclarations({"SavedVariables".TypeHighlight()}.{"merged".VariableHighlight()});") + "\n" + GetNextUnit(Unit.exit, data, indent);
+            writer.InvokeMember(typeof(SavedVariables), "SaveDeclarations", 
+            writer.Action(() =>
+            {
+                writer.GetMember(typeof(SavedVariables), "merged");
+            })).NewLine();
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

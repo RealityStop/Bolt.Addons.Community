@@ -1,5 +1,4 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -8,25 +7,30 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public UnbindActionNodeGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(output, data);
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            var output = string.Empty;
             var variable = string.Empty;
             bool sourceIsDelgateNode = Unit.a.hasValidConnection && Unit.a.connection.source.unit is DelegateNode;
             if (sourceIsDelgateNode)
             {
-                variable = data.AddLocalNameInScope("@delgate", Unit.a.connection.source.type).VariableHighlight();
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit((Unit.a.connection.source.unit as DelegateNode)._delegate.GetDelegateType().As().CSharpName(false, true) + " " + variable + " = ") + GenerateValue(Unit.a, data) + MakeClickableForThisUnit(";") + "\n";
+                var source = Unit.a.connection.source;
+                variable = data.AddLocalNameInScope("@delgate", source.type);
+                writer.CreateVariable((source.unit as DelegateNode)._delegate.GetDelegateType(), variable, writer.Action(() => GenerateValue(Unit.a, data, writer)));
+
+                writer.WriteIndented(variable.VariableHighlight() + " -= ");
+                GenerateValue(Unit.b, data, writer);
+                writer.WriteEnd(EndWriteOptions.LineEnd);
+            }
+            else
+            {
+                writer.WriteIndented();
+                GenerateValue(Unit.a, data, writer);
+                writer.Write(" -= ");
+                GenerateValue(Unit.b, data, writer);
+                writer.WriteEnd(EndWriteOptions.LineEnd);
             }
 
-            output += CodeBuilder.Indent(indent) + (sourceIsDelgateNode ? MakeClickableForThisUnit(variable + " -= ") + GenerateValue(Unit.b, data) + MakeClickableForThisUnit(";") + "\n" : GenerateValue(Unit.a, data) + MakeClickableForThisUnit(" -= ") + GenerateValue(Unit.b, data) + MakeClickableForThisUnit(";") + "\n");
-            output += GetNextUnit(Unit.exit, data, indent);
-            return output;
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

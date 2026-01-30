@@ -1,9 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
-using UnityEngine;
-
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(FlowReroute))]
@@ -12,11 +6,10 @@ namespace Unity.VisualScripting.Community.CSharp
         public FlowRerouteGenerator(Unit unit) : base(unit)
         {
         }
-    
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.output, data, indent);
+            GenerateExitControl(Unit.output, data, writer);
         }
     }
-    
 }

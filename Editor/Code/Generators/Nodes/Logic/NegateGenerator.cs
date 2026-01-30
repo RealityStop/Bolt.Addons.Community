@@ -1,4 +1,5 @@
 ﻿using Unity.VisualScripting;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -9,28 +10,14 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            if (input == Unit.input)
-            {
-                if (Unit.input.hasAnyConnection)
-                {
-                    return (Unit.input.connection.source.unit as Unit).GenerateValue(Unit.input.connection.source, data);
-                }
-            }
-
-            return base.GenerateValue(input, data);
-        }
-
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-        {
-
             if (output == Unit.output)
             {
-                return MakeClickableForThisUnit("!(") + GenerateValue(Unit.input, data) + MakeClickableForThisUnit(")");
+                writer.Write("!(");
+                GenerateValue(Unit.input, data, writer);
+                writer.Write(")");
             }
-
-            return base.GenerateValue(output, data);
         }
     }
 }

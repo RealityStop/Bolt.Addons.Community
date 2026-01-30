@@ -17,31 +17,32 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(Joint2D), "brokenJoint") };
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.breakForce)
             {
-                return MakeClickableForThisUnit("brokenJoint".VariableHighlight() + "." + "breakForce".VariableHighlight());
+                writer.GetVariable("brokenJoint").GetMember("breakForce");
             }
             else if (output == Unit.breakTorque)
             {
-                return MakeClickableForThisUnit("brokenJoint".VariableHighlight() + "." + "breakTorque".VariableHighlight());
+                writer.GetVariable("brokenJoint").GetMember("breakTorque");
             }
             else if (output == Unit.connectedBody)
             {
-                return MakeClickableForThisUnit("brokenJoint".VariableHighlight() + "." + "connectedBody".VariableHighlight());
+                writer.GetVariable("brokenJoint").GetMember("connectedBody");
             }
             else if (output == Unit.reactionForce)
             {
-                return MakeClickableForThisUnit("brokenJoint".VariableHighlight() + "." + "reactionForce".VariableHighlight());
+                writer.GetVariable("brokenJoint").GetMember("reactionForce");
             }
             else if (output == Unit.reactionTorque)
             {
-                return MakeClickableForThisUnit("brokenJoint".VariableHighlight() + "." + "reactionTorque".VariableHighlight());
+                writer.GetVariable("brokenJoint").GetMember("reactionTorque");
             }
             else
             {
-                return MakeClickableForThisUnit("brokenJoint".VariableHighlight());
+                writer.GetVariable("brokenJoint");
             }
         }
     }

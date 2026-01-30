@@ -28,19 +28,29 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public OnButtonInputGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateUpdateCode(ControlGenerationData data, int indent)
+        public override void GenerateUpdateCode(ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if ".ControlHighlight() + "(") + CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("GetButtonAction"), GenerateValue(Unit.buttonName, data), GenerateValue(Unit.action, data)) + MakeClickableForThisUnit(")") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-            output += CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit((Unit.coroutine ? $"StartCoroutine({Name}())" : Name + "()") + ";") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
-            return output;
+            writer.WriteIndented("if".ControlHighlight());
+            writer.Write(" (");
+            writer.CallCSharpUtilityMethod("GetButtonAction",
+                writer.Action(() => GenerateValue(Unit.buttonName, data, writer)),
+                writer.Action(() => GenerateValue(Unit.action, data, writer))
+            );
+            writer.Write(")");
+            writer.NewLine();
+            writer.WriteLine("{");
+            using (writer.IndentedScope(data))
+            {
+                writer.WriteIndented(Unit.coroutine ? $"StartCoroutine({Name}())" : Name + "()");
+                writer.Write(";");
+                writer.NewLine();
+            }
+            writer.WriteLine("}");
         }
 
-        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
     }
 }

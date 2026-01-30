@@ -1,7 +1,4 @@
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -10,22 +7,18 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public MathParamNodeGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return GetArguments(data);
-        }
-
-        string GetArguments(ControlGenerationData data)
-        {
-            var arguments = new List<string>();
-            for (var i = 0; i < Unit.argumentCount; i++)
+            for (int i = 0; i < Unit.argumentCount; i++)
             {
-                arguments.Add(GenerateValue(Unit.arguments[i], data));
+                if (i != 0)
+                    writer.Write(MathOperator());
+
+                GenerateValue(Unit.arguments[i], data, writer);
             }
-            return string.Join(MakeClickableForThisUnit(MathType()), arguments);
         }
 
-        string MathType()
+        private string MathOperator()
         {
             return Unit.OperationType switch
             {

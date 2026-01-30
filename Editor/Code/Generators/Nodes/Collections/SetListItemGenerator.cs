@@ -1,6 +1,3 @@
-using Unity.VisualScripting;
-using System;
-
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SetListItem))]
@@ -10,9 +7,22 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return string.Concat(base.GenerateValue(this.Unit.list, data), MakeClickableForThisUnit("[", true), base.GenerateValue(this.Unit.index, data), MakeClickableForThisUnit("] = ", true)) + base.GenerateValue(this.Unit.item, data) + MakeClickableForThisUnit(";", true) + "\n" + GetNextUnit(this.Unit.exit, data, indent);
+            writer.WriteIndented();
+            GenerateValue(Unit.list, data, writer);
+            writer.Brackets(w =>
+            {
+                GenerateValue(Unit.index, data, writer);
+            });
+
+            writer.Equal();
+
+            GenerateValue(Unit.item, data, writer);
+
+            writer.WriteEnd(EndWriteOptions.LineEnd);
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Linq;
 using Unity.VisualScripting.Community.Utility;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -16,7 +17,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         #region Colors
         public static string EnumColor = "FFFFBB";
         public static string ConstructColor = "4488FF";
-        public static string WarningColor = "CC3333";
+        public static string ErrorColor = "CC3333";
+        public static string WarningColor = "FFA500";
         public static string InterfaceColor = "DDFFBB";
         public static string TypeColor = "33EEAA";
         public static string StringColor = "CC8833";
@@ -402,16 +404,23 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return ConstructorModifier.None;
         }
 
-        public static string Parameters(this List<ParameterGenerator> parameters)
+        public static string Parameters(this List<ParameterGenerator> parameters, CodeWriter writer, ControlGenerationData data)
         {
-            var output = "(";
-            for (int i = 0; i < parameters.Count; i++)
+            CaptureResult result;
+            using (writer.Capture(out result))
             {
-                output += parameters[i].Generate(0);
-                if (i < parameters.Count - 1) output += ", ";
+                writer.Write("(");
+                for (int i = 0; i < parameters.Count; i++)
+                {
+                    parameters[i].Generate(writer, data);
+                    if (i < parameters.Count - 1)
+                    {
+                        writer.Write(", ");
+                    }
+                }
+                writer.Write(")");
             }
-            output += ")";
-            return output;
+            return result.Value;
         }
 
         public static string InitializeVariable(string name, Type type)
@@ -470,34 +479,14 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return code + ");";
         }
 
-        public static string End(this string code, Unit unit)
-        {
-            return code + ");".MakeClickable(unit);
-        }
-
         public static string Parentheses(this string value)
         {
             return "(" + value + ")";
         }
 
-        public static string Parentheses(this string value, Unit unit)
-        {
-            return "(".MakeClickable(unit) + value + ")".MakeClickable(unit);
-        }
-
         public static string SingleLineLambda(string parameters, string body)
         {
             return "(" + parameters + ") => { " + body + " }";
-        }
-
-        public static string ExpressionLambda(this string body, string parameters = "", Unit unit = null)
-        {
-            return "(".MakeClickable(unit) + parameters + ") => ".MakeClickable(unit) + body;
-        }
-
-        public static string ExpressionLambda(this string body, Unit unit = null)
-        {
-            return "() => ".MakeClickable(unit) + body;
         }
 
         public static string MultiLineLambda(string parameters, string body, int Indent)
@@ -506,14 +495,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                     CodeBuilder.Indent(Indent) + "{" + "\n" +
                     body + "\n" +
                    CodeBuilder.Indent(Indent) + "}";
-        }
-
-        public static string MultiLineLambda(Unit unit, string parameters, string body, int Indent)
-        {
-            return CodeUtility.MakeClickable(unit, "(") + parameters + CodeUtility.MakeClickable(unit, ") =>") + "\n" +
-                   CodeBuilder.Indent(Indent) + CodeUtility.MakeClickable(unit, "{") + "\n" +
-                    body + "\n" +
-                   CodeBuilder.Indent(Indent) + CodeUtility.MakeClickable(unit, "}");
         }
 
         public static string Assign(this string member, string value, Type castedType)
@@ -526,55 +507,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return member + " = " + value + ";";
         }
 
-        public static string Return(this string value, bool highlight = true, Unit unit = null)
-        {
-            return (highlight ? "return ".ControlHighlight() : "return ").MakeClickable(unit) + value + ";".MakeClickable(unit);
-        }
-
-        public static string YieldReturn(this string value, bool highlight = true, Unit unit = null)
-        {
-            return (highlight ? "yield return ".ControlHighlight() : "yield return ").MakeClickable(unit) + value + ";".MakeClickable(unit);
-        }
-
-        public static string Create(this Type type, string parameters = "", bool fullName = true, bool highlight = true, Unit unit = null)
-        {
-            return ((highlight ? "new ".ConstructHighlight() : "new ") + type.As().CSharpName(false, fullName, highlight) + $"(").MakeClickable(unit) + parameters + ")".MakeClickable(unit);
-        }
-
-        private static string MakeClickable(this string value, Unit unit)
-        {
-            if (unit != null)
-            {
-                return CodeUtility.MakeClickable(unit, value);
-            }
-            else
-            {
-                return value;
-            }
-        }
-
-        private static string MakeClickableIf(this string value, Unit unit, bool isTrue)
-        {
-            if (isTrue)
-            {
-                return CodeUtility.MakeClickable(unit, value);
-            }
-            else
-            {
-                return value;
-            }
-        }
-
-        public static string GetConvertToString<T>(this string str, Unit unit = null)
-        {
-            return str + $".ConvertTo<{typeof(T).As().CSharpName(false, true)}>()".MakeClickable(unit);
-        }
-
-        public static string GetConvertToString(this string str, Type type, Unit unit = null)
-        {
-            return str + $".ConvertTo<{type.As().CSharpName(false, true)}>()".MakeClickable(unit);
-        }
-
         public static string CastTo(this string value, Type type, bool shouldCast = true)
         {
             if (shouldCast)
@@ -582,24 +514,10 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return value;
         }
 
-        public static string CastTo(this string value, Type type, Unit unit, bool shouldCast = true)
-        {
-            if (shouldCast)
-                return $"({type.As().CSharpName(false, true)})".MakeClickable(unit) + value;
-            return value;
-        }
-
         public static string CastAs(this string value, Type type, bool shouldCast)
         {
             if (shouldCast)
                 return $"(({type.As().CSharpName(false, true)}){value})";
-            return value;
-        }
-
-        public static string CastAs(this string value, Type type, Unit unit, bool shouldCast)
-        {
-            if (shouldCast)
-                return $"(({type.As().CSharpName(false, true)})".MakeClickable(unit) + value + ")".MakeClickable(unit);
             return value;
         }
 
@@ -654,88 +572,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return builder.ToString();
         }
 
-        /// <summary>
-        /// Generate code for calling a method in the CSharpUtility class
-        /// </summary>
-        /// <param name="unit">Unit to make the code selectable for</param>
-        /// <param name="methodName">Method to call, This is not made selectable</param>
-        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
-        /// <returns>The method call as a string</returns>
-        public static string CallCSharpUtilityMethod(Unit unit, string methodName, params string[] parameters)
-        {
-            return CodeUtility.MakeClickable(unit, $"{typeof(CSharpUtility).As().CSharpName(false, true)}.") + methodName + CodeUtility.MakeClickable(unit, "(") + string.Join(CodeUtility.MakeClickable(unit, ", "), parameters) + CodeUtility.MakeClickable(unit, ")");
-        }
-
-        /// <summary>
-        /// Generate code for calling a generic method in the CSharpUtility class
-        /// </summary>
-        /// <param name="unit">Unit to make the code selectable for</param>
-        /// <param name="methodName">Method to call, This is not made selectable</param>
-        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
-        /// <returns>The method call as a string</returns>
-        public static string CallCSharpUtilityGenericMethod(Unit unit, string methodName, string[] parameters, params Type[] genericTypes)
-        {
-            if (genericTypes.Length > 0)
-            {
-                string genericTypeString = CodeUtility.MakeClickable(unit, "<" + string.Join(", ", genericTypes.Select(t => t.As().CSharpName(false, true))) + ">");
-                return CodeUtility.MakeClickable(unit, $"{typeof(CSharpUtility).As().CSharpName(false, true)}.") + methodName + genericTypeString + CodeUtility.MakeClickable(unit, "(") + string.Join(CodeUtility.MakeClickable(unit, ", "), parameters) + CodeUtility.MakeClickable(unit, ")");
-            }
-            else
-            {
-                return CallCSharpUtilityMethod(unit, methodName, parameters);
-            }
-        }
-
-        /// <summary>
-        /// Generate code for calling a extensition method in the CSharpUtility class
-        /// </summary>
-        /// <param name="unit">Unit to make the code selectable for</param>
-        /// <param name="target">Target for the method This is not made selectable</param>
-        /// <param name="methodName">Method to call, This is not made selectable</param>
-        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
-        /// <returns>The method call as a string</returns>
-        public static string CallCSharpUtilityExtensitionMethod(Unit unit, string target, string methodName, params string[] parameters)
-        {
-            return target + ".".MakeClickable(unit) + methodName + "(".MakeClickable(unit) + string.Join(", ".MakeClickable(unit), parameters) + ")".MakeClickable(unit);
-        }
-
-        /// <summary>
-        /// Generate code for calling a static method in the Type inputed
-        /// </summary>
-        /// <param name="unit">Unit to make the code selectable for</param>
-        /// <param name="methodName">Method to call, This is not made selectable</param>
-        /// <param name="fullName">if the type should generate with its full name or not</param>
-        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
-        /// <returns>The method call as a string</returns>
-        public static string StaticCall(Unit unit, Type type, string methodName, bool fullName = true, params string[] parameters)
-        {
-            var typeName = type.As().CSharpName(false, fullName);
-            var clickableType = typeName.MakeClickable(unit);
-            var clickableMethodName = methodName.MakeClickable(unit);
-            var clickableOpenParen = "(".MakeClickable(unit);
-            var clickableComma = ", ".MakeClickable(unit);
-            var clickableCloseParen = ")".MakeClickable(unit);
-
-            return clickableType + "." + clickableMethodName + clickableOpenParen +
-                   string.Join(clickableComma, parameters) + clickableCloseParen;
-        }
-
-        /// <summary>
-        /// Generate code for calling a static method in the Type inputed
-        /// </summary>
-        /// <param name="unit">Unit to make the code selectable for</param>
-        /// <param name="methodName">Method to call, This is not made selectable</param>
-        /// <param name="fullName">if the type should generate with its full name or not</param>
-        /// <param name="parameters">Parameters for the method, This is not made selectable</param>
-        /// <returns>The method call as a string</returns>
-        public static string StaticCall(Type type, string methodName, bool fullName = true, params string[] parameters)
-        {
-            string typeName = type.As().CSharpName(false, fullName);
-            string joinedParams = string.Join(", ", parameters);
-
-            return $"{typeName}.{methodName}({joinedParams})";
-        }
-
         public static string Highlight(string code, Color color)
         {
             string hex = UnityEngine.ColorUtility.ToHtmlStringRGB(color);
@@ -753,6 +589,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             else return "";
         }
 
+        public static string ErrorHighlight(this string code)
+        {
+            return Highlight(code, ErrorColor);
+        }
+
         public static string WarningHighlight(this string code)
         {
             return Highlight(code, WarningColor);
@@ -760,12 +601,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string ConstructHighlight(this string code)
         {
-            // Temporary compatibility with existing uses of "if" and "else"
-            if (code == "if" || code == "else")
-            {
-                return code.ControlHighlight();
-            }
-
             return Highlight(code, ConstructColor);
         }
 

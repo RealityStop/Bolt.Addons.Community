@@ -20,10 +20,11 @@ namespace Unity.VisualScripting.Community
         }
 
         private static Texture2D background;
-
+        
         public override void OnInspectorGUI()
         {
             GraphGUIPatch.InitializeNewGUI();
+
             var old = LudiqStyles.headerBackground.normal.background;
 
             LudiqStyles.headerBackground.normal.background = background;

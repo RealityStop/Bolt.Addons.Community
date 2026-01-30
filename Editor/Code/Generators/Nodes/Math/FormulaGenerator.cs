@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
@@ -33,344 +33,252 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public FormulaGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var formula = Unit.formula;
-
-            if (string.IsNullOrWhiteSpace(formula))
-                return MakeClickableForThisUnit("/* No formula provided */".WarningHighlight());
+            if (string.IsNullOrWhiteSpace(Unit.formula))
+            {
+                writer.Error("No formula provided");
+                return;
+            }
 
             try
             {
-                var parsed = ParseFormula(formula, data);
-                return parsed;
-            }
-            catch (Exception ex)
-            {
-                return MakeClickableForThisUnit(("/* Error: " + ex.Message + " */").WarningHighlight());
-            }
-        }
+                int index = 0;
+                string formula = Unit.formula;
 
-        private string ParseFormula(string formula, ControlGenerationData data)
-        {
-            int index = 0;
-            return ParseExpression();
+                ParseExpression(writer);
 
-            string ParseExpression()
-            {
-                StringBuilder sb = new StringBuilder();
-                while (index < formula.Length)
+                void ParseExpression(CodeWriter cw = null)
                 {
-                    char ch = formula[index];
+                    cw ??= writer;
 
-                    if (char.IsLetter(ch))
+                    while (index < formula.Length)
                     {
-                        string identifier = ParseIdentifier();
-                        if (index < formula.Length && formula[index] == '(')
-                        {
-                            index++;
-                            var args = ParseArguments();
-                            if (!FunctionMap.TryGetValue(identifier.ToLowerInvariant(), out var func))
-                                throw new Exception($"Unknown function '{identifier}'");
+                        char ch = formula[index];
 
-                            sb.Append(MakeClickableForThisUnit(func + "(") + string.Join(MakeClickableForThisUnit(", "), args) + MakeClickableForThisUnit(")"));
-                        }
-                        else
+                        if (char.IsLetter(ch))
                         {
-                            sb.Append(ParseInputReference(identifier));
-                        }
-                    }
-                    else if (ch == '-')
-                    {
-                        bool isUnary = false;
-
-                        if (sb.Length == 0)
-                        {
-                            isUnary = true;
-                        }
-                        else
-                        {
-                            int lastIndex = sb.Length - 1;
-                            while (lastIndex >= 0 && char.IsWhiteSpace(sb[lastIndex]))
-                                lastIndex--;
-
-                            if (lastIndex < 0)
+                            string identifier = ParseIdentifier();
+                            if (index < formula.Length && formula[index] == '(')
                             {
-                                isUnary = true;
+                                index++;
+                                cw.Write(FunctionMap.TryGetValue(identifier.ToLowerInvariant(), out var func) ? func + "(" : identifier + "(");
+                                ParseArguments(cw);
+                                cw.Write(")");
                             }
                             else
                             {
-                                char lastChar = sb[lastIndex];
-                                if (lastChar == '(' || lastChar == '+' || lastChar == '-' || lastChar == '*' || lastChar == '/' || lastChar == '^' || lastChar == ',')
-                                {
-                                    isUnary = true;
-                                }
+                                ParseInputReference(identifier, cw);
                             }
                         }
-
-                        if (isUnary)
+                        else if ("-+*/^".Contains(ch))
                         {
-                            sb.Append(MakeClickableForThisUnit("-"));
+                            cw.Write(" " + ch + " ");
                             index++;
+                        }
+                        else if (ch == '(')
+                        {
+                            index++;
+                            cw.Write("(");
+                            ParseExpression(cw);
+                            Expect(')');
+                            cw.Write(")");
+                        }
+                        else if (ch == ')')
+                        {
+                            return;
+                        }
+                        else if (ch == '"')
+                        {
+                            cw.Write(ParseStringLiteral());
+                        }
+                        else if (ch == '\'')
+                        {
+                            cw.Write(ParseCharLiteral());
+                        }
+                        else if (char.IsDigit(ch) || ch == '.')
+                        {
+                            cw.Write(ParseNumber());
                         }
                         else
                         {
-                            sb.Append(MakeClickableForThisUnit(" - "));
                             index++;
                         }
                     }
-                    else if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^')
+                }
+
+                string ParseIdentifier()
+                {
+                    int start = index;
+                    while (index < formula.Length && char.IsLetter(formula[index])) index++;
+                    return formula.Substring(start, index - start);
+                }
+
+                void ParseArguments(CodeWriter cw)
+                {
+                    int parenDepth = 1;
+                    int argStart = index;
+                    bool firstArg = true;
+
+                    while (index < formula.Length && parenDepth > 0)
                     {
-                        sb.Append(MakeClickableForThisUnit(" " + ch + " "));
+                        char ch = formula[index];
+
+                        if (ch == '(') parenDepth++;
+                        else if (ch == ')') parenDepth--;
+                        else if (ch == ',' && parenDepth == 1)
+                        {
+                            if (!firstArg) cw.Write(", ");
+                            firstArg = false;
+
+                            string subExpr = formula.Substring(argStart, index - argStart);
+                            ParseArgumentExpression(subExpr, cw);
+
+                            index++;
+                            argStart = index;
+                            continue;
+                        }
+
                         index++;
                     }
-                    else if (ch == '(')
+
+                    if (index > argStart)
                     {
-                        index++;
-                        sb.Append(MakeClickableForThisUnit("(") + ParseExpression() + MakeClickableForThisUnit(")"));
-                        Expect(')');
-                    }
-                    else if (ch == ')')
-                    {
-                        break;
-                    }
-                    else if (ch == '"')
-                    {
-                        sb.Append(ParseStringLiteral());
-                    }
-                    else if (ch == '\'')
-                    {
-                        sb.Append(ParseCharLiteral());
-                    }
-                    else if (char.IsDigit(ch) || ch == '.')
-                    {
-                        sb.Append(ParseNumber());
-                    }
-                    else if (char.IsWhiteSpace(ch))
-                    {
-                        index++;
-                    }
-                    else
-                    {
-                        throw new Exception($"Unexpected character ' {ch} '");
+                        if (!firstArg) cw.Write(", ");
+                        string subExpr = formula.Substring(argStart, index - argStart - 1);
+                        ParseArgumentExpression(subExpr, cw);
                     }
                 }
-                return sb.ToString();
-            }
 
-            string ParseStringLiteral()
-            {
-                int start = index;
-                index++;
-
-                while (index < formula.Length)
+                void ParseArgumentExpression(string subExpr, CodeWriter cw)
                 {
-                    char ch = formula[index];
+                    string oldFormula = formula;
+                    int oldIndex = index;
 
-                    if (ch == '"')
+                    formula = subExpr;
+                    index = 0;
+
+                    ParseExpression(cw);
+
+                    formula = oldFormula;
+                    index = oldIndex;
+                }
+
+                void ParseInputReference(string name, CodeWriter cw)
+                {
+                    if (name.Length == 1 && char.IsLetter(name[0]))
                     {
-                        index++;
-                        break;
+                        int idx = Formula.GetArgumentIndex(char.ToLowerInvariant(name[0]));
+                        if (idx < Unit.multiInputs.Count)
+                        {
+                            GenerateValue(Unit.multiInputs[idx], data, cw);
+                            return;
+                        }
                     }
+                    ParseVariable(name, cw);
+                }
 
+                string ParseStringLiteral()
+                {
+                    int start = index;
+                    index++;
+                    while (index < formula.Length && formula[index] != '"') index++;
+                    index++;
+                    return formula.Substring(start, index - start).StringHighlight();
+                }
+
+                string ParseCharLiteral()
+                {
+                    int start = index;
+                    index++;
+                    if (index + 1 < formula.Length && formula[index + 1] == '\'') { index += 2; return formula.Substring(start, index - start).StringHighlight(); }
+                    return "'".ErrorHighlight();
+                }
+
+                string ParseNumber()
+                {
+                    int start = index;
+                    bool hasDot = false, hasExp = false;
+                    while (index < formula.Length)
+                    {
+                        char ch = formula[index];
+                        if (char.IsDigit(ch)) index++;
+                        else if (ch == '.' && !hasDot) { hasDot = true; index++; }
+                        else if ((ch == 'e' || ch == 'E') && !hasExp) { hasExp = true; index++; if (index < formula.Length && ("+-".Contains(formula[index]))) index++; }
+                        else break;
+                    }
+                    string numberStr = formula.Substring(start, index - start);
+
+                    if (int.TryParse(numberStr, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _))
+                        return numberStr.NumericHighlight();
+                    if (long.TryParse(numberStr, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _))
+                        return (numberStr + "L").NumericHighlight();
+                    if (float.TryParse(numberStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _))
+                        return (numberStr + "f").NumericHighlight();
+                    if (double.TryParse(numberStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _))
+                        return numberStr.NumericHighlight();
+
+                    throw new Exception($"Invalid numeric literal '{numberStr}'");
+                }
+
+                void Expect(char expected)
+                {
+                    if (index >= formula.Length || formula[index] != expected)
+                        throw new Exception($"Expected '{expected}' at position {index}");
                     index++;
                 }
 
-                string strLiteral = formula.Substring(start, index - start);
-                return MakeClickableForThisUnit(strLiteral.StringHighlight());
-            }
-
-            string ParseCharLiteral()
-            {
-                int start = index;
-                index++;
-
-                if (index + 1 < formula.Length && formula[index + 1] == '\'')
+                void ParseVariable(string name, CodeWriter cw)
                 {
-                    index += 2;
-                    string charLiteral = formula.Substring(start, index - start);
-                    return MakeClickableForThisUnit(charLiteral.StringHighlight());
-                }
-
-                return "'".WarningHighlight();
-            }
-
-            string ParseIdentifier()
-            {
-                int start = index;
-                while (index < formula.Length && char.IsLetter(formula[index]))
-                    index++;
-                return formula.Substring(start, index - start);
-            }
-
-            List<string> ParseArguments()
-            {
-                List<string> args = new List<string>();
-                StringBuilder argBuilder = new StringBuilder();
-                int parenDepth = 1;
-
-                while (index < formula.Length && parenDepth > 0)
-                {
-                    char ch = formula[index];
-
-                    if (ch == '(')
+                    if (data.ContainsNameInAncestorScope(name))
                     {
-                        parenDepth++;
-                        argBuilder.Append(ch);
-                        index++;
+                        cw.GetVariable(name);
+                        return;
                     }
-                    else if (ch == ')')
+
+                    if (data.TryGetGameObject(out var go))
                     {
-                        parenDepth--;
-                        if (parenDepth == 0)
+                        if (VisualScripting.Variables.Object(go).IsDefined(name))
                         {
-                            args.Add(ParseArgumentExpression(argBuilder.ToString()));
-                            argBuilder.Clear();
-                            index++;
-                            break;
-                        }
-                        else
-                        {
-                            argBuilder.Append(ch);
-                            index++;
+                            cw.Write(typeof(VisualScripting.Variables).As().CSharpName(false, true) +
+                                     $".Object({go.As().Code(false, false, true, "", false, true)}).Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
+                            return;
                         }
                     }
-                    else if (ch == ',' && parenDepth == 1)
+
+                    if (VisualScripting.Variables.ActiveScene.IsDefined(name))
                     {
-                        args.Add(ParseArgumentExpression(argBuilder.ToString()));
-                        argBuilder.Clear();
-                        index++;
+                        cw.Write(typeof(VisualScripting.Variables).As().CSharpName(false, true) +
+                                 $".{"ActiveScene".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
+                        return;
                     }
-                    else
+
+                    if (VisualScripting.Variables.Application.IsDefined(name))
                     {
-                        argBuilder.Append(ch);
-                        index++;
+                        cw.Write(typeof(VisualScripting.Variables).As().CSharpName(false, true) +
+                                 $".{"Application".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
+                        return;
+                    }
+
+                    if (VisualScripting.Variables.Saved.IsDefined(name))
+                    {
+                        cw.Write(typeof(VisualScripting.Variables).As().CSharpName(false, true) +
+                                 $".{"Saved".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
+                        return;
+                    }
+
+                    using (cw.CodeDiagnosticScope($"Variable '{name}' could not be found!", CodeDiagnosticKind.Error))
+                    {
+                        cw.Write(name.ErrorHighlight());
                     }
                 }
-
-                return args;
             }
-
-            string ParseArgumentExpression(string subExpr)
+            catch (Exception ex)
             {
-                int oldIndex = index;
-                string oldFormula = formula;
-
-                formula = subExpr;
-                index = 0;
-                string parsed = ParseExpression();
-
-                formula = oldFormula;
-                index = oldIndex;
-                return parsed;
-            }
-
-            string ParseInputReference(string name)
-            {
-                if (name.Length == 1 && char.IsLetter(name[0]))
+                using (writer.CodeDiagnosticScope(ex.Message, CodeDiagnosticKind.Error))
                 {
-                    int idx = Formula.GetArgumentIndex(char.ToLowerInvariant(name[0]));
-                    if (idx < Unit.multiInputs.Count)
-                        return GenerateValue(Unit.multiInputs[idx], data);
+                    writer.Error("Error");
                 }
-                return MakeClickableForThisUnit(ParseVariable(name));
-            }
-
-            string ParseNumber()
-            {
-                int start = index;
-                bool hasDot = false;
-                bool hasExp = false;
-
-                while (index < formula.Length)
-                {
-                    char ch = formula[index];
-                    if (char.IsDigit(ch))
-                    {
-                        index++;
-                    }
-                    else if (ch == '.' && !hasDot)
-                    {
-                        hasDot = true;
-                        index++;
-                    }
-                    else if ((ch == 'e' || ch == 'E') && !hasExp)
-                    {
-                        hasExp = true;
-                        index++;
-                        if (index < formula.Length && (formula[index] == '+' || formula[index] == '-'))
-                            index++;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-
-                string numberStr = formula.Substring(start, index - start);
-
-                if (int.TryParse(numberStr, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _))
-                {
-                    return MakeClickableForThisUnit(numberStr.NumericHighlight());
-                }
-
-                if (long.TryParse(numberStr, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out _))
-                {
-                    return MakeClickableForThisUnit((numberStr + "L").NumericHighlight());
-                }
-
-                if (float.TryParse(numberStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _))
-                {
-                    return MakeClickableForThisUnit((numberStr + "f").NumericHighlight());
-                }
-
-                if (double.TryParse(numberStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _))
-                {
-                    return MakeClickableForThisUnit(numberStr.NumericHighlight());
-                }
-
-                throw new Exception($"Invalid numeric literal '{numberStr}'");
-            }
-
-            void Expect(char expected)
-            {
-                if (index >= formula.Length || formula[index] != expected)
-                    throw new Exception($"Expected '{expected}' at position {index}");
-                index++;
-            }
-
-            string ParseVariable(string name)
-            {
-                if (data.ContainsNameInAnyScope(name))
-                {
-                    return name.VariableHighlight();
-                }
-
-                if (data.TryGetGameObject(out var gameObject))
-                {
-                    if (VisualScripting.Variables.Object(gameObject).IsDefined(name))
-                    {
-                        return typeof(VisualScripting.Variables).As().CSharpName(false, true) + $".Object({gameObject.As().Code(false, false, true, "", false, true)}).Get<{"float".ConstructHighlight()}>({name.As().Code(false)})";
-                    }
-                }
-
-
-                if (VisualScripting.Variables.ActiveScene.IsDefined(name))
-                {
-                    return typeof(VisualScripting.Variables).As().CSharpName(false, true) + $".{"ActiveScene".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})";
-                }
-
-                if (VisualScripting.Variables.Application.IsDefined(name))
-                {
-                    return typeof(VisualScripting.Variables).As().CSharpName(false, true) + $".{"Application".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})";
-                }
-
-                if (VisualScripting.Variables.Saved.IsDefined(name))
-                {
-                    return typeof(VisualScripting.Variables).As().CSharpName(false, true) + $".{"Saved".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})";
-                }
-
-                return name.WarningHighlight();
             }
         }
     }

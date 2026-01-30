@@ -13,108 +13,120 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public CooldownGenerator(Cooldown unit) : base(unit)
         {
-            NameSpaces = "Unity.VisualScripting.Community";
             variableName = Name;
         }
 
         private Cooldown Unit => unit as Cooldown;
 
         public override AccessModifier AccessModifier => AccessModifier.Private;
-
         public override FieldModifier FieldModifier => FieldModifier.None;
-
         public override string Name => "cooldown" + count;
-
         public override Type Type => typeof(CooldownLogic);
-
         public override object DefaultValue => new CooldownLogic();
-
         public override bool HasDefaultValue => true;
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting.Community";
+        }
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
             variableName = Name;
+
             if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
             {
-                return CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip("Cooldown only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate Cooldown", ""));
+                writer.WriteErrorDiagnostic("Cooldown only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", 
+                "Could not generate Cooldown", WriteOptions.IndentedNewLineAfter);
+                return;
             }
 
-            var output = string.Empty;
             if (!data.scopeGeneratorData.TryGetValue(Unit.enter, out _))
             {
                 data.scopeGeneratorData.Add(Unit.enter, true);
 
-                string readyCallback = Unit.exitReady.hasValidConnection ? GetAction(Unit.exitReady, data) : null;
-                string notReadyCallback = Unit.exitNotReady.hasValidConnection ? GetAction(Unit.exitNotReady, data) : null;
-                string onTickCallback = Unit.tick.hasValidConnection ? GetAction(Unit.tick, data) : null;
-                string onCompleteCallback = Unit.becameReady.hasValidConnection ? GetAction(Unit.becameReady, data) : null;
-
-                var parameters = new[]
-                {
-                    readyCallback ?? MakeClickableForThisUnit("null".ConstructHighlight()),
-                    notReadyCallback ?? MakeClickableForThisUnit("null".ConstructHighlight()),
-                    onTickCallback ?? MakeClickableForThisUnit("null".ConstructHighlight()),
-                    onCompleteCallback ?? MakeClickableForThisUnit("null".ConstructHighlight())
-                };
-
-                string paramList = string.Join(MakeClickableForThisUnit(", "), parameters);
-
-                output += CodeBuilder.Indent(indent)
-                    + MakeClickableForThisUnit(variableName.VariableHighlight() + ".Initialize(")
-                    + paramList
-                    + MakeClickableForThisUnit(");")
-                    + "\n";
+                writer.WriteIndented();
+                writer.InvokeMember(
+                    variableName.VariableHighlight(),
+                    "Initialize",
+                    WriteAction(Unit.exitReady, data),
+                    WriteAction(Unit.exitNotReady, data),
+                    WriteAction(Unit.tick, data),
+                    WriteAction(Unit.becameReady, data));
+                writer.WriteEnd(EndWriteOptions.LineEnd);
             }
 
             if (input == Unit.enter)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".StartCooldown(") + GenerateValue(Unit.duration, data) + MakeClickableForThisUnit(", ") + GenerateValue(Unit.unscaledTime, data) + MakeClickableForThisUnit(");") + "\n";
+                writer.WriteIndented();
+                writer.InvokeMember(
+                    variableName.VariableHighlight(),
+                    "StartCooldown",
+                    writer.Action(() => GenerateValue(Unit.duration, data, writer)),
+                    writer.Action(() => GenerateValue(Unit.unscaledTime, data, writer)));
+                writer.WriteEnd(EndWriteOptions.LineEnd);
             }
             else if (input == Unit.reset)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".ResetCooldown();") + "\n";
+                writer.WriteIndented();
+                writer.InvokeMember(variableName.VariableHighlight(), "ResetCooldown");
+                writer.WriteEnd(EndWriteOptions.LineEnd);
             }
 
-            GenerateActionMethod(Unit.exitReady, data, indent);
-            GenerateActionMethod(Unit.exitNotReady, data, indent);
-            GenerateActionMethod(Unit.tick, data, indent);
-            GenerateActionMethod(Unit.becameReady, data, indent);
-
-            void GenerateActionMethod(ControlOutput port, ControlGenerationData data, int indent)
-            {
-                if (port.hasValidConnection && !data.scopeGeneratorData.TryGetValue(port, out _))
-                {
-                    data.scopeGeneratorData.Add(port, true);
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("void ".ConstructHighlight()) + GetAction(port, data) + MakeClickableForThisUnit("()") + "\n";
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                    output += GetNextUnit(port, data, indent + 1);
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-                }
-            }
-
-            return output;
+            GenerateActionMethod(Unit.exitReady, data, writer);
+            GenerateActionMethod(Unit.exitNotReady, data, writer);
+            GenerateActionMethod(Unit.tick, data, writer);
+            GenerateActionMethod(Unit.becameReady, data, writer);
         }
 
-        private string GetAction(ControlOutput controlOutput, ControlGenerationData data)
+        private Action<CodeWriter> WriteAction(ControlOutput port, ControlGenerationData data)
         {
-            if (!controlOutput.hasValidConnection)
-                return "";
-            var output = "";
-            output += MakeClickableForThisUnit(variableName.Capitalize().First().Letter() + "_" + controlOutput.key.Capitalize().First().Letter());
-            return output;
+            if (!port.hasValidConnection)
+                return w => w.Write("null".ConstructHighlight());
+
+            return w => w.Write(GetAction(port));
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        private void GenerateActionMethod(ControlOutput port, ControlGenerationData data, CodeWriter writer)
+        {
+            if (!port.hasValidConnection || data.scopeGeneratorData.TryGetValue(port, out _))
+                return;
+
+            data.scopeGeneratorData.Add(port, true);
+
+            writer.WriteIndented("void ".ConstructHighlight());
+            writer.Write(GetAction(port));
+            writer.Parentheses();
+            writer.NewLine();
+
+            writer.WriteLine("{");
+
+            using (writer.IndentedScope(data))
+            {
+                GenerateChildControl(port, data, writer);
+            }
+
+            writer.WriteLine("}");
+        }
+
+        private string GetAction(ControlOutput controlOutput)
+        {
+            return variableName.Capitalize().First().Letter() + "_" + controlOutput.key.Capitalize().First().Letter();
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.remainingSeconds)
             {
-                return MakeClickableForThisUnit(variableName.VariableHighlight() + "." + "RemainingTime".VariableHighlight());
+                writer.GetMember(variableName.VariableHighlight(), "RemainingTime");
+                return;
             }
-            else if (output == Unit.remainingRatio)
+
+            if (output == Unit.remainingRatio)
             {
-                return MakeClickableForThisUnit(variableName.VariableHighlight() + "." + "RemainingPercentage".VariableHighlight());
+                writer.GetMember(variableName.VariableHighlight(), "RemainingPercentage");
+                return;
             }
-            return base.GenerateValue(output, data);
         }
     }
 }

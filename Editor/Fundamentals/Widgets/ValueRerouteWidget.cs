@@ -43,6 +43,11 @@ namespace Unity.VisualScripting.Community
             var copyID = unit.guid;
             if (!copyDataList.Any(c => c.copyID == copyID) && unit.hideConnection)
             {
+                if (unit.input.hasValidConnection && canvas.selection.Contains(unit.input.connection.source.unit))
+                {
+                    base.ExpandCopyGroup(copyGroup);
+                    return;
+                }
                 var copy = new RerouteCopyData
                 {
                     copyID = copyID,

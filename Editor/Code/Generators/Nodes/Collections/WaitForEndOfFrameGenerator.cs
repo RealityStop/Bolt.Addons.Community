@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -7,17 +9,19 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public WaitForEndOfFrameGenerator(Unit unit) : base(unit)
         {
-            NameSpaces = "UnityEngine";
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
         {
-            return base.GenerateValue(output, data);
+            yield return "UnityEngine";
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("yield return".ControlHighlight() + " new ".ConstructHighlight() + "WaitForEndOfFrame".TypeHighlight() + "();");
+            data.SetHasReturned(true);
+            writer.YieldReturn(writer.Action(() => writer.New(typeof(WaitForEndOfFrame))), WriteOptions.IndentedNewLineAfter);
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

@@ -18,61 +18,97 @@ namespace Unity.VisualScripting.Community.CSharp
         protected abstract string MethodName { get; }
 
         public BaseIncrementDecrementNodeGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        public override IEnumerable<string> GetNamespaces()
+        {
+            if (Unit.kind == VariableKind.Scene)
+                yield return "UnityEngine.SceneManagement";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (!Unit.assign.hasValidConnection)
-                return $"/* ControlInput {Unit.assign.key} requires connection */".WarningHighlight();
+            {
+                writer.Error($"ControlInput {Unit.assign.key} requires connection");
+                return;
+            }
 
             if (Unit.kind == VariableKind.Flow || Unit.kind == VariableKind.Graph)
             {
                 if (output == Unit.preIncrement)
-                    return MakeClickableForThisUnit(preVariable.VariableHighlight());
+                {
+                    writer.Write(preVariable.VariableHighlight());
+                    return;
+                }
                 if (output == Unit.postIncrement)
-                    return MakeClickableForThisUnit(postVariable.VariableHighlight());
+                {
+                    writer.Write(postVariable.VariableHighlight());
+                    return;
+                }
             }
 
-            return output == Unit.preIncrement ? MakeClickableForThisUnit($"{variableName}.pre".VariableHighlight()) : output == Unit.postIncrement ? MakeClickableForThisUnit($"{variableName}.post".VariableHighlight()) : base.GenerateValue(output, data);
-        }
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            if (Unit.kind == VariableKind.Scene)
-                NameSpaces = "UnityEngine.SceneManagement";
+            if (output == Unit.preIncrement)
+                writer.Write($"{variableName}.pre".VariableHighlight());
+            else if (output == Unit.postIncrement)
+                writer.Write($"{variableName}.post".VariableHighlight());
             else
-                NameSpaces = string.Empty;
-
-            return Unit.name.hasValidConnection ? GenerateConnectedNameCode(data, indent) : GenerateDirectNameCode(data, indent);
+                base.GenerateValueInternal(output, data, writer);
         }
 
-        private string GenerateConnectedNameCode(ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-            var nameCode = GenerateValue(Unit.name, data);
-            var kindAccessor = GetVariableKindAccessor(Unit.kind, string.Empty, data, out var variableType);
+            if (Unit.name.hasValidConnection)
+                GenerateConnectedNameCodeInternal(data, writer);
+            else
+                GenerateDirectNameCodeInternal(data, writer);
+        }
 
-            if (string.IsNullOrEmpty(kindAccessor))
+        private void GenerateConnectedNameCodeInternal(ControlGenerationData data, CodeWriter writer)
+        {
+            bool validKind = Unit.kind != VariableKind.Flow && Unit.kind != VariableKind.Graph;
+
+            if (!validKind)
             {
-                return MakeClickableForThisUnit(CodeUtility.ErrorTooltip(
-                    $"{Unit.kind} Variables do not support connected names",
-                    "Could not generate Variable",
-                    string.Empty));
+                using (writer.CodeDiagnosticScope($"{Unit.kind} Variables do not support connected names", CodeDiagnosticKind.Error))
+                    writer.Error($"Could not generate Variable");
+                GenerateExitControl(Unit.assigned, data, writer);
+                return;
             }
 
             variableName = data.AddLocalNameInScope($"{MethodName.ToLower()}Value");
-            if (variableType == typeof(object)) variableType = typeof(float);
 
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("var ".ConstructHighlight()) + MakeClickableForThisUnit(variableName.VariableHighlight()) + MakeClickableForThisUnit(" = ") +
-                      CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit(MethodName),
-                          kindAccessor + MakeClickableForThisUnit($".Get<{variableType.As().CSharpName(false, true)}>(") + nameCode + MakeClickableForThisUnit(")")) + MakeClickableForThisUnit(";") + "\n";
+            writer.WriteIndented();
+            writer.Write("var".ConstructHighlight());
+            writer.Space();
+            writer.Write(variableName.VariableHighlight());
+            writer.Write(" = ");
+            writer.CallCSharpUtilityMethod(MethodName, writer.Action(w =>
+            {
+                GetVariableKindAccessor(Unit.kind, string.Empty, data, writer, out variableType);
+                if (variableType == typeof(object)) variableType = typeof(float);
+                w.Write($".Get<{variableType.As().CSharpName(false, true)}>(");
+                GenerateValue(Unit.name, data, w);
+                w.Write(")");
+            }));
+            writer.Write(";");
+            writer.NewLine();
 
-            output += CodeBuilder.Indent(indent) + kindAccessor + MakeClickableForThisUnit(".Set(") + nameCode + MakeClickableForThisUnit(", " + variableName.VariableHighlight() + "." + "post".VariableHighlight() + ");") + "\n";
+            writer.WriteIndented();
+            GetVariableKindAccessor(Unit.kind, string.Empty, data, writer, out variableType);
+            writer.Write(".Set(");
+            GenerateValue(Unit.name, data, writer);
+            writer.ParameterSeparator();
+            writer.Write(variableName.VariableHighlight());
+            writer.Write(".");
+            writer.Write("post".VariableHighlight());
+            writer.Write(");");
+            writer.NewLine();
 
-            output += GetNextUnit(Unit.assigned, data, indent);
-            return output;
+            GenerateExitControl(Unit.assigned, data, writer);
         }
 
-        private string GenerateDirectNameCode(ControlGenerationData data, int indent)
+        private void GenerateDirectNameCodeInternal(ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
             var name = Unit.defaultValues[Unit.name.key] as string;
             var legalName = name.LegalMemberName();
             variableName = legalName;
@@ -80,34 +116,81 @@ namespace Unity.VisualScripting.Community.CSharp
             if (Unit.kind == VariableKind.Flow || Unit.kind == VariableKind.Graph)
             {
                 if (!data.ContainsNameInAnyScope(legalName))
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{"var".ConstructHighlight()} {legalName.VariableHighlight()} = {0.As().Code(false)};") + "\n";
+                {
+                    writer.WriteIndented();
+                    writer.Write("var".ConstructHighlight());
+                    writer.Space();
+                    writer.Write(legalName.VariableHighlight());
+                    writer.Write(" = ");
+                    writer.Write("0".NumericHighlight());
+                    writer.Write(";");
+                    writer.NewLine();
+                }
                 preVariable = data.AddLocalNameInScope($"pre{legalName}").VariableHighlight();
                 postVariable = data.AddLocalNameInScope($"post{legalName}").VariableHighlight();
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{"var".ConstructHighlight()} {preVariable} = {legalName.VariableHighlight()};") + "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{legalName.VariableHighlight()}{OperationKeyword};") + "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{"var".ConstructHighlight()} {postVariable} = {legalName.VariableHighlight()};") + "\n";
-                output += GetNextUnit(Unit.assigned, data, indent);
-                return output;
+
+                writer.WriteIndented();
+                writer.Write("var".ConstructHighlight());
+                writer.Space();
+                writer.Write(preVariable);
+                writer.Write(" = ");
+                writer.Write(legalName.VariableHighlight());
+                writer.Write(";");
+                writer.NewLine();
+
+                writer.WriteIndented();
+                writer.Write(legalName.VariableHighlight());
+                writer.Write(OperationKeyword);
+                writer.Write(";");
+                writer.NewLine();
+
+                writer.WriteIndented();
+                writer.Write("var".ConstructHighlight());
+                writer.Space();
+                writer.Write(postVariable);
+                writer.Write(" = ");
+                writer.Write(legalName.VariableHighlight());
+                writer.Write(";");
+                writer.NewLine();
+
+                GenerateExitControl(Unit.assigned, data, writer);
+                return;
             }
 
             var localName = data.AddLocalNameInScope($"{MethodName.ToLower()}{legalName}").VariableHighlight();
-            var accessor = GetVariableKindAccessor(Unit.kind, name, data, out var variableType);
-            if (variableType == typeof(object)) variableType = typeof(float);
 
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("var ".ConstructHighlight()) + MakeClickableForThisUnit(localName) + MakeClickableForThisUnit(" = ") +
-                      CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit(MethodName),
-                          accessor + MakeClickableForThisUnit($".Get<{variableType.As().CSharpName(false, true)}>({name.As().Code(false)})")) + MakeClickableForThisUnit(";") + "\n";
+            writer.WriteIndented();
+            writer.Write("var".ConstructHighlight());
+            writer.Space();
+            writer.Write(localName);
+            writer.Write(" = ");
+            writer.CallCSharpUtilityMethod(MethodName, writer.Action(w =>
+            {
+                GetVariableKindAccessor(Unit.kind, name, data, writer, out variableType);
+                if (variableType == typeof(object)) variableType = typeof(float);
+                w.Write($".Get<{variableType.As().CSharpName(false, true)}>(");
+                w.Write(name.As().Code(false));
+                w.Write(")");
+            }));
+            writer.Write(";");
+            writer.NewLine();
 
-            output += CodeBuilder.Indent(indent) + accessor + MakeClickableForThisUnit(".Set(") +
-                      name.As().Code(false, Unit) + MakeClickableForThisUnit($", {localName.VariableHighlight()}.{"post".VariableHighlight()});") + "\n";
+            writer.WriteIndented();
+            GetVariableKindAccessor(Unit.kind, name, data, writer, out _);
+            writer.Write(".Set(");
+            writer.Write(name.As().Code(false));
+            writer.ParameterSeparator();
+            writer.Write(localName);
+            writer.Write(".");
+            writer.Write("post".VariableHighlight());
+            writer.Write(");");
+            writer.NewLine();
 
             variableName = localName;
-            output += GetNextUnit(Unit.assigned, data, indent);
-
-            return output;
+            GenerateExitControl(Unit.assigned, data, writer);
         }
 
-        protected string GetVariableKindAccessor(VariableKind kind, string name, ControlGenerationData data, out Type resolvedType)
+        protected void GetVariableKindAccessor(VariableKind kind, string name, ControlGenerationData data, CodeWriter writer, out Type resolvedType)
         {
             resolvedType = typeof(object);
             var variables = typeof(Unity.VisualScripting.Variables).As().CSharpName(true, true);
@@ -118,21 +201,23 @@ namespace Unity.VisualScripting.Community.CSharp
                     var target = GetTarget(data);
                     if (target != null && VisualScripting.Variables.Object(target).IsDefined(name))
                         resolvedType = ResolveVariableType(VisualScripting.Variables.Object(target), name);
-                    return MakeClickableForThisUnit($"{variables}.Object(") + GenerateValue(Unit.@object, data) + MakeClickableForThisUnit(")");
+                    writer.Write($"{variables}.Object").Parentheses(w => GenerateValue(Unit.@object, data, w));
+                    break;
                 case VariableKind.Scene:
                     if (VisualScripting.Variables.ActiveScene.IsDefined(name))
                         resolvedType = ResolveVariableType(VisualScripting.Variables.ActiveScene, name);
-                    return MakeClickableForThisUnit(GetSceneKind(data, variables));
+                    writer.Write(GetSceneKind(data, variables));
+                    break;
                 case VariableKind.Application:
                     if (VisualScripting.Variables.Application.IsDefined(name))
                         resolvedType = ResolveVariableType(VisualScripting.Variables.Application, name);
-                    return MakeClickableForThisUnit($"{variables}.{"Application".VariableHighlight()}");
+                    writer.Write($"{variables}.{"Application".VariableHighlight()}");
+                    break;
                 case VariableKind.Saved:
                     if (VisualScripting.Variables.Saved.IsDefined(name))
                         resolvedType = ResolveVariableType(VisualScripting.Variables.Saved, name);
-                    return MakeClickableForThisUnit($"{variables}.{"Saved".VariableHighlight()}");
-                default:
-                    return string.Empty;
+                    writer.Write($"{variables}.{"Saved".VariableHighlight()}");
+                    break;
             }
         }
 
@@ -160,22 +245,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 }
             }
             return null;
-        }
-
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
-        {
-            if (input == Unit.@object && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
-                return MakeClickableForThisUnit("gameObject".VariableHighlight());
-
-            if (input == Unit.@object)
-            {
-                data.SetExpectedType(typeof(GameObject));
-                var code = base.GenerateValue(input, data);
-                data.RemoveExpectedType();
-                return code;
-            }
-
-            return base.GenerateValue(input, data);
         }
 
         private static Type GetCachedType(string typeId)

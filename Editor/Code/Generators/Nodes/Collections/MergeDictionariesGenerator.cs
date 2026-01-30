@@ -10,34 +10,68 @@ namespace Unity.VisualScripting.Community.CSharp
     [NodeGenerator(typeof(MergeDictionaries))]
     public class MergeDictionariesGenerator : NodeGenerator<MergeDictionaries>
     {
-        public MergeDictionariesGenerator(Unit unit) : base(unit) { NameSpaces = "Unity.VisualScripting.Community"; }
-
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public MergeDictionariesGenerator(Unit unit) : base(unit)
         {
-            if (data.GetExpectedType() != null && GetExpectedType(data.GetExpectedType()) != null)
+        }
+
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting.Community";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            var expected = data.GetExpectedType();
+            var genericTypes = expected != null ? GetExpectedType(expected) : null;
+
+            if (expected != null && genericTypes != null)
             {
-                return CodeBuilder.CallCSharpUtilityGenericMethod(Unit, MakeClickableForThisUnit(nameof(CSharpUtility.MergeDictionaries)), Unit.multiInputs.Select(input => GenerateValue(input, data)).ToArray(), GetExpectedType(data.GetExpectedType()));
+                writer.CallCSharpUtilityGenericMethod(nameof(CSharpUtility.MergeDictionaries),
+                    genericTypes.Select(t => new CodeWriter.TypeParameter(true) { TypeValue = t }).ToArray(),
+                    writer.Action(() =>
+                    {
+                        for (int i = 0; i < Unit.multiInputs.Count; i++)
+                        {
+                            GenerateValue(Unit.multiInputs[i], data, writer);
+                            if (i < Unit.multiInputs.Count - 1)
+                                writer.ParameterSeparator();
+                        }
+                    })
+                );
             }
             else
-                return CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit(nameof(CSharpUtility.MergeDictionaries)), Unit.multiInputs.Select(input => GenerateValue(input, data)).ToArray());
+            {
+                writer.CallCSharpUtilityMethod(nameof(CSharpUtility.MergeDictionaries),
+                    writer.Action(() =>
+                    {
+                        for (int i = 0; i < Unit.multiInputs.Count; i++)
+                        {
+                            GenerateValue(Unit.multiInputs[i], data, writer);
+                            if (i < Unit.multiInputs.Count - 1)
+                                writer.ParameterSeparator();
+                        }
+                    }
+                ));
+            }
         }
 
         private Type[] GetExpectedType(Type type)
         {
             if (typeof(IDictionary).IsAssignableFrom(type) || typeof(IDictionary<,>).IsAssignableFrom(type))
             {
-                NameSpaces += "," + type.Namespace;
                 if (type.IsGenericType)
                 {
                     var types = type.GetGenericArguments();
-                    NameSpaces += "," + string.Join(",", types.Select(t => t.Namespace));
+
                     return types;
                 }
-                else if (type == typeof(AotDictionary))
+
+                if (type == typeof(AotDictionary))
                 {
                     return new Type[] { typeof(object), typeof(object) };
                 }
             }
+
             return new Type[] { typeof(object), typeof(object) };
         }
     }

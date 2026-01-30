@@ -7,7 +7,6 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(WaitForManualPress))]
-    [RequiresMethods]
     public class WaitForManualPressGenerator : VariableNodeGenerator, IRequireMethods
     {
         private WaitForManualPress Unit => unit as WaitForManualPress;
@@ -24,23 +23,20 @@ namespace Unity.VisualScripting.Community.CSharp
         public override bool HasDefaultValue => false;
 
         public WaitForManualPressGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-        {
-            return base.GenerateValue(output, data);
-        }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = MakeClickableForThisUnit(Name.VariableHighlight() + " = " + "true".ConstructHighlight() + ";") + "\n";
-            output += MakeClickableForThisUnit(typeof(WaitWhile).Create("() => " + Name.VariableHighlight()).YieldReturn()) + "\n";
-            output += GetNextUnit(Unit.output, data, indent);
-            return  output;
+            writer.SetVariable(Name, writer.BoolString(true));
+
+            writer.YieldReturn(writer.Action(() => writer.New(typeof(WaitWhile), "() => " + Name.VariableHighlight())), WriteOptions.IndentedNewLineAfter);
+
+            GenerateExitControl(Unit.output, data, writer);
         }
 
         public IEnumerable<MethodGenerator> GetRequiredMethods(ControlGenerationData data)
         {
             var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), data.AddMethodName("WaitForPress"));
-            method.Body(MakeClickableForThisUnit($"{Name.VariableHighlight()} = {"false".ConstructHighlight()};") + "\n");
+            method.Body(w => w.Write($"{Name.VariableHighlight()} = {"false".ConstructHighlight()};").NewLine());
             var attribute = AttributeGenerator.Attribute<ContextMenu>();
             attribute.AddParameter($"Trigger_{Name}");
             method.AddAttribute(attribute);

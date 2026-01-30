@@ -16,33 +16,10 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateControl(input, data, indent);
-        }
-
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-        {
-            var _output = string.Empty;
-            _output += GenerateValue(Unit.target, data) + MakeClickableForThisUnit("." + output.key);
-            return _output;
-        }
-
-
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
-        {
-            if (input.hasValidConnection)
-            {
-                return input.connection.source.type == typeof(object) ? MakeClickableForThisUnit($"(({input.type.DisplayName().TypeHighlight()})") + (input.connection.source.unit as Unit).GenerateValue(input.connection.source) + ")" : string.Empty + (input.connection.source.unit as Unit).GenerateValue(input.connection.source, data);
-            }
-            else if (input.hasDefaultValue)
-            {
-                return unit.defaultValues[input.key].As().Code(false, Unit, true, true);
-            }
-            else
-            {
-                return MakeClickableForThisUnit($"/* {input.key} Requires Input ");
-            }
+            GenerateValue(Unit.target, data, writer);
+            writer.Write("." + output.key.VariableHighlight());
         }
     }
 }

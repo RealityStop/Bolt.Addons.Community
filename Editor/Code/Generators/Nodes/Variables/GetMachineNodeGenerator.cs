@@ -11,17 +11,22 @@ namespace Unity.VisualScripting.Community.CSharp
     public class GetMachineNodeGenerator : NodeGenerator<GetMachineNode>
     {
         public GetMachineNodeGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (data?.GetExpectedType().IsAssignableFrom(typeof(SMachine)) ?? false)
             {
-                data.SetCurrentExpectedTypeMet(true, typeof(SMachine));
+                data.MarkExpectedTypeMet(typeof(SMachine));
             }
-            data.SetExpectedType(Unit.type == GraphSource.Macro ? typeof(ScriptGraphAsset) : typeof(string));
-            var assetCode = GenerateValue(Unit.asset, data);
-            data.RemoveExpectedType();
-            var paramCode = Unit.type == GraphSource.Macro && CodeUtility.CleanCode(assetCode).Trim().RemoveHighlights().RemoveMarkdown() == "null" ? MakeClickableForThisUnit($"({"ScriptGraphAsset".TypeHighlight()}){"null".ConstructHighlight()}") : assetCode;
-            return CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("GetScriptMachine"), GenerateValue(Unit.target, data), paramCode);
+
+            var name = Unit.type == GraphSource.Macro ? "GetScriptMachineWithAsset" : "GetScriptMachineWithName";
+            writer.CallCSharpUtilityMethod("name", writer.Action(() => GenerateValue(Unit.target, data, writer)), writer.Action(() =>
+            {
+                using (data.Expect(Unit.type == GraphSource.Macro ? typeof(ScriptGraphAsset) : typeof(string)))
+                {
+                    GenerateValue(Unit.asset, data, writer);
+                }
+            }));
         }
     }
 }

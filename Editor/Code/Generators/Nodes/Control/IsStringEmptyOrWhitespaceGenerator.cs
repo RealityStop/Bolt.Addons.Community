@@ -1,4 +1,4 @@
-﻿using System.Text;
+﻿using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
@@ -7,72 +7,55 @@ namespace Unity.VisualScripting.Community.CSharp
     [NodeGenerator(typeof(IsStringEmptyOrWhitespace))]
     public sealed class IsStringEmptyOrWhitespaceGenerator : NodeGenerator<IsStringEmptyOrWhitespace>
     {
-        public IsStringEmptyOrWhitespaceGenerator(IsStringEmptyOrWhitespace unit) : base(unit)
-        {
-        }
+        public IsStringEmptyOrWhitespaceGenerator(IsStringEmptyOrWhitespace unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = new StringBuilder();
+            if (input != Unit.Input)
+                return;
 
-            if (input == Unit.Input)
+            writer.WriteIndented("if ".ControlHighlight() + "(");
+            writer.InvokeMember(typeof(string), "IsNullOrWhiteSpace", writer.Action(() =>
             {
-                output.Append(CodeBuilder.Indent(indent))
-                      .Append(MakeClickableForThisUnit("if".ControlHighlight() + " ("))
-                      .Append(MakeClickableForThisUnit("string".ConstructHighlight() + "." + "IsNullOrWhiteSpace(") + GenerateValue(Unit.String, data) + MakeClickableForThisUnit(")"))
-                      .Append(MakeClickableForThisUnit(")"))
-                      .AppendLine()
-                      .Append(CodeBuilder.Indent(indent))
-                      .AppendLine(MakeClickableForThisUnit("{"));
+                GenerateValue(Unit.String, data, writer);
+            }));
+            writer.WriteEnd(EndWriteOptions.CloseParentheses | EndWriteOptions.Newline);
 
-                string trueCode;
+            writer.WriteLine("{");
 
-                data.NewScope();
-                trueCode = GetNextUnit(Unit.True, data, indent + 1).TrimEnd();
-                data.ExitScope();
-                output.Append(trueCode);
-
-                output.AppendLine()
-                      .Append(CodeBuilder.Indent(indent))
-                      .AppendLine(MakeClickableForThisUnit("}"));
-
-                if (!Unit.False.hasAnyConnection)
-                {
-                    output.Append("\n");
-                }
-
-                if (Unit.False.hasAnyConnection)
-                {
-                    output.Append(CodeBuilder.Indent(indent))
-                          .Append(MakeClickableForThisUnit("else".ConstructHighlight()));
-
-                    if (!Unit.True.hasValidConnection || string.IsNullOrEmpty(trueCode))
-                    {
-                        output.Append(MakeClickableForThisUnit(CodeBuilder.MakeRecommendation(
-                            "You should use the negate node and connect the true input instead")));
-                    }
-
-                    output.AppendLine()
-                          .Append(CodeBuilder.Indent(indent))
-                          .AppendLine(MakeClickableForThisUnit("{"));
-
-                    data.NewScope();
-                    output.Append(GetNextUnit(Unit.False, data, indent + 1).TrimEnd());
-                    data.ExitScope();
-
-                    output.AppendLine()
-                          .Append(CodeBuilder.Indent(indent))
-                          .AppendLine(MakeClickableForThisUnit("}") + "\n");
-                }
+            using (writer.IndentedScope(data))
+            {
+                GenerateChildControl(Unit.True, data, writer);
             }
 
-            return output.ToString();
+            writer.WriteLine("}");
+
+            if (!Unit.False.hasAnyConnection)
+            {
+                return;
+            }
+
+            writer.WriteLine("else".ControlHighlight());
+
+            writer.WriteLine("{");
+
+            using (writer.IndentedScope(data))
+            {
+                GenerateChildControl(Unit.False, data, writer);
+            }
+
+            writer.WriteLine("}");
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (input == Unit.String && !input.hasValidConnection && Unit.defaultValues[input.key] == null) return "".As().Code(false, Unit);
-            return base.GenerateValue(input, data);
+            if (input == Unit.String && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
+            {
+                writer.Write("".As().Code(false));
+                return;
+            }
+
+            base.GenerateValueInternal(input, data, writer);
         }
     }
 }

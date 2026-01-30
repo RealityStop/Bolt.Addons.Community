@@ -1,69 +1,99 @@
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
+using System.Collections.Generic;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(QueryNode))]
-    public class QueryNodeGenerator : NodeGenerator<QueryNode>
+    public class QueryNodeGenerator : LocalVariableGenerator
     {
+        private QueryNode Unit => unit as QueryNode;
         public QueryNodeGenerator(Unit unit) : base(unit)
         {
-            NameSpaces = "System.Linq";
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "System.Linq";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.result)
             {
-                switch (Unit.operation)
+                if (!Unit.enter.hasValidConnection)
                 {
-                    case QueryOperation.Any:
-                    case QueryOperation.Sum:
-                        return $"{GenerateValue(Unit.collection, data)}{MakeClickableForThisUnit("." + Unit.operation + "()")}";
-
-                    case QueryOperation.Count:
-                        return $"{GenerateValue(Unit.collection, data)}{MakeClickableForThisUnit("." + Unit.operation + $"() > {"0".NumericHighlight()}")}";
-
-                    case QueryOperation.AnyWithCondition:
-                    case QueryOperation.First:
-                    case QueryOperation.FirstOrDefault:
-                    case QueryOperation.Single:
-                    case QueryOperation.Last:
-                    case QueryOperation.LastOrDefault:
-                    case QueryOperation.Where:
-                        return GenerateLambda(Unit.operation, Unit.condition, data);
-
-                    case QueryOperation.OrderBy:
-                    case QueryOperation.OrderByDescending:
-                        return GenerateLambda(Unit.operation, Unit.key, data);
-
-                    case QueryOperation.Select:
-                        return GenerateLambda(Unit.operation, Unit.value, data);
-
-                    case QueryOperation.Skip:
-                    case QueryOperation.Take:
-                        return $"{GenerateValue(Unit.collection, data)}{MakeClickableForThisUnit("." + GetOperationMethod(Unit.operation) + "(")}{GenerateValue(Unit.value, data)}{MakeClickableForThisUnit(")")}";
+                    writer.WriteErrorDiagnostic("The 'enter' ControlInput requires a connection", "Could not generate QueryNode");
+                    return;
                 }
+                writer.GetVariable(variableName);
             }
             else if (output == Unit.item)
             {
-                return MakeClickableForThisUnit("item".VariableHighlight());
+                writer.GetVariable("item");
             }
-            return base.GenerateValue(output, data);
         }
 
-        private string GenerateLambda(QueryOperation op, ValueInput returnValue, ControlGenerationData data)
+        private void GenerateOperation(CodeWriter writer, ControlGenerationData data)
         {
-            var indent = CodeBuilder.currentIndent;
-            var lambdaBody =
-                GetNextUnit(Unit.body, data, indent + 1) +
-                CodeBuilder.GetCurrentIndent(Unit.body.hasValidConnection ? 0 : 1) +
-                GenerateValue(returnValue, data).Return(true, Unit);
+            switch (Unit.operation)
+            {
+                case QueryOperation.Any:
+                case QueryOperation.Sum:
+                    GenerateValue(Unit.collection, data, writer);
+                    writer.Write("." + Unit.operation + "()");
+                    break;
 
-            return $"{GenerateValue(Unit.collection, data)}{MakeClickableForThisUnit("." + GetOperationMethod(op) + "(")}" +
-                   CodeBuilder.MultiLineLambda(Unit, MakeClickableForThisUnit("item".VariableHighlight()), lambdaBody, indent);
+                case QueryOperation.Count:
+                    GenerateValue(Unit.collection, data, writer);
+                    writer.Write("." + Unit.operation + "() > " + "0".NumericHighlight());
+                    break;
+
+                case QueryOperation.AnyWithCondition:
+                case QueryOperation.First:
+                case QueryOperation.FirstOrDefault:
+                case QueryOperation.Single:
+                case QueryOperation.Last:
+                case QueryOperation.LastOrDefault:
+                case QueryOperation.Where:
+                    GenerateLambda(writer, Unit.operation, Unit.condition, data);
+                    break;
+
+                case QueryOperation.OrderBy:
+                case QueryOperation.OrderByDescending:
+                    GenerateLambda(writer, Unit.operation, Unit.key, data);
+                    break;
+
+                case QueryOperation.Select:
+                    GenerateLambda(writer, Unit.operation, Unit.value, data);
+                    break;
+
+                case QueryOperation.Skip:
+                case QueryOperation.Take:
+                    GenerateValue(Unit.collection, data, writer);
+                    writer.Write("." + GetOperationMethod(Unit.operation) + "(");
+                    GenerateValue(Unit.value, data, writer);
+                    writer.Write(")");
+                    break;
+            }
+        }
+
+        private void GenerateLambda(CodeWriter writer, QueryOperation op, ValueInput returnValue, ControlGenerationData data)
+        {
+            GenerateValue(Unit.collection, data, writer);
+            writer.Write("." + GetOperationMethod(op) + "(");
+            writer.MultilineLambda(
+                writer.Action(() =>
+                {
+                    if (Unit.body != null)
+                        GenerateChildControl(Unit.body, data, writer);
+                    writer.Return(writer.Action(() => GenerateValue(returnValue, data, writer)), WriteOptions.IndentedNewLineAfter);
+                }),
+                "item"
+            );
+            writer.Write(")");
         }
 
         private string GetOperationMethod(QueryOperation operation)
@@ -75,9 +105,47 @@ namespace Unity.VisualScripting.Community.CSharp
             };
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.exit, data, indent);
+            Type type = Unit.result?.type ?? typeof(object);
+
+            if (type.IsGenericType)
+            {
+                var sourceType = GetSourceType(Unit.collection, data, writer);
+                if (sourceType.IsGenericType)
+                {
+                    var actualType = Unit.operation == QueryOperation.OrderBy || Unit.operation == QueryOperation.OrderByDescending
+                    ? typeof(IOrderedEnumerable<>)
+                    : typeof(IEnumerable<>);
+                    type = actualType.MakeGenericType(sourceType.GetGenericArguments()[0]);
+                }
+            }
+            else if (type == typeof(object))
+            {
+                switch (Unit.operation)
+                {
+                    case QueryOperation.First:
+                    case QueryOperation.FirstOrDefault:
+                    case QueryOperation.Single:
+                    case QueryOperation.Last:
+                    case QueryOperation.LastOrDefault:
+                        var sourceType = GetSourceType(Unit.collection, data, writer);
+                        if (sourceType != typeof(object) && sourceType.IsGenericType)
+                        {
+                            type = sourceType.GetGenericArguments()[0];
+                        }
+                        break;
+                }
+            }
+
+            data.CreateSymbol(Unit, type);
+
+            variableName = data.AddLocalNameInScope("queryOperation", type);
+            variableType = type;
+
+            writer.CreateVariable(variableType, variableName, writer.Action(() => GenerateOperation(writer, data)));
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

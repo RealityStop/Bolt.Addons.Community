@@ -27,8 +27,17 @@ namespace Unity.VisualScripting.Community
             HUMIO.Delete(fullPath);
             HUMIO.Ensure(fullPath).Path();
 
+            var oldTooltips = CSharpPreviewSettings.ShouldGenerateTooltips;
+            var oldRecommendations = CSharpPreviewSettings.ShouldShowRecommendations;
+
+            CSharpPreviewSettings.ShouldGenerateTooltips = false;
+            CSharpPreviewSettings.ShouldShowRecommendations = false;
+
             string code = GenerateCode(asset);
             HUMIO.Save(code).Custom(fullPath).Text(false);
+
+            CSharpPreviewSettings.ShouldGenerateTooltips = oldTooltips;
+            CSharpPreviewSettings.ShouldShowRecommendations = oldRecommendations;
 
             string relativePath = GetRelativeFilePath(asset, paths);
 

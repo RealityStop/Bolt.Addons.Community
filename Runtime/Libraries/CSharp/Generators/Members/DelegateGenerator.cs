@@ -1,6 +1,7 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -28,19 +29,20 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return this;
         }
 
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
-            return CodeBuilder.Indent(indent) + scope.AsString() + " delegate ".ConstructHighlight() + returnType.Name + " " + name + "(" + GenerateParameters() + ");";
+            writer.WriteIndented(scope.AsString() + " delegate ".ConstructHighlight() + returnType.Name + " " + name + "(");
+            GenerateParameters();
 
-            string GenerateParameters()
+            writer.Write(");");
+
+            void GenerateParameters()
             {
-                var output = string.Empty;
                 for (int i = 0; i < parameters.Count; i++)
                 {
-                    output += parameters[i].Generate(0);
-                    output += i < parameters.Count - 1 ? ", " : string.Empty;
+                    parameters[i].Generate(writer, data);
+                    if (i < parameters.Count - 1) writer.Write(", ");
                 }
-                return output;
             }
         }
 

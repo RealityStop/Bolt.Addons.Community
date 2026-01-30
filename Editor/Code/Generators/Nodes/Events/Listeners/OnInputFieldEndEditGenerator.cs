@@ -36,9 +36,9 @@ namespace Unity.VisualScripting.Community.CSharp
             return Unit.target;
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("value".VariableHighlight());
+            writer.GetVariable("value");
         }
     }
 }

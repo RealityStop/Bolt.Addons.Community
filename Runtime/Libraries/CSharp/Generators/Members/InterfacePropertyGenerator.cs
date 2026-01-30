@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using static Unity.VisualScripting.Community.Libraries.Humility.HUMType_Children;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -19,9 +20,28 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public string set;
         public List<string> definedUsings = new List<string>();
 
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
-            return (isStringType ? (withNamespace ? stringNamespace.SlashesToPeriods().OnNotNullOrEmpty(string.Empty) + stringType.WithHighlight(highlightType) : stringType.WithHighlight(highlightType)) : type.As().CSharpName()) + " " + name.LegalMemberName() + " " + "{ " + get + set + "}";
+            if (isStringType)
+            {
+                if (withNamespace)
+                {
+                    writer.WriteIndented(stringNamespace.SlashesToPeriods().OnNotNullOrEmpty(string.Empty) + stringType.WithHighlight(highlightType));
+                }
+                else
+                {
+                    writer.WriteIndented(stringType.WithHighlight(highlightType));
+                }
+            }
+            else
+            {
+                writer.WriteIndented();
+                writer.Write(type);
+            }
+
+            writer.Write(" " + name.LegalMemberName().VariableHighlight());
+
+            writer.Write(" " + "{ " + get + set + "}").NewLine();
         }
 
         private InterfacePropertyGenerator() { }
@@ -58,7 +78,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (type != null)
             {
                 if (!type.Is().PrimitiveStringOrVoid()) usings.Add(type.Namespace);
-                
+
             }
             else if (!string.IsNullOrEmpty(stringNamespace))
             {

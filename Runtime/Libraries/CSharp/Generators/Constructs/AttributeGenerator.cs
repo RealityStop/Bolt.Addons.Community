@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Utility;
 using System.Linq;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -20,11 +21,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         /// <summary>
         /// Generate the attribute as a string.
         /// </summary>
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
             if (type == null)
             {
-                return "";
+                return;
             }
 
             var parameterList = new List<string>();
@@ -52,10 +53,10 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             var showBrackets = parameterList.Count > 0;
 
-            return CodeBuilder.Indent(indent) + "[" +
-                type.As().CSharpName(false, true) +
+            writer.WriteIndented("[" +
+                writer.GetTypeNameHighlighted(type) +
                 (showBrackets ? "(" + parameters + ")" : string.Empty) +
-                "]";
+                "]");
         }
 
         private AttributeGenerator()

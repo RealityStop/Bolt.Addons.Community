@@ -41,11 +41,37 @@ namespace Unity.VisualScripting.Community
                     }
                     else // if (showPredictedvalue)
                     {
-                        value = Flow.Predict(connection.source, reference);
+                        try
+                        {
+                            value = Flow.Predict(connection.source, reference);
+                        }
+                        catch (Exception ex)
+                        {
+                            value = ex;
+                        }
                     }
 
                     var valueString = value.ToShortString();
-                    if (value is Color colorValue)
+                    if (value is Exception exception)
+                    {
+                        var label = EditorGUIUtility.TrTextContentWithIcon("", MessageType.Error);
+                        var labelSize = Styles.prediction.CalcSize(label);
+                        var labelPosition = new Rect(position.position - labelSize / 2, labelSize);
+                        BeginDim();
+                        GUI.Label(labelPosition, label, Styles.prediction);
+                        EndDim();
+                        if (labelPosition.Contains(Event.current.mousePosition))
+                        {
+                            var innerRect = new Rect(labelPosition.x + 1, labelPosition.y + 1, labelPosition.width - 2, labelPosition.height - 2);
+
+                            var colorText = exception.Message;
+                            var textSize = Styles.prediction.CalcSize(new GUIContent(colorText));
+                            var textRect = new Rect(labelPosition.x + labelPosition.width + 6, labelPosition.center.y - textSize.y / 2, textSize.x, textSize.y);
+
+                            GUI.Label(textRect, colorText, Styles.prediction);
+                        }
+                    }
+                    else if (value is Color colorValue)
                     {
                         var label = new GUIContent(valueString, Icons.Type(typeof(Color))?[IconSize.Small]);
                         var labelSize = Styles.prediction.CalcSize(label);
@@ -91,14 +117,14 @@ namespace Unity.VisualScripting.Community
                                     if (m is FieldInfo f)
                                     {
                                         return f.IsPublic ||
-                                               f.GetCustomAttribute<SerializeField>() != null ||
-                                               f.GetCustomAttribute<SerializeAttribute>() != null ||
-                                               f.GetCustomAttribute<InspectableAttribute>() != null;
+                                            f.GetCustomAttribute<SerializeField>() != null ||
+                                            f.GetCustomAttribute<SerializeAttribute>() != null ||
+                                            f.GetCustomAttribute<InspectableAttribute>() != null;
                                     }
                                     else if (m is PropertyInfo p)
                                     {
                                         return (p.GetCustomAttribute<InspectableAttribute>() != null ||
-                                               p.GetCustomAttribute<SerializeAttribute>() != null || p.IsPubliclyGettable()) && p.CanRead;
+                                            p.GetCustomAttribute<SerializeAttribute>() != null || p.IsPubliclyGettable()) && p.CanRead;
                                     }
                                     return false;
                                 })

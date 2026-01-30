@@ -1,10 +1,4 @@
 #if VISUAL_SCRIPTING_1_8_0_OR_GREATER
-using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
-
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(MissingType))]
@@ -12,14 +6,14 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public MissingTypeGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return $"/* The type {Unit.formerType} could not be found */".WarningHighlight();
+            writer.Error($"The type {Unit.formerType} could not be found");
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return $"/* The type {Unit.formerType} could not be found */".WarningHighlight();
+            writer.Error($"The type {Unit.formerType} could not be found");
         }
     }
 }

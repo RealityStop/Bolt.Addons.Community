@@ -29,15 +29,23 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override List<TypeParam> Parameters => new List<TypeParam>();
 
-        public override string MethodBody => GetNextUnit(Unit.Converted, Data, indent);
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        public override void GeneratedMethodCode(ControlGenerationData data, CodeWriter writer)
         {
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"{typeof(FlowToCoroutine).DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {typeof(FlowToCoroutine).DisplayName()}", ""));
-            var builder = Unit.CreateClickableString();
-            builder.MethodCall("StartCoroutine", Name + "()").EndLine();
-            builder.Ignore(GetNextUnit(Unit.normalFlow, data, indent));
-            return builder;
+            GenerateChildControl(Unit.Converted, data, writer);
+        }
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
+            {
+                writer.WriteErrorDiagnostic($"{typeof(CoroutineToFlow).DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour",
+                $"Could not generate {typeof(CoroutineToFlow).DisplayName()}", WriteOptions.IndentedNewLineAfter);
+                return;
+            }
+
+            writer.WriteIndented("StartCoroutine").Parentheses(i => i.Write(Name + "()")).WriteEnd(EndWriteOptions.LineEnd);
+
+            GenerateExitControl(Unit.normalFlow, data, writer);
         }
     }
 }

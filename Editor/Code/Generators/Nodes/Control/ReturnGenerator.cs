@@ -13,31 +13,47 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            string output = string.Empty;
             if (input == Unit.enter)
             {
                 if (Unit.data.hasValidConnection)
                 {
-                    data.SetExpectedType(typeof(ReturnEventArg));
-                    var dataCode = GenerateValue(Unit.data, data);
-                    data.RemoveExpectedType();
-                    output += CodeBuilder.Indent(indent) + dataCode + MakeClickableForThisUnit("." + "callback".VariableHighlight() + "?.Invoke(") + GenerateValue(Unit.value, data) + MakeClickableForThisUnit(");") + "\n";
-
-                    return output;
+                    writer.WriteIndented();
+                    using (data.Expect(typeof(ReturnEventArg)))
+                        GenerateValue(Unit.data, data, writer);
+                    writer.Write($".{"callback".VariableHighlight()}?.Invoke(");
+                    GenerateValue(Unit.value, data, writer);
+                    writer.WriteEnd();
+                    return;
                 }
 
                 if (data.MustReturn)
                 {
-                    var sourceType = GetSourceType(Unit.value, data) ?? typeof(object);
+                    var sourceType = GetSourceType(Unit.value, data, writer);
                     data.SetHasReturned(data.Returns == sourceType || data.Returns.IsAssignableFrom(sourceType));
                 }
-                var yield = SupportsYieldReturn(data.Returns) ? "yield ".ControlHighlight() : "";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(yield + "return".ControlHighlight()) + (!data.Returns.Is().Void() ? MakeClickableForThisUnit(" ") + GenerateValue(Unit.value, data) : "") + MakeClickableForThisUnit(";");
-                return output;
+                else if (data.MustBreak)
+                {
+                    data.SetHasBroke(true);
+                }
+
+                writer.WriteIndented();
+                bool isYieldReturn = SupportsYieldReturn(data.Returns);
+                if (isYieldReturn)
+                {
+                    writer.Write("yield ".ControlHighlight());
+                }
+                writer.Write("return".ControlHighlight());
+
+                if (!data.Returns.Is().Void())
+                {
+                    writer.Write(" ");
+                    GenerateValue(Unit.value, data, writer);
+                }
+
+                writer.WriteEnd(EndWriteOptions.LineEnd);
             }
-            return base.GenerateControl(input, data, indent);
         }
 
         /// <summary>

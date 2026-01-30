@@ -26,21 +26,26 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public WaitForFlowGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = Unit.CreateClickableString();
-            output.Indent(indent);
             if (input != Unit.reset)
             {
-                output.Body(before =>
-                before.Clickable("if ".ControlHighlight()).Parentheses(inner => inner.InvokeMember(Name.VariableHighlight(), "Enter", Unit.controlInputs.ToList().IndexOf(input).As().Code(false))),
-                (inner, indent) => inner.Ignore(GetNextUnit(Unit.exit, data, indent)), true, indent);
+                writer.WriteIndented("if ".ControlHighlight()).Parentheses(inner =>
+                inner.InvokeMember(Name.VariableHighlight(), "Enter", Unit.controlInputs.ToList().IndexOf(input).As().Code(false))).NewLine();
+                writer.WriteLine("{");
+                using (writer.IndentedScope(data))
+                {
+                    GenerateChildControl(Unit.exit, data, writer);
+                }
+                writer.WriteLine("}");
             }
             else
             {
-                output.InvokeMember(Name.VariableHighlight(), "Reset", Array.Empty<string>()).Clickable(";").NewLine();
+                writer.WriteIndented();
+                writer.InvokeMember(Name.VariableHighlight(), "Reset");
+
+                writer.WriteEnd(EndWriteOptions.LineEnd);
             }
-            return output;
         }
     }
 }

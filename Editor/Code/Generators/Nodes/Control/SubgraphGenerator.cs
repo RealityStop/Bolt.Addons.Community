@@ -2,12 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
+
 #if VISUAL_SCRIPTING_1_7
 using SUnit = Unity.VisualScripting.SubgraphUnit;
 #else
@@ -17,74 +17,67 @@ using SUnit = Unity.VisualScripting.SuperUnit;
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SUnit))]
-    [RequiresVariables]
-    public class SubgraphGenerator : NodeGenerator<SUnit>, IRequireVariables
+    public sealed class SubgraphGenerator : NodeGenerator<SUnit>, IRequireVariables
     {
         private static readonly Dictionary<string, Type> typeCache = new Dictionary<string, Type>();
+
         private readonly Dictionary<CustomEvent, int> customEventIds = new Dictionary<CustomEvent, int>();
+        private readonly HashSet<CustomEvent> customEvents = new HashSet<CustomEvent>();
+
         private Unit graphInput;
         private Unit graphOutput;
-        HashSet<CustomEvent> customEvents = new HashSet<CustomEvent>();
+        private bool hasEventUnit;
 
-        bool hasEventUnit;
         public SubgraphGenerator(SUnit unit) : base(unit)
         {
-            SubscribeToGraphChanges();
-            InitializeInputOutputConnections();
+            RebuildGraphState();
         }
 
-        private void SubscribeToGraphChanges()
+        private void RebuildGraphState()
         {
-            if (Unit.nest?.graph?.units != null)
+            graphInput = null;
+            graphOutput = null;
+            hasEventUnit = false;
+            customEvents.Clear();
+            customEventIds.Clear();
+
+            if (Unit.nest == null || Unit.nest.graph == null)
+                return;
+
+            foreach (Unit u in Unit.nest.graph.units)
             {
-                Unit.nest.graph.units.CollectionChanged += OnUnitsChanged;
-            }
-        }
-
-        private void OnUnitsChanged()
-        {
-            InitializeInputOutputConnections();
-        }
-
-
-        private void InitializeInputOutputConnections()
-        {
-            var units = Unit.nest.graph.units;
-            foreach (var unit in units)
-            {
-                if (graphInput == null && unit is GraphInput gi)
+                if (graphInput == null && u is GraphInput)
                 {
-                    graphInput = gi;
+                    graphInput = u;
                     continue;
                 }
 
-                if (graphOutput == null && unit is GraphOutput go)
+                if (graphOutput == null && u is GraphOutput)
                 {
-                    graphOutput = go;
+                    graphOutput = u;
                     continue;
                 }
 
-                if (unit is IEventUnit)
+                if (u is IEventUnit)
                 {
                     hasEventUnit = true;
-                    if (unit is CustomEvent ce)
-                    {
+                    if (u is CustomEvent ce)
                         customEvents.Add(ce);
-                    }
                 }
             }
 
             if (graphInput != null)
             {
-                var inputGen = graphInput.GetGenerator();
-                if (inputGen != null)
+                var gen = graphInput.GetGenerator() as GraphInputGenerator;
+                gen.ClearConnectedValueInputs();
+                gen.parent = Unit;
+                if (gen != null)
                 {
-                    inputGen.connectedValueInputs.Clear();
                     foreach (var input in Unit.valueInputs)
                     {
-                        if ((input.hasDefaultValue || input.hasValidConnection) && !inputGen.connectedValueInputs.Contains(input))
+                        if (input.hasDefaultValue || input.hasValidConnection)
                         {
-                            inputGen.connectedValueInputs.Add(input);
+                            gen.AddConnectedValueInput(input);
                         }
                     }
                 }
@@ -92,77 +85,42 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (graphOutput != null)
             {
-                var outputGen = graphOutput.GetGenerator();
-                if (outputGen != null)
+                var gen = graphOutput.GetGenerator() as GraphOutputGenerator;
+                gen.parent = Unit;
+                if (gen != null)
                 {
-                    outputGen.connectedGraphOutputs.Clear();
+                    gen.ClearConnectedGraphOutputs();
                     foreach (var output in Unit.controlOutputs.Where(o => o.hasValidConnection))
                     {
-                        if (!outputGen.connectedGraphOutputs.Contains(output))
-                        {
-                            outputGen.connectedGraphOutputs.Add(output);
-                        }
+                        gen.AddConnectedControlOutput(output);
                     }
                 }
             }
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (!Unit.nest?.graph?.units?.Any() ?? true)
-                return base.GenerateControl(input, data, indent);
+            if (Unit.nest == null || Unit.nest.graph == null || !Unit.nest.graph.units.Any())
+            {
+                base.GenerateControlInternal(input, data, writer);
+                return;
+            }
+
+            RebuildGraphState();
 
             if (data.TryGetGraphPointer(out var graphPointer))
             {
                 data.SetGraphPointer(graphPointer.AsReference().ChildReference(Unit, false));
             }
 
-            var sb = new StringBuilder();
-            if (graphOutput != null)
-            {
-                var outputGen = graphOutput.GetGenerator();
-                if (outputGen != null)
-                {
-                    outputGen.connectedGraphOutputs.Clear();
-                    foreach (var output in Unit.controlOutputs.Where(o => o.hasValidConnection))
-                    {
-                        if (!outputGen.connectedGraphOutputs.Contains(output))
-                        {
-                            outputGen.connectedGraphOutputs.Add(output);
-                        }
-                    }
-                }
-            }
-            if (graphInput != null)
-            {
-                var inputGen = graphInput.GetGenerator();
-                if (inputGen != null)
-                {
-                    inputGen.connectedValueInputs.Clear();
-                    foreach (var _input in Unit.valueInputs)
-                    {
-                        if ((_input.hasDefaultValue || _input.hasValidConnection) && !inputGen.connectedValueInputs.Contains(_input))
-                        {
-                            inputGen.connectedValueInputs.Add(_input);
-                        }
-                    }
-                }
-            }
-
-            var subgraphName = Unit.nest.graph.title?.Trim();
-
-            if (string.IsNullOrWhiteSpace(subgraphName))
-            {
-                subgraphName = Unit.nest.source == GraphSource.Macro ? Unit.nest.macro.name : "UnnamedSubgraph";
-            }
+            var subgraphName = GraphTraversal.GetNesterUnitName(Unit);
 
             if (CSharpPreviewSettings.ShouldShowSubgraphComment)
             {
-                var comment = (graphInput != null || graphOutput != null)
-                    ? $"//Subgraph: \"{subgraphName}\" Port({input.key})".CommentHighlight()
-                    : $"/* Subgraph \"{subgraphName}\" is empty */".WarningHighlight();
-
-                sb.AppendLine(CodeBuilder.Indent(indent) + MakeClickableForThisUnit(comment));
+                if (graphInput != null || graphOutput != null)
+                writer.Comment($"Subgraph: \"{subgraphName}\" Port({input.key})", WriteOptions.IndentedNewLineAfter);
+                else
+                writer.Error($"Subgraph \"{subgraphName}\" does not have a GraphInput or GraphOutput", WriteOptions.IndentedNewLineAfter);
             }
 
             if (!hasEventUnit)
@@ -170,131 +128,134 @@ namespace Unity.VisualScripting.Community.CSharp
                 foreach (var variable in Unit.nest.graph.variables)
                 {
 #if VISUAL_SCRIPTING_1_7
-                    var type = GetCachedType(variable.typeHandle.Identification);
+                    Type type = GetCachedType(variable.typeHandle.Identification);
 #else
-                    var type = variable.value?.GetType() ?? typeof(object);
+                    Type type = variable.value != null ? variable.value.GetType() : typeof(object);
 #endif
-                    var name = data.AddLocalNameInScope(variable.name.LegalMemberName(), type);
-                    sb.Append(CodeBuilder.Indent(indent));
-                    sb.Append(MakeClickableForThisUnit($"{type.As().CSharpName(false, true)} {name.VariableHighlight()} = "));
-                    sb.Append(variable.value.As().Code(true, Unit, true, true, "", false, true));
-                    sb.AppendLine(MakeClickableForThisUnit(";"));
+                    string name = data.AddLocalNameInScope(variable.name.LegalVariableName(), type);
+                    writer.CreateVariable(type, name, variable.value.As().Code(true, true, true, "", false, true), WriteOptions.Indented, EndWriteOptions.LineEnd);
                 }
             }
 
             int index = 0;
-            if (customEvents.Count > 0) NameSpaces = "Unity.VisualScripting.Community";
-            foreach (var customEvent in customEvents)
+
+            foreach (CustomEvent customEvent in customEvents)
             {
-                if (!customEvent.trigger.hasValidConnection) continue;
+                if (!customEvent.trigger.hasValidConnection)
+                    continue;
+
                 index++;
                 customEventIds[customEvent] = index;
 
                 if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
                 {
-                    sb.AppendLine(CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip("/* Custom Event units only work on monobehaviours */", "Could not generate Custom Events", "")));
+                    writer.WriteErrorDiagnostic("Custom Event units only work on MonoBehaviours", "Could not generate Custom Events", WriteOptions.IndentedNewLineAfter);
                     break;
                 }
 
                 var generator = customEvent.GetGenerator();
                 var methodName = GetMethodName(customEvent);
+
                 var action = customEvent.coroutine
-                    ? $"({"args".VariableHighlight()}) => StartCoroutine({methodName}({"args".VariableHighlight()}))"
+                    ? $"({"args".VariableHighlight()}) => StartCoroutine(" + methodName + $"({"args".VariableHighlight()}))"
                     : methodName;
 
-                sb.AppendLine(CodeBuilder.Indent(indent) +
-                              CodeBuilder.CallCSharpUtilityMethod(customEvent, CodeUtility.MakeClickable(customEvent, nameof(CSharpUtility.RegisterCustomEvent)),
-                              generator.GenerateValue(customEvent.target, data), CodeUtility.MakeClickable(customEvent, action), CodeUtility.MakeClickable(customEvent, (methodName + "_" + customEvent.ToString().Replace(".", "")).As().Code(false))) +
-                              CodeUtility.MakeClickable(customEvent, ";"));
+                writer.WriteIndented();
+                writer.CallCSharpUtilityMethod(
+                    "RegisterCustomEvent",
+                    writer.Action(w => generator.GenerateValue(customEvent.target, data, w)),
+                    action,
+                    (methodName + "_" + customEvent.ToString().Replace(".", "")).As().Code(false)
+                );
+                writer.WriteEnd(EndWriteOptions.LineEnd);
 
                 var returnType = customEvent.coroutine ? typeof(IEnumerator) : typeof(void);
-                sb.AppendLine(CodeBuilder.Indent(indent) + CodeUtility.MakeClickable(customEvent,
-                    $"{returnType.As().CSharpName(false, true)} {methodName}({"CustomEventArgs".TypeHighlight()} {"args".VariableHighlight()})"));
-                sb.AppendLine(CodeBuilder.Indent(indent) + CodeUtility.MakeClickable(customEvent, "{"));
-                sb.AppendLine(CodeBuilder.Indent(indent + 1) + CodeUtility.MakeClickable(customEvent,
-                    $"{"if".ControlHighlight()} ({"args".VariableHighlight()}.{"name".VariableHighlight()} == ") +
-                    generator.GenerateValue(customEvent.name, data) + CodeUtility.MakeClickable(customEvent, ")"));
-                sb.AppendLine(CodeBuilder.Indent(indent + 1) + CodeUtility.MakeClickable(customEvent, "{"));
-                data.NewScope();
-                sb.Append(GetNextUnit(customEvent.trigger, data, indent + 2));
-                data.ExitScope();
-                sb.AppendLine(CodeBuilder.Indent(indent + 1) + CodeUtility.MakeClickable(customEvent, "}"));
-                sb.AppendLine(CodeBuilder.Indent(indent) + CodeUtility.MakeClickable(customEvent, "}"));
+
+                writer.WriteIndented(returnType.As().CSharpName(false, true));
+                writer.Write(" ");
+                writer.Write(methodName);
+                writer.Write($"({"CustomEventArgs".TypeHighlight()} {"args".VariableHighlight()})");
+                writer.NewLine();
+
+                writer.WriteLine("{");
+                using (writer.Indented())
+                {
+                    writer.WriteIndented("if ".ControlHighlight() + $"({"args".VariableHighlight()}.{"name".VariableHighlight()} == ");
+                    generator.GenerateValue(customEvent.name, data, writer);
+                    writer.Write(")");
+                    writer.NewLine();
+
+                    writer.WriteLine("{");
+                    using (writer.IndentedScope(data))
+                    {
+                        generator.GenerateControl(null, data, writer);
+                    }
+                    writer.WriteLine("}");
+                }
+                writer.WriteLine("}");
             }
+
             if (input.hasValidConnection && graphInput != null)
             {
-                var matchingOutput = graphInput.controlOutputs.FirstOrDefault(o => o.key.Equals(input.key, StringComparison.OrdinalIgnoreCase));
-                if (matchingOutput != null)
-                {
-                    sb.Append(GetNextUnit(matchingOutput, data, indent));
-                }
+                writer.ExitCurrentNode(unit);
+                graphInput.GenerateControl(input, data, writer);
             }
-
-            if (data.TryGetGraphPointer(out var _))
-            {
-                data.SetGraphPointer(graphPointer.AsReference().ParentReference(false));
-            }
-
-            return sb.ToString();
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var graphOutput = Unit.nest.graph.units.FirstOrDefault(u => u is GraphOutput) as Unit;
-            if (graphOutput != null)
+            if (Unit.nest == null || Unit.nest.graph == null)
             {
-                return graphOutput.GetGenerator().GenerateValue(output, data);
+                writer.WriteErrorDiagnostic("Subgraph missing GraphOutput unit", "Could not Generate subgraph value.");
+                return;
             }
 
-            return "/* Subgraph missing GraphOutput unit */".WarningHighlight();
+            Unit go = Unit.nest.graph.units.FirstOrDefault(u => u is GraphOutput) as Unit;
+            if (go != null)
+            {
+                go.GenerateValue(output, writer, data);
+                return;
+            }
+
+            writer.WriteErrorDiagnostic("Subgraph missing GraphOutput unit", "Could not Generate subgraph value.");
         }
 
         private static Type GetCachedType(string typeId)
         {
-            if (string.IsNullOrEmpty(typeId)) return typeof(object);
-            if (!typeCache.TryGetValue(typeId, out var type))
+            if (string.IsNullOrEmpty(typeId))
+                return typeof(object);
+
+            if (!typeCache.TryGetValue(typeId, out Type type))
             {
                 type = Type.GetType(typeId) ?? typeof(object);
                 typeCache[typeId] = type;
             }
+
             return type;
         }
 
         private string GetMethodName(CustomEvent customEvent)
         {
             if (!customEvent.name.hasValidConnection)
-            {
                 return (string)customEvent.defaultValues[customEvent.name.key];
-            }
-            return "CustomEvent" + (customEventIds.TryGetValue(customEvent, out var id) ? id : 0);
+
+            return "CustomEvent" + (customEventIds.TryGetValue(customEvent, out int id) ? id : 0);
         }
 
-        /// <summary>
-        /// We do this to ensure the graph variables will still be able to be accessed across scopes
-        /// </summary>
         public IEnumerable<FieldGenerator> GetRequiredVariables(ControlGenerationData data)
         {
-            if (hasEventUnit)
-            {
-                foreach (var variable in Unit.nest.graph.variables)
-                {
-#if VISUAL_SCRIPTING_1_7
-                    var type = GetCachedType(variable.typeHandle.Identification);
-#else
-                    var type = variable.value?.GetType() ?? typeof(object);
-#endif
-                    var name = data.AddLocalNameInScope(variable.name.LegalMemberName(), type);
-                    var field = FieldGenerator.Field(AccessModifier.None, FieldModifier.None, type, name, variable.value);
-                    yield return field;
-                }
-            }
-        }
+            if (!hasEventUnit)
+                yield break;
 
-        ~SubgraphGenerator()
-        {
-            if (Unit.nest?.graph?.units != null)
+            foreach (var variable in Unit.nest.graph.variables)
             {
-                Unit.nest.graph.units.CollectionChanged -= OnUnitsChanged;
+#if VISUAL_SCRIPTING_1_7
+                Type type = GetCachedType(variable.typeHandle.Identification);
+#else
+                Type type = variable.value != null ? variable.value.GetType() : typeof(object);
+#endif
+                string name = data.AddLocalNameInScope(variable.name.LegalVariableName(), type);
+                yield return FieldGenerator.Field(AccessModifier.None, FieldModifier.None, type, name, variable.value);
             }
         }
     }

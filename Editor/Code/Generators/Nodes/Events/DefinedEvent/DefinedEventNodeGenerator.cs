@@ -11,8 +11,6 @@ using System.Collections;
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(DefinedEventNode))]
-    [RequiresMethods]
-    [RequiresVariables]
     public class DefinedEventNodeGenerator : MethodNodeGenerator, IRequireMethods, IRequireVariables
     {
         private DefinedEventNode Unit => unit as DefinedEventNode;
@@ -49,39 +47,53 @@ namespace Unity.VisualScripting.Community.CSharp
         private string eventVariableName = "_definedEvent";
 
         public DefinedEventNodeGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (Unit.IsNotRestricted)
-                return MakeClickableForThisUnit("args".VariableHighlight());
+            {
+                writer.GetVariable("args");
+            }
             else
-                return MakeClickableForThisUnit("args".VariableHighlight() + "." + output.key.VariableHighlight());
-
+            {
+                writer.GetVariable("args").GetMember(output.key);
+            }
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
 
         public IEnumerable<MethodGenerator> GetRequiredMethods(ControlGenerationData data)
         {
             var disableMethod = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), "OnDisable");
-            disableMethod.body = MakeClickableForThisUnit(eventVariableName.VariableHighlight() + "." + "Dispose();") + "\n";
+            disableMethod.Body(w =>
+            {
+                w.WriteIndented(eventVariableName.VariableHighlight() + "." + "Dispose();".ConstructHighlight());
+                w.NewLine();
+            });
             yield return disableMethod;
 
             var enableMethod = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), "OnEnable");
-            var builder = Unit.CreateClickableString();
-            builder.Indent(indent);
-            string args = "args".VariableHighlight();
-            builder.Clickable(eventVariableName.VariableHighlight()).Equal(true).InvokeMember(
-                typeof(DefinedEvent),
-                "RegisterListener",
-                new Type[] { EventType },
-                p1 => p1.Ignore(GenerateValue(Unit.target, data)),
-                p2 => p2.Clickable($"{args} => {(Unit.coroutine ? $"StartCoroutine({Name}({args}))" : $"{Name}({args})")}"));
-
-            builder.Clickable(";").NewLine();
-            enableMethod.body = builder;
+            enableMethod.Body(w =>
+            {
+                string args = "args".VariableHighlight();
+                string lambdaBody = Unit.coroutine 
+                    ? $"StartCoroutine({Name.VariableHighlight()}({args}))" 
+                    : $"{Name.VariableHighlight()}({args})";
+                
+                w.WriteIndented(eventVariableName.VariableHighlight());
+                w.Write(" = ".ControlHighlight());
+                w.InvokeMember(
+                    typeof(DefinedEvent),
+                    "RegisterListener",
+                    new CodeWriter.TypeParameter[] { EventType },
+                    w.Action(inner => GenerateValue(Unit.target, data, inner)),
+                    w.Action(inner => inner.Write($"({args}) => {lambdaBody}")));
+                w.Write(";".ConstructHighlight());
+                w.NewLine();
+            });
             yield return enableMethod;
         }
 

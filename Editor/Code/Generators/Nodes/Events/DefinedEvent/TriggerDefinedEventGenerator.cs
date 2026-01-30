@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -11,29 +12,29 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private Type EventType => Unit.IsRestricted ? Unit.RestrictedEventType : Unit.EventType;
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            builder.Indent(indent);
-            System.Action<ClickableStringBuilder> action = (p2) =>
+            writer.WriteIndented(typeof(DefinedEvent).As().CSharpName(false, true));
+            writer.Write(".");
+            writer.Write("Trigger");
+            writer.Write("(");
+            GenerateValue(Unit.EventTarget, data, writer);
+            writer.Write(", ");
+            if (Unit.IsRestricted)
             {
-                if (Unit.IsRestricted)
-                {
-                    p2.InvokeMember(
-                        typeof(CSharpUtility),
-                        nameof(CSharpUtility.CreateDefinedEventInstance),
-                        new Type[] { EventType },
-                        Unit.inputPorts.Select(port =>(Action<ClickableStringBuilder>)(sb => sb.Ignore(GenerateValue(port, data)))).ToArray()
-                    );
-                }
-                else
-                {
-                    p2.Ignore(GenerateValue(Unit.inputPorts[0], data));
-                }
-            };
-            builder.InvokeMember(typeof(DefinedEvent), nameof(DefinedEvent.Trigger), p1 => p1.Ignore(GenerateValue(Unit.EventTarget, data)), action).Clickable(";").NewLine();
-            builder.Ignore(GetNextUnit(Unit.exit, data, indent));
-            return builder;
+                writer.CallCSharpUtilityGenericMethod("CreateDefinedEventInstance", new CodeWriter.TypeParameter[] { EventType },
+                    Unit.inputPorts.Select(port => (CodeWriter.MethodParameter)writer.Action(w => GenerateValue(port, data, w))).ToArray()
+                );
+            }
+            else
+            {
+                GenerateValue(Unit.inputPorts[0], data, writer);
+            }
+            writer.Write(")");
+            writer.Write(";");
+            writer.NewLine();
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

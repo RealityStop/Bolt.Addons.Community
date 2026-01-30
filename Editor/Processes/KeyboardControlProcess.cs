@@ -35,6 +35,7 @@ namespace Unity.VisualScripting.Community
         }
         bool wasZooming;
         Vector2 originalPan;
+
         public override void Process(FlowGraph graph, FlowCanvas canvas)
         {
             if (@event != null && @event.alt && IsMiddleMouseButton(@event))
@@ -189,7 +190,7 @@ namespace Unity.VisualScripting.Community
                 {
                     port.Description<UnitPortDescription>();
                 }
-                
+
                 try
                 {
                     canvas.CacheWidgetPositions();

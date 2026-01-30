@@ -12,54 +12,83 @@ namespace Unity.VisualScripting.Community.CSharp
         public TryCatchGenerator(Unit unit) : base(unit)
         {
         }
-    
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = "";
-            if (Unit.@try.hasValidConnection)
+            if (!Unit.@try.hasValidConnection)
+                return;
+
+            writer.WriteIndented("try".ControlHighlight()).NewLine();
+            writer.WriteLine("{");
+
+            using (writer.Indented())
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("try".ControlHighlight()) + "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
                 data.NewScope();
-                output += GetNextUnit(Unit.@try, data, indent + 1);
+                GenerateChildControl(Unit.@try, data, writer);
                 data.ExitScope();
-                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-    
-                if (!Unit.@catch.hasValidConnection && !Unit.@finally.hasValidConnection)
-                {
-                    return output + "/* Catch or Finally requires connection */".WarningHighlight();
-                }
-    
-                if (Unit.@catch.hasValidConnection)
-                {
-                    data.NewScope();
-                    variableName = data.AddLocalNameInScope("ex", Unit.exceptionType);
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("catch".ControlHighlight() + " (" + Unit.exceptionType.As().CSharpName(false, true) + $" {variableName}".VariableHighlight() + ")") + "\n";
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                    output += GetNextUnit(Unit.@catch, data, indent + 1);
-                    data.ExitScope();
-                    output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-                }
-    
-                if (Unit.@finally.hasValidConnection)
-                {
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("finally".ControlHighlight()) + "\n";
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                    data.NewScope();
-                    output += GetNextUnit(Unit.@finally, data, indent + 1);
-                    data.ExitScope();
-                    output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-                }
             }
-            return output;
+
+            writer.WriteLine("}");
+
+            if (!Unit.@catch.hasValidConnection && !Unit.@finally.hasValidConnection)
+            {
+                using (writer.CodeDiagnosticScope("Catch or Finally requires connection", CodeDiagnosticKind.Warning))
+                    writer.Error("Expected catch or finally block");
+                return;
+            }
+
+            if (Unit.@catch.hasValidConnection)
+            {
+                data.NewScope();
+                writer.WriteIndented("catch".ControlHighlight());
+                if (Unit.exception.hasValidConnection)
+                {
+                    variableName = data.AddLocalNameInScope("ex", Unit.exceptionType);
+                    writer.Parentheses(w =>
+                    {
+                        w.Write(Unit.exceptionType.As().CSharpName(false, true).TypeHighlight());
+                        w.Space();
+                        w.Write(variableName.VariableHighlight());
+                    });
+                }
+                writer.NewLine();
+                writer.WriteLine("{");
+
+                using (writer.Indented())
+                {
+                    GenerateChildControl(Unit.@catch, data, writer);
+                }
+
+                writer.WriteLine("}");
+                data.ExitScope();
+            }
+
+            if (Unit.@finally.hasValidConnection)
+            {
+                writer.WriteIndented("finally".ControlHighlight()).NewLine();
+                writer.WriteLine("{");
+
+                using (writer.Indented())
+                {
+                    data.NewScope();
+                    GenerateChildControl(Unit.@finally, data, writer);
+                    data.ExitScope();
+                }
+
+                writer.WriteLine("}");
+            }
         }
-    
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            if (data.ContainsNameInAnyScope(data.GetVariableName(variableName)))
-                return MakeClickableForThisUnit(variableName.VariableHighlight());
+            if (data.ContainsNameInAnyScope(variableName))
+            {
+                writer.GetVariable(variableName);
+            }
             else
-                return MakeClickableForThisUnit($"/* {variableName} is only accessible from a catch scope */".WarningHighlight());
+            {
+                writer.Error($"{variableName} is only accessible from a catch scope");
+            }
         }
-    } 
+    }
 }

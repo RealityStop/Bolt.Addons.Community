@@ -1,5 +1,7 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections.Generic;
+using Unity.VisualScripting.Community.CSharp;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -58,61 +60,93 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return usings;
         }
 
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
-            if (string.IsNullOrEmpty(@namespace)) return GenerateBefore(indent) + "\n" + GenerateBody(indent) + "\n" + GenerateAfter(indent);
-            return base.Generate(indent);
+            if (string.IsNullOrEmpty(@namespace))
+            {
+                GenerateBefore(writer, data);
+                GenerateBody(writer, data);
+                GenerateAfter(writer, data);
+                return;
+            }
+            base.Generate(writer, data);
         }
 
-        protected override string GenerateAfter(int indent)
+        protected override void GenerateAfter(CodeWriter writer, ControlGenerationData data)
         {
-            return string.Empty;
         }
 
-        protected override string GenerateBefore(int indent)
+        protected override void GenerateBefore(CodeWriter writer, ControlGenerationData data)
         {
-            var output = string.IsNullOrEmpty(beforeUsings) ? string.Empty : CodeBuilder.Indent(indent) + beforeUsings + "\n";
+            if (!string.IsNullOrEmpty(beforeUsings))
+            {
+                writer.WriteLine(beforeUsings);
+            }
+
             var _usings = Usings();
             usings.MergeUnique(_usings);
+            bool hasUsings = false;
             for (int i = 0; i < usings.Count; i++)
             {
-                if (!string.IsNullOrEmpty(usings[i])) output += "using".ConstructHighlight() + " " + usings[i] + ";" + ((i < usings.Count - 1) ? "\n" : string.Empty);
+                if (!string.IsNullOrEmpty(usings[i]))
+                {
+                    hasUsings = true;
+                    writer.Write("using".ConstructHighlight() + " " + usings[i] + ";");
+                    if (i < usings.Count - 1)
+                    {
+                        writer.NewLine();
+                    }
+                }
             }
-            if (output.Contains("using")) output += string.IsNullOrEmpty(@namespace) ? "\n" : "\n\n";
-            return !string.IsNullOrEmpty(@namespace) ? output + "namespace ".ConstructHighlight() + @namespace : output;
+
+            if (hasUsings)
+            {
+                writer.NewLine();
+                writer.NewLine();
+            }
+
+            if (!string.IsNullOrEmpty(@namespace))
+            {
+                writer.Write("namespace ".ConstructHighlight() + @namespace);
+                writer.NewLine();
+            }
         }
 
-        protected override string GenerateBody(int indent)
+        protected override void GenerateBody(CodeWriter writer, ControlGenerationData data)
         {
-            var output = string.Empty;
-
             for (int i = 0; i < classes.Count; i++)
             {
-                output += classes[i].Generate(indent) + (i < classes.Count - 1 ? "\n" : string.Empty);
+                classes[i].Generate(writer, data);
+                if (i < classes.Count - 1) writer.NewLine();
             }
 
-            output += structs.Count > 0 && classes.Count > 0 ? "\n" : string.Empty;
+            if (structs.Count > 0 && classes.Count > 0)
+                writer.NewLine();
 
             for (int i = 0; i < structs.Count; i++)
             {
-                output += structs[i].Generate(indent) + (i < structs.Count - 1 ? "\n" : string.Empty);
+                structs[i].Generate(writer, data);
+                if (i < structs.Count - 1) writer.NewLine();
             }
 
-            output += interfaces.Count > 0 && structs.Count > 0 ? "\n" : string.Empty;
+            if (interfaces.Count > 0 && structs.Count > 0)
+                writer.NewLine();
 
             for (int i = 0; i < interfaces.Count; i++)
             {
-                output += interfaces[i].Generate(indent) + (i < interfaces.Count - 1 ? "\n" : string.Empty);
+                interfaces[i].Generate(writer, data);
+                if (i < interfaces.Count - 1) writer.NewLine();
             }
 
-            output += enums.Count > 0 && interfaces.Count > 0 ? "\n" : string.Empty;
+            if (enums.Count > 0 && interfaces.Count > 0)
+                writer.NewLine();
 
             for (int i = 0; i < enums.Count; i++)
             {
-                output += enums[i].Generate(indent) + (i < enums.Count - 1 ? "\n" : string.Empty);
+                enums[i].Generate(writer, data);
+                if (i < enums.Count - 1) writer.NewLine();
             }
 
-            return output;
         }
 
         public NamespaceGenerator AddClass(ClassGenerator @class)

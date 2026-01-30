@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -18,55 +19,80 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public List<InterfaceMethodGenerator> methods = new List<InterfaceMethodGenerator>();
         public bool generateUsings;
 
-        protected override string GenerateBefore(int indent)
+        protected override void GenerateBefore(CodeWriter writer, ControlGenerationData data)
         {
-            var output = string.Empty;
-
             if (generateUsings)
             {
                 var usings = Usings();
                 for (int i = 0; i < usings.Count; i++)
                 {
-                    output += "using".ConstructHighlight() + " " + usings[i] + ";" + ((i < usings.Count - 1) ? "\n" : string.Empty);
+                    writer.Write("using".ConstructHighlight() + " " + usings[i] + ";");
+
+                    if (i < usings.Count - 1)
+                    {
+                        writer.NewLine();
+                    }
                 }
             }
 
             for (int i = 0; i < attributes.Count; i++)
             {
-                output += attributes[i].Generate(indent) + "\n";
+                attributes[i].Generate(writer, data);
+                writer.NewLine();
             }
 
             var hasInterfaces = interfaces.Length > 0;
-            output += CodeBuilder.Indent(indent) + scope.AsString().ConstructHighlight() + " interface ".ConstructHighlight() + typeName.LegalMemberName().InterfaceHighlight() + (hasInterfaces ? " : " : string.Empty);
-            output += string.Join(", ", interfaces.Select(i => i.Name.LegalMemberName().InterfaceHighlight()));
 
-            return output;
+            writer.WriteIndented((scope.AsString() + " interface ").ConstructHighlight() + typeName.LegalMemberName().InterfaceHighlight());
+
+            if (hasInterfaces)
+            {
+                writer.Write(" : ");
+
+                for (int i = 0; i < interfaces.Length; i++)
+                {
+                    writer.Write(interfaces[i].Name.LegalMemberName().InterfaceHighlight());
+
+                    if (i < interfaces.Length - 1)
+                    {
+                        writer.Write(", ");
+                    }
+                }
+            }
+            writer.NewLine();
         }
 
-        protected override string GenerateBody(int indent)
+        protected override void GenerateBody(CodeWriter writer, ControlGenerationData data)
         {
-            var output = string.Empty;
-
             for (int i = 0; i < properties.Count; i++)
             {
-                output += CodeBuilder.Indent(indent) + properties[i].Generate(indent);
-                if (i < properties.Count - 1) output += "\n";
+                properties[i].Generate(writer, data);
+
+                if (i < properties.Count - 1)
+                {
+                    writer.NewLine();
+                }
             }
 
-            if (methods.Count > 0 && properties.Count > 0) output += "\n";
+            if (methods.Count > 0 && properties.Count > 0)
+            {
+                writer.NewLine();
+            }
 
             for (int i = 0; i < methods.Count; i++)
             {
-                output += CodeBuilder.Indent(indent) + methods[i].Generate(indent);
-                if (i < methods.Count - 1) output += "\n";
-            }
+                methods[i].Generate(writer, data);
 
-            return output;
+                if (i < methods.Count - 1)
+                {
+                    writer.NewLine();
+                }
+            }
         }
 
-        protected override string GenerateAfter(int indent)
+
+        protected override void GenerateAfter(CodeWriter writer, ControlGenerationData data)
         {
-            return string.Empty;
         }
 
         private InterfaceGenerator(string name, params Type[] interfaces) { this.typeName = name; this.interfaces = interfaces; }
@@ -110,14 +136,12 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             for (int i = 0; i < properties?.Count; i++)
             {
-                var @namespace = properties[i].type.Namespace;
-                if (!usings.Contains(@namespace) && !properties[i].type.Is().PrimitiveStringOrVoid()) usings.Add(@namespace);
+                usings.AddRange(properties[i].Usings());
             }
 
             for (int i = 0; i < methods?.Count; i++)
             {
-                var @namespace = methods[i].returnType.Namespace;
-                if (!usings.Contains(@namespace) && !methods[i].returnType.Is().PrimitiveStringOrVoid()) usings.Add(@namespace);
+                usings.AddRange(methods[i].Usings());
             }
 
             return usings;

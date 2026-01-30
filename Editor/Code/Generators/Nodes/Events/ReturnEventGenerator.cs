@@ -9,7 +9,6 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ReturnEvent))]
-    [RequiresMethods]
     public class ReturnEventGenerator : AwakeMethodNodeGenerator, IRequireMethods
     {
         private ReturnEvent Unit => unit as ReturnEvent;
@@ -29,46 +28,49 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private string name = "ReturnEventRunner";
         public ReturnEventGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.eventData)
             {
                 if (data.GetExpectedType() == typeof(ReturnEventArg))
                 {
-                    data.SetCurrentExpectedTypeMet(true, typeof(ReturnEventArg));
+                    data.MarkExpectedTypeMet(typeof(ReturnEventArg));
                 }
-                return MakeClickableForThisUnit("args".VariableHighlight());
+                writer.GetVariable("args");
+                return;
             }
 
-            var callCode = CodeBuilder.CallCSharpUtilityExtensitionMethod(Unit, MakeClickableForThisUnit("args".VariableHighlight()), MakeClickableForThisUnit(nameof(CSharpUtility.GetArgument)), Unit.arguments.IndexOf(output).As().Code(false, Unit), MakeClickableForThisUnit("typeof".ConstructHighlight() + "(" + (data.GetExpectedType() ?? typeof(object)).As().CSharpName(false, true) + ")"));
-            var code = Unit.CreateClickableString().Ignore(callCode).Cast(data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != typeof(object));
-            return code;
+            using (writer.Cast(data.GetExpectedType(), () => data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != typeof(object), true))
+            {
+                writer.InvokeMember("args".VariableHighlight(), nameof(CSharpUtility.GetArgument), writer.IntString(Unit.arguments.IndexOf(output)),
+                "typeof".ConstructHighlight() + "(" + (data.GetExpectedType() ?? typeof(object)).As().CSharpName(false, true) + ")");
+            }
         }
 
-        public override string GenerateAwakeCode(ControlGenerationData data, int indent)
+        public override void GenerateAwakeCode(ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            builder.Indent(indent);
-            if (!Unit.global)
-                builder.CallCSharpUtilityMethod(MakeClickableForThisUnit("RegisterReturnEvent"),
-                p => p.Ignore(GenerateValue(Unit.target, data)),
-                p => p.Clickable(name),
-                p => p.Ignore(GenerateValue(Unit.name, data)),
-                p => p.Clickable(Unit.count.As().Code(false)),
-                p => p.Clickable(Unit.ToString().Replace(".", "").As().Code(false))).EndLine();
-            else
-                builder.CallCSharpUtilityMethod(MakeClickableForThisUnit("RegisterReturnEvent"),
-                p => p.Null(),
-                p => p.Clickable(name),
-                p => p.Ignore(GenerateValue(Unit.name, data)),
-                p => p.Clickable(Unit.count.As().Code(false)),
-                p => p.Clickable(Unit.ToString().Replace(".", "").As().Code(false))).EndLine();
-            return builder;
+            writer.WriteIndented();
+            writer.CallCSharpUtilityMethod("RegisterReturnEvent",
+                writer.Action(() =>
+                {
+                    if (!Unit.global)
+                        GenerateValue(Unit.target, data, writer);
+                    else
+                        writer.Write("null".ConstructHighlight());
+                }),
+                writer.Action(() => writer.Write(name.VariableHighlight())),
+                writer.Action(() => GenerateValue(Unit.name, data, writer)),
+                writer.Action(() => writer.Write(Unit.count.As().Code(false))),
+                writer.Action(() => writer.Write(Unit.ToString().Replace(".", "").As().Code(false)))
+            );
+            writer.Write(";");
+            writer.NewLine();
         }
 
-        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
 
         public IEnumerable<MethodGenerator> GetRequiredMethods(ControlGenerationData data)
@@ -77,9 +79,12 @@ namespace Unity.VisualScripting.Community.CSharp
             var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), name);
             method.AddParameter(ParameterGenerator.Parameter("args", typeof(ReturnEventArg), ParameterModifier.None));
             data.AddLocalNameInScope("args");
-            var builder = Unit.CreateClickableString();
-            builder.Clickable(Unit.coroutine ? $"StartCoroutine({name}({"args".VariableHighlight()}))" : Name + $"({"args".VariableHighlight()})").EndLine();
-            method.Body(builder);
+            method.Body(writer =>
+            {
+                writer.WriteIndented(Unit.coroutine ? $"StartCoroutine({name}({"args".VariableHighlight()}))" : Name + $"({"args".VariableHighlight()})");
+                writer.Write(";");
+                writer.NewLine();
+            });
             yield return method;
         }
     }

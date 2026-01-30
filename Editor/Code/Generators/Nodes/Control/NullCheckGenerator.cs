@@ -14,39 +14,52 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-            var _input = GenerateValue(Unit.input, data);
             if (Unit.ifNotNull.hasValidConnection)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ConstructHighlight() + "(") + $"{_input}" + MakeClickableForThisUnit($" != {"null".ConstructHighlight()})") + "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                data.NewScope();
-                output += GetNextUnit(Unit.ifNotNull, data, indent + 1);
-                data.ExitScope();
-                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
+                writer.WriteIndented("if".ControlHighlight()).Space().Parentheses(w =>
+                {
+                    GenerateValue(Unit.input, data, writer);
+                    writer.NotEqual().Null();
+                }).NewLine();
+
+                writer.WriteLine("{");
+                using (writer.IndentedScope(data))
+                {
+                    GenerateChildControl(Unit.ifNotNull, data, writer);
+                }
+
+                writer.WriteLine("}");
                 if (Unit.ifNull.hasValidConnection)
                 {
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"else".ConstructHighlight()) + "\n";
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                    data.NewScope();
-                    output += GetNextUnit(Unit.ifNull, data, indent + 1);
-                    data.ExitScope();
-                    output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
+                    writer.WriteIndented("else".ControlHighlight()).NewLine();
+
+                    writer.WriteLine("{");
+                    using (writer.IndentedScope(data))
+                    {
+                        GenerateChildControl(Unit.ifNull, data, writer);
+                    }
+                    writer.WriteLine("}");
                 }
             }
             else if (Unit.ifNull.hasValidConnection)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ConstructHighlight() + "(") + $"{_input}" + MakeClickableForThisUnit($" == {"null".ConstructHighlight()})") + "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                data.NewScope();
-                output += GetNextUnit(Unit.ifNull, data, indent + 1);
-                data.ExitScope();
-                output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-            }
+                writer.WriteIndented("if".ControlHighlight()).Space().Parentheses(w =>
+                {
+                    GenerateValue(Unit.input, data, writer);
+                    writer.Equals().Null();
+                }).NewLine();
 
-            return output;
+                writer.WriteLine("{");
+
+                using (writer.IndentedScope(data))
+                {
+                    GenerateChildControl(Unit.ifNull, data, writer);
+                }
+
+                writer.WriteLine("}");
+            }
         }
     }
 }

@@ -1,8 +1,4 @@
-using Unity.VisualScripting;
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Linq;
-using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -15,15 +11,45 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
         {
+            yield return "Unity.VisualScripting.Community";
+        }
 
-            if (data.GetExpectedType() != null && GetExpectedType(data.GetExpectedType()) != null)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            var expected = data.GetExpectedType();
+            var genericType = expected != null ? GetExpectedType(expected) : null;
+
+            if (expected != null && genericType != null)
             {
-                return MakeClickableForThisUnit("CSharpUtility".TypeHighlight() + $".MergeLists<{GetExpectedType(data.GetExpectedType()).As().CSharpName(false, true)}>(") + $"{string.Join(MakeClickableForThisUnit(", "), Unit.multiInputs.Select(input => GenerateValue(input, data)))}{MakeClickableForThisUnit(")")}";
+                writer.CallCSharpUtilityGenericMethod(nameof(CSharpUtility.MergeLists),
+                    new CodeWriter.TypeParameter[] { new CodeWriter.TypeParameter(true) { TypeValue = genericType } },
+                    writer.Action(() =>
+                    {
+                        for (int i = 0; i < Unit.multiInputs.Count; i++)
+                        {
+                            GenerateValue(Unit.multiInputs[i], data, writer);
+                            if (i < Unit.multiInputs.Count - 1)
+                                writer.ParameterSeparator();
+                        }
+                    })
+                );
             }
             else
-                return MakeClickableForThisUnit("CSharpUtility".TypeHighlight() + $".MergeLists(") + $"{string.Join(MakeClickableForThisUnit(", "), Unit.multiInputs.Select(input => GenerateValue(input, data)))}{MakeClickableForThisUnit(")")}";
+            {
+                writer.CallCSharpUtilityMethod(nameof(CSharpUtility.MergeLists),
+                    writer.Action(() =>
+                    {
+                        for (int i = 0; i < Unit.multiInputs.Count; i++)
+                        {
+                            GenerateValue(Unit.multiInputs[i], data, writer);
+                            if (i < Unit.multiInputs.Count - 1)
+                                writer.ParameterSeparator();
+                        }
+                    }
+                ));
+            }
         }
 
         private Type GetExpectedType(Type type)
@@ -39,7 +65,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 {
                     return typeof(object);
                 }
-                NameSpaces = type.Namespace;
             }
             return null;
         }

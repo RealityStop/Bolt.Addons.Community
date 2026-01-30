@@ -1,244 +1,254 @@
 using System;
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(GetVariable))]
-    public class GetVariableGenerator : LocalVariableGenerator
+    public sealed class GetVariableGenerator : LocalVariableGenerator
     {
+        private static readonly Dictionary<string, Type> typeCache = new Dictionary<string, Type>();
         private GetVariable Unit => unit as GetVariable;
+
         public GetVariableGenerator(Unit unit) : base(unit)
         {
-            SetNamespaceBasedOnVariableKind();
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
         {
-            SetNamespaceBasedOnVariableKind();
+            if (Unit.kind == VariableKind.Scene)
+                yield return "UnityEngine.SceneManagement";
+        }
 
-            if (Unit.name.hasValidConnection || Unit.kind == VariableKind.Object)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            string variablesType = typeof(VisualScripting.Variables).As().CSharpName(true, true);
+            bool hasConnectedName = Unit.name.hasValidConnection;
+
+            data.TryGetGraphPointer(out GraphPointer graphPointer);
+
+            string name = hasConnectedName
+                ? graphPointer != null && CanPredictConnection(Unit.name, data)
+                    ? Flow.Predict<string>(Unit.name, graphPointer.AsReference())
+                    : Unit.defaultValues[Unit.name.key] as string
+                : Unit.defaultValues[Unit.name.key] as string;
+
+            if (string.IsNullOrEmpty(name))
             {
-                if (Unit.kind == VariableKind.Object && !Unit.name.hasValidConnection)
-                {
-                    return GenerateDisconnectedVariableCode(data);
-                }
-                return GenerateConnectedVariableCode(data);
+                writer.Error("Variable name is empty");
+                return;
             }
-            else
+
+            if (hasConnectedName)
             {
-                return GenerateDisconnectedVariableCode(data);
+                GenerateConnected(data, writer, variablesType, graphPointer, name);
+                return;
             }
+
+            GenerateDisconnected(data, writer, variablesType, graphPointer, name);
         }
 
-        private string GetSceneKind(ControlGenerationData data, string variables)
+        private void GenerateConnected(ControlGenerationData data, CodeWriter writer, string variablesType, GraphPointer graphPointer, string name)
         {
-            return typeof(Component).IsAssignableFrom(data.ScriptType) ? variables + ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")" : variables + "." + "ActiveScene".VariableHighlight();
-        }
+            switch (Unit.kind)
+            {
+                case VariableKind.Flow:
+                    using (writer.CodeDiagnosticScope("Flow Variables do not support connected names", CodeDiagnosticKind.Error))
+                        writer.Error("Could not generate Flow Variable");
+                    return;
 
-        private void SetNamespaceBasedOnVariableKind()
-        {
-            NameSpaces = Unit.kind == VariableKind.Scene ? "UnityEngine.SceneManagement" : string.Empty;
-        }
+                case VariableKind.Graph:
+                    using (writer.CodeDiagnosticScope("Graph Variables do not support connected names", CodeDiagnosticKind.Error))
+                        writer.Error("Could not generate Graph Variable");
+                    return;
 
-        private string GenerateConnectedVariableCode(ControlGenerationData data)
-        {
-            variableType = GetVariableType(data.TryGetGraphPointer(out var graphPointer) && CanPredictConnection(Unit.name, data) ? Flow.Predict<string>(Unit.name, graphPointer.AsReference()) : "", data, true);
-            if (data.GetExpectedType() != null && variableType != null && data.GetExpectedType().IsAssignableFrom(variableType))
-                data.SetCurrentExpectedTypeMet(true, variableType);
-            else
-                data.SetCurrentExpectedTypeMet(false, variableType);
-            var typeString = variableType != null ? $"<{variableType.As().CSharpName(false, true)}>" : string.Empty;
-            var kind = GetKind(data, typeString);
+                case VariableKind.Object:
+                    writer.Write(variablesType + ".Object(");
+                    GenerateValue(Unit.@object, data, writer);
+                    writer.Write(")");
+                    ResolveVariableTypeSafe(VisualScripting.Variables.Object(GetTarget(data)), name, data);
+                    break;
 
+                case VariableKind.Scene:
+                    VariableDeclarations sceneVars = VisualScripting.Variables.ActiveScene;
+                    if (graphPointer != null && graphPointer.scene != null)
+                        sceneVars = VisualScripting.Variables.Scene(graphPointer.scene);
+
+                    WriteSceneKind(data, variablesType, writer);
+
+                    ResolveVariableTypeSafe(sceneVars, name, data);
+                    break;
+
+                case VariableKind.Application:
+                    writer.Write(variablesType + "." + "Application".VariableHighlight());
+                    ResolveVariableTypeSafe(VisualScripting.Variables.Application, name, data);
+                    break;
+
+                case VariableKind.Saved:
+                    writer.Write(variablesType + "." + "Saved".VariableHighlight());
+                    ResolveVariableTypeSafe(VisualScripting.Variables.Saved, name, data);
+                    break;
+            }
+
+            string typeString = variableType != null
+                ? "<" + variableType.As().CSharpName(false, true) + ">"
+                : string.Empty;
+
+            writer.Write(".Get" + typeString + "(");
+            GenerateValue(Unit.name, data, writer);
+            writer.Write(")");
+
+            UpdateExpectedType(data);
             data.CreateSymbol(Unit, variableType ?? typeof(object));
-            return kind + $"{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(")")}";
         }
 
-        private string GetKind(ControlGenerationData data, string typeString)
+        private void GenerateDisconnected(ControlGenerationData data, CodeWriter writer, string variablesType, GraphPointer graphPointer, string name)
         {
-            var variables = typeof(VisualScripting.Variables).As().CSharpName(true, true);
-            return Unit.kind switch
+            if (Unit.kind == VariableKind.Object ||
+                Unit.kind == VariableKind.Scene ||
+                Unit.kind == VariableKind.Application ||
+                Unit.kind == VariableKind.Saved)
             {
-                VariableKind.Object => MakeClickableForThisUnit(variables + $".Object(") + $"{GenerateValue(Unit.@object, data)}{MakeClickableForThisUnit($").Get{typeString}(")}",
-                VariableKind.Scene => MakeClickableForThisUnit(GetSceneKind(data, variables) + $".Get{typeString}("),
-                VariableKind.Application => MakeClickableForThisUnit(variables + "." + "Application".VariableHighlight() + $".Get{typeString}("),
-                VariableKind.Saved => MakeClickableForThisUnit(variables + "." + "Saved".VariableHighlight() + $".Get{typeString}("),
-                _ => string.Empty,
-            };
-        }
+                VariableDeclarations declarations = null;
 
-        private string GenerateDisconnectedVariableCode(ControlGenerationData data)
-        {
-            var name = (Unit.defaultValues[Unit.name.key] as string).LegalMemberName();
-            variableType = GetVariableType(name, data, true);
-            if (Unit.kind == VariableKind.Object || Unit.kind == VariableKind.Scene || Unit.kind == VariableKind.Application || Unit.kind == VariableKind.Saved)
-            {
-                var typeString = variableType != null ? $"<{variableType.As().CSharpName(false, true)}>" : string.Empty;
-                var expectedType = data.GetExpectedType();
-                var hasExpectedType = expectedType != null;
-                Type targetType = null;
+                if (Unit.kind == VariableKind.Object)
+                    declarations = GetTarget(data) != null ? VisualScripting.Variables.Object(GetTarget(data)) : null;
+                else if (Unit.kind == VariableKind.Scene)
+                    declarations = graphPointer != null && graphPointer.scene != null
+                        ? VisualScripting.Variables.Scene(graphPointer.scene)
+                        : VisualScripting.Variables.ActiveScene;
+                else if (Unit.kind == VariableKind.Application)
+                    declarations = VisualScripting.Variables.Application;
+                else if (Unit.kind == VariableKind.Saved)
+                    declarations = VisualScripting.Variables.Saved;
 
-#if VISUAL_SCRIPTING_1_7
-                var isExpectedType =
-                    (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType))
-                    || (hasExpectedType && IsVariableDefined(data, name) &&
-                        !string.IsNullOrEmpty(GetVariableDeclaration(data, name).typeHandle.Identification) &&
-                        expectedType.IsAssignableFrom(Type.GetType(GetVariableDeclaration(data, name).typeHandle.Identification)))
-                    || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out targetType) &&
-                        expectedType.IsAssignableFrom(targetType));
-#else
-                var isExpectedType =
-                    (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType))
-                    || (hasExpectedType && IsVariableDefined(data, name) &&
-                        GetVariableDeclaration(data, name).value != null &&
-                        expectedType.IsAssignableFrom(GetVariableDeclaration(data, name).value.GetType()))
-                    || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out targetType) &&
-                        expectedType.IsAssignableFrom(targetType));
-#endif
-                data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
-                var code = GetKind(data, typeString) + $"{GenerateValue(Unit.name, data)}{MakeClickableForThisUnit(")")}";
-                return code;
+                ResolveVariableTypeSafe(declarations, name, data);
+
+                string typeString = variableType != null
+                    ? "<" + variableType.As().CSharpName(false, true) + ">"
+                    : string.Empty;
+
+                WriteKindPrefix(data, variablesType, writer);
+                writer.Write(".Get" + typeString + "(");
+                GenerateValue(Unit.name, data, writer);
+                writer.Write(")");
+
+                UpdateExpectedType(data);
+                data.CreateSymbol(Unit, variableType ?? typeof(object));
+                return;
             }
-            else
-            {
-                data.CreateSymbol(Unit, variableType);
-                var expectedType = data.GetExpectedType();
-                var hasExpectedType = expectedType != null;
-                Type targetType = null;
-                var declaration = IsVariableDefined(data, name) ? GetVariableDeclaration(data, name) : null;
 
-#if VISUAL_SCRIPTING_1_7
-                var isExpectedType =
-                    (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType))
-                    || (hasExpectedType && declaration != null &&
-                        !string.IsNullOrEmpty(declaration.typeHandle.Identification) &&
-                        expectedType.IsAssignableFrom(Type.GetType(declaration.typeHandle.Identification)))
-                    || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out targetType) &&
-                        expectedType.IsAssignableFrom(targetType));
-#else
-                var isExpectedType =
-                    (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType))
-                    || (hasExpectedType && declaration != null &&
-                        declaration.value != null &&
-                        expectedType.IsAssignableFrom(declaration.value.GetType()))
-                    || (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out targetType) &&
-                        expectedType.IsAssignableFrom(targetType));
-#endif
-                data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
-                return MakeClickableForThisUnit(data.GetVariableName(name).VariableHighlight());
-            }
+            string scopedName = data.GetVariableName(name.LegalVariableName());
+
+            variableName = scopedName.LegalVariableName();
+            variableType = data.GetVariableType(scopedName);
+            writer.Write(variableName.VariableHighlight());
+            UpdateExpectedType(data);
+            data.CreateSymbol(Unit, variableType);
         }
 
-        private Type GetVariableType(string name, ControlGenerationData data, bool checkDecleration)
+        private void UpdateExpectedType(ControlGenerationData data)
         {
-            if (checkDecleration)
-            {
-                var isDefined = IsVariableDefined(data, name);
-                if (isDefined)
-                {
-                    var declaration = GetVariableDeclaration(data, name);
-#if VISUAL_SCRIPTING_1_7
-                    return declaration?.typeHandle.Identification != null
-                        ? Type.GetType(declaration.typeHandle.Identification)
-                        : null;
-#else
-                    return declaration?.value != null
-                        ? declaration.value.GetType()
-                        : null;
-#endif
+            Type expected = data.GetExpectedType();
 
-                }
-            }
-            var type = data.TryGetVariableType(data.GetVariableName(name), out Type targetType) ? targetType : data.GetExpectedType();
+            bool met =
+                expected != null &&
+                variableType != null &&
+                expected.IsAssignableFrom(variableType);
 
-            if (type == null && data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet())
-            {
-                return data.GetExpectedType();
-            }
-            return type ?? typeof(object);
+            if (met)
+                data.MarkExpectedTypeMet(variableType);
         }
 
-        private bool IsVariableDefined(ControlGenerationData data, string name)
+        private void WriteKindPrefix(ControlGenerationData data, string variablesType, CodeWriter writer)
         {
-            var target = Unit.kind == VariableKind.Object ? GetTarget(data) : null;
-            return Unit.kind switch
-            {
-                VariableKind.Object => target != null && VisualScripting.Variables.Object(target).IsDefined(name),
-                VariableKind.Scene => VisualScripting.Variables.ActiveScene.IsDefined(name),
-                VariableKind.Application => VisualScripting.Variables.Application.IsDefined(name),
-                VariableKind.Saved => VisualScripting.Variables.Saved.IsDefined(name),
-                _ => false,
-            };
+            if (Unit.kind == VariableKind.Object)
+                writer.InvokeMember(variablesType, "Object", writer.Action(w => WriteObject(data, w)));
+            if (Unit.kind == VariableKind.Scene)
+                WriteSceneKind(data, variablesType, writer);
+            if (Unit.kind == VariableKind.Application)
+                writer.GetMember(variablesType, "Application");
+            if (Unit.kind == VariableKind.Saved)
+                writer.GetMember(variablesType, "Saved");
         }
 
-        private VariableDeclaration GetVariableDeclaration(ControlGenerationData data, string name)
+        private void WriteObject(ControlGenerationData data, CodeWriter writer)
         {
-            var target = Unit.kind == VariableKind.Object ? GetTarget(data) : null;
-            return Unit.kind switch
+            if (!Unit.@object.hasValidConnection && Unit.defaultValues[Unit.@object.key] == null)
             {
-                VariableKind.Graph => unit.graph.variables.GetDeclaration(name),
-                VariableKind.Object => target != null ? VisualScripting.Variables.Object(target).GetDeclaration(name) : null,
-                VariableKind.Scene => VisualScripting.Variables.ActiveScene.GetDeclaration(name),
-                VariableKind.Application => VisualScripting.Variables.Application.GetDeclaration(name),
-                VariableKind.Saved => VisualScripting.Variables.Saved.GetDeclaration(name),
-                _ => null,
-            };
+                writer.Write("gameObject".VariableHighlight());
+                return;
+            }
+
+            GenerateValue(Unit.@object, data, writer);
         }
+
+        private void ResolveVariableTypeSafe(VariableDeclarations declarations, string name, ControlGenerationData data)
+        {
+            UnitSymbol unitSymbol = null;
+            variableType = declarations != null && declarations.IsDefined(name)
+                ? ResolveVariableType(declarations, name)
+                : data.TryGetSymbol(Unit, out unitSymbol) ? unitSymbol.Type : data.GetExpectedType() ?? typeof(object);
+        }
+
+        private void WriteSceneKind(ControlGenerationData data, string variables, CodeWriter writer)
+        {
+            writer.Write(typeof(Component).IsAssignableFrom(data.ScriptType)
+                ? variables + ".Scene(" + "gameObject".VariableHighlight() + "." + "scene".VariableHighlight() + ")"
+                : variables + "." + "ActiveScene".VariableHighlight());
+        }
+
         private GameObject GetTarget(ControlGenerationData data)
         {
-            if (!Unit.@object.hasValidConnection && Unit.defaultValues[Unit.@object.key] == null && data.TryGetGameObject(out var gameObject))
-            {
+            if (!Unit.@object.hasValidConnection && Unit.defaultValues[Unit.@object.key] == null && data.TryGetGameObject(out GameObject gameObject))
                 return gameObject;
-            }
-            else if (!Unit.@object.hasValidConnection && Unit.defaultValues[Unit.@object.key] != null)
-            {
+
+            if (!Unit.@object.hasValidConnection && Unit.defaultValues[Unit.@object.key] != null)
                 return Unit.defaultValues[Unit.@object.key].ConvertTo<GameObject>();
-            }
-            else
+
+            if (data.TryGetGraphPointer(out GraphPointer graphPointer) &&
+                Unit.@object.hasValidConnection &&
+                CanPredictConnection(Unit.@object, data))
             {
-                if (data.TryGetGraphPointer(out var graphPointer))
+                try
                 {
-                    if (Unit.@object.hasValidConnection && CanPredictConnection(Unit.@object, data))
-                    {
-                        try
-                        {
-                            return Flow.Predict<GameObject>(Unit.@object.GetPesudoSource(), graphPointer.AsReference());
-                        }
-                        catch (InvalidOperationException ex)
-                        {
-                            Debug.LogError(ex);
-                            return null;
-                        }
-                    }
-                    else
-                    {
-                        return null;
-                    }
+                    return Flow.Predict<GameObject>(Unit.@object.GetPesudoSource(), graphPointer.AsReference());
                 }
-                return null;
-            }
-        }
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
-        {
-            if (input == Unit.@object && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
-            {
-                return MakeClickableForThisUnit("gameObject".VariableHighlight());
+                catch (InvalidOperationException)
+                {
+                    return null;
+                }
             }
 
-            if (input == Unit.@object)
+            return null;
+        }
+
+        private static Type GetCachedType(string typeId)
+        {
+            if (!typeCache.TryGetValue(typeId, out var type))
             {
-                data.SetExpectedType(typeof(GameObject));
-                var code = base.GenerateValue(input, data);
-                data.RemoveExpectedType();
-                return code;
+                type = Type.GetType(typeId) ?? typeof(object);
+                typeCache[typeId] = type;
             }
-            return base.GenerateValue(input, data);
+            return type;
+        }
+
+
+        private Type ResolveVariableType(VariableDeclarations declarations, string name)
+        {
+            var declaration = declarations.GetDeclaration(name);
+
+#if VISUAL_SCRIPTING_1_7
+            var id = declaration.typeHandle.Identification;
+            return string.IsNullOrEmpty(id) ? typeof(object) : GetCachedType(id);
+#else
+            return declaration.value != null ? declaration.value.GetType() : typeof(object);
+#endif
         }
     }
 }

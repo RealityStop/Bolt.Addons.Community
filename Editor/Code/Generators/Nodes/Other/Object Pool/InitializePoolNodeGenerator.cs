@@ -1,9 +1,8 @@
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
 using Unity.VisualScripting;
-using UnityEngine;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -11,32 +10,46 @@ namespace Unity.VisualScripting.Community.CSharp
     public class InitializePoolNodeGenerator : LocalVariableGenerator
     {
         private InitializePoolNode Unit => unit as InitializePoolNode;
+
         public InitializePoolNodeGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(variableName.VariableHighlight());
+            writer.WriteIndented();
+
+            variableName = data.AddLocalNameInScope("pool", typeof(ObjectPool), true);
+
+            writer.CreateVariable("var".ConstructHighlight(), variableName, writer.Action(() =>
+            {
+                writer.InvokeMember(typeof(ObjectPool), "CreatePool");
+                GenerateValue(Unit.InitialPoolSize, data, writer);
+                writer.ParameterSeparator();
+                GenerateValue(Unit.Prefab, data, writer);
+
+                if (Unit.CustomParent)
+                {
+                    writer.ParameterSeparator();
+                    GenerateValue(Unit.parent, data, writer);
+                }
+            }), WriteOptions.Indented, EndWriteOptions.LineEnd);
+
+            GenerateExitControl(Unit.Initialized, data, writer);
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            builder.Indent(indent);
-            builder.Clickable("var ".ConstructHighlight() + (variableName = data.AddLocalNameInScope("pool", typeof(ObjectPool)).VariableHighlight()));
-            if (Unit.CustomParent)
-                builder.Equal(true).Clickable(typeof(ObjectPool).As().CSharpName(false, true)).Dot().MethodCall("CreatePool", p1 => p1.Ignore(GenerateValue(Unit.InitialPoolSize, data)), p2 => p2.Ignore(GenerateValue(Unit.Prefab, data)), p3 => p3.Ignore(GenerateValue(Unit.parent, data))).Clickable(";");
-            else
-                builder.Equal(true).Clickable(typeof(ObjectPool).As().CSharpName(false, true)).Dot().MethodCall("CreatePool", p1 => p1.Ignore(GenerateValue(Unit.InitialPoolSize, data)), p2 => p2.Ignore(GenerateValue(Unit.Prefab, data))).Clickable(";");
-            builder.NewLine().Ignore(GetNextUnit(Unit.Initialized, data, indent));
-            return builder;
+            writer.GetVariable(variableName);
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input == Unit.parent && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
             {
-                return MakeClickableForThisUnit("gameObject".VariableHighlight());
+                writer.GetVariable("gameObject");
+                return;
             }
-            return base.GenerateValue(input, data);
+
+            base.GenerateValueInternal(input, data, writer);
         }
     }
 }

@@ -7,7 +7,13 @@ namespace Unity.VisualScripting.Community.CSharp
     [NodeGenerator(typeof(OnToggleValueChanged))]
     public class OnToggleValueChangedGenerator : EventListenerMethodGenerator<OnToggleValueChanged>
     {
-        public OnToggleValueChangedGenerator(Unit unit) : base(unit) { NameSpaces = "UnityEngine.UI"; }
+        public OnToggleValueChangedGenerator(Unit unit) : base(unit) { }
+
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "UnityEngine.UI";
+        }
+
         public override List<ValueOutput> OutputValues => new List<ValueOutput>() { Unit.value };
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(bool), "value") };
@@ -28,10 +34,9 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             return Unit.target;
         }
-
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("value".VariableHighlight());
+            writer.GetVariable("value");
         }
     }
 }

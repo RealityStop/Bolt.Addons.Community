@@ -21,25 +21,30 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public OnDestinationReachedGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateUpdateCode(ControlGenerationData data, int indent)
+        public override void GenerateUpdateCode(ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            builder.Indent(indent);
-            builder.Body(before =>
-                before.Clickable("if ".ControlHighlight()).Parentheses(inner =>
-                    inner.CallCSharpUtilityMethod(MakeClickableForThisUnit("DestinationReached"),
-                        p1 => p1.Clickable("gameObject".VariableHighlight()),
-                        p2 => p2.Ignore(GenerateValue(Unit.threshold, data)),
-                        p3 => p3.Ignore(GenerateValue(Unit.requireSuccess, data))
-                    )
-                ),
-            (body, _indent) => body.Indent(_indent).Clickable(Unit.coroutine ? $"StartCoroutine({Name + "()"})" : Name + "()"), true, indent);
-            return builder;
+            writer.WriteIndented("if".ControlHighlight());
+            writer.Write(" (");
+            writer.CallCSharpUtilityMethod("DestinationReached",
+                writer.Action(() => writer.Write("gameObject".VariableHighlight())),
+                writer.Action(() => GenerateValue(Unit.threshold, data, writer)),
+                writer.Action(() => GenerateValue(Unit.requireSuccess, data, writer))
+            );
+            writer.Write(")");
+            writer.NewLine();
+            writer.WriteLine("{");
+            using (writer.IndentedScope(data))
+            {
+                writer.WriteIndented(Unit.coroutine ? $"StartCoroutine({Name}())" : Name + "()");
+                writer.Write(";");
+                writer.NewLine();
+            }
+            writer.WriteLine("}");
         }
 
-        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateExitControl(Unit.trigger, data, writer);
         }
     }
 }

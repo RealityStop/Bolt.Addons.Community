@@ -15,14 +15,17 @@ namespace Unity.VisualScripting.Community.CSharp
     public class CSharpPreviewWindow : EditorWindow
     {
         [SerializeField] private UnityEngine.Object _asset;
-        private string manualCode;
+        private CodeWriter manualCodeWriter;
         private Vector2 scrollPosition;
         private float visualZoom = 0.7f;
 
         private bool canCompile = true;
 
         private string[] codeLines;
-        private Dictionary<int, List<ClickableRegion>> cachedRegions;
+        private int[] lineStartIndices;
+        private SourceMap sourceMap;
+        private SourceNode activeNode;
+        private CodeWriter generatedCodeWriter;
 
         private string searchQuery = "";
         private List<int> searchMatches = new List<int>();
@@ -63,7 +66,7 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 _asset = Selection.activeObject;
                 canCompile = true;
-                manualCode = "";
+                manualCodeWriter = null;
                 UpdateCodeDisplay();
                 Repaint();
             }
@@ -72,13 +75,13 @@ namespace Unity.VisualScripting.Community.CSharp
         /// <summary>
         /// Opens the preview window with specific code, no asset required.
         /// </summary>
-        public static void OpenWithCode(string code, bool canCompile)
+        public static void OpenWithCode(CodeWriter code, bool canCompile)
         {
             var win = GetWindow<CSharpPreviewWindow>();
             window = win;
             win.titleContent = new GUIContent("C# Preview");
             win.minSize = new Vector2(400, 400);
-            win.manualCode = code;
+            win.manualCodeWriter = code;
             win.canCompile = canCompile;
             win.UpdateCodeDisplay();
             win.Show();
@@ -86,32 +89,44 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void UpdateCodeDisplay()
         {
-            string code = string.Empty;
+            settingsManager.InitializeSettings();
+            generatedCodeWriter = null;
+            sourceMap = null;
+            activeNode = null;
 
-            if (!string.IsNullOrEmpty(manualCode))
+            if (manualCodeWriter != null)
             {
-                code = manualCode;
+                generatedCodeWriter = manualCodeWriter;
             }
             else if (_asset != null)
             {
-                code = LoadCode();
+                generatedCodeWriter = LoadCode();
             }
 
-            codeLines = string.IsNullOrEmpty(code)
+            string displayCode = generatedCodeWriter?.ToHighlightedString() ?? "";
+            codeLines = string.IsNullOrEmpty(displayCode)
                 ? Array.Empty<string>()
-                : code.Split(new[] { '\n' }, StringSplitOptions.None);
+                : displayCode.Split('\n');
 
-            var clickableRegions = CodeUtility.ExtractAndPopulateClickableRegions(code ?? "");
-            cachedRegions = clickableRegions
-                .GroupBy(r => r.startLine)
-                .ToDictionary(g => g.Key, g => g.ToList());
+            if (generatedCodeWriter != null)
+            {
+                sourceMap = generatedCodeWriter.GetSourceMap();
+            }
+
+            lineStartIndices = new int[codeLines.Length];
+            int index = 0;
+            for (int i = 0; i < codeLines.Length; i++)
+            {
+                lineStartIndices[i] = index;
+                index += codeLines[i].RemoveHighlights().RemoveMarkdown().Length + 1;
+            }
 
             lineWidths = new float[codeLines.Length];
         }
 
-        private string LoadCode()
+        private CodeWriter LoadCode()
         {
-            if (_asset == null) return string.Empty;
+            if (_asset == null) return null;
 
             if (CodeGeneratorValueUtility.currentAsset == null && _asset != null)
                 CodeGeneratorValueUtility.currentAsset = _asset;
@@ -126,13 +141,18 @@ namespace Unity.VisualScripting.Community.CSharp
                     CodeGeneratorValueUtility.currentAsset = (generator as GameObjectGenerator).current;
                 }
             }
-            if (generator == null) return string.Empty;
 
-            var code = generator.Generate(0);
-            return code.RemoveMarkdown();
+            if (generator == null) return null;
+
+            var writer = new CodeWriter();
+            generator.Generate(writer, generator.GetGenerationData());
+
+            return writer;
         }
+
         private float[] lineWidths;
         float contentWidth;
+
         private void OnGUI()
         {
             if (CodeGeneratorValueUtility.currentAsset == null && _asset != null)
@@ -143,7 +163,6 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 EditorGUILayout.Space();
                 settingsScroll = EditorGUILayout.BeginScrollView(settingsScroll, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
-                settingsManager.InitializeSettings();
                 settingsManager.UpdateSettings(settings => UIBuilder.DrawCSharpPreviewSettings(settings, () => RefreshPreview()));
                 EditorGUILayout.EndScrollView();
                 return;
@@ -200,10 +219,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 {
                     if (!elementWasClicked)
                     {
-                        selectedRegions.Clear();
-                        selectedLines.Clear();
-                        selectedUnitID = "";
-                        allCodeSelected = false;
+                        activeNode = null;
                         GUI.FocusControl(null);
                         e.Use();
                         Repaint();
@@ -278,38 +294,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (GUILayout.Button("Copy To Clipboard", EditorStyles.toolbarButton, GUILayout.Width(120)))
             {
-                if (allCodeSelected || (selectedLines.Count == 0 && selectedRegions.Count == 0))
-                {
-                    GUIUtility.systemCopyBuffer = string.Join("\n", codeLines.Select(l => CodeUtility.CleanCode(RemoveColorTags(l))));
-                }
-                else
-                {
-                    var lineSelections = new Dictionary<int, List<string>>();
-
-                    foreach (var line in selectedLines)
-                    {
-                        if (line >= 0 && line < codeLines.Length)
-                        {
-                            if (!lineSelections.ContainsKey(line))
-                                lineSelections[line] = new List<string>();
-
-                            lineSelections[line].Add(CodeUtility.CleanCode(RemoveColorTags(codeLines[line])));
-                        }
-                    }
-
-                    foreach (var region in selectedRegions.OrderBy(c => c.startLine).ThenBy(c => c.startIndex))
-                    {
-                        int lineIndex = region.startLine;
-                        if (!lineSelections.ContainsKey(lineIndex))
-                            lineSelections[lineIndex] = new List<string>();
-
-                        lineSelections[lineIndex].Add(CodeUtility.CleanCode(RemoveColorTags(region.code)));
-                    }
-
-                    var finalLines = lineSelections.OrderBy(kv => kv.Key).Select(v => string.Join("", v.Value));
-
-                    GUIUtility.systemCopyBuffer = string.Join("\n", finalLines);
-                }
+                GUIUtility.systemCopyBuffer = string.Join("\n", codeLines.Select(l => RemoveColorTags(l)));
             }
 
             if (GUILayout.Button("Refresh", EditorStyles.toolbarButton, GUILayout.Width(70)))
@@ -383,25 +368,14 @@ namespace Unity.VisualScripting.Community.CSharp
         }
 
         private const float LineNumberWidth = 35f;
-        private HashSet<int> selectedLines = new HashSet<int>();
-        private HashSet<ClickableRegion> selectedRegions = new HashSet<ClickableRegion>();
-        private string selectedUnitID;
-        private bool allCodeSelected = false;
-
-        private string CleanLine(string line)
-        {
-            var toolTipText = CodeUtility.ExtractTooltip(line, out _);
-            string cleanText = CodeUtility.CleanCode(toolTipText, false);
-            return RemoveColorTags(cleanText);
-        }
-
         private bool elementWasClicked = false;
 
         private float DrawLine(Rect rect, int index)
         {
             float x = rect.x - scrollPosition.x;
+            float lineHeight = LineHeight * visualZoom;
 
-            if (!string.IsNullOrEmpty(searchQuery) && CleanLine(codeLines[index]).IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
+            if (!string.IsNullOrEmpty(searchQuery) && codeLines[index].IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, rect.height), highlightColor);
             }
@@ -418,214 +392,161 @@ namespace Unity.VisualScripting.Community.CSharp
             var e = Event.current;
             GUI.Label(lineNumberRect, lineNumberText, baseStyle);
 
-            if (e.type == EventType.MouseDown && e.button == 0 && lineNumberRect.Contains(e.mousePosition))
-            {
-                if (e.CtrlOrCmd())
-                {
-                    if (selectedLines.Contains(index))
-                        selectedLines.Remove(index);
-                    else
-                    {
-                        if (cachedRegions != null && cachedRegions.TryGetValue(index, out var _regions) && _regions.Count > 0)
-                        {
-                            var first = _regions.FirstOrDefault();
-                            if (first != null)
-                                selectedUnitID = first.unitId;
-                            else selectedUnitID = "";
-                        }
-                        else
-                            selectedUnitID = "";
-                        selectedLines.Add(index);
-                    }
-                }
-                else
-                {
-                    selectedLines.Clear();
-                    selectedRegions.Clear();
-                    selectedLines.Add(index);
-                    if (cachedRegions != null && cachedRegions.TryGetValue(index, out var _regions) && _regions.Count > 0)
-                    {
-                        var first = _regions.FirstOrDefault();
-                        if (first != null)
-                            selectedUnitID = first.unitId;
-                        else selectedUnitID = "";
-                    }
-                    else
-                        selectedUnitID = "";
-                }
-                e.Use();
-            }
-
             x += lineNumberWidth;
 
-            float lineHeight = LineHeight * visualZoom;
+            string cleanText = codeLines[index].RemoveHighlights().RemoveMarkdown();
 
-            if (cachedRegions != null && cachedRegions.TryGetValue(index, out var regions) && regions.Count > 0)
+            // Highlight active source node
+            if (activeNode != null)
             {
-                AdjustLeadingWhitespacesForFirstRegion(codeLines[index], regions[0]);
-                bool isMatchingInLine = false;
-                foreach (var region in regions)
+                SourceSpan span = activeNode.Span;
+                int lineStart = lineStartIndices[index];
+                int lineEnd = lineStart + cleanText.Length;
+
+                if (span.Start < lineEnd && span.End > lineStart)
                 {
-                    if (!string.IsNullOrEmpty(searchQuery) && !isMatchingInLine)
+                    int localStart = Mathf.Max(span.Start, lineStart) - lineStart;
+                    int localEnd = Mathf.Min(span.End, lineEnd) - lineStart;
+
+                    Vector2 startPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), localStart);
+                    Vector2 endPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), localEnd);
+
+                    Rect highlight = new Rect(x + startPos.x, rect.y, endPos.x - startPos.x, rect.height);
+                    EditorGUI.DrawRect(highlight, new Color(0.25f, 0.5f, 0.8f, 0.25f));
+                }
+            }
+
+            // Highlight search matches
+            if (!string.IsNullOrEmpty(searchQuery))
+            {
+                int matchIndex = cleanText.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase);
+                if (matchIndex >= 0)
+                {
+                    Vector2 startPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), matchIndex);
+                    Vector2 endPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), matchIndex + searchQuery.Length);
+                    Rect highlightRect = new Rect(x + startPos.x, rect.y, endPos.x - startPos.x, rect.height);
+                    EditorGUI.DrawRect(highlightRect, highlightColor.WithAlpha(0.3f));
+                }
+            }
+
+            CodeDiagnostic best = null;
+            float bestScore = float.MinValue;
+
+            // Display diagnostics
+            if (generatedCodeWriter != null)
+            {
+                foreach (CodeDiagnostic diagnostic in generatedCodeWriter.GetDiagnostics())
+                {
+                    SourceSpan span = diagnostic.Span;
+                    int lineStart = lineStartIndices[index];
+                    int lineEnd = lineStart + cleanText.Length;
+
+                    if (span.Start < lineEnd && span.End > lineStart)
                     {
-                        isMatchingInLine = true;
-                        var cleanedCode = CleanLine(codeLines[index]);
-                        int matchIndex = cleanedCode.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase);
-                        if (matchIndex >= 0)
+                        int localStart = Mathf.Max(span.Start, lineStart) - lineStart;
+                        int localEnd = Mathf.Min(span.End, lineEnd) - lineStart;
+
+                        Vector2 startPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), localStart);
+                        Vector2 endPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), localEnd);
+
+                        Rect diagnosticRect = new Rect(x + startPos.x, rect.y, Mathf.Max(2f, endPos.x - startPos.x), rect.height);
+
+                        if (diagnosticRect.Contains(Event.current.mousePosition))
                         {
-                            Vector2 startPos = noPaddingStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanedCode), matchIndex);
-                            Vector2 endPos = noPaddingStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanedCode), matchIndex + searchQuery.Length);
-                            Rect highlightRect = new Rect(x + startPos.x, rect.y, endPos.x - startPos.x, rect.height);
-                            EditorGUI.DrawRect(highlightRect, highlightColor.WithAlpha(0.3f));
+                            float spanSize = span.End - span.Start;
+                            float severity = (int)diagnostic.Kind;
+                            float centerX = diagnosticRect.x + diagnosticRect.width * 0.5f;
+                            float mouseDist = Mathf.Abs(Event.current.mousePosition.x - centerX);
+
+                            float score =
+                                (100000f / Mathf.Max(1f, spanSize)) +
+                                (severity * 1000f) -
+                                mouseDist;
+
+                            if (score > bestScore)
+                            {
+                                bestScore = score;
+                                best = diagnostic;
+                            }
                         }
                     }
-
-                    var toolTipText = CodeUtility.ExtractTooltip(region.code, out var tooltip);
-                    string cleanText = CodeUtility.CleanCode(toolTipText, false);
-
-                    Vector2 size = noPaddingStyle.CalcSize(Temp(cleanText));
-                    var content = string.IsNullOrEmpty(tooltip) ? Temp(cleanText) : Temp(cleanText, tooltip);
-                    Rect buttonRect = new Rect(x, rect.y, size.x, rect.height);
-
-                    if (allCodeSelected || selectedLines.Contains(index) || (region != null && selectedRegions.Contains(region)))
-                    {
-                        EditorGUI.DrawRect(buttonRect, new Color(0.25f, 0.5f, 0.8f, 0.3f));
-                    }
-                    else if (selectedUnitID == region.unitId)
-                    {
-                        EditorGUI.DrawRect(buttonRect, new Color(0.25f, 0.25f, 0.25f, 0.4f));
-                    }
-
-                    if (GUI.Button(buttonRect, content, noPaddingStyle))
-                    {
-                        selectedUnitID = region.unitId;
-                        HandleClick(index, region);
-                        HandleClickableRegionClick(region.unitId, index);
-                        elementWasClicked = true;
-                    }
-
-                    x += size.x;
                 }
             }
-            else
+
+            var highlightedCode = codeLines[index].RemoveMarkdown();
+            var content = best != null ? Temp(highlightedCode, GetDiagnosticMessage(best)) : Temp(highlightedCode);
+            Vector2 size = baseStyle.CalcSize(content);
+            Rect labelRect = new Rect(x, rect.y, size.x, rect.height);
+
+            if (GUI.Button(labelRect, content, baseStyle))
             {
-                string lineText = CodeUtility.ExtractTooltip(codeLines[index], out var tooltip);
-                string cleanText = CodeUtility.CleanCode(lineText);
-
-                if (!string.IsNullOrEmpty(searchQuery))
-                {
-                    int matchIndex = RemoveColorTags(cleanText).IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase);
-                    if (matchIndex >= 0)
-                    {
-                        Vector2 startPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), matchIndex);
-                        Vector2 endPos = baseStyle.GetCursorPixelPosition(new Rect(0, 0, 1000, lineHeight), Temp(cleanText), matchIndex + searchQuery.Length);
-                        Rect highlightRect = new Rect(x + startPos.x, rect.y, endPos.x - startPos.x, rect.height);
-                        EditorGUI.DrawRect(highlightRect, highlightColor.WithAlpha(0.3f));
-                    }
-                }
-
-                Vector2 size = baseStyle.CalcSize(Temp(cleanText));
-                Rect labelRect = new Rect(x, rect.y, size.x, rect.height);
-                var content = string.IsNullOrEmpty(tooltip) ? Temp(cleanText) : Temp(cleanText, tooltip);
-
-                if (allCodeSelected || selectedLines.Contains(index))
-                {
-                    EditorGUI.DrawRect(labelRect, new Color(0.25f, 0.5f, 0.8f, 0.3f));
-                }
-
-                if (GUI.Button(labelRect, content, baseStyle))
-                {
-                    selectedUnitID = "";
-                    HandleClick(index, null);
-                    elementWasClicked = true;
-                }
-
-                x += size.x;
+                ResolveClick(labelRect, index);
+                elementWasClicked = true;
             }
 
+            x += size.x;
             lineWidths[index] = x;
             return x;
         }
 
-        private int clickCount = 0;
-        private float lastClickTime = 0f;
-        private const float doubleClickThreshold = 0.3f;
-        private int lastClickedLine = -1;
-
-        private void HandleClick(int index, ClickableRegion region)
+        private string GetDiagnosticMessage(CodeDiagnostic diagnostic)
         {
-            var e = Event.current;
-            bool isRegion = region != null;
-
-            if (e != null && e.button == 0)
+            switch (diagnostic.Kind)
             {
-                float time = Time.realtimeSinceStartup;
-                if (index == lastClickedLine && time - lastClickTime <= doubleClickThreshold)
-                {
-                    clickCount++;
-                }
-                else
-                {
-                    clickCount = 1;
-                }
-
-                lastClickTime = time; lastClickedLine = index;
-                bool ctrl = e.CtrlOrCmd();
-
-                if (clickCount == 2)
-                {
-                    if (ctrl)
-                    {
-                        selectedLines.Add(index);
-                        if (selectedRegions.Contains(region))
-                            selectedRegions.Remove(region);
-                    }
-                    else
-                    {
-                        selectedLines.Clear();
-                        selectedRegions.Clear();
-                        selectedLines.Add(index);
-                    }
-                    allCodeSelected = false;
-                }
-                else if (clickCount == 1)
-                {
-                    if (ctrl)
-                    {
-                        if (isRegion)
-                        {
-                            if (selectedRegions.Contains(region))
-                                selectedRegions.Remove(region);
-                            else
-                                selectedRegions.Add(region);
-                        }
-                        else
-                        {
-                            if (selectedLines.Contains(index))
-                                selectedLines.Remove(index);
-                            else
-                                selectedLines.Add(index);
-                        }
-                    }
-                    else
-                    {
-                        selectedLines.Clear();
-                        selectedRegions.Clear();
-                        if (isRegion)
-                            selectedRegions.Add(region);
-                        else
-                            selectedLines.Add(index);
-                        allCodeSelected = false;
-                    }
-                }
-                else if (clickCount >= 3)
-                {
-                    allCodeSelected = true;
-                    selectedLines.Clear();
-                    selectedRegions.Clear();
-                    clickCount = 0;
-                }
+                case CodeDiagnosticKind.Info: return "Info: " + diagnostic.Message;
+                case CodeDiagnosticKind.Warning: return $"<color={"#" + CodeBuilder.WarningColor}>Warning: " + diagnostic.Message + "</color>";
+                case CodeDiagnosticKind.Recommendation: return $"<color={"#" + CodeBuilder.RecommendationColor}>Recommendation: " + diagnostic.Message + "</color>";
+                case CodeDiagnosticKind.Error: return $"<color={"#" + CodeBuilder.ErrorColor}>Error: " + diagnostic.Message + "</color>";
             }
+            return diagnostic.Message;
+        }
+
+        private void ResolveClick(Rect rect, int lineIndex)
+        {
+            Vector2 mouse = Event.current.mousePosition;
+            float lineHeight = LineHeight * visualZoom;
+
+            float clickXInRect = mouse.x - rect.x;
+
+            string displayText = codeLines[lineIndex];
+            string cleanText = displayText.RemoveHighlights().RemoveMarkdown();
+
+            int charIndex = 0;
+
+            Rect measureRect = new Rect(0, 0, 2000, lineHeight);
+
+            for (int i = 0; i < cleanText.Length; i++)
+            {
+                Vector2 startPos = baseStyle.GetCursorPixelPosition(measureRect, Temp(cleanText), i);
+                Vector2 endPos = baseStyle.GetCursorPixelPosition(measureRect, Temp(cleanText), i + 1);
+
+                float charStartX = startPos.x;
+                float charEndX = endPos.x;
+
+                if (clickXInRect >= charStartX && clickXInRect < charEndX)
+                {
+                    charIndex = i;
+                    break;
+                }
+
+                if (charStartX > clickXInRect)
+                {
+                    charIndex = i;
+                    break;
+                }
+
+                charIndex = i + 1;
+            }
+
+            int globalIndex = lineStartIndices[lineIndex] + charIndex;
+            activeNode = sourceMap?.Resolve(globalIndex);
+
+            if (activeNode != null && activeNode.Unit != null)
+            {
+                HandleClickableRegionClick(activeNode.Unit, lineIndex + 1);
+            }
+
+            Repaint();
         }
 
         const float Height = 16f;
@@ -701,21 +622,6 @@ namespace Unity.VisualScripting.Community.CSharp
             return _tempTooltip;
         }
 
-        private void AdjustLeadingWhitespacesForFirstRegion(string line, ClickableRegion firstRegion)
-        {
-            int leadingWhitespaceLength = 0;
-            while (leadingWhitespaceLength < line.Length && char.IsWhiteSpace(line[leadingWhitespaceLength]))
-            {
-                leadingWhitespaceLength++;
-            }
-
-            string whitespace = line.Substring(0, leadingWhitespaceLength);
-            if (!firstRegion.code.StartsWith(whitespace))
-            {
-                firstRegion.code = whitespace + firstRegion.code.TrimStart();
-            }
-        }
-
         private UnityEngine.Object GetRootObject(GraphReference reference)
         {
             var root = reference.rootObject;
@@ -726,20 +632,29 @@ namespace Unity.VisualScripting.Community.CSharp
             return root;
         }
 
-        private void HandleClickableRegionClick(string unitId, int line)
+        private void HandleClickableRegionClick(Unit unit, int line)
         {
             var code = CodeGenerator.GetSingleDecorator(_asset);
 
-            if (GraphWindow.active != null && GraphWindow.active.reference != null && GraphWindow.active.context.graph is FlowGraph)
+            if (GraphWindow.active != null &&
+                GraphWindow.active.reference != null &&
+                GraphWindow.active.context.graph is FlowGraph)
             {
-                if (GetRootObject(GraphWindow.active.reference) != (_asset is GameObject ? (code as GameObjectGenerator).current : _asset))
+                if (GetRootObject(GraphWindow.active.reference) !=
+                    (_asset is GameObject ? (code as GameObjectGenerator).current : _asset))
                 {
-                    OpenInitial(unitId, line, code);
+                    OpenInitial(unit, line, code);
                 }
-                var reference = GraphWindow.active.reference.isRoot ? GraphWindow.active.reference : GraphWindow.active.reference.root.GetReference() as GraphReference;
+
+                var reference =
+                    GraphWindow.active.reference.isRoot
+                        ? GraphWindow.active.reference
+                        : GraphWindow.active.reference.root.GetReference() as GraphReference;
+
                 GraphWindow.active.Focus();
 
                 List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
+
                 if (reference.macro != null &&
                     (reference.macro is MethodDeclaration ||
                      reference.macro is ConstructorDeclaration ||
@@ -762,25 +677,28 @@ namespace Unity.VisualScripting.Community.CSharp
                 {
                     units = GraphTraversal.TraverseFlowGraph<Unit>(reference).ToList();
                 }
-                var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
-                if (ordered.Count() > 0 && ordered.Any(selectable => selectable.result.Item2 != null))
+
+                var match = units.FirstOrDefault(u => u.Item2 == unit);
+
+                if (match.Item2 != null)
                 {
-                    ordered = ordered.Where(selectable => selectable.result.Item2 != null);
-                }
-                if (units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString()).Count() > 0)
-                {
-                    if (!GraphWindow.active.reference.isRoot && reference != ordered.First().result.Item1)
+                    if (!GraphWindow.active.reference.isRoot &&
+                        reference != match.Item1)
                     {
-                        GraphWindow.active.reference = GraphWindow.active.reference.root.GetReference() as GraphReference;
+                        GraphWindow.active.reference =
+                            GraphWindow.active.reference.root.GetReference() as GraphReference;
                     }
-                    var path = GraphTraversal.GetReferencePath(ordered.First().result.Item1);
-                    if (GraphWindow.active.reference != ordered.First().result.Item1)
+
+                    var path = GraphTraversal.GetReferencePath(match.Item1);
+
+                    if (GraphWindow.active.reference != match.Item1)
                     {
                         foreach (var item in path)
                         {
                             if (item.Item2 != null)
                             {
-                                GraphWindow.active.reference = GraphWindow.active.reference.ChildReference(item.Item2, false);
+                                GraphWindow.active.reference =
+                                    GraphWindow.active.reference.ChildReference(item.Item2, false);
                             }
                             else if (item.Item1.isRoot)
                             {
@@ -788,92 +706,114 @@ namespace Unity.VisualScripting.Community.CSharp
                             }
                         }
                     }
-                    if (ordered.First().result.Item2 != null)
-                    {
-                        var canvas = GraphWindow.active.context.canvas as FlowCanvas;
-                        GraphWindow.active.context.BeginEdit();
-                        canvas.ViewElements(new List<Unit>() { ordered.First().result.Item2 });
-                        GraphWindow.active.context.canvas.UpdateViewport();
-                        GraphWindow.active.context.EndEdit();
-                    }
+
+                    var canvas = GraphWindow.active.context.canvas as FlowCanvas;
+                    GraphWindow.active.context.BeginEdit();
+                    canvas.ViewElements(new List<Unit> { match.Item2 });
+                    GraphWindow.active.context.canvas.UpdateViewport();
+                    GraphWindow.active.context.EndEdit();
                 }
             }
             else
             {
-                OpenInitial(unitId, line, code);
+                OpenInitial(unit, line, code);
             }
         }
 
-        private void OpenInitial(string unitId, int line, CodeGenerator code)
+        private void OpenInitial(Unit unit, int line, CodeGenerator code)
         {
-            if (code is ClassAssetGenerator classAssetGenerator)
+            if (code is ClassAssetGenerator classAssetGenerator &&
+                classAssetGenerator.Data != null)
             {
-                if (classAssetGenerator.Data != null)
+                List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
+
+                foreach (var constructorDeclaration in classAssetGenerator.Data.constructors)
                 {
-                    List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
-                    foreach (var constructorDeclaration in classAssetGenerator.Data.constructors)
-                    {
-                        ProcessConstructorDeclaration(constructorDeclaration, units);
-                    }
+                    ProcessConstructorDeclaration(constructorDeclaration, units);
+                }
 
-                    foreach (var fieldDeclaration in classAssetGenerator.Data.variables)
-                    {
-                        ProcessFieldDeclaration(fieldDeclaration, units);
-                    }
+                foreach (var fieldDeclaration in classAssetGenerator.Data.variables)
+                {
+                    ProcessFieldDeclaration(fieldDeclaration, units);
+                }
 
-                    foreach (var methodDeclaration in classAssetGenerator.Data.methods)
-                    {
-                        ProcessMethodDeclaration(methodDeclaration, units);
-                    }
-                    var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
-                    GraphWindow.OpenActive(ordered.First().result.Item1);
-                    HandleClickableRegionClick(unitId, line);
+                foreach (var methodDeclaration in classAssetGenerator.Data.methods)
+                {
+                    ProcessMethodDeclaration(methodDeclaration, units);
+                }
+
+                var match = units.FirstOrDefault(u => u.Item2 == unit);
+                if (match.Item2 != null)
+                {
+                    GraphWindow.OpenActive(match.Item1);
+                    HandleClickableRegionClick(unit, line);
                 }
             }
-            else if (code is StructAssetGenerator structAssetGenerator)
+            else if (code is StructAssetGenerator structAssetGenerator &&
+                     structAssetGenerator.Data != null)
             {
-                if (structAssetGenerator.Data != null)
+                List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
+
+                foreach (var constructorDeclaration in structAssetGenerator.Data.constructors)
                 {
-                    List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
-                    foreach (var constructorDeclaration in structAssetGenerator.Data.constructors)
-                    {
-                        ProcessConstructorDeclaration(constructorDeclaration, units);
-                    }
+                    ProcessConstructorDeclaration(constructorDeclaration, units);
+                }
 
-                    foreach (var fieldDeclaration in structAssetGenerator.Data.variables)
-                    {
-                        ProcessFieldDeclaration(fieldDeclaration, units);
-                    }
+                foreach (var fieldDeclaration in structAssetGenerator.Data.variables)
+                {
+                    ProcessFieldDeclaration(fieldDeclaration, units);
+                }
 
-                    foreach (var methodDeclaration in structAssetGenerator.Data.methods)
-                    {
-                        ProcessMethodDeclaration(methodDeclaration, units);
-                    }
-                    var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
-                    GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
-                    HandleClickableRegionClick(unitId, line);
+                foreach (var methodDeclaration in structAssetGenerator.Data.methods)
+                {
+                    ProcessMethodDeclaration(methodDeclaration, units);
+                }
+
+                var match = units.FirstOrDefault(u => u.Item2 == unit);
+                if (match.Item2 != null)
+                {
+                    var root = match.Item1.isRoot
+                        ? match.Item1
+                        : match.Item1.root.GetReference() as GraphReference;
+
+                    GraphWindow.OpenActive(root);
+                    HandleClickableRegionClick(unit, line);
                 }
             }
-            else if (code is ScriptGraphAssetGenerator graphAssetGenerator)
+            else if (code is ScriptGraphAssetGenerator graphAssetGenerator &&
+                     graphAssetGenerator.Data != null)
             {
-                if (graphAssetGenerator.Data != null)
+                var units =
+                    GraphTraversal.TraverseFlowGraph<Unit>(
+                        graphAssetGenerator.Data.GetReference() as GraphReference).ToList();
+
+                var match = units.FirstOrDefault(u => u.Item2 == unit);
+                if (match.Item2 != null)
                 {
-                    List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
-                    units = GraphTraversal.TraverseFlowGraph<Unit>(graphAssetGenerator.Data.GetReference() as GraphReference).ToList();
-                    var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
-                    GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
-                    HandleClickableRegionClick(unitId, line);
+                    var root = match.Item1.isRoot
+                        ? match.Item1
+                        : match.Item1.root.GetReference() as GraphReference;
+
+                    GraphWindow.OpenActive(root);
+                    HandleClickableRegionClick(unit, line);
                 }
             }
-            else if (code is GameObjectGenerator gameObjectGenerator)
+            else if (code is GameObjectGenerator gameObjectGenerator &&
+                     gameObjectGenerator.Data != null)
             {
-                if (gameObjectGenerator.Data != null)
+                var units =
+                    GraphTraversal.TraverseFlowGraph<Unit>(
+                        gameObjectGenerator.current.GetReference() as GraphReference).ToList();
+
+                var match = units.FirstOrDefault(u => u.Item2 == unit);
+                if (match.Item2 != null)
                 {
-                    List<(GraphReference, Unit)> units = new List<(GraphReference, Unit)>();
-                    units = GraphTraversal.TraverseFlowGraph<Unit>(gameObjectGenerator.current.GetReference() as GraphReference).ToList();
-                    var ordered = units.OrderableSearchFilter(unitId ?? "", (value) => value.Item2.ToString());
-                    GraphWindow.OpenActive(ordered.First().result.Item1.isRoot ? ordered.First().result.Item1 : ordered.First().result.Item1.root.GetReference() as GraphReference);
-                    HandleClickableRegionClick(unitId, line);
+                    var root = match.Item1.isRoot
+                        ? match.Item1
+                        : match.Item1.root.GetReference() as GraphReference;
+
+                    GraphWindow.OpenActive(root);
+                    HandleClickableRegionClick(unit, line);
                 }
             }
         }
@@ -963,7 +903,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
             for (int i = 0; i < codeLines.Length; i++)
             {
-                if (CleanLine(codeLines[i]).IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
+                if (codeLines[i].IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
                     searchMatches.Add(i);
             }
 

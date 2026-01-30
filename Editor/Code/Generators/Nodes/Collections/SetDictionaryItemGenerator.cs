@@ -1,9 +1,3 @@
-
-using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SetDictionaryItem))]
@@ -11,14 +5,22 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public SetDictionaryItemGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(output, data);
-        }
+            writer.WriteIndented();
+            GenerateValue(Unit.dictionary, data, writer);
+            writer.Brackets(w =>
+            {
+                GenerateValue(Unit.key, data, writer);
+            });
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return string.Concat(base.GenerateValue(this.Unit.dictionary, data), MakeClickableForThisUnit("[", true), base.GenerateValue(this.Unit.key, data), MakeClickableForThisUnit("] = ", true)) + base.GenerateValue(this.Unit.value, data) + MakeClickableForThisUnit(";", true) + "\n" + GetNextUnit(this.Unit.exit, data, indent);
+            writer.Equal();
+
+            GenerateValue(Unit.value, data, writer);
+
+            writer.WriteEnd(EndWriteOptions.LineEnd);
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

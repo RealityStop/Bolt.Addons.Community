@@ -17,35 +17,36 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(ControllerColliderHit), "hit") };
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.collider)
             {
-                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "collider".VariableHighlight());
+                writer.GetVariable("hit").GetMember("collider");
             }
             else if (output == Unit.controller)
             {
-                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "controller".VariableHighlight());
+                writer.GetVariable("hit").GetMember("controller");
             }
             else if (output == Unit.moveDirection)
             {
-                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "moveDirection".VariableHighlight());
+                writer.GetVariable("hit").GetMember("moveDirection");
             }
             else if (output == Unit.moveLength)
             {
-                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "moveLength".VariableHighlight());
+                writer.GetVariable("hit").GetMember("moveLength");
             }
             else if (output == Unit.normal)
             {
-                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "normal".VariableHighlight());
+                writer.GetVariable("hit").GetMember("normal");
             }
             else if (output == Unit.point)
             {
-                return MakeClickableForThisUnit("hit".VariableHighlight() + "." + "point".VariableHighlight());
+                writer.GetVariable("hit").GetMember("point");
             }
             else
             {
-                return MakeClickableForThisUnit("hit".VariableHighlight());
+                writer.GetVariable("hit");
             }
         }
     }

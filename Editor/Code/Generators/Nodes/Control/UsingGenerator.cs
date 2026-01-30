@@ -11,21 +11,21 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public UsingGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(output, data);
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            string output = string.Empty;
-
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{"using".ConstructHighlight()} (") + GenerateValue(Unit.value, data) + MakeClickableForThisUnit(")") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-            output += GetNextUnit(Unit.body, data, indent + 1);
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-            output += GetNextUnit(Unit.exit, data, indent);
-            return output;
+            writer.WriteIndented();
+            writer.Write("using".ConstructHighlight());
+            writer.Write(" (");
+            GenerateValue(Unit.value, data, writer);
+            writer.Write(")");
+            writer.NewLine();
+            writer.WriteLine("{");
+            using (writer.Indented())
+            {
+                GenerateChildControl(Unit.body, data, writer);
+            }
+            writer.WriteLine("}");
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

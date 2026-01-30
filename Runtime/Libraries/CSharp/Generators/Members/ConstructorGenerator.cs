@@ -1,6 +1,8 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Utility;
+using Unity.VisualScripting.Community.CSharp;
+using System;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -10,7 +12,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         private ConstructorModifier modifier;
         public List<(bool useInCall, ParameterGenerator generator)> parameters { get; private set; } = new List<(bool useInCall, ParameterGenerator generator)>();
         private List<AttributeGenerator> attributes = new List<AttributeGenerator>();
-        private string body;
+
+        private System.Action<CodeWriter> bodyAction;
 
         public List<string> callChainParameters = new List<string>();
 
@@ -33,47 +36,75 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return constructor;
         }
 
-        protected override sealed string GenerateBefore(int indent)
+        IDisposable nodeScope = null;
+
+        protected override sealed void GenerateBefore(CodeWriter writer, ControlGenerationData data)
         {
-            var attributes = string.Empty;
+            if (owner != null)
+                nodeScope = writer.BeginNode(owner);
+
             foreach (AttributeGenerator attr in this.attributes)
             {
-                attributes += attr.Generate(indent) + "\n";
+                attr.Generate(writer, data);
+                writer.NewLine();
             }
             var modSpace = modifier == ConstructorModifier.None ? string.Empty : " ";
-            var parameters = string.Empty;
+
+            if (scope != AccessModifier.None && modifier != ConstructorModifier.Static)
+            {
+                writer.WriteIndented(scope.AsString().ToLower().ConstructHighlight() + " ");
+            }
+            else
+            {
+                writer.WriteIndented();
+            }
+
+            writer.Write(modifier.AsString().ConstructHighlight()).Write(modSpace);
+            writer.Write(name.LegalMemberName().TypeHighlight()).Write("(");
 
             if (modifier != ConstructorModifier.Static)
             {
                 for (int i = 0; i < this.parameters.Count; i++)
                 {
-                    parameters += this.parameters[i].generator.Generate(0);
-                    if (i < this.parameters.Count - 1) parameters += ", ";
+                    this.parameters[i].generator.Generate(writer, data);
+                    if (i < this.parameters.Count - 1) writer.Write(", ");
                     if (this.parameters[i].useInCall)
                     {
                         callChainParameters.Add(this.parameters[i].generator.name.VariableHighlight());
                     }
                 }
             }
-            
+
+            writer.Write(")");
+
             string _callChainParameters = string.Join(", ", callChainParameters);
             string callChain = callType != ConstructorInitializer.None && modifier != ConstructorModifier.Static ? $" : {(callType == ConstructorInitializer.Base ? "base" : "this").ConstructHighlight()}(" + _callChainParameters + ")" : string.Empty;
-            return attributes + CodeBuilder.Indent(indent) + (scope == AccessModifier.None || modifier == ConstructorModifier.Static ? "" : scope.AsString().ToLower().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + name.LegalMemberName().TypeHighlight() + "(" + parameters + ")" + callChain;
+
+            writer.Write(callChain);
+            writer.NewLine();
         }
 
-        protected override sealed string GenerateBody(int indent)
+        protected override sealed void GenerateBody(CodeWriter writer, ControlGenerationData data)
         {
-            return string.IsNullOrEmpty(body) ? string.Empty : body.Contains("\n") ? body.Replace("\n", "\n" + CodeBuilder.Indent(indent)).Insert(0, CodeBuilder.Indent(indent)) : CodeBuilder.Indent(indent) + body;
+            data.EnterMethod();
+            bodyAction?.Invoke(writer);
+            data.ExitMethod();
         }
 
-        protected override sealed string GenerateAfter(int indent)
+        protected override sealed void GenerateAfter(CodeWriter writer, ControlGenerationData data)
         {
-            return string.Empty;
+            nodeScope?.Dispose();
         }
 
-        public ConstructorGenerator Body(string body)
+        public ConstructorGenerator Body(System.Action<CodeWriter> bodyAction)
         {
-            this.body = body;
+            this.bodyAction = bodyAction;
+            return this;
+        }
+
+        public ConstructorGenerator AddToBody(System.Action<CodeWriter> bodyAction)
+        {
+            this.bodyAction += bodyAction;
             return this;
         }
 

@@ -149,7 +149,7 @@ namespace Unity.VisualScripting.Community
                 lastCleanupTime = now;
             }
 
-            GraphMiniMapStorage.AutoSaveIfNeeded();
+            GraphMiniMapStorage.SaveIfNeeded();
         }
 
         private static void SetMinimizedKey(string reference, bool minimized)
@@ -378,7 +378,7 @@ namespace Unity.VisualScripting.Community
                 instances.Remove(w);
             }
         }
-
+        static readonly List<IGraphElementWidget> hitWidgets = new List<IGraphElementWidget>();
         private static void DrawMiniMap(MiniMapInstance instance)
         {
             if (instance.isMinimized) return;
@@ -395,18 +395,7 @@ namespace Unity.VisualScripting.Community
             GUI.BeginGroup(rect);
             Handles.color = Color.white * 0.4f;
 
-            tempWidgets.Clear();
-            foreach (var e in graph.elements)
-                if (canvas.widgetProvider.IsValid(e) && canvas.Widget(e) is IGraphElementWidget w)
-                    tempWidgets.Add(w);
-
-            if (tempWidgets.Count == 0)
-            {
-                GUI.EndGroup();
-                return;
-            }
-
-            Rect contentBounds = GraphGUI.CalculateArea(tempWidgets);
+            Rect contentBounds = GraphGUI.CalculateArea(context.canvas.widgets.OfType<IGraphElementWidget>());
             contentBounds.xMin -= Padding;
             contentBounds.yMin -= Padding;
             contentBounds.xMax += Padding;
@@ -423,12 +412,17 @@ namespace Unity.VisualScripting.Community
             GraphUtility.OverrideContextIfNeeded(() =>
             {
                 Rect position = default;
-                List<IGraphElementWidget> hitWidgets = new List<IGraphElementWidget>();
-                Vector2 mousePos = Event.current.mousePosition;
 
-                foreach (var widget in tempWidgets)
+                hitWidgets.Clear();
+
+                Vector2 mousePos = Event.current.mousePosition;
+                IGraphElementWidget closest = null;
+                var contextIsValid = GraphContextProvider.instance.IsValid(instance.context.reference);
+                foreach (var w in canvas.widgets)
                 {
-                    if (!canvas.widgetProvider.IsValid(widget.element) || !GraphContextProvider.instance.IsValid(instance.context.reference)) continue;
+                    if (!canvas.widgetProvider.IsValid(w.item) || !(canvas.Widget(w.item) is IGraphElementWidget widget)) continue;
+
+                    if (!canvas.widgetProvider.IsValid(widget.element) || !contextIsValid) continue;
                     Rect wp = widget.position;
                     position.position = ToMinimap(wp.position);
                     position.size = wp.size * scale;
@@ -439,29 +433,52 @@ namespace Unity.VisualScripting.Community
                         Color.white * (canvas.selection.Contains(widget.element) ? 1f : 0.25f)
                     );
 
+                    Vector2 widgetMinimapPos = ToMinimap(widget.position.position + widget.position.size * 0.5f);
+                    if (closest == null || Vector2.Distance(widgetMinimapPos, mousePos) < Vector2.Distance(ToMinimap(closest.position.position + closest.position.size * 0.5f), mousePos))
+                    {
+                        closest = widget;
+                    }
+
                     if (position.Contains(mousePos))
+                    {
                         hitWidgets.Add(widget);
+                    }
                 }
 
                 var e = Event.current;
-                if (e.type == EventType.MouseDown && e.button == 0 && hitWidgets.Count > 0)
+                if (e.type == EventType.MouseDown && e.button == 0)
                 {
-                    int nextIndex = 0;
-                    if (selectedWidget != null)
+                    if (hitWidgets.Count > 0)
                     {
-                        int currentIndex = hitWidgets.IndexOf(selectedWidget);
-                        nextIndex = (currentIndex + 1) % hitWidgets.Count;
+                        int nextIndex = 0;
+                        if (selectedWidget != null)
+                        {
+                            int currentIndex = hitWidgets.IndexOf(selectedWidget);
+                            nextIndex = (currentIndex + 1) % hitWidgets.Count;
+                        }
+
+                        selectedWidget = hitWidgets[nextIndex];
+                        canvas.ViewElements(selectedWidget.element.Yield());
+
+                        if (e.shift)
+                            canvas.selection.Add(selectedWidget.element);
+                        else
+                            canvas.selection.Select(selectedWidget.element);
+
+                        e.Use();
                     }
+                    else if (closest != null)
+                    {
+                        selectedWidget = closest;
+                        canvas.ViewElements(closest.element.Yield());
 
-                    selectedWidget = hitWidgets[nextIndex];
-                    canvas.ViewElements(selectedWidget.element.Yield());
+                        if (e.shift)
+                            canvas.selection.Add(closest.element);
+                        else
+                            canvas.selection.Select(closest.element);
 
-                    if (e.shift)
-                        canvas.selection.Add(selectedWidget.element);
-                    else
-                        canvas.selection.Select(selectedWidget.element);
-
-                    e.Use();
+                        e.Use();
+                    }
                 }
             });
 

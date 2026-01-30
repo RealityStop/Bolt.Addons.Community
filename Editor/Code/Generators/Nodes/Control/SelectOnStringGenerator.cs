@@ -13,30 +13,38 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public SelectOnStringGenerator(SelectOnString unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var selector = GenerateValue(Unit.selector, data);
-            var defaultValue = GenerateValue(Unit.@default, data);
-            var currentIndent = CodeBuilder.GetCurrentIndent();
-            var indent = CodeBuilder.GetCurrentIndent(1);
-
-            var cases = Unit.branches.Select(branch =>
+            GenerateValue(Unit.selector, data, writer);
+            if (Unit.ignoreCase)
             {
-                var key = branch.Key.ToLowerInvariant() ?? "null";
-                var value = GenerateValue(branch.Value, data);
-                var keyCode = key.As().Code(false);
-                return indent + MakeClickableForThisUnit(keyCode + " ") + MakeClickableForThisUnit($"=> ") + value;
-            });
-
-            var defaultCase = indent + MakeClickableForThisUnit("_ ".VariableHighlight()) + MakeClickableForThisUnit($"=> ") + defaultValue;
-
-            var body = string.Join($"{MakeClickableForThisUnit(",")}\n", cases.Concat(new[] { defaultCase }));
-
-            return selector + MakeClickableForThisUnit((Unit.ignoreCase ? ".ToLowerInvariant()" : "") +" switch".ControlHighlight()) + "\n" +
-                   currentIndent + MakeClickableForThisUnit("{") + "\n" +
-                   body + "\n" +
-                   currentIndent + MakeClickableForThisUnit("}");
+                writer.Write(".ToLowerInvariant()");
+            }
+            writer.Write(" switch".ControlHighlight());
+            writer.NewLine();
+            writer.WriteLine("{");
+            
+            using (writer.Indented())
+            {
+                foreach (var branch in Unit.branches)
+                {
+                    var caseKey = Unit.ignoreCase ? branch.Key.ToLowerInvariant() ?? "null" : branch.Key;
+                    writer.WriteIndented();
+                    writer.Write(caseKey.As().Code(false));
+                    writer.Write(" => ");
+                    GenerateValue(branch.Value, data, writer);
+                    writer.Write(",");
+                    writer.NewLine();
+                }
+                
+                writer.WriteIndented();
+                writer.Write("_".ConstructHighlight() + " => ");
+                GenerateValue(Unit.@default, data, writer);
+                writer.Write(",");
+                writer.NewLine();
+            }
+            
+            writer.WriteIndented("}");
         }
-
     }
 }

@@ -10,18 +10,28 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public TriggerAssetCustomEventGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var hook = "hook".VariableHighlight();
-            var argList = MakeClickableForThisUnit("new ".ConstructHighlight() + "object".ConstructHighlight() + "[] {") + "\n" + string.Join(MakeClickableForThisUnit(", "), Unit.args.Select(a => GenerateValue(a, data))) + MakeClickableForThisUnit("}") + "\n";
-            var builder = Unit.CreateClickableString();
-            builder.Indent(indent);
-            builder.CallCSharpUtilityMethod(MakeClickableForThisUnit("TriggerAssetCustomEvent"),
-            p => p.Ignore(GenerateValue(Unit.asset, data)),
-            p => p.Ignore(GenerateValue(Unit.name, data)),
-            p => p.Body(before => before.Clickable("new ".ConstructHighlight() + "object".ConstructHighlight() + "[]"), (inner, indent) => inner.Indent(indent).Ignore(string.Join(MakeClickableForThisUnit(", "), Unit.args.Select(a => GenerateValue(a, data)))), true, indent, false)).EndLine();
-            builder.Ignore(GetNextUnit(Unit.exit, data, indent));
-            return builder;
+            writer.CallCSharpUtilityMethod("TriggerAssetCustomEvent",
+                writer.Action(w => GenerateValue(Unit.asset, data, w)),
+                writer.Action(w => GenerateValue(Unit.name, data, w)),
+                writer.Action(w => {
+                    writer.Write("new".ConstructHighlight());
+                    writer.Write("object".ConstructHighlight());
+                    writer.Write("[]");
+                    writer.Write("{");
+                    var args = Unit.args;
+                    for (int i = 0; i < args.Count; i++)
+                    {
+                        GenerateValue(args[i], data, w);
+                        if (i < args.Count - 1) writer.Write(", ");
+                    }
+                    writer.Write("}");
+                })
+            );
+            writer.Write(";");
+            writer.NewLine();
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

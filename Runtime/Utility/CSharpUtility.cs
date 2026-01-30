@@ -19,7 +19,7 @@ namespace Unity.VisualScripting.Community
 {
     public static class CSharpUtility
     {
-        public static SMachine GetScriptMachine(GameObject target, ScriptGraphAsset asset)
+        public static SMachine GetScriptMachineWithAsset(GameObject target, ScriptGraphAsset asset)
         {
             var machines = target.GetComponents<SMachine>();
             foreach (var machine in machines)
@@ -32,7 +32,7 @@ namespace Unity.VisualScripting.Community
             return null;
         }
 
-        public static SMachine GetScriptMachine(GameObject target, string name)
+        public static SMachine GetScriptMachineWithName(GameObject target, string name)
         {
             var machines = target.GetComponents<SMachine>();
             foreach (var machine in machines)
@@ -86,7 +86,7 @@ namespace Unity.VisualScripting.Community
             return mergedList;
         }
 
-        public static List<T> MergeLists<T>(params IEnumerable<object>[] lists)
+        public static List<T> MergeLists<T>(params IEnumerable[] lists)
         {
             var mergedList = new List<T>();
 
@@ -264,9 +264,9 @@ namespace Unity.VisualScripting.Community
             return (pre, post);
         }
 
-        public static object GetArgument(this CustomEventArgs args, int index, Type targetType)
+        public static T GetArgument<T>(this CustomEventArgs args, int index)
         {
-            return args.arguments[index].ConvertTo(targetType);
+            return args.arguments[index].ConvertTo<T>();
         }
 
         public static object GetArgument(this ReturnEventArg args, int index, Type targetType)
@@ -999,5 +999,38 @@ namespace Unity.VisualScripting.Community
             }
             return true;
         }
+
+        // Using these utilities instead of adding the tags directly to not break the preview
+        #region String
+        public static string BoldString(string value)
+        {
+            return "<b>" + value + "</b>";
+        }
+
+        public static string ItalicString(string value)
+        {
+            return "<i>" + value + "</i>";
+        }
+
+        public static string UnderlineString(string value)
+        {
+            return "<u>" + value + "</u>";
+        }
+
+        public static string StrikethroughString(string value)
+        {
+            return "<s>" + value + "</s>";
+        }
+
+        public static string ColorString(string value, string color)
+        {
+            return "<color=" + color + ">" + value + "</color>";
+        }
+
+        public static string SizeString(string value, int size)
+        {
+            return "<size=" + size.ToString() + ">" + value + "</size>";
+        }
+        #endregion
     }
 }

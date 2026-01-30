@@ -70,7 +70,7 @@ namespace Unity.VisualScripting.Community
             _isDirty = true;
         }
 
-        public static void AutoSaveIfNeeded()
+        public static void SaveIfNeeded()
         {
             if (_isDirty)
                 Save();

@@ -19,41 +19,57 @@ namespace Unity.VisualScripting.Community.CSharp
         public override List<TypeParam> Parameters => new List<TypeParam>();
 
         public ChannelEventGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        public override void GenerateAwakeCode(ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(output, data);
+            writer.WriteIndented(typeof(EventBus).As().CSharpName(false, true) + $".Register<{typeof(Channel).As().CSharpName(false, true)}>(" + typeof(CommunityEvents).As().CSharpName(false, true) + $".{"ChannelEvent".VariableHighlight()}, " + "channel".VariableHighlight() + " => ");
+            using (writer.Indented())
+            {
+                if (Unit.coroutine)
+                {
+                    GetCoroutineCode(data, writer);
+                }
+                else
+                {
+                    GetNormalCode(data, writer);
+                }
+            }
+            writer.Write(");");
         }
 
-        public override string GenerateAwakeCode(ControlGenerationData data, int indent)
+        private void GetCoroutineCode(ControlGenerationData data, CodeWriter writer)
         {
-            return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(typeof(EventBus).As().CSharpName(false, true) + $".Register<{typeof(Channel).As().CSharpName(false, true)}>(" + typeof(CommunityEvents).As().CSharpName(false, true) + $".{"ChannelEvent".VariableHighlight()}, ") + $"{MakeClickableForThisUnit("channel".VariableHighlight() + " => ") + (Unit.coroutine ? GetCoroutineCode(data, indent + 1) : GetNormalCode(data, indent + 1))}{MakeClickableForThisUnit(");")}" + "\n";
+            writer.Write("{").NewLine();
+            writer.WriteIndented("if ".ControlHighlight() + "(" + "channel".VariableHighlight() + " == ");
+            GenerateValue(Unit.Channel, data, writer);
+            writer.Write(")").NewLine();
+
+            writer.WriteLine("{");
+            using (writer.Indented())
+            {
+                writer.WriteIndented($"StartCoroutine({Name}());").NewLine();
+            }
+            writer.WriteIndented("}");
         }
 
-        private string GetCoroutineCode(ControlGenerationData data, int indent)
+        private void GetNormalCode(ControlGenerationData data, CodeWriter writer)
         {
-            string output = MakeClickableForThisUnit("{") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ControlHighlight() + " (" + "channel".VariableHighlight() + " == " + GenerateValue(Unit.Channel, data) + ")") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-            output += CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit($"StartCoroutine({Name}());") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-            output += MakeClickableForThisUnit("}");
-            return output;
+            writer.Write("{").NewLine();
+            writer.WriteIndented("if ".ControlHighlight() + "(" + "channel".VariableHighlight() + " == ");
+            GenerateValue(Unit.Channel, data, writer);
+            writer.Write(")").NewLine();
+
+            writer.WriteLine("{");
+            using (writer.Indented())
+            {
+                writer.WriteIndented($"{Name}();").NewLine();
+            }
+            writer.WriteIndented("}");
         }
 
-
-        private string GetNormalCode(ControlGenerationData data,int indent)
+        protected override void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            string output = MakeClickableForThisUnit("{") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if".ControlHighlight() + " (" + "channel".VariableHighlight() + " == ") + GenerateValue(Unit.Channel, data) + MakeClickableForThisUnit(")") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-            output += CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit($"{Name}();") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-            output += MakeClickableForThisUnit("}");
-            return output;
-        }
-        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
     }
 }

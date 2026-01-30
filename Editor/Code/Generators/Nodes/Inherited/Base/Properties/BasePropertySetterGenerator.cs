@@ -11,12 +11,17 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(string.Concat("base".ConstructHighlight(), ".", Unit.member.name, " = ")) + GenerateValue(Unit.value, data) + MakeClickableForThisUnit(";") + "\n";
-            output += GetNextUnit(Unit.exit, data, indent);
-            return output;
+            writer.WriteIndented("base".ConstructHighlight());
+            writer.Write(".");
+            writer.Write(Unit.member.name);
+            writer.Write(" = ");
+            GenerateValue(Unit.value, data, writer);
+            writer.Write(";");
+            writer.NewLine();
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

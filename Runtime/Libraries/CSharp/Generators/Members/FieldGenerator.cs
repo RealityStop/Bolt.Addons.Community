@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using static Unity.VisualScripting.Community.Libraries.Humility.HUMType_Children;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -84,24 +85,67 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return this;
         }
 
-        public override string Generate(int indent)
+        IDisposable nodeScope = null;
+
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
-            if (string.IsNullOrEmpty(name)) { return string.Empty; }
+            if (string.IsNullOrEmpty(name)) return;
+
+            if (owner != null)
+                nodeScope = writer.BeginNode(owner);
 
             var _attributes = string.Empty;
             var count = 0;
 
             foreach (AttributeGenerator attr in attributes)
             {
-                _attributes += attr.Generate(indent) + (count < attributes.Count - 1 ? "\n" : string.Empty);
+                attr.Generate(writer, data);
+                if (count < attributes.Count - 1) writer.NewLine();
                 count++;
             }
 
-            if (attributes.Count > 0) _attributes += "\n";
+            if (attributes.Count > 0) writer.NewLine();
+
             var modSpace = (modifier == FieldModifier.None) ? string.Empty : " ";
-            var definition = CodeBuilder.Indent(indent) + (scope == AccessModifier.None ? "" : scope.AsString().ConstructHighlight() + " ") + modifier.AsString().ConstructHighlight() + modSpace + (typeIsString ? stringType.WithHighlight(highlightType) : type.As().CSharpName()) + " " + name.LegalMemberName().VariableHighlight();
-            var output = !isString && (!hasDefault || defaultValue == null || (!(typeIsString ? stringType == nameof(Type) : type == typeof(Type)) && defaultValue.Equals(type.PseudoDefault()))) ? ";" : " = " + (isString ? stringDefault + ";" : defaultValue.As().Code(isNew, isLiteral, true, "", isNewlineLiteral, true, false) + ";");
-            return _attributes + definition + output;
+
+            writer.WriteIndented();
+
+            if (scope != AccessModifier.None)
+            {
+                writer.Write(scope.AsString().ConstructHighlight() + " ");
+            }
+
+            writer.Write(modifier.AsString().ConstructHighlight() + modSpace);
+
+            if (typeIsString)
+            {
+                writer.Write(stringType.WithHighlight(highlightType));
+            }
+            else
+            {
+                writer.Write(type);
+            }
+
+            var legalName = name.LegalVariableName();
+            writer.Write(" " + data.AddLocalNameInScope(legalName).VariableHighlight());
+
+            if (!isString && (!hasDefault || defaultValue == null || (!(typeIsString ? stringType == nameof(Type) : type == typeof(Type)) && defaultValue.Equals(type.PseudoDefault()))))
+            {
+                writer.Write(";");
+            }
+            else
+            {
+                writer.Write(" = ");
+                if (isString)
+                {
+                    writer.Write(stringDefault + ";");
+                }
+                else
+                {
+                    writer.Write(defaultValue.As().Code(isNew, isLiteral, true, "", isNewlineLiteral, true, false) + ";");
+                }
+            }
+            nodeScope?.Dispose();
         }
 
         public FieldGenerator SetLiteral(bool value)

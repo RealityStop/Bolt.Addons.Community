@@ -9,44 +9,52 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(AddDictionaryItem))]
-    [RenamedFrom("Unity.VisualScrripting.Community.AddDictionaryItemGenerator")]// Typo VisualScrripting
+    [RenamedFrom("Unity.VisualScrripting.Community.AddDictionaryItemGenerator")]
     public class AddDictionaryItemGenerator : NodeGenerator<AddDictionaryItem>
     {
         public AddDictionaryItemGenerator(Unit unit) : base(unit)
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            string output = string.Empty;
-            var keyCode = "";
-            var valueCode = "";
-            data.SetExpectedType(typeof(System.Collections.IDictionary));
-            output = output + Unity.VisualScripting.Community.Libraries.CSharp.CodeBuilder.Indent(indent) + base.GenerateValue(this.Unit.dictionaryInput, data) + MakeClickableForThisUnit(".Add(", true);
-            var result = data.RemoveExpectedType();
-            if (result.isMet && typeof(System.Collections.IDictionary).IsAssignableFrom(result.type))
+            ExpectedTypeResult result;
+            using (data.Expect(typeof(System.Collections.IDictionary), out result))
             {
-                data.SetExpectedType(GetKeyExpectedType(result.type));
-                keyCode = base.GenerateValue(this.Unit.key, data);
-                data.RemoveExpectedType();
+                writer.WriteIndented();
+                GenerateValue(Unit.dictionaryInput, data, writer);
+            }
 
-                data.SetExpectedType(GetValueExpectedType(result.type));
-                valueCode = base.GenerateValue(this.Unit.value, data);
-                data.RemoveExpectedType();
+            writer.Write(".Add(");
+
+            if (result.IsSatisfied && typeof(System.Collections.IDictionary).IsAssignableFrom(result.ResolvedType))
+            {
+                using (data.Expect(GetKeyExpectedType(result.ResolvedType)))
+                {
+                    GenerateValue(Unit.key, data, writer);
+                }
+
+                writer.ParameterSeparator();
+
+                using (data.Expect(GetValueExpectedType(result.ResolvedType)))
+                {
+                    GenerateValue(Unit.value, data, writer);
+                }
             }
             else
             {
-                keyCode = base.GenerateValue(this.Unit.key, data);
-                valueCode = base.GenerateValue(this.Unit.value, data);
+                GenerateValue(Unit.key, data, writer);
+                writer.ParameterSeparator();
+                GenerateValue(Unit.value, data, writer);
             }
 
-            output = output + keyCode + MakeClickableForThisUnit(", ", true) + valueCode + MakeClickableForThisUnit(");", true) + "\n" + GetNextUnit(this.Unit.exit, data, indent);
-            return output;
+            writer.WriteEnd();
+            GenerateExitControl(Unit.exit, data, writer);
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(this.Unit.dictionaryInput, data);
+            GenerateValue(Unit.dictionaryInput, data, writer);
         }
 
         public Type GetKeyExpectedType(Type type)

@@ -14,15 +14,14 @@ namespace Unity.VisualScripting.Community.CSharp
             return new ControlGenerationData(typeof(object), null);
         }
 
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
             if (Data != null)
             {
-                var output = string.Empty;
                 NamespaceGenerator @namespace = NamespaceGenerator.Namespace(Data.category);
                 InterfaceGenerator @interface = InterfaceGenerator.Interface(Data.title.LegalMemberName(), Data.interfaces.Select(@interface => @interface.type).ToArray());
 
-                if (string.IsNullOrEmpty(Data.title)) return output;
+                if (string.IsNullOrEmpty(Data.title)) return;
 
                 for (int i = 0; i < Data.variables.Count; i++)
                 {
@@ -52,10 +51,11 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     @interface.AddMethod(methodGen);
                 }
-
+                
+                var fullname = Data.GetFullTypeName();
                 foreach (var name in Data.lastCompiledNames)
                 {
-                    if (!string.IsNullOrEmpty(Data.GetFullTypeName()) && name != Data.GetFullTypeName())
+                    if (!string.IsNullOrEmpty(fullname) && name != fullname)
                     {
                         if (!string.IsNullOrEmpty(name))
                             @interface.AddAttribute(AttributeGenerator.Attribute<RenamedFromAttribute>().AddParameter(name));
@@ -63,10 +63,8 @@ namespace Unity.VisualScripting.Community.CSharp
                 }
 
                 @namespace.AddInterface(@interface);
-                return @namespace.Generate(indent);
+                @namespace.Generate(writer, data);
             }
-
-            return string.Empty;
         }
     }
 }

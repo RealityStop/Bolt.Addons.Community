@@ -9,70 +9,69 @@ namespace Unity.VisualScripting.Community.CSharp
     public sealed class ForGenerator : LocalVariableGenerator
     {
         private For Unit => unit as For;
+
         public ForGenerator(For unit) : base(unit)
         {
         }
-    
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-    
             if (input == Unit.enter)
             {
-                var initialization = GenerateValue(Unit.firstIndex, data);
-                var condition = GenerateValue(Unit.lastIndex, data);
-                var iterator = GenerateValue(Unit.step, data);
-    
-                variableName = data.AddLocalNameInScope("i", typeof(int), true);
-                variableType = typeof(int);
-    
-                string varName = MakeClickableForThisUnit(variableName.VariableHighlight());
-                string iteratorCode = !Unit.step.hasValidConnection && (int)Unit.defaultValues[Unit.step.key] == 1 ? varName.VariableHighlight() + MakeClickableForThisUnit("++") : varName.VariableHighlight() + MakeClickableForThisUnit(" += ") + iterator;
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"for".ControlHighlight() + "(" + "int ".ConstructHighlight()) + $"{varName}".VariableHighlight() + MakeClickableForThisUnit(" = ") + initialization + MakeClickableForThisUnit("; ") + varName.VariableHighlight() + $"{MakeClickableForThisUnit(" < ")}{condition}{MakeClickableForThisUnit("; ")}" + $"{iteratorCode}{MakeClickableForThisUnit(")")}";
-                output += "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{");
-                output += "\n";
-    
-                if (Unit.body.hasAnyConnection)
+                using (writer.NewScope(data))
                 {
-                    data.NewScope();
-                    output += GetNextUnit(Unit.body, data, indent + 1).TrimEnd();
-                    data.ExitScope();
+                    variableName = data.AddLocalNameInScope("i", typeof(int), true);
+                    variableType = typeof(int);
+
+                    writer.WriteIndented("for".ControlHighlight());
+                    writer.Parentheses(w =>
+                    {
+                        w.CreateVariable(typeof(int), variableName, writer.Action(() => GenerateValue(Unit.firstIndex, data, w)), WriteOptions.None, EndWriteOptions.Semicolon);
+                        w.Space();
+                        w.Write(variableName.VariableHighlight());
+                        w.Write(" < ");
+                        GenerateValue(Unit.lastIndex, data, w);
+                        w.Write("; ");
+
+                        if (!Unit.step.hasValidConnection && (int)Unit.defaultValues[Unit.step.key] == 1)
+                        {
+                            w.Write(variableName.VariableHighlight());
+                            w.Write("++");
+                        }
+                        else
+                        {
+                            w.Write(variableName.VariableHighlight());
+                            w.Write(" += ");
+                            GenerateValue(Unit.step, data, w);
+                        }
+                    }).NewLine();
+
+                    writer.WriteLine("{");
+
+                    if (Unit.body.hasValidConnection)
+                    {
+                        using (writer.Indented())
+                        {
+                            GenerateChildControl(Unit.body, data, writer);
+                        }
+                    }
+
+                    writer.WriteLine("}");
                 }
-    
-                output += "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
-                output += "\n";
             }
-    
-            if (Unit.exit.hasAnyConnection)
-            {
-                output += GetNextUnit(Unit.exit, data, indent);
-                output += "\n";
-            }
-    
-    
-            return output;
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
-    
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(variableName.VariableHighlight());
-        }
-    
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
-        {
-            if (input.hasValidConnection)
+            if (!data.ContainsNameInAncestorScope(variableName))
             {
-                data.SetExpectedType(input.type);
-                var connectedCode = GetNextValueUnit(input, data);
-                data.RemoveExpectedType();
-                return connectedCode.CastAs(input.type, Unit, ShouldCast(input, data, false));
+                writer.WriteErrorDiagnostic($"{variableName}, can only be used inside the loop.", $"Could not find or access {variableName}");
+                return;
             }
-            else
-            {
-                return Unit.defaultValues[input.key].As().Code(false, unit);
-            }
+
+            writer.GetVariable(variableName);
         }
-    } 
+    }
 }

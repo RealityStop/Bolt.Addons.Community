@@ -13,25 +13,33 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public SubtractGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var inferredType = InferType(GetSourceType(Unit.minuend, data), GetSourceType(Unit.subtrahend, data)) ?? data.GetExpectedType() ?? typeof(object);
-            data.SetExpectedType(inferredType);
-            var minuend = GenerateValue(Unit.minuend, data);
-            data.RemoveExpectedType();
-            data.SetExpectedType(inferredType);
-            var subtrahend = GenerateValue(Unit.subtrahend, data);
-            data.RemoveExpectedType();
+            var inferredType = InferType(GetSourceType(Unit.minuend, data, writer, false), GetSourceType(Unit.subtrahend, data, writer, false)) ?? data.GetExpectedType() ?? typeof(object);
+            if (data.GetExpectedType() != null && data.GetExpectedType().IsStrictlyAssignableFrom(inferredType))
+            {
+                data.MarkExpectedTypeMet(inferredType);
+            }
             data.CreateSymbol(Unit, inferredType);
-            return TypeConversionUtility.CastTo(MakeClickableForThisUnit("(") + $"{minuend}{MakeClickableForThisUnit(" - ")}{subtrahend}" + MakeClickableForThisUnit(")"), inferredType, data.GetExpectedType(), Unit);
+
+            writer.Write("(");
+            using (data.Expect(inferredType))
+            {
+                GenerateValue(Unit.minuend, data, writer);
+            }
+            writer.Write(" - ");
+            using (data.Expect(inferredType))
+            {
+                GenerateValue(Unit.subtrahend, data, writer);
+            }
+            writer.Write(")");
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input.hasValidConnection)
             {
-                var code = GetNextValueUnit(input, data);
-                return code;
+                GenerateConnectedValue(input, data, writer, false);
             }
             else if (input.hasDefaultValue)
             {
@@ -39,19 +47,19 @@ namespace Unity.VisualScripting.Community.CSharp
                 var val = unit.defaultValues[input.key];
 
                 if (expectedType == typeof(int))
-                    return MakeClickableForThisUnit($"{val}".NumericHighlight());
-                if (expectedType == typeof(float))
-                    return MakeClickableForThisUnit($"{val}f".Replace(",", ".").NumericHighlight());
-                if (expectedType == typeof(double))
-                    return MakeClickableForThisUnit($"{val}d".Replace(",", ".").NumericHighlight());
-                if (expectedType == typeof(long))
-                    return MakeClickableForThisUnit($"{val}L".Replace(",", ".").NumericHighlight());
-
-                return val.As().Code(true, Unit, true, true, "", false);
+                    writer.Write($"{val}".NumericHighlight());
+                else if (expectedType == typeof(float))
+                    writer.Write($"{val}f".Replace(",", ".").NumericHighlight());
+                else if (expectedType == typeof(double))
+                    writer.Write($"{val}d".Replace(",", ".").NumericHighlight());
+                else if (expectedType == typeof(long))
+                    writer.Write($"{val}L".Replace(",", ".").NumericHighlight());
+                else
+                    writer.Write(val.As().Code(true, true, true, "", false));
             }
             else
             {
-                return $"/* \"{input.key} Requires Input\" */".WarningHighlight();
+                writer.Write($"/* \"{input.key} Requires Input\" */".ErrorHighlight());
             }
         }
 

@@ -11,9 +11,11 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(string.Concat("base".ConstructHighlight(), ".", this.Unit.member.name));
+            writer.Write("base".ConstructHighlight());
+            writer.Write(".");
+            writer.Write(Unit.member.name);
         }
     }
 }

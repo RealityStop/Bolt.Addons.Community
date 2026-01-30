@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -29,7 +30,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return expression;
         }
 
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
             var parameters = string.Empty;
 
@@ -45,9 +46,16 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                     }
                 }
 
-                return "(" + parameters + ") =>\n" +
-                    CodeBuilder.Indent(indent) + "{\n" +
-                    body.Replace("\n", "\n" + CodeBuilder.Indent(indent + 1)) + "\n}";
+                writer.Write("(" + parameters + ") =>");
+                writer.NewLine();
+
+                writer.WriteLine("{");
+
+                writer.Write(body);
+                
+                writer.NewLine();
+
+                writer.WriteIndented("}");
             }
             else
             {
@@ -61,7 +69,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                     }
                 }
 
-                return "(" + parameters + ") => { " + body + (string.IsNullOrEmpty(body) ? string.Empty : " ") + "}";
+                writer.Write("(" + parameters + ") => { " + body + (string.IsNullOrEmpty(body) ? string.Empty : " ") + "}");
             }
         }
 

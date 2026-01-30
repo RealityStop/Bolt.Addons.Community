@@ -1,4 +1,5 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -9,14 +10,9 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
     
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateControl(input, data, indent);
+            writer.Write("gameObject".VariableHighlight());
         }
-    
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-        {
-            return MakeClickableForThisUnit("gameObject".VariableHighlight());
-        }
-    } 
+    }
 }

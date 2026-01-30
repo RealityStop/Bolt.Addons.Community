@@ -1,6 +1,3 @@
-using Unity.VisualScripting;
-using System.Collections.Generic;
-using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -10,75 +7,127 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public StringBuilderGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            List<string> codeSegments = new List<string>();
-
             for (int i = 0; i < Unit.appendModes.Count; i++)
             {
-                var mode = Unit.appendModes[i].appendMode;
-                string inputValue = GenerateValue(Unit.inputPorts[i], data);
-                string segment = HandleAppendMode(mode, inputValue, i, Unit.appendModes.Count);
+                if (i != 0)
+                {
+                    writer.Write(" + ");
+                }
 
-                codeSegments.Add(segment);
+                WriteAppendSegment(Unit.appendModes[i].appendMode, Unit.inputPorts[i], i, Unit.appendModes.Count, data, writer);
             }
-
-            return string.Join(MakeClickableForThisUnit(" + "), codeSegments);
         }
 
-        private string HandleAppendMode(StringBuilderUnit.AppendMode mode, string inputValue, int index, int totalCount)
+        private void WriteAppendSegment(StringBuilderUnit.AppendMode mode, ValueInput input, int index, int totalCount, ControlGenerationData data, CodeWriter writer)
         {
             switch (mode)
             {
                 case StringBuilderUnit.AppendMode.UpperCase:
-                    return inputValue + MakeClickableForThisUnit(".ToUpperInvariant()");
+                    GenerateValue(input, data, writer);
+                    writer.Write(".ToUpperInvariant()");
+                    break;
 
                 case StringBuilderUnit.AppendMode.LowerCase:
-                    return inputValue + MakeClickableForThisUnit(".ToLowerInvariant()");
-                case StringBuilderUnit.AppendMode.Quoted:
-                    return MakeClickableForThisUnit($"{"\"\\\"\"".StringHighlight()} + ") + inputValue + MakeClickableForThisUnit($" + {"\"\\\"\"".StringHighlight()}");
+                    GenerateValue(input, data, writer);
+                    writer.Write(".ToLowerInvariant()");
+                    break;
 
                 case StringBuilderUnit.AppendMode.Trimmed:
-                    return inputValue + MakeClickableForThisUnit(".Trim()");
+                    GenerateValue(input, data, writer);
+                    writer.Write(".Trim()");
+                    break;
+
+                case StringBuilderUnit.AppendMode.Quoted:
+                    writer.Write("\"\\\"\"".StringHighlight());
+                    writer.Write(" + ");
+                    GenerateValue(input, data, writer);
+                    writer.Write(" + ");
+                    writer.Write("\"\\\"\"".StringHighlight());
+                    break;
 
                 case StringBuilderUnit.AppendMode.Prefixed:
-                    string prefix = this.Unit.appendModes[index].prefix;
-                    return MakeClickableForThisUnit($"\"{prefix}\"".StringHighlight()) + MakeClickableForThisUnit(" + ") + inputValue;
+                    writer.Write($"\"{Unit.appendModes[index].prefix}\"".StringHighlight());
+                    writer.Write(" + ");
+                    GenerateValue(input, data, writer);
+                    break;
 
                 case StringBuilderUnit.AppendMode.Suffixed:
-                    string suffix = this.Unit.appendModes[index].suffix;
-                    return inputValue + MakeClickableForThisUnit(" + ") + MakeClickableForThisUnit($"\"{suffix}\"".StringHighlight());
+                    GenerateValue(input, data, writer);
+                    writer.Write(" + ");
+                    writer.Write($"\"{Unit.appendModes[index].suffix}\"".StringHighlight());
+                    break;
 
                 case StringBuilderUnit.AppendMode.Repeated:
-                    int repetitions = this.Unit.appendModes[index].repeatCount;
-                    List<string> output = new List<string>();
-                    for (int i = 0; i < repetitions; i++) output.Add(inputValue);
-                    return string.Join(MakeClickableForThisUnit(" + "), output);
-                case StringBuilderUnit.AppendMode.TabAfter:
-                    return inputValue + MakeClickableForThisUnit($" + {"\"\\t\"".StringHighlight()}");
+                    int repeat = Unit.appendModes[index].repeatCount;
+                    for (int i = 0; i < repeat; i++)
+                    {
+                        if (i != 0)
+                            writer.Write(" + ");
+
+                        GenerateValue(input, data, writer);
+                    }
+                    break;
+
                 case StringBuilderUnit.AppendMode.TabBefore:
-                    return MakeClickableForThisUnit($"{"\"\\t\"".StringHighlight()} + ") + inputValue;
-                case StringBuilderUnit.AppendMode.CommaSeparated:
-                    if (index < totalCount - 1)
-                        return inputValue + MakeClickableForThisUnit($" + {"\", \"".StringHighlight()}");
-                    return inputValue;
-                case StringBuilderUnit.AppendMode.SpaceAfter:
-                    return inputValue + MakeClickableForThisUnit($" + {"\" \"".StringHighlight()}");
+                    writer.Write("\"\\t\"".StringHighlight());
+                    writer.Write(" + ");
+                    GenerateValue(input, data, writer);
+                    break;
+
+                case StringBuilderUnit.AppendMode.TabAfter:
+                    GenerateValue(input, data, writer);
+                    writer.Write(" + ");
+                    writer.Write("\"\\t\"".StringHighlight());
+                    break;
+
                 case StringBuilderUnit.AppendMode.SpaceBefore:
-                    return MakeClickableForThisUnit($"{"\" \"".StringHighlight()} + ") + inputValue;
+                    writer.Write("\" \"".StringHighlight());
+                    writer.Write(" + ");
+                    GenerateValue(input, data, writer);
+                    break;
+
+                case StringBuilderUnit.AppendMode.SpaceAfter:
+                    GenerateValue(input, data, writer);
+                    writer.Write(" + ");
+                    writer.Write("\" \"".StringHighlight());
+                    break;
+
                 case StringBuilderUnit.AppendMode.NewLineBefore:
-                    return MakeClickableForThisUnit($"{"\"\\n\"".StringHighlight()} + ") + inputValue;
+                    writer.Write("\"\\n\"".StringHighlight());
+                    writer.Write(" + ");
+                    GenerateValue(input, data, writer);
+                    break;
+
                 case StringBuilderUnit.AppendMode.NewLineAfter:
-                    return inputValue + MakeClickableForThisUnit($" + {"\"\\n\"".StringHighlight()}");
-                case StringBuilderUnit.AppendMode.Delimiter:
-                    string delimiter = this.Unit.appendModes[index].delimiter;
+                    GenerateValue(input, data, writer);
+                    writer.Write(" + ");
+                    writer.Write("\"\\n\"".StringHighlight());
+                    break;
+
+                case StringBuilderUnit.AppendMode.CommaSeparated:
+                    GenerateValue(input, data, writer);
                     if (index < totalCount - 1)
-                        return inputValue + MakeClickableForThisUnit($" + {$"\"{delimiter}\"".StringHighlight()}");
-                    return inputValue;
+                    {
+                        writer.Write(" + ");
+                        writer.Write("\", \"".StringHighlight());
+                    }
+                    break;
+
+                case StringBuilderUnit.AppendMode.Delimiter:
+                    GenerateValue(input, data, writer);
+                    if (index < totalCount - 1)
+                    {
+                        writer.Write(" + ");
+                        writer.Write($"\"{Unit.appendModes[index].delimiter}\"".StringHighlight());
+                    }
+                    break;
 
                 case StringBuilderUnit.AppendMode.Default:
                 default:
-                    return inputValue;
+                    GenerateValue(input, data, writer);
+                    break;
             }
         }
     }

@@ -1,8 +1,4 @@
-
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -11,31 +7,32 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public RemoveDictionaryItemGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(output, data);
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            data.SetExpectedType(typeof(System.Collections.IDictionary));
-            string output = CodeBuilder.Indent(indent) + GenerateValue(Unit.dictionaryInput, data) + MakeClickableForThisUnit(".Remove(");
-            var (type, isMet) = data.RemoveExpectedType();
-            string keyCode;
-
-            if (isMet && typeof(System.Collections.IDictionary).IsAssignableFrom(type))
+            ExpectedTypeResult result;
+            using (data.Expect(typeof(System.Collections.IDictionary), out result))
             {
-                data.SetExpectedType(GetKeyExpectedType(type));
-                keyCode = base.GenerateValue(Unit.key, data);
-                data.RemoveExpectedType();
+                writer.WriteIndented();
+                GenerateValue(Unit.dictionaryInput, data, writer);
             }
-            else
+            writer.InvokeMember(null, "Remove", writer.Action(() =>
             {
-                keyCode = base.GenerateValue(Unit.key, data);
-            }
+                if (result.IsSatisfied && typeof(System.Collections.IDictionary).IsAssignableFrom(result.ResolvedType))
+                {
+                    using (data.Expect(GetKeyExpectedType(result.ResolvedType)))
+                    {
+                        GenerateValue(Unit.key, data, writer);
+                    }
+                }
+                else
+                {
+                    GenerateValue(Unit.key, data, writer);
+                }
+            }));
 
-            output = output + keyCode + MakeClickableForThisUnit(");") + "\n" + GetNextUnit(Unit.exit, data, indent);
-            return output;
+            writer.WriteEnd(EndWriteOptions.LineEnd);
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
 
         public Type GetKeyExpectedType(Type type)

@@ -21,20 +21,20 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public ChangeDetectGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            builder.Body(before =>
-            before.Clickable("if ".ControlHighlight()).Parentheses(inner =>
-            inner.InvokeMember(Name.VariableHighlight(), "Changed", p1 => p1.Ignore(GenerateValue(Unit.input, data)))),
-            (body, indent) => body.Ignore(GetNextUnit(Unit.onChange, data, indent).TrimEnd()), true, indent);
-
-            return builder;
+            writer.WriteIndented("if ".ControlHighlight()).Parentheses(inner => inner.InvokeMember(Name.VariableHighlight(), "Changed", inner.Action(() => GenerateValue(Unit.input, data, inner)))).NewLine();
+            writer.WriteLine("{");
+            using (writer.IndentedScope(data)) 
+            {
+                GenerateChildControl(Unit.onChange, data, writer); 
+            }
+            writer.WriteLine("}");
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(Name.VariableHighlight() + "." + "PreviousValue".VariableHighlight());
+            writer.GetMember(Name.VariableHighlight(), "PreviousValue");
         }
     }
 }

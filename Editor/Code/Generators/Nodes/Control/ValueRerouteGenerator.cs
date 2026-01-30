@@ -1,9 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
-using UnityEngine;
-
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ValueReroute))]
@@ -12,12 +6,10 @@ namespace Unity.VisualScripting.Community.CSharp
         public ValueRerouteGenerator(Unit unit) : base(unit)
         {
         }
-    
-                public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            
-            return GenerateValue(Unit.input, data);
+            GenerateConnectedValue(Unit.input, data, writer);
         }
     }
-    
 }

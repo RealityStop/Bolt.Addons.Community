@@ -486,12 +486,12 @@ public class {fileName.Replace(" ", "")} : {unitType}
                 if (valueInput.nullMeansSelf)
                 {
                     template += $@"
-        {valueInputName.Replace(" ", "")} = ValueInput<{valueInput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueInputName.Replace(" ", "")}), default).NullMeansSelf();";
+        {valueInputName.Replace(" ", "")} = ValueInput<{valueInput.type.As().CSharpName(false, true, false).Replace(" ", "")}>(nameof({valueInputName.Replace(" ", "")}), default).NullMeansSelf();";
                 }
                 else
                 {
                     template += $@"
-        {valueInputName.Replace(" ", "")} = ValueInput<{valueInput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueInputName.Replace(" ", "")}), default);";
+        {valueInputName.Replace(" ", "")} = ValueInput<{valueInput.type.As().CSharpName(false, true, false).Replace(" ", "")}>(nameof({valueInputName.Replace(" ", "")}), default);";
                 }
             }
 
@@ -500,7 +500,7 @@ public class {fileName.Replace(" ", "")} : {unitType}
             {
                 string valueOutputName = string.IsNullOrEmpty(valueOutput.name) ? $"ValueOutput{valueOutputs.IndexOf(valueOutput)}" : valueOutput.name;
                 template += $@"
-        {valueOutputName.Replace(" ", "")} = ValueOutput<{valueOutput.type.CSharpFullName().Replace(" ", "")}>(nameof({valueOutputName.Replace(" ", "")}){(valueOutput.triggersMethod ? $", {valueOutput.methodName}" : string.Empty)});";
+        {valueOutputName.Replace(" ", "")} = ValueOutput<{valueOutput.type.As().CSharpName(false, true, false).Replace(" ", "")}>(nameof({valueOutputName.Replace(" ", "")}){(valueOutput.triggersMethod ? $", {valueOutput.methodName}" : string.Empty)});";
             }
 
             foreach (InputData input in controlInputs)

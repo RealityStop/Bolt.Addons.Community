@@ -21,7 +21,8 @@ namespace Unity.VisualScripting.Community.CSharp
         protected override string GenerateCode(UnityEngine.Object asset)
         {
             var enumAsset = (EnumAsset)asset;
-            return EnumAssetGenerator.GetSingleDecorator(enumAsset).GenerateClean(0);
+            var generator = EnumAssetGenerator.GetSingleDecorator(enumAsset);
+            return generator.GenerateClean(new CodeWriter(), generator.GetGenerationData());
         }
 
         public override void PostProcess(UnityEngine.Object asset, PathConfig paths, Type type)

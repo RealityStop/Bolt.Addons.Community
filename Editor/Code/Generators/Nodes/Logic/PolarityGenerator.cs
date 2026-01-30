@@ -11,27 +11,29 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public PolarityGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "UnityEngine";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.positive)
             {
-                return GenerateValue(Unit.input, data) + MakeClickableForThisUnit($" > {"0".NumericHighlight()}");
+                GenerateValue(Unit.input, data, writer);
+                writer.Write(" > " + "0".NumericHighlight());
             }
             else if (output == Unit.negative)
             {
-                return GenerateValue(Unit.input, data) + MakeClickableForThisUnit($" < {"0".NumericHighlight()}");
+                GenerateValue(Unit.input, data, writer);
+                writer.Write(" < " + "0".NumericHighlight());
             }
             else if (output == Unit.zero)
             {
-                NameSpaces = "UnityEngine";
-                return MakeClickableForThisUnit($"{"Mathf".TypeHighlight()}.Approximately(") + GenerateValue(Unit.input, data) + MakeClickableForThisUnit($", {"0f".NumericHighlight()}");
+                writer.Write("Mathf".TypeHighlight() + ".Approximately(");
+                GenerateValue(Unit.input, data, writer);
+                writer.Write(", " + "0f".NumericHighlight() + ")");
             }
-            return base.GenerateValue(output, data);
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
         }
     }
 }

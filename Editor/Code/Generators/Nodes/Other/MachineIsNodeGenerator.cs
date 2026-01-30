@@ -6,17 +6,12 @@ namespace Unity.VisualScripting.Community.CSharp
     public class MachineIsNodeGenerator : NodeGenerator<MachineIsNode>
     {
         public MachineIsNodeGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            data.SetExpectedType(typeof(GameObject));
-            string target = GenerateValue(Unit.target, data);
-            data.RemoveExpectedType();
-            data.SetExpectedType(typeof(ScriptGraphAsset));
-            string asset = GenerateValue(Unit.asset, data);
-            data.RemoveExpectedType();
-            var builder = Unit.CreateClickableString();
-            builder.InvokeMember(typeof(CSharpUtility), "MachineIs", p1 => p1.Ignore(target), p2 => p2.Ignore(asset));
-            return builder;
+            writer.InvokeMember(typeof(CSharpUtility), "MachineIs", 
+            writer.Action(() => GenerateValue(Unit.target, data, writer)),
+            writer.Action(() => GenerateValue(Unit.asset, data, writer)));
         }
     }
 }

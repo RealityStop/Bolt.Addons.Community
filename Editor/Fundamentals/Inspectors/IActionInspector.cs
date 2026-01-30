@@ -26,15 +26,15 @@ namespace Unity.VisualScripting.Community
                     {
                         var data = new ControlGenerationData(typeof(object), LudiqGraphsEditorUtility.editedContext.value.reference);
 
-                        string code;
+                        CodeWriter code = new CodeWriter();
 
                         if (unit is DelegateNode delegateNode)
                         {
-                            code = delegateNode.GenerateValue(delegateNode.@delegate, data).RemoveMarkdown();
+                            delegateNode.GenerateValue(delegateNode.@delegate, code, data);
                         }
                         else
                         {
-                            code = unit.GenerateControl(null, data, 0).RemoveMarkdown();
+                            unit.GenerateControl(null, data, code);
                         }
 
                         CSharpPreviewWindow.OpenWithCode(code, false);

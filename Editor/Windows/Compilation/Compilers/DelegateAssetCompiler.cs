@@ -29,7 +29,8 @@ namespace Unity.VisualScripting.Community.CSharp
         protected override string GenerateCode(UnityEngine.Object asset)
         {
             var delegateAsset = (DelegateAsset)asset;
-            return DelegateAssetGenerator.GetSingleDecorator(delegateAsset).GenerateClean(0);
+            var generator = DelegateAssetGenerator.GetSingleDecorator(delegateAsset);
+            return generator.GenerateClean(new CodeWriter(), generator.GetGenerationData());
         }
 
         public override void PostProcess(UnityEngine.Object asset, PathConfig paths, Type type)

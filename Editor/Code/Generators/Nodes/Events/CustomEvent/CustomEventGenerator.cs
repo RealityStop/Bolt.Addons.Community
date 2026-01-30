@@ -29,26 +29,34 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(CustomEventArgs), "args") };
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input == Unit.target && !input.hasValidConnection)
-                return MakeClickableForThisUnit("gameObject".VariableHighlight());
-            return base.GenerateValue(input, data);
+            {
+                writer.GetVariable("gameObject");
+                return;
+            }
+            base.GenerateValueInternal(input, data, writer);
         }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (Unit.argumentPorts.Contains(output))
             {
-                var callCode = CodeBuilder.CallCSharpUtilityExtensitionMethod(Unit, MakeClickableForThisUnit("args".VariableHighlight()), MakeClickableForThisUnit(nameof(CSharpUtility.GetArgument)), Unit.argumentPorts.IndexOf(output).As().Code(false, Unit), MakeClickableForThisUnit("typeof".ConstructHighlight() + "(" + (data.GetExpectedType() ?? typeof(object)).As().CSharpName(false, true) + ")"));
-                var code = Unit.CreateClickableString().Ignore(callCode).Cast(data.GetExpectedType(), data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != typeof(object));
-                return code;
+                using (writer.Cast(data.GetExpectedType(), () => data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != typeof(object), true))
+                {
+                    data.MarkExpectedTypeMet();
+                    writer.InvokeMember("args".VariableHighlight(), nameof(CSharpUtility.GetArgument), new CodeWriter.TypeParameter[] { data.GetExpectedType() ?? typeof(object) },
+                    Unit.argumentPorts.IndexOf(output).As().Code(false));
+                }
+                return;
             }
-            return base.GenerateValue(output, data);
+            base.GenerateValueInternal(output, data, writer);
         }
     }
 }

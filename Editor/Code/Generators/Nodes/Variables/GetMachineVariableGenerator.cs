@@ -23,70 +23,75 @@ namespace Unity.VisualScripting.Community.CSharp
         {
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (Unit.name.hasValidConnection)
             {
-                return MakeClickableForThisUnit(CodeUtility.ErrorTooltip("Name can not have a connected value!", "Error Generating GetMachineVariableNode", "null".ConstructHighlight()));
+                using (writer.CodeDiagnosticScope("Name can not have a connected value", CodeDiagnosticKind.Error))
+                    writer.Error("Could not generate GetMachineVariableNode");
+                return;
             }
-            else
-            {
-                return GenerateDisconnectedVariableCode(data);
-            }
-        }
 
-        private string GenerateDisconnectedVariableCode(ControlGenerationData data)
-        {
-            var name = (Unit.defaultValues[Unit.name.key] as string).LegalMemberName();
-            variableType = GetVariableType(name, data, true);
+            var name = (Unit.defaultValues[Unit.name.key] as string).LegalVariableName();
+
+            if (string.IsNullOrEmpty(name))
+            {
+                writer.Error("Variable name is empty");
+                return;
+            }
+
+            variableType = GetVariableType(name, data);
 
             data.CreateSymbol(Unit, variableType);
             var expectedType = data.GetExpectedType();
             var hasExpectedType = expectedType != null;
 #if VISUAL_SCRIPTING_1_7
-var isExpectedType =
-                (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType)) ||
-                (hasExpectedType && IsVariableDefined(data, name) && !string.IsNullOrEmpty(GetVariableDeclaration(data, name).typeHandle.Identification) && expectedType.IsAssignableFrom(Type.GetType(GetVariableDeclaration(data, name).typeHandle.Identification))) ||
-                (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && expectedType.IsAssignableFrom(targetType));
+            var isExpectedType =
+                            (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType)) ||
+                            (hasExpectedType && IsVariableDefined(data, name) && !string.IsNullOrEmpty(GetVariableDeclaration(data, name).typeHandle.Identification) && expectedType.IsAssignableFrom(Type.GetType(GetVariableDeclaration(data, name).typeHandle.Identification))) ||
+                            (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && expectedType.IsAssignableFrom(targetType));
 #else
             var isExpectedType =
                 (hasExpectedType && variableType != null && expectedType.IsAssignableFrom(variableType)) ||
                 (hasExpectedType && IsVariableDefined(data, name) && expectedType.IsAssignableFrom(GetVariableDeclaration(data, name).value?.GetType())) ||
                 (hasExpectedType && data.TryGetVariableType(data.GetVariableName(name), out Type targetType) && expectedType.IsAssignableFrom(targetType));
 #endif
-            data.SetCurrentExpectedTypeMet(isExpectedType, variableType);
+            if (isExpectedType)
+                data.MarkExpectedTypeMet(variableType);
+
             if (!Unit.target.hasValidConnection && Unit.defaultValues[Unit.target.key] == null)
             {
                 if (!data.ContainsNameInAnyScope(name))
-                    return MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"Variable '{name}' could not be found in this script ensure it's defined in the Graph Variables.", "Error Generating GetMachineVariableNode", ""));
-                return MakeClickableForThisUnit(data.GetVariableName(name).VariableHighlight());
+                {
+                    using (writer.CodeDiagnosticScope($"Variable '{name}' could not be found in this script ensure it's defined in the Graph Variables.", CodeDiagnosticKind.Error))
+                        writer.Error("Error Generating GetMachineVariableNode");
+                    return;
+                }
+                writer.Write(data.GetVariableName(name).VariableHighlight());
+                return;
             }
-            else
-                return GenerateValue(Unit.target, data) + MakeClickableForThisUnit(".") + GenerateValue(Unit.name, data);
+
+            GenerateValue(Unit.target, data, writer);
+            writer.Dot();
+            GenerateValue(Unit.name, data, writer);
         }
 
-        private Type GetVariableType(string name, ControlGenerationData data, bool checkDecleration)
+        private Type GetVariableType(string name, ControlGenerationData data)
         {
-            if (checkDecleration)
+            var isDefined = IsVariableDefined(data, name);
+            if (isDefined)
             {
-                var isDefined = IsVariableDefined(data, name);
-                if (isDefined)
-                {
-                    var declaration = GetVariableDeclaration(data, name);
+                var declaration = GetVariableDeclaration(data, name);
 #if VISUAL_SCRIPTING_1_7
-                    return declaration?.typeHandle.Identification != null 
-                        ? Type.GetType(declaration.typeHandle.Identification) 
-                        : null;
+                return declaration?.typeHandle.Identification != null ? Type.GetType(declaration.typeHandle.Identification) : null;
 #else
-                    return declaration?.value != null
-                        ? declaration.value.GetType()
-                        : null;
+                return declaration?.value != null ? declaration.value.GetType() : null;
 #endif
 
-                }
             }
+
             var target = GetTarget(data);
-            ControlGenerationData targetData = null;
+            ControlGenerationData targetData = data;
             if (target != null && CodeGenerator.GetSingleDecorator(GetTarget(data).gameObject) is ICreateGenerationData generationData)
             {
                 targetData = generationData.GetGenerationData();
@@ -145,12 +150,11 @@ var isExpectedType =
                 return null;
             }
         }
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input == Unit.target && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
-            {
-                return "";
-            }
+                return;
 
             if (input == Unit.target)
             {
@@ -160,10 +164,22 @@ var isExpectedType =
                     var machineName = GetMachineName(machine);
                     data.TryGetGameObject(out var gameObject);
                     if (machine.gameObject.GetComponents<MonoBehaviour>().Any(m => m.GetType().Name == machineName))
-                        return (gameObject != machine.gameObject ? machine.gameObject.As().Code(false, Unit) + MakeClickableForThisUnit(".") : "") + MakeClickableForThisUnit($"GetComponent<{machineName.TypeHighlight()}>()");
+                    {
+                        if (gameObject != machine.gameObject)
+                        {
+                            writer.Write(machine.gameObject.As().Code(false)).Dot();
+                        }
+                        writer.Write($"GetComponent<{machineName.TypeHighlight()}>()");
+                        return;
+                    }
                     else
-                        return MakeClickableForThisUnit(CodeUtility.InfoTooltip($"{machineName} could not be found on the target GameObject. Ensure that the ScriptMachine is compiled into a C# script and attached to the correct GameObject.",
-                        (gameObject != machine.gameObject ? machine.gameObject.As().Code(false) + "." : "") + $"GetComponent<{machineName.TypeHighlight()}>()"));
+                    {
+                        using (writer.CodeDiagnosticScope($"{machineName} could not be found on the target GameObject. Ensure that the ScriptMachine is compiled into a C# script and attached to the correct GameObject.", CodeDiagnosticKind.Info))
+                        {
+                            writer.Comment("Note: (Hover for more info)");
+                            writer.Write($"GetComponent<{machineName.TypeHighlight()}>()");
+                        }
+                    }
                 }
 
                 var target = GetTarget(data);
@@ -171,20 +187,34 @@ var isExpectedType =
                 {
                     var machineName = GetMachineName(target);
                     data.TryGetGameObject(out var gameObject);
-                    if (target.gameObject.GetComponents<MonoBehaviour>().Any(m => m.GetType().Name == machineName))
-                        return (gameObject != target.gameObject ? target.gameObject.As().Code(false, Unit) + MakeClickableForThisUnit(".") : "") + MakeClickableForThisUnit($"GetComponent<{machineName.TypeHighlight()}>()");
+                    if (target.GetComponents<MonoBehaviour>().Any(m => m.GetType().Name == machineName))
+                    {
+                        if (gameObject != target)
+                        {
+                            writer.Write(target.As().Code(false)).Dot();
+                        }
+                        writer.Write($"GetComponent<{machineName.TypeHighlight()}>()");
+                        return;
+                    }
                     else
-                        return MakeClickableForThisUnit(CodeUtility.InfoTooltip($"{machineName} could not be found on the target GameObject. Ensure that the ScriptMachine is compiled into a C# script and attached to the correct GameObject.",
-                        (gameObject != target.gameObject ? target.gameObject.As().Code(false) + "." : "") + $"GetComponent<{machineName.TypeHighlight()}>()"));
+                    {
+                        using (writer.CodeDiagnosticScope($"{machineName} could not be found on the target GameObject. Ensure that the ScriptMachine is compiled into a C# script and attached to the correct GameObject.", CodeDiagnosticKind.Info))
+                        {
+                            writer.Comment("Note: (Hover for more info)");
+                            writer.Write($"GetComponent<{machineName.TypeHighlight()}>()");
+                        }
+                    }
                 }
-                return MakeClickableForThisUnit($"/* Could not find target for variable {CodeUtility.CleanCode(GenerateValue(Unit.name, data)).RemoveHighlights().RemoveMarkdown()} */".WarningHighlight());
+                writer.Error("Could not find target for variable");
+                return;
             }
 
             if (input == Unit.name && !input.hasValidConnection)
             {
-                return MakeClickableForThisUnit(Unit.defaultValues[input.key].ToString().VariableHighlight());
+                writer.GetVariable(Unit.defaultValues[input.key].ToString());
+                return;
             }
-            return base.GenerateValue(input, data);
+            base.GenerateValueInternal(input, data, writer);
         }
 
         private string GetMachineName(SMachine machine)

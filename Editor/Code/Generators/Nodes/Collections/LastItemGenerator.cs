@@ -1,7 +1,7 @@
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections;
-using Unity.VisualScripting;
+using System.Collections.Generic;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -10,17 +10,26 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public LastItemGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "System.Linq";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (typeof(IList).IsAssignableFrom(data.GetExpectedType()))
             {
-                var listCode = GenerateValue(Unit.collection, data);
-                return listCode + MakeClickableForThisUnit($"[") + listCode + MakeClickableForThisUnit($".Count - {"1".NumericHighlight()}]");
+                GenerateValue(Unit.collection, data, writer);
+                writer.Brackets(w =>
+                {
+                    w.GetMember(writer.Action(w1 => GenerateValue(Unit.collection, data, w1)), "Count");
+                    w.Subtract().Int(1);
+                });
             }
             else
             {
-                NameSpaces = "System.Linq";
-                return GenerateValue(Unit.collection, data) + MakeClickableForThisUnit($".Cast<{"object".ConstructHighlight()}>().Last()");
+                GenerateValue(Unit.collection, data, writer);
+                writer.Write(".Cast<").Write("object".ConstructHighlight()).Write(">().Last()");
             }
         }
     }

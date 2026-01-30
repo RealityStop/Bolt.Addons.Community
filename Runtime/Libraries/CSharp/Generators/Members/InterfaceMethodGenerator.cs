@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -12,16 +13,20 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public Type returnType;
         public List<ParameterGenerator> parameters = new List<ParameterGenerator>();
 
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
-            if (string.IsNullOrEmpty(name)) { return string.Empty; }
+            if (string.IsNullOrEmpty(name)) return;
 
-            var output = returnType.As().CSharpName() + " " + name.LegalMemberName() + "(";
+            writer.WriteIndented(writer.GetTypeNameHighlighted(returnType) + " " + name.LegalMemberName() + "(");
 
-            output += string.Join(", ", parameters.Select(p => p.Generate(indent)));
-            output += ");";
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                var parameter = parameters[i];
+                if (i != 0) writer.Write(", ");
+                parameter.Generate(writer, data);
+            }
 
-            return output;
+            writer.WriteEnd();
         }
 
         internal InterfaceMethodGenerator() { }

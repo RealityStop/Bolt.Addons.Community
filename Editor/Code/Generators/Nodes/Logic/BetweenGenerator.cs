@@ -8,11 +8,19 @@ namespace Unity.VisualScripting.Community.CSharp
     [NodeGenerator(typeof(Between))]
     public class BetweenGenerator : NodeGenerator<Between>
     {
-        public BetweenGenerator(Unit unit) : base(unit) { NameSpaces = "Unity.VisualScripting.Community"; }
+        public BetweenGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
         {
-            return CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("IsWithin"), GenerateValue(Unit.input, data), GenerateValue(Unit.min, data), GenerateValue(Unit.max, data));
+            yield return "Unity.VisualScripting.Community";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            writer.CallCSharpUtilityMethod("IsWithin",
+            writer.Action(w => GenerateValue(Unit.input, data, w)),
+            writer.Action(w => GenerateValue(Unit.min, data, w)),
+            writer.Action(w => GenerateValue(Unit.max, data, w)));
         }
     }
 }

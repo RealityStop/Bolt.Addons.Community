@@ -20,7 +20,8 @@ namespace Unity.VisualScripting.Community.CSharp
         protected override string GenerateCode(UnityEngine.Object asset)
         {
             var classAsset = (ClassAsset)asset;
-            var code = ClassAssetGenerator.GetSingleDecorator(classAsset).GenerateClean(0);
+            var generator = ClassAssetGenerator.GetSingleDecorator(classAsset);
+            var code = generator.GenerateClean(new CodeWriter(), generator.GetGenerationData());
             return code;
         }
 

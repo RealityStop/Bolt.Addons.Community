@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -8,8 +9,13 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public CounterNodeGenerator(CounterNode unit) : base(unit)
         {
-            NameSpaces = "Unity.VisualScripting.Community";
         }
+        
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting.Community";
+        }
+
         private CounterNode Unit => unit as CounterNode;
         public override AccessModifier AccessModifier => AccessModifier.Private;
 
@@ -23,27 +29,28 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override bool HasDefaultValue => true;
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
             variableName = Name;
-            var output = string.Empty;
-
             if (input == Unit.enter)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".Update()\n");
-                output += GetNextUnit(Unit.exit, data, indent);
+                writer.WriteIndented();
+                writer.InvokeMember(variableName.VariableHighlight(), "Update");
+                writer.WriteEnd(EndWriteOptions.LineEnd);
+
+                GenerateExitControl(Unit.exit, data, writer);
             }
             else if (input == Unit.reset)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".Reset()\n");
+                writer.WriteIndented();
+                writer.InvokeMember(variableName.VariableHighlight(), "Reset");
+                writer.WriteEnd(EndWriteOptions.LineEnd);
             }
-
-            return output;
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(variableName.VariableHighlight() + "." + "Count".VariableHighlight());
+            writer.GetMember(variableName.VariableHighlight(), "Count");
         }
     }
 }

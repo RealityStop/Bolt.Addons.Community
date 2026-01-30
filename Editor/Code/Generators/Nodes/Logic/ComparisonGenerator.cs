@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
@@ -11,69 +12,101 @@ namespace Unity.VisualScripting.Community.CSharp
     {
         public ComparisonGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
         {
-            string a = GenerateValue(Unit.a, data);
-            string b = GenerateValue(Unit.b, data);
+            yield return "UnityEngine";
+            yield return "Unity.VisualScripting";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
             bool numeric = Unit.numeric;
-
-            string op(string symbol) => MakeClickableForThisUnit(symbol);
-            string call(string method, string args) =>
-                $"{op("OperatorUtility".TypeHighlight())}{op("." + method + "(")}{args}{op(")")}";
-
-            string approx(string x, string y) =>
-                $"{op("Mathf".TypeHighlight())}{op(".Approximately(")}{x}{op(", ")}{y}{op(")")}";
-
-            string group(string expression) =>
-                $"{op("(")}{expression}{op(")")}";
-
-            string logicOr(string left, string right) =>
-                $"{group(left + op(" || ") + right)}";
 
             if (numeric)
             {
-                NameSpaces = "UnityEngine";
                 if (output == Unit.aLessThanB)
-                    return $"{a}{op(" < ")}{b}";
-
-                if (output == Unit.aLessThanOrEqualToB)
-                    return logicOr($"{a}{op(" < ")}{b}", approx(a, b));
-
-                if (output == Unit.aEqualToB)
-                    return approx(a, b);
-
-                if (output == Unit.aNotEqualToB)
-                    return $"{op("!")} {approx(a, b)}";
-
-                if (output == Unit.aGreaterThanOrEqualToB)
-                    return logicOr($"{a}{op(" > ")}{b}", approx(a, b));
-
-                if (output == Unit.aGreatherThanB)
-                    return $"{a}{op(" > ")}{b}";
+                {
+                    GenerateValue(Unit.a, data, writer);
+                    writer.Write(" < ");
+                    GenerateValue(Unit.b, data, writer);
+                }
+                else if (output == Unit.aLessThanOrEqualToB)
+                {
+                    GenerateValue(Unit.a, data, writer);
+                    writer.Write(" < ");
+                    GenerateValue(Unit.b, data, writer);
+                    writer.Write(" || " + "Mathf".TypeHighlight() + ".Approximately(");
+                    GenerateValue(Unit.a, data, writer);
+                    writer.Write(", ");
+                    GenerateValue(Unit.b, data, writer);
+                    writer.Write(")");
+                }
+                else if (output == Unit.aEqualToB)
+                {
+                    writer.Write("Mathf".TypeHighlight() + ".Approximately(");
+                    GenerateValue(Unit.a, data, writer);
+                    writer.Write(", ");
+                    GenerateValue(Unit.b, data, writer);
+                    writer.Write(")");
+                }
+                else if (output == Unit.aNotEqualToB)
+                {
+                    writer.Write("!" + "Mathf".TypeHighlight() + ".Approximately(");
+                    GenerateValue(Unit.a, data, writer);
+                    writer.Write(", ");
+                    GenerateValue(Unit.b, data, writer);
+                    writer.Write(")");
+                }
+                else if (output == Unit.aGreaterThanOrEqualToB)
+                {
+                    GenerateValue(Unit.a, data, writer);
+                    writer.Write(" > ");
+                    GenerateValue(Unit.b, data, writer);
+                    writer.Write(" || " + "Mathf".TypeHighlight() + ".Approximately(");
+                    GenerateValue(Unit.a, data, writer);
+                    writer.Write(", ");
+                    GenerateValue(Unit.b, data, writer);
+                    writer.Write(")");
+                }
+                else if (output == Unit.aGreatherThanB)
+                {
+                    GenerateValue(Unit.a, data, writer);
+                    writer.Write(" > ");
+                    GenerateValue(Unit.b, data, writer);
+                }
             }
             else
             {
-                NameSpaces = "Unity.VisualScripting";
+                writer.Write("OperatorUtility".TypeHighlight() + ".");
                 if (output == Unit.aLessThanB)
-                    return call("LessThan", $"{a}{op(", ")}{b}");
-
-                if (output == Unit.aLessThanOrEqualToB)
-                    return call("LessThanOrEqual", $"{a}{op(", ")}{b}");
-
-                if (output == Unit.aEqualToB)
-                    return call("Equal", $"{a}{op(", ")}{b}");
-
-                if (output == Unit.aNotEqualToB)
-                    return call("NotEqual", $"{a}{op(", ")}{b}");
-
-                if (output == Unit.aGreaterThanOrEqualToB)
-                    return call("GreaterThanOrEqual", $"{a}{op(", ")}{b}");
-
-                if (output == Unit.aGreatherThanB)
-                    return call("GreaterThan", $"{a}{op(", ")}{b}");
+                {
+                    writer.Write("LessThan(");
+                }
+                else if (output == Unit.aLessThanOrEqualToB)
+                {
+                    writer.Write("LessThanOrEqual(");
+                }
+                else if (output == Unit.aEqualToB)
+                {
+                    writer.Write("Equal(");
+                }
+                else if (output == Unit.aNotEqualToB)
+                {
+                    writer.Write("NotEqual(");
+                }
+                else if (output == Unit.aGreaterThanOrEqualToB)
+                {
+                    writer.Write("GreaterThanOrEqual(");
+                }
+                else if (output == Unit.aGreatherThanB)
+                {
+                    writer.Write("GreaterThan(");
+                }
+                GenerateValue(Unit.a, data, writer);
+                writer.Write(", ");
+                GenerateValue(Unit.b, data, writer);
+                writer.Write(")");
             }
-
-            return $"{op("/* Unknown comparison output */".WarningHighlight() + " false".ConstructHighlight())}";
         }
     }
 }

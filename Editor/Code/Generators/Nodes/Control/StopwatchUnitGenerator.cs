@@ -1,73 +1,77 @@
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
+using System.Collections.Generic;
 using System.Diagnostics;
+using Unity.VisualScripting;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(StopwatchUnit))]
-    public class StopwatchUnitGenerator : VariableNodeGenerator
+    public sealed class StopwatchUnitGenerator : VariableNodeGenerator
     {
         private StopwatchUnit Unit => unit as StopwatchUnit;
+
         public override AccessModifier AccessModifier => AccessModifier.Private;
-
         public override FieldModifier FieldModifier => FieldModifier.None;
-
         public override string Name => "stopwatch" + count;
-
         public override Type Type => typeof(Stopwatch);
-
         public override object DefaultValue => new Stopwatch();
-
         public override bool HasDefaultValue => true;
 
         public StopwatchUnitGenerator(Unit unit) : base(unit)
         {
-            NameSpaces = "System.Diagnostics";
         }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        public override IEnumerable<string> GetNamespaces()
         {
-            var builder = Unit.CreateClickableString();
+            yield return "System.Diagnostics";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            writer.GetVariable(Name);
+
             if (output == Unit.ElapsedMilliseconds)
             {
-                builder.GetMember(Name.VariableHighlight(), "Elapsed").GetMember("Milliseconds");
+                writer.GetMember("Elapsed").GetMember("Milliseconds");
             }
             else if (output == Unit.ElapsedSeconds)
             {
-                builder.GetMember(Name.VariableHighlight(), "Elapsed").GetMember("TotalSeconds");
+                writer.GetMember("Elapsed").GetMember("TotalSeconds");
             }
             else if (output == Unit.ElapsedMinutes)
             {
-                builder.GetMember(Name.VariableHighlight(), "Elapsed").GetMember("TotalMinutes");
+                writer.GetMember("Elapsed").GetMember("TotalMinutes");
             }
             else if (output == Unit.ElapsedHours)
             {
-                builder.GetMember(Name.VariableHighlight(), "Elapsed").GetMember("TotalHours");
+                writer.GetMember("Elapsed").GetMember("TotalHours");
             }
             else if (output == Unit.IsRunning)
             {
-                builder.GetMember(Name.VariableHighlight(), "IsRunning");
+                writer.GetMember("IsRunning");
             }
-            return builder;
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
             if (input == Unit.Start)
             {
-                builder.InvokeMember(Name.VariableHighlight(), "Start", Array.Empty<string>()).EndLine();
-                builder.Ignore(GetNextUnit(Unit.Started, data, indent));
+                writer.WriteIndented();
+                writer.GetVariable(Name).InvokeMember(null, "Start").WriteEnd(EndWriteOptions.LineEnd);
+                GenerateExitControl(Unit.Started, data, writer);
             }
             else if (input == Unit.Stop)
             {
-                builder.InvokeMember(Name.VariableHighlight(), "Stop", Array.Empty<string>()).EndLine();
-                builder.Ignore(GetNextUnit(Unit.Stopped, data, indent));
+                writer.WriteIndented();
+                writer.GetVariable(Name).InvokeMember(null, "Stop").WriteEnd(EndWriteOptions.LineEnd);
+                GenerateExitControl(Unit.Stopped, data, writer);
             }
             else if (input == Unit.Reset)
             {
-                builder.InvokeMember(Name.VariableHighlight(), "Reset", Array.Empty<string>()).EndLine();
+                writer.WriteIndented();
+                writer.GetVariable(Name).InvokeMember(null, "Reset").WriteEnd(EndWriteOptions.LineEnd);
             }
-            return builder;
         }
     }
 }

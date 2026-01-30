@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using Unity.VisualScripting.Community.CSharp;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -15,8 +16,9 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public AccessModifier setterScope;
         public bool hasGetter;
         public bool hasSetter;
-        private string getterBody;
-        private string setterBody;
+
+        private Action<CodeWriter> getterBodyAction;
+        private Action<CodeWriter> setterBodyAction;
         private bool multiStatementGetter;
         private bool multiStatementSetter;
         public object defaultValue;
@@ -81,40 +83,40 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return this;
         }
 
-        public PropertyGenerator SingleStatementGetter(AccessModifier scope, string body)
+        public PropertyGenerator SingleStatementGetter(AccessModifier scope, Action<CodeWriter> bodyAction)
         {
             this.getterScope = scope;
             multiStatementGetter = false;
-            getterBody = body;
+            getterBodyAction = bodyAction;
             hasGetter = true;
             return this;
         }
 
 
-        public PropertyGenerator MultiStatementGetter(AccessModifier scope, string body)
+        public PropertyGenerator MultiStatementGetter(AccessModifier scope, Action<CodeWriter> bodyAction)
         {
             this.getterScope = scope;
             multiStatementGetter = true;
-            getterBody = body;
+            getterBodyAction = bodyAction;
             hasGetter = true;
             return this;
         }
 
-        public PropertyGenerator SingleStatementSetter(AccessModifier scope, string body)
+        public PropertyGenerator SingleStatementSetter(AccessModifier scope, Action<CodeWriter> bodyAction)
         {
             this.setterScope = scope;
             multiStatementSetter = false;
-            setterBody = body;
+            setterBodyAction = bodyAction;
             hasSetter = true;
             return this;
         }
 
 
-        public PropertyGenerator MultiStatementSetter(AccessModifier scope, string body)
+        public PropertyGenerator MultiStatementSetter(AccessModifier scope, Action<CodeWriter> bodyAction)
         {
             this.setterScope = scope;
             multiStatementSetter = true;
-            setterBody = body;
+            setterBodyAction = bodyAction;
             hasSetter = true;
             return this;
         }
@@ -132,149 +134,237 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return this;
         }
 
-        public override string Generate(int indent)
-        {
-            var getterscope = getterScope != scope && getterScope != AccessModifier.None ? getterScope.AsString().ConstructHighlight() + " " : string.Empty;
-            var setterscope = setterScope != scope && setterScope != AccessModifier.None ? setterScope.AsString().ConstructHighlight() + " " : string.Empty;
-            var modifierStr = modifier.AsString().ConstructHighlight() + " ";
-            var scopeStr = scope != AccessModifier.None ? scope.AsString().ConstructHighlight() + " " : string.Empty;
-            var typeStr = useAssemblyQualifiedReturnType ? assemblyQualifiedReturnType : returnType.As().CSharpName();
+        IDisposable getterNodeScope = null;
+        IDisposable setterNodeScope = null;
+        Unit getterOwner = null;
+        Unit setterOwner = null;
 
-            var attributesStr = string.Empty;
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
+        {
+            var getterscope = getterScope != scope && getterScope != AccessModifier.None
+                ? getterScope.AsString().ConstructHighlight() + " "
+                : string.Empty;
+
+            var setterscope = setterScope != scope && setterScope != AccessModifier.None
+                ? setterScope.AsString().ConstructHighlight() + " "
+                : string.Empty;
+
+            var modifierStr = modifier != PropertyModifier.None ? modifier.AsString().ConstructHighlight() + " " : string.Empty;
+            var scopeStr = scope != AccessModifier.None ? scope.AsString().ConstructHighlight() + " " : string.Empty;
+            var typeStr = useAssemblyQualifiedReturnType ? assemblyQualifiedReturnType : writer.GetTypeNameHighlighted(returnType);
+
             foreach (AttributeGenerator attr in attributes)
             {
-                attributesStr += attr.Generate(indent) + "\n";
+                attr.Generate(writer, data);
+                writer.NewLine();
             }
 
             // Handle auto-implemented override properties
-            if (hasGetter && modifier == PropertyModifier.Override && string.IsNullOrWhiteSpace(getterBody))
+            if (hasGetter && modifier == PropertyModifier.Override && getterBodyAction == null)
             {
-                SingleStatementGetter(getterScope, defaultValue.As().Code(true, true));
-            }
-            if (hasSetter && modifier == PropertyModifier.Override && string.IsNullOrWhiteSpace(setterBody))
-            {
-                SingleStatementSetter(setterScope, defaultValue.As().Code(true, true));
+                SingleStatementGetter(getterScope, w => w.Write(defaultValue.As().Code(true, true)));
             }
 
-            // Build property header
-            var header = CodeBuilder.Indent(indent) + scopeStr + modifierStr + typeStr;
+            if (hasSetter && modifier == PropertyModifier.Override && setterBodyAction == null)
+            {
+                SingleStatementSetter(setterScope, w => w.Write(defaultValue.As().Code(true, true)));
+            }
+
+            var header = scopeStr + modifierStr + typeStr;
+
             if (hasIndexer)
             {
                 header += " this".ConstructHighlight() + $"[{indexerBody}]";
             }
             else
             {
-                header += " " + name.LegalMemberName().VariableHighlight();
+                var legalName = name.LegalVariableName();
+                header += " " + legalName.VariableHighlight();
+                data.AddLocalNameInScope(legalName, returnType);
             }
 
-            // Property body
-            var body = string.Empty;
             var warnings = new List<string>();
 
-            if (!string.IsNullOrEmpty(warning)) warnings.Add(warning);
+            if (!string.IsNullOrEmpty(warning))
+            {
+                warnings.Add(warning);
+            }
 
             // Validate accessibility modifiers
-            if (hasGetter && hasSetter && getterScope != scope && setterScope != scope && getterScope != AccessModifier.None && setterScope != AccessModifier.None)
+            if (hasGetter && hasSetter && getterScope != scope && setterScope != scope &&
+                getterScope != AccessModifier.None && setterScope != AccessModifier.None)
             {
                 warnings.Add("Cannot specify accessibility modifiers for both getter and setter");
             }
+
             if (hasGetter && !hasSetter && getterScope != scope && getterScope != AccessModifier.None)
             {
                 warnings.Add("Accessibility modifier on getter may only be used if the property has both a get and a set");
             }
+
             if (!hasGetter && hasSetter && setterScope != scope && setterScope != AccessModifier.None)
             {
                 warnings.Add("Accessibility modifier on setter may only be used if the property has both a get and a set");
             }
+
             if (hasGetter && modifier == PropertyModifier.Abstract && getterScope == AccessModifier.Private)
             {
                 warnings.Add("Abstract Properties cannot have a private getter");
             }
+
             if (hasSetter && modifier == PropertyModifier.Abstract && setterScope == AccessModifier.Private)
             {
                 warnings.Add("Abstract Properties cannot have a private setter");
             }
-            if (hasGetter && getterScope != scope && getterScope != AccessModifier.None && !CodeBuilder.IsMoreRestrictive(getterScope, scope))
+
+            if (hasGetter && getterScope != scope && getterScope != AccessModifier.None &&
+                !CodeBuilder.IsMoreRestrictive(getterScope, scope))
             {
                 warnings.Add("Accessibility modifier on getter must be more restrictive than the property itself");
             }
-            if (hasSetter && setterScope != scope && setterScope != AccessModifier.None && !CodeBuilder.IsMoreRestrictive(setterScope, scope))
+
+            if (hasSetter && setterScope != scope && setterScope != AccessModifier.None &&
+                !CodeBuilder.IsMoreRestrictive(setterScope, scope))
             {
                 warnings.Add("Accessibility modifier on setter must be more restrictive than the property itself");
             }
 
+            if (warnings.Count > 0)
+            {
+                for (int i = 0; i < warnings.Count; i++)
+                {
+                    writer.WriteIndented((" /* " + warnings[i] + " */").ErrorHighlight());
+                    writer.NewLine();
+                }
+            }
+
+            writer.WriteIndented(header);
+
             // Generate accessor body
             if (IsAutoImplemented())
             {
-                body = " { ";
+                writer.Write(" { ");
+
                 if (hasGetter)
                 {
-                    body += getterscope + "get".ConstructHighlight() + "; ";
+                    if (getterOwner != null)
+                        getterNodeScope = writer.BeginNode(getterOwner);
+
+                    writer.Write(getterscope + "get".ConstructHighlight() + "; ");
+
+                    getterNodeScope?.Dispose();
                 }
+
                 if (hasSetter)
                 {
-                    body += setterscope + "set".ConstructHighlight() + "; ";
+                    if (setterOwner != null)
+                        setterNodeScope = writer.BeginNode(setterOwner);
+
+                    writer.Write(setterscope + "set".ConstructHighlight() + "; ");
+
+                    setterNodeScope?.Dispose();
                 }
-                body += "}";
+
+                writer.Write("}");
 
                 if (hasDefault && defaultValue != null && modifier != PropertyModifier.Override)
                 {
-                    body += " = " + defaultValue.As().Code(true, true, true, "", false, true, false) + ";";
+                    writer.Write(" = " + defaultValue.As().Code(true, true, true, "", false, true, false) + ";");
                 }
             }
             else
             {
-                body = "\n" + CodeBuilder.Indent(indent) + "{";
+                writer.NewLine();
+                writer.WriteLine("{");
+
 
                 if (hasGetter)
                 {
-                    body += "\n" + CodeBuilder.Indent(indent + 1) + getterscope + "get".ConstructHighlight();
-                    if (multiStatementGetter)
+                    if (getterOwner != null)
+                        getterNodeScope = writer.BeginNode(getterOwner);
+
+                    using (writer.Indented())
                     {
-                        body += "\n" + CodeBuilder.Indent(indent + 1) + "{\n" +
-                               CodeBuilder.Indent(indent + 2) + getterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 2)) +
-                               "\n" + CodeBuilder.Indent(indent + 1) + "}";
+                        writer.WriteIndented(getterscope + "get".ConstructHighlight());
+
+                        if (multiStatementGetter)
+                        {
+                            writer.NewLine();
+
+                            writer.WriteLine("{");
+                            if (getterBodyAction != null)
+                            {
+                                using (writer.Indented())
+                                {
+                                    getterBodyAction.Invoke(writer);
+                                    writer.NewLine();
+                                }
+                            }
+                            writer.WriteLine("}");
+                        }
+                        else if (getterBodyAction != null)
+                        {
+                            writer.Write(" => ");
+                            getterBodyAction?.Invoke(writer);
+                            writer.WriteEnd(EndWriteOptions.LineEnd);
+                        }
                     }
-                    else if (!string.IsNullOrWhiteSpace(getterBody))
-                    {
-                        body += " => " + getterBody + ";";
-                    }
+
+                    getterNodeScope?.Dispose();
                 }
+
 
                 if (hasSetter)
                 {
-                    if (hasGetter) body += "\n";
-                    body += CodeBuilder.Indent(indent + 1) + setterscope + "set".ConstructHighlight();
-                    if (multiStatementSetter)
+                    if (setterOwner != null)
+                        setterNodeScope = writer.BeginNode(setterOwner);
+
+                    using (writer.Indented())
                     {
-                        body += "\n" + CodeBuilder.Indent(indent + 1) + "{\n" +
-                               CodeBuilder.Indent(indent + 2) + setterBody.Replace("\n", "\n" + CodeBuilder.Indent(indent + 2)) +
-                               "\n" + CodeBuilder.Indent(indent + 1) + "}";
+                        writer.WriteIndented(getterscope + "set".ConstructHighlight());
+
+                        if (multiStatementSetter)
+                        {
+                            writer.NewLine();
+
+                            writer.WriteLine("{");
+                            if (getterBodyAction != null)
+                            {
+                                using (writer.Indented())
+                                {
+                                    setterBodyAction.Invoke(writer);
+                                    writer.NewLine();
+                                }
+                            }
+                            writer.WriteLine("}");
+                        }
+                        else if (setterBodyAction != null)
+                        {
+                            writer.Write(" => ");
+                            setterBodyAction?.Invoke(writer);
+                            writer.WriteEnd(EndWriteOptions.LineEnd);
+                        }
                     }
-                    else if (!string.IsNullOrWhiteSpace(setterBody))
-                    {
-                        body += " => " + setterBody + ";";
-                    }
+                    setterNodeScope?.Dispose();
                 }
 
-                body += "\n" + CodeBuilder.Indent(indent) + "}";
+                writer.WriteIndented("}");
             }
+        }
 
-            // Add warnings
-            var warningsStr = string.Empty;
-            if (warnings.Count > 0)
-            {
-                warningsStr = string.Join("\n", warnings.Select(w =>
-                    CodeBuilder.Indent(indent) + (" /* " + w + " */").WarningHighlight())) + "\n";
-            }
+        public void SetGetterOwner(Unit getterOwner)
+        {
+            this.getterOwner = getterOwner;
+        }
 
-            return warningsStr + attributesStr + header + body;
+        public void SetSetterOwner(Unit setterOwner)
+        {
+            this.setterOwner = setterOwner;
         }
 
         public bool IsAutoImplemented()
         {
-            return (string.IsNullOrWhiteSpace(getterBody) && string.IsNullOrWhiteSpace(setterBody)) ||
-                   (modifier == PropertyModifier.Abstract);
+            return (getterBodyAction == null && setterBodyAction == null) || (modifier == PropertyModifier.Abstract);
         }
 
         public PropertyGenerator SetWarning(string warning)

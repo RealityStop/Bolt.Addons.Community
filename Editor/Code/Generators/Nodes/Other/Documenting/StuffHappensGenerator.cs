@@ -9,19 +9,15 @@ namespace Unity.VisualScripting.Community.CSharp
     [NodeGenerator(typeof(StuffHappens))]
     public class StuffHappensGenerator : NodeGenerator<StuffHappens>
     {
-        
+
         public StuffHappensGenerator(Unit unit) : base(unit)
         {
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(output, data);
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return CodeBuilder.Indent(indent) + MakeClickableForThisUnit("// Stuff Happens".CommentHighlight()) + "\n " + GetNextUnit(Unit.exit, data, indent);
+            writer.Comment("Stuff Happens", WriteOptions.IndentedNewLineAfter);
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

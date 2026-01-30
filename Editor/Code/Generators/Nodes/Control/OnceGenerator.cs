@@ -11,51 +11,38 @@ namespace Unity.VisualScripting.Community.CSharp
         }
         private Unity.VisualScripting.Once Unit => unit as Unity.VisualScripting.Once;
         public override AccessModifier AccessModifier => AccessModifier.Private;
-    
+
         public override FieldModifier FieldModifier => FieldModifier.None;
-    
+
         public override string Name => "Once_" + count;
-    
+
         public override object DefaultValue => null;
-    
+
         public override Type Type => typeof(bool);
-    
+
         public override bool HasDefaultValue => false;
-    
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
-    
             if (input == Unit.enter)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"if".ConstructHighlight() + $"(!{Name.VariableHighlight()})");
-                output += "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{");
-                output += "\n";
-    
-                if (Unit.once.hasAnyConnection)
+                writer.WriteIndented("if ".ControlHighlight()).Parentheses(w => w.Write($"!{Name.VariableHighlight()}")).NewLine();
+                writer.WriteLine("{");
+
+                using (writer.IndentedScope(data))
                 {
-                    output += GetNextUnit(Unit.once, data, indent + 1);
-                    output += "\n";
+                    GenerateChildControl(Unit.once, data, writer);
+                    writer.SetVariable(Name.VariableHighlight(), writer.BoolString(true), WriteOptions.Indented, EndWriteOptions.LineEnd);
                 }
-    
-                output += CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit($"{Name.VariableHighlight()} = " + "true".ConstructHighlight() + ";");
-                output += "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}");
-                output += "\n";
-    
-                if (Unit.after.hasValidConnection)
-                {
-                    output += GetNextUnit(Unit.after, data, indent);
-                }
+
+                writer.WriteLine("}");
+
+                GenerateExitControl(Unit.after, data, writer);
             }
-    
             else if (input == Unit.reset)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit($"{Name.VariableHighlight()} = " + "false".ConstructHighlight() + ";") + "\n";
+                writer.SetVariable(Name.VariableHighlight(), writer.BoolString(false), WriteOptions.Indented, EndWriteOptions.LineEnd);
             }
-    
-            return output;
         }
-    } 
+    }
 }

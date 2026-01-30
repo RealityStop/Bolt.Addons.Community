@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Unity.VisualScripting.Community.CSharp;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
@@ -30,7 +31,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         /// <summary>
         /// Generate the operator as a string.
         /// </summary>
-        public override string Generate(int indent)
+        public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
             var output = " ";
 
@@ -103,7 +104,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             output += " ";
 
-            return output;
+            writer.Write(output);
         }
 
         public override List<string> Usings()

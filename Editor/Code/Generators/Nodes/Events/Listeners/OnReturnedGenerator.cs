@@ -5,12 +5,10 @@ using Unity.VisualScripting.Community.Utility;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
-using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnReturned))]
-    [RequiresMethods]
     public class OnReturnedGenerator : AwakeMethodNodeGenerator, IRequireMethods
     {
         private OnReturned Unit => unit as OnReturned;
@@ -24,22 +22,26 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public OnReturnedGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("result".VariableHighlight());
+            writer.GetVariable("result");
         }
 
-        public override string GenerateAwakeCode(ControlGenerationData data, int indent)
+        public override void GenerateAwakeCode(ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            builder.Indent(indent);
-            builder.InvokeMember(typeof(EventBus), "Register", new Type[] { typeof(PoolData) }, p1 => p1.GetMember(typeof(CommunityEvents), "OnReturned"), p2 => p2.Clickable(methodName)).Clickable(";").NewLine();
-            return builder;
+            writer.WriteIndented();
+            writer.InvokeMember(typeof(EventBus), "Register", new CodeWriter.TypeParameter[] { typeof(PoolData) }, 
+                writer.Action(() => writer.GetMember(typeof(CommunityEvents), "OnReturned")),
+                writer.Action(() => writer.Write(methodName.VariableHighlight()))
+            );
+            writer.Write(";");
+            writer.NewLine();
         }
 
-        protected override string GenerateCode(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
 
         public IEnumerable<MethodGenerator> GetRequiredMethods(ControlGenerationData data)
@@ -48,20 +50,33 @@ namespace Unity.VisualScripting.Community.CSharp
             methodName = data.AddMethodName(methodName);
             var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), methodName);
             method.AddParameter(ParameterGenerator.Parameter("args", typeof(PoolData), ParameterModifier.None));
-            var builder = Unit.CreateClickableString();
-            builder.Clickable("if ".ControlHighlight()).Parentheses(inner => inner.GetMember("args".VariableHighlight(), "pool").Equals(true).Ignore(GenerateValue(Unit.Pool, data)));
-            builder.Body(null, (inner, indent) => inner.Indent(indent).Clickable(Unit.coroutine ? $"StartCoroutine({Name}({"args".VariableHighlight()}.{"arg".VariableHighlight()}));" : Name + $"({"args".VariableHighlight()}.{"arg".VariableHighlight()});"), true);
-            method.Body(builder);
+            method.Body(writer => {
+                writer.WriteIndented("if".ControlHighlight());
+                writer.Write(" (");
+                writer.GetMember("args".VariableHighlight(), "pool");
+                writer.Write(" == ");
+                GenerateValue(Unit.Pool, data, writer);
+                writer.Write(")");
+                writer.NewLine();
+                writer.WriteLine("{");
+                using (writer.IndentedScope(data))
+                {
+                    writer.WriteIndented(Unit.coroutine ? $"StartCoroutine({Name}({"args".VariableHighlight()}.{"arg".VariableHighlight()}));" : Name + $"({"args".VariableHighlight()}.{"arg".VariableHighlight()});");
+                    writer.NewLine();
+                }
+                writer.WriteLine("}");
+            });
             yield return method;
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input == Unit.Pool && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
             {
-                return MakeClickableForThisUnit("gameObject".VariableHighlight() + ".GetComponent<" + typeof(ObjectPool).As().CSharpName(false, true) + ">()");
+                writer.GetVariable("gameObject").GetComponent(typeof(ObjectPool));
+                return;
             }
-            return base.GenerateValue(input, data);
+            base.GenerateValueInternal(input, data, writer);
         }
     }
 }
