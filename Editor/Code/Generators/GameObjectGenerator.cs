@@ -22,6 +22,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override ControlGenerationData GetGenerationData(bool newIfDisposed = true)
         {
+            if (current == null) return new ControlGenerationData(null, null);
             if (datas.TryGetValue(current, out var data))
             {
                 if (!data.isDisposed || !newIfDisposed)
