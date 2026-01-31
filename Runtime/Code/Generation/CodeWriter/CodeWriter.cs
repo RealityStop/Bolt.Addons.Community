@@ -438,26 +438,33 @@ namespace Unity.VisualScripting.Community
         {
             if (!checkAmbiguity)
                 return type.As().CSharpName(false, true);
+            return type.As().CSharpName(false, BuildAmbiguityResolver(), true);
+        }
 
-            string shortName = type.Name;
-            string ns = type.Namespace ?? "";
-
-            if (!shortNameNamespaces.TryGetValue(shortName, out HashSet<string> namespaces))
-                return type.As().CSharpName(false, false);
-
-            int visibleCount = 0;
-
-            foreach (string n in namespaces)
+        public Func<Type, bool> BuildAmbiguityResolver()
+        {
+            return type =>
             {
-                if (n == ns || includedNamespaces.Contains(n))
-                {
-                    visibleCount++;
-                    if (visibleCount > 1)
-                        return type.As().CSharpName(false, true);
-                }
-            }
+                string shortName = type.Name;
+                string ns = type.Namespace ?? "";
 
-            return type.As().CSharpName(false, false);
+                if (!shortNameNamespaces.TryGetValue(shortName, out HashSet<string> namespaces))
+                    return false;
+
+                int visibleCount = 0;
+
+                foreach (string n in namespaces)
+                {
+                    if (n == ns || includedNamespaces.Contains(n))
+                    {
+                        visibleCount++;
+                        if (visibleCount > 1)
+                            return true;
+                    }
+                }
+
+                return false;
+            };
         }
 
         static Dictionary<string, HashSet<string>> shortNameNamespaces = new Dictionary<string, HashSet<string>>();

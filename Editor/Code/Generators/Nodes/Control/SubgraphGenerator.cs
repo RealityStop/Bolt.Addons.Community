@@ -28,6 +28,25 @@ namespace Unity.VisualScripting.Community.CSharp
         private Unit graphOutput;
         private bool hasEventUnit;
 
+        public override IEnumerable<string> GetNamespaces()
+        {
+            if (Unit.nest == null || Unit.nest.graph == null)
+                yield break;
+
+            foreach (var variable in Unit.nest.graph.variables)
+            {
+#if VISUAL_SCRIPTING_1_7
+                Type type = GetCachedType(variable.typeHandle.Identification);
+#else
+                Type type = variable.value != null ? variable.value.GetType() : typeof(object);
+#endif
+                foreach (var @namespace in type.GetAllNamespaces())
+                {
+                    yield return @namespace;
+                }
+            }
+        }
+
         public SubgraphGenerator(SUnit unit) : base(unit)
         {
             RebuildGraphState();
@@ -118,9 +137,9 @@ namespace Unity.VisualScripting.Community.CSharp
             if (CSharpPreviewSettings.ShouldShowSubgraphComment)
             {
                 if (graphInput != null || graphOutput != null)
-                writer.Comment($"Subgraph: \"{subgraphName}\" Port({input.key})", WriteOptions.IndentedNewLineAfter);
+                    writer.Comment($"Subgraph: \"{subgraphName}\" Port({input.key})", WriteOptions.IndentedNewLineAfter);
                 else
-                writer.Error($"Subgraph \"{subgraphName}\" does not have a GraphInput or GraphOutput", WriteOptions.IndentedNewLineAfter);
+                    writer.Error($"Subgraph \"{subgraphName}\" does not have a GraphInput or GraphOutput", WriteOptions.IndentedNewLineAfter);
             }
 
             if (!hasEventUnit)

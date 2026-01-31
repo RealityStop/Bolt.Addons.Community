@@ -54,7 +54,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     if (fallback && elementType == typeof(object))
                         w.Write("var".ConstructHighlight());
                     else
-                        w.Write(elementType.As().CSharpName().TypeHighlight());
+                        w.Write(writer.GetTypeNameHighlighted(elementType));
 
                     w.Space();
                     w.Write(variableName.VariableHighlight());

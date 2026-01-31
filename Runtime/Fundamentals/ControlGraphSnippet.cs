@@ -9,6 +9,7 @@ namespace Unity.VisualScripting.Community
     public sealed class ControlGraphSnippet : GraphSnippet
     {
         public sealed override SnippetType SnippetType => SnippetType.ControlInput;
+        [Serialize]
         private SnippetControlSourceUnit _sourceUnit;
         public sealed override Unit SourceUnit()
         {

@@ -550,33 +550,6 @@ namespace Unity.VisualScripting.Community.CSharp
         }
 
         const float Height = 16f;
-        private static GUIStyle _noPaddingStyle;
-        private GUIStyle noPaddingStyle
-        {
-            get
-            {
-                if (_noPaddingStyle == null)
-                {
-                    _noPaddingStyle = new GUIStyle(baseStyle)
-                    {
-                        padding = new RectOffset(0, 0, 0, 0),
-                        margin = new RectOffset(0, 0, 0, 0),
-                    };
-                    _noPaddingStyle.fontSize = Mathf.RoundToInt(Height * visualZoom);
-
-                    var c = Color.white;
-                    _noPaddingStyle.normal.textColor = c;
-                    _noPaddingStyle.hover.textColor = c;
-                    _noPaddingStyle.active.textColor = c;
-                    _noPaddingStyle.focused.textColor = c;
-                }
-                else
-                {
-                    _noPaddingStyle.fontSize = Mathf.RoundToInt(Height * visualZoom);
-                }
-                return _noPaddingStyle;
-            }
-        }
 
         private static GUIStyle _baseStyle;
         private GUIStyle baseStyle

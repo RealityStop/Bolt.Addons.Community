@@ -375,17 +375,30 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public override List<string> Usings()
         {
-            var usings = new List<string>
+            HashSet<string> result = new HashSet<string>();
+
+            Type resolvedType = useAssemblyQualifiedReturnType ? Type.GetType(assemblyQualifiedReturnType) : returnType;
+
+            if (resolvedType != null && !resolvedType.IsPrimitive)
             {
-                useAssemblyQualifiedReturnType ? (Type.GetType(assemblyQualifiedReturnType).IsPrimitive ?  string.Empty : Type.GetType(assemblyQualifiedReturnType).Namespace) : (returnType.IsPrimitive ? string.Empty : returnType.Namespace)
-            };
+                foreach (string ns in resolvedType.GetAllNamespaces())
+                {
+                    if (!string.IsNullOrEmpty(ns))
+                        result.Add(ns);
+                }
+            }
 
             for (int i = 0; i < attributes.Count; i++)
             {
-                usings.MergeUnique(attributes[i].Usings());
+                List<string> attrUsings = attributes[i].Usings();
+                for (int u = 0; u < attrUsings.Count; u++)
+                {
+                    if (!string.IsNullOrEmpty(attrUsings[u]))
+                        result.Add(attrUsings[u]);
+                }
             }
 
-            return usings;
+            return result.ToList();
         }
     }
 }

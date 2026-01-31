@@ -2,6 +2,7 @@ using System.Text;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -15,7 +16,7 @@ namespace Unity.VisualScripting.Community.CSharp
             var unit = Unit;
 
             writer.WriteIndented();
-            writer.Write("Debug".TypeHighlight() + ".");
+            writer.Write(typeof(Debug)).Dot();
             
             string logMethod = unit.type switch
             {
@@ -33,7 +34,7 @@ namespace Unity.VisualScripting.Community.CSharp
             }
             else
             {
-                writer.Write("string".TypeHighlight() + ".Format(");
+                writer.Write("string".ConstructHighlight() + ".Format(");
                 GenerateValue(unit.format, data, writer);
                 
                 for (int i = 0; i < unit.argumentCount; i++)

@@ -30,17 +30,17 @@ namespace Unity.VisualScripting.Community.CSharp
                     writer.Error($"{Unit.kind} Variables do not support connected names");
                     break;
                 case VariableKind.Object:
-                    writer.InvokeMember(typeof(VisualScripting.Variables).As().CSharpName(true, true), "Object", writer.Action(() => GenerateValue(Unit.@object, data, writer)));
+                    writer.InvokeMember(writer.GetTypeNameHighlighted(typeof(VisualScripting.Variables)), "Object", writer.Action(() => GenerateValue(Unit.@object, data, writer)));
                     break;
                 case VariableKind.Scene:
-                    writer.Write(typeof(VisualScripting.Variables).As().CSharpName(true, true));
+                    writer.Write(writer.GetTypeNameHighlighted(typeof(VisualScripting.Variables)));
                     WriteSceneKind(data, writer);
                     break;
                 case VariableKind.Application:
-                    writer.GetMember(typeof(VisualScripting.Variables).As().CSharpName(true, true), "Application");
+                    writer.GetMember(writer.GetTypeNameHighlighted(typeof(VisualScripting.Variables)), "Application");
                     break;
                 case VariableKind.Saved:
-                    writer.GetMember(typeof(VisualScripting.Variables).As().CSharpName(true, true), "Saved");
+                    writer.GetMember(writer.GetTypeNameHighlighted(typeof(VisualScripting.Variables)), "Saved");
                     break;
             }
             writer.InvokeMember(null, "IsDefined", writer.Action(() => GenerateValue(Unit.name, data, writer)));

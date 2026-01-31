@@ -194,6 +194,146 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return fullName ? type.CSharpFullName(true, true) : type.CSharpName(true, true);
         }
 
+        public static string CSharpName(this HUMType.Data.As @as, bool hideSystemObject = false, Func<Type, bool> useFullName = null, bool highlight = true)
+        {
+            if (highlight)
+                return @as.HighlightCSharpName(hideSystemObject, useFullName);
+
+            var type = @as.type;
+
+            if (type == null)
+                return "null";
+
+            if (type.Is().Void())
+                return "void";
+
+            if (type.IsConstructedGenericType || type.IsGenericType)
+                return GenericDeclaration(type, useFullName, false);
+
+            if (type == typeof(int)) return "int";
+            if (type == typeof(string)) return "string";
+            if (type == typeof(float)) return "float";
+            if (type == typeof(double)) return "double";
+            if (type == typeof(bool)) return "bool";
+            if (type == typeof(byte)) return "byte";
+            if (type == typeof(object) && type.BaseType == null)
+                return hideSystemObject ? string.Empty : "object";
+            if (type == typeof(object[]))
+                return "object[]";
+
+            if (type is FakeGenericParameterType fake)
+                return fake.Name;
+
+            if (type.Name.EndsWith("Attribute", StringComparison.Ordinal))
+            {
+                var name = type.Name.Substring(0, type.Name.Length - 9);
+
+                bool fullName = useFullName != null && useFullName(type);
+                
+                return fullName && !string.IsNullOrEmpty(type.Namespace)
+                    ? $"{type.Namespace}.{name}"
+                    : name;
+            }
+
+            if (type.IsArray)
+            {
+                var arrayDepth = 0;
+                while (type.IsArray)
+                {
+                    arrayDepth++;
+                    type = type.GetElementType();
+                }
+
+                var elementName = type.As().CSharpName(hideSystemObject, useFullName, false);
+                return elementName + new string('[', arrayDepth).Replace("[", "[]");
+            }
+
+            if (string.IsNullOrEmpty(type.Name))
+                return "UnknownType".ErrorHighlight();
+            if (string.IsNullOrEmpty(type.Namespace))
+                return type.CSharpName();
+
+            return type.CSharpFullName(useFullName);
+        }
+
+        private static string HighlightCSharpName(this HUMType.Data.As @as, bool hideSystemObject = false, Func<Type, bool> useFullName = null)
+        {
+            var type = @as.type;
+            if (type == null)
+                return "null".ConstructHighlight();
+
+            if (type.Is().Void())
+                return "void".ConstructHighlight();
+
+            if (type.IsConstructedGenericType || type.IsGenericType)
+                return GenericDeclaration(type, useFullName, true);
+
+            if (type == typeof(int)) return "int".ConstructHighlight();
+            if (type == typeof(string)) return "string".ConstructHighlight();
+            if (type == typeof(float)) return "float".ConstructHighlight();
+            if (type == typeof(double)) return "double".ConstructHighlight();
+            if (type == typeof(bool)) return "bool".ConstructHighlight();
+            if (type == typeof(byte)) return "byte".ConstructHighlight();
+            if (type == typeof(object) && type.BaseType == null)
+                return hideSystemObject ? string.Empty : "object".ConstructHighlight();
+            if (type == typeof(object[]))
+                return "object".ConstructHighlight() + "[]";
+
+            if (type is FakeGenericParameterType fake)
+            {
+                if (fake.IsArray)
+                {
+                    var temp = type;
+                    while (((FakeGenericParameterType)temp).IsArray)
+                        temp = temp.GetElementType();
+
+                    var coreName = ((FakeGenericParameterType)temp).Name.TypeHighlight();
+                    return fake.Name.Replace(((FakeGenericParameterType)temp).Name, coreName);
+                }
+
+                return fake.Name.TypeHighlight();
+            }
+
+            if (type.Name.EndsWith("Attribute", StringComparison.Ordinal))
+            {
+                bool fullName = useFullName != null && useFullName(type);
+                var coreName = type.Name.Substring(0, type.Name.Length - 9).TypeHighlight();
+                if (fullName && !string.IsNullOrEmpty(type.Namespace))
+                    return $"{type.Namespace.NamespaceHighlight()}.{coreName}";
+                return coreName;
+            }
+
+            if (type.IsInterface)
+            {
+                bool fullName = useFullName != null && useFullName(type);
+                var prefix = fullName && !string.IsNullOrEmpty(type.Namespace)
+                    ? type.Namespace.NamespaceHighlight() + "."
+                    : "";
+                return prefix + type.Name.InterfaceHighlight();
+            }
+
+            if (type.IsArray)
+            {
+                var arrayDepth = 0;
+                while (type.IsArray)
+                {
+                    arrayDepth++;
+                    type = type.GetElementType();
+                }
+
+                var elementName = type.As().CSharpName(hideSystemObject, useFullName, true);
+                return elementName + new string('[', arrayDepth).Replace("[", "[]");
+            }
+
+            if (string.IsNullOrEmpty(type.Name))
+                return "UnknownType".ErrorHighlight();
+
+            if (string.IsNullOrEmpty(type.Namespace))
+                return type.CSharpName(true, true);
+
+            return type.CSharpFullName(useFullName, true, true);
+        }
+
         public enum HighlightType
         {
             None,
@@ -1025,6 +1165,13 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return fullName ? type.CSharpFullName(true, highlight) : type.CSharpName(true, highlight);
         }
 
+        public static string GenericDeclaration(Type type, Func<Type, bool> useFullName = null, bool highlight = true)
+        {
+            if (!type.IsConstructedGenericType && !type.IsGenericType) throw new Exception("Type is not a generic type but you are trying to declare a generic.");
+
+            return type.CSharpFullName(useFullName, true, highlight);
+        }
+
         public static string GenericDeclaration(Type type, List<Type> parameters, bool fullName = true, bool highlight = true)
         {
             var output = string.Empty;
@@ -1071,7 +1218,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         {
             var output = string.Empty;
 
-            if (!type.IsConstructedGenericType && !type.IsGenericType) return type.As().CSharpName();
+            if (!type.IsConstructedGenericType && !type.IsGenericType) return type.As().CSharpName(false, highlight);
             if (highlight)
             {
                 output += type.Name.Contains("`") ? type.Name.Remove(type.Name.IndexOf("`"), type.Name.Length - type.Name.IndexOf("`")).WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type) : type.Name.WithHighlight(type.IsInterface ? HighlightType.Interface : HighlightType.Type);
@@ -1212,9 +1359,19 @@ namespace Unity.VisualScripting.Community
             return type.CSharpName(TypeQualifier.Name, includeGenericParameters, highlight);
         }
 
+        public static string CSharpName(this Type type, Func<Type, bool> useFullName, bool includeGenericParameters = true, bool highlight = false)
+        {
+            return type.CSharpName(TypeQualifier.Name, useFullName, includeGenericParameters, highlight);
+        }
+
         public static string CSharpFullName(this Type type, bool includeGenericParameters = true, bool highlight = false)
         {
             return type.CSharpName(TypeQualifier.Namespace, includeGenericParameters, highlight);
+        }
+
+        public static string CSharpFullName(this Type type, Func<Type, bool> useFullName, bool includeGenericParameters = true, bool highlight = false)
+        {
+            return type.CSharpName(TypeQualifier.Namespace, useFullName, includeGenericParameters, highlight);
         }
 
         public static string CSharpUniqueName(this Type type, bool includeGenericParameters = true)
@@ -1313,6 +1470,89 @@ namespace Unity.VisualScripting.Community
                 {
                     name += "<";
                     name += string.Join(includeGenericParameters ? ", " : ",", genericArguments.Select(t => t.CSharpName(qualifier, includeGenericParameters, highlight)).ToArray());
+                    name += ">";
+                }
+
+                return name;
+            }
+        }
+
+        private static string CSharpName(this Type type, TypeQualifier qualifier, Func<Type, bool> resolver, bool includeGenericParameters = true, bool highlight = false)
+        {
+            if (type == null) return "";
+
+            if (primitives.ContainsKey(type))
+            {
+                return highlight ? primitives[type].ConstructHighlight() : primitives[type];
+            }
+            else if (type.IsGenericParameter)
+            {
+                return includeGenericParameters ? highlight ? type.Name.TypeHighlight() : type.Name : "";
+            }
+            else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                var nonNullable = Nullable.GetUnderlyingType(type);
+
+                var underlyingName = nonNullable?.CSharpName(qualifier, resolver, includeGenericParameters, highlight) ?? (highlight ? "Unknown".ErrorHighlight() : "Unknown");
+
+                return underlyingName + "?";
+            }
+            else if (type.IsArray)
+            {
+                var tempType = type.GetElementType();
+                var arrayString = "[]";
+                while (tempType.IsArray)
+                {
+                    tempType = tempType.GetElementType();
+                    arrayString += "[]";
+                }
+
+                var tempTypeName = tempType.CSharpName(qualifier, resolver, includeGenericParameters, highlight);
+                return tempTypeName + arrayString;
+            }
+            else
+            {
+                var name = type.Name;
+
+                if (type.IsGenericType && name.Contains('`'))
+                {
+                    name = highlight ? name.Substring(0, name.IndexOf('`')).TypeHighlight() : name.Substring(0, name.IndexOf('`'));
+                }
+                else
+                {
+                    name = highlight ? name.TypeHighlight() : name;
+                }
+
+                var genericArguments = (IEnumerable<Type>)type.GetGenericArguments();
+
+                if (type.IsNested)
+                {
+                    name = type.DeclaringType.CSharpName(qualifier, resolver, includeGenericParameters, highlight) + "." + (highlight ? name.TypeHighlight() : name);
+
+                    if (type.DeclaringType.IsGenericType)
+                    {
+                        genericArguments = genericArguments.Skip(type.DeclaringType.GetGenericArguments().Length);
+                    }
+                }
+
+                if (!type.IsNested)
+                {
+                    bool fullName = resolver != null && resolver(type);
+                    if ((qualifier == TypeQualifier.Namespace || qualifier == TypeQualifier.GlobalNamespace) && fullName)
+                    {
+                        name = (highlight ? type.Namespace.NamespaceHighlight() : type.Namespace) + "." + (highlight ? name.TypeHighlight() : name);
+                    }
+
+                    if (qualifier == TypeQualifier.GlobalNamespace)
+                    {
+                        name = (highlight ? "global::".ConstructHighlight() : "global::") + (highlight ? name.TypeHighlight() : name);
+                    }
+                }
+
+                if (genericArguments.Any())
+                {
+                    name += "<";
+                    name += string.Join(includeGenericParameters ? ", " : ",", genericArguments.Select(t => t.CSharpName(qualifier, resolver, includeGenericParameters, highlight)).ToArray());
                     name += ">";
                 }
 

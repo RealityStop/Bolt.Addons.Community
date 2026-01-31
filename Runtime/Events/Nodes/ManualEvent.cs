@@ -34,7 +34,7 @@ namespace Unity.VisualScripting.Community
 
         protected override string hookName => EventHooks.Update;
 
-#if ENABLE_VERTICAL_FLOW || !NEW_UNIT_UI
+#if ENABLE_VERTICAL_FLOW
         [Inspectable]
         [UnitHeaderInspectable]
         [NodeButton("TriggerButton")]

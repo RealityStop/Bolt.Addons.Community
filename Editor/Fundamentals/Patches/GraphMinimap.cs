@@ -460,10 +460,13 @@ namespace Unity.VisualScripting.Community
                         selectedWidget = hitWidgets[nextIndex];
                         canvas.ViewElements(selectedWidget.element.Yield());
 
-                        if (e.shift)
-                            canvas.selection.Add(selectedWidget.element);
-                        else
-                            canvas.selection.Select(selectedWidget.element);
+                        if (selectedWidget.canSelect)
+                        {
+                            if (e.shift)
+                                canvas.selection.Add(selectedWidget.element);
+                            else
+                                canvas.selection.Select(selectedWidget.element);
+                        }
 
                         e.Use();
                     }
@@ -471,11 +474,13 @@ namespace Unity.VisualScripting.Community
                     {
                         selectedWidget = closest;
                         canvas.ViewElements(closest.element.Yield());
-
-                        if (e.shift)
-                            canvas.selection.Add(closest.element);
-                        else
-                            canvas.selection.Select(closest.element);
+                        if (selectedWidget.canSelect)
+                        {
+                            if (e.shift)
+                                canvas.selection.Add(closest.element);
+                            else
+                                canvas.selection.Select(closest.element);
+                        }
 
                         e.Use();
                     }

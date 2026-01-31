@@ -77,7 +77,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             var usings = new List<string>();
             if (type != null)
             {
-                if (!type.Is().PrimitiveStringOrVoid()) usings.Add(type.Namespace);
+                if (!type.Is().PrimitiveStringOrVoid()) usings.AddRange(type.GetAllNamespaces());
 
             }
             else if (!string.IsNullOrEmpty(stringNamespace))

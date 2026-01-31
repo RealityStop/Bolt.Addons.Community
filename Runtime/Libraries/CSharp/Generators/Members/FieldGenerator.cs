@@ -174,7 +174,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
             else
             {
-                if (type != null && !type.Is().PrimitiveStringOrVoid() && !string.IsNullOrEmpty(type.Namespace)) usings.Add(type.Namespace);
+                if (type != null && !type.Is().PrimitiveStringOrVoid()) usings.AddRange(type.GetAllNamespaces());
             }
 
             for (int i = 0; i < attributes.Count; i++)

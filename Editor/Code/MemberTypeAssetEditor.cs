@@ -1277,7 +1277,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 if (metadata.value is Type type)
                                 {
                                     GUIContent TypebuilderButtonContent = new GUIContent(
-                                    (metadata.value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                                    (metadata.value as Type)?.As().CSharpName(false, false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
                                     (metadata.value as Type)?.Icon()?[IconSize.Small]
                                     );
                                     GUILayout.Label(field.Key + ":");
@@ -1401,7 +1401,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 if (attributeParamMeta[paramIndex]["defaultValue"].value is Type type)
                                 {
                                     GUIContent TypebuilderButtonContent = new GUIContent(
-                                    (attributeParamMeta[paramIndex]["defaultValue"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                                    (attributeParamMeta[paramIndex]["defaultValue"].value as Type)?.As().CSharpName(false, false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
                                     (attributeParamMeta[paramIndex]["defaultValue"].value as Type)?.Icon()?[IconSize.Small]
                                     );
                                     GUILayout.BeginHorizontal();
@@ -2308,7 +2308,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 EditorGUILayout.LabelField("Type", GUILayout.Width(labelWidth));
 
                                 GUIContent TypebuilderButtonContent = new GUIContent(
-                                    (variables[index]["type"].value as Type)?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                                    (variables[index]["type"].value as Type)?.As().CSharpName(false, false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
                                     (variables[index]["type"].value as Type)?.Icon()?[IconSize.Small]
                                 );
 

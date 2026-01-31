@@ -87,12 +87,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return parameter;
         }
 
-        public string Using()
-        {
-            if (useAssemblyQualifiedType || type == null) return string.Empty;
-            return type == typeof(void) || type == typeof(Void) || type.IsPrimitive ? string.Empty : type.Namespace;
-        }
-
         public override List<string> Usings()
         {
             var usings = new List<string>();
@@ -100,7 +94,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (!type.Is().NullOrVoid() && !type.IsPrimitive)
             {
                 if (type.Namespace != "Unity.VisualScripting.Community.Generics")
-                    usings.Add(type.Namespace);
+                    usings.AddRange(type.GetAllNamespaces());
             }
             foreach (var attribute in attributes)
             {

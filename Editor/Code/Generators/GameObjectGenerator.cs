@@ -18,7 +18,7 @@ namespace Unity.VisualScripting.Community.CSharp
         public SMachine[] components = new SMachine[0];
         public SMachine current;
 
-        private readonly Dictionary<object, ControlGenerationData> datas = new Dictionary<object, ControlGenerationData>();
+        private readonly Dictionary<SMachine, ControlGenerationData> datas = new Dictionary<SMachine, ControlGenerationData>();
 
         public override ControlGenerationData GetGenerationData(bool newIfDisposed = true)
         {

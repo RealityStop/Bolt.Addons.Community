@@ -252,7 +252,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (output == Unit.postIncrement && (Unit.kind == VariableKind.Object || Unit.kind == VariableKind.Scene || Unit.kind == VariableKind.Application || Unit.kind == VariableKind.Saved))
             {
-                var variables = typeof(VisualScripting.Variables).As().CSharpName(true, true);
+                var variables = writer.GetTypeNameHighlighted(typeof(VisualScripting.Variables));
 
                 switch (Unit.kind)
                 {

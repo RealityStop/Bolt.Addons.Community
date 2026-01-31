@@ -51,7 +51,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                 for (int i = 0; i < parameters.Length; i++)
                 {
-                    properties += " new".ConstructHighlight() + " TypeParam".TypeHighlight() + $"() {{ {"name".VariableHighlight()} = " + $@"""{parameters[i].Name}""".StringHighlight() + $", {"type".VariableHighlight()} = " + "typeof".ConstructHighlight() + "(" + (parameters[i].ParameterType.IsGenericParameter ? Data.type.type.As().CSharpName() : parameters[i].ParameterType.As().CSharpName()) + ") }";
+                    properties += " new".ConstructHighlight() + " TypeParam".TypeHighlight() + $"() {{ {"name".VariableHighlight()} = " + $@"""{parameters[i].Name}""".StringHighlight() + $", {"type".VariableHighlight()} = " + "typeof".ConstructHighlight() + "(" + (parameters[i].ParameterType.IsGenericParameter ? Data.type.type.As().CSharpName(false, false) : parameters[i].ParameterType.As().CSharpName(false, false)) + ") }";
                     if (!parameterUsings.Contains(parameters[i].ParameterType.Namespace)) parameterUsings.Add(parameters[i].ParameterType.Namespace);
                     if (i < parameters.Length - 1) properties += ", ";
                 }
@@ -97,13 +97,13 @@ namespace Unity.VisualScripting.Community.CSharp
                     {
                         if (i < generics.Length - 1 || IsAction)
                         {
-                            invokeString += $"({generics[i].As().CSharpName().Replace("&", string.Empty)}){"parameters".VariableHighlight()}[{i}]";
+                            invokeString += $"({generics[i].As().CSharpName(false, false).Replace("&", string.Empty)}){"parameters".VariableHighlight()}[{i}]";
                             if (i < generics.Length - (IsAction ? 1 : 2)) invokeString += ", ";
                         }
                     }
                 }
 
-                var type = Data.type.type.As().CSharpName().EnsureNonConstructName();
+                var type = Data.type.type.As().CSharpName(false, false).EnsureNonConstructName();
 
                 @class.AddField(FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, type, Data.type.type.Namespace, "callback"));
                 @class.AddField(FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, type, Data.type.type.Namespace, "instance"));
@@ -118,7 +118,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                 @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(bool), "initialized", false).SingleStatementGetter(AccessModifier.Public, w => w.Write("_initialized".VariableHighlight())).SingleStatementSetter(AccessModifier.Public, w => w.Write($"{"_initialized".VariableHighlight()} = {"value".ConstructHighlight()}")));
 
-                if (IsFunc) @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(Type), "ReturnType", false).SingleStatementGetter(AccessModifier.Public, w => w.Write("typeof".ConstructHighlight() + "(" + Data.type.type.GetGenericArguments().Last().As().CSharpName() + ")").NewLine()));
+                if (IsFunc) @class.AddProperty(PropertyGenerator.Property(AccessModifier.Public, PropertyModifier.None, typeof(Type), "ReturnType", false).SingleStatementGetter(AccessModifier.Public, w => w.Write("typeof".ConstructHighlight() + "(" + Data.type.type.GetGenericArguments().Last().As().CSharpName(false, false) + ")").NewLine()));
 
                 @class.AddMethod(MethodGenerator.Method(AccessModifier.Public, MethodModifier.None, typeof(Type), "GetDelegateType").Body(w => w.WriteIndented("return ".ControlHighlight() + "typeof".ConstructHighlight() + "(" + type + ");").NewLine()));
 
@@ -146,7 +146,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     Body(w =>
                     {
                         w.WriteIndented($"{"instance".VariableHighlight()} = " + "new ".ConstructHighlight() + type + "(");
-                        LambdaGenerator.SingleLine(stringConstructorParameters, stringConstructorParameters.Count > 0 ? $"{"unit".VariableHighlight()}.AssignParameters({"flow".VariableHighlight()}, " + assignParams + "); " + (IsAction ? $"{"flowAction".VariableHighlight()}();" : "return ".ControlHighlight() + "(" + Data.type.type.GetGenericArguments().Last().As().CSharpName() + ")" + $"{"flowFunc".VariableHighlight()}();") : (IsAction ? $"{"flowAction".VariableHighlight()}();" : "return ".ControlHighlight() + "(" + Data.type.type.GetGenericArguments().Last().As().CSharpName() + ")" + $"{"flowFunc".VariableHighlight()}();")).Generate(w, data);
+                        LambdaGenerator.SingleLine(stringConstructorParameters, stringConstructorParameters.Count > 0 ? $"{"unit".VariableHighlight()}.AssignParameters({"flow".VariableHighlight()}, " + assignParams + "); " + (IsAction ? $"{"flowAction".VariableHighlight()}();" : "return ".ControlHighlight() + "(" + Data.type.type.GetGenericArguments().Last().As().CSharpName(false, false) + ")" + $"{"flowFunc".VariableHighlight()}();") : (IsAction ? $"{"flowAction".VariableHighlight()}();" : "return ".ControlHighlight() + "(" + Data.type.type.GetGenericArguments().Last().As().CSharpName(false, false) + ")" + $"{"flowFunc".VariableHighlight()}();")).Generate(w, data);
                         w.Write(");\n");
                     }));
 

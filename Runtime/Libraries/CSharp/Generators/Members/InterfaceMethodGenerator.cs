@@ -48,7 +48,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public override List<string> Usings()
         {
             var usings = new List<string>();
-            if (returnType != null && returnType != typeof(void) && !returnType.IsPrimitive) usings.Add(returnType.Namespace);
+            if (returnType != null && returnType != typeof(void) && !returnType.IsPrimitive) usings.AddRange(returnType.GetAllNamespaces());
             for (int i = 0; i < parameters.Count; i++)
             {
                 usings.MergeUnique(parameters[i].Usings());

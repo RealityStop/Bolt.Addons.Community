@@ -16,7 +16,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            writer.WriteIndented(typeof(CustomEvent).As().CSharpName(false, true));
+            writer.WriteIndented(writer.GetTypeNameHighlighted(typeof(CustomEvent)));
             writer.Write(".");
             writer.Write("Trigger");
             writer.Write("(");

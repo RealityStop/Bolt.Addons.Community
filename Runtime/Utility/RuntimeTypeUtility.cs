@@ -173,6 +173,38 @@ namespace Unity.VisualScripting.Community
             return type.Namespace;
         }
 
+        public static HashSet<string> GetAllNamespaces(this Type type)
+        {
+            HashSet<string> result = new HashSet<string>();
+            CollectNamespaces(type, result);
+            return result;
+        }
+
+        static void CollectNamespaces(Type type, HashSet<string> result)
+        {
+            if (type == null)
+                return;
+
+            if (type == typeof(Libraries.CSharp.Void))
+                type = typeof(void);
+
+            if (!string.IsNullOrEmpty(type.Namespace))
+                result.Add(type.Namespace);
+
+            if (type.DeclaringType != null)
+                CollectNamespaces(type.DeclaringType, result);
+
+            if (type.IsArray || type.IsPointer || type.IsByRef)
+                CollectNamespaces(type.GetElementType(), result);
+
+            if (type.IsGenericType && !type.IsGenericTypeDefinition)
+            {
+                Type[] args = type.GetGenericArguments();
+                for (int i = 0; i < args.Length; i++)
+                    CollectNamespaces(args[i], result);
+            }
+        }
+
         public static bool IsStrictlyAssignableFrom(this Type target, Type source)
         {
             if (target == null || source == null)

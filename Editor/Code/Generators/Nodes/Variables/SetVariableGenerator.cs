@@ -28,7 +28,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            string variablesType = typeof(VisualScripting.Variables).As().CSharpName(true, true);
+            string variablesType = writer.GetTypeNameHighlighted(typeof(VisualScripting.Variables));
             bool hasConnectedName = Unit.name.hasValidConnection;
 
             data.TryGetGraphPointer(out GraphPointer graphPointer);

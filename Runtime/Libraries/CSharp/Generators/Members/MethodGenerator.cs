@@ -67,7 +67,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return method;
         }
 
-        
+
 
         protected override sealed void GenerateBefore(CodeWriter writer, ControlGenerationData data)
         {
@@ -249,8 +249,10 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public override List<string> Usings()
         {
             var usings = new List<string>();
+
             if (!string.IsNullOrEmpty(stringReturnType) && !string.IsNullOrEmpty(stringReturnTypeNamespace) && !usings.Contains(stringReturnTypeNamespace))
                 usings.Add(stringReturnTypeNamespace);
+
             else if (returnType != null && !usings.Contains(returnType.Namespace) && !returnType.Is().PrimitiveStringOrVoid()) usings.Add(returnType.GetNamespace());
 
             for (int i = 0; i < attributes.Count; i++)
@@ -261,18 +263,18 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             foreach (var generic in generics)
             {
                 if (!usings.Contains(generic.baseTypeConstraint.type.Namespace))
-                    usings.Add(generic.baseTypeConstraint.type.Namespace);
+                    usings.AddRange(generic.baseTypeConstraint.type.GetAllNamespaces());
 
                 foreach (var interfaceConstraint in generic.interfaceConstraints)
                 {
                     if (!usings.Contains(interfaceConstraint.type.Namespace))
-                        usings.Add(interfaceConstraint.type.Namespace);
+                        usings.AddRange(interfaceConstraint.type.GetAllNamespaces());
                 }
             }
 
             for (int i = 0; i < parameters.Count; i++)
             {
-                if (!parameters[i].useAssemblyQualifiedType && !usings.Contains(parameters[i].Using()) && !parameters[i].type.Is().PrimitiveStringOrVoid()) usings.MergeUnique(parameters[i].Usings());
+                if (!parameters[i].useAssemblyQualifiedType && !parameters[i].type.Is().PrimitiveStringOrVoid()) usings.MergeUnique(parameters[i].Usings());
             }
 
             return usings;

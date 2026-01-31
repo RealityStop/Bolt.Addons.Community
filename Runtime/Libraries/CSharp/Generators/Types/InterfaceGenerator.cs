@@ -131,7 +131,16 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
             for (int i = 0; i < interfaces?.Length; i++)
             {
-                if (!usings.Contains(interfaces[i].Namespace) && !interfaces[i].IsPrimitive) usings.Add(interfaces[i].Namespace);
+                HashSet<string> needed = interfaces[i].GetAllNamespaces();
+
+                foreach (string ns in needed)
+                {
+                    if (string.IsNullOrEmpty(ns))
+                        continue;
+
+                    if (!usings.Contains(ns))
+                        usings.Add(ns);
+                }
             }
 
             for (int i = 0; i < properties?.Count; i++)

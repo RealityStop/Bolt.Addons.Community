@@ -113,7 +113,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 if (Target.inheritsType)
                 {
                     GUIContent InheritButtonContent = new GUIContent(
-                        Target.inherits?.type?.As().CSharpName(false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
+                        Target.inherits?.type?.As().CSharpName(false, false).RemoveHighlights().RemoveMarkdown() ?? "Select Type",
                         Target.inherits?.type?.Icon()?[IconSize.Small]
                     );
 

@@ -132,7 +132,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             if (returnType != typeof(void) && !returnType.IsPrimitive) usings.Add(returnType.Namespace);
             for (int i = 0; i < parameters.Count; i++)
             {
-                if (!usings.Contains(parameters[i].generator.type.Namespace) && !parameters[i].generator.type.Is().PrimitiveStringOrVoid()) usings.Add(parameters[i].generator.type.Namespace);
+                if (!parameters[i].generator.type.Is().PrimitiveStringOrVoid()) usings.AddRange(parameters[i].generator.Usings());
             }
             return usings;
         }
