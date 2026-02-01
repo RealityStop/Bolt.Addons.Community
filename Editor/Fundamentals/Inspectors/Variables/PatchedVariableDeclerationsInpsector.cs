@@ -476,7 +476,10 @@ namespace Unity.VisualScripting.Community
                         var valueInspector = typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(inspector);
                         valueInspector.GetType().GetMethod("ResolveType", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(valueInspector, Array.Empty<object>());
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError(ex.Message);
+                    }
                 }
             }
 
