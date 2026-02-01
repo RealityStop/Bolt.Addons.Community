@@ -23,6 +23,8 @@ namespace Unity.VisualScripting.Community
             public VisualElement root;
             public Vector2 lastPan;
             public float lastZoom;
+            public HashSet<IGraphElementWidget> widgets;
+            public Action elementsChangedHandler;
         }
 
         private static readonly Dictionary<GraphWindow, MiniMapInstance> instances = new Dictionary<GraphWindow, MiniMapInstance>();
@@ -44,7 +46,6 @@ namespace Unity.VisualScripting.Community
         };
 
         private static readonly Dictionary<Type, PropertyInfo> colorPropertyCache = new Dictionary<Type, PropertyInfo>();
-        private static readonly List<IGraphElementWidget> tempWidgets = new List<IGraphElementWidget>();
 
         private static Vector2 lastMousePos = Vector2.zero;
 
@@ -103,6 +104,12 @@ namespace Unity.VisualScripting.Community
                 {
                     Cleanup();
                     result.container?.RemoveFromHierarchy();
+                    var _instance = instances[window];
+                    if (_instance.context?.graph != null && _instance.elementsChangedHandler != null)
+                    {
+                        _instance.context.graph.elements.CollectionChanged -= _instance.elementsChangedHandler;
+                    }
+                    instances[window].context.graph.elements.CollectionChanged -= () => CacheWidgets(instances[window], window);
                     instances.Remove(window);
                     continue;
                 }
@@ -177,6 +184,10 @@ namespace Unity.VisualScripting.Community
                 context = window.context,
                 isMinimized = GetMinimizedKey(window.reference.ToString())
             };
+            instance.elementsChangedHandler += () => CacheWidgets(instance, window);
+            instance.context.graph.elements.CollectionChanged += instance.elementsChangedHandler;
+            GraphWindow.activeContextChanged += (c) => CacheWidgets(instance, window);
+            CacheWidgets(instance, window);
 
             bool isDark = EditorGUIUtility.isProSkin;
             var root = instance.root;
@@ -307,6 +318,13 @@ namespace Unity.VisualScripting.Community
             return instance;
         }
 
+        private static void CacheWidgets(MiniMapInstance instance, GraphWindow window)
+        {
+            if (window.context == null || window.context.graph == null) return;
+
+            instance.widgets = window.context.graph.elements.Select(e => window.context.canvas.Widget(e)).ToHashSet();
+        }
+
         private static FieldInfo sidebarsField = typeof(GraphWindow).GetField("sidebars", BindingFlags.NonPublic | BindingFlags.Instance);
 
         private static void KeepMinimapAnchored(MiniMapInstance instance)
@@ -379,23 +397,21 @@ namespace Unity.VisualScripting.Community
             }
         }
         static readonly List<IGraphElementWidget> hitWidgets = new List<IGraphElementWidget>();
+
         private static void DrawMiniMap(MiniMapInstance instance)
         {
             if (instance.isMinimized) return;
 
             var context = instance.context;
-            if (context?.graph == null) return;
+            if (context == null || context.graph == null) return;
 
-            var graph = context.graph;
-
-            var canvas = graph.Canvas();
+            var canvas = context.graph.Canvas();
             if (canvas == null) return;
 
             Rect rect = GUILayoutUtility.GetRect(MinimapSize.x, MinimapSize.y);
             GUI.BeginGroup(rect);
-            Handles.color = Color.white * 0.4f;
 
-            Rect contentBounds = GraphGUI.CalculateArea(context.canvas.widgets.OfType<IGraphElementWidget>());
+            Rect contentBounds = GraphGUI.CalculateArea(instance.widgets);
             contentBounds.xMin -= Padding;
             contentBounds.yMin -= Padding;
             contentBounds.xMax += Padding;
@@ -404,82 +420,101 @@ namespace Unity.VisualScripting.Community
             Rect viewportWorld = new Rect(canvas.pan - canvas.viewport.size * 0.5f, canvas.viewport.size);
             Rect combinedBounds = contentBounds.Encompass(viewportWorld);
 
-            float scale = Mathf.Min(rect.width / combinedBounds.width, rect.height / combinedBounds.height);
-            Vector2 minimapOffset = rect.center - 0.5f * scale * combinedBounds.size;
+            float scaleX = rect.width / combinedBounds.width;
+            float scaleY = rect.height / combinedBounds.height;
+            float scale = scaleX < scaleY ? scaleX : scaleY;
+            if (scale <= 0f) { GUI.EndGroup(); return; }
 
-            Vector2 ToMinimap(Vector2 worldPos) => (worldPos - combinedBounds.min) * scale + minimapOffset;
+            Vector2 minimapOffset = rect.center - combinedBounds.size * (scale * 0.5f);
+            Vector2 boundsMin = combinedBounds.min;
+
+            Vector2 ToMinimap(Vector2 worldPos)
+            {
+                return (worldPos - boundsMin) * scale + minimapOffset;
+            }
 
             GraphUtility.OverrideContextIfNeeded(() =>
             {
-                Rect position = default;
-
                 hitWidgets.Clear();
 
-                Vector2 mousePos = Event.current.mousePosition;
+                var e = Event.current;
+                Vector2 mousePos = e.mousePosition;
+                Vector2 mouseWorld = (mousePos - minimapOffset) / scale + boundsMin;
+
+                var selection = canvas.selection;
+                bool contextIsValid = GraphContextProvider.instance.IsValid(context.reference);
+
                 IGraphElementWidget closest = null;
-                var contextIsValid = GraphContextProvider.instance.IsValid(instance.context.reference);
-                foreach (var w in canvas.widgets)
+                float closestDistSq = float.MaxValue;
+
+                Rect drawRect = default;
+
+                foreach (var w in instance.widgets)
                 {
-                    if (!canvas.widgetProvider.IsValid(w.item) || !(canvas.Widget(w.item) is IGraphElementWidget widget)) continue;
+                    if (!canvas.widgetProvider.IsValid(w.item)) continue;
+
+                    var widget = canvas.Widget(w.item) as IGraphElementWidget;
+                    if (widget == null) continue;
 
                     if (!canvas.widgetProvider.IsValid(widget.element) || !contextIsValid) continue;
+
                     Rect wp = widget.position;
-                    position.position = ToMinimap(wp.position);
-                    position.size = wp.size * scale;
+
+                    drawRect.position = ToMinimap(wp.position);
+                    drawRect.size = wp.size * scale;
 
                     Handles.DrawSolidRectangleWithOutline(
-                        position,
+                        drawRect,
                         GetElementColor(widget).WithAlpha(0.5f),
                         Color.white * (canvas.selection.Contains(widget.element) ? 1f : 0.25f)
                     );
 
-                    Vector2 widgetMinimapPos = ToMinimap(widget.position.position + widget.position.size * 0.5f);
-                    if (closest == null || Vector2.Distance(widgetMinimapPos, mousePos) < Vector2.Distance(ToMinimap(closest.position.position + closest.position.size * 0.5f), mousePos))
+                    Vector2 center = wp.center;
+                    Vector2 delta = center - mouseWorld;
+                    float distSq = delta.sqrMagnitude;
+
+                    if (distSq < closestDistSq)
                     {
+                        closestDistSq = distSq;
                         closest = widget;
                     }
 
-                    if (position.Contains(mousePos))
+                    if (drawRect.Contains(mousePos))
                     {
                         hitWidgets.Add(widget);
                     }
                 }
 
-                var e = Event.current;
                 if (e.type == EventType.MouseDown && e.button == 0)
                 {
+                    IGraphElementWidget target = null;
+
                     if (hitWidgets.Count > 0)
                     {
-                        int nextIndex = 0;
+                        int index = 0;
                         if (selectedWidget != null)
                         {
-                            int currentIndex = hitWidgets.IndexOf(selectedWidget);
-                            nextIndex = (currentIndex + 1) % hitWidgets.Count;
+                            int i = hitWidgets.IndexOf(selectedWidget);
+                            if (i >= 0) index = (i + 1) % hitWidgets.Count;
                         }
-
-                        selectedWidget = hitWidgets[nextIndex];
-                        canvas.ViewElements(selectedWidget.element.Yield());
-
-                        if (selectedWidget.canSelect)
-                        {
-                            if (e.shift)
-                                canvas.selection.Add(selectedWidget.element);
-                            else
-                                canvas.selection.Select(selectedWidget.element);
-                        }
-
-                        e.Use();
+                        target = hitWidgets[index];
                     }
-                    else if (closest != null)
+                    else
                     {
-                        selectedWidget = closest;
-                        canvas.ViewElements(closest.element.Yield());
-                        if (selectedWidget.canSelect)
+                        target = closest;
+                    }
+
+                    if (target != null)
+                    {
+                        selectedWidget = target;
+                        canvas.ViewElements(target.element.Yield());
+
+                        if (target.canSelect)
                         {
                             if (e.shift)
-                                canvas.selection.Add(closest.element);
+                                selection.Add(target.element);
                             else
-                                canvas.selection.Select(closest.element);
+                                selection.Select(target.element);
                         }
 
                         e.Use();
@@ -489,15 +524,20 @@ namespace Unity.VisualScripting.Community
 
             Vector2 viewPos = ToMinimap(viewportWorld.position);
             Vector2 viewSize = viewportWorld.size * scale;
-            Rect viewRect = new Rect(viewPos, viewSize);
-            viewRect = Rect.MinMaxRect(
-                Mathf.Max(viewRect.xMin, 0),
-                Mathf.Max(viewRect.yMin, 0),
-                Mathf.Min(viewRect.xMax, MinimapSize.x),
-                Mathf.Min(viewRect.yMax, MinimapSize.y)
+
+            Rect viewRect = Rect.MinMaxRect(
+                Mathf.Max(viewPos.x, 0),
+                Mathf.Max(viewPos.y, 0),
+                Mathf.Min(viewPos.x + viewSize.x, MinimapSize.x),
+                Mathf.Min(viewPos.y + viewSize.y, MinimapSize.y)
             );
 
-            Handles.DrawSolidRectangleWithOutline(viewRect, new Color(1f, 1f, 1f, 0.1f), Color.yellow);
+            Handles.DrawSolidRectangleWithOutline(
+                viewRect,
+                new Color(1f, 1f, 1f, 0.1f),
+                Color.yellow
+            );
+
             GUI.EndGroup();
         }
 
@@ -509,31 +549,8 @@ namespace Unity.VisualScripting.Community
                     return commentNodeWidget.element.color;
                 else if (unitWidget is ArrowWidget arrowWidget)
                     return arrowWidget.element.Color;
-
-                Color result = new NodeColorMix(NodeColor.Gray).ToColor();
-                try
-                {
-                    GraphUtility.OverrideContextIfNeeded(() =>
-                    {
-                        NodeColorMix mix = default;
-                        var type = widget.GetType();
-                        if (!colorPropertyCache.TryGetValue(type, out var prop))
-                        {
-                            prop = type.GetProperty("color", BindingFlags.NonPublic | BindingFlags.Instance);
-                            colorPropertyCache[type] = prop;
-                        }
-
-                        if (prop != null)
-                            mix = (NodeColorMix)prop.GetValue(widget);
-
-                        result = mix.ToColor();
-                    });
-                }
-                catch
-                {
-                    return result;
-                }
-                return result;
+                else
+                    return Color.gray;
             }
             else if (widget is GraphGroupWidget group)
             {
