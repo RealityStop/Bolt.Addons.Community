@@ -440,12 +440,12 @@ namespace Unity.VisualScripting.Community
                 return base.CanDrop(item);
             }
 
+            private bool initialized;
 #if DARKER_UI
             // I have to do this setup to change the color of the add button
             // It's very hacky but seems to work better than tinting the background Texture.
             private Color _previousBackgroundColor;
             private bool _tintApplied;
-            private bool initialized;
             /// <summary>
             /// Called before list elements are drawn.
             /// Ensures the GUI color is reset properly.
@@ -476,10 +476,7 @@ namespace Unity.VisualScripting.Community
                         var valueInspector = typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(inspector);
                         valueInspector.GetType().GetMethod("ResolveType", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(valueInspector, Array.Empty<object>());
                     }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError(ex.Message);
-                    }
+                    catch { }
                 }
             }
 
@@ -492,6 +489,30 @@ namespace Unity.VisualScripting.Community
                 _previousBackgroundColor = GUI.backgroundColor;
                 GUI.backgroundColor = CommunityStyles.backgroundColor.Brighten(0.36f);
                 _tintApplied = true;
+            }
+#else
+            public override void BeginGUI()
+            {
+                if (initialized)
+                {
+                    return;
+                }
+
+                initialized = true;
+
+                for (int i = 0; i < (metadata.value as VariableDeclarationCollection).Count; i++)
+                {
+                    var element = metadata[i];
+                    var valueMetadata = element["value"];
+
+                    var inspector = valueMetadata.Inspector();
+                    try
+                    {
+                        var valueInspector = typeof(SystemObjectInspector).GetField("inspector", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(inspector);
+                        valueInspector.GetType().GetMethod("ResolveType", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(valueInspector, Array.Empty<object>());
+                    }
+                    catch { }
+                }
             }
 #endif
             public override float GetItemHeight(float width, int index)
