@@ -319,6 +319,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                 if (!CSharpPreviewWindow.isPreviewing)
                 {
+                    field.sameLineAttributes = true;
                     field.AddAttribute(AttributeGenerator.Attribute<HideInInspector>());
                 }
 

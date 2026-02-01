@@ -21,6 +21,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public HighlightType highlightType;
         public Type type;
         public bool hasDefault;
+        public bool sameLineAttributes;
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
         private bool isLiteral = true;
         private bool isNewlineLiteral = true;
@@ -100,15 +101,28 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             foreach (AttributeGenerator attr in attributes)
             {
                 attr.Generate(writer, data);
-                if (count < attributes.Count - 1) writer.NewLine();
+                if (count < attributes.Count - 1)
+                {
+                    if (sameLineAttributes)
+                        writer.Space();
+                    else
+                        writer.NewLine();
+                }
                 count++;
             }
 
-            if (attributes.Count > 0) writer.NewLine();
+            if (attributes.Count > 0)
+            {
+                if (sameLineAttributes)
+                    writer.Space();
+                else
+                    writer.NewLine();
+            }
 
             var modSpace = (modifier == FieldModifier.None) ? string.Empty : " ";
 
-            writer.WriteIndented();
+            if (!sameLineAttributes)
+                writer.WriteIndented();
 
             if (scope != AccessModifier.None)
             {

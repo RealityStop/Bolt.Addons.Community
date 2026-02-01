@@ -221,6 +221,8 @@ namespace Unity.VisualScripting.Community.CSharp
                     if (!elementWasClicked)
                     {
                         activeNode = null;
+                        selectionStartLine = -1;
+                        selectionEndLine = -1;
                         GUI.FocusControl(null);
                         e.Use();
                         Repaint();

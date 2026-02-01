@@ -48,7 +48,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 parameterList.Add("typeof".ConstructHighlight() + "(" + stringTypeParameterValues[i] + ")");
             }
 
-            // Join all parameters with ", "
             var parameters = string.Join(", ", parameterList);
 
             var showBrackets = parameterList.Count > 0;
