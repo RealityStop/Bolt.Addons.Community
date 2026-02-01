@@ -44,12 +44,6 @@ namespace Unity.VisualScripting.Community
             isRunning = true;
         }
 
-        public void StartTimer(float duration, bool unscaled, Action onStarted)
-        {
-            StartTimer(duration, unscaled);
-            onStarted?.Invoke();
-        }
-
         public void PauseTimer() => isRunning = false;
         public void ResumeTimer() => isRunning = true;
         public void ToggleTimer() => isRunning = !isRunning;

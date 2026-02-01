@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return namespc;
         }
 
-        public void AddUsing(string @namespace)
+        public new void AddUsing(string @namespace)
         {
             usings.AddNonContainedTypes<string>(new List<string>() { @namespace });
         }

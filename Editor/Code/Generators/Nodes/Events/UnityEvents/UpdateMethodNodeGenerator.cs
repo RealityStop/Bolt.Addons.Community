@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community.CSharp
     /// Used for generating nodes that require a Method and the Update method to function.
     /// For example OnKeyboardInput.
     /// </summary>
-    public abstract class UpdateMethodNodeGenerator : MethodNodeGenerator
+    public abstract class UpdateMethodNodeGenerator : MethodNodeGenerator, IRequireUpdateCode
     {
         protected UpdateMethodNodeGenerator(Unit unit) : base(unit)
         {
@@ -31,14 +31,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 return;
             }
 
-            using (writer.NewScope(data))
-            {
-                foreach (var param in Parameters)
-                {
-                    data.AddLocalNameInScope(param.name, param.type);
-                }
-                GenerateCode(input, data, writer);
-            }
+            GenerateCode(input, data, writer);
         }
 
         protected abstract void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer);

@@ -14,6 +14,7 @@ namespace Unity.VisualScripting.Community.CSharp
 {
     public class CSharpPreviewWindow : EditorWindow
     {
+        public static bool isPreviewing;
         [SerializeField] private UnityEngine.Object _asset;
         private CodeWriter manualCodeWriter;
         private Vector2 scrollPosition;
@@ -127,7 +128,7 @@ namespace Unity.VisualScripting.Community.CSharp
         private CodeWriter LoadCode()
         {
             if (_asset == null) return null;
-
+            isPreviewing = true;
             if (CodeGeneratorValueUtility.currentAsset == null && _asset != null)
                 CodeGeneratorValueUtility.currentAsset = _asset;
 
@@ -146,7 +147,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
             var writer = new CodeWriter();
             generator.Generate(writer, generator.GetGenerationData());
-
+            isPreviewing = false;
             return writer;
         }
 
@@ -286,15 +287,41 @@ namespace Unity.VisualScripting.Community.CSharp
             GUILayout.FlexibleSpace();
 
             EditorGUI.BeginDisabledGroup(!canCompile);
+
             if (GUILayout.Button("Compile", EditorStyles.toolbarButton, GUILayout.Width(70)))
             {
                 CompileCode();
             }
+
             EditorGUI.EndDisabledGroup();
 
             if (GUILayout.Button("Copy To Clipboard", EditorStyles.toolbarButton, GUILayout.Width(120)))
             {
-                GUIUtility.systemCopyBuffer = string.Join("\n", codeLines.Select(l => RemoveColorTags(l)));
+                string textToCopy;
+
+                if (activeNode != null)
+                {
+                    int start = activeNode.Span.Start;
+                    int end = activeNode.Span.End;
+
+                    var codeText = generatedCodeWriter.ToString();
+
+                    start = Mathf.Clamp(start, 0, codeText.Length);
+                    end = Mathf.Clamp(end, 0, codeText.Length);
+
+                    textToCopy = codeText.Substring(start, end - start);
+                }
+                else if (selectionStartLine >= 0 && selectionEndLine >= 0)
+                {
+                    textToCopy = string.Join("\n", codeLines.Skip(selectionStartLine).Take(selectionEndLine - selectionStartLine + 1)
+                        .Select(l => RemoveColorTags(l)));
+                }
+                else
+                {
+                    textToCopy = string.Join("\n", codeLines.Select(l => RemoveColorTags(l)));
+                }
+
+                GUIUtility.systemCopyBuffer = textToCopy;
             }
 
             if (GUILayout.Button("Refresh", EditorStyles.toolbarButton, GUILayout.Width(70)))
@@ -364,11 +391,17 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private string RemoveColorTags(string input)
         {
-            return Regex.Replace(input, @"<color=#[0-9a-fA-F]{6,8}>|</color>", string.Empty, RegexOptions.Compiled);
+            return input.RemoveHighlights().RemoveMarkdown();
         }
 
         private const float LineNumberWidth = 35f;
         private bool elementWasClicked = false;
+
+        private int selectionStartLine = -1;
+        private int selectionEndLine = -1;
+        private int clickCount = 0;
+        private double lastClickTime = 0;
+        private const double doubleClickTime = 0.3;
 
         private float DrawLine(Rect rect, int index)
         {
@@ -413,6 +446,14 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     Rect highlight = new Rect(x + startPos.x, rect.y, endPos.x - startPos.x, rect.height);
                     EditorGUI.DrawRect(highlight, new Color(0.25f, 0.5f, 0.8f, 0.25f));
+                }
+            }
+
+            if (selectionStartLine >= 0 && selectionEndLine >= 0)
+            {
+                if (index >= selectionStartLine && index <= selectionEndLine)
+                {
+                    EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, rect.height), new Color(0.3f, 0.5f, 0.8f, 0.25f));
                 }
             }
 
@@ -480,7 +521,33 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (GUI.Button(labelRect, content, baseStyle))
             {
-                ResolveClick(labelRect, index);
+                double time = EditorApplication.timeSinceStartup;
+                if (time - lastClickTime < doubleClickTime)
+                    clickCount++;
+                else
+                    clickCount = 1;
+
+                lastClickTime = time;
+
+                if (clickCount == 2)
+                {
+                    activeNode = null;
+                    selectionStartLine = index;
+                    selectionEndLine = index;
+                }
+                else if (clickCount >= 3)
+                {
+                    activeNode = null;
+                    selectionStartLine = 0;
+                    selectionEndLine = codeLines.Length - 1;
+                }
+                else
+                {
+                    ResolveClick(labelRect, index);
+                    selectionStartLine = -1;
+                    selectionEndLine = -1;
+                }
+
                 elementWasClicked = true;
             }
 
@@ -544,6 +611,12 @@ namespace Unity.VisualScripting.Community.CSharp
             if (activeNode != null && activeNode.Unit != null)
             {
                 HandleClickableRegionClick(activeNode.Unit, lineIndex + 1);
+            }
+            else
+            {
+                int lineStart = lineStartIndices[lineIndex];
+                int lineEnd = lineStart + cleanText.Length;
+                activeNode = new SourceNode(new SourceSpan(lineStart, lineEnd), null, null);
             }
 
             Repaint();

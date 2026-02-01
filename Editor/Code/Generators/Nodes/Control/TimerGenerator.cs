@@ -4,16 +4,14 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
-using UnityEngine;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Timer))]
-    public class TimerGenerator : VariableNodeGenerator
+    public class TimerGenerator : AwakeVariableNodeGenerator, IRequireMethods, IRequireUpdateCode
     {
         public TimerGenerator(Timer unit) : base(unit)
         {
-            variableName = Name;
         }
 
         public override IEnumerable<string> GetNamespaces()
@@ -41,7 +39,7 @@ namespace Unity.VisualScripting.Community.CSharp
             if (!controlOutput.hasValidConnection)
                 return "";
             var output = "";
-            output += variableName.Capitalize().First().Letter() + "_" + controlOutput.key.Capitalize().First().Letter();
+            output += Name.Capitalize().First().Letter() + "_" + controlOutput.key.Capitalize().First().Letter();
             return output;
         }
 
@@ -71,64 +69,76 @@ namespace Unity.VisualScripting.Community.CSharp
             }
         }
 
-        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        string tickMethodName;
+        string completedMethodName;
+
+        public IEnumerable<MethodGenerator> GetRequiredMethods(ControlGenerationData data)
         {
-            variableName = Name;
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
+            if (Unit.tick.hasValidConnection)
             {
-                writer.WriteErrorDiagnostic("Timer only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate Timer", WriteOptions.IndentedNewLineAfter);
-                return;
+                tickMethodName = data.AddMethodName(GetAction(Unit.tick));
+                var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), tickMethodName);
+                method.Body(w => GenerateChildControl(Unit.tick, data, w));
+                method.SetOwner(Unit);
+                yield return method;
             }
 
-            if (Unit.start.hasValidConnection && !data.scopeGeneratorData.TryGetValue(Unit.start, out _))
+            if (Unit.completed.hasValidConnection)
             {
-                data.scopeGeneratorData.Add(Unit.start, true);
-                string turnedOnCallback = Unit.completed.hasValidConnection ? GetAction(Unit.completed) : null;
-                string turnedOffCallback = Unit.tick.hasValidConnection ? GetAction(Unit.tick) : null;
+                completedMethodName = data.AddMethodName(GetAction(Unit.completed));
+                var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), completedMethodName);
+                method.Body(w => GenerateChildControl(Unit.completed, data, w));
+                method.SetOwner(Unit);
+                yield return method;
+            }
+        }
 
-                writer.WriteIndented(variableName.VariableHighlight());
-                writer.Write(".");
-                writer.Write("Initialize");
-                writer.Write("(");
+        public override void GenerateAwakeCode(ControlGenerationData data, CodeWriter writer)
+        {
+            if (!Unit.completed.hasValidConnection && !Unit.tick.hasValidConnection) return;
 
-                if (turnedOnCallback != null)
-                    writer.Write(turnedOnCallback);
-                else if (turnedOffCallback != null)
-                    writer.Write("null".ConstructHighlight());
+            string turnedOnCallback = Unit.completed.hasValidConnection ? completedMethodName : null;
+            string turnedOffCallback = Unit.tick.hasValidConnection ? tickMethodName : null;
 
-                if (turnedOffCallback != null)
-                {
-                    writer.Write(", ");
-                    writer.Write(turnedOffCallback);
-                }
+            writer.WriteIndented(Name.VariableHighlight());
+            writer.Write(".");
+            writer.Write("Initialize");
+            writer.Write("(");
 
-                writer.Write(")");
-                writer.Write(";");
-                writer.NewLine();
+            if (turnedOnCallback != null)
+                writer.Write(turnedOnCallback);
+            else if (turnedOffCallback != null)
+                writer.Write("null".ConstructHighlight());
+
+            if (turnedOffCallback != null)
+            {
+                writer.Write(", ");
+                writer.Write(turnedOffCallback);
             }
 
+            writer.WriteEnd(EndWriteOptions.All);
+        }
+
+        protected override void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
             if (input == Unit.start)
             {
-                var action = GetAction(Unit.started);
-                writer.WriteIndented(variableName.VariableHighlight());
+                writer.WriteIndented(Name.VariableHighlight());
                 writer.Write(".");
                 writer.Write("StartTimer");
                 writer.Write("(");
                 GenerateValue(Unit.duration, data, writer);
                 writer.Write(", ");
                 GenerateValue(Unit.unscaledTime, data, writer);
-                if (!string.IsNullOrEmpty(action))
-                {
-                    writer.Write(", ");
-                    writer.Write(action);
-                }
                 writer.Write(")");
                 writer.Write(";");
                 writer.NewLine();
+
+                GenerateChildControl(Unit.started, data, writer);
             }
             else if (input == Unit.pause)
             {
-                writer.WriteIndented(variableName.VariableHighlight());
+                writer.WriteIndented(Name.VariableHighlight());
                 writer.Write(".");
                 writer.Write("PauseTimer");
                 writer.Write("()");
@@ -137,7 +147,7 @@ namespace Unity.VisualScripting.Community.CSharp
             }
             else if (input == Unit.resume)
             {
-                writer.WriteIndented(variableName.VariableHighlight());
+                writer.WriteIndented(Name.VariableHighlight());
                 writer.Write(".");
                 writer.Write("ResumeTimer");
                 writer.Write("()");
@@ -146,34 +156,18 @@ namespace Unity.VisualScripting.Community.CSharp
             }
             else if (input == Unit.toggle)
             {
-                writer.WriteIndented(variableName.VariableHighlight());
+                writer.WriteIndented(Name.VariableHighlight());
                 writer.Write(".");
                 writer.Write("ToggleTimer");
                 writer.Write("()");
                 writer.Write(";");
                 writer.NewLine();
             }
+        }
 
-            GenerateActionMethod(Unit.started, data);
-            GenerateActionMethod(Unit.tick, data);
-            GenerateActionMethod(Unit.completed, data);
-
-            void GenerateActionMethod(ControlOutput port, ControlGenerationData data)
-            {
-                if (port.hasValidConnection && !data.scopeGeneratorData.TryGetValue(port, out _))
-                {
-                    data.scopeGeneratorData.Add(port, true);
-                    writer.WriteLine("void".ConstructHighlight() + " " + GetAction(port) + "()");
-                    writer.WriteLine("{");
-
-                    using (writer.IndentedScope(data))
-                    {
-                        GenerateChildControl(port, data, writer);
-                    }
-
-                    writer.WriteLine("}");
-                }
-            }
+        public void GenerateUpdateCode(ControlGenerationData data, CodeWriter writer)
+        {
+            writer.WriteIndented().GetVariable(Name).InvokeMember(null, "Update").WriteEnd(EndWriteOptions.LineEnd);
         }
     }
 }

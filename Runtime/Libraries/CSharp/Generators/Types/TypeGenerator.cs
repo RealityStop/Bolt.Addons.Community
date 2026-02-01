@@ -26,5 +26,11 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             this.usings.MergeUnique(usings);
             return this;
         }
+
+        public TypeGenerator AddUsing(string @using)
+        {
+            usings.Add(@using);
+            return this;
+        }
     }
 }

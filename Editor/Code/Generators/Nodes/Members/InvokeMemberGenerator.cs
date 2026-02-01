@@ -39,7 +39,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (hasResultConnection)
             {
-                variableName = data.AddLocalNameInScope(Unit.member.name.LegalMemberName() + "_Variable", Unit.result.type);
+                variableName = data.AddLocalNameInScope(Unit.member.info.SelectedName(true).LegalVariableName(false) + "_Variable", Unit.result.type);
                 variableType = Unit.result.type;
 
                 writer.WriteIndented("var ".ConstructHighlight());

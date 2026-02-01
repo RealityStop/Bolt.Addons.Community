@@ -26,7 +26,12 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private Unit graphInput;
         private Unit graphOutput;
-        private bool hasEventUnit;
+        /// <summary>
+        /// Has code that is not triggered in the scope that the Subgraph is Generated in,
+        /// To avoid errors we make the variables from this subgraph class wide so it will be accessible.
+        /// This might add variables that are not used outside of the scope but it this is the best solution i could come up with.
+        /// </summary>
+        private bool hasExternalCode;
 
         public override IEnumerable<string> GetNamespaces()
         {
@@ -56,7 +61,7 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             graphInput = null;
             graphOutput = null;
-            hasEventUnit = false;
+            hasExternalCode = false;
             customEvents.Clear();
             customEventIds.Clear();
 
@@ -76,10 +81,10 @@ namespace Unity.VisualScripting.Community.CSharp
                     graphOutput = u;
                     continue;
                 }
-
-                if (u is IEventUnit)
+                var generator = u.GetGenerator();
+                if (u is IEventUnit || generator is IRequireMethods or MethodNodeGenerator)
                 {
-                    hasEventUnit = true;
+                    hasExternalCode = true;
                     if (u is CustomEvent ce)
                         customEvents.Add(ce);
                 }
@@ -142,7 +147,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     writer.Error($"Subgraph \"{subgraphName}\" does not have a GraphInput or GraphOutput", WriteOptions.IndentedNewLineAfter);
             }
 
-            if (!hasEventUnit)
+            if (!hasExternalCode)
             {
                 foreach (var variable in Unit.nest.graph.variables)
                 {
@@ -263,7 +268,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public IEnumerable<FieldGenerator> GetRequiredVariables(ControlGenerationData data)
         {
-            if (!hasEventUnit)
+            if (!hasExternalCode)
                 yield break;
 
             foreach (var variable in Unit.nest.graph.variables)
@@ -273,8 +278,7 @@ namespace Unity.VisualScripting.Community.CSharp
 #else
                 Type type = variable.value != null ? variable.value.GetType() : typeof(object);
 #endif
-                string name = data.AddLocalNameInScope(variable.name.LegalVariableName(), type);
-                yield return FieldGenerator.Field(AccessModifier.None, FieldModifier.None, type, name, variable.value);
+                yield return FieldGenerator.Field(AccessModifier.Private, FieldModifier.None, type, variable.name, variable.value);
             }
         }
     }

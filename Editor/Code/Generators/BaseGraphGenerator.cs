@@ -83,6 +83,16 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private Dictionary<string, (MethodGenerator method, bool createNew)> RequiredMethods = new Dictionary<string, (MethodGenerator, bool)>();
 
+        private readonly Dictionary<Unit, NodeInfo> _nodeInfoCache = new Dictionary<Unit, NodeInfo>();
+
+        private struct NodeInfo
+        {
+            public NodeGenerator Generator;
+            public bool IsEvent;
+            public bool IsUpdate;
+            public bool IsCoroutine;
+        }
+
         protected abstract FlowGraph GetFlowGraph();
         protected abstract GraphPointer GetGraphPointer();
         protected abstract string GetGraphName();
@@ -167,8 +177,16 @@ namespace Unity.VisualScripting.Community.CSharp
 
             GraphTraversal.TraverseFlowGraph(GetFlowGraph(), (unit) =>
             {
-                var usings = new HashSet<string> { "Unity", "UnityEngine", "Unity.VisualScripting" };
                 var generator = unit.GetGenerator();
+                var info = new NodeInfo
+                {
+                    Generator = generator,
+                    IsEvent = unit is IEventUnit,
+                    IsUpdate = generator is IRequireUpdateCode,
+                    IsCoroutine = unit is IEventUnit e && e.coroutine
+                };
+
+                _nodeInfoCache[unit] = info;
 
                 if (generator is IRequireVariables variables)
                 {
@@ -214,7 +232,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                 GenerateAwakeHandlers(@class, unit);
 
-                if (generator is UpdateMethodNodeGenerator || generator is UpdateVariableNodeGenerator)
+                if (generator is IRequireUpdateCode)
                 {
                     _updateUnits.Add(unit);
                 }
@@ -256,21 +274,21 @@ namespace Unity.VisualScripting.Community.CSharp
                     {
                         pauseFalseUnits.Add(resumeEvent);
                     }
-                    else if (generator is InterfaceNodeGenerator interfaceNodeGenerator)
+                }
+
+                if (generator is InterfaceNodeGenerator interfaceNodeGenerator)
+                {
+                    foreach (var interfaceType in interfaceNodeGenerator.InterfaceTypes)
                     {
-                        foreach (var interfaceType in interfaceNodeGenerator.InterfaceTypes)
-                        {
-                            @class.ImplementInterface(interfaceType);
-                        }
+                        @class.ImplementInterface(interfaceType);
                     }
                 }
 
                 foreach (var @namespace in generator.GetNamespaces())
                 {
-                    usings.Add(@namespace);
+                    @class.AddUsing(@namespace);
                 }
 
-                @class.AddUsings(usings);
                 _allUnits.Add(unit);
 
                 if (generator is UpdateMethodNodeGenerator) return;
@@ -279,7 +297,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                 if (unit is ReturnEvent) return;
 
-                if (unit is IEventUnit || unit.GetGenerator() is MethodNodeGenerator) _eventUnits.Add(unit);
+                if (_nodeInfoCache[unit].IsEvent || generator is MethodNodeGenerator) _eventUnits.Add(unit);
             });
         }
 
@@ -295,12 +313,20 @@ namespace Unity.VisualScripting.Community.CSharp
                 var isDelegate = typeof(IDelegate).IsAssignableFrom(type);
                 type = isDelegate ? (variable.value as IDelegate)?.GetDelegateType() ?? (Activator.CreateInstance(type) as IDelegate)?.GetDelegateType() : type;
 
-                var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, type, variable.name.LegalVariableName(), variable.value);
-                
+                var modifer = CSharpPreviewWindow.isPreviewing ? AccessModifier.Private : AccessModifier.Public;
+
+                var field = FieldGenerator.Field(modifer, FieldModifier.None, type, variable.name.LegalVariableName(), variable.value);
+
+                if (!CSharpPreviewWindow.isPreviewing)
+                {
+                    field.AddAttribute(AttributeGenerator.Attribute<HideInInspector>());
+                }
+
                 if (isDelegate)
                 {
                     field.Default(null);
                 }
+
                 field.SetNewlineLiteral(false);
                 @class.AddField(field);
             }
@@ -333,7 +359,7 @@ namespace Unity.VisualScripting.Community.CSharp
             if (unit is CustomEvent eventUnit)
             {
                 if (eventUnit.graph != GetFlowGraph()) return;
-                data.SetReturns(eventUnit.coroutine ? typeof(IEnumerator) : typeof(void));
+                data.SetReturns(_nodeInfoCache[eventUnit].IsCoroutine ? typeof(IEnumerator) : typeof(void));
                 data.AddLocalNameInScope("args", typeof(CustomEventArgs));
                 _customEventIds.Add(eventUnit, customEventId);
                 customEventId++;
@@ -378,63 +404,24 @@ namespace Unity.VisualScripting.Community.CSharp
 
                 addMethod = true;
             }
-            else if (unit.GetGenerator() is AwakeMethodNodeGenerator)
+            else if (_nodeInfoCache[unit].Generator is IRequireAwakeCode requireAwakeCode)
             {
                 Action<CodeWriter> body = null;
-                var generator = unit.GetGenerator() as AwakeMethodNodeGenerator;
-                if (generator.OutputPort != null && generator.OutputPort.hasValidConnection)
-                {
-                    data.SetReturns(typeof(void));
-                    body += (w) =>
-                    {
-                        using (w.BeginNode(unit))
-                        {
-                            generator.GenerateAwakeCode(data, w);
-                            w.NewLine();
-                        }
-                    };
 
-                    var method = MethodGenerator.Method(generator.AccessModifier, generator.MethodModifier, generator.ReturnType, generator.Name);
-                    method.SetOwner(unit);
-                    AddMethodAttributes(method, generator.Attributes);
-                    foreach (var param in generator.Parameters)
-                    {
-                        method.AddParameter(ParameterGenerator.Parameter(param.name, param.type, param.modifier, param.hasDefault, param.defaultValue));
-                    }
-
-                    method.Body((w) =>
-                    {
-                        data.SetReturns(generator.ReturnType);
-
-                        generator.GenerateControl(null, data, w);
-                    });
-                    @class.AddMethod(method);
-                    addMethod = true;
-                }
-
-                awakeMethod.bodyAction += body;
-            }
-            else if (unit.GetGenerator() is AwakeVariableNodeGenerator)
-            {
-                Action<CodeWriter> body = null;
-                var generator = unit.GetGenerator() as AwakeVariableNodeGenerator;
-                var field = FieldGenerator.Field(generator.AccessModifier, generator.FieldModifier, generator.Type, generator.Name);
-
-                field.SetOwner(unit);
-
-                @class.AddField(field);
+                data.SetReturns(typeof(void));
                 body += (w) =>
                 {
-                    data.SetReturns(typeof(void));
                     using (w.BeginNode(unit))
                     {
-                        generator.GenerateAwakeCode(data, w);
-                        w.NewLine();
+                        requireAwakeCode.GenerateAwakeCode(data, w);
                     }
                 };
-                awakeMethod.bodyAction += body;
+
                 addMethod = true;
+
+                awakeMethod.bodyAction += body;
             }
+
             if (!hasAwakeMethod && addMethod)
                 @class.AddMethod(awakeMethod);
         }
@@ -537,9 +524,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     Unit is OnApplicationLostFocus ||
                     Unit is OnApplicationPause ||
                     Unit is OnApplicationResume ||
-                    Unit is CustomEvent ||
-                    Unit.GetGenerator() is AwakeMethodNodeGenerator ||
-                    Unit.GetGenerator() is AwakeVariableNodeGenerator)
+                    Unit is CustomEvent)
                 {
                     continue;
                 }
@@ -721,7 +706,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             };
                     }
                 }
-                else if (Unit.GetGenerator() is MethodNodeGenerator methodNodeGenerator)
+                else if (_nodeInfoCache[Unit].Generator is MethodNodeGenerator methodNodeGenerator)
                 {
                     HandleMethodNodeGenerator(methodNodeGenerator, methodBodies);
                 }
@@ -853,26 +838,14 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 foreach (var unit in _updateUnits)
                 {
-                    var generator = unit.GetGenerator();
-                    if (generator is UpdateVariableNodeGenerator variableGenerator)
+                    var generator = _nodeInfoCache[unit].Generator;
+                    if (generator is IRequireUpdateCode updateCode)
                     {
                         code += (w) =>
                         {
                             using (w.BeginNode(unit))
                             {
-                                variableGenerator.GenerateUpdateCode(data, w);
-                                w.NewLine();
-                            }
-                        };
-                    }
-                    else if (generator is UpdateMethodNodeGenerator methodGenerator)
-                    {
-                        code += (w) =>
-                        {
-                            using (w.BeginNode(unit))
-                            {
-                                methodGenerator.GenerateUpdateCode(data, w);
-                                w.NewLine();
+                                updateCode.GenerateUpdateCode(data, w);
                             }
                         };
                     }
@@ -927,7 +900,7 @@ namespace Unity.VisualScripting.Community.CSharp
 #if PACKAGE_INPUT_SYSTEM_EXISTS
             bool hasInputSystemNode = false;
 #endif
-            foreach (var unit in _updateUnits.Where(u => u.GetGenerator() is UpdateMethodNodeGenerator))
+            foreach (var unit in _updateUnits.Where(u => _nodeInfoCache[u].Generator is UpdateMethodNodeGenerator))
             {
                 var generator = unit.GetMethodGenerator();
                 var method = MethodGenerator.Method(generator.AccessModifier, generator.MethodModifier, generator.ReturnType, generator.Name);
@@ -962,16 +935,11 @@ namespace Unity.VisualScripting.Community.CSharp
                 {
                     foreach (var unit in _updateUnits)
                     {
-                        var generator = unit.GetGenerator();
-                        if (generator is UpdateVariableNodeGenerator variableGenerator)
+                        var generator = _nodeInfoCache[unit].Generator;
+                        if (generator is IRequireUpdateCode updateCode)
                         {
-                            variableGenerator.GenerateUpdateCode(data, writer);
-                            writer.NewLine();
-                        }
-                        else if (generator is UpdateMethodNodeGenerator methodGenerator)
-                        {
-                            methodGenerator.GenerateUpdateCode(data, writer);
-                            writer.NewLine();
+                            using (writer.BeginNode(unit))
+                                updateCode.GenerateUpdateCode(data, writer);
                         }
                     }
 
@@ -1002,18 +970,18 @@ namespace Unity.VisualScripting.Community.CSharp
                 var updateMethod = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), "Update");
 
                 updateMethod.Body(delegate (CodeWriter writer)
-                {
-                    foreach (var unit in _allUnits.OfType<OnInputSystemEvent>())
-                    {
-                        if (!unit.trigger.hasValidConnection) continue;
-
-                        using (writer.BeginNode(unit))
                         {
-                            writer.Write(unit.GetMethodGenerator().Name + "();");
-                            writer.NewLine();
-                        }
-                    }
-                });
+                            foreach (var unit in _allUnits.OfType<OnInputSystemEvent>())
+                            {
+                                if (!unit.trigger.hasValidConnection) continue;
+
+                                using (writer.BeginNode(unit))
+                                {
+                                    writer.Write(unit.GetMethodGenerator().Name + "();");
+                                    writer.NewLine();
+                                }
+                            }
+                        });
 
                 @class.AddMethod(updateMethod);
             }

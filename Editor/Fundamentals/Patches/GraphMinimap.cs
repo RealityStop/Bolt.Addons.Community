@@ -25,6 +25,7 @@ namespace Unity.VisualScripting.Community
             public float lastZoom;
             public HashSet<IGraphElementWidget> widgets;
             public Action elementsChangedHandler;
+            public IGraph subscribedGraph;
         }
 
         private static readonly Dictionary<GraphWindow, MiniMapInstance> instances = new Dictionary<GraphWindow, MiniMapInstance>();
@@ -184,10 +185,31 @@ namespace Unity.VisualScripting.Community
                 context = window.context,
                 isMinimized = GetMinimizedKey(window.reference.ToString())
             };
-            instance.elementsChangedHandler += () => CacheWidgets(instance, window);
-            instance.context.graph.elements.CollectionChanged += instance.elementsChangedHandler;
-            GraphWindow.activeContextChanged += (c) => CacheWidgets(instance, window);
-            CacheWidgets(instance, window);
+
+            instance.elementsChangedHandler = () =>
+            {
+                EditorApplication.delayCall += () => CacheWidgets(instance, window);
+            };
+
+            void Subscribe(IGraphContext context)
+            {
+                if (instance.subscribedGraph != null)
+                {
+                    instance.subscribedGraph.elements.CollectionChanged -= instance.elementsChangedHandler;
+                    instance.subscribedGraph = null;
+                }
+
+                if (context == null || context.graph == null) return;
+
+                instance.subscribedGraph = context.graph;
+                instance.subscribedGraph.elements.CollectionChanged += instance.elementsChangedHandler;
+
+                CacheWidgets(instance, window);
+            }
+
+            Subscribe(window.context);
+
+            GraphWindow.activeContextChanged += Subscribe;
 
             bool isDark = EditorGUIUtility.isProSkin;
             var root = instance.root;
@@ -465,8 +487,8 @@ namespace Unity.VisualScripting.Community
 
                     Handles.DrawSolidRectangleWithOutline(
                         drawRect,
-                        GetElementColor(widget).WithAlpha(0.5f),
-                        Color.white * (canvas.selection.Contains(widget.element) ? 1f : 0.25f)
+                        GetElementColor(widget).WithAlpha(0.1f),
+                        Color.white * (canvas.selection.Contains(widget.element) ? 1f : 0)
                     );
 
                     Vector2 center = wp.center;

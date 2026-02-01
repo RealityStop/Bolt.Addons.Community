@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community.CSharp
     /// Used for generating nodes that require a Method and the awake method to function.
     /// For example OnButtonClick.
     /// </summary>
-    public abstract class AwakeMethodNodeGenerator : MethodNodeGenerator
+    public abstract class AwakeMethodNodeGenerator : MethodNodeGenerator, IRequireAwakeCode
     {
         protected AwakeMethodNodeGenerator(Unit unit) : base(unit)
         {
@@ -31,10 +31,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 return;
             }
 
-            foreach (var param in Parameters)
-            {
-                data.AddLocalNameInScope(param.name, param.type);
-            }
             GenerateCode(input, data, writer);
         }
 

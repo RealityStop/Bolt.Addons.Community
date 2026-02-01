@@ -101,7 +101,7 @@ namespace Unity.VisualScripting.Community
 
         #region Helpers
 
-        private static GUIStyle GetBoxStyle()
+        public static GUIStyle GetBoxStyle()
         {
             return new GUIStyle(EditorStyles.helpBox)
             {
@@ -110,7 +110,7 @@ namespace Unity.VisualScripting.Community
             };
         }
 
-        private static void SectionLabel(string text, int fontSize = 14, int topMargin = 10, Color? color = null)
+        public static void SectionLabel(string text, int fontSize = 14, int topMargin = 10, Color? color = null)
         {
             GUILayout.Space(topMargin);
             var style = new GUIStyle(EditorStyles.boldLabel)

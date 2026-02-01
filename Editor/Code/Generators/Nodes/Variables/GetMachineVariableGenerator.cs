@@ -87,14 +87,13 @@ namespace Unity.VisualScripting.Community.CSharp
 #else
                 return declaration?.value != null ? declaration.value.GetType() : null;
 #endif
-
             }
 
             var target = GetTarget(data);
             ControlGenerationData targetData = data;
-            if (target != null && CodeGenerator.GetSingleDecorator(GetTarget(data).gameObject) is ICreateGenerationData generationData)
+            if (target != null && CodeGenerator.GetSingleDecorator(GetTarget(data).gameObject) is ICreateGenerationData creator)
             {
-                targetData = generationData.GetGenerationData();
+                targetData = creator.GetGenerationData();
             }
             Type targetType = null;
             return targetData?.TryGetVariableType(targetData?.GetVariableName(name), out targetType) ?? false ? targetType : data.GetExpectedType() ?? typeof(object);
