@@ -10,9 +10,8 @@ namespace Unity.VisualScripting.Community.CSharp
 
         protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (!Unit.invoke.hasAnyConnection)
+            if (Unit.invoke == null || !Unit.invoke.hasAnyConnection)
             {
-                writer.NewLine();
                 return;
             }
 

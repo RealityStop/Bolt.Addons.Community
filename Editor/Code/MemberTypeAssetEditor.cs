@@ -970,7 +970,7 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             Target.constructorsOpened = HUMEditor.Foldout(Target.constructorsOpened, CommunityStyles.foldoutHeaderColor, Color.black, 1, () =>
             {
-                HUMEditor.Image(PathUtil.Load("constructor_32", CommunityEditorPath.Code).Single(), 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
+                HUMEditor.Image(PathUtil.Load("constructor_32", CommunityEditorPath.Code)?[IconSize.Small], 16, 16, new RectOffset(), new RectOffset(4, 8, 4, 4));
                 GUILayout.Label("Constructors");
             }, () =>
             {
@@ -1504,6 +1504,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 Undo.RegisterCompleteObjectUndo(target, $"Deleted {paramToRemove.name} parameter");
                                 parameters.Remove(paramToRemove);
                                 UpdatePreview();
+                                context?.DescribeAnalyzeAndDefineFlowGraph();
                             }, parameters[i]);
 
                             if (i > 0)

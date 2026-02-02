@@ -84,9 +84,14 @@ namespace Unity.VisualScripting.Community.CSharp
                 var generator = u.GetGenerator();
                 if (u is IEventUnit || generator is IRequireMethods or MethodNodeGenerator)
                 {
-                    hasExternalCode = true;
                     if (u is CustomEvent ce)
+                    {
                         customEvents.Add(ce);
+                    }
+                    else
+                    {
+                        hasExternalCode = true;
+                    }
                 }
             }
 

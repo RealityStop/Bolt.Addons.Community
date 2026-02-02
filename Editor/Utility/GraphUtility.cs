@@ -16,6 +16,8 @@ namespace Unity.VisualScripting.Community
 
         public static List<CommentNode> GetComments(this FlowGraph graph)
         {
+            if (graph == null) return new List<CommentNode>();
+
             if (!commentCache.TryGetValue(graph, out var cached) || cached.unitCount != graph.units.Count)
             {
                 cached.commentNodes = graph.units.Where(u => u is CommentNode).Cast<CommentNode>().ToList();

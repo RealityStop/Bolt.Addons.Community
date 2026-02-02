@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ToggleFlow))]
-    public class ToggleFlowGenerator : VariableNodeGenerator
+    public class ToggleFlowGenerator : VariableNodeGenerator, IRequireMethods, IRequireAwakeCode
     {
         public ToggleFlowGenerator(ToggleFlow unit) : base(unit)
         {
@@ -22,27 +22,45 @@ namespace Unity.VisualScripting.Community.CSharp
         }
 
         private ToggleFlow Unit => unit as ToggleFlow;
+
         public override AccessModifier AccessModifier => AccessModifier.Private;
-
         public override FieldModifier FieldModifier => FieldModifier.None;
-
         public override string Name => "toggleFlow" + count;
-
         public override Type Type => typeof(ToggleFlowLogic);
-
         public override object DefaultValue => new ToggleFlowLogic() { startOn = Unit.startOn };
-
         public override bool HasDefaultValue => true;
-
         public override bool Literal => true;
+
+        string turnedOnMethodName;
+        string turnedOffMethodName;
 
         private string GetAction(ControlOutput controlOutput)
         {
             if (!controlOutput.hasValidConnection)
-                return "";
-            var output = "";
-            output += variableName.Capitalize().First().Letter() + "_" + controlOutput.key.Capitalize().First().Letter();
-            return output;
+                return null;
+
+            return Name.Capitalize().First().Letter() + "_" + controlOutput.key.Capitalize().First().Letter();
+        }
+
+        public IEnumerable<MethodGenerator> GetRequiredMethods(ControlGenerationData data)
+        {
+            if (Unit.turnedOn.hasValidConnection)
+            {
+                turnedOnMethodName = data.AddMethodName(GetAction(Unit.turnedOn));
+                var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), turnedOnMethodName);
+                method.Body(w => GenerateChildControl(Unit.turnedOn, data, w));
+                method.SetOwner(Unit);
+                yield return method;
+            }
+
+            if (Unit.turnedOff.hasValidConnection)
+            {
+                turnedOffMethodName = data.AddMethodName(GetAction(Unit.turnedOff));
+                var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), turnedOffMethodName);
+                method.Body(w => GenerateChildControl(Unit.turnedOff, data, w));
+                method.SetOwner(Unit);
+                yield return method;
+            }
         }
 
         protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
@@ -52,44 +70,22 @@ namespace Unity.VisualScripting.Community.CSharp
                 writer.GetMember(variableName.VariableHighlight(), "isOn");
             }
             else
+            {
                 base.GenerateValueInternal(output, data, writer);
+            }
         }
 
         protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
             variableName = Name;
+
             if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
             {
-                writer.WriteErrorDiagnostic("ToggleFlow only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate ToggleFlow", WriteOptions.IndentedNewLineAfter);
+                writer.WriteErrorDiagnostic(
+                    "ToggleFlow only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour",
+                    "Could not generate ToggleFlow",
+                    WriteOptions.IndentedNewLineAfter);
                 return;
-            }
-
-            if (!data.scopeGeneratorData.TryGetValue(Unit.enter, out _))
-            {
-                data.scopeGeneratorData.Add(Unit.enter, true);
-
-                string turnedOnCallback = Unit.turnedOn.hasValidConnection ? GetAction(Unit.turnedOn) : null;
-                string turnedOffCallback = Unit.turnedOff.hasValidConnection ? GetAction(Unit.turnedOff) : null;
-
-                writer.WriteIndented(variableName.VariableHighlight());
-                writer.Write(".");
-                writer.Write("Initialize");
-                writer.Write("(");
-
-                if (turnedOnCallback != null)
-                    writer.Write(turnedOnCallback);
-                else if (turnedOffCallback != null)
-                    writer.Write("null".ConstructHighlight());
-
-                if (turnedOffCallback != null)
-                {
-                    writer.Write(", ");
-                    writer.Write(turnedOffCallback);
-                }
-
-                writer.Write(")");
-                writer.Write(";");
-                writer.NewLine();
             }
 
             if (input == Unit.enter)
@@ -124,6 +120,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     writer.WriteIndented("}");
                 }
+
                 writer.NewLine();
             }
             else if (input == Unit.turnOn)
@@ -153,26 +150,29 @@ namespace Unity.VisualScripting.Community.CSharp
                 writer.Write(";");
                 writer.NewLine();
             }
+        }
 
-            GenerateActionMethod(Unit.turnedOn, data);
-            GenerateActionMethod(Unit.turnedOff, data);
+        public void GenerateAwakeCode(ControlGenerationData data, CodeWriter writer)
+        {
+            writer.WriteIndented(variableName.VariableHighlight());
+            writer.Write(".");
+            writer.Write("Initialize");
+            writer.Write("(");
 
-            void GenerateActionMethod(ControlOutput port, ControlGenerationData data)
+            if (turnedOnMethodName != null)
+                writer.Write(turnedOnMethodName);
+            else if (turnedOffMethodName != null)
+                writer.Write("null".ConstructHighlight());
+
+            if (turnedOffMethodName != null)
             {
-                if (port.hasValidConnection && !data.scopeGeneratorData.TryGetValue(port, out _))
-                {
-                    data.scopeGeneratorData.Add(port, true);
-                    writer.WriteLine("void".ConstructHighlight() + " " + GetAction(port) + "()");
-                    writer.WriteLine("{");
-
-                    using (writer.IndentedScope(data))
-                    {
-                        GenerateChildControl(port, data, writer);
-                    }
-
-                    writer.WriteLine("}");
-                }
+                writer.Write(", ");
+                writer.Write(turnedOffMethodName);
             }
+
+            writer.Write(")");
+            writer.Write(";");
+            writer.NewLine();
         }
     }
 }
