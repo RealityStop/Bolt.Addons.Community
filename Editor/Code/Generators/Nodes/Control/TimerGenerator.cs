@@ -134,7 +134,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 writer.Write(";");
                 writer.NewLine();
 
-                GenerateChildControl(Unit.started, data, writer);
+                GenerateExitControl(Unit.started, data, writer);
             }
             else if (input == Unit.pause)
             {

@@ -1044,7 +1044,7 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 if (!customEvent.name.hasValidConnection)
                 {
-                    methodName = (string)customEvent.defaultValues[customEvent.name.key];
+                    methodName = ((string)customEvent.defaultValues[customEvent.name.key]).LegalMemberName();
                     if (string.IsNullOrEmpty(methodName)) return "CustomEvent" + _customEventIds[customEvent];
                 }
                 else
@@ -1052,7 +1052,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     if (NodeGenerator.CanPredictConnection(customEvent.name, data))
                     {
                         data.TryGetGraphPointer(out var graphPointer);
-                        methodName = Flow.Predict<string>(customEvent.name, graphPointer.AsReference());
+                        methodName = Flow.Predict<string>(customEvent.name, graphPointer.AsReference()).LegalMemberName();
                     }
                     else
                         return "CustomEvent" + _customEventIds[customEvent];
