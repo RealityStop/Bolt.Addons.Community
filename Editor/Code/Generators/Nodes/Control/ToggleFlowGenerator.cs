@@ -49,7 +49,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 turnedOnMethodName = data.AddMethodName(GetAction(Unit.turnedOn));
                 var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), turnedOnMethodName);
                 method.Body(w => GenerateChildControl(Unit.turnedOn, data, w));
-                method.SetOwner(Unit);
                 yield return method;
             }
 
@@ -58,7 +57,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 turnedOffMethodName = data.AddMethodName(GetAction(Unit.turnedOff));
                 var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), turnedOffMethodName);
                 method.Body(w => GenerateChildControl(Unit.turnedOff, data, w));
-                method.SetOwner(Unit);
                 yield return method;
             }
         }

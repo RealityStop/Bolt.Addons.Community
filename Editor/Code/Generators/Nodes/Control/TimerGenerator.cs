@@ -79,7 +79,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 tickMethodName = data.AddMethodName(GetAction(Unit.tick));
                 var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), tickMethodName);
                 method.Body(w => GenerateChildControl(Unit.tick, data, w));
-                method.SetOwner(Unit);
                 yield return method;
             }
 
@@ -88,7 +87,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 completedMethodName = data.AddMethodName(GetAction(Unit.completed));
                 var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), completedMethodName);
                 method.Body(w => GenerateChildControl(Unit.completed, data, w));
-                method.SetOwner(Unit);
                 yield return method;
             }
         }

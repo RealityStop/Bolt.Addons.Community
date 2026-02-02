@@ -70,20 +70,14 @@ namespace Unity.VisualScripting.Community
         public bool attributesOpened;
         public bool genericsOpened;
 #endif
-        private FunctionNode _functionNode;
         public FunctionNode functionNode
         {
             get
             {
-                if (_functionNode != null)
-                {
-                    return _functionNode;
-                }
                 var expectedUnit = graph.units[0];
                 if (expectedUnit is FunctionNode functionNode)
                 {
-                    _functionNode ??= functionNode;
-                    return _functionNode;
+                    return functionNode;
                 }
                 else
                 {
@@ -92,7 +86,7 @@ namespace Unity.VisualScripting.Community
                         throw new Exception(methodName + " on " + parentAsset.title + " does not contain a function unit in the main graph!");
                     }
 
-                    _functionNode ??= graph.units.First(unit => unit is FunctionNode) as FunctionNode;
+                    var _functionNode = graph.units.First(unit => unit is FunctionNode) as FunctionNode;
                     return _functionNode;
                 }
             }
