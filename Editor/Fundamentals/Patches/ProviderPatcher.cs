@@ -39,6 +39,7 @@ namespace Unity.VisualScripting.Community
 #endif
             GraphWindow.activeContextChanged += context =>
             {
+                current = context;
                 if (context != null && context.graph is FlowGraph)
                 {
                     var provider = context.canvas.widgetProvider;
