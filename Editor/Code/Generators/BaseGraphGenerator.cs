@@ -161,6 +161,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void Initialize(ClassGenerator @class)
         {
+            customEventId = 0;
             _customEventIds = new Dictionary<CustomEvent, int>(2);
             _namedAnimationEventIds = new Dictionary<BoltNamedAnimationEvent, int>(2);
             _unityEventIds = new Dictionary<BoltUnityEvent, int>(2);

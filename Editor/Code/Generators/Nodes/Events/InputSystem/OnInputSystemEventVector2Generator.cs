@@ -34,6 +34,11 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override List<TypeParam> Parameters => new List<TypeParam>();
 
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "UnityEngine.InputSystem";
+        }
+
         protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input == Unit.Target)
@@ -64,7 +69,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 {
                     if (!(input.unit.defaultValues[input.key] is InputAction value))
                     {
-                        writer.WriteErrorDiagnostic("The problem could be that the player input component could not be found.", "Could not generate Input Action");
+                        writer.WriteErrorDiagnostic("The problem could be that the player input component could not be found or is set to <None>.", "Could not generate Input Action");
                         return;
                     }
                     else

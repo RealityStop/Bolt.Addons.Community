@@ -121,9 +121,15 @@ namespace Unity.VisualScripting.Community.CSharp
             }
             else if (input.hasDefaultValue)
             {
-                if (input == Unit.target && (input.type == typeof(GameObject) || typeof(Component).IsAssignableFrom(input.type)))
+                var isGameObject = input.type == typeof(GameObject);
+                var isComponent = typeof(Component).IsAssignableFrom(input.type);
+                if (input == Unit.target && (isGameObject || isComponent))
                 {
                     writer.Write("gameObject".VariableHighlight());
+                    if (isComponent)
+                    {
+                        writer.GetComponent(null, input.type);
+                    }
                 }
                 else if (input == Unit.target && !input.nullMeansSelf)
                 {

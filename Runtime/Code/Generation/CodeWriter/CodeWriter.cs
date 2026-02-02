@@ -441,7 +441,7 @@ namespace Unity.VisualScripting.Community
             return type.As().CSharpName(false, BuildAmbiguityResolver(), true);
         }
 
-        public Func<Type, bool> BuildAmbiguityResolver()
+        private Func<Type, bool> BuildAmbiguityResolver()
         {
             return type =>
             {
