@@ -8,25 +8,7 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Get Discord Thread ID
-        id: get_thread
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh auth setup-git
-          THREAD_ID=""
-          COMMENTS=$(gh issue view ${{ github.event.issue.number }} --json comments --jq '.comments[].body')
-          for COMMENT in $COMMENTS; do
-            if [[ "$COMMENT" =~ <!--\ discord-thread-id:\ ([0-9]+)\ --> ]]; then
-              THREAD_ID="${BASH_REMATCH[1]}"
-              break
-            fi
-          done
-          echo "thread_id=$THREAD_ID" >> $GITHUB_OUTPUT
-
       - name: Send Discord Embed
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_ISSUES_URL }}
         run: |
           LABELS_DISPLAY="None"
           if [ -s "$GITHUB_EVENT_PATH" ]; then
@@ -36,48 +18,29 @@ jobs:
             fi
           fi
 
-          if [ -z "${{ steps.get_thread.outputs.thread_id }}" ]; then
-            RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" \
-              -d "{
-                \"thread_name\": \"Issue: ${{ github.event.issue.number }} - ${{ github.event.issue.title }}\",
-                \"embeds\": [{
-                  \"author\": {
-                    \"name\": \"${{ github.event.issue.user.login }}\",
-                    \"icon_url\": \"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png\"
-                  },
-                  \"title\": \"**Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}**\",
-                  \"description\": \"**State:** ${{ github.event.issue.state }}\",
-                  \"fields\": [
-                    {\"name\": \"Labels\", \"value\": \"${LABELS_DISPLAY}\", \"inline\": false},
-                    {\"name\": \"View on Github\", \"value\": \"[Link](${{ github.event.issue.html_url }})\", \"inline\": false}
-                  ],
-                  \"color\": 3066993
-                }]
-              }" $DISCORD_WEBHOOK)
-
-            THREAD_ID=$(echo "$RESPONSE" | jq -r '.id')
-
-            if [ -n "$THREAD_ID" ] && [ "$THREAD_ID" != "null" ]; then
-              gh issue comment ${{ github.event.issue.number }} "<!-- discord-thread-id: $THREAD_ID -->"
-              gh issue comment ${{ github.event.issue.number }} "Your issue has been added to the community Discord."
-            fi
-          else
-            THREAD_ID="${{ steps.get_thread.outputs.thread_id }}"
-            curl -X POST -H "Content-Type: application/json" \
-              -d "{
-                \"thread_name\": \"Issue: ${{ github.event.issue.number }} - ${{ github.event.issue.title }}\",
-                \"embeds\": [{
-                  \"author\": {
-                    \"name\": \"${{ github.event.issue.user.login }}\",
-                    \"icon_url\": \"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png\"
-                  },
-                  \"title\": \"**Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}**\",
-                  \"description\": \"**State:** ${{ github.event.issue.state }}\",
-                  \"fields\": [
-                    {\"name\": \"Labels\", \"value\": \"${LABELS_DISPLAY}\", \"inline\": false},
-                    {\"name\": \"View on Github\", \"value\": \"[Link](${{ github.event.issue.html_url }})\", \"inline\": false}
-                  ],
-                  \"color\": 3066993
-                }]
-              }" "https://discord.com/api/v10/channels/$THREAD_ID/messages"
-          fi
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{
+            \"thread_name\": \"Issue: ${{ github.event.issue.number }} - ${{ github.event.issue.title }}\",
+            \"embeds\": [{
+              \"author\": {
+                \"name\": \"${{ github.event.issue.user.login }}\",
+                \"icon_url\": \"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png\"
+              },
+              \"title\": \"**Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}**\",
+              \"description\": \"**State:** ${{ github.event.issue.state }}\",
+              \"fields\": [
+                {
+                  \"name\": \"Labels\",
+                  \"value\": \"${LABELS_DISPLAY}\",
+                  \"inline\": false
+                },
+                {
+                  \"name\": \"View on Github\",
+                  \"value\": \"[Link](${{ github.event.issue.html_url }})\",
+                  \"inline\": false
+                }
+              ],
+              \"color\": 3066993
+            }]
+          }" \
+          ${{ secrets.DISCORD_WEBHOOK_ISSUES_URL }}
