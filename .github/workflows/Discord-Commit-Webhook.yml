@@ -30,4 +30,4 @@ jobs:
               "color": 3066993
             }]
           }' \
-          ${{ secrets.DISCORD_WEBHOOK_URL }}
+          ${{ secrets.DISCORD_WEBHOOK_COMMIT_URL }}
