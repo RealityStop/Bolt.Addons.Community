@@ -19,7 +19,7 @@ jobs:
                 "name": "${{ github.event.head_commit.author.name }}",
                 "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
               },
-              "title": "**Message** ${{ github.event.head_commit.message }}",
+              "title": "**Message:** ${{ github.event.head_commit.message }}",
               "description": "**Branch:** ${{ github.ref_name }}",
               "fields": [
               {
