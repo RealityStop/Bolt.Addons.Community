@@ -76,6 +76,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 | :--- | :--- |
 | [**Selection to Macro**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Selection-to-Macro) | Quickly convert a group of nodes into a Subgraph (Embed or Macro). |
 | [**Graph Snippets**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Graph-Snippets) | Save and inject common node patterns (Control & Value). |
+| [**Node Finder**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Node-Finder) | Global search utility for finding nodes and other elements within any graph or subgraph. |
 
 ---
 
