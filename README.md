@@ -57,6 +57,10 @@ To update, open Packages/manifest.json and remove the dev.bolt.addons entry unde
 
 ----------
 
+# Join the discord
+![Discord Banner](https://discord.com/api/guilds/1086044503548366928/widget.png?style=banner2)
+
+----------
 
 ### What's included
 We include a multitude of assets, nodes, and tooling to extend missing language concepts and provide fundamental utilities and extensions for graphs. Here is what you will find:
