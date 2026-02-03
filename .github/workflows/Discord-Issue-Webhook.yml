@@ -10,6 +10,10 @@ jobs:
     steps:
       - name: Send Discord Embed
         run: |
+          LABELS_DISPLAY="None"
+          if [ "${{ github.event.issue.labels }}" != "[]" ]; then
+            LABELS_DISPLAY=$(echo '${{ github.event.issue.labels }}' | jq -r '.[].name' | paste -sd ", " -)
+          fi
           curl -X POST -H "Content-Type: application/json" \
           -d '{
             "thread_name": "Issue: ${{ github.event.issue.number }} - ${{ github.event.issue.title }}",
@@ -23,7 +27,7 @@ jobs:
               "fields": [
               {
                 "name": "Labels",
-                "value": "${{ github.event.issue.labels.name || join(', ') }}",
+                "value": "${LABELS_DISPLAY}",
                 "inline": false
               }, {
                 "name": "View on Github",
