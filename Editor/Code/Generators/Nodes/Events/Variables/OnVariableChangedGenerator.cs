@@ -20,7 +20,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(object), "value") };
 
-        private string name = "onValueChanged";
+        private FieldGenerator field;
 
         public OnVariableChangedGenerator(Unit unit) : base(unit) { }
 
@@ -32,7 +32,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override void GenerateUpdateCode(ControlGenerationData data, CodeWriter writer)
         {
-            if (Unit.name.hasValidConnection && !SupportsNameConnection()) 
+            if (Unit.name.hasValidConnection && !SupportsNameConnection())
             {
                 writer.WriteErrorDiagnostic($"{Unit.GetType().DisplayName()} does not support a name connection when Variable Kind is set to {Unit.kind}", $"Could not generate {Unit.GetType().DisplayName()}");
                 return;
@@ -40,17 +40,28 @@ namespace Unity.VisualScripting.Community.CSharp
 
             writer.WriteIndented("if".ControlHighlight());
             writer.Write(" (");
-            writer.InvokeMember(name.VariableHighlight(), "HasValueChanged",
-                writer.Action(() => GenerateValue(Unit.name, data, writer)),
-                writer.Action(() => {
-                    writer.Write("out var ".ConstructHighlight());
-                    writer.Write(data.AddLocalNameInScope("result").VariableHighlight());
-                }),
-                writer.Action(() => {
-                    if (Unit.provideInitial)
+            if (Unit.provideInitial)
+                writer.InvokeMember(field.modifiedName.VariableHighlight(), "HasValueChanged",
+                    writer.Action(() => GenerateValue(Unit.name, data, writer)),
+                    writer.Action(() =>
+                    {
+                        writer.Write("out var ".ConstructHighlight());
+                        writer.Write(data.AddLocalNameInScope("result").VariableHighlight());
+                    }),
+                    writer.Action(() =>
+                    {
                         GenerateValue(Unit.Initial, data, writer);
-                })
-            );
+                    })
+                );
+            else
+                writer.InvokeMember(field.modifiedName.VariableHighlight(), "HasValueChanged",
+                    writer.Action(() => GenerateValue(Unit.name, data, writer)),
+                    writer.Action(() =>
+                    {
+                        writer.Write("out var ".ConstructHighlight());
+                        writer.Write(data.AddLocalNameInScope("result").VariableHighlight());
+                    })
+                );
             writer.Write(")");
             writer.NewLine();
             writer.WriteLine("{");
@@ -91,7 +102,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 else if (Unit.kind == VariableKind.Object)
                 {
                     writer.InvokeMember(typeof(VisualScripting.Variables), "Object", writer.Action(() => base.GenerateValueInternal(Unit.@object, data, writer)))
-                    .InvokeMember("Get", writer.Action(() => base.GenerateValueInternal(Unit.@name, data, writer)));
+                    .InvokeMember(null, "Get", writer.Action(() => base.GenerateValueInternal(Unit.@name, data, writer)));
                     return;
                 }
                 else if (Unit.kind == VariableKind.Scene)
@@ -99,25 +110,25 @@ namespace Unity.VisualScripting.Community.CSharp
                     if (typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
                     {
                         writer.InvokeMember(typeof(VisualScripting.Variables), "Scene", writer.Action(() => writer.GetMember("gameObject".VariableHighlight(), "scene")))
-                        .InvokeMember("Get", writer.Action(() => base.GenerateValueInternal(Unit.@name, data, writer)));
+                        .InvokeMember(null, "Get", writer.Action(() => base.GenerateValueInternal(Unit.@name, data, writer)));
                     }
                     else
                     {
                         writer.GetMember(typeof(VisualScripting.Variables), "ActiveScene")
-                        .InvokeMember("Get", writer.Action(() => base.GenerateValueInternal(Unit.@name, data, writer)));
+                        .InvokeMember(null, "Get", writer.Action(() => base.GenerateValueInternal(Unit.@name, data, writer)));
                     }
                     return;
                 }
                 else if (Unit.kind == VariableKind.Application)
                 {
                     writer.GetMember(typeof(VisualScripting.Variables), "Application")
-                    .InvokeMember("Get", writer.Action(() => base.GenerateValueInternal(Unit.@name, data, writer)));
+                    .InvokeMember(null, "Get", writer.Action(() => base.GenerateValueInternal(Unit.@name, data, writer)));
                     return;
                 }
                 else if (Unit.kind == VariableKind.Saved)
                 {
                     writer.GetMember(typeof(VisualScripting.Variables), "Saved")
-                    .InvokeMember("Get", writer.Action(() => base.GenerateValueInternal(Unit.@name, data, writer)));
+                    .InvokeMember(null, "Get", writer.Action(() => base.GenerateValueInternal(Unit.@name, data, writer)));
                     return;
                 }
             }
@@ -128,13 +139,12 @@ namespace Unity.VisualScripting.Community.CSharp
                 return;
             }
 
-            base.GenerateValueInternal(Unit.@name, data, writer);
+            base.GenerateValueInternal(input, data, writer);
         }
 
         public IEnumerable<FieldGenerator> GetRequiredVariables(ControlGenerationData data)
         {
-            name = data.AddLocalNameInScope(name);
-            var field = FieldGenerator.Field(AccessModifier.Private, FieldModifier.None, typeof(OnValueChangedLogic), name, new OnValueChangedLogic(Unit.provideInitial));
+            field = FieldGenerator.Field(AccessModifier.Private, FieldModifier.None, typeof(OnValueChangedLogic), "onValueChanged", new OnValueChangedLogic(Unit.provideInitial));
             field.SetNewlineLiteral(false);
             yield return field;
         }

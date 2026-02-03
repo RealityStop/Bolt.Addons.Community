@@ -12,6 +12,10 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public AccessModifier scope;
         public FieldModifier modifier;
         public string name;
+        /// <summary>
+        /// Will only be set after the field is Generated.
+        /// </summary>
+        public string modifiedName { get; private set; }
         public object defaultValue;
         public string stringType;
         public string stringTypeNamespace;
@@ -141,7 +145,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
 
             var legalName = name.LegalVariableName();
-            writer.Write(" " + data.AddLocalNameInScope(legalName).VariableHighlight());
+            modifiedName = data.AddLocalNameInScope(legalName);
+            writer.Write(" " + modifiedName.VariableHighlight());
 
             if (!isString && (!hasDefault || defaultValue == null || (!(typeIsString ? stringType == nameof(Type) : type == typeof(Type)) && defaultValue.Equals(type.PseudoDefault()))))
             {
