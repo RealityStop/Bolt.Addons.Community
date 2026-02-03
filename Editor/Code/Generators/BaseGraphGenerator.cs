@@ -624,7 +624,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                     {
                                         inner.GetMember("animationEvent".VariableHighlight(), "stringParameter").Equals();
                                         animationEvent.GenerateValue(animationEvent.name, inner, data);
-                                    }).NewLine();
+                                    });
 
                                     writer.Braces((inner, _indent) =>
                                     {
@@ -635,7 +635,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                                 _inside.Write(string.Join(", ", generator.Parameters.Select(p => p.name.VariableHighlight())));
                                             }
                                         })).Write(";");
-                                    });
+                                    }).NewLine();
                                 }
                             };
                         }
@@ -692,12 +692,12 @@ namespace Unity.VisualScripting.Community.CSharp
                                     {
                                         inner.GetMember("animationEvent".VariableHighlight(), "stringParameter").Equals();
                                         animationEvent.GenerateValue(animationEvent.name, inner, data);
-                                    }).NewLine();
+                                    });
 
                                     writer.Braces((inner, _indent) =>
                                     {
                                         WriteMethodBody(unit, data, writer);
-                                    });
+                                    }).NewLine();
                                 }
                             };
                         }
