@@ -11,8 +11,11 @@ jobs:
       - name: Send Discord Embed
         run: |
           LABELS_DISPLAY="None"
-          if [ "${{ github.event.issue.labels }}" != "[]" ]; then
-            LABELS_DISPLAY=$(echo '${{ github.event.issue.labels }}' | jq -r '.[].name' | paste -sd ", " -)
+          if [ -s "$GITHUB_EVENT_PATH" ]; then
+            LABELS=$(jq -r '.issue.labels[].name' "$GITHUB_EVENT_PATH" 2>/dev/null || echo "")
+            if [ -n "$LABELS" ]; then
+              LABELS_DISPLAY=$(echo "$LABELS" | paste -sd ", " -)
+            fi
           fi
 
           curl -X POST -H "Content-Type: application/json" \
