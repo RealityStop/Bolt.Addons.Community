@@ -32,12 +32,9 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private readonly HashSet<Unit> _specialUnits = new HashSet<Unit>();
 
-        Dictionary<string, int> methodIndex = new Dictionary<string, int>();
-
         protected override TypeGenerator OnGenerateType(NamespaceGenerator @namespace)
         {
             _specialUnits.Clear();
-            methodIndex.Clear();
             if (Data == null)
                 return ClassGenerator.Class(RootAccessModifier.Public, ClassModifier.None, "", null);
             generatorCounts.Clear();
