@@ -14,4 +14,4 @@ jobs:
       - uses: EndBug/discuss-on-discord@v1
         with:
           discord_bot_token: ${{ secrets.DISCORD_BOT_TOKEN }}
-          destination: https://discord.com/channels/1086044503548366928/1468227359436963850
+          destination: https://discord.com/channels/1086044503548366928/1468231895522213961
