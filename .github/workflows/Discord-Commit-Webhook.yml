@@ -29,10 +29,10 @@ jobs:
                   name: $author,
                   icon_url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
                 },
-                title: "**Message:** " + $message,
-                description: "**Branch:** " + $branch,
+                title: ("**Message:** " + $message),
+                description: ("**Branch:** " + $branch),
                 fields: [
-                  { name: "View on Github", value: "[Link](" + $url + ")", inline: false },
+                  { name: "View on Github", value: ("[Link](" + $url + ")"), inline: false },
                   { name: "Commit", value: $sha, inline: false }
                 ],
                 color: 3066993
