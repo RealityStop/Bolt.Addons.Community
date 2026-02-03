@@ -22,6 +22,10 @@ jobs:
               "description": "**State:** ${{ github.event.issue.state }}",
               "fields": [
               {
+                "name": "Labels",
+                "value": "${{ github.event.issue.labels.name || join(', ') }}",
+                "inline": false
+              }, {
                 "name": "View on Github",
                 "value": "[Link](${{ github.event.issue.html_url }})",
                 "inline": false
