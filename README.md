@@ -39,7 +39,7 @@ Add the following line to your `Packages/manifest.json` under `dependencies`:
 ---
 
 ## 📦 What's Included?
-Extending missing language concepts and providing fundamental utilities for your graphs.
+We include a multitude of assets, nodes, and tooling to extend missing language concepts and provide fundamental utilities and extensions for graphs. Here is what you will find:
 
 ### 📦 Node Library
 
