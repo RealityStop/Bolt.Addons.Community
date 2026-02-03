@@ -11,7 +11,7 @@ jobs:
       issues: read
     steps:
       - name: Sync Issue to Discord Thread
-        uses: EndBug/discuss-on-discord@v1
+        uses: appleboy/discord-action@v1.2.0
         with:
           discord_bot_token: ${{ secrets.DISCORD_BOT_TOKEN }}
 
