@@ -16,7 +16,8 @@ jobs:
             "thread_name": "Commit: ${{ github.sha }}",
             "embeds": [{
               "author":{
-                "name": "${{ github.event.head_commit.author.name }}"
+                "name": "${{ github.event.head_commit.author.name }}",
+                "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
               },
               "title": "**Message** ${{ github.event.head_commit.message }}",
               "description": "**Branch:** ${{ github.ref_name }}",
