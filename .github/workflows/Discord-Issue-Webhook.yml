@@ -7,40 +7,18 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
-      - name: Send Discord Embed
-        run: |
-          LABELS_DISPLAY="None"
-          if [ -s "$GITHUB_EVENT_PATH" ]; then
-            LABELS=$(jq -r '.issue.labels[].name' "$GITHUB_EVENT_PATH" 2>/dev/null || echo "")
-            if [ -n "$LABELS" ]; then
-              LABELS_DISPLAY=$(echo "$LABELS" | paste -sd ", " -)
-            fi
-          fi
+      - name: Sync Issue to Discord Thread
+        uses: EndBug/discuss-on-discord@v1
+        with:
+          discord_bot_token: ${{ secrets.DISCORD_BOT_TOKEN }}
 
-          curl -X POST -H "Content-Type: application/json" \
-          -d "{
-            \"thread_name\": \"Issue: ${{ github.event.issue.number }} - ${{ github.event.issue.title }}\",
-            \"embeds\": [{
-              \"author\": {
-                \"name\": \"${{ github.event.issue.user.login }}\",
-                \"icon_url\": \"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png\"
-              },
-              \"title\": \"**Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}**\",
-              \"description\": \"**State:** ${{ github.event.issue.state }}\",
-              \"fields\": [
-                {
-                  \"name\": \"Labels\",
-                  \"value\": \"${LABELS_DISPLAY}\",
-                  \"inline\": false
-                },
-                {
-                  \"name\": \"View on Github\",
-                  \"value\": \"[Link](${{ github.event.issue.html_url }})\",
-                  \"inline\": false
-                }
-              ],
-              \"color\": 3066993
-            }]
-          }" \
-          ${{ secrets.DISCORD_WEBHOOK_ISSUES_URL }}
+          destination: https://discord.com/channels/1086044503548366928/1468227359436963850
+
+          thread_name: "Issue: ${{ github.event.issue.number }} - ${{ github.event.issue.title }}"
+          discord_message: |
+            **Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}**
+            **State:** ${{ github.event.issue.state }}
+            **View on GitHub:** ${{ github.event.issue.html_url }}
