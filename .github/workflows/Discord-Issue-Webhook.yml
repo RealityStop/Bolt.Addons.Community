@@ -2,7 +2,7 @@ name: Discord Issue Notifications
 
 on:
   issues:
-    types: [opened, edited, closed, reopened, labeled, unlabeled]
+    types: [opened, closed, reopened]
 
 jobs:
   notify:
