@@ -58,7 +58,7 @@ To update, open Packages/manifest.json and remove the dev.bolt.addons entry unde
 ----------
 
 # Join the discord
-![Discord Banner](https://discord.com/api/guilds/1086044503548366928/widget.png?style=banner2)
+[![Discord Banner](https://discord.com/api/guilds/1086044503548366928/widget.png?style=banner2)](https://discord.gg/TdqJhZG3Nd)
 
 ----------
 
