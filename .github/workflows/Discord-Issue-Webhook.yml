@@ -10,17 +10,18 @@ jobs:
     steps:
       - name: Get Discord Thread ID
         id: get_thread
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          gh auth setup-git
           THREAD_ID=""
           COMMENTS=$(gh issue view ${{ github.event.issue.number }} --json comments --jq '.comments[].body')
-
           for COMMENT in $COMMENTS; do
             if [[ "$COMMENT" =~ <!--\ discord-thread-id:\ ([0-9]+)\ --> ]]; then
               THREAD_ID="${BASH_REMATCH[1]}"
               break
             fi
           done
-
           echo "thread_id=$THREAD_ID" >> $GITHUB_OUTPUT
 
       - name: Send Discord Embed
