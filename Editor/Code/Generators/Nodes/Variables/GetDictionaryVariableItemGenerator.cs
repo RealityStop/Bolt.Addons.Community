@@ -36,7 +36,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 GenerateDisconnectedVariableCodeInternal(data, writer);
             }
         }
-        private static string variablesTypeString = typeof(Unity.VisualScripting.Variables).As().CSharpName(true, true);
+
         private void GenerateConnectedVariableCodeInternal(ControlGenerationData data, CodeWriter writer)
         {
             variableName = data.TryGetGraphPointer(out var graphPointer) && CanPredictConnection(Unit.name, data) ? Flow.Predict<string>(Unit.name, graphPointer.AsReference()) : "";
@@ -57,16 +57,16 @@ namespace Unity.VisualScripting.Community.CSharp
             switch (Unit.kind)
             {
                 case VariableKind.Object:
-                    writer.Write(variablesTypeString + ".Object").Parentheses(w => GenerateValue(Unit.@object, data, w));
+                    writer.Write(writer.GetTypeNameHighlighted(typeof(Unity.VisualScripting.Variables)) + ".Object").Parentheses(w => GenerateValue(Unit.@object, data, w));
                     break;
                 case VariableKind.Scene:
-                    writer.Write(GetSceneKind(data, variablesTypeString));
+                    writer.Write(GetSceneKind(data, writer.GetTypeNameHighlighted(typeof(Unity.VisualScripting.Variables))));
                     break;
                 case VariableKind.Application:
-                    writer.Write(variablesTypeString + "." + "Application".VariableHighlight());
+                    writer.Write(writer.GetTypeNameHighlighted(typeof(Unity.VisualScripting.Variables)) + "." + "Application".VariableHighlight());
                     break;
                 case VariableKind.Saved:
-                    writer.Write(variablesTypeString + "." + "Saved".VariableHighlight());
+                    writer.Write(writer.GetTypeNameHighlighted(typeof(Unity.VisualScripting.Variables)) + "." + "Saved".VariableHighlight());
                     break;
             }
         }
