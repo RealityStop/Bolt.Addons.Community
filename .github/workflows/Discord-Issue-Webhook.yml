@@ -15,7 +15,7 @@ jobs:
         with:
           discord_bot_token: ${{ secrets.DISCORD_BOT_TOKEN }}
 
-          destination: "1468227359436963850"
+          destination: "https://discord.com/channels/1086044503548366928/1468227359436963850"
 
           discord_message: |
             **Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}**
