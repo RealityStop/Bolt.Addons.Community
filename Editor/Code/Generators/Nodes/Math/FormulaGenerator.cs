@@ -33,6 +33,12 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public FormulaGenerator(Unit unit) : base(unit) { }
 
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting";
+            yield return "UnityEngine";
+        }
+
         protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (string.IsNullOrWhiteSpace(Unit.formula))
@@ -240,7 +246,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     {
                         if (VisualScripting.Variables.Object(go).IsDefined(name))
                         {
-                            cw.Write(typeof(VisualScripting.Variables).As().CSharpName(false, true) +
+                            cw.Write(typeof(VisualScripting.Variables)).Write(
                                      $".Object({go.As().Code(false, false, true, "", false, true)}).Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
                             return;
                         }
@@ -248,21 +254,21 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     if (VisualScripting.Variables.ActiveScene.IsDefined(name))
                     {
-                        cw.Write(typeof(VisualScripting.Variables).As().CSharpName(false, true) +
+                        cw.Write(typeof(VisualScripting.Variables)).Write(
                                  $".{"ActiveScene".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
                         return;
                     }
 
                     if (VisualScripting.Variables.Application.IsDefined(name))
                     {
-                        cw.Write(typeof(VisualScripting.Variables).As().CSharpName(false, true) +
+                        cw.Write(typeof(VisualScripting.Variables)).Write(
                                  $".{"Application".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
                         return;
                     }
 
                     if (VisualScripting.Variables.Saved.IsDefined(name))
                     {
-                        cw.Write(typeof(VisualScripting.Variables).As().CSharpName(false, true) +
+                        cw.Write(typeof(VisualScripting.Variables)).Write(
                                  $".{"Saved".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
                         return;
                     }

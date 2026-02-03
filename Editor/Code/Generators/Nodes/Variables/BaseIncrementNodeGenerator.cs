@@ -23,6 +23,7 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             if (Unit.kind == VariableKind.Scene)
                 yield return "UnityEngine.SceneManagement";
+            yield return "Unity.VisualScripting";
         }
 
         protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
@@ -193,7 +194,7 @@ namespace Unity.VisualScripting.Community.CSharp
         protected void GetVariableKindAccessor(VariableKind kind, string name, ControlGenerationData data, CodeWriter writer, out Type resolvedType)
         {
             resolvedType = typeof(object);
-            var variables = typeof(Unity.VisualScripting.Variables).As().CSharpName(true, true);
+            var variables = writer.GetTypeNameHighlighted(typeof(Unity.VisualScripting.Variables));
 
             switch (kind)
             {
