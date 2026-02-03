@@ -40,7 +40,6 @@ For BOLT use branch `bolt-main` with this url:
 Then, use the Regenerate Nodes option in Project Settings > Visual Scripting, and they're ready to go!  Once you've rebuilt your node options, the new nodes will be available for use.
 
 
-
 ### Manual install:
 Alternatively, open Packages/manifest.json and add this line under dependencies:
 
