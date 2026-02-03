@@ -4,14 +4,43 @@ on:
   issues:
     types: [opened, edited, closed, reopened, labeled, unlabeled]
 
-permissions:
-  issues: write
-
 jobs:
-  discord:
+  notify:
     runs-on: ubuntu-latest
     steps:
-      - uses: EndBug/discuss-on-discord@v1
-        with:
-          discord_bot_token: ${{ secrets.DISCORD_BOT_TOKEN }}
-          destination: https://discord.com/channels/1086044503548366928/1086044504273981496
+      - name: Send Discord Embed
+        run: |
+          LABELS_DISPLAY="None"
+          if [ -s "$GITHUB_EVENT_PATH" ]; then
+            LABELS=$(jq -r '.issue.labels[].name' "$GITHUB_EVENT_PATH" 2>/dev/null || echo "")
+            if [ -n "$LABELS" ]; then
+              LABELS_DISPLAY=$(echo "$LABELS" | paste -sd ", " -)
+            fi
+          fi
+
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{
+            \"thread_name\": \"Issue: ${{ github.event.issue.number }} - ${{ github.event.issue.title }}\",
+            \"embeds\": [{
+              \"author\": {
+                \"name\": \"${{ github.event.issue.user.login }}\",
+                \"icon_url\": \"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png\"
+              },
+              \"title\": \"**Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}**\",
+              \"description\": \"**State:** ${{ github.event.issue.state }}\",
+              \"fields\": [
+                {
+                  \"name\": \"Labels\",
+                  \"value\": \"${LABELS_DISPLAY}\",
+                  \"inline\": false
+                },
+                {
+                  \"name\": \"View on Github\",
+                  \"value\": \"[Link](${{ github.event.issue.html_url }})\",
+                  \"inline\": false
+                }
+              ],
+              \"color\": 3066993
+            }]
+          }" \
+          ${{ secrets.DISCORD_WEBHOOK_ISSUES_URL }}
