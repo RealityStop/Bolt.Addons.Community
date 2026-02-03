@@ -2,7 +2,7 @@
 # Join the discord
 [![Discord Banner](https://discord.com/api/guilds/1086044503548366928/widget.png?style=banner2)](https://discord.gg/TdqJhZG3Nd)
 
-A community-driven project extending Unity Visual Scripting with custom nodes, assets, and helpers. 
+A community-driven project extending Unity Visual Scripting with custom nodes, assets, helpers and more! 
 
 > [!IMPORTANT]
 > The original creators have moved on. This project is now managed by new maintainers!
