@@ -43,20 +43,20 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 
 ### 📦 Node Library
 
-| Category | | |
-| :--- | :--- | :--- |
-| [**Variables**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#variables) | Increment, Decrement, Plus Equals | Reset Saved, Clear Saved |
-| [**Events**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#events) | On Every X Seconds, On Variable Changed, Manual Event, Defined Event, Trigger Defined Event, Global Defined Event | Return Event, Event Return, Trigger Return Event, Editor Window Events, Trigger Asset Custom Event, Reset Graph Listener, Channel Event, Trigger Channel Event |
-| [**Control**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#control) | Branch (Params), Gate, Edge Trigger, Change Detect, Invoke Delegate, Bind Delegate, Unbind Delegate, Create Delegate | FlowToCoroutine, CoroutineToFlow, WaitForManualPress, If (Next), ElseIf, Using, Flow Reroute, Value Reroute, Chance Flow, Limited Trigger |
-| [**Collections**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#control) | Create Array, Get Array Item | Query Node, Random Element, Random Numbers, Set Array Item |
-| [**Logic**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#logic) | Logic Params, Log Node, Toggle Bool, Gate | Polarity, Between, Edge Trigger, Latch |
-| [**Utility**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#logic) | Convert, As, Copy To Clipboard, Counter, IsStringEmptyOrWhitespace, HDRColors, Select Expose, Bold, Italic | Strikethrough, Underline, Reverse String, String Builder, Size, Color, Random String, Multiline String |
-| [**Documentation**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#documentation) | Comment, Arrow | Todo, Stuff Happens, Some Value |
-| [**Object Pooling**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#pooling) | Initialize Object Pool, Retrieve Object, On Retrieved | Return Object, Return All Objects, On Returned |
-| [**Graphs**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Machine-Variables) | Machine Is, Get Machine, Get Machine Variable | Get Machines, Set Machine Variable, Has Machine Variable |
-| [**Time**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Machine-Variables) | Yield, Enumerator, Stopwatch ||
-| [**Editor Window View**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Window-View) | Window Is, Get Window Variable, Set Window Variable ||
-| [**Math**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Window-View) | Math Op, Negate Value | Decay, Exponential, Linear, Logarithmic, Reverse Linear, Sigmoid |
+| Category | |
+| :--- | :--- |
+| [**Variables**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#variables) | Increment, Decrement, Plus Equals, Reset Saved, Clear Saved |
+| [**Events**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#events) | On Every X Seconds, On Variable Changed, Manual Event, Defined Event, Trigger Defined Event, Global Defined Event, Return Event, Event Return, Trigger Return Event, Editor Window Events, Trigger Asset Custom Event, Reset Graph Listener, Channel Event, Trigger Channel Event |
+| [**Control**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#control) | Branch (Params), Gate, Edge Trigger, Change Detect, Invoke Delegate, Bind Delegate, Unbind Delegate, Create Delegate, FlowToCoroutine, CoroutineToFlow, WaitForManualPress, If (Next), ElseIf, Using, Flow Reroute, Value Reroute, Chance Flow, Limited Trigger |
+| [**Collections**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#control) | Create Array, Get Array Item, Query Node, Random Element, Random Numbers, Set Array Item |
+| [**Logic**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#logic) | Logic Params, Log Node, Toggle Bool, Gate, Polarity, Between, Edge Trigger, Latch |
+| [**Utility**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#logic) | Convert, As, Copy To Clipboard, Counter, IsStringEmptyOrWhitespace, HDRColors, Select Expose, Bold, Italic, Strikethrough, Underline, Reverse String, String Builder, Size, Color, Random String, Multiline String |
+| [**Documentation**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#documentation) | Comment, Arrow, Todo, Stuff Happens, Some Value |
+| [**Object Pooling**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#pooling) | Initialize Object Pool, Retrieve Object, On Retrieved, Return Object, Return All Objects, On Returned |
+| [**Graphs**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Machine-Variables) | Machine Is, Get Machine, Get Machine Variable, Get Machines, Set Machine Variable, Has Machine Variable |
+| [**Time**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Machine-Variables) | Yield, Enumerator, Stopwatch |
+| [**Editor Window View**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Window-View) | Window Is, Get Window Variable, Set Window Variable |
+| [**Math**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Window-View) | Math Op, Negate Value, Decay, Exponential, Linear, Logarithmic, Reverse Linear, Sigmoid |
 
 ### 💎 Assets
 *Code Assets generate dependency-free C# code directly from your graphs.*
