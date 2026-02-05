@@ -4,6 +4,8 @@ using System.Reflection;
 using UnityEditor;
 #if PACKAGE_INPUT_SYSTEM_EXISTS
 using Unity.VisualScripting.InputSystem;
+using UnityEngine;
+
 #endif
 
 #if VISUAL_SCRIPTING_1_7
@@ -20,9 +22,9 @@ namespace Unity.VisualScripting.Community
         static ProviderPatcher()
         {
             EnsurePatched();
+            PatchVariablesDeclarationsInspector();
             PatchWidgets();
             // PatchGraphContext();
-            PatchVariablesDeclarationsInspector();
         }
 
         public static void EnsurePatched()
@@ -30,16 +32,16 @@ namespace Unity.VisualScripting.Community
             PatchConstructorStubWriter();
         }
 
+        private static FieldInfo ReferenceDataField = typeof(GraphWindow).GetField("referenceData", BindingFlags.Instance | BindingFlags.NonPublic);
+
         private static void PatchWidgets()
         {
-            IGraphContext current = null;
-            var provider = DescriptorProvider.instance;
+            var descriptorProvider = DescriptorProvider.instance;
 #if ENABLE_VERTICAL_FLOW
-            PatchGlobalProvider(provider, typeof(IEventUnit), typeof(EventUnitDescriptor<>));
+            PatchGlobalProvider(descriptorProvider, typeof(IEventUnit), typeof(EventUnitDescriptor<>));
 #endif
             GraphWindow.activeContextChanged += context =>
             {
-                current = context;
                 if (context != null && context.graph is FlowGraph)
                 {
                     var provider = context.canvas.widgetProvider;
@@ -52,28 +54,40 @@ namespace Unity.VisualScripting.Community
                 PatchUnitConnectionWidgets(context);
             };
 
-            if (current == null)
+            // Trigger GraphWindow.activeContextChanged for each of the windows
+            // this should ensure that it patches the providers before any call to
+            // canvas.Widget can be made.
+            foreach (var tab in Resources.FindObjectsOfTypeAll<GraphWindow>())
             {
-                var context = GraphWindow.activeContext;
+                tab.reference = (ReferenceDataField.GetValue(tab) as GraphPointerData).ToReference(false);
+
+                var context = tab.context;
+
                 if (context != null && context.graph is FlowGraph)
                 {
-                    var widgetProvider = context.canvas.widgetProvider;
-                    PatchGlobalProvider(widgetProvider, typeof(UnifiedVariableUnit), typeof(UnifiedVariableUnitWidget));
+                    var provider = context.canvas.widgetProvider;
+                    PatchGlobalProvider(provider, typeof(UnifiedVariableUnit), typeof(UnifiedVariableUnitWidget));
                 }
 #if NEW_UNIT_UI
                 PatchUnitWidgets(context);
 #endif
                 PatchUnitPortWidgets(context);
                 PatchUnitConnectionWidgets(context);
+                if (!string.IsNullOrEmpty(context.windowTitle))
+                {
+                    EditorApplication.delayCall += () =>
+                    {
+                        tab.titleContent = new GUIContent(context.windowTitle, BoltCore.Icons.window?[IconSize.Small]);
+                    };
+                }
             }
         }
 
         private static void PatchUnitWidgets(IGraphContext context)
         {
-            if (context != null && context.graph is FlowGraph)
+            if (context != null && context.graph is FlowGraph graph)
             {
                 var provider = context.canvas.widgetProvider;
-
                 PatchGlobalProvider(provider, typeof(IUnit), typeof(UnitWidget<>));
                 PatchGlobalProvider(provider, typeof(SUnit), typeof(SubgraphUnitWidget));
                 PatchGlobalProvider(provider, typeof(StateUnit), typeof(StateUnitWidget));

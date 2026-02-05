@@ -21,54 +21,70 @@ namespace Unity.VisualScripting.Community
             EditorApplication.update += OnEditorUpdate;
         }
 
-        private class SearchState
-        {
-            public string text;
-            public List<IGraphElement> matches = new List<IGraphElement>();
-            public int currentIndex = -1;
-            public Dictionary<IGraphElement, float> highlightTimers = new Dictionary<IGraphElement, float>();
-            public GraphReference reference;
-            public Label counterLabel;
-        }
+        static Dictionary<GraphWindow, Sidebars> sidebars = new Dictionary<GraphWindow, Sidebars>();
 
-        private static readonly Dictionary<GraphWindow, SearchState> windowSearchStates = new Dictionary<GraphWindow, SearchState>();
-
-        private static SearchState GetSearchState(GraphWindow window)
+        private static WindowState GetWindowState(GraphWindow window)
         {
-            if (!windowSearchStates.TryGetValue(window, out var state))
+            if (window == null)
+                return null;
+
+            var root = window.rootVisualElement;
+            if (root == null)
+                return null;
+
+            if (!(root.userData is WindowState state))
             {
-                state = new SearchState();
-                windowSearchStates[window] = state;
+                state = new WindowState
+                {
+                    SearchState = new SearchState(),
+                    Toolbar = CreateToolbar(window),
+                    FloatingToolbar = CreateFloatingToolbar(window)
+                };
+
+                root.userData = state;
             }
+
             return state;
         }
 
-        private static Event e => Event.current;
-
-        private static readonly Dictionary<GraphWindow, VisualElement> floatingToolbars = new Dictionary<GraphWindow, VisualElement>();
-        private static readonly Dictionary<GraphWindow, VisualElement> Toolbars = new Dictionary<GraphWindow, VisualElement>();
-
-        static Dictionary<GraphWindow, Sidebars> sidebars = new Dictionary<GraphWindow, Sidebars>();
-
-        private static VisualElement GetFloatingToolbar(GraphWindow window)
+        private static SearchState GetSearchState(GraphWindow window)
         {
-            if (!floatingToolbars.TryGetValue(window, out var result))
+            var state = GetWindowState(window);
+            if (state == null) return null;
+
+            if (state.SearchState.reference != window.reference)
             {
-                result = CreateFloatingToolbar(window);
-                if (result == null) return null;
-                floatingToolbars[window] = result;
+                state.SearchState.reference = window.reference;
+                state.SearchState.highlightTimers?.Clear();
+                state.SearchState.matches.Clear();
             }
-            return result;
+
+            return state.SearchState;
         }
 
         private static VisualElement GetToolbar(GraphWindow window)
         {
-            if (!Toolbars.TryGetValue(window, out var result))
-            {
-                result = CreateToolbar(window);
-                Toolbars[window] = result;
-            }
-            return result;
+            var state = GetWindowState(window);
+            return state != null ? state.Toolbar : null;
+        }
+
+        private static VisualElement GetFloatingToolbar(GraphWindow window)
+        {
+            var state = GetWindowState(window);
+            return state != null ? state.FloatingToolbar : null;
+        }
+
+        private static void RemoveUI(GraphWindow window)
+        {
+            if (!(window.rootVisualElement.userData is WindowState state)) return;
+
+            var toolbar = state.Toolbar;
+            toolbar?.RemoveFromHierarchy();
+
+            var floatingToolbar = state.FloatingToolbar;
+            floatingToolbar?.RemoveFromHierarchy();
+
+            window.rootVisualElement.userData = null;
         }
 
         private static void OnEditorUpdate()
@@ -86,13 +102,7 @@ namespace Unity.VisualScripting.Community
                     {
                         patchedRoots.Remove(window.rootVisualElement);
 
-                        GetToolbar(window)?.RemoveFromHierarchy();
-                        GetFloatingToolbar(window)?.RemoveFromHierarchy();
-
-                        if (floatingToolbars.ContainsKey(window))
-                            floatingToolbars.Remove(window);
-                        if (Toolbars.ContainsKey(window))
-                            Toolbars.Remove(window);
+                        RemoveUI(window);
                     }
                     else
                         continue;
@@ -106,10 +116,7 @@ namespace Unity.VisualScripting.Community
                 else if (disableUI)
                 {
                     patchedRoots.Remove(window.rootVisualElement);
-                    GetToolbar(window).RemoveFromHierarchy();
-                    GetFloatingToolbar(window)?.RemoveFromHierarchy();
-                    floatingToolbars.Remove(window);
-                    Toolbars.Remove(window);
+                    RemoveUI(window);
                 }
                 KeepToolbarAnchored(window);
             }
@@ -141,6 +148,7 @@ namespace Unity.VisualScripting.Community
             ToolbarGUI(root, window);
             FloatingToolbarGUI(root, window);
         }
+
         private static VisualElement CreateFloatingToolbar(GraphWindow window)
         {
             if (window.reference == null || window.context == null) return null;
@@ -183,12 +191,16 @@ namespace Unity.VisualScripting.Community
                 }
             };
         }
+
         public const float FloatingToolbarButtonSize = 28;
         private static bool previousDeveloperMode = BoltCore.Configuration.developerMode;
         private static void FloatingToolbarGUI(VisualElement root, GraphWindow window)
         {
             var floatingToolbar = GetFloatingToolbar(window);
             if (floatingToolbar == null) return;
+
+            var windowState = GetWindowState(window);
+
             floatingToolbar.style.flexDirection = FlexDirection.Row;
             floatingToolbar.style.alignItems = Align.FlexEnd;
             floatingToolbar.style.justifyContent = Justify.SpaceBetween;
@@ -289,8 +301,12 @@ namespace Unity.VisualScripting.Community
                     }));
                 }
             }
+
             RebuildToolbar();
-            GraphWindow.activeContextChanged += _ => RebuildToolbar();
+            windowState.contextChanged += () =>
+            {
+                floatingToolbar.schedule.Execute(() => RebuildToolbar());
+            };
 
             root.Add(floatingToolbar);
         }
@@ -588,12 +604,20 @@ namespace Unity.VisualScripting.Community
         private static void ToolbarGUI(VisualElement root, GraphWindow window)
         {
             var state = GetSearchState(window);
+            var windowState = GetWindowState(window);
 
             var Toolbar = GetToolbar(window);
 
             Toolbar.Add(new IMGUIContainer(() =>
             {
                 if (window == null || window.context?.canvas == null) return;
+
+                windowState.SetContext(window.context);
+
+                if (state.reference != window.reference)
+                {
+                    state = GetSearchState(window);
+                }
 
                 var canvas = window.context.canvas;
                 foreach (var kvp in state.highlightTimers.ToList())
@@ -703,7 +727,13 @@ namespace Unity.VisualScripting.Community
             Toolbar.style.position = Position.Relative;
             Toolbar.style.width = new Length(100, LengthUnit.Percent);
 
-            GraphWindow.activeContextChanged += v => RebuildBreadcrumbs();
+            windowState.contextChanged += () =>
+            {
+                Toolbar.schedule.Execute(() =>
+                {
+                    RebuildBreadcrumbs();
+                });
+            };
 
             void RebuildBreadcrumbs()
             {
@@ -1273,6 +1303,32 @@ namespace Unity.VisualScripting.Community
 
 #endif
             }
+        }
+
+        private class WindowState
+        {
+            public SearchState SearchState = new SearchState();
+            public VisualElement Toolbar;
+            public VisualElement FloatingToolbar;
+            public Action contextChanged;
+            public IGraphContext Context;
+
+            public void SetContext(IGraphContext context)
+            {
+                if (context == Context) return;
+
+                contextChanged?.Invoke();
+                Context = context;
+            }
+        }
+        private class SearchState
+        {
+            public string text;
+            public List<IGraphElement> matches = new List<IGraphElement>();
+            public int currentIndex = -1;
+            public Dictionary<IGraphElement, float> highlightTimers = new Dictionary<IGraphElement, float>();
+            public GraphReference reference;
+            public Label counterLabel;
         }
     }
 }

@@ -20,13 +20,18 @@ namespace Unity.VisualScripting.Community
     
         protected override int Order()
         {
-            return 1;
+            return 2;
         }
     
         public override string SearchResultLabel(string query)
         {
             return query + $"<color=#{ColorPalette.unityForegroundDim.ToHexString()}> (dynamic value)</color>";
         }
+
+        // Used to make the query not match exactly so it will still prefer other matches over this.
+        private const string Poison = "zzx";
+
+        public override string formerHaystack => Poison + currentQuery + Poison;
     
         protected override void FillFromUnit()
         {
@@ -39,6 +44,11 @@ namespace Unity.VisualScripting.Community
         protected override string Label(bool human)
         {
             return currentQuery;
+        }
+
+        protected override string Haystack(bool human)
+        {
+            return Poison + currentQuery + Poison;
         }
     
         protected override EditorTexture Icon()

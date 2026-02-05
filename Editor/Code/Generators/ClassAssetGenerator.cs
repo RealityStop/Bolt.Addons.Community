@@ -609,11 +609,6 @@ namespace Unity.VisualScripting.Community.CSharp
         public override ControlGenerationData CreateGenerationData()
         {
             data = new ControlGenerationData(Data.inheritsType ? Data.GetInheritedType() : typeof(object), null);
-            foreach (var variable in Data.variables)
-            {
-                if (!string.IsNullOrEmpty(variable.FieldName))
-                    data.AddLocalNameInScope(variable.FieldName, variable.type);
-            }
             return data;
         }
 
@@ -660,11 +655,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 }
                 methodGenerator.count = generatorCounts[type];
                 generatorCounts[type]++;
-                foreach (var item in @class.fields)
-                {
-                    if (!data.ContainsNameInAnyScope(item.name))
-                        data.AddLocalNameInScope(item.name, item.type);
-                }
+
                 var method = MethodGenerator.Method(methodGenerator.AccessModifier, methodGenerator.MethodModifier, methodGenerator.ReturnType, methodGenerator.Name);
 
                 method.SetOwner(methodGenerator.unit);
@@ -714,12 +705,6 @@ namespace Unity.VisualScripting.Community.CSharp
                         }
                         method.AddAttribute(attrGenerator);
                     }
-                }
-
-                foreach (var variable in Data.variables)
-                {
-                    if (!data.ContainsNameInAnyScope(variable.name))
-                        data.AddLocalNameInScope(variable.FieldName, variable.type);
                 }
 
                 method.Body(Writer);
