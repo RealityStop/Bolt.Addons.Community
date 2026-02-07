@@ -32,11 +32,11 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 if (data.GetExpectedType() == typeof(int))
                 {
-                    writer.Write(int.Parse(unit.defaultValues[input.key].ToString()).As().Code(true, true, true, "", false));
+                    writer.Object(int.Parse(unit.defaultValues[input.key].ToString()), true, true, true, true, "", false);
                 }
                 else
                 {
-                    writer.Write(unit.defaultValues[input.key].As().Code(true, true, true, "", false));
+                    writer.Object(unit.defaultValues[input.key], true, true, true, true, "", false);
                 }
             }
             else

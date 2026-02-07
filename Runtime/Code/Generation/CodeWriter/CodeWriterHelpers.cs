@@ -100,7 +100,7 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         public CodeWriter Int(int value)
         {
-            Write(value.As().Code(false));
+            Write(value.As().Code(false, true, true, "", false, false));
             return this;
         }
 
@@ -109,7 +109,7 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         public CodeWriter Float(float value)
         {
-            Write(value.As().Code(false));
+            Write(value.As().Code(false, true, true, "", false, false));
             return this;
         }
 
@@ -118,7 +118,7 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         public CodeWriter Bool(bool value)
         {
-            Write(value.As().Code(false));
+            Write(value.As().Code(false, true, true, "", false, false));
             return this;
         }
 
@@ -127,7 +127,7 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         public string IntString(int value)
         {
-            return value.As().Code(false);
+            return value.As().Code(false, true, true, "", false, false);
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         public string FloatString(float value)
         {
-            return value.As().Code(false);
+            return value.As().Code(false, true, true, "", false, false);
         }
 
         /// <summary>
@@ -143,7 +143,7 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         public string BoolString(bool value)
         {
-            return value.As().Code(false);
+            return value.As().Code(false, true, true, "", false, false);
         }
 
         /// <summary>

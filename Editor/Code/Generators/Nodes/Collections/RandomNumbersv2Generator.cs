@@ -33,9 +33,9 @@ namespace Unity.VisualScripting.Community.CSharp
                 writer.Action(() => GenerateValue(Unit.count, data, writer)),
                 writer.Action(() => GenerateValue(Unit.minimum, data, writer)),
                 writer.Action(() => GenerateValue(Unit.maximum, data, writer)),
-                Unit.integer.As().Code(false),
-                Unit.aotList.As().Code(false),
-                Unit.unique.As().Code(false)
+                writer.ObjectString(Unit.integer),
+                writer.ObjectString(Unit.aotList),
+                writer.ObjectString(Unit.unique)
             );
         }
 
@@ -49,9 +49,9 @@ namespace Unity.VisualScripting.Community.CSharp
                     writer.Action(() => GenerateValue(Unit.count, data, writer)),
                     writer.Action(() => GenerateValue(Unit.minimum, data, writer)),
                     writer.Action(() => GenerateValue(Unit.maximum, data, writer)),
-                    Unit.integer.As().Code(false),
-                    Unit.aotList.As().Code(false),
-                    Unit.unique.As().Code(false)
+                    writer.ObjectString(Unit.integer),
+                    writer.ObjectString(Unit.aotList),
+                    writer.ObjectString(Unit.unique)
                     );
                 })
             );

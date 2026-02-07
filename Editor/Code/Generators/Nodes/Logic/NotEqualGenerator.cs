@@ -50,7 +50,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 }
                 else if (Unit.numeric)
                 {
-                    writer.Write(Unit.defaultValues["b"].As().Code(true));
+                    writer.Object(Unit.defaultValues["b"]);
                     return;
                 }
             }

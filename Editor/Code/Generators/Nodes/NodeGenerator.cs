@@ -252,11 +252,11 @@ namespace Unity.VisualScripting.Community.CSharp
                     return;
                 }
 
-                writer.Write("gameObject".VariableHighlight() + ".GetComponent<" + input.type.As().CSharpName(false, true) + ">()");
+                writer.Write("gameObject".VariableHighlight() + ".GetComponent<" + writer.GetTypeNameHighlighted(input.type) + ">()");
                 return;
             }
 
-            writer.Write(input.unit.defaultValues[input.key].As().Code(true, true, true, "", true, true));
+            writer.Object(input.unit.defaultValues[input.key]);
         }
 
         public bool ShouldCast(ValueInput input, ControlGenerationData data, CodeWriter writer)

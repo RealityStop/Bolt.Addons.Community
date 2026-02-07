@@ -41,7 +41,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 }
                 else
                 {
-                    writer.Write(defaultValue.As().Code(true, true, true, "", false, true));
+                    writer.Object(defaultValue, true, true, true, true, "", false, true);
                 }
             }
         }

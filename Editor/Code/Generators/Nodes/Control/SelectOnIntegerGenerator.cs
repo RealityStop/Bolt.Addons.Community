@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 foreach (var branch in Unit.branches)
                 {
                     writer.WriteIndented();
-                    writer.Write(branch.Key.As().Code(false));
+                    writer.Object(branch.Key);
                     writer.Write(" => ");
                     GenerateValue(branch.Value, data, writer);
                     writer.Write(",");

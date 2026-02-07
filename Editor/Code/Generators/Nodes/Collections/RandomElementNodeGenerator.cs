@@ -29,7 +29,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 return;
             }
 
-            writer.CallCSharpUtilityMethod("GetRandomElement", writer.Action(() => GenerateValue(Unit.collection, data, writer)), Unit.Dictionary.As().Code(false));
+            writer.CallCSharpUtilityMethod("GetRandomElement", writer.Action(() => GenerateValue(Unit.collection, data, writer)), writer.ObjectString(Unit.Dictionary));
 
             writer.Dot();
             writer.Write(output == Unit.key ? "key".VariableHighlight() : "value".VariableHighlight());
@@ -41,7 +41,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
             writer.CreateVariable(variableName, writer.Action(() =>
             {
-                writer.CallCSharpUtilityMethod("GetRandomElement", writer.Action(() => GenerateValue(Unit.collection, data, writer)), Unit.Dictionary.As().Code(false));
+                writer.CallCSharpUtilityMethod("GetRandomElement", writer.Action(() => GenerateValue(Unit.collection, data, writer)), writer.ObjectString(Unit.Dictionary));
             }));
 
             GenerateExitControl(Unit.exit, data, writer);

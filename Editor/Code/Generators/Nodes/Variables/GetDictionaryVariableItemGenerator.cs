@@ -121,7 +121,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                 WriteKind(writer, data);
                 writer.Write(".GetDictionaryVariable");
-                writer.Parentheses(inside => inside.Write(name.As().Code(false)));
+                writer.Parentheses(inside => writer.Object(name));
                 writer.Brackets(inside => GenerateValue(Unit.key, data, inside));
             }
             else

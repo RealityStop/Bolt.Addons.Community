@@ -767,32 +767,32 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(Vector2))
             {
                 var value = (Vector2)@as.value;
-                return Create("Vector2", value.x.As().Code(false, false, false), value.y.As().Code(false, false, false));
+                return Create("Vector2", value.x.As().Code(false, false, false, "", false, fullName), value.y.As().Code(false, false, false, "", false, fullName));
             }
             if (type == typeof(Vector3))
             {
                 var value = (Vector3)@as.value;
-                return Create("Vector3", value.x.As().Code(false, false, false), value.y.As().Code(false, false, false), value.z.As().Code(false, false, false));
+                return Create("Vector3", value.x.As().Code(false, false, false, "", false, fullName), value.y.As().Code(false, false, false, "", false, fullName), value.z.As().Code(false, false, false, "", false, fullName));
             }
             if (type == typeof(Vector4))
             {
                 var value = (Vector4)@as.value;
-                return Create("Vector4", value.x.As().Code(false, false, false), value.y.As().Code(false, false, false), value.z.As().Code(false, false, false), value.w.As().Code(false, false, false));
+                return Create("Vector4", value.x.As().Code(false, false, false, "", false, fullName), value.y.As().Code(false, false, false, "", false, fullName), value.z.As().Code(false, false, false, "", false, fullName), value.w.As().Code(false, false, false, "", false, fullName));
             }
             if (type == typeof(AnimationCurve))
             {
                 var value = @as.value as AnimationCurve;
-                return Create("AnimationCurve", value.keys.Select(k => Create("Keyframe", k.time.As().Code(false, false, false), k.value.As().Code(false, false, false), k.inTangent.As().Code(false, false, false), k.outTangent.As().Code(false, false, false), k.inWeight.As().Code(false, false, false), k.outWeight.As().Code(false, false, false))).ToArray());
+                return Create("AnimationCurve", value.keys.Select(k => Create("Keyframe", k.time.As().Code(false, false, false, "", false, fullName), k.value.As().Code(false, false, false, "", false, fullName), k.inTangent.As().Code(false, false, false, "", false, fullName), k.outTangent.As().Code(false, false, false, "", false, fullName), k.inWeight.As().Code(false, false, false, "", false, fullName), k.outWeight.As().Code(false, false, false, "", false, fullName))).ToArray());
             }
             if (type == typeof(Color))
             {
                 var value = (Color)@as.value;
-                return Create("Color", value.r.As().Code(false, false, false), value.g.As().Code(false, false, false), value.b.As().Code(false, false, false), value.a.As().Code(false, false, false));
+                return Create("Color", value.r.As().Code(false, false, false, "", false, fullName), value.g.As().Code(false, false, false, "", false, fullName), value.b.As().Code(false, false, false, "", false, fullName), value.a.As().Code(false, false, false, "", false, fullName));
             }
             if (type == typeof(WaitForFlowLogic))
             {
                 var value = (WaitForFlowLogic)@as.value;
-                return Create("WaitForFlowLogic", value.InputCount.As().Code(false, false, false), value.ResetOnExit.As().Code(false, false, false));
+                return Create("WaitForFlowLogic", value.InputCount.As().Code(false, false, false, "", false, fullName), value.ResetOnExit.As().Code(false, false, false, "", false, fullName));
             }
             if (type.IsNumeric()) return @as.value.ToString();
             if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(false, " | ", fullName);
@@ -872,35 +872,252 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(Vector2))
             {
                 var value = (Vector2)@as.value;
-                return CreateHighlighted("Vector2", value.x.As().Code(false, false, true), value.y.As().Code(false, false, true));
+                return CreateHighlighted("Vector2", value.x.As().Code(false, false, true, "", false, fullName), value.y.As().Code(false, false, true, "", false, fullName));
             }
             if (type == typeof(Vector3))
             {
                 var value = (Vector3)@as.value;
-                return CreateHighlighted("Vector3", value.x.As().Code(false, false, true), value.y.As().Code(false, false, true), value.z.As().Code(false, false, true));
+                return CreateHighlighted("Vector3", value.x.As().Code(false, false, true, "", false, fullName), value.y.As().Code(false, false, true, "", false, fullName), value.z.As().Code(false, false, true, "", false, fullName));
             }
             if (type == typeof(Vector4))
             {
                 var value = (Vector4)@as.value;
-                return CreateHighlighted("Vector4", value.x.As().Code(false, false, true), value.y.As().Code(false, false, true), value.z.As().Code(false, false, true), value.w.As().Code(false, false, true));
+                return CreateHighlighted("Vector4", value.x.As().Code(false, false, true, "", false, fullName), value.y.As().Code(false, false, true, "", false, fullName), value.z.As().Code(false, false, true, "", false, fullName), value.w.As().Code(false, false, true, "", false, fullName));
             }
             if (type == typeof(AnimationCurve))
             {
                 var value = @as.value as AnimationCurve;
-                return CreateHighlighted("AnimationCurve", value.keys.Select(k => CreateHighlighted("Keyframe", k.time.As().Code(false), k.value.As().Code(false), k.inTangent.As().Code(false), k.outTangent.As().Code(false), k.inWeight.As().Code(false), k.outWeight.As().Code(false))).ToArray());
+                return CreateHighlighted("AnimationCurve", value.keys.Select(k => CreateHighlighted("Keyframe", k.time.As().Code(false, false, true, "", false, fullName), k.value.As().Code(false, false, true, "", false, fullName), k.inTangent.As().Code(false, false, true, "", false, fullName), k.outTangent.As().Code(false, false, true, "", false, fullName), k.inWeight.As().Code(false, false, true, "", false, fullName), k.outWeight.As().Code(false, false, true, "", false, fullName))).ToArray());
             }
             if (type == typeof(Color))
             {
                 var value = (Color)@as.value;
-                return CreateHighlighted("Color", value.r.As().Code(false), value.g.As().Code(false), value.b.As().Code(false), value.a.As().Code(false));
+                return CreateHighlighted("Color", value.r.As().Code(false, false, true, "", false, fullName), value.g.As().Code(false, false, true, "", false, fullName), value.b.As().Code(false, false, true, "", false, fullName), value.a.As().Code(false, false, true, "", false, fullName));
             }
             if (type == typeof(WaitForFlowLogic))
             {
                 var value = (WaitForFlowLogic)@as.value;
-                return CreateHighlighted("WaitForFlowLogic", value.InputCount.As().Code(false), value.ResetOnExit.As().Code(false));
+                return CreateHighlighted("WaitForFlowLogic", value.InputCount.As().Code(false, false, true, "", false, fullName), value.ResetOnExit.As().Code(false, false, true, "", false, fullName));
             }
             if (type.IsNumeric()) return @as.value.ToString().NumericHighlight();
             if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(true, " | ", fullName);
+            if (isNew)
+            {
+                if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)
+                {
+                    if (type.IsGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, true, variableForObjects) : "new ".ConstructHighlight() + GenericDeclaration(type, fullName) + "()";
+                    if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, true, variableForObjects) : "new ".ConstructHighlight() + GenericDeclaration(type, fullName) + "(" + parameters + ")";
+                    return isLiteral ? Literal(@as.value, newLineLiteral, fullName, true, variableForObjects) : "new ".ConstructHighlight() + type.As().CSharpName(false, fullName, true) + "(" + parameters + ")";
+                }
+                else
+                {
+                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, true, variableForObjects) : "new ".ConstructHighlight() + type.As().CSharpName(false, fullName, true) + "(" + parameters + ")";
+                }
+            }
+
+            return @as.value.ToString();
+        }
+        /// <summary>
+        /// Converts a value into code form. Example: a float value of '10' would be '10f'. A string would add quotes, etc.
+        /// </summary>
+        public static string Code(this HUMValue.Data.As @as, bool isNew, bool isLiteral = false, bool highlight = true, string parameters = "", bool newLineLiteral = false, Func<Type, bool> fullName = null, bool variableForObjects = true)
+        {
+            if (highlight) return HighlightedCode(@as, isNew, isLiteral, parameters, newLineLiteral, fullName, variableForObjects);
+            Type type = @as.value?.GetType();
+            if (@as.value is Type) return "typeof(" + ((Type)@as.value).As().CSharpName(false, fullName, false) + ")";
+            if (type == null) return "null";
+            if (type == typeof(void)) return "void";
+            if (type == typeof(bool)) return @as.value.ToString().ToLower();
+            if (type == typeof(float)) return @as.value.ToString().Replace(",", ".") + "f";
+            if (type == typeof(double) || type == typeof(decimal)) return @as.value.ToString().Replace(",", ".");
+            if (type == typeof(string))
+            {
+                var str = @as.value.ToString();
+                if (str.Contains('\n') || str.Contains('\r'))
+                {
+                    var lines = str.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+                    string output = "@\"";
+
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        var line = lines[i];
+                        bool isLast = i == lines.Length - 1;
+
+                        output += line;
+                        if (!isLast)
+                            output += "\n";
+                    }
+
+                    output += "\"";
+                    return output;
+                }
+                else
+                {
+                    return "\"" + str + "\"";
+                }
+            }
+            if (type == typeof(char)) return string.IsNullOrEmpty(@as.value.ToString()) ? "new Char()" : $"'{@as.value}'";
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type))
+            {
+                if (variableForObjects)
+                {
+                    var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
+                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString().Substring(0, 3)}";
+
+                    if (!hasVariable)
+                    {
+                        CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
+                    }
+                    else
+                    {
+                        CodeGeneratorValueUtility.SetIsUsed(current);
+                    }
+                    return variable;
+                }
+                else
+                {
+                    return "null";
+                }
+            }
+
+            //Special Cases
+            if (type == typeof(Vector2))
+            {
+                var value = (Vector2)@as.value;
+                return Create("Vector2", value.x.As().Code(false, false, false, "", false, fullName), value.y.As().Code(false, false, false, "", false, fullName));
+            }
+            if (type == typeof(Vector3))
+            {
+                var value = (Vector3)@as.value;
+                return Create("Vector3", value.x.As().Code(false, false, false, "", false, fullName), value.y.As().Code(false, false, false, "", false, fullName), value.z.As().Code(false, false, false, "", false, fullName));
+            }
+            if (type == typeof(Vector4))
+            {
+                var value = (Vector4)@as.value;
+                return Create("Vector4", value.x.As().Code(false, false, false, "", false, fullName), value.y.As().Code(false, false, false, "", false, fullName), value.z.As().Code(false, false, false, "", false, fullName), value.w.As().Code(false, false, false, "", false, fullName));
+            }
+            if (type == typeof(AnimationCurve))
+            {
+                var value = @as.value as AnimationCurve;
+                return Create("AnimationCurve", value.keys.Select(k => Create("Keyframe", k.time.As().Code(false, false, false, "", false, fullName), k.value.As().Code(false, false, false, "", false, fullName), k.inTangent.As().Code(false, false, false, "", false, fullName), k.outTangent.As().Code(false, false, false, "", false, fullName), k.inWeight.As().Code(false, false, false, "", false, fullName), k.outWeight.As().Code(false, false, false, "", false, fullName))).ToArray());
+            }
+            if (type == typeof(Color))
+            {
+                var value = (Color)@as.value;
+                return Create("Color", value.r.As().Code(false, false, false, "", false, fullName), value.g.As().Code(false, false, false, "", false, fullName), value.b.As().Code(false, false, false, "", false, fullName), value.a.As().Code(false, false, false, "", false, fullName));
+            }
+            if (type == typeof(WaitForFlowLogic))
+            {
+                var value = (WaitForFlowLogic)@as.value;
+                return Create("WaitForFlowLogic", value.InputCount.As().Code(false, false, false, "", false, fullName), value.ResetOnExit.As().Code(false, false, false, "", false, fullName));
+            }
+            if (type.IsNumeric()) return @as.value.ToString();
+            if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(false, " | ", fullName != null && fullName(type));
+            if (isNew)
+            {
+                if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)
+                {
+                    if (type.IsGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false, variableForObjects) : "new " + GenericDeclaration(type, fullName, false) + "()";
+                    if (type.IsConstructedGenericType) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false, variableForObjects) : "new " + GenericDeclaration(type, fullName, false) + "(" + parameters + ")";
+                    return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false, variableForObjects) : "new " + type.As().CSharpName(false, fullName, false) + "(" + parameters + ")";
+                }
+                else
+                {
+                    if (type.IsValueType && !type.IsEnum && !type.IsPrimitive) return isLiteral ? Literal(@as.value, newLineLiteral, fullName, false, variableForObjects) : "new " + type.As().CSharpName(false, fullName, false) + "(" + parameters + ")";
+                }
+            }
+
+            return @as.value.ToString();
+        }
+
+        private static string HighlightedCode(this HUMValue.Data.As @as, bool isNew, bool isLiteral = false, string parameters = "", bool newLineLiteral = false, Func<Type, bool> fullName = null, bool variableForObjects = true)
+        {
+            Type type = @as.value?.GetType();
+            if (@as.value is Type) return "typeof".ConstructHighlight() + "(" + ((Type)@as.value).As().CSharpName(false, fullName) + ")";
+            if (type == null) return "null".ConstructHighlight();
+            if (type == typeof(void)) return "void".ConstructHighlight();
+            if (type == typeof(bool)) return @as.value.ToString().ToLower().ConstructHighlight();
+            if (type == typeof(float)) return (@as.value.ToString().Replace(",", ".") + "f").NumericHighlight();
+            if (type == typeof(double) || type == typeof(decimal)) return @as.value.ToString().Replace(",", ".").NumericHighlight();
+            if (type == typeof(string))
+            {
+                var str = @as.value.ToString();
+                if (str.Contains('\n') || str.Contains('\r'))
+                {
+                    var lines = str.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+                    string output = "@\"".StringHighlight();
+
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        var line = lines[i];
+                        bool isLast = i == lines.Length - 1;
+
+                        output += line.StringHighlight();
+                        if (!isLast)
+                            output += "\n";
+                    }
+
+                    output += "\"".StringHighlight();
+                    return output;
+                }
+                else
+                {
+                    return ("\"" + str + "\"").StringHighlight();
+                }
+            }
+            if (type == typeof(char)) return (char)@as.value == char.MinValue ? "/* Cannot have a empty character */".ErrorHighlight() : $"'{@as.value}'".StringHighlight();
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type))
+            {
+                if (variableForObjects)
+                {
+                    var hasVariable = CodeGeneratorValueUtility.TryGetVariable((UnityEngine.Object)@as.value, out string current);
+                    var variable = hasVariable ? current : $"ObjectVariable_{(@as.value as UnityEngine.Object).name.LegalMemberName() + "_" + Guid.NewGuid().ToString().Substring(0, 3)}";
+
+                    if (!hasVariable)
+                        CodeGeneratorValueUtility.AddValue(variable, (UnityEngine.Object)@as.value);
+                    else
+                        CodeGeneratorValueUtility.SetIsUsed(current);
+                    return variable.VariableHighlight();
+                }
+                else
+                {
+                    return "null".ConstructHighlight();
+                }
+            }
+
+            //Special Cases
+            if (type == typeof(Vector2))
+            {
+                var value = (Vector2)@as.value;
+                return CreateHighlighted("Vector2", value.x.As().Code(false, false, true, "", false, fullName), value.y.As().Code(false, false, true, "", false, fullName));
+            }
+            if (type == typeof(Vector3))
+            {
+                var value = (Vector3)@as.value;
+                return CreateHighlighted("Vector3", value.x.As().Code(false, false, true, "", false, fullName), value.y.As().Code(false, false, true, "", false, fullName), value.z.As().Code(false, false, true, "", false, fullName));
+            }
+            if (type == typeof(Vector4))
+            {
+                var value = (Vector4)@as.value;
+                return CreateHighlighted("Vector4", value.x.As().Code(false, false, true, "", false, fullName), value.y.As().Code(false, false, true, "", false, fullName), value.z.As().Code(false, false, true, "", false, fullName), value.w.As().Code(false, false, true, "", false, fullName));
+            }
+            if (type == typeof(AnimationCurve))
+            {
+                var value = @as.value as AnimationCurve;
+                return CreateHighlighted("AnimationCurve", value.keys.Select(k => CreateHighlighted("Keyframe", k.time.As().Code(false, false, true, "", false, fullName), k.value.As().Code(false, false, true, "", false, fullName), k.inTangent.As().Code(false, false, true, "", false, fullName), k.outTangent.As().Code(false, false, true, "", false, fullName), k.inWeight.As().Code(false, false, true, "", false, fullName), k.outWeight.As().Code(false, false, true, "", false, fullName))).ToArray());
+            }
+            if (type == typeof(Color))
+            {
+                var value = (Color)@as.value;
+                return CreateHighlighted("Color", value.r.As().Code(false, false, true, "", false, fullName), value.g.As().Code(false, false, true, "", false, fullName), value.b.As().Code(false, false, true, "", false, fullName), value.a.As().Code(false, false, true, "", false, fullName));
+            }
+            if (type == typeof(WaitForFlowLogic))
+            {
+                var value = (WaitForFlowLogic)@as.value;
+                return CreateHighlighted("WaitForFlowLogic", value.InputCount.As().Code(false, false, true, "", false, fullName), value.ResetOnExit.As().Code(false, false, true, "", false, fullName));
+            }
+            if (type.IsNumeric()) return @as.value.ToString().NumericHighlight();
+            if (type.IsEnum) return (@as.value as Enum).ToMultipleEnumString(true, " | ", fullName != null && fullName(type));
             if (isNew)
             {
                 if (type.IsClass || !type.IsClass && !type.IsInterface && !type.IsEnum)
@@ -963,6 +1180,202 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         }
 
         private static string Literal(object value, bool newLine = false, bool fullName = false, bool highlight = true, bool variableForObjects = true)
+        {
+            if (highlight)
+            {
+                return HightlightedLiteral(value, newLine, fullName, variableForObjects);
+            }
+
+            var members = GetCachedMembers(value?.GetType());
+            var output = string.Empty;
+            var usableMembers = new List<MemberInfo>();
+
+            foreach (var member in members)
+            {
+                if (member is FieldInfo field)
+                {
+                    if (field.IsPublic && !field.IsStatic && !field.IsInitOnly)
+                        usableMembers.Add(field);
+                }
+                else if (member is PropertyInfo property)
+                {
+                    if (property.SetMethod != null && property.SetMethod.IsPublic && !property.IsStatic())
+                        usableMembers.Add(property);
+                }
+            }
+
+            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) +
+            "new " + (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName, false) : GenericDeclaration(value.GetType(), fullName)) +
+            (value.GetType().IsArray ? "" : "()");
+
+            bool isMultiLine = (value is ICollection col && col.Count > 0) || usableMembers.Count > 0;
+
+            if (isMultiLine)
+            {
+                output += "\n" + CodeBuilder.GetCurrentIndent() + "{";
+                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
+            }
+
+            var indent = CodeBuilder.GetCurrentIndent();
+
+            if (value is IList list && list.Count > 0)
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    output += "\n" + indent +
+                    list[i].As().Code(true, true, false, "", false, fullName, variableForObjects);
+
+                    if (i < list.Count - 1)
+                        output += ", ";
+                }
+            }
+            else if (value is IDictionary dict && dict.Count > 0)
+            {
+                int i = 0;
+                foreach (DictionaryEntry entry in dict)
+                {
+                    output += "\n" + indent + "{ " +
+                    entry.Key.As().Code(true, true, false, "", false, fullName, variableForObjects) +
+                    ", " +
+                    entry.Value.As().Code(true, true, false, "", false, fullName, variableForObjects) +
+                    " }";
+
+                    if (++i < dict.Count)
+                        output += ", ";
+                }
+            }
+            else if (value is Array array && array.Length > 0)
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    output += "\n" + indent +
+                    array.GetValue(i).As().Code(true, true, false, "", false, fullName, variableForObjects);
+
+                    if (i < array.Length - 1)
+                        output += ", ";
+                }
+            }
+
+            for (int i = 0; i < usableMembers.Count; i++)
+            {
+                var memberValue = usableMembers[i] is FieldInfo f
+                    ? f.GetValueOptimized(value)
+                    : ((PropertyInfo)usableMembers[i]).GetValueOptimized(value);
+
+                output += "\n" + indent +
+                          usableMembers[i].Name + " = " +
+                          memberValue.As().Code(true, true, false, "", false, fullName, variableForObjects);
+
+                if (i < usableMembers.Count - 1)
+                    output += ", ";
+            }
+
+            if (isMultiLine)
+            {
+                CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
+                output += "\n" + CodeBuilder.GetCurrentIndent() + "}";
+            }
+
+            return output;
+        }
+
+        private static string HightlightedLiteral(object value, bool newLine = false, Func<Type, bool> fullName = null, bool variableForObjects = true)
+        {
+            var members = GetCachedMembers(value?.GetType());
+            var output = string.Empty;
+            var usableMembers = new List<MemberInfo>();
+
+            foreach (var member in members)
+            {
+                if (member is FieldInfo field)
+                {
+                    if (field.IsPublic && !field.IsStatic && !field.IsInitOnly)
+                        usableMembers.Add(field);
+                }
+                else if (member is PropertyInfo property)
+                {
+                    if (property.SetMethod != null && property.SetMethod.IsPublic && !property.IsStatic())
+                        usableMembers.Add(property);
+                }
+            }
+
+            output += (newLine ? "\n" + CodeBuilder.GetCurrentIndent() : string.Empty) +
+            "new ".ConstructHighlight() +
+            (!value.GetType().IsGenericType ? value.GetType().As().CSharpName(false, fullName) : GenericDeclaration(value.GetType(), fullName)) +
+            (value.GetType().IsArray ? "" : "()");
+
+            bool isMultiLine = (value is ICollection col && col.Count > 0) || usableMembers.Count > 0;
+
+            if (isMultiLine)
+            {
+                output += "\n" + CodeBuilder.GetCurrentIndent() + "{";
+                CodeBuilder.Indent(CodeBuilder.currentIndent + 1);
+            }
+
+            var indent = CodeBuilder.GetCurrentIndent();
+
+            if (value is IList list && list.Count > 0)
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    output += "\n" + indent +
+                    list[i].As().Code(true, true, true, "", false, fullName, variableForObjects);
+
+                    if (i < list.Count - 1)
+                        output += ", ";
+                }
+            }
+            else if (value is IDictionary dict && dict.Count > 0)
+            {
+                int i = 0;
+                foreach (DictionaryEntry entry in dict)
+                {
+                    output += "\n" + indent + "{ " +
+                    entry.Key.As().Code(true, true, true, "", false, fullName, variableForObjects) +
+                    ", " +
+                    entry.Value.As().Code(true, true, true, "", false, fullName, variableForObjects) +
+                    " }";
+
+                    if (++i < dict.Count)
+                        output += ", ";
+                }
+            }
+            else if (value is Array array && array.Length > 0)
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    output += "\n" + indent +
+                    array.GetValue(i).As().Code(true, true, true, "", false, fullName, variableForObjects);
+
+                    if (i < array.Length - 1)
+                        output += ", ";
+                }
+            }
+
+            for (int i = 0; i < usableMembers.Count; i++)
+            {
+                var memberValue = usableMembers[i] is FieldInfo f
+                    ? f.GetValueOptimized(value)
+                    : ((PropertyInfo)usableMembers[i]).GetValueOptimized(value);
+
+                output += "\n" + indent +
+                usableMembers[i].Name.VariableHighlight() + " = " +
+                memberValue.As().Code(true, true, true, "", false, fullName, variableForObjects);
+
+                if (i < usableMembers.Count - 1)
+                    output += ", ";
+            }
+
+            if (isMultiLine)
+            {
+                CodeBuilder.Indent(CodeBuilder.currentIndent - 1);
+                output += "\n" + CodeBuilder.GetCurrentIndent() + "}";
+            }
+
+            return output;
+        }
+        
+        private static string Literal(object value, bool newLine = false, Func<Type, bool> fullName = null, bool highlight = true, bool variableForObjects = true)
         {
             if (highlight)
             {

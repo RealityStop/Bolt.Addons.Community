@@ -425,7 +425,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public static string InitializeVariable(string name, Type type)
         {
-            return !type.Is().NullOrVoid() ? type.As().CSharpName(false, false) + " " + name.Assign(HUMValue.Create().New(type).As().Code(false)) + "\n" : string.Empty;
+            return !type.Is().NullOrVoid() ? type.As().CSharpName(false, false) + " " + name.Assign(HUMValue.Create().New(type).As().Code(false, false, true, "", false, true)) + "\n" : string.Empty;
         }
 
         public static string InitializeVariable(string name, Type type, string value)

@@ -30,7 +30,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 {
                     var caseKey = Unit.ignoreCase ? branch.Key.ToLowerInvariant() ?? "null" : branch.Key;
                     writer.WriteIndented();
-                    writer.Write(caseKey.As().Code(false));
+                    writer.Object(caseKey);
                     writer.Write(" => ");
                     GenerateValue(branch.Value, data, writer);
                     writer.Write(",");

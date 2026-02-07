@@ -247,7 +247,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         if (VisualScripting.Variables.Object(go).IsDefined(name))
                         {
                             cw.Write(typeof(VisualScripting.Variables)).Write(
-                                     $".Object({go.As().Code(false, false, true, "", false, true)}).Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
+                                     $".Object({writer.ObjectString(go)}).Get<{"float".ConstructHighlight()}>({writer.ObjectString(name)})");
                             return;
                         }
                     }
@@ -255,21 +255,21 @@ namespace Unity.VisualScripting.Community.CSharp
                     if (VisualScripting.Variables.ActiveScene.IsDefined(name))
                     {
                         cw.Write(typeof(VisualScripting.Variables)).Write(
-                                 $".{"ActiveScene".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
+                                 $".{"ActiveScene".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({writer.ObjectString(name)})");
                         return;
                     }
 
                     if (VisualScripting.Variables.Application.IsDefined(name))
                     {
                         cw.Write(typeof(VisualScripting.Variables)).Write(
-                                 $".{"Application".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
+                                 $".{"Application".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({writer.ObjectString(name)})");
                         return;
                     }
 
                     if (VisualScripting.Variables.Saved.IsDefined(name))
                     {
                         cw.Write(typeof(VisualScripting.Variables)).Write(
-                                 $".{"Saved".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({name.As().Code(false)})");
+                                 $".{"Saved".VariableHighlight()}.Get<{"float".ConstructHighlight()}>({writer.ObjectString(name)})");
                         return;
                     }
 

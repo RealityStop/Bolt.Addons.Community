@@ -271,7 +271,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                     using (w.BeginNode(unit))
                                     {
                                         if (index != 0) w.NewLine();
-                                        w.Write((unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();");
+                                        w.WriteIndented((unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();");
                                     }
                                     index++;
                                 }
@@ -287,8 +287,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             {
                                 using (w.BeginNode(unit))
                                 {
-                                    w.WriteIndented(MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();");
-                                    w.NewLine();
+                                    w.WriteLine(MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();");
                                 }
                             };
                         }
@@ -326,8 +325,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             {
                                 using (w.BeginNode(unit))
                                 {
-                                    w.WriteIndented(MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();");
-                                    w.NewLine();
+                                    w.WriteLine(MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit).Name + "();");
                                 }
                             });
                         }
@@ -349,8 +347,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             {
                                 using (w.BeginNode(unit))
                                 {
-                                    w.WriteIndented(unit.GetMethodGenerator()?.Name + "();");
-                                    w.NewLine();
+                                    w.WriteLine(unit.GetMethodGenerator()?.Name + "();");
                                 }
                             };
                         }
@@ -366,8 +363,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             {
                                 using (w.BeginNode(unit))
                                 {
-                                    w.WriteIndented(MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit)?.Name + "();");
-                                    w.NewLine();
+                                    w.WriteLine(MethodNodeGenerator.GetSingleDecorator<MethodNodeGenerator>(unit, unit)?.Name + "();");
                                 }
                             };
                         }

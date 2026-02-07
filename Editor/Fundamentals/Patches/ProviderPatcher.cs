@@ -54,7 +54,7 @@ namespace Unity.VisualScripting.Community
                 PatchUnitConnectionWidgets(context);
             };
 
-            // Trigger GraphWindow.activeContextChanged for each of the windows
+            // Trigger the patch for each of the windows
             // this should ensure that it patches the providers before any call to
             // canvas.Widget can be made.
             foreach (var tab in Resources.FindObjectsOfTypeAll<GraphWindow>())

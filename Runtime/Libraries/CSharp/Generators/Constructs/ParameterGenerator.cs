@@ -40,7 +40,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             }
 
             var _modifier = RuntimeTypeUtility.GetModifierAsString(modifier);
-            var _default = isLiteral && !useAssemblyQualifiedType ? type.IsBasic() ? " = " + defaultValue.As().Code(true, true) : " = " + (type.IsStruct() && isLiteral && !type.IsBasic() ? "default".ConstructHighlight() : "null".ConstructHighlight()) : "";
+            var _default = isLiteral && !useAssemblyQualifiedType ? type.IsBasic() ? " = " + writer.Object(defaultValue) : " = " + (type.IsStruct() && isLiteral && !type.IsBasic() ? "default".ConstructHighlight() : "null".ConstructHighlight()) : "";
             writer.Write((useAssemblyQualifiedType ? _modifier + assemblyQualifiedType + " " + name.VariableHighlight() : _modifier + writer.GetTypeNameHighlighted(type) + " " + name.LegalMemberName().VariableHighlight()) + _default);
         }
 

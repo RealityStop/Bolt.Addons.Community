@@ -33,13 +33,13 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             // Add parameters without labels
             for (int i = 0; i < parameterValues.Count; i++)
             {
-                parameterList.Add(parameterValues[i].As().Code(false));
+                parameterList.Add(writer.ObjectString(parameterValues[i]));
             }
 
             // Add parameters with labels
             for (int i = 0; i < parameterValuesWithLabel.Count; i++)
             {
-                parameterList.Add(parameterValuesWithLabel[i].Item1.VariableHighlight() + " = " + parameterValuesWithLabel[i].Item2.As().Code(false));
+                parameterList.Add(parameterValuesWithLabel[i].Item1.VariableHighlight() + " = " + writer.Object(parameterValuesWithLabel[i].Item2));
             }
 
             // Add type parameters

@@ -205,7 +205,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     {
                         if (gameObject != machine.gameObject)
                         {
-                            writer.Write(machine.gameObject.As().Code(false)).Dot();
+                            writer.Object(machine.gameObject).Dot();
                         }
                         writer.Write($"GetComponent<{machineName.TypeHighlight()}>()");
                         return;
@@ -229,7 +229,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     {
                         if (gameObject != target)
                         {
-                            writer.Write(target.As().Code(false)).Dot();
+                            writer.Object(target).Dot();
                         }
                         writer.Write($"GetComponent<{machineName.TypeHighlight()}>()");
                         return;

@@ -61,8 +61,8 @@ namespace Unity.VisualScripting.Community.CSharp
                 }),
                 writer.Action(() => writer.Write(name.VariableHighlight())),
                 writer.Action(() => GenerateValue(Unit.name, data, writer)),
-                writer.Action(() => writer.Write(Unit.count.As().Code(false))),
-                writer.Action(() => writer.Write(Unit.ToString().Replace(".", "").As().Code(false)))
+                writer.Action(() => writer.Object(Unit.count)),
+                writer.Action(() => writer.Object(Unit.ToString().Replace(".", "")))
             );
             writer.Write(";");
             writer.NewLine();

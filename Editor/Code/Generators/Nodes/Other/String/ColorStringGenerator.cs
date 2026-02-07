@@ -12,7 +12,7 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 using (data.Expect(typeof(string)))
                     GenerateValue(Unit.Value, data, writer);
-            }), Unit.color.As().Code(false));
+            }), writer.ObjectString(Unit.color));
         }
     }
 }

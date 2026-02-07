@@ -77,7 +77,19 @@ namespace Unity.VisualScripting.Community.CSharp
                 return null;
         }
 
-        public static string GetComponent(this ValueInput input, Type sourceType, Type requiredType, bool includeDot, bool includeParentheses)
+        private static string GetComponentCode(Type type, CodeWriter writer, bool includeDot, bool includeParentheses)
+        {
+            if (type == typeof(Transform))
+            {
+                return (includeDot ? "." : "") + "transform".VariableHighlight();
+            }
+            else
+            {
+                return (includeDot ? "." : "") + $"GetComponent<{writer.GetTypeNameHighlighted(type)}>" + (includeParentheses ? "()" : "");
+            }
+        }
+
+        public static string GetComponent(this ValueInput input, CodeWriter writer, Type sourceType, Type requiredType, bool includeDot, bool includeParentheses)
         {
             if (requiredType == typeof(GameObject) || !typeof(Component).IsStrictlyAssignableFrom(requiredType))
             {
@@ -87,7 +99,7 @@ namespace Unity.VisualScripting.Community.CSharp
             if (!input.hasValidConnection && sourceType == typeof(GameObject))
             {
                 // If required is a Component (or subclass), we need GetComponent on the implicit gameObject.
-                return (includeDot ? "." : "") + $"GetComponent<{requiredType.As().CSharpName(false, true)}>" + (includeParentheses ? "()" : "");
+                return GetComponentCode(requiredType, writer, includeDot, includeParentheses);
             }
 
             // If the source already returns something assignable to the required type -> NO GetComponent
@@ -99,7 +111,7 @@ namespace Unity.VisualScripting.Community.CSharp
             // If the source is a GameObject -> we need GetComponent<T>()
             if (sourceType == typeof(GameObject))
             {
-                return (includeDot ? "." : "") + $"GetComponent<{requiredType.As().CSharpName(false, true)}>" + (includeParentheses ? "()" : "");
+                return GetComponentCode(requiredType, writer, includeDot, includeParentheses);
             }
 
             // If the source unit is a MemberUnit that is already a GetComponent call, don't add another one.
@@ -130,7 +142,7 @@ namespace Unity.VisualScripting.Community.CSharp
             // return GetComponent to be safe.
             if (typeof(Component).IsStrictlyAssignableFrom(requiredType))
             {
-                return (includeDot ? "." : "") + $"GetComponent<{requiredType.As().CSharpName(false, true)}>" + (includeParentheses ? "()" : "");
+                return GetComponentCode(requiredType, writer, includeDot, includeParentheses);
             }
 
             return string.Empty;

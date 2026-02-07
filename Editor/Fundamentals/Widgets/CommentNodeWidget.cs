@@ -25,6 +25,15 @@ namespace Unity.VisualScripting.Community
     {
         public CommentNodeWidget(FlowCanvas canvas, CommentNode unit) : base(canvas, unit) { MigrateRects(); }
 
+        public override float zIndex
+        {
+            get
+            {
+                return float.MaxValue;
+            }
+            set { }
+        }
+
         const float
             borderOutside = 12f,
             borderInside = 1.5f,

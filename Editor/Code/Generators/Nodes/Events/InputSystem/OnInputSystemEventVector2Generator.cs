@@ -13,6 +13,7 @@ using Unity.VisualScripting.InputSystem;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
+    // TODO: Create awake method to cache the component if it's using 'This'.
     [NodeGenerator(typeof(OnInputSystemEventVector2))]
     public sealed class OnInputSystemEventVector2Generator : MethodNodeGenerator
     {
@@ -74,7 +75,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     }
                     else
                     {
-                        writer.Write(value.name.As().Code(false));
+                        writer.Object(value.name);
                         return;
                     }
                 }
@@ -109,14 +110,21 @@ namespace Unity.VisualScripting.Community.CSharp
             writer.Write(" ");
             writer.Write(actionVariable.VariableHighlight());
             writer.Write(" = ");
-            writer.Write(inputVariable.VariableHighlight());
-            writer.Write(".");
-            writer.Write("actions".VariableHighlight());
-            writer.Write(".");
-            writer.Write("FindAction");
-            writer.Write("(");
-            GenerateValue(Unit.InputAction, data, writer);
-            writer.Write(")");
+            if (!Unit.InputAction.hasValidConnection)
+            {
+                writer.Write(inputVariable.VariableHighlight());
+                writer.Write(".");
+                writer.Write("actions".VariableHighlight());
+                writer.Write(".");
+                writer.Write("FindAction");
+                writer.Write("(");
+                GenerateValue(Unit.InputAction, data, writer);
+                writer.Write(")");
+            }
+            else
+            {
+                GenerateValue(Unit.InputAction, data, writer);
+            }
             writer.Write(";");
             writer.NewLine();
 

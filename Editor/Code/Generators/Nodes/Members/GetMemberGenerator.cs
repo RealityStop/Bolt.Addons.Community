@@ -69,10 +69,10 @@ namespace Unity.VisualScripting.Community.CSharp
             }
 
             var targetCode = captureResult.Value;
-            var code = !result.IsSatisfied ? Unit.target.GetComponent(SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, false, false) : "";
+            var code = !result.IsSatisfied ? Unit.target.GetComponent(writer, SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, true, true) : "";
             if (!string.IsNullOrEmpty(code))
             {
-                writer.InvokeMember(writer.Action(w => w.Write(targetCode)), code).GetMember(name);
+                writer.Write(targetCode).Write(code).GetMember(name);
                 return;
             }
             else
@@ -110,15 +110,16 @@ namespace Unity.VisualScripting.Community.CSharp
                     {
                         if (input.type == typeof(GameObject) || typeof(Component).IsStrictlyAssignableFrom(input.type))
                         {
-                            var code = Unit.target.GetComponent(SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, false, false);
+                            var sourceType = SourceType(Unit.target, data, writer);
+                            var code = Unit.target.GetComponent(writer, sourceType, Unit.member.pseudoDeclaringType, true, true);
                             if (!string.IsNullOrEmpty(code))
                             {
-                                writer.InvokeMember("gameObject".VariableHighlight(), code);
+                                writer.GetVariable("gameObject").Write(code);
                                 return;
                             }
                             else
                             {
-                                writer.Write("gameObject".VariableHighlight());
+                                writer.GetVariable("gameObject");
                                 return;
                             }
                         }

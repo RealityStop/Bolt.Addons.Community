@@ -31,7 +31,7 @@ namespace Unity.VisualScripting.Community.CSharp
             if (input != Unit.reset)
             {
                 writer.WriteIndented("if ".ControlHighlight()).Parentheses(inner =>
-                inner.InvokeMember(Name.VariableHighlight(), "Enter", Unit.controlInputs.ToList().IndexOf(input).As().Code(false))).NewLine();
+                inner.InvokeMember(Name.VariableHighlight(), "Enter", writer.ObjectString(Unit.controlInputs.ToList().IndexOf(input)))).NewLine();
                 writer.WriteLine("{");
                 using (writer.IndentedScope(data))
                 {

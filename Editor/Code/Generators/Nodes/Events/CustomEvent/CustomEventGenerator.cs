@@ -56,8 +56,8 @@ namespace Unity.VisualScripting.Community.CSharp
                 using (writer.Cast(data.GetExpectedType(), () => data.GetExpectedType() != null && !data.IsCurrentExpectedTypeMet() && data.GetExpectedType() != typeof(object), true))
                 {
                     data.MarkExpectedTypeMet();
-                    writer.InvokeMember("args".VariableHighlight(), nameof(CSharpUtility.GetArgument), new CodeWriter.TypeParameter[] { data.GetExpectedType() ?? typeof(object) },
-                    Unit.argumentPorts.IndexOf(output).As().Code(false));
+                    writer.InvokeMember("args".VariableHighlight(), nameof(CSharpUtility.GetArgument), new CodeWriter.TypeParameter[] { new CodeWriter.TypeParameter(true) { TypeValue = data.GetExpectedType() ?? typeof(object) } },
+                    writer.ObjectString(Unit.argumentPorts.IndexOf(output)));
                 }
                 return;
             }

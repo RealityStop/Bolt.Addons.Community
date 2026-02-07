@@ -34,7 +34,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         GenerateValue(Unit.target, data, writer);
                     }
 
-                    var code = !result.IsSatisfied ? Unit.target.GetComponent(SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, true, true) : "";
+                    var code = !result.IsSatisfied ? Unit.target.GetComponent(writer, SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, true, true) : "";
 
                     writer.GetMember(code, memberName).Equal();
                     using (data.Expect(Unit.input.type))
@@ -63,7 +63,7 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 GenerateValue(Unit.target, data, writer);
             }
-            var code = !result.IsSatisfied ? Unit.target.GetComponent(SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, true, true) : "";
+            var code = !result.IsSatisfied ? Unit.target.GetComponent(writer, SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, true, true) : "";
             writer.Write(code).GetMember(Unit.member.name);
         }
 

@@ -4,7 +4,6 @@ using Unity.VisualScripting;
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
-using UnityEngine;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -28,7 +27,7 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 Type = expectedType;
             }
-            writer.Write("new ".ConstructHighlight() + Type.As().CSharpName(false, true) + (!Type.IsArray ? "()" : string.Empty)).Space().Braces(w =>
+            writer.Write("new ".ConstructHighlight() + writer.GetTypeNameHighlighted(Type) + (!Type.IsArray ? "()" : string.Empty)).Space().Braces(w =>
             {
                 w.Space();
                 for (int i = 0; i < Unit.multiInputs.Count; i++)

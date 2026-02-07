@@ -170,7 +170,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 GetVariableKindAccessor(Unit.kind, name, data, writer, out variableType);
                 if (variableType == typeof(object)) variableType = typeof(float);
                 w.Write($".Get<{variableType.As().CSharpName(false, true)}>(");
-                w.Write(name.As().Code(false));
+                writer.Object(name);
                 w.Write(")");
             }));
             writer.Write(";");
@@ -179,7 +179,7 @@ namespace Unity.VisualScripting.Community.CSharp
             writer.WriteIndented();
             GetVariableKindAccessor(Unit.kind, name, data, writer, out _);
             writer.Write(".Set(");
-            writer.Write(name.As().Code(false));
+            writer.Object(name);
             writer.ParameterSeparator();
             writer.Write(localName);
             writer.Write(".");

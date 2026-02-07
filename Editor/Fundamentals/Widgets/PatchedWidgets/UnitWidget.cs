@@ -47,6 +47,8 @@ namespace Unity.VisualScripting.Community
 
         private readonly List<string> settingNames = new List<string>();
 
+        public override Rect hotArea => outerPosition;
+
         protected IEnumerable<Metadata> settings
         {
             get

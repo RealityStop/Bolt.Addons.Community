@@ -161,6 +161,7 @@ namespace Unity.VisualScripting.Community
         /// </summary>
         public CodeWriter GetComponent(TypeParameter type)
         {
+            type.fullName = true;
             InvokeMember(null, "GetComponent", new TypeParameter[] { type }, new MethodParameter[0]);
             return this;
         }
@@ -234,7 +235,7 @@ namespace Unity.VisualScripting.Community
                     }
                     else if (generic.TypeValue != null)
                     {
-                        Write(GetTypeNameHighlighted(generic.TypeValue, !generic.fullName));
+                        Write(GetTypeNameHighlighted(generic.TypeValue, generic.fullName));
                     }
                     else
                     {

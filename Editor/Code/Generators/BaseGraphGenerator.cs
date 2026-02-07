@@ -375,7 +375,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         w.CSharpUtilityType().Write(".RegisterCustomEvent(");
                         eventUnit.GenerateValue(eventUnit.target, w, data);
                         w.Write($", {eventName}");
-                        w.Write($", {(eventName + "_" + eventUnit.ToString().Replace(".", "")).As().Code(false)});");
+                        w.Write($", {w.ObjectString(eventName + "_" + eventUnit.ToString().Replace(".", ""))});");
                         w.NewLine();
                     }
                 };
@@ -866,8 +866,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         {
                             using (w.BeginNode(inputUnit))
                             {
-                                w.WriteIndented(inputUnit.GetMethodGenerator().Name + "();");
-                                w.NewLine();
+                                w.WriteLine(inputUnit.GetMethodGenerator().Name + "();");
                             }
                         };
                     }
@@ -882,8 +881,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     {
                         using (w.BeginNode(inputUnit))
                         {
-                            w.WriteIndented(inputUnit.GetMethodGenerator().Name + "();");
-                            w.NewLine();
+                            w.WriteLine(inputUnit.GetMethodGenerator().Name + "();");
                         }
                     };
                 }
@@ -954,8 +952,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                             using (writer.BeginNode(unit))
                             {
-                                writer.Write(unit.GetMethodGenerator().Name + "();");
-                                writer.NewLine();
+                                writer.WriteLine(unit.GetMethodGenerator().Name + "();");
                             }
                         }
                     }
@@ -972,24 +969,22 @@ namespace Unity.VisualScripting.Community.CSharp
                 var updateMethod = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), "Update");
 
                 updateMethod.Body(delegate (CodeWriter writer)
+                {
+                    foreach (var unit in _allUnits.OfType<OnInputSystemEvent>())
+                    {
+                        if (!unit.trigger.hasValidConnection) continue;
+                        using (writer.BeginNode(unit))
                         {
-                            foreach (var unit in _allUnits.OfType<OnInputSystemEvent>())
-                            {
-                                if (!unit.trigger.hasValidConnection) continue;
-
-                                using (writer.BeginNode(unit))
-                                {
-                                    writer.Write(unit.GetMethodGenerator().Name + "();");
-                                    writer.NewLine();
-                                }
-                            }
-                        });
+                            writer.WriteLine(unit.GetMethodGenerator().Name + "();");
+                        }
+                    }
+                });
 
                 @class.AddMethod(updateMethod);
             }
             else if (UnityEngine.InputSystem.InputSystem.settings.updateMode != InputSettings.UpdateMode.ProcessEventsInDynamicUpdate
-                     && !hasFixedUpdate
-                     && hasInputSystemNode)
+                    && !hasFixedUpdate
+                    && hasInputSystemNode)
             {
                 var fixedMethod = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), "FixedUpdate");
                 fixedMethod.Body(delegate (CodeWriter writer)
@@ -1000,8 +995,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                         using (writer.BeginNode(unit))
                         {
-                            writer.Write(unit.GetMethodGenerator().Name + "();");
-                            writer.NewLine();
+                            writer.WriteLine(unit.GetMethodGenerator().Name + "();");
                         }
                     }
                 });

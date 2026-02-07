@@ -16,7 +16,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            writer.Write(value.As().Code(false));
+            writer.Object(value);
         }
     }
 }

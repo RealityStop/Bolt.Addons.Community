@@ -19,6 +19,15 @@ namespace Unity.VisualScripting.Community
         {
         }
 
+        public override float zIndex
+        {
+            get
+            {
+                return float.MaxValue;
+            }
+            set { }
+        }
+
         public override bool canClip => false;
         Vector3 lineStart;
         Vector3 lineEnd;
@@ -52,7 +61,7 @@ namespace Unity.VisualScripting.Community
 
             if (unit.ShowCenter)
             {
-                DrawUnitPosition(unitCenter, lineStart, lineEnd);
+                DrawUnitPosition(unitCenter);
             }
 
             DrawTextField((lineStart + lineEnd) / 2f, unit.Text);
@@ -78,7 +87,7 @@ namespace Unity.VisualScripting.Community
             Handles.DrawAAConvexPolygon(arrowPoints);
         }
 
-        private void DrawUnitPosition(Vector3 unitCenter, Vector3 lineStart, Vector3 lineEnd)
+        private void DrawUnitPosition(Vector3 unitCenter)
         {
             float halfSize = arrowHandle / 2f;
 

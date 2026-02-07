@@ -384,7 +384,8 @@ namespace Unity.VisualScripting.Community
                 prediction.normal.background = new Color(0, 0, 0, 0.25f).GetPixel();
                 prediction.padding = new RectOffset(4, 6, 3, 3);
                 prediction.margin = new RectOffset(0, 0, 0, 0);
-                prediction.alignment = TextAnchor.MiddleCenter;
+                prediction.alignment = TextAnchor.MiddleLeft;
+                prediction.clipping = TextClipping.Overflow;
             }
 
             public static readonly GUIStyle prediction;

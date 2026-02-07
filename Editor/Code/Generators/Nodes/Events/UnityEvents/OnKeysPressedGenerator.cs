@@ -35,7 +35,7 @@ namespace Unity.VisualScripting.Community.CSharp
             writer.Write(" (");
             writer.Write(name.VariableHighlight());
             writer.Write(".Check(");
-            writer.Write(Unit.Delay.As().Code(false));
+            writer.Object(Unit.Delay);
             writer.Write(", ");
             GenerateValue(Unit.Key1, data, writer);
             writer.Write(", ");

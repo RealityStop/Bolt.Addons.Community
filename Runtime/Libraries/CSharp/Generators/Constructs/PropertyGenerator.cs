@@ -162,12 +162,12 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             // Handle auto-implemented override properties
             if (hasGetter && modifier == PropertyModifier.Override && getterBodyAction == null)
             {
-                SingleStatementGetter(getterScope, w => w.Write(defaultValue.As().Code(true, true)));
+                SingleStatementGetter(getterScope, w => w.Object(defaultValue));
             }
 
             if (hasSetter && modifier == PropertyModifier.Override && setterBodyAction == null)
             {
-                SingleStatementSetter(setterScope, w => w.Write(defaultValue.As().Code(true, true)));
+                SingleStatementSetter(setterScope, w => w.Object(defaultValue));
             }
 
             var header = scopeStr + modifierStr + typeStr;
@@ -297,7 +297,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                                 using (writer.Indented())
                                 {
                                     getterBodyAction.Invoke(writer);
-                                    writer.NewLine();
                                 }
                             }
                             writer.WriteLine("}");
@@ -333,7 +332,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                                 using (writer.Indented())
                                 {
                                     setterBodyAction.Invoke(writer);
-                                    writer.NewLine();
                                 }
                             }
                             writer.WriteLine("}");

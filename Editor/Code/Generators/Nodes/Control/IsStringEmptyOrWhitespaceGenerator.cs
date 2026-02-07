@@ -51,7 +51,7 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             if (input == Unit.String && !input.hasValidConnection && Unit.defaultValues[input.key] == null)
             {
-                writer.Write("".As().Code(false));
+                writer.Object("");
                 return;
             }
 

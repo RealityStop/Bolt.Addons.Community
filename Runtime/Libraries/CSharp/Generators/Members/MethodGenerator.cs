@@ -67,8 +67,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             return method;
         }
 
-
-
         protected override sealed void GenerateBefore(CodeWriter writer, ControlGenerationData data)
         {
             var attributes = string.Empty;
@@ -88,9 +86,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             {
                 writer.WriteIndented("/// <summary>".CommentHighlight());
 
-                //foreach (var line in summary.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-
-                foreach (var line in summary.Split('\n').Where(s => !string.IsNullOrEmpty(s)))
+                foreach (var line in summary.Split('\n', StringSplitOptions.RemoveEmptyEntries).Where(s => !string.IsNullOrEmpty(s)))
                 {
                     writer.NewLine();
                     writer.WriteIndented($"/// {line}".CommentHighlight());

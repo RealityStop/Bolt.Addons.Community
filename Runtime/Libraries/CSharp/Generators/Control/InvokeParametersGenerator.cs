@@ -15,7 +15,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             writer.Write("(");
             for (int i = 0; i < parameters.Count; i++)
             {
-                writer.Write(parameters[i].As().Code(true));
+                writer.Object(parameters[i]);
                 if (i < Count - 1) writer.Write(", ");
             }
             writer.Write(")");

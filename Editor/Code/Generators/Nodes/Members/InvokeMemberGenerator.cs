@@ -93,7 +93,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     if (!hasResultConnection)
                         writer.WriteIndented();
                     GenerateValue(Unit.target, data, writer);
-                    writer.Write(Unit.target.GetComponent(GetSourceType(Unit.target, data, writer), Unit.target.type, true, true));
+                    writer.Write(Unit.target.GetComponent(writer, GetSourceType(Unit.target, data, writer), Unit.target.type, true, true));
                 }
 
                 writer.Dot();
@@ -206,7 +206,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     else
                     {
                         GenerateValue(Unit.target, data, writer);
-                        writer.Write(Unit.target.GetComponent(GetSourceType(Unit.target, data, writer), Unit.target.type, true, true));
+                        writer.Write(Unit.target.GetComponent(writer, GetSourceType(Unit.target, data, writer), Unit.target.type, true, true));
                     }
 
                     writer.Dot();

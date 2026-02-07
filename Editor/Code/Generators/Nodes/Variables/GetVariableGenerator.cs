@@ -96,7 +96,7 @@ namespace Unity.VisualScripting.Community.CSharp
             }
 
             string typeString = variableType != null
-                ? "<" + variableType.As().CSharpName(false, true) + ">"
+                ? "<" + writer.GetTypeNameHighlighted(variableType) + ">"
                 : string.Empty;
 
             writer.Write(".Get" + typeString + "(");
@@ -130,7 +130,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 ResolveVariableTypeSafe(declarations, name, data);
 
                 string typeString = variableType != null
-                    ? "<" + variableType.As().CSharpName(false, true) + ">"
+                    ? "<" + writer.GetTypeNameHighlighted(variableType) + ">"
                     : string.Empty;
 
                 WriteKindPrefix(data, variablesType, writer);

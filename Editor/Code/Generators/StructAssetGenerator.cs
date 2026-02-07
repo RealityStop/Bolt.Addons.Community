@@ -556,10 +556,6 @@ namespace Unity.VisualScripting.Community.CSharp
                 }
                 methodGenerator.count = generatorCounts[type];
                 generatorCounts[type]++;
-                foreach (var item in @struct.GetFields())
-                {
-                    data.AddLocalNameInScope(item.name, item.type);
-                }
                 var method = MethodGenerator.Method(methodGenerator.AccessModifier, methodGenerator.MethodModifier, methodGenerator.ReturnType, methodGenerator.Name);
 
                 method.SetOwner(methodGenerator.unit);
@@ -577,10 +573,6 @@ namespace Unity.VisualScripting.Community.CSharp
                     }
                 }
 
-                foreach (var variable in Data.variables)
-                {
-                    data.AddLocalNameInScope(variable.FieldName, variable.type);
-                }
                 data = data;
                 data.EnterMethod();
                 data.SetReturns(methodGenerator.ReturnType);

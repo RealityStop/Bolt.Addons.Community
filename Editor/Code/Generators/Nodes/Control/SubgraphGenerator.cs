@@ -93,6 +93,10 @@ namespace Unity.VisualScripting.Community.CSharp
                         hasExternalCode = true;
                     }
                 }
+                else if (u is SUnit)
+                {
+                    hasExternalCode = (generator as SubgraphGenerator).hasExternalCode;
+                }
             }
 
             if (graphInput != null)
@@ -146,10 +150,17 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (CSharpPreviewSettings.ShouldShowSubgraphComment)
             {
-                if (graphInput != null || graphOutput != null)
-                    writer.Comment($"Subgraph: \"{subgraphName}\" Port({input.key})", WriteOptions.IndentedNewLineAfter);
+                if (CSharpPreviewWindow.isPreviewing)
+                {
+                    if (graphInput != null || graphOutput != null)
+                        writer.Comment($"Subgraph: \"{subgraphName}\" Port({input.key})", WriteOptions.IndentedNewLineAfter);
+                    else
+                        writer.Error($"Subgraph \"{subgraphName}\" does not have a GraphInput or GraphOutput", WriteOptions.IndentedNewLineAfter);
+                }
                 else
-                    writer.Error($"Subgraph \"{subgraphName}\" does not have a GraphInput or GraphOutput", WriteOptions.IndentedNewLineAfter);
+                {
+                    writer.WriteLine();
+                }
             }
 
             if (!hasExternalCode)
@@ -162,7 +173,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     Type type = variable.value != null ? variable.value.GetType() : typeof(object);
 #endif
                     string name = data.AddLocalNameInScope(variable.name.LegalVariableName(), type);
-                    writer.CreateVariable(type, name, variable.value.As().Code(true, true, true, "", false, true), WriteOptions.Indented, EndWriteOptions.LineEnd);
+                    writer.CreateVariable(type, name, writer.ObjectString(variable.value, true, true, true, true, "", false, true), WriteOptions.Indented, EndWriteOptions.LineEnd);
                 }
             }
 
@@ -194,13 +205,13 @@ namespace Unity.VisualScripting.Community.CSharp
                     "RegisterCustomEvent",
                     writer.Action(w => generator.GenerateValue(customEvent.target, data, w)),
                     action,
-                    (methodName + "_" + customEvent.ToString().Replace(".", "")).As().Code(false)
+                    writer.ObjectString(methodName + "_" + customEvent.ToString().Replace(".", ""))
                 );
                 writer.WriteEnd(EndWriteOptions.LineEnd);
 
                 var returnType = customEvent.coroutine ? typeof(IEnumerator) : typeof(void);
 
-                writer.WriteIndented(returnType.As().CSharpName(false, true));
+                writer.WriteIndented(writer.GetTypeNameHighlighted(returnType));
                 writer.Write(" ");
                 writer.Write(methodName);
                 writer.Write($"({"CustomEventArgs".TypeHighlight()} {"args".VariableHighlight()})");

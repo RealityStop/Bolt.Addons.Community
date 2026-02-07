@@ -434,6 +434,20 @@ namespace Unity.VisualScripting.Community
 
         public HashSet<string> includedNamespaces = new HashSet<string>();
 
+        public CodeWriter Object(object value, bool checkAmbiguity = true, bool isNew = false, bool isLiteral = false, bool highlight = true, string parameters = "", bool newLineLiteral = false, bool variableForObjects = true)
+        {
+            if (!checkAmbiguity)
+                return Write(value.As().Code(isNew, isLiteral, highlight, parameters, newLineLiteral, false, variableForObjects));
+            return Write(value.As().Code(isNew, isLiteral, highlight, parameters, newLineLiteral, BuildAmbiguityResolver(), variableForObjects));
+        }
+
+        public string ObjectString(object value, bool checkAmbiguity = true, bool isNew = false, bool isLiteral = false, bool highlight = true, string parameters = "", bool newLineLiteral = false, bool variableForObjects = true)
+        {
+            if (!checkAmbiguity)
+                return value.As().Code(isNew, isLiteral, highlight, parameters, newLineLiteral, false, variableForObjects);
+            return value.As().Code(isNew, isLiteral, highlight, parameters, newLineLiteral, BuildAmbiguityResolver(), variableForObjects);
+        }
+
         public string GetTypeNameHighlighted(Type type, bool checkAmbiguity = true)
         {
             if (!checkAmbiguity)

@@ -24,7 +24,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 }
             }), writer.Action(() =>
             {
-                writer.Write(Unit.rounding.As().Code(false));
+                writer.Object(Unit.rounding);
             }));
         }
 
@@ -48,7 +48,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 else if (expectedType == typeof(long))
                     writer.Write($"{val}L".Replace(",", ".").NumericHighlight());
                 else
-                    writer.Write(val.As().Code(true, true, true, "", false));
+                    writer.Object(val, true, true, true, true, "", false);
             }
             else
             {
