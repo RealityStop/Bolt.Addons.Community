@@ -16,6 +16,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         /// </summary>
         public override void Generate(CodeWriter writer, ControlGenerationData data)
         {
+            Initialize(writer);
             if (owner != null)
                 nodeScope = writer.BeginNode(owner);
             // write a empty string so if Generate before does not Write anything LastGeneratedCode will be empty
@@ -29,7 +30,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 writer.Indent();
             }
 
-            InitializeBody(writer);
             GenerateBody(writer, data);
 
             if (!hideBrackets)
@@ -49,7 +49,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             nodeScope?.Dispose();
         }
 
-        public virtual void InitializeBody(CodeWriter writer) { }
+        public virtual void Initialize(CodeWriter writer) { }
 
         /// <summary>
         /// Override to generate what comes before the body. Such as a method or type declaration, or even a lambda expression.

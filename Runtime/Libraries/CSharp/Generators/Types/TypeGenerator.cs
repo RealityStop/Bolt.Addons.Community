@@ -1,15 +1,15 @@
 ﻿using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.CSharp;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
     [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.TypeGenerator")]
     public abstract class TypeGenerator : BodyGenerator
     {
-        public sealed override void InitializeBody(CodeWriter writer)
+        public sealed override void Initialize(CodeWriter writer)
         {
-            CodeWriter.BuildAmbiguityCache();
             writer.includedNamespaces.AddRange(Usings());
         }
 

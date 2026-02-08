@@ -34,6 +34,7 @@ namespace Unity.VisualScripting.Community
 
         public CodeWriter()
         {
+            BuildAmbiguityCache();
         }
 
         public int Indent()
@@ -335,7 +336,7 @@ namespace Unity.VisualScripting.Community
 
         public IDisposable CodeDiagnosticScope(string message, CodeDiagnosticKind kind)
         {
-            if (IsRecordingSuppressed)
+            if (IsRecordingSuppressed || string.IsNullOrEmpty(message))
                 return EmptyScope.Instance;
 
             if (!CSharpPreviewSettings.ShouldGenerateTooltips)
@@ -438,29 +439,33 @@ namespace Unity.VisualScripting.Community
         {
             if (!checkAmbiguity)
                 return Write(value.As().Code(isNew, isLiteral, highlight, parameters, newLineLiteral, false, variableForObjects));
-            return Write(value.As().Code(isNew, isLiteral, highlight, parameters, newLineLiteral, BuildAmbiguityResolver(), variableForObjects));
+            return Write(value.As().Code(isNew, isLiteral, highlight, parameters, newLineLiteral, BuildFullNameResolver(), variableForObjects));
         }
 
         public string ObjectString(object value, bool checkAmbiguity = true, bool isNew = false, bool isLiteral = false, bool highlight = true, string parameters = "", bool newLineLiteral = false, bool variableForObjects = true)
         {
             if (!checkAmbiguity)
                 return value.As().Code(isNew, isLiteral, highlight, parameters, newLineLiteral, false, variableForObjects);
-            return value.As().Code(isNew, isLiteral, highlight, parameters, newLineLiteral, BuildAmbiguityResolver(), variableForObjects);
+            return value.As().Code(isNew, isLiteral, highlight, parameters, newLineLiteral, BuildFullNameResolver(), variableForObjects);
         }
 
         public string GetTypeNameHighlighted(Type type, bool checkAmbiguity = true)
         {
             if (!checkAmbiguity)
                 return type.As().CSharpName(false, true);
-            return type.As().CSharpName(false, BuildAmbiguityResolver(), true);
+
+            return type.As().CSharpName(false, BuildFullNameResolver(), true);
         }
 
-        private Func<Type, bool> BuildAmbiguityResolver()
+        private Func<Type, bool> BuildFullNameResolver()
         {
             return type =>
             {
                 string shortName = type.Name;
                 string ns = type.Namespace ?? "";
+
+                if (!includedNamespaces.Contains(ns))
+                    return true;
 
                 if (!shortNameNamespaces.TryGetValue(shortName, out HashSet<string> namespaces))
                     return false;

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community.CSharp;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community.Libraries.CSharp
 {
@@ -22,6 +23,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public string name;
         public List<AttributeGenerator> attributes = new List<AttributeGenerator>();
         public List<FieldGenerator> fields = new List<FieldGenerator>();
+        public (string message, Func<List<FieldGenerator>>) deferredFields;
         public List<PropertyGenerator> properties = new List<PropertyGenerator>();
         public List<MethodGenerator> methods = new List<MethodGenerator>();
         public List<ConstructorGenerator> constructors = new List<ConstructorGenerator>();
@@ -188,7 +190,38 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 }
             }
 
-            if (methods.Count > 0 && (classes.Count > 0 || structs.Count > 0 || enums.Count > 0))
+            var defferedFieldCount = 0;
+            if (deferredFields.Item2 != null)
+            {
+                var message = deferredFields.message;
+                var _fields = deferredFields.Item2();
+                if (_fields.Count > 0)
+                {
+                    using (writer.CodeDiagnosticScope(message, CodeDiagnosticKind.Info))
+                    {
+                        if (!string.IsNullOrEmpty(message))
+                        {
+                            writer.Comment("(Hover for more info)", WriteOptions.IndentedNewLineAfter);
+                        }
+                        else
+                        {
+                            writer.NewLine();
+                        }
+
+                        defferedFieldCount = _fields.Count;
+                        for (int i = 0; i < defferedFieldCount; i++)
+                        {
+                            if (!string.IsNullOrEmpty(_fields[i].name))
+                            {
+                                _fields[i].Generate(writer, data);
+                                if (i < _fields.Count - 1) writer.Write("\n\n");
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (methods.Count > 0 && (defferedFieldCount > 0 || classes.Count > 0 || structs.Count > 0 || enums.Count > 0))
                 writer.Write("\n\n");
             else if (methods.Count > 0)
                 writer.Write("\n");
@@ -327,6 +360,15 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         public ClassGenerator AddField(FieldGenerator generator)
         {
             fields.Add(generator);
+            return this;
+        }
+
+        /// <summary>
+        /// Add a field to this class that will generate after the methods.
+        /// </summary>
+        public ClassGenerator DeferredFields(string message, Func<List<FieldGenerator>> fieldGeneratorsFactory)
+        {
+            deferredFields = (message, fieldGeneratorsFactory);
             return this;
         }
 

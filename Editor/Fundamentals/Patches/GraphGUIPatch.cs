@@ -845,6 +845,8 @@ namespace Unity.VisualScripting.Community
                             new Vector4(10, 0, 10, 0));
                         }
 
+                        if (!DescriptorProvider.instance.IsValid(breadcrumb.parent)) return;
+
                         Sprite bgSprite = breadcrumb.isRoot ? breadCrumbRootIcon : breadCrumbIcon;
                         btn.style.backgroundImage = Background.FromSprite(bgSprite);
                         var title = breadcrumb.parent.Description().ToGUIContent(IconSize.Small);

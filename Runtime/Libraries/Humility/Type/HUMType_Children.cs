@@ -298,6 +298,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 bool fullName = useFullName != null && useFullName(type);
                 var coreName = type.Name.Substring(0, type.Name.Length - 9).TypeHighlight();
+
                 if (fullName && !string.IsNullOrEmpty(type.Namespace))
                     return $"{type.Namespace.NamespaceHighlight()}.{coreName}";
                 return coreName;
@@ -689,7 +690,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         public static bool PrimitiveStringOrVoid(this HUMType.Data.Is @is)
         {
             if (@is.type == null) return false;
-            return @is.type.IsPrimitive || @is.type == typeof(string) || @is.type == typeof(void) || @is.type.BaseType == null && @is.type == typeof(object);
+            return @is.type.IsPrimitive || @is.type == typeof(string) || @is.type == typeof(void) || @is.type == typeof(CSharp.Void)|| @is.type.BaseType == null && @is.type == typeof(object);
         }
 
         /// <summary>

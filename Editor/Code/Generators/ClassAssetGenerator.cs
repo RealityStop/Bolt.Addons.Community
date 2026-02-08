@@ -253,10 +253,9 @@ namespace Unity.VisualScripting.Community.CSharp
                                 var index = 0;
                                 foreach (var unit in _specialUnits)
                                 {
-                                    if (index != 0) w.NewLine();
                                     using (w.BeginNode(unit))
                                     {
-                                        w.WriteIndented((unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();");
+                                        w.WriteLine((unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();");
                                     }
                                     index++;
                                 }
@@ -270,8 +269,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 {
                                     using (w.BeginNode(unit))
                                     {
-                                        if (index != 0) w.NewLine();
-                                        w.WriteIndented((unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();");
+                                        w.WriteLine((unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();");
                                     }
                                     index++;
                                 }
@@ -305,10 +303,9 @@ namespace Unity.VisualScripting.Community.CSharp
                             var index = 0;
                             foreach (var unit in _specialUnits)
                             {
-                                if (index != 0) w.NewLine();
                                 using (w.BeginNode(unit))
                                 {
-                                    w.WriteIndented((unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();");
+                                    w.WriteLine((unit.GetGenerator() as VariableNodeGenerator)?.Name.VariableHighlight() + ".Update();");
                                 }
                                 index++;
                             }
@@ -633,7 +630,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 }
                 variableGenerator.count = generatorCounts[type];
                 generatorCounts[type]++;
-                var field = FieldGenerator.Field(variableGenerator.AccessModifier, variableGenerator.FieldModifier, variableGenerator.Type, variableGenerator.Name, variableGenerator.HasDefaultValue ? variableGenerator.DefaultValue : null);
+                var field = FieldGenerator.Field(variableGenerator.AccessModifier, variableGenerator.FieldModifier, variableGenerator.Type, variableGenerator.Name, variableGenerator.DefaultValue, variableGenerator.HasDefaultValue);
 
                 field.SetOwner(variableGenerator.unit);
 

@@ -161,7 +161,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
                 }
                 else
                 {
-                    writer.Write(defaultValue.As().Code(isNew, isLiteral, true, "", isNewlineLiteral, true, false) + ";");
+                    writer.Object(defaultValue, true, isNew, isLiteral, true, "", isNewlineLiteral, false).Write(";");
                 }
             }
             nodeScope?.Dispose();
@@ -200,7 +200,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             {
                 usings.MergeUnique(attributes[i].Usings());
             }
-
+            
             return usings;
         }
     }

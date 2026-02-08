@@ -25,44 +25,6 @@ namespace Unity.VisualScripting.Community.CSharp
             { "OnFixedUpdate", "FixedUpdate" },
             { "OnLateUpdate", "LateUpdate" },
         };
-
-        protected static readonly HashSet<Type> UNITY_METHOD_TYPES = new HashSet<Type>
-        {
-#if MODULE_PHYSICS_EXISTS
-            typeof(OnCollisionEnter),
-            typeof(OnCollisionExit),
-            typeof(OnCollisionStay),
-            typeof(OnJointBreak),
-            typeof(OnTriggerEnter),
-            typeof(OnTriggerExit),
-            typeof(OnTriggerStay),
-            typeof(OnControllerColliderHit),
-            typeof(OnParticleCollision),
-#endif
-#if MODULE_PHYSICS_2D_EXISTS
-            typeof(OnCollisionEnter2D),
-            typeof(OnCollisionExit2D),
-            typeof(OnCollisionStay2D),
-            typeof(OnJointBreak2D),
-            typeof(OnTriggerEnter2D),
-            typeof(OnTriggerExit2D),
-            typeof(OnTriggerStay2D),
-#endif
-            typeof(OnApplicationFocus),
-            typeof(OnApplicationPause),
-            typeof(OnApplicationQuit),
-            typeof(Start),
-            typeof(Update),
-            typeof(FixedUpdate),
-            typeof(LateUpdate),
-            typeof(OnBecameVisible),
-            typeof(OnBecameInvisible),
-#if PACKAGE_INPUT_SYSTEM_EXISTS
-            typeof(OnInputSystemEventButton),
-            typeof(OnInputSystemEventVector2),
-            typeof(OnInputSystemEventFloat),
-#endif
-        };
         #endregion
 
         // Todo: find a better way to handle these
@@ -125,7 +87,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
             @class.generateUsings = true;
 
-            Initialize(@class);
+            Initialize(@class, writer);
             GenerateVariableDeclarations(@class);
             GenerateEventMethods(@class);
             GenerateSpecialUnits(@class);
@@ -140,26 +102,32 @@ namespace Unity.VisualScripting.Community.CSharp
                 @class.AddMethod(method);
             }
 
-            var values = CodeGeneratorValueUtility.GetAllValues(GetGraphPointer().rootObject);
-            var index = 0;
-            foreach (var variable in values)
+            var message = CSharpPreviewWindow.isPreviewing ? "Generated late to ensure all Units have executed and their object references are available." : "";
+            @class.DeferredFields(message, () =>
             {
-                var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, variable.Value != null ? variable.Value.GetType() : typeof(UnityEngine.Object), data.AddLocalNameInScope(variable.Key.LegalMemberName()));
+                var fields = new List<FieldGenerator>();
+                var values = CodeGeneratorValueUtility.GetAllValues(GetGraphPointer().rootObject);
+                var index = 0;
+                foreach (var variable in values)
+                {
+                    var field = FieldGenerator.Field(AccessModifier.Public, FieldModifier.None, variable.Value != null ? variable.Value.GetType() : typeof(UnityEngine.Object), variable.Key.LegalMemberName());
 
-                var attribute = AttributeGenerator.Attribute(typeof(FoldoutAttribute));
-                attribute.AddParameter("ObjectReferences");
-                field.AddAttribute(attribute);
+                    var attribute = AttributeGenerator.Attribute(typeof(FoldoutAttribute));
+                    attribute.AddParameter("ObjectReferences");
+                    field.AddAttribute(attribute);
 
-                @class.AddField(field);
-                index++;
-            }
+                    fields.Add(field);
+                    index++;
+                }
+                return fields;
+            });
 
             @class.Generate(writer, data);
 
             data.Dispose();
         }
 
-        private void Initialize(ClassGenerator @class)
+        private void Initialize(ClassGenerator @class, CodeWriter writer)
         {
             customEventId = 0;
             _customEventIds = new Dictionary<CustomEvent, int>(2);
@@ -179,6 +147,13 @@ namespace Unity.VisualScripting.Community.CSharp
             GraphTraversal.TraverseFlowGraph(GetFlowGraph(), (unit) =>
             {
                 var generator = unit.GetGenerator();
+
+                foreach (var @namespace in generator.GetNamespaces())
+                {
+                    @class.AddUsing(@namespace);
+                    writer.includedNamespaces.Add(@namespace);
+                }
+
                 var info = new NodeInfo
                 {
                     Generator = generator,
@@ -245,7 +220,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     field.SetOwner(unit);
 
                     if (variableNodeGenerator.HasDefaultValue)
-                        field.CustomDefault(variableNodeGenerator.DefaultValue.As().Code(variableNodeGenerator.IsNew, variableNodeGenerator.Literal, true, "", variableNodeGenerator.NewLineLiteral, true, false));
+                        field.CustomDefault(writer.ObjectString(variableNodeGenerator.DefaultValue, true, variableNodeGenerator.IsNew, variableNodeGenerator.Literal, true, "", variableNodeGenerator.NewLineLiteral, false));
                     @class.AddField(field);
                 }
 #if PACKAGE_INPUT_SYSTEM_EXISTS && !PACKAGE_INPUT_SYSTEM_1_2_0_OR_NEWER_EXISTS
@@ -285,11 +260,6 @@ namespace Unity.VisualScripting.Community.CSharp
                     }
                 }
 
-                foreach (var @namespace in generator.GetNamespaces())
-                {
-                    @class.AddUsing(@namespace);
-                }
-
                 _allUnits.Add(unit);
 
                 if (generator is UpdateMethodNodeGenerator) return;
@@ -316,7 +286,9 @@ namespace Unity.VisualScripting.Community.CSharp
 
                 var modifer = CSharpPreviewWindow.isPreviewing ? AccessModifier.Private : AccessModifier.Public;
 
-                var field = FieldGenerator.Field(modifer, FieldModifier.None, type, variable.name.LegalVariableName(), variable.value);
+                bool hasDefault = variable.value != type.Default();
+
+                var field = FieldGenerator.Field(modifer, FieldModifier.None, type, variable.name.LegalVariableName(), variable.value, hasDefault);
 
                 if (!CSharpPreviewWindow.isPreviewing)
                 {
