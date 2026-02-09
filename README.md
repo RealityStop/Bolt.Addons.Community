@@ -43,7 +43,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 
 ### 📦 Node Library
 
-| Category | |
+| Category | Units |
 | :--- | :--- |
 | [**Variables**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#variables) | Increment, Decrement, Plus Equals, Reset Saved, Clear Saved |
 | [**Events**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#events) | On Every X Seconds, On Variable Changed, Manual Event, Defined Event, Trigger Defined Event, Global Defined Event, Return Event, Event Return, Trigger Return Event, Editor Window Events, Trigger Asset Custom Event, Reset Graph Listener, Channel Event, Trigger Channel Event |
