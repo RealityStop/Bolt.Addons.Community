@@ -64,7 +64,7 @@ We include a multitude of assets, nodes, and tooling to extend missing language 
 | Category | Type | Description |
 | :--- | :--- | :--- |
 | [**Code**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/C%23-Generation) | Class, Delegates, Enums, Interface, Struct | Essential Visual Scripting to C# building blocks. (Experimental) |
-| [**Editor**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Windows) | Window View) | Tool for custom UI. |
+| [**Editor**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Windows) | Window View | Tool for custom UI. |
 | **Wizards** | [Node](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Node-Creation-Wizard) & [Descriptor Creation](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Descriptor-Creation-Wizard) | Tools for faster unit and descriptor creation. |
 
 ---
