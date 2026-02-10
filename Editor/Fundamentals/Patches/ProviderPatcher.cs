@@ -5,6 +5,8 @@ using UnityEditor;
 #if PACKAGE_INPUT_SYSTEM_EXISTS
 using Unity.VisualScripting.InputSystem;
 using UnityEngine;
+using System.Collections;
+
 
 #endif
 
@@ -19,6 +21,7 @@ namespace Unity.VisualScripting.Community
     [InitializeOnLoad]
     public static class ProviderPatcher
     {
+        internal static bool isPatched;
         static ProviderPatcher()
         {
             EnsurePatched();
@@ -54,6 +57,7 @@ namespace Unity.VisualScripting.Community
                 PatchUnitConnectionWidgets(context);
             };
 
+            bool set = false;
             // Trigger the patch for each of the windows
             // this should ensure that it patches the providers before any call to
             // canvas.Widget can be made.
@@ -62,6 +66,8 @@ namespace Unity.VisualScripting.Community
                 tab.reference = (ReferenceDataField.GetValue(tab) as GraphPointerData).ToReference(false);
 
                 var context = tab.context;
+
+                isPatched = set = context != null && context.graph is FlowGraph;
 
                 if (context != null && context.graph is FlowGraph)
                 {
@@ -73,7 +79,7 @@ namespace Unity.VisualScripting.Community
 #endif
                 PatchUnitPortWidgets(context);
                 PatchUnitConnectionWidgets(context);
-                if (!string.IsNullOrEmpty(context.windowTitle))
+                if (!string.IsNullOrEmpty(context?.windowTitle))
                 {
                     EditorApplication.delayCall += () =>
                     {
@@ -81,6 +87,70 @@ namespace Unity.VisualScripting.Community
                     };
                 }
             }
+
+            if (!set)
+            {
+                EditorApplicationUtility.onHierarchyChange += TryPatchAllWindows;
+            }
+        }
+
+        private static readonly HashSet<int> PatchedWindows = new HashSet<int>();
+
+        private static void TryPatchAllWindows()
+        {
+            foreach (var tab in Resources.FindObjectsOfTypeAll<GraphWindow>())
+            {
+                TryPatchWindow(tab);
+            }
+
+            EditorApplicationUtility.onHierarchyChange -= TryPatchAllWindows;
+        }
+
+        private static void TryPatchWindow(GraphWindow tab)
+        {
+            if (tab == null) return;
+
+            var id = tab.GetInstanceID();
+            if (PatchedWindows.Contains(id)) return;
+
+            if (tab.reference == null)
+                tab.reference = (ReferenceDataField.GetValue(tab) as GraphPointerData).ToReference(false);
+
+            tab.Validate();
+            tab.MatchSelection();
+
+            var context = tab.context;
+            if (context == null || !(context.graph is FlowGraph graph)) return;
+            if (context.canvas == null) return;
+
+            var provider = context.canvas.widgetProvider;
+            if (provider == null) return;
+
+            isPatched = true;
+
+            PatchGlobalProvider(provider, typeof(UnifiedVariableUnit), typeof(UnifiedVariableUnitWidget));
+
+#if NEW_UNIT_UI
+            PatchUnitWidgets(context);
+#endif
+
+            PatchUnitPortWidgets(context);
+            PatchUnitConnectionWidgets(context);
+            context.canvas.CacheWidgetCollections();
+
+            if (!string.IsNullOrEmpty(context?.windowTitle))
+            {
+                EditorApplication.delayCall += () =>
+                {
+                    if (tab != null)
+                        tab.titleContent = new GUIContent(
+                            context.windowTitle,
+                            BoltCore.Icons.window?[IconSize.Small]
+                        );
+                };
+            }
+
+            PatchedWindows.Add(id);
         }
 
         private static void PatchUnitWidgets(IGraphContext context)

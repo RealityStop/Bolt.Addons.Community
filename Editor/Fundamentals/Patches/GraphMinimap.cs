@@ -79,6 +79,7 @@ namespace Unity.VisualScripting.Community
 
         private static void OnEditorUpdate()
         {
+            if (!ProviderPatcher.isPatched) return;
             double now = EditorApplication.timeSinceStartup;
             bool mustClean = BoltCore.instance == null || EditorApplication.isCompiling;
             if (now - lastUpdateTime < UpdateInterval && !mustClean) return;
