@@ -20,6 +20,9 @@ A community-driven project extending Unity Visual Scripting with custom nodes, a
 ### Option 1: Via Package Manager (Recommended)
 1. Open the Unity Package Manager.
 2. Click the **+** button > **Add package from git URL...**
+
+![](https://imgur.com/v92tiFD.png)
+
 3. Paste the following:
    - **For Visual Scripting:** `https://github.com/RealityStop/Bolt.Addons.Community.git`
    - **For Bolt:** `https://github.com/RealityStop/Bolt.Addons.Community.git#bolt-main`
