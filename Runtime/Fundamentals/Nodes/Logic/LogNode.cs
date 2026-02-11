@@ -93,20 +93,23 @@ namespace Unity.VisualScripting.Community
                 return val.ToString();
             });
 
-            switch (type) 
+            switch (type)
             {
-                case LogType.Log: Debug.Log(string.Format(flow.GetValue<string>(format), stringArgs.ToArray()));
+                case LogType.Log:
+                    Debug.Log(string.Format(flow.GetValue<string>(format), stringArgs.ToArray()));
                     break;
-                case LogType.Warning: Debug.LogWarning(string.Format(flow.GetValue<string>(format), stringArgs.ToArray()));
+                case LogType.Warning:
+                    Debug.LogWarning(string.Format(flow.GetValue<string>(format), stringArgs.ToArray()));
                     break;
-                case LogType.Error: Debug.LogError(string.Format(flow.GetValue<string>(format), stringArgs.ToArray()));
+                case LogType.Error:
+                    Debug.LogError(string.Format(flow.GetValue<string>(format), stringArgs.ToArray()));
                     break;
             }
             return output;
         }
     }
 
-    public enum LogType 
+    public enum LogType
     {
         Log,
         Warning,

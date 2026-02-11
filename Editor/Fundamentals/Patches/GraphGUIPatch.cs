@@ -713,7 +713,7 @@ namespace Unity.VisualScripting.Community
             Sprite breadCrumbRootIcon = null;
             Sprite breadCrumbIcon = null;
 
-            RebuildBreadcrumbs();
+            SyncBreadcrumbs();
 
             Toolbar.Add(lockedButton);
             Toolbar.Add(inspectorButton);
@@ -731,73 +731,165 @@ namespace Unity.VisualScripting.Community
             {
                 Toolbar.schedule.Execute(() =>
                 {
-                    RebuildBreadcrumbs();
+                    SyncBreadcrumbs();
                 });
             };
 
-            void RebuildBreadcrumbs()
+            ToolbarButton CreateBreadcrumbButton()
             {
-                state.reference = window.reference;
-                state.highlightTimers.Clear();
-                state.matches.Clear();
-                state.currentIndex = -1;
-                Search(window, state, false);
-                breadcrumbContainer.Clear();
-                if (state.counterLabel != null)
-                    state.counterLabel.text = state.matches.Count == 0 ? "0/0" : $"{state.currentIndex + 1}/{state.matches.Count}";
+                var btn = new ToolbarButton();
+                btn.focusable = false;
+                btn.style.height = 20;
+                btn.style.fontSize = 9;
+                btn.style.backgroundColor = Color.clear;
 
-                if (window.reference == null || !window.reference.isValid) return;
-
-                foreach (var breadcrumb in window.reference.GetBreadcrumbs())
+#if !UNITY_2023_2_OR_NEWER
+                var img = new Image
                 {
-                    bool isCurrent = breadcrumb == window.reference;
-                    var btn = new ToolbarButton(() =>
+                    name = "BreadcrumbIcon"
+                };
+                img.AlignSelf(Align.FlexStart);
+
+                btn.Insert(0, img);
+#endif
+
+                btn.style.marginRight = 0;
+                btn.style.paddingLeft = 10;
+#if UNITY_2023_2_OR_NEWER
+                btn.style.paddingRight = 10;
+#else
+                btn.style.paddingRight = 0;
+#endif
+                btn.style.borderLeftWidth = 0;
+                btn.style.borderRightWidth = 0;
+
+                btn.style.minWidth = 80;
+
+                btn.style.borderRightWidth = 0;
+                btn.style.borderLeftWidth = 0;
+
+                btn.style.unityTextAlign = TextAnchor.MiddleCenter;
+                btn.style.whiteSpace = WhiteSpace.NoWrap;
+
+                btn.clicked += () =>
+                {
+                    var target = btn.userData as GraphReference;
+                    if (target != null && target != window.reference)
                     {
-                        if (!isCurrent)
-                        {
-                            window.reference = breadcrumb;
-                            state.reference = window.reference;
-                            state.highlightTimers.Clear();
-                            state.matches.Clear();
-                            state.currentIndex = -1;
-                            Search(window, state, false);
-                            RebuildBreadcrumbs();
-                        }
+                        window.reference = target;
+                        SyncBreadcrumbs();
+                    }
+                };
+
+                var assigned = false;
+                btn.Add(new IMGUIContainer(() =>
+                {
+                    var breadcrumb = btn.userData as GraphReference;
+                    if (breadcrumb == null) return;
+
+                    if (breadCrumbRootIcon == null || breadCrumbIcon == null)
+                    {
+                        var root = Styles.toolbarBreadcrumbRoot.normal.background;
+                        var child = Styles.toolbarBreadcrumb.normal.background;
+
+                        breadCrumbRootIcon = Sprite.Create(
+                            root,
+                            new Rect(0, 0, root.width, root.height),
+                            new Vector2(0.5f, 0.5f),
+                            100,
+                            0,
+                            SpriteMeshType.FullRect,
+                            new Vector4(10, 0, 10, 0)
+                        );
+
+                        breadCrumbIcon = Sprite.Create(
+                            child,
+                            new Rect(0, 0, child.width, child.height),
+                            new Vector2(0.5f, 0.5f),
+                            100,
+                            0,
+                            SpriteMeshType.FullRect,
+                            new Vector4(10, 0, 10, 0)
+                        );
+                    }
+
+                    if (!DescriptorProvider.instance.IsValid(breadcrumb.parent)) return;
+
+                    var title = breadcrumb.parent.Description().ToGUIContent(IconSize.Small);
+
+#if !UNITY_2023_2_OR_NEWER
+                    btn.text = (breadcrumb.isRoot ? "       " : " ") + title.text;
+#else
+                    btn.text = title.text;
+
+                    btn.schedule.Execute(() =>
+                    {
+                        if (title.image is Texture2D iconTex)
+                            btn.iconImage = iconTex;
                     });
+#endif
+                    if (!assigned)
+                    {
+                        assigned = true;
+                        btn.style.backgroundImage = Background.FromSprite(
+                            breadcrumb.isRoot ? breadCrumbRootIcon : breadCrumbIcon
+                        );
+                    }
+                }));
+
+                return btn;
+            }
+
+            void SyncBreadcrumbs()
+            {
+                if (window.reference == null || !window.reference.isValid)
+                    return;
+
+                var breadcrumbs = window.reference.GetBreadcrumbs().ToList();
+
+                while (breadcrumbContainer.childCount > breadcrumbs.Count)
+                    breadcrumbContainer.RemoveAt(breadcrumbContainer.childCount - 1);
+
+                for (int i = 0; i < breadcrumbs.Count; i++)
+                {
+                    var breadcrumb = breadcrumbs[i];
+
+                    ToolbarButton btn;
+
+                    if (i >= breadcrumbContainer.childCount)
+                    {
+                        btn = CreateBreadcrumbButton();
+                        breadcrumbContainer.Add(btn);
+                    }
+                    else
+                    {
+                        btn = breadcrumbContainer[i] as ToolbarButton;
+                    }
 
                     if (breadcrumb.isRoot)
                         btn.style.marginLeft = 0;
                     else
                         btn.style.marginLeft = -10;
 
-                    btn.style.marginRight = 0;
-                    btn.style.paddingLeft = 10;
-#if UNITY_2023_2_OR_NEWER
-                    btn.style.paddingRight = 10;
-#else
-                    btn.style.paddingRight = 0;
-#endif
-                    btn.style.borderLeftWidth = 0;
-                    btn.style.borderRightWidth = 0;
-
-                    btn.style.minWidth = 80;
-
-                    btn.style.borderRightWidth = 0;
-                    btn.style.borderLeftWidth = 0;
-
-                    btn.style.unityTextAlign = TextAnchor.MiddleCenter;
-                    btn.style.whiteSpace = WhiteSpace.NoWrap;
-
-#if !UNITY_2023_2_OR_NEWER
-                    var img = new Image();
+                    btn.userData = breadcrumb;
 
                     var title = breadcrumb.parent.Description().ToGUIContent(IconSize.Small);
-                    img.image = title.image;
-                    img.AlignSelf(Align.FlexStart);
 
-                    btn.Add(img);
+#if !UNITY_2023_2_OR_NEWER
+                    var img = btn.Q<Image>("BreadcrumbIcon");
+                    if (img != null)
+                    {
+                        img.image = title.image;
+                        if (breadcrumb.isRoot)
+                        {
+                            img.style.marginRight = 45;
+                        }
+                    }
 
-                    btn.style.unityTextOverflowPosition = TextOverflowPosition.End;
+                    btn.text = (breadcrumb.isRoot ? "       " : " ") + title.text;
+                    btn.style.overflow = Overflow.Hidden;
+                    btn.style.textOverflow = TextOverflow.Ellipsis;
+
                     btn.RegisterCallback<ChangeEvent<string>>(s =>
                     {
                         var title = breadcrumb.parent.Description().ToGUIContent(IconSize.Small);
@@ -807,12 +899,6 @@ namespace Unity.VisualScripting.Community
                         else
                             btn.style.width = 80;
                     });
-
-#if !UNITY_2023_2_OR_NEWER
-                    btn.text = (breadcrumb.isRoot ? "       " : " ") + title.text;
-#else
-                    btn.text = title.text;
-#endif
 
                     btn.RegisterCallback<GeometryChangedEvent>(evt =>
                     {
@@ -829,48 +915,8 @@ namespace Unity.VisualScripting.Community
                         btn.style.width = Mathf.Max(80, textSize);
                     });
 #endif
-                    btn.Add(new IMGUIContainer(() =>
-                    {
-                        if (breadCrumbRootIcon == null || breadCrumbIcon == null)
-                        {
-                            var root = Styles.toolbarBreadcrumbRoot.normal.background;
-                            var child = Styles.toolbarBreadcrumb.normal.background;
-
-                            breadCrumbRootIcon = Sprite.Create(root, new Rect(0, 0, root.width, root.height),
-                            new Vector2(0.5f, 0.5f), 100, 0, SpriteMeshType.FullRect,
-                            new Vector4(10, 0, 10, 0));
-
-                            breadCrumbIcon = Sprite.Create(child, new Rect(0, 0, child.width, child.height),
-                            new Vector2(0.5f, 0.5f), 100, 0, SpriteMeshType.FullRect,
-                            new Vector4(10, 0, 10, 0));
-                        }
-
-                        if (!DescriptorProvider.instance.IsValid(breadcrumb.parent)) return;
-
-                        Sprite bgSprite = breadcrumb.isRoot ? breadCrumbRootIcon : breadCrumbIcon;
-                        btn.style.backgroundImage = Background.FromSprite(bgSprite);
-                        var title = breadcrumb.parent.Description().ToGUIContent(IconSize.Small);
-#if !UNITY_2023_2_OR_NEWER
-                        btn.text = (breadcrumb.isRoot ? "       " : " ") + title.text;
-#else
-                        btn.text = title.text;
-#endif
-
-#if UNITY_2023_2_OR_NEWER
-                        btn.schedule.Execute(() =>
-                        {
-                            if (title.image is Texture2D iconTex)
-                                btn.iconImage = iconTex;
-                        });
-#endif
-                    }));
+                    bool isCurrent = breadcrumb == window.reference;
                     btn.style.unityFontStyleAndWeight = isCurrent ? FontStyle.Bold : FontStyle.Normal;
-                    btn.style.backgroundColor = Color.clear;
-                    btn.style.height = 20;
-                    btn.style.fontSize = 9;
-                    btn.focusable = false;
-
-                    breadcrumbContainer.Add(btn);
                 }
             }
         }
