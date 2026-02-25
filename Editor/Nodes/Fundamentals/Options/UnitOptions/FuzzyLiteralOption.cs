@@ -31,8 +31,6 @@ namespace Unity.VisualScripting.Community
         // Used to make the query not match exactly so it will still prefer other matches over this.
         private const string Poison = "zzx";
 
-        public override string formerHaystack => Poison + currentQuery + Poison;
-    
         protected override void FillFromUnit()
         {
             literalType = unit.type;

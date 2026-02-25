@@ -1,6 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+#if VISUAL_SCRIPTING_1_7
+using SUnit = Unity.VisualScripting.SubgraphUnit;
+#else
+using SUnit = Unity.VisualScripting.SuperUnit;
+#endif
+
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -12,7 +18,7 @@ namespace Unity.VisualScripting.Community.CSharp
         }
 
         internal List<ControlOutput> connectedControlOutputs = new List<ControlOutput>();
-        public SubgraphUnit parent;
+        public SUnit parent;
 
         protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
