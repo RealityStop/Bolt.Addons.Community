@@ -17,6 +17,12 @@ namespace Unity.VisualScripting.Community.CSharp
         protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
             var controloutput = connectedControlOutputs.FirstOrDefault(output => output.key.Equals(input.key, System.StringComparison.OrdinalIgnoreCase));
+
+            if (data.TryGetGraphPointer(out var graphPointer) && graphPointer.isChild)
+            {
+                data.ParentReference(false);
+            }
+
             if (controloutput != null)
             {
                 GenerateExitControl(controloutput, data, writer);

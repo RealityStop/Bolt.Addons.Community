@@ -296,15 +296,15 @@ namespace Unity.VisualScripting.Community
 
         private readonly HashSet<ValueInput> resolvingTypes = new HashSet<ValueInput>();
 
-        public IDisposable SuppressRecording(ValueInput input, out bool canSuppress)
+        public IDisposable SuppressRecording(ValueInput input, out bool suppressed)
         {
             if (!resolvingTypes.Add(input))
             {
-                canSuppress = false;
+                suppressed = false;
                 return EmptyScope.Instance;
             }
             suppressRecording++;
-            canSuppress = true;
+            suppressed = true;
             return new RecordingSuppressionScope(this, input);
         }
 

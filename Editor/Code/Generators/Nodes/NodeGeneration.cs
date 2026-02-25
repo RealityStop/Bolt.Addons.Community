@@ -218,7 +218,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private static IUnitValuePort FindConnectedInput(GraphInputGenerator generator, string key)
         {
-            foreach (var valueInput in generator.parent.valueInputs)
+            foreach (var valueInput in generator?.parent?.valueInputs ?? Enumerable.Empty<ValueInput>())
             {
                 if (valueInput.key == key)
                 {

@@ -143,7 +143,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (data.TryGetGraphPointer(out var graphPointer))
             {
-                data.SetGraphPointer(graphPointer.AsReference().ChildReference(Unit, false));
+                data.ChildReference(Unit, false);
             }
 
             var subgraphName = GraphTraversal.GetNesterUnitName(Unit);
@@ -294,7 +294,9 @@ namespace Unity.VisualScripting.Community.CSharp
 #else
                 Type type = variable.value != null ? variable.value.GetType() : typeof(object);
 #endif
-                yield return FieldGenerator.Field(AccessModifier.Private, FieldModifier.None, type, variable.name, variable.value);
+
+                bool hasDefault = variable.value != type.Default();
+                yield return FieldGenerator.Field(AccessModifier.Private, FieldModifier.None, type, variable.name, variable.value, hasDefault);
             }
         }
     }

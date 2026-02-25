@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -20,6 +21,8 @@ namespace Unity.VisualScripting.Community.CSharp
         public Dictionary<object, object> globalGeneratorData = new Dictionary<object, object>();
 
         public bool isDisposed { get; private set; } = false;
+
+        public readonly Stack<string> graphScopeStack;
 
         public void Dispose()
         {
@@ -66,14 +69,22 @@ namespace Unity.VisualScripting.Community.CSharp
 
         #endregion
 
+        private readonly Dictionary<string, Dictionary<string, string>> graphVariableMap = new Dictionary<string, Dictionary<string, string>>();
+
         public string AddLocalNameInScope(string name, Type type = null, bool checkAnscestorsOnly = false)
         {
             if (scopes.Count > 0)
             {
+                var graphId = graphScopeStack.Peek();
+
+                if (!graphVariableMap.TryGetValue(graphId, out var map))
+                {
+                    map = new Dictionary<string, string>();
+                    graphVariableMap[graphId] = map;
+                }
+
                 string newName = name;
                 int count = 0;
-
-                var scope = PeekScope();
 
                 while (checkAnscestorsOnly ? ContainsNameInAncestorScope(newName) : ContainsNameInAnyScope(newName))
                 {
@@ -81,9 +92,8 @@ namespace Unity.VisualScripting.Community.CSharp
                     newName = name + count;
                 }
 
-                scope.scopeVariables.Add(newName, type);
-                scope.nameMapping[name] = newName;
-
+                map[name] = newName;
+                PeekScope().scopeVariables.Add(newName, type);
                 return newName;
             }
             else
@@ -117,6 +127,7 @@ namespace Unity.VisualScripting.Community.CSharp
             methodId++;
             NewScope();
         }
+
         public void ExitMethod()
         {
             GeneratorScope result;
@@ -127,6 +138,7 @@ namespace Unity.VisualScripting.Community.CSharp
             methodId--;
             ExitScope(true);
         }
+
         public void NewScope()
         {
             var parent = PeekScope();
@@ -140,7 +152,6 @@ namespace Unity.VisualScripting.Community.CSharp
 
             scopes.Push(newScope);
         }
-
 
         public void ExitScope(bool exitingMethod = false)
         {
@@ -221,19 +232,14 @@ namespace Unity.VisualScripting.Community.CSharp
         #region Variable Management
         public string GetVariableName(string name, bool errorIfNotFound = false, string error = "")
         {
-            foreach (var scope in scopes)
+            foreach (var graphId in graphScopeStack)
             {
-                if (scope.nameMapping.TryGetValue(name, out string variableName))
+                if (graphVariableMap.TryGetValue(graphId, out var map))
                 {
-                    return variableName;
-                }
-            }
-
-            foreach (var preservedScope in preservedScopes)
-            {
-                if (preservedScope.nameMapping.TryGetValue(name, out string variableName))
-                {
-                    return variableName;
+                    if (map.TryGetValue(name, out var mapped))
+                    {
+                        return mapped;
+                    }
                 }
             }
 
@@ -244,7 +250,6 @@ namespace Unity.VisualScripting.Community.CSharp
 
             return name;
         }
-
 
         public Type GetVariableType(string name)
         {
@@ -320,6 +325,26 @@ namespace Unity.VisualScripting.Community.CSharp
             return false;
         }
 
+        public GraphPointer ChildReference(IGraphParentElement parentElement, bool ensureValid)
+        {
+            graphPointer = graphPointer?.AsReference()?.ChildReference(parentElement, ensureValid);
+            graphScopeStack.Push(graphPointer?.ToString() ?? "Global");
+            return graphPointer;
+        }
+
+        public GraphPointer ChildReference(GraphPointer pointer)
+        {
+            graphPointer = pointer?.AsReference();
+            graphScopeStack.Push(graphPointer?.ToString() ?? "Global");
+            return graphPointer;
+        }
+
+        public void ParentReference(bool ensureValid)
+        {
+            graphPointer = graphPointer?.AsReference()?.ParentReference(ensureValid);
+            graphScopeStack.Pop();
+        }
+
         public void SetGraphPointer(GraphReference graphReference)
         {
             // This should only happen if this is not a scriptmachine
@@ -342,16 +367,83 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             this.ScriptType = ScriptType;
             this.graphPointer = graphPointer;
-            if (gameObject == null && graphPointer != null && graphPointer.gameObject != null)
+            if (graphPointer != null)
             {
-                gameObject = graphPointer.gameObject;
+                if (gameObject == null && graphPointer.gameObject != null)
+                {
+                    gameObject = graphPointer.gameObject;
+                }
+
+                graphScopeStack = new Stack<string>();
+                graphScopeStack.Push(graphPointer?.ToString() ?? "Global");
+            }
+            else
+            {
+                graphScopeStack = new Stack<string>();
+                graphScopeStack.Push("Global");
             }
         }
+
+        #region Helper Methods
+        public void GenerateConstructor(CodeWriter writer, Action<ControlInput, ControlGenerationData, CodeWriter> generate, GraphReference reference, List<TypeParam> @params = null)
+        {
+            GenerateVoidMethod(writer, generate, reference, @params);
+        }
+
+        public void GeneratePropertyGetter(CodeWriter writer, Action<ControlInput, ControlGenerationData, CodeWriter> generate, GraphReference reference, Type returnType, out bool notReturned)
+        {
+            GenerateReturnMethod(writer, generate, reference, returnType, out notReturned);
+        }
+
+        public void GeneratePropertySetter(CodeWriter writer, Action<ControlInput, ControlGenerationData, CodeWriter> generate, GraphReference reference, Type variableType)
+        {
+            GenerateVoidMethod(writer, generate, reference, @params: new List<TypeParam>() { new TypeParam(variableType, "value") });
+        }
+
+        private void GenerateVoidMethod(CodeWriter writer, Action<ControlInput, ControlGenerationData, CodeWriter> generate, GraphReference reference, List<TypeParam> @params = null)
+        {
+            EnterMethod();
+            ChildReference(reference);
+            SetReturns(typeof(void));
+            if (@params != null)
+            {
+                foreach (var param in @params)
+                {
+                    AddLocalNameInScope(param.name, param.type);
+                }
+            }
+            generate(null, this, writer);
+            ParentReference(false);
+            ExitMethod();
+        }
+
+        private void GenerateReturnMethod(CodeWriter writer, Action<ControlInput, ControlGenerationData, CodeWriter> generate, GraphReference reference, Type returnType, out bool notReturned, List<TypeParam> @params = null)
+        {
+            EnterMethod();
+            ChildReference(reference);
+            SetReturns(returnType);
+            if (@params != null)
+            {
+                foreach (var param in @params)
+                {
+                    AddLocalNameInScope(param.name, param.type);
+                }
+            }
+            generate(null, this, writer);
+            ParentReference(false);
+            notReturned = MustReturn && !HasReturned;
+            ExitMethod();
+        }
+
+        public void GenerateMethod(CodeWriter writer, Action<ControlInput, ControlGenerationData, CodeWriter> generate, GraphReference reference, Type returnType, out bool notReturned, List<TypeParam> @params = null)
+        {
+            GenerateReturnMethod(writer, generate, reference, returnType, out notReturned, @params);
+        }
+        #endregion
 
         private sealed class GeneratorScope
         {
             public Dictionary<string, Type> scopeVariables { get; private set; }
-            public Dictionary<string, string> nameMapping { get; private set; }
             public GeneratorScope ParentScope { get; private set; }
             public readonly Dictionary<object, object> generatorData = new Dictionary<object, object>();
 
@@ -366,7 +458,6 @@ namespace Unity.VisualScripting.Community.CSharp
             public GeneratorScope(GeneratorScope parentScope, int methodId)
             {
                 scopeVariables = new Dictionary<string, Type>();
-                nameMapping = new Dictionary<string, string>();
                 ParentScope = parentScope;
                 this.methodId = methodId;
             }

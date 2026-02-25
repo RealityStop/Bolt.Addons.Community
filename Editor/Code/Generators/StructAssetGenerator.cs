@@ -70,9 +70,6 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     constructor.SetOwner(unit);
 
-                    data.EnterMethod();
-                    data.SetReturns(typeof(void));
-                    data.SetGraphPointer(Data.constructors[i].GetReference().AsReference());
                     var usings = new List<string>();
                     GraphTraversal.TraverseFlowGraph(Data.constructors[i].graph, unit =>
                     {
@@ -135,11 +132,8 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     @struct.AddUsings(usings);
 
-                    foreach (var param in Data.constructors[i].parameters)
-                    {
-                        data.AddLocalNameInScope(param.name, param.type);
-                    }
-                    constructor.Body(w => unit.GenerateControl(null, data, w));
+                    constructor.Body(w => data.GenerateConstructor(w, unit.GenerateControl, Data.constructors[i].GetReference().AsReference(), Data.constructors[i].parameters));
+
                     for (int pIndex = 0; pIndex < Data.constructors[i].parameters.Count; pIndex++)
                     {
                         if (!string.IsNullOrEmpty(Data.constructors[i].parameters[pIndex].name)) constructor.AddParameter(false, ParameterGenerator.Parameter(Data.constructors[i].parameters[pIndex].name, Data.constructors[i].parameters[pIndex].type, Data.constructors[i].parameters[pIndex].modifier, Data.constructors[i].parameters[pIndex].hasDefault, Data.constructors[i].parameters[pIndex].defaultValue));
@@ -259,12 +253,11 @@ namespace Unity.VisualScripting.Community.CSharp
                             });
 
                             @struct.AddUsings(usings);
-                            data.EnterMethod();
-                            data.SetReturns(Data.variables[i].type);
-                            data.SetGraphPointer(Data.variables[i].getter.GetReference().AsReference());
-                            property.MultiStatementGetter(AccessModifier.Public, w => (Data.variables[i].getter.graph.units[0] as Unit)
-                            .GenerateControl(null, data, w));
-                            data.ExitMethod();
+                            property.MultiStatementGetter(AccessModifier.Public, w =>
+                            {
+                                data.GeneratePropertyGetter(w, unit.GenerateControl, Data.variables[i].getter.GetReference().AsReference(), Data.variables[i].type, out var notReturned);
+                                if (notReturned) property.SetWarning("Not all code paths return a value");
+                            });
                         }
 
                         if (Data.variables[i].set)
@@ -336,14 +329,10 @@ namespace Unity.VisualScripting.Community.CSharp
 
 
                             @struct.AddUsings(usings);
-                            data.EnterMethod();
-                            data.SetReturns(typeof(void));
-                            data.SetGraphPointer(Data.variables[i].setter.GetReference().AsReference());
-                            data.AddLocalNameInScope("value", Data.variables[i].type);
-
-                            property.MultiStatementSetter(AccessModifier.Public, w => (Data.variables[i].setter.graph.units[0] as Unit)
-                            .GenerateControl(null, data, w));
-                            data.ExitMethod();
+                            property.MultiStatementSetter(AccessModifier.Public, w =>
+                            {
+                                data.GeneratePropertySetter(w, unit.GenerateControl, Data.variables[i].setter.GetReference().AsReference(), Data.variables[i].type);
+                            });
                         }
 
                         @struct.AddProperty(property);
@@ -491,15 +480,11 @@ namespace Unity.VisualScripting.Community.CSharp
 
                         @struct.AddUsings(usings);
 
-                        data.EnterMethod();
-                        data.SetReturns(Data.methods[i].returnType);
-                        data.SetGraphPointer(Data.methods[i].GetReference().AsReference());
-                        foreach (var param in Data.methods[i].parameters)
+                        method.Body(w =>
                         {
-                            data.AddLocalNameInScope(param.name, param.type);
-                        }
-                        method.Body(w => unit.GenerateControl(null, data, w));
-                        data.ExitMethod();
+                            data.GenerateMethod(w, unit.GenerateControl, Data.methods[i].GetReference().AsReference(), Data.methods[i].returnType, out bool notReturned, Data.methods[i].parameters);
+                            if (notReturned) method.SetWarning("Not all code paths return a value");
+                        });
                         for (int pIndex = 0; pIndex < Data.methods[i].parameters.Count; pIndex++)
                         {
                             if (!string.IsNullOrEmpty(Data.methods[i].parameters[pIndex].name)) method.AddParameter(ParameterGenerator.Parameter(Data.methods[i].parameters[pIndex].name, Data.methods[i].parameters[pIndex].type, Data.methods[i].parameters[pIndex].modifier, Data.methods[i].parameters[pIndex].hasDefault, Data.methods[i].parameters[pIndex].defaultValue));

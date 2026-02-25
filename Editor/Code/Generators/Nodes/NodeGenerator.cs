@@ -313,9 +313,9 @@ namespace Unity.VisualScripting.Community.CSharp
             // Ensure that the Generator is Initialized so it creates any Symbols, Variables, etc.
             if (resolveTypes)
             {
-                using (writer.SuppressRecording(valueInput, out var canSuppress))
+                using (writer.SuppressRecording(valueInput, out var suppressed))
                 {
-                    if (canSuppress)
+                    if (suppressed)
                         GenerateValueInternal(valueInput, data, writer);
                 }
             }

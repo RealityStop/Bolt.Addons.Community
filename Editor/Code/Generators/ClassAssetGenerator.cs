@@ -136,11 +136,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 @class.AddUsings(ProcessGraphUnits(constructorData.graph, @class));
                 constructor.Body(w =>
                 {
-                    data.EnterMethod();
-                    data.SetGraphPointer(constructorData.GetReference().AsReference());
-                    using (data.Expect(typeof(void)))
-                        unit.GenerateControl(null, data, w);
-                    data.ExitMethod();
+                    data.GenerateConstructor(w, unit.GenerateControl, constructorData.GetReference().AsReference());
                 });
                 foreach (var param in parameters)
                 {
@@ -210,14 +206,8 @@ namespace Unity.VisualScripting.Community.CSharp
                     @class.AddUsings(ProcessGraphUnits(methodData.graph, @class));
                     method.Body(w =>
                     {
-                        data.EnterMethod();
-                        data.SetReturns(methodData.returnType);
-                        data.SetGraphPointer(methodData.GetReference().AsReference());
-
-                        unit.GenerateControl(null, data, w);
-
-                        if (data.MustReturn && !data.HasReturned) method.SetWarning("Not all code paths return a value");
-                        data.ExitMethod();
+                        data.GenerateMethod(w, unit.GenerateControl, methodData.GetReference().AsReference(), methodData.returnType, out bool notReturned);
+                        if (notReturned) method.SetWarning("Not all code paths return a value");
                     });
 
                     foreach (var param in methodData.parameters)
@@ -472,14 +462,9 @@ namespace Unity.VisualScripting.Community.CSharp
 
                 void GetterMethod(CodeWriter w)
                 {
-                    data.EnterMethod();
-                    data.SetReturns(variableData.type);
-                    data.SetGraphPointer(variableData.getter.GetReference().AsReference());
+                    data.GeneratePropertyGetter(w, unit.GenerateControl, variableData.getter.GetReference().AsReference(), variableData.type, out var notReturned);
 
-                    unit.GenerateControl(null, data, w);
-
-                    if (data.MustReturn && !data.HasReturned) property.SetWarning("Not all code paths return a value");
-                    data.ExitMethod();
+                    if (notReturned) property.SetWarning("Not all code paths return a value");
                 }
             }
 
@@ -496,13 +481,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                 void SetterMethod(CodeWriter w)
                 {
-                    data.EnterMethod();
-                    data.SetReturns(variableData.type);
-                    data.SetGraphPointer(variableData.setter.GetReference().AsReference());
-
-                    unit.GenerateControl(null, data, w);
-
-                    data.ExitMethod();
+                    data.GeneratePropertySetter(w, unit.GenerateControl, variableData.setter.GetReference().AsReference(), variableData.type);
                 }
             }
 

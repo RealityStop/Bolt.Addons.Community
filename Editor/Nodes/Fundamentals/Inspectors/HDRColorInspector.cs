@@ -1,0 +1,33 @@
+using UnityEditor;
+using UnityEngine;
+
+namespace Unity.VisualScripting.Community
+{
+    [Inspector(typeof(HDRColor))]
+    [RenamedFrom("Unity.VisualScripting.HDRColorInspector")]
+    public class HDRColorInspector : Inspector
+    {
+        public HDRColorInspector(Metadata metadata) : base(metadata) { }
+
+        protected override float GetHeight(float width, GUIContent label)
+        {
+            return EditorGUIUtility.singleLineHeight;
+        }
+
+        protected override void OnGUI(Rect position, GUIContent label)
+        {
+            position = BeginLabeledBlock(metadata, position, label);
+
+            HDRColor hdrColor = (HDRColor)metadata.value;
+            var newValue = EditorGUI.ColorField(position, GUIContent.none, hdrColor.color, true, true, true);
+
+            if (EndBlock(metadata))
+            {
+                metadata.RecordUndo();
+
+                hdrColor.color = newValue;
+                metadata.value = hdrColor;
+            }
+        }
+    }
+}

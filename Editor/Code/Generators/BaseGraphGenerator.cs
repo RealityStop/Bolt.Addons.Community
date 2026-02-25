@@ -53,6 +53,7 @@ namespace Unity.VisualScripting.Community.CSharp
             public bool IsEvent;
             public bool IsUpdate;
             public bool IsCoroutine;
+            public GraphReference reference;
         }
 
         protected abstract FlowGraph GetFlowGraph();
@@ -87,8 +88,8 @@ namespace Unity.VisualScripting.Community.CSharp
 
             @class.generateUsings = true;
 
-            Initialize(@class, writer);
             GenerateVariableDeclarations(@class);
+            Initialize(@class, writer);
             GenerateEventMethods(@class);
             GenerateSpecialUnits(@class);
 
@@ -144,8 +145,11 @@ namespace Unity.VisualScripting.Community.CSharp
 
             _allUnits = new List<Unit>();
 
-            GraphTraversal.TraverseFlowGraph(GetFlowGraph(), (unit) =>
+            GraphTraversal.TraverseFlowGraph(GetGraphPointer().AsReference(), (current) =>
             {
+                var unit = current.unit;
+                var reference = current.reference;
+
                 var generator = unit.GetGenerator();
 
                 foreach (var @namespace in generator.GetNamespaces())
@@ -159,7 +163,8 @@ namespace Unity.VisualScripting.Community.CSharp
                     Generator = generator,
                     IsEvent = unit is IEventUnit,
                     IsUpdate = generator is IRequireUpdateCode,
-                    IsCoroutine = unit is IEventUnit e && e.coroutine
+                    IsCoroutine = unit is IEventUnit e && e.coroutine,
+                    reference = reference
                 };
 
                 _nodeInfoCache[unit] = info;
@@ -284,6 +289,9 @@ namespace Unity.VisualScripting.Community.CSharp
                 var isDelegate = typeof(IDelegate).IsAssignableFrom(type);
                 type = isDelegate ? (variable.value as IDelegate)?.GetDelegateType() ?? (Activator.CreateInstance(type) as IDelegate)?.GetDelegateType() : type;
 
+                // We make the variables appear as private in the C# Preview
+                // but when generating they will be public but hidden to avoid any errors
+                // with units like GetMachineVariable or SetMachineVariable
                 var modifer = CSharpPreviewWindow.isPreviewing ? AccessModifier.Private : AccessModifier.Public;
 
                 bool hasDefault = variable.value != type.Default();
@@ -502,6 +510,16 @@ namespace Unity.VisualScripting.Community.CSharp
                 {
                     continue;
                 }
+
+                var original = data.TryGetGraphPointer(out var pointer) ? pointer : null;
+
+                if (Unit.graph != GetFlowGraph())
+                {
+                    var reference = _nodeInfoCache[Unit].reference;
+                    data.SetGraphPointer(reference);
+                    data.graphScopeStack.Push(reference?.ToString() ?? "Global");
+                }
+
                 if (Unit is IEventUnit unit)
                 {
                     if (Unit is TriggerReturnEvent triggerReturn)
@@ -555,10 +573,18 @@ namespace Unity.VisualScripting.Community.CSharp
                             coroutineBodies[coroutineMethodName] = coroutineMethod;
                         }
 
-                        coroutineMethod.bodyAction += delegate (CodeWriter writer)
+                        if (RequiredMethods.TryGetValue(unityMethodName, out var entry))
                         {
-                            WriteMethodBody(unit, data, writer, unityMethodName);
-                        };
+                            entry.method.bodyAction += w =>
+                            {
+                                Unit.GenerateControl(null, data, w);
+                            };
+                        }
+                        else
+                            coroutineMethod.bodyAction += delegate (CodeWriter writer)
+                            {
+                                WriteMethodBody(unit, data, writer);
+                            };
 
                         if (!methodBodies.TryGetValue(unityMethodName, out var unityMethod))
                         {
@@ -674,15 +700,30 @@ namespace Unity.VisualScripting.Community.CSharp
                             };
                         }
                         else
-                            methodBodies[unityMethodName].bodyAction += delegate (CodeWriter writer)
+                        {
+                            if (RequiredMethods.TryGetValue(unityMethodName, out var entry))
                             {
-                                WriteMethodBody(unit, data, writer, unityMethodName);
-                            };
+                                entry.method.bodyAction += w =>
+                                {
+                                    Unit.GenerateControl(null, data, w);
+                                };
+                            }
+                            else
+                                methodBodies[unityMethodName].bodyAction += delegate (CodeWriter writer)
+                                {
+                                    WriteMethodBody(unit, data, writer);
+                                };
+                        }
                     }
                 }
                 else if (_nodeInfoCache[Unit].Generator is MethodNodeGenerator methodNodeGenerator)
                 {
                     HandleMethodNodeGenerator(methodNodeGenerator, methodBodies);
+                }
+                if (Unit.graph != GetFlowGraph() && original != null)
+                {
+                    data.SetGraphPointer(original.AsReference());
+                    data.graphScopeStack.Pop();
                 }
             }
 
@@ -812,14 +853,15 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 foreach (var unit in _updateUnits)
                 {
-                    var generator = _nodeInfoCache[unit].Generator;
-                    if (generator is IRequireUpdateCode updateCode)
+                    var info = _nodeInfoCache[unit];
+                    var generator = info.Generator;
+                    if (info.IsUpdate)
                     {
                         code += (w) =>
                         {
                             using (w.BeginNode(unit))
                             {
-                                updateCode.GenerateUpdateCode(data, w);
+                                (generator as IRequireUpdateCode).GenerateUpdateCode(data, w);
                             }
                         };
                     }
@@ -1073,18 +1115,23 @@ namespace Unity.VisualScripting.Community.CSharp
             return methodName + (getCoroutine && eventUnit.coroutine ? "_Coroutine" : "");
         }
 
-        private void WriteMethodBody(IEventUnit eventUnit, ControlGenerationData data, CodeWriter writer, string methodName = "")
+        private void WriteMethodBody(IEventUnit eventUnit, ControlGenerationData data, CodeWriter writer)
         {
-            if (RequiredMethods.TryGetValue(methodName, out var entry))
+            var original = data.TryGetGraphPointer(out var pointer) ? pointer : null;
+
+            if (eventUnit.graph != GetFlowGraph())
             {
-                entry.method.bodyAction += w =>
-                {
-                    (eventUnit as Unit).GenerateControl(null, data, w);
-                };
+                var reference = _nodeInfoCache[eventUnit as Unit].reference;
+                data.SetGraphPointer(reference);
+                data.graphScopeStack.Push(reference?.ToString() ?? "Global");
             }
-            else
+
+            (eventUnit as Unit).GenerateControl(null, data, writer);
+
+            if (eventUnit.graph != GetFlowGraph() && original != null)
             {
-                (eventUnit as Unit).GenerateControl(null, data, writer);
+                data.SetGraphPointer(original.AsReference());
+                data.graphScopeStack.Pop();
             }
         }
 

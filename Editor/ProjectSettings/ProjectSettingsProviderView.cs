@@ -81,18 +81,18 @@ namespace Unity.VisualScripting.Community
 
                     EditorPrefs.SetBool(UnitUIKey, enable);
 
-                    ScriptingDefinesHandler.UpdateUnitUI();
-                    ScriptingDefinesHandler.UpdateVerticalFlow();
-                    ScriptingDefinesHandler.UpdateUnitStyle();
+                    ScriptingDefineUtility.UpdateUnitUI();
+                    ScriptingDefineUtility.UpdateVerticalFlow();
+                    ScriptingDefineUtility.UpdateUnitStyle();
 
                     return enable;
                 }
 
                 EditorPrefs.SetBool(UnitUIKey, false);
 
-                ScriptingDefinesHandler.UpdateUnitUI();
-                ScriptingDefinesHandler.UpdateVerticalFlow();
-                ScriptingDefinesHandler.UpdateUnitStyle();
+                ScriptingDefineUtility.UpdateUnitUI();
+                ScriptingDefineUtility.UpdateVerticalFlow();
+                ScriptingDefineUtility.UpdateUnitStyle();
 
                 return true;
             });
@@ -109,10 +109,9 @@ namespace Unity.VisualScripting.Community
             DrawToggle("Darker UI", ref _darkerUI);
             DrawToggle("New Variables UI", ref _newVariablesUI);
 
-            if (_newVariablesUI)
-            {
-                DrawToggle("Show Variables Quickbar", ref _showVariablesQuickbar);
-            }
+            EditorGUI.BeginDisabledGroup(!_newVariablesUI);
+            DrawToggle("Show Variables Quickbar", ref _showVariablesQuickbar);
+            EditorGUI.EndDisabledGroup();
 
             DrawToggle("New List UI", ref _newListUI);
             DrawToggle("New Dictionary UI", ref _newDictionaryUI);
@@ -213,15 +212,15 @@ namespace Unity.VisualScripting.Community
             EditorPrefs.SetBool(NewListUIKey, _newListUI);
             EditorPrefs.SetBool(NewDictionaryUIKey, _newDictionaryUI);
 
-            ScriptingDefinesHandler.UpdateUnitUI();
-            ScriptingDefinesHandler.UpdateVerticalFlow();
-            ScriptingDefinesHandler.UpdateUnitStyle();
-            ScriptingDefinesHandler.UpdateToolbarStyle();
-            ScriptingDefinesHandler.UpdateGraphMiniMap();
-            ScriptingDefinesHandler.UpdateDarkUI();
-            ScriptingDefinesHandler.UpdateVariablesUI();
-            ScriptingDefinesHandler.UpdateListUI();
-            ScriptingDefinesHandler.UpdateDictionaryUI();
+            ScriptingDefineUtility.UpdateUnitUI();
+            ScriptingDefineUtility.UpdateVerticalFlow();
+            ScriptingDefineUtility.UpdateUnitStyle();
+            ScriptingDefineUtility.UpdateToolbarStyle();
+            ScriptingDefineUtility.UpdateGraphMiniMap();
+            ScriptingDefineUtility.UpdateDarkUI();
+            ScriptingDefineUtility.UpdateVariablesUI();
+            ScriptingDefineUtility.UpdateListUI();
+            ScriptingDefineUtility.UpdateDictionaryUI();
 
             _originalUnitUI = _unitUI;
             _originalGraphLayout = _graphLayout;
