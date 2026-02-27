@@ -1,4 +1,3 @@
-#if ENABLE_VERTICAL_FLOW
 using UnityEditor;
 using UnityEngine;
 using System.Linq;
@@ -128,4 +127,3 @@ namespace Unity.VisualScripting.Community
         }
     }
 }
-#endif

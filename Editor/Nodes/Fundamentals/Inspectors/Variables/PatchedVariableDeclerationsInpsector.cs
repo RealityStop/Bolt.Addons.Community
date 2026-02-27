@@ -563,7 +563,9 @@ namespace Unity.VisualScripting.Community
                 });
                 Handles.color = restoredColor;
             }
+
             private HashSet<string> updatedInspectors = new HashSet<string>();
+
             public override void DrawItem(Rect position, int index)
             {
                 var element = metadata[index];
@@ -579,9 +581,27 @@ namespace Unity.VisualScripting.Community
                 }
 
                 var reference = LudiqGraphsEditorUtility.editedContext?.value?.reference;
-                if (reference != null && updatedInspectors.Add(declaration.name))
+                UnityEngine.Object root = reference?.rootObject;
+                Guid[] parentGuids = reference?.parentElementGuids?.ToArray();
+                if (VariablesWindow.isVariablesWindowContext)
                 {
-                    foldout.isExpanded = VariableInspectorState.Load(reference.rootObject, reference.parentElementGuids.ToArray(), declaration.name);
+                    reference = VariablesWindow.currentContext?.reference;
+                    root = reference?.rootObject;
+                    parentGuids = reference?.parentElementGuids?.ToArray();
+                }
+                else if (metadata.Ancestor(m => m.value is VisualScripting.Variables) != null)
+                {
+                    var ancestor = metadata.Ancestor(m => m.value is VisualScripting.Variables);
+                    if (ancestor != null)
+                    {
+                        root = ancestor.value as VisualScripting.Variables;
+                    }
+                    parentGuids = new Guid[0];
+                }
+
+                if (root != null && updatedInspectors.Add(declaration.name))
+                {
+                    foldout.isExpanded = VariableInspectorState.Load(root, parentGuids, declaration.name);
                 }
 
                 position.x -= 20;
@@ -612,8 +632,8 @@ namespace Unity.VisualScripting.Community
                     foldout.isExpanded = !foldout.isExpanded;
                     parentInspector.foldouts[declaration] = foldout;
                     Event.current.Use();
-                    if (reference != null)
-                        VariableInspectorState.Save(reference.rootObject, reference.parentElementGuids.ToArray(), declaration.name, foldout.isExpanded);
+                    if (root != null)
+                        VariableInspectorState.Save(root, parentGuids, declaration.name, foldout.isExpanded);
                 }
 
                 var e = Event.current;
@@ -632,8 +652,8 @@ namespace Unity.VisualScripting.Community
                     {
                         foldout.isExpanded = true;
                         parentInspector.foldouts[declaration] = foldout;
-                        if (reference != null)
-                            VariableInspectorState.Save(reference.rootObject, reference.parentElementGuids.ToArray(), declaration.name, true);
+                        if (root != null)
+                            VariableInspectorState.Save(root, parentGuids, declaration.name, true);
                     }
 
                     parentInspector.SetHeightDirty();

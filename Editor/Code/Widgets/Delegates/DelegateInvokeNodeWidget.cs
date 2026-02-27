@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Unity.VisualScripting.Community
 {
-    public abstract class DelegateInvokeNodeWidget<T, TDelegate> : UnitWidget<T> 
+    public abstract class DelegateInvokeNodeWidget<T, TDelegate> : UnitWidget<T>
         where T : DelegateInvokeNode<TDelegate>
         where TDelegate : IDelegate
     {
@@ -25,9 +25,7 @@ namespace Unity.VisualScripting.Community
 
         protected override void DrawHeaderAddon()
         {
-            var buttonRect = position;
-            buttonRect.x += 42;
-            buttonRect.y += 38;
+            var buttonRect = headerAddonPosition;
             buttonRect.height = 20;
 
             var buttonLabel = unit._delegate == null ? "( None Selected )" : unit._delegate?.DisplayName;

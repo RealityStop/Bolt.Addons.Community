@@ -25,9 +25,7 @@ namespace Unity.VisualScripting.Community
 
         protected override void DrawHeaderAddon()
         {
-            var buttonRect = position;
-            buttonRect.x += 42;
-            buttonRect.y += 22;
+            var buttonRect = headerAddonPosition;
             buttonRect.height = 20;
 
             var buttonLabel = unit._delegate == null ? "( None Selected )" : unit._delegate?.DisplayName;

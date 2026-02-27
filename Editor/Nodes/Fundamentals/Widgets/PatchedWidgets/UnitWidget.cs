@@ -1376,21 +1376,21 @@ namespace Unity.VisualScripting.Community
             set { unit.position = value.position; }
         }
 
-        public Rect titlePosition { get; private set; }
+        public Rect titlePosition { get; protected set; }
 
-        public Rect surtitlePosition { get; private set; }
+        public Rect surtitlePosition { get; protected set; }
 
-        public Rect subtitlePosition { get; private set; }
+        public Rect subtitlePosition { get; protected set; }
 
-        public Rect iconPosition { get; private set; }
+        public Rect iconPosition { get; protected set; }
 
-        public List<Rect> iconsPositions { get; private set; } = new List<Rect>();
+        public List<Rect> iconsPositions { get; protected set; } = new List<Rect>();
 
         public Dictionary<Metadata, Rect> settingsPositions { get; } = new Dictionary<Metadata, Rect>();
 
-        public Rect headerAddonPosition { get; private set; }
+        public Rect headerAddonPosition { get; protected set; }
 
-        public Rect portsBackgroundPosition { get; private set; }
+        public Rect portsBackgroundPosition { get; protected set; }
 
         private bool _isSpecialColor;
 

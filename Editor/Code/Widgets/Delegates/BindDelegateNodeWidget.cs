@@ -25,9 +25,8 @@ namespace Unity.VisualScripting.Community
 
         protected override void DrawHeaderAddon()
         {
-            var buttonRect = position;
-            buttonRect.x += 42;
-            buttonRect.y += 22;
+            var buttonRect = headerAddonPosition;
+
             buttonRect.height = 20;
 
             var buttonLabel = unit._delegate == null ? "( None Selected )" : unit._delegate?.DisplayName;
@@ -49,7 +48,7 @@ namespace Unity.VisualScripting.Community
                         if (!types[type].IsAbstract && typeof(TDelegate).IsAssignableFrom(types[type]))
                         {
                             var _type = types[type];
-                            var del = (TDelegate)Activator.CreateInstance(_type as System.Type);
+                            var del = (TDelegate)Activator.CreateInstance(_type);
                             menu.AddItem(new GUIContent(del.DisplayName), false, () =>
                             {
                                 unit._delegate = del;

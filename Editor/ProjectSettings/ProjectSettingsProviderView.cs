@@ -204,6 +204,11 @@ namespace Unity.VisualScripting.Community
             EditorPrefs.SetBool(UnitUIKey, _unitUI);
             EditorPrefs.SetInt(GraphLayoutKey, (int)_graphLayout);
             EditorPrefs.SetBool(UnitStyleKey, _unitStyle);
+            if (!_unitUI)
+            {
+                EditorPrefs.SetInt(GraphLayoutKey, 0);
+                EditorPrefs.SetBool(UnitStyleKey, _unitStyle);
+            }
             EditorPrefs.SetBool(NewToolbarKey, _newToolbar);
             EditorPrefs.SetBool(GraphMinimapKey, _graphMinimap);
             EditorPrefs.SetBool(DarkerUIKey, _darkerUI);
