@@ -564,7 +564,7 @@ namespace Unity.VisualScripting.Community
                 Handles.color = restoredColor;
             }
 
-            private HashSet<string> updatedInspectors = new HashSet<string>();
+            private HashSet<VariableDeclaration> updatedInspectors = new HashSet<VariableDeclaration>();
 
             public override void DrawItem(Rect position, int index)
             {
@@ -580,16 +580,24 @@ namespace Unity.VisualScripting.Community
                     parentInspector.foldouts[declaration] = foldout;
                 }
 
-                var reference = LudiqGraphsEditorUtility.editedContext?.value?.reference;
-                UnityEngine.Object root = reference?.rootObject;
-                Guid[] parentGuids = reference?.parentElementGuids?.ToArray();
+                GraphReference reference = null;
+                UnityEngine.Object root = null;
+                Guid[] parentGuids = null;
+
                 if (VariablesWindow.isVariablesWindowContext)
                 {
                     reference = VariablesWindow.currentContext?.reference;
                     root = reference?.rootObject;
                     parentGuids = reference?.parentElementGuids?.ToArray();
                 }
-                else if (metadata.Ancestor(m => m.value is VisualScripting.Variables) != null)
+                else
+                {
+                    reference = LudiqGraphsEditorUtility.editedContext?.value?.reference;
+                    root = reference?.rootObject;
+                    parentGuids = reference?.parentElementGuids?.ToArray();
+                }
+
+                if (metadata.Ancestor(m => m.value is VisualScripting.Variables) != null)
                 {
                     var ancestor = metadata.Ancestor(m => m.value is VisualScripting.Variables);
                     if (ancestor != null)
@@ -599,7 +607,18 @@ namespace Unity.VisualScripting.Community
                     parentGuids = new Guid[0];
                 }
 
-                if (root != null && updatedInspectors.Add(declaration.name))
+                if (parentInspector.kind == VariableKind.Application)
+                {
+                    root = ApplicationVariables.asset;
+                    parentGuids = new Guid[0];
+                }
+                else if (parentInspector.kind == VariableKind.Saved)
+                {
+                    root = SavedVariables.asset;
+                    parentGuids = new Guid[0];
+                }
+
+                if (root != null && updatedInspectors.Add(declaration))
                 {
                     foldout.isExpanded = VariableInspectorState.Load(root, parentGuids, declaration.name);
                 }
