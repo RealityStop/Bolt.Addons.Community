@@ -878,7 +878,7 @@ namespace Unity.VisualScripting.Community
 
                     if (isSpecialPortsColor)
                     {
-                        GUI.backgroundColor = PortsbackgroundColor ?? color.ToColor();
+                        GUI.backgroundColor = PortsbackgroundColor ?? ToColor(color);
                     }
 
                     Styles.portsBackground.Draw(portsBackgroundPosition, false, false, false, false);
@@ -890,6 +890,32 @@ namespace Unity.VisualScripting.Community
 #endif
                 }
             }
+        }
+
+        private readonly Dictionary<NodeColor, Color> colorMap = new Dictionary<NodeColor, Color>()
+        {
+            { NodeColor.Gray, new Color(0.5f, 0.5f, 0.5f) },
+            { NodeColor.Blue, new Color(0.25f, 0.6f, 1f) },
+            { NodeColor.Teal, new Color(0f, 0.75f, 0.75f) },
+            { NodeColor.Green, new Color(0.4f, 0.8f, 0.4f) },
+            { NodeColor.Yellow, new Color(1f, 0.9f, 0.2f) },
+            { NodeColor.Orange, new Color(1f, 0.6f, 0.2f) },
+            { NodeColor.Red, new Color(1f, 0.3f, 0.3f) }
+        };
+
+        public Color ToColor(NodeColorMix mix)
+        {
+            mix = mix.normalized;
+            Color result = Color.black;
+            foreach (var kvp in mix)
+                if (colorMap.TryGetValue(kvp.Key, out var c))
+                    result += c * kvp.Value;
+
+            result.r = Mathf.Clamp01(result.r);
+            result.g = Mathf.Clamp01(result.g);
+            result.b = Mathf.Clamp01(result.b);
+            result.a = 1f;
+            return result;
         }
 
         #endregion

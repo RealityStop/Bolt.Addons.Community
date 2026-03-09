@@ -1,3 +1,4 @@
+# if NEW_UNIT_UI
 using UnityEditor;
 using UnityEngine;
 using System.Linq;
@@ -127,3 +128,4 @@ namespace Unity.VisualScripting.Community
         }
     }
 }
+#endif

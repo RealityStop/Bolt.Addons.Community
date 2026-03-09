@@ -34,8 +34,6 @@ namespace Unity.VisualScripting.Community
 
             var collection = metadata["collection"];
 
-            var fresh = new Dictionary<VariableDeclaration, VariableFoldout>();
-
             foldouts ??= new Dictionary<VariableDeclaration, VariableFoldout>();
 
             foreach (var declaration in variableDecls)
@@ -43,14 +41,13 @@ namespace Unity.VisualScripting.Community
                 if (foldouts.TryGetValue(declaration, out var existing))
                 {
                     existing.name = declaration.name;
-                    fresh[declaration] = existing;
+                    foldouts[declaration] = existing;
                 }
                 else
                 {
-                    fresh[declaration] = new VariableFoldout(declaration.name, false);
+                    foldouts[declaration] = new VariableFoldout(declaration.name, false);
                 }
             }
-            foldouts = fresh;
 
 #pragma warning disable 618
             kind = metadata.GetAttribute<VariableKindAttribute>()?.kind;
@@ -358,9 +355,6 @@ namespace Unity.VisualScripting.Community
 
             metadata.RecordUndo();
 
-            if (foldouts == null)
-                foldouts = new Dictionary<VariableDeclaration, VariableFoldout>();
-
             foldouts[newVar] = new VariableFoldout(newVarName, true);
 
             SetHeightDirty();
@@ -525,9 +519,6 @@ namespace Unity.VisualScripting.Community
                 var element = metadata[index];
                 var declaration = (VariableDeclaration)element.value;
 
-                if (parentInspector.foldouts == null)
-                    parentInspector.foldouts = new Dictionary<VariableDeclaration, VariableFoldout>();
-
                 if (!parentInspector.foldouts.TryGetValue(declaration, out var foldout))
                 {
                     foldout = new VariableFoldout(declaration.name, false);
@@ -571,9 +562,6 @@ namespace Unity.VisualScripting.Community
                 var element = metadata[index];
                 var declaration = (VariableDeclaration)element.value;
 
-                if (parentInspector.foldouts == null)
-                    parentInspector.foldouts = new Dictionary<VariableDeclaration, VariableFoldout>();
-
                 if (!parentInspector.foldouts.TryGetValue(declaration, out var foldout))
                 {
                     foldout = new VariableFoldout(declaration.name, false);
@@ -597,9 +585,9 @@ namespace Unity.VisualScripting.Community
                     parentGuids = reference?.parentElementGuids?.ToArray();
                 }
 
-                if (metadata.Ancestor(m => m.value is VisualScripting.Variables) != null)
+                var ancestor = metadata.Ancestor(m => m.value is VisualScripting.Variables);
+                if (ancestor != null)
                 {
-                    var ancestor = metadata.Ancestor(m => m.value is VisualScripting.Variables);
                     if (ancestor != null)
                     {
                         root = ancestor.value as VisualScripting.Variables;
@@ -708,10 +696,6 @@ namespace Unity.VisualScripting.Community
                 using (adaptiveWidth.Override(true)) // Hide the Type label
                 {
                     var typeInspector = element["typeHandle"].Inspector();
-                    // if (updatedInspectors.Add(typeInspector) && parentInspector.metadata.HasAttribute<TypeFilter>())
-                    // {
-                    //     typeof(TypeHandleInspector).GetProperty("typeFilter", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(typeInspector, parentInspector.metadata.GetAttribute<TypeFilter>());
-                    // }
                     typeInspector.Draw(typeRect, GUIContent.none);
                 }
 #endif

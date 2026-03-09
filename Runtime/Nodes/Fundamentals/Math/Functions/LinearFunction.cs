@@ -1,4 +1,6 @@
-﻿namespace Unity.VisualScripting.Community
+﻿using UnityEngine;
+
+namespace Unity.VisualScripting.Community
 {
     /// <summary>
     /// Takes a given float input (0-1) and scales it across the specified range.
