@@ -3,18 +3,50 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ScalarExponentiate))]
     public class ScalarExponentiateGenerator : NodeGenerator<ScalarExponentiate>
     {
         public ScalarExponentiateGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var @base = GenerateValue(Unit.@base, data);
-            var exponent = GenerateValue(Unit.exponent, data);
-            return CodeBuilder.StaticCall(Unit, typeof(Mathf), "Pow", true, @base, exponent);
+            writer.InvokeMember(typeof(Mathf), "Pow", writer.Action(() =>
+            {
+                GenerateValue(Unit.@base, data, writer);
+                writer.Write(", ");
+                GenerateValue(Unit.exponent, data, writer);
+            }));
+        }
+
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            if (input.hasValidConnection)
+            {
+                GenerateConnectedValue(input, data, writer);
+            }
+            else if (input.hasDefaultValue)
+            {
+                var expectedType = data.GetExpectedType();
+                var val = unit.defaultValues[input.key];
+
+                if (expectedType == typeof(int))
+                    writer.Write($"{val}".NumericHighlight());
+                else if (expectedType == typeof(float))
+                    writer.Write($"{val}f".Replace(",", ".").NumericHighlight());
+                else if (expectedType == typeof(double))
+                    writer.Write($"{val}d".Replace(",", ".").NumericHighlight());
+                else if (expectedType == typeof(long))
+                    writer.Write($"{val}L".Replace(",", ".").NumericHighlight());
+                else
+                    writer.Object(val, true, true, true, true, "", false);
+            }
+            else
+            {
+                writer.Write($"/* \"{input.key} Requires Input\" */".ErrorHighlight());
+            }
         }
     }
 }

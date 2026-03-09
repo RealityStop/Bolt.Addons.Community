@@ -3,37 +3,45 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class ModuloGenerator<T> : NodeGenerator<Modulo<T>>
     {
         public ModuloGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-
-            var dividend = GenerateValue(Unit.dividend, data);
-            var divisor = GenerateValue(Unit.divisor, data);
-            return dividend + MakeClickableForThisUnit(" % ") + divisor;
+            using (data.Expect(typeof(int)))
+            {
+                GenerateValue(Unit.dividend, data, writer);
+            }
+            writer.Write(" % ");
+            using (data.Expect(typeof(int)))
+            {
+                GenerateValue(Unit.divisor, data, writer);
+            }
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
             if (input.hasValidConnection)
             {
-                return GetNextValueUnit(input, data);
+                GenerateConnectedValue(input, data, writer);
             }
             else if (input.hasDefaultValue)
             {
                 if (data.GetExpectedType() == typeof(int))
                 {
-                    return int.Parse(unit.defaultValues[input.key].ToString()).As().Code(true, Unit, true, true, "", false);
+                    writer.Object(int.Parse(unit.defaultValues[input.key].ToString()), true, true, true, true, "", false);
                 }
-                return unit.defaultValues[input.key].As().Code(true, Unit, true, true, "", false);
+                else
+                {
+                    writer.Object(unit.defaultValues[input.key], true, true, true, true, "", false);
+                }
             }
             else
             {
-                return $"/* \"{input.key} Requires Input\" */".WarningHighlight();
+                writer.Write($"/* \"{input.key} Requires Input\" */".ErrorHighlight());
             }
         }
     }

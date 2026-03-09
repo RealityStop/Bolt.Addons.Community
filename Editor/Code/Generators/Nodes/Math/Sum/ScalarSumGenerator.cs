@@ -1,4 +1,4 @@
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ScalarSum))]
     public class ScalarSumGenerator : SumGenerator<ScalarSum>

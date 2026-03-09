@@ -1,9 +1,8 @@
 #if VISUAL_SCRIPTING_1_7
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Collections.Generic;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     public abstract class GetGraphsGenerator<TGraph, TGraphAsset, TMachine> : NodeGenerator<GetGraphs<TGraph, TGraphAsset, TMachine>>
         where TGraph : class, IGraph, new()
@@ -12,20 +11,22 @@ namespace Unity.VisualScripting.Community
     {
         public GetGraphsGenerator(Unit unit) : base(unit)
         {
-            NameSpaces = "Unity.VisualScripting.Community";
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting.Community";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.graphList)
             {
-                string goExpr = GenerateValue(Unit.gameObject, data);
-                var builder = Unit.CreateClickableString();
-                builder.InvokeMember(typeof(CSharpUtility), "GetGraphs", new Type[] { typeof(TGraph), typeof(TGraphAsset), typeof(TMachine) }, false, p1 => p1.Ignore(goExpr));
-                return builder;
+                writer.InvokeMember(typeof(CSharpUtility), "GetGraphs", new CodeWriter.TypeParameter[] { typeof(TGraph), typeof(TGraphAsset), typeof(TMachine) },
+                writer.Action(() => GenerateValue(Unit.gameObject, data, writer)));
+                return;
             }
-
-            return base.GenerateValue(output, data);
+            base.GenerateValueInternal(output, data, writer);
         }
     }
 }

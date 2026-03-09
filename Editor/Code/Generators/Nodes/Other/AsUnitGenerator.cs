@@ -6,7 +6,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(AsUnit))]
     public class AsUnitGenerator : NodeGenerator<AsUnit>
@@ -15,13 +15,15 @@ namespace Unity.VisualScripting.Community
         {
         }
     
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (data.GetExpectedType() != null && data.GetExpectedType() == Unit.AsType)
             {
-                data.SetCurrentExpectedTypeMet(true, Unit.AsType);
+                data.MarkExpectedTypeMet(Unit.AsType);
             }
-            return MakeClickableForThisUnit("(") + GenerateValue(Unit.Value, data) + MakeClickableForThisUnit(" as ".ConstructHighlight() + Unit.AsType.As().CSharpName(false, true, true) + ")");
+            writer.Write("(");
+            GenerateValue(Unit.Value, data, writer);
+            writer.Write(" " + "as".ConstructHighlight() + " " + Unit.AsType.As().CSharpName(false, true, true).TypeHighlight() + ")");
         }
-    } 
+    }
 }

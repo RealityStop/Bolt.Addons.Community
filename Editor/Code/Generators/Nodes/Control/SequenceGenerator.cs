@@ -1,26 +1,24 @@
 using System.Text;
-namespace Unity.VisualScripting.Community 
+using Unity.VisualScripting.Community.Libraries.CSharp;
+
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Sequence))]
     public sealed class SequenceGenerator : NodeGenerator<Sequence>
     {
         public SequenceGenerator(Unit unit) : base(unit) { }
     
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var outputBuilder = new StringBuilder();
-
             var outputs = Unit.multiOutputs;
     
             foreach (var controlOutput in outputs)
             {
                 if (controlOutput.hasValidConnection)
                 {
-                    outputBuilder.Append(GetNextUnit(controlOutput, data, indent));
+                    GenerateChildControl(controlOutput, data, writer);
                 }
             }
-    
-            return outputBuilder.ToString();
         }
-    } 
+    }
 }

@@ -3,7 +3,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Cache))]
     public class CacheGenerator : LocalVariableGenerator
@@ -14,20 +14,19 @@ namespace Unity.VisualScripting.Community
 
         public CacheGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            
-            return MakeClickableForThisUnit(data.GetVariableName(Name, true, CodeUtility.ErrorTooltip($"The variable '{Name}' could not be found, it could be because you are trying to access this value across different flows.", $"Error finding variable {Name}", "")).VariableHighlight());
+            writer.Write(data.GetVariableName(Name, true, $"Error finding variable {Name}").VariableHighlight());
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = string.Empty;
             Name = data.AddLocalNameInScope(Name);
-            variableType = GetSourceType(Unit.input, data);
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("var ".ConstructHighlight() + Name.VariableHighlight() + " = ") + GenerateValue(Unit.input, data) + MakeClickableForThisUnit(";") + "\n";
-            output += GetNextUnit(Unit.exit, data, indent);
-            return output;
+            variableType = GetSourceType(Unit.input, data, writer);
+            writer.WriteIndented("var ".ConstructHighlight() + Name.VariableHighlight()).Equal();
+            GenerateValue(Unit.input, data, writer);
+            writer.Write(";").NewLine();
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

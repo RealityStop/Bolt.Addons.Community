@@ -1,7 +1,7 @@
 using System;
 using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ListContainsItem))]
     public class ListContainsItemGenerator : NodeGenerator<ListContainsItem>
@@ -10,12 +10,13 @@ namespace Unity.VisualScripting.Community
         {
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            data.SetExpectedType(Unit.list.type);
-            var listCode = base.GenerateValue(this.Unit.list, data);
-            data.RemoveExpectedType();
-            return listCode + MakeClickableForThisUnit(".Contains(") + base.GenerateValue(this.Unit.item, data) + MakeClickableForThisUnit(")");
+            using (data.Expect(Unit.list.type))
+            {
+                GenerateValue(Unit.list, data, writer);
+            }
+            writer.InvokeMember(null, "Contains", writer.Action(() => GenerateValue(Unit.item, data, writer)));
         }
     }
 }

@@ -1,4 +1,4 @@
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ScalarListAverage))]
     public class ScalarListAverageGenerator : BaseListAverage<ScalarListAverage, float>

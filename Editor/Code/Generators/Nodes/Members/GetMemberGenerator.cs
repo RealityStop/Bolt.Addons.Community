@@ -8,27 +8,35 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 using System;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
-    [NodeGenerator(typeof(Unity.VisualScripting.GetMember))]
-    public sealed class GetMemberGenerator : NodeGenerator<Unity.VisualScripting.GetMember>
+    [NodeGenerator(typeof(GetMember))]
+    public sealed class GetMemberGenerator : NodeGenerator<GetMember>
     {
-        public GetMemberGenerator(Unity.VisualScripting.GetMember unit) : base(unit)
+        public GetMemberGenerator(GetMember unit) : base(unit)
         {
-            NameSpaces = Unit.member.pseudoDeclaringType.Namespace;
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
         {
-            var builder = Unit.CreateClickableString();
+            yield return Unit.member.pseudoDeclaringType.Namespace;
+        }
 
-            data.CreateSymbol(Unit, Unit.member.type);
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            data.CreateSymbol(Unit, output.type);
 
             if (Unit.target == null)
-                return builder.GetMember(Unit.member.targetType, Unit.member.name);
+            {
+                writer.GetMember(Unit.member.targetType, Unit.member.name);
+                return;
+            }
 
             if (!Unit.target.hasValidConnection)
-                return builder.GetMember(t => t.Ignore(GenerateValue(Unit.target, data)), Unit.member.name);
+            {
+                writer.GetMember(writer.Action(writer => GenerateValue(Unit.target, data, writer)), Unit.member.name);
+                return;
+            }
 
             string name;
 
@@ -46,58 +54,86 @@ namespace Unity.VisualScripting.Community
             }
 
             if (!typeof(Component).IsAssignableFrom(Unit.member.pseudoDeclaringType))
-                return builder.GetMember(t => t.Ignore(GenerateValue(Unit.target, data)), name);
+            {
+                writer.GetMember(writer.Action(writer => GenerateValue(Unit.target, data, writer)), name);
+                return;
+            }
+            ExpectedTypeResult result;
+            CaptureResult captureResult;
+            using (data.Expect(Unit.target.type, out result))
+            {
+                using (writer.Capture(out captureResult))
+                {
+                    GenerateValue(Unit.target, data, writer);
+                }
+            }
 
-            var code = Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, false, false);
+            var targetCode = captureResult.Value;
+            var code = !result.IsSatisfied ? Unit.target.GetComponent(writer, SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, true, true) : "";
             if (!string.IsNullOrEmpty(code))
-                return builder.InvokeMember(t => t.Ignore(GenerateValue(Unit.target, data)), code).GetMember(name);
+            {
+                writer.Write(targetCode).Write(code).GetMember(name);
+                return;
+            }
             else
-                return builder.GetMember(t => t.Ignore(GenerateValue(Unit.target, data)), name);
+            {
+                writer.GetMember(writer.Action(w => w.Write(targetCode)), name);
+                return;
+            }
         }
 
-        public override string GenerateValue(ValueInput input, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
             if (Unit.target != null)
             {
                 if (input == Unit.target)
                 {
                     if (Unit.target.hasValidConnection)
                     {
-                        data.SetExpectedType(Unit.member.pseudoDeclaringType);
-                        var connectedCode = GetNextValueUnit(input, data);
-                        data.RemoveExpectedType();
+                        GenerateConnectedValue(input, data, writer);
+                        if (ShouldCast(input, data, writer))
+                        {
+                            var expected = data.GetExpectedType();
+                            if (expected != null && expected.IsConvertibleTo(input.type, true))
+                            {
+                                data.MarkExpectedTypeMet(input.type);
+                            }
+                            writer.WriteConvertTo(input.type, true);
+                        }
                         // if (typeof(Component).IsStrictlyAssignableFrom(Unit.member.pseudoDeclaringType))
                         // {
                         //     return connectedCode.CastAs(typeof(GameObject), Unit, ShouldCast(input, data));
                         // }
-                        return ShouldCast(input, data) ? connectedCode.GetConvertToString(input.type) : connectedCode;
+                        return;
                     }
                     else if (Unit.target.hasDefaultValue)
                     {
                         if (input.type == typeof(GameObject) || typeof(Component).IsStrictlyAssignableFrom(input.type))
                         {
-                            var code = Unit.target.GetComponent(SourceType(Unit.target, data), Unit.member.pseudoDeclaringType, false, false);
+                            var sourceType = SourceType(Unit.target, data, writer);
+                            var code = Unit.target.GetComponent(writer, sourceType, Unit.member.pseudoDeclaringType, true, true);
                             if (!string.IsNullOrEmpty(code))
-                                return builder.InvokeMember("gameObject".VariableHighlight(), code, Array.Empty<string>());
+                            {
+                                writer.GetVariable("gameObject").Write(code);
+                                return;
+                            }
                             else
-                                builder.Clickable("gameObject".VariableHighlight());
+                            {
+                                writer.GetVariable("gameObject");
+                                return;
+                            }
                         }
-                        return Unit.defaultValues[input.key].As().Code(true, Unit, true, true, "", false, true);
-                    }
-                    else
-                    {
-                        return base.GenerateValue(input, data);
+                        base.GenerateValueInternal(input, data, writer);
                     }
                 }
             }
 
-            return base.GenerateValue(input, data);
+            base.GenerateValueInternal(input, data, writer);
         }
 
-        private Type SourceType(ValueInput valueInput, ControlGenerationData data)
+        private Type SourceType(ValueInput valueInput, ControlGenerationData data, CodeWriter writer)
         {
-            return GetSourceType(valueInput, data) ?? valueInput.connection?.source?.type ?? valueInput.type;
+            return GetSourceType(valueInput, data, writer) ?? valueInput.connection?.source?.type ?? valueInput.type;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Unity.VisualScripting.Community
         {
             if (element is GraphGroup group)
             {
-                var name = GetGroupFullName(group);
+                var name = SearchUtility.GetSearchName(group);
                 if (SearchUtility.SearchMatches(pattern, name, searchMode, out _))
                 {
                     var matchRecord = new MatchObject(group, name);
@@ -27,23 +27,6 @@ namespace Unity.VisualScripting.Community
                 }
             }
             return null;
-        }
-
-        public static string GetGroupFullName(GraphGroup group)
-        {
-            if (!string.IsNullOrEmpty(group.label) && !string.IsNullOrEmpty(group.comment))
-            {
-                return group.label + "." + group.comment;
-            }
-            else if (!string.IsNullOrEmpty(group.label))
-            {
-                return group.label;
-            }
-            else if (!string.IsNullOrEmpty(group.comment))
-            {
-                return group.comment;
-            }
-            return "Unnamed Graph Group";
         }
     }
 }

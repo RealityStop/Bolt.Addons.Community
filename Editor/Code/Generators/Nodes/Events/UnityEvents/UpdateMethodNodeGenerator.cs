@@ -6,36 +6,34 @@ using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     /// <summary>
     /// Used for generating nodes that require a Method and the Update method to function.
-    /// For example OnButtonClick.
+    /// For example OnKeyboardInput.
     /// </summary>
-    public abstract class UpdateMethodNodeGenerator : MethodNodeGenerator
+    public abstract class UpdateMethodNodeGenerator : MethodNodeGenerator, IRequireUpdateCode
     {
         protected UpdateMethodNodeGenerator(Unit unit) : base(unit)
         {
         }
 
-        /// <summary>
-        /// Not used for UpdateMethodNodeGenerator
-        /// </summary>
-        public sealed override string MethodBody => null;
         public override MethodModifier MethodModifier => MethodModifier.None;
         public override AccessModifier AccessModifier => AccessModifier.Private;
         public override string Name => unit.GetType().DisplayName().Replace(" ", "") + count;
-        public abstract string GenerateUpdateCode(ControlGenerationData data, int indent);
-        public override sealed string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        public abstract void GenerateUpdateCode(ControlGenerationData data, CodeWriter writer);
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType)) return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", ""));
-            foreach (var param in Parameters)
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
             {
-                data.AddLocalNameInScope(param.name, param.type);
+                writer.WriteErrorDiagnostic($"{unit.GetType().DisplayName()} only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", $"Could not generate {unit.GetType().DisplayName()}", WriteOptions.IndentedNewLineAfter);
+                return;
             }
-            return GenerateCode(input, data, indent);
+
+            GenerateCode(input, data, writer);
         }
 
-        protected abstract string GenerateCode(ControlInput input, ControlGenerationData data, int indent);
+        protected abstract void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer);
     }
 }

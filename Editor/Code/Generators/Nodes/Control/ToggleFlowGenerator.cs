@@ -6,125 +6,171 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ToggleFlow))]
-    public class ToggleFlowGenerator : VariableNodeGenerator
+    public class ToggleFlowGenerator : VariableNodeGenerator, IRequireMethods, IRequireAwakeCode
     {
         public ToggleFlowGenerator(ToggleFlow unit) : base(unit)
         {
-            NameSpaces = "Unity.VisualScripting.Community";
             variableName = Name;
         }
+
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting.Community";
+        }
+
         private ToggleFlow Unit => unit as ToggleFlow;
+
         public override AccessModifier AccessModifier => AccessModifier.Private;
-
         public override FieldModifier FieldModifier => FieldModifier.None;
-
         public override string Name => "toggleFlow" + count;
-
         public override Type Type => typeof(ToggleFlowLogic);
-
         public override object DefaultValue => new ToggleFlowLogic() { startOn = Unit.startOn };
-
         public override bool HasDefaultValue => true;
-
         public override bool Literal => true;
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        string turnedOnMethodName;
+        string turnedOffMethodName;
+
+        private string GetAction(ControlOutput controlOutput)
         {
-            variableName = Name;
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
+            if (!controlOutput.hasValidConnection)
+                return null;
+
+            return Name.Capitalize().First().Letter() + "_" + controlOutput.key.Capitalize().First().Letter();
+        }
+
+        public IEnumerable<MethodGenerator> GetRequiredMethods(ControlGenerationData data)
+        {
+            if (Unit.turnedOn.hasValidConnection)
             {
-                return CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip("ToggleFlow only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate ToggleFlow", ""));
+                turnedOnMethodName = data.AddMethodName(GetAction(Unit.turnedOn));
+                var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), turnedOnMethodName);
+                method.Body(w => GenerateChildControl(Unit.turnedOn, data, w));
+                yield return method;
             }
 
-            var output = string.Empty;
-            if (!data.scopeGeneratorData.TryGetValue(Unit.enter, out _))
+            if (Unit.turnedOff.hasValidConnection)
             {
-                data.scopeGeneratorData.Add(Unit.enter, true);
+                turnedOffMethodName = data.AddMethodName(GetAction(Unit.turnedOff));
+                var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), turnedOffMethodName);
+                method.Body(w => GenerateChildControl(Unit.turnedOff, data, w));
+                yield return method;
+            }
+        }
 
-                string turnedOnCallback = Unit.turnedOn.hasValidConnection ? GetAction(Unit.turnedOn, data) : null;
-                string turnedOffCallback = Unit.turnedOff.hasValidConnection ? GetAction(Unit.turnedOff, data) : null;
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
+        {
+            if (output == Unit.isOn)
+            {
+                writer.GetMember(variableName.VariableHighlight(), "isOn");
+            }
+            else
+            {
+                base.GenerateValueInternal(output, data, writer);
+            }
+        }
 
-                var parameters = new List<string>();
-                if (turnedOnCallback != null)
-                    parameters.Add(turnedOnCallback);
-                else if (turnedOffCallback != null)
-                    parameters.Add(MakeClickableForThisUnit("null".ConstructHighlight()));
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            variableName = Name;
 
-                if (turnedOffCallback != null)
-                    parameters.Add(turnedOffCallback);
-
-                string paramList = string.Join(MakeClickableForThisUnit(", "), parameters);
-
-                output += CodeBuilder.Indent(indent)
-                    + MakeClickableForThisUnit(variableName.VariableHighlight() + ".Initialize(")
-                    + paramList
-                    + MakeClickableForThisUnit(");") + "\n";
+            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
+            {
+                writer.WriteErrorDiagnostic(
+                    "ToggleFlow only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour",
+                    "Could not generate ToggleFlow",
+                    WriteOptions.IndentedNewLineAfter);
+                return;
             }
 
             if (input == Unit.enter)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("if ".ControlHighlight() + $"({variableName.VariableHighlight() + "." + "isOn".VariableHighlight()})") + "\n";
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                output += GetNextUnit(Unit.exitOn, data, indent + 1);
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
+                writer.WriteIndented("if".ControlHighlight());
+                writer.Write(" (");
+                writer.Write(variableName.VariableHighlight());
+                writer.Write(".");
+                writer.Write("isOn".VariableHighlight());
+                writer.Write(")");
+                writer.NewLine();
+                writer.WriteLine("{");
+
+                using (writer.IndentedScope(data))
+                {
+                    GenerateChildControl(Unit.exitOn, data, writer);
+                }
+
+                writer.WriteIndented("}");
+
                 if (Unit.exitOff.hasValidConnection)
                 {
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("else ".ControlHighlight()) + "\n";
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                    output += GetNextUnit(Unit.exitOff, data, indent + 1);
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
+                    writer.NewLine();
+                    writer.WriteIndented("else".ControlHighlight());
+                    writer.NewLine();
+                    writer.WriteLine("{");
+
+                    using (writer.IndentedScope(data))
+                    {
+                        GenerateChildControl(Unit.exitOff, data, writer);
+                    }
+
+                    writer.WriteIndented("}");
                 }
+
+                writer.NewLine();
             }
             else if (input == Unit.turnOn)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".TurnOn();") + "\n";
+                writer.WriteIndented(variableName.VariableHighlight());
+                writer.Write(".");
+                writer.Write("TurnOn");
+                writer.Write("()");
+                writer.Write(";");
+                writer.NewLine();
             }
             else if (input == Unit.turnOff)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".TurnOff();") + "\n";
+                writer.WriteIndented(variableName.VariableHighlight());
+                writer.Write(".");
+                writer.Write("TurnOff");
+                writer.Write("()");
+                writer.Write(";");
+                writer.NewLine();
             }
             else if (input == Unit.toggle)
             {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".Toggle();") + "\n";
+                writer.WriteIndented(variableName.VariableHighlight());
+                writer.Write(".");
+                writer.Write("Toggle");
+                writer.Write("()");
+                writer.Write(";");
+                writer.NewLine();
             }
-
-            GenerateActionMethod(Unit.turnedOn, data, indent);
-            GenerateActionMethod(Unit.turnedOff, data, indent);
-
-            void GenerateActionMethod(ControlOutput port, ControlGenerationData data, int indent)
-            {
-                if (port.hasValidConnection && !data.scopeGeneratorData.TryGetValue(port, out _))
-                {
-                    data.scopeGeneratorData.Add(port, true);
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("void ".ConstructHighlight()) + GetAction(port, data) + MakeClickableForThisUnit("()") + "\n";
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                    output += GetNextUnit(port, data, indent + 1);
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-                }
-            }
-
-            return output;
         }
 
-        private string GetAction(ControlOutput controlOutput, ControlGenerationData data)
+        public void GenerateAwakeCode(ControlGenerationData data, CodeWriter writer)
         {
-            if (!controlOutput.hasValidConnection)
-                return "";
-            var output = "";
-            output += MakeClickableForThisUnit(variableName.Capitalize().First().Letter() + "_" + controlOutput.key.Capitalize().First().Letter());
-            return output;
-        }
+            writer.WriteIndented(variableName.VariableHighlight());
+            writer.Write(".");
+            writer.Write("Initialize");
+            writer.Write("(");
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-        {
-            if (output == Unit.isOn)
+            if (turnedOnMethodName != null)
+                writer.Write(turnedOnMethodName);
+            else if (turnedOffMethodName != null)
+                writer.Write("null".ConstructHighlight());
+
+            if (turnedOffMethodName != null)
             {
-                return Unit.CreateClickableString().GetMember(variableName.VariableHighlight(), "isOn");
+                writer.Write(", ");
+                writer.Write(turnedOffMethodName);
             }
-            return base.GenerateValue(output, data);
+
+            writer.Write(")");
+            writer.Write(";");
+            writer.NewLine();
         }
     }
 }

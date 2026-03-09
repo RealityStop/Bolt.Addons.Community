@@ -1,10 +1,8 @@
-using System.Collections;
 using UnityEditor;
 using UnityEngine;
-using Unity.VisualScripting;
+using Unity.VisualScripting.Community.CSharp;
 using UnityEngine.UIElements;
 using Unity.VisualScripting.Community.Libraries.Humility;
-using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -13,7 +11,7 @@ namespace Unity.VisualScripting.Community
         private BorderedRectangle container;
 
         public static Event e;
-        public FlowGraphContext graphContext;
+        public GraphContext<FlowGraph, FlowCanvas> graphContext;
 
         public static UtilityWindow Open()
         {

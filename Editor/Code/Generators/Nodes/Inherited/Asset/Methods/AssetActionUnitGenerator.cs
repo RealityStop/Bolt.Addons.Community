@@ -4,7 +4,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(AssetActionUnit))]
     public class AssetActionUnitGenerator : NodeGenerator<AssetActionUnit>
@@ -12,10 +12,10 @@ namespace Unity.VisualScripting.Community
         public AssetActionUnitGenerator(Unit unit) : base(unit)
         {
         }
-    
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(Unit.method.methodName);
+            writer.Write(Unit.method.methodName);
         }
     } 
 }

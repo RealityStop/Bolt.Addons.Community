@@ -27,75 +27,132 @@ namespace Unity.VisualScripting.Community
         private static Metadata targetMetadata;
 
         private bool canMakeArrayTypeForBaseType;
+        static GUIStyle popupStyle;
+        static GUIContent sharedContent = new GUIContent();
+
         public static bool Button(Type type, string nullType = "Select Type", TextAnchor textAnchor = TextAnchor.MiddleLeft, params GUILayoutOption[] options)
         {
-            GUIContent buttonContent = new GUIContent(
-                type?.As().CSharpName(false, false, false) ?? nullType,
-                type.GetTypeIcon()
-            );
+            if (popupStyle == null)
+            {
+                popupStyle = new GUIStyle(EditorStyles.popup);
+            }
 
-            GUIStyle style = new GUIStyle(EditorStyles.popup);
+            popupStyle.alignment = textAnchor;
 
-            style.alignment = textAnchor;
+            sharedContent.text = type != null ? type.As().CSharpName(false, false, false) : nullType;
+            sharedContent.image = type?.GetTypeIcon();
 
-            return GUILayout.Button(buttonContent, style, options);
+            return GUILayout.Button(sharedContent, popupStyle, options);
         }
 
-        public static void ShowWindow(Rect position, Metadata Meta, bool canMakeArray = true, Type[] types = null, Action onBeforeChanged = null, Action<Type> onAfterChanged = null)
+        public static void ShowWindow(
+            Rect position,
+            Metadata meta,
+            bool canMakeArray = true,
+            Type[] types = null,
+            Action onBeforeChanged = null,
+            Action<Type> onAfterChanged = null)
         {
-            if (Window == null)
-            {
-                Window = CreateInstance<TypeBuilderWindow>();
-            }
-            targetMetadata = Meta;
-            var type = Meta?.value as Type;
-            ConfigureWindow(Window, position, type, types, canMakeArray, onBeforeChanged, onAfterChanged);
+            ShowWindowInternal(
+                position,
+                meta,
+                null,
+                meta != null ? meta.value as Type : null,
+                canMakeArray,
+                types,
+                null,
+                onBeforeChanged,
+                onAfterChanged);
         }
 
-        public static void ShowWindow(Rect position, Metadata Meta, bool canMakeArray = true, List<FakeGenericParameterType> fakeGenericParameterTypes = null, Action onBeforeChanged = null, Action<Type> onAfterChanged = null)
+        public static void ShowWindow(
+            Rect position,
+            Metadata meta,
+            bool canMakeArray = true,
+            List<FakeGenericParameterType> fakeGenericParameterTypes = null,
+            Action onBeforeChanged = null,
+            Action<Type> onAfterChanged = null)
         {
-            if (Window == null)
-            {
-                Window = CreateInstance<TypeBuilderWindow>();
-            }
-            targetMetadata = Meta;
-            var type = Meta?.value as Type;
-            Window.fakeGenericParameterTypes = fakeGenericParameterTypes;
-            Window.settingAssemblyTypesLookup = Window.settingAssemblyTypesLookup.Concat(fakeGenericParameterTypes).ToArray();
-            Window.baseTypeLookup = Window.settingAssemblyTypesLookup.Where(t => !NameUtility.TypeHasSpecialName(t) && t != null)
-                .ToArray();
-            ConfigureWindow(Window, position, type, new Type[0], canMakeArray, onBeforeChanged, onAfterChanged);
+            ShowWindowInternal(
+                position,
+                meta,
+                null,
+                meta != null ? meta.value as Type : null,
+                canMakeArray,
+                Array.Empty<Type>(),
+                fakeGenericParameterTypes,
+                onBeforeChanged,
+                onAfterChanged);
         }
 
         public static void ShowWindow(Rect position, Action<Type> result, Type currentType, bool canMakeArray = true, Type[] types = null, Action onBeforeChanged = null, Action<Type> onAfterChanged = null)
         {
-            if (Window == null)
-            {
-                Window = CreateInstance<TypeBuilderWindow>();
-            }
-            Window.result = result;
-            targetMetadata = null;
-            ConfigureWindow(Window, position, currentType, types, canMakeArray, onBeforeChanged, onAfterChanged);
+            ShowWindowInternal(position, null, result, currentType, canMakeArray, types, null, onBeforeChanged, onAfterChanged);
         }
 
-        public static void ShowWindow(Rect position, Action<Type> result, Type currentType, bool canMakeArray = true, List<FakeGenericParameterType> fakeGenericParameterTypes = null, Action onBeforeChanged = null, Action<Type> onAfterChanged = null)
+        public static void ShowWindow(Rect position, Action<Type> result, Type currentType, bool canMakeArray = true,
+        List<FakeGenericParameterType> fakeGenericParameterTypes = null, Action onBeforeChanged = null, Action<Type> onAfterChanged = null)
+        {
+            ShowWindowInternal(position, null, result, currentType, canMakeArray, Array.Empty<Type>(), fakeGenericParameterTypes, onBeforeChanged, onAfterChanged);
+        }
+
+        static void ShowWindowInternal(Rect position, Metadata meta, Action<Type> result, Type currentType, bool canMakeArray, Type[] types, List<FakeGenericParameterType> fakeGenerics, Action onBeforeChanged, Action<Type> onAfterChanged)
+        {
+            var window = GetWindow();
+
+            targetMetadata = meta;
+            window.result = result;
+
+            if (fakeGenerics != null)
+            {
+                window.fakeGenericParameterTypes = fakeGenerics;
+                window.settingAssemblyTypesLookup = MergeAssemblyTypes(fakeGenerics);
+                window.baseTypeLookup = FilterBaseTypes(window.settingAssemblyTypesLookup);
+            }
+
+            ConfigureWindow(window, position, currentType, types, canMakeArray, onBeforeChanged, onAfterChanged);
+        }
+
+        static TypeBuilderWindow GetWindow()
         {
             if (Window == null)
             {
                 Window = CreateInstance<TypeBuilderWindow>();
             }
-            Window.result = result;
-            targetMetadata = null;
-            Window.fakeGenericParameterTypes = fakeGenericParameterTypes;
-            Window.settingAssemblyTypesLookup = Window.settingAssemblyTypesLookup.Concat(fakeGenericParameterTypes).Where(t => t.IsPublic).ToArray();
-            Window.baseTypeLookup = Window.settingAssemblyTypesLookup.Where(t => t != null && !NameUtility.TypeHasSpecialName(t))
-                .ToArray();
-            ConfigureWindow(Window, position, currentType, new Type[0], canMakeArray, onBeforeChanged, onAfterChanged);
+            return Window;
+        }
+
+        static Type[] MergeAssemblyTypes(IEnumerable<Type> extra)
+        {
+            var baseTypes = Codebase.settingsAssembliesTypes;
+            var result = new List<Type>(baseTypes.Count + 4);
+
+            result.AddRange(baseTypes);
+            result.Add(typeof(void));
+            result.Add(typeof(Libraries.CSharp.Void));
+
+            if (extra != null)
+                result.AddRange(extra);
+
+            return result.ToArray();
+        }
+
+        static Type[] FilterBaseTypes(Type[] source)
+        {
+            var list = new List<Type>(source.Length);
+            for (int i = 0; i < source.Length; i++)
+            {
+                var t = source[i];
+                if (t != null && !NameUtility.TypeHasSpecialName(t))
+                    list.Add(t);
+            }
+            return list.ToArray();
         }
         const float DefaultHeight = 320f;
         const float MinWidth = 500f;
         const float MaxWidth = 1000f;
         private bool triggerDropdownOnOpen = false;
+
         private static void ConfigureWindow(TypeBuilderWindow window, Rect position, Type type, Type[] types, bool canMakeArray, Action onBeforeChanged, Action<Type> onAfterChanged)
         {
             window.onBeforeChanged = onBeforeChanged;
@@ -105,36 +162,38 @@ namespace Unity.VisualScripting.Community
             if (type != null)
             {
                 genericParameter = GenericParameter.Create(type, type.Name);
-                genericParameter.AddGenericParameters(type, (generic) => window.GetConstrainedTypes(generic));
+                genericParameter.AddGenericParameters(type, g => window.GetConstrainedTypes(g));
                 window.baseType = genericParameter.ConstructType();
             }
             else
             {
                 genericParameter.Clear();
+                window.baseType = null;
             }
 
             position = GUIUtility.GUIToScreenRect(position);
             position.width = Mathf.Clamp(position.width, MinWidth, MaxWidth);
-            window.minSize = new Vector2(MinWidth, MaxWidth);
-            window.titleContent = new GUIContent("Type Builder");
 
-            if (types?.Length > 0)
+            if (types != null && types.Length > 0)
             {
                 if (window.baseType == null)
-                    window.baseType = types.First();
-                window.customTypeLookup = types.Concat(window.fakeGenericParameterTypes).ToArray();
+                    window.baseType = types[0];
+
+                window.customTypeLookup = types;
             }
 
-            var initialSize = new Vector2(position.width, DefaultHeight);
-            window.ShowAsDropDown(position, initialSize);
+            window.ShowAsDropDown(position, new Vector2(position.width, DefaultHeight));
         }
 
         private void OnEnable()
         {
             triggerDropdownOnOpen = true;
-            settingAssemblyTypesLookup = Codebase.settingsAssembliesTypes.ToArray();
-            baseTypeLookup = settingAssemblyTypesLookup.Where(t => !NameUtility.TypeHasSpecialName(t) && t != null)
-                .ToArray();
+
+            minSize = new Vector2(MinWidth, MaxWidth);
+            titleContent = new GUIContent("Type Builder");
+
+            settingAssemblyTypesLookup = MergeAssemblyTypes(null);
+            baseTypeLookup = FilterBaseTypes(settingAssemblyTypesLookup);
         }
 
         private IFuzzyOptionTree GetBaseTypeOptions()

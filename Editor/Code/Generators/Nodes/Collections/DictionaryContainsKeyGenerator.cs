@@ -1,24 +1,22 @@
-
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(DictionaryContainsKey))]
     public class DictionaryContainsKeyGenerator : NodeGenerator<DictionaryContainsKey>
     {
         public DictionaryContainsKeyGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return GenerateValue(Unit.dictionary, data) + MakeClickableForThisUnit(".Contains(") + GenerateValue(Unit.key, data) + MakeClickableForThisUnit(")");
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            return base.GenerateControl(input, data, indent);
+            writer.InvokeMember(
+                writer.Action(w => GenerateValue(Unit.dictionary, data, w)),
+                "Contains",
+                writer.Action(w => GenerateValue(Unit.key, data, w))
+            );
         }
     }
 }

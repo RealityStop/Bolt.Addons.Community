@@ -2,7 +2,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [Serializable]
     public abstract class CodeGenerator : Decorator<CodeGenerator, CodeGeneratorAttribute, object>, ICodeGenerator, ICreateGenerationData
@@ -21,12 +21,12 @@ namespace Unity.VisualScripting.Community
 
         public abstract ControlGenerationData CreateGenerationData();
         
-        public abstract string Generate(int indent);
+        public abstract void Generate(CodeWriter writer, ControlGenerationData data);
 
-        public string GenerateClean(int indent)
+        public string GenerateClean(CodeWriter writer, ControlGenerationData data)
         {
-            var generatedCode = CodeUtility.CleanCode(Generate(indent).RemoveHighlights().RemoveMarkdown());
-            return generatedCode;
+            Generate(writer, data);
+            return writer.ToString();
         }
 
     }

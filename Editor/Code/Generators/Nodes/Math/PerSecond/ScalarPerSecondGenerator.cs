@@ -1,4 +1,4 @@
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ScalarPerSecond))]
     public class ScalarPerSecondGenerator : PerSecondGenerator<float>

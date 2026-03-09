@@ -7,7 +7,7 @@ using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnInputFieldEndEdit))]
     public class OnInputFieldEndEditGeneratorGenerator : EventListenerMethodGenerator<OnInputFieldEndEdit>
@@ -36,9 +36,9 @@ namespace Unity.VisualScripting.Community
             return Unit.target;
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("value".VariableHighlight());
+            writer.GetVariable("value");
         }
     }
 }

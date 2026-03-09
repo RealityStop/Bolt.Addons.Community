@@ -6,7 +6,7 @@ using UnityEngine;
 using Unity.VisualScripting.Community.Utility;
 using System.Collections;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ManualEvent))]
     public class ManualEventGenerator : MethodNodeGenerator
@@ -38,14 +38,10 @@ namespace Unity.VisualScripting.Community
         }
 
         public ManualEventGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-        {
-            return base.GenerateValue(output, data);
-        }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(Unit.trigger, data, writer);
         }
     }
 }

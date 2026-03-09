@@ -5,7 +5,7 @@ using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(AssetFieldUnit))]
     public class AssetFieldUnitGenerator : NodeGenerator<AssetFieldUnit>
@@ -14,22 +14,26 @@ namespace Unity.VisualScripting.Community
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            var output = string.Empty;
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(Unit.field.FieldName.VariableHighlight() + " = ") + GenerateValue(Unit.value, data) + MakeClickableForThisUnit(";");
-            output += "\n" + GetNextUnit(Unit.exit, data, indent);
-            return output;
-        }
-
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (Unit.actionDirection == ActionDirection.Get)
             {
-                return MakeClickableForThisUnit(Unit.field.FieldName.VariableHighlight());
+                writer.GetVariable(Unit.field.FieldName);
             }
+            else
+            {
+                base.GenerateValueInternal(output, data, writer);
+            }
+        }
 
-            return base.GenerateValue(output, data);
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            writer.WriteIndented(Unit.field.FieldName.VariableHighlight());
+            writer.Write(" = ");
+            GenerateValue(Unit.value, data, writer);
+            writer.Write(";");
+            writer.NewLine();
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 

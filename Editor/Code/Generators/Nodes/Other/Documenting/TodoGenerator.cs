@@ -4,20 +4,27 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using System;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
-	[NodeGenerator(typeof(Todo))]
+    [NodeGenerator(typeof(Todo))]
 	public sealed class TodoGenerator : NodeGenerator<Todo>
 	{
 		public TodoGenerator(Todo Unit) : base(Unit)
 		{
-	
 		}
-	
-		public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-		{
-			return CodeBuilder.Indent(indent) + MakeClickableForThisUnit(CodeBuilder.CommentHighlight("//TODO: " + base.Unit.CustomMessage)) + GetNextUnit(Unit.exit, data, indent);
-		}
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            writer.Comment("TODO: " + Unit.CustomMessage, WriteOptions.IndentedNewLineAfter);
+			if (Unit.ErrorIfHit)
+			{
+				writer.WriteIndented("throw ".ControlHighlight());
+				writer.New(typeof(NotImplementedException), Unit.CustomMessage);
+				writer.WriteEnd(EndWriteOptions.LineEnd);
+			}
+			GenerateExitControl(Unit.exit, data, writer);
+        }
 	} 
 }

@@ -209,7 +209,7 @@ namespace Unity.VisualScripting.Community
 
             string defaultPath = EditorUtility.SaveFilePanelInProject(
                 "Save Descriptor Script (It needs to be in a folder named Editor)",
-                unitType.HumanName(true) + "Descriptor.cs",
+                unitType.HumanName(true).Replace(" ", "") + "Descriptor.cs",
                 "cs",
                 "Enter a file name to save the descriptor script as"
             );
@@ -227,6 +227,8 @@ namespace Unity.VisualScripting.Community
                 $"UnitDescriptor<{unitName}>",
                 unitNamespace, new List<string> { "Unity.VisualScripting", "UnityEditor", "UnityEngine", "System" }
             );
+
+            descriptorClass.AddAttribute(AttributeGenerator.Attribute<DescriptorAttribute>().AddParameter(unitType));
 
             descriptorClass.generateUsings = true;
             if (!string.IsNullOrEmpty(unitNamespace)) descriptorClass.AddUsings(unitNamespace.Yield().ToList());
@@ -271,11 +273,11 @@ namespace Unity.VisualScripting.Community
                     body.AppendLine("}");
                 }
 
-                portMethod.body = body.ToString();
+                portMethod.Body(w => w.Write(body.ToString()));
                 descriptorClass.AddMethod(portMethod);
             }
-
-            string content = descriptorClass.GenerateClean(0);
+            var writer = new CodeWriter();
+            string content = descriptorClass.GenerateClean(writer, new CSharp.ControlGenerationData(typeof(UnitDescriptor<>).MakeGenericType(unitType), null));
             System.IO.File.WriteAllText(defaultPath, content);
             AssetDatabase.Refresh();
             Debug.Log("Descriptor script generated successfully at " + defaultPath);
@@ -286,14 +288,14 @@ namespace Unity.VisualScripting.Community
             if (!string.IsNullOrEmpty(defined))
             {
                 var method = MethodGenerator.Method(AccessModifier.Protected, MethodModifier.Override, typeof(string), "Defined" + methodName);
-                method.Body($"return \"{defined}\";");
+                method.Body(w => w.Write($"return \"{defined}\";"));
                 cls.AddMethod(method);
             }
 
             if (!string.IsNullOrEmpty(def))
             {
                 var method = MethodGenerator.Method(AccessModifier.Protected, MethodModifier.Override, typeof(string), "Default" + methodName);
-                method.Body($"return \"{def}\";");
+                method.Body(w => w.Write($"return \"{def}\";"));
                 cls.AddMethod(method);
             }
 
@@ -302,7 +304,7 @@ namespace Unity.VisualScripting.Community
                 cls.AddUsings(typeof(Exception).Namespace.Yield().ToList());
                 var method = MethodGenerator.Method(AccessModifier.Protected, MethodModifier.Override, typeof(string), "Error" + methodName);
                 method.AddParameter(ParameterGenerator.Parameter("exception", typeof(Exception), Libraries.CSharp.ParameterModifier.None));
-                method.Body($"return $\"{ExtractCodes(error)}\";");
+                method.Body(w => w.Write($"return $\"{ExtractCodes(error)}\";"));
                 cls.AddMethod(method);
             }
         }
@@ -327,7 +329,7 @@ namespace Unity.VisualScripting.Community
                 cls.AddUsings(typeof(Exception).Namespace.Yield().ToList());
             }
 
-            method.body = $"Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(\"{path}\");\nreturn EditorTexture.Single(icon);";
+            method.Body(w => w.Write($"Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(\"{path}\");\nreturn EditorTexture.Single(icon);"));
 
             cls.AddMethod(method);
         }

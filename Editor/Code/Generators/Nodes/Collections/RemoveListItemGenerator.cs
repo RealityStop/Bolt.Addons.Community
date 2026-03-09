@@ -1,23 +1,25 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(RemoveListItem))]
     public sealed class RemoveListItemGenerator : NodeGenerator<RemoveListItem>
     {
-        public RemoveListItemGenerator(Unit unit) : base(unit)
+        public RemoveListItemGenerator(Unit unit) : base(unit) { }
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
+            using (data.Expect(Unit.listInput.type))
+            {
+                writer.WriteIndented();
+                GenerateValue(Unit.listInput, data, writer);
+            }
+
+            writer.InvokeMember(null, "Remove",writer.Action(() => GenerateValue(Unit.item, data, writer)));
+
+            writer.WriteEnd(EndWriteOptions.LineEnd);
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
-    
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            var output = string.Empty;
-            data.SetExpectedType(Unit.listInput.type);
-            var listCode = GenerateValue(Unit.listInput, data);
-            data.RemoveExpectedType();
-            output += CodeBuilder.Indent(indent) + listCode + MakeClickableForThisUnit($".Remove(") + GenerateValue(Unit.item, data) + MakeClickableForThisUnit(");") + "\n";
-            output += GetNextUnit(Unit.exit, data, indent);
-            return output;
-        }
-    } 
+    }
 }

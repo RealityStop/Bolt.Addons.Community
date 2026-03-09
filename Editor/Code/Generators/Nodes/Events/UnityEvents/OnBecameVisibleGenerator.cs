@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using Unity.VisualScripting.Community.Utility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnBecameVisible))]
     public class OnBecameVisibleGenerator : UnityMethodGenerator<OnBecameVisible, EmptyEventArgs>

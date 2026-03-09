@@ -5,3 +5,6 @@ Changelog for 1.0.0:
 - Added Flow Reroute
 - Added Value Reroute
 - Added Reroute Shortcut using 'Spacebar' while a port is being dragged.
+
+Changelog for 2.0.0:
+- Added ablity to use Value Reroute as a portal node(Hide its connection)

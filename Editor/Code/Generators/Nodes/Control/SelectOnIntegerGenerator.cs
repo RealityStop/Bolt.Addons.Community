@@ -6,37 +6,40 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SelectOnInteger))]
     public sealed class SelectOnIntegerGenerator : NodeGenerator<SelectOnInteger>
     {
         public SelectOnIntegerGenerator(SelectOnInteger unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var selector = GenerateValue(Unit.selector, data);
-            var defaultValue = GenerateValue(Unit.@default, data);
-            var currentIndent = CodeBuilder.GetCurrentIndent();
-            var indent = CodeBuilder.GetCurrentIndent(1);
-
-            var cases = Unit.branches.Select(branch =>
+            GenerateValue(Unit.selector, data, writer);
+            writer.Write(" switch".ControlHighlight());
+            writer.NewLine();
+            writer.WriteLine("{");
+            
+            using (writer.Indented())
             {
-                var key = branch.Key;
-                var value = GenerateValue(branch.Value, data);
-                var keyCode = key.As().Code(false);
-                return indent + MakeClickableForThisUnit(keyCode + " ") + MakeClickableForThisUnit($"=> ") + value;
-            });
-
-            var defaultCase = indent + MakeClickableForThisUnit("_ ".VariableHighlight()) + MakeClickableForThisUnit($"=> ") + defaultValue;
-
-            var body = string.Join($"{MakeClickableForThisUnit(",")}\n", cases.Concat(new[] { defaultCase }));
-
-            return selector + MakeClickableForThisUnit(" switch".ControlHighlight()) + "\n" +
-                   currentIndent + MakeClickableForThisUnit("{") + "\n" +
-                   body + "\n" +
-                   currentIndent + MakeClickableForThisUnit("}");
+                foreach (var branch in Unit.branches)
+                {
+                    writer.WriteIndented();
+                    writer.Object(branch.Key);
+                    writer.Write(" => ");
+                    GenerateValue(branch.Value, data, writer);
+                    writer.Write(",");
+                    writer.NewLine();
+                }
+                
+                writer.WriteIndented();
+                writer.Write("_".ConstructHighlight() + " => ");
+                GenerateValue(Unit.@default, data, writer);
+                writer.Write(",");
+                writer.NewLine();
+            }
+            
+            writer.WriteIndented("}");
         }
-
     }
 }

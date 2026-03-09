@@ -7,7 +7,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     /// <summary>
     /// Abstract base class for generating nodes that require a method To Function.
@@ -24,12 +24,14 @@ namespace Unity.VisualScripting.Community
         public virtual int GenericCount { get => 0; }
         public abstract List<TypeParam> Parameters { get; }
         public virtual List<AttributeDeclaration> Attributes { get; } = new List<AttributeDeclaration>();
-        public virtual string MethodBody { get; } = null;
-        public ControlGenerationData Data;
-        public int indent = 0;
 
         protected MethodNodeGenerator(Unit unit) : base(unit)
         {
+        }
+
+        public virtual void GeneratedMethodCode(ControlGenerationData data, CodeWriter writer)
+        {
+            throw new NotImplementedException();
         }
     }
 }

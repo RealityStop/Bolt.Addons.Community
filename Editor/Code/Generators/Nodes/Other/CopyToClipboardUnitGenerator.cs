@@ -4,22 +4,20 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(CopyToClipboardUnit))]
     public class CopyToClipboardUnitGenerator : NodeGenerator<CopyToClipboardUnit>
     {
         public CopyToClipboardUnitGenerator(Unit unit) : base(unit) { }
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-        {
-            return base.GenerateValue(output, data);
-        }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = "";
-            output += Unit.CreateClickableString(CodeBuilder.Indent(indent)).SetMember(typeof(GUIUtility), "systemCopyBuffer", value => value.Ignore(GenerateValue(Unit.text, data))).Clickable(";").NewLine().Ignore(GetNextUnit(Unit.exit, data, indent));
-            return output;
+            writer.WriteIndented("GUIUtility".TypeHighlight() + "." + "systemCopyBuffer".VariableHighlight() + " = ");
+            GenerateValue(Unit.text, data, writer);
+            writer.Write(";");
+            writer.NewLine();
+            GenerateChildControl(Unit.exit, data, writer);
         }
     }
 }

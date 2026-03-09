@@ -6,7 +6,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(EnumeratorNode))]
     public class EnumeratorNodeGenerator : MethodNodeGenerator
@@ -28,14 +28,14 @@ namespace Unity.VisualScripting.Community
 
         public EnumeratorNodeGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(Name + "()");
+            writer.Write(Name + "()");
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return GetNextUnit(Unit.trigger, data, indent);
+            GenerateChildControl(OutputPort, data, writer);
         }
     }
 }

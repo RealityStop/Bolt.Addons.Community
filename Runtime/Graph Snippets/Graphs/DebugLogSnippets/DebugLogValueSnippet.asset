@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e57c036929169040a5d784c8a5618e5, type: 3}
+  m_Name: DebugLogValueSnippet
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"_sourceUnit":{"defaultValues":{},"position":{"x":0.0,"y":0.0},"guid":"1f44e8aa-ac00-4a43-ad49-c93b6113d009","$version":"A","$id":"1"},"SnippetName":"DebugLog","snippetArguments":[{"argumentName":"value","argumentType":"System.String"}],"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":217.36,"y":124.9},"zoom":1.0,"elements":[{"argumentName":"value","defaultValues":{},"position":{"x":-30.0,"y":178.0},"guid":"8eb466cc-5ef2-4fa5-a45e-fe6eec80c814","$version":"A","$type":"Unity.VisualScripting.Community.SnippetInputNode","$id":"13"},{"argumentCount":0,"type":"Log","defaultValues":{"format":{"$content":"","$type":"System.String"}},"position":{"x":238.0,"y":77.0},"guid":"83707f96-d73a-44c6-b4d1-7b75cabef7be","$version":"A","$type":"Unity.VisualScripting.Community.LogNode","$id":"15"},{"$ref":"1"},{"sourceUnit":{"$ref":"1"},"sourceKey":"source","destinationUnit":{"$ref":"15"},"destinationKey":"input","guid":"0ae6f378-0fba-4a59-afcf-365369205554","$type":"Unity.VisualScripting.ControlConnection"},{"sourceUnit":{"$ref":"13"},"sourceKey":"output","destinationUnit":{"$ref":"15"},"destinationKey":"format","guid":"e55ee0e4-ad2e-434c-8fa0-ccb8e6f248f2","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
+  SnippetName: DebugLog
+  snippetArguments:
+  - argumentName: value

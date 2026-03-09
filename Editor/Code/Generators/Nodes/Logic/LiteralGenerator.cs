@@ -2,38 +2,44 @@
 using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
+using System.Collections.Generic;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Literal))]
     public sealed class LiteralGenerator : NodeGenerator<Literal>
     {
         public LiteralGenerator(Literal unit) : base(unit)
         {
-
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
+        {
+            var @namespace = Unit.type?.Namespace ?? Unit.value.GetType().Namespace;
+
+            if (!string.IsNullOrEmpty(@namespace))
+                yield return @namespace;
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (data.GetExpectedType()?.IsAssignableFrom(Unit.type) ?? false)
             {
-                data.SetCurrentExpectedTypeMet(true, Unit.type);
+                data.MarkExpectedTypeMet(Unit.type);
             }
-            if (Unit.value != null)
-                NameSpaces = Unit.value.GetType().Namespace;
+
             var fromType = Unit.type;
             var toType = data.GetExpectedType();
 
             data.CreateSymbol(Unit, Unit.type);
 
-            var code = Unit.value.As().Code(true, Unit, true, true, "", false, true);
+            var code = Unit.value.As().Code(true, true, true, "", false, true);
 
             if (toType != null && fromType != null)
             {
-                code = TypeConversionUtility.CastTo(code, fromType, toType, Unit);
+                code = TypeConversionUtility.CastTo(code, fromType, toType);
             }
-
-            return code;
+            writer.Write(code);
         }
     }
 }

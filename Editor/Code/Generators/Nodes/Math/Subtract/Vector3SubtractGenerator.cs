@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Vector3Subtract))]
     public class Vector3SubtractGenerator : SubtractGenerator<Vector3>

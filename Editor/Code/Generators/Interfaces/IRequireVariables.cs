@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     public interface IRequireVariables
     {
         IEnumerable<FieldGenerator> GetRequiredVariables(ControlGenerationData data);
-    } 
+    }
 }

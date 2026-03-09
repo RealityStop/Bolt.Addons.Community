@@ -1,25 +1,34 @@
 using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections;
-using Unity.VisualScripting;
+using System.Collections.Generic;
+using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(FirstItem))]
     public class FirstItemGenerator : NodeGenerator<FirstItem>
     {
         public FirstItemGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "System.Linq";
+        }
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (typeof(IList).IsAssignableFrom(data.GetExpectedType()))
             {
-                return GenerateValue(Unit.collection, data) + MakeClickableForThisUnit($"[{"0".NumericHighlight()}]");
+                GenerateValue(Unit.collection, data, writer);
+                writer.Brackets(w =>
+                {
+                    w.Int(0);
+                });
             }
             else
             {
-                NameSpaces = "System.Linq";
-                return GenerateValue(Unit.collection, data) + MakeClickableForThisUnit($".Cast<{"object".ConstructHighlight()}>().First()");
+                GenerateValue(Unit.collection, data, writer);
+                writer.Write(".Cast<").Write("object".ConstructHighlight()).Write(">().First()");
             }
         }
     }

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(EdgeTrigger))]
     public class EdgeTriggerGenerator : VariableNodeGenerator
@@ -24,12 +24,14 @@ namespace Unity.VisualScripting.Community
 
         public EdgeTriggerGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var builder = Unit.CreateClickableString();
-            builder.If(condition => condition.InvokeMember(Name.VariableHighlight(), "ShouldTrigger", p => p.Ignore(GenerateValue(Unit.inValue, data))),
-            (body, indent) => body.Ignore(GetNextUnit(Unit.exit, data, indent).TrimEnd()), true, indent);
-            return builder;
+            writer.WriteIndented("if ".ControlHighlight()).Parentheses(inner => inner.InvokeMember(Name.VariableHighlight(), "ShouldTrigger", 
+            inner.Action(() => GenerateValue(Unit.inValue, data, inner))));
+            writer.Braces((inner, indent) =>
+            {
+                GenerateChildControl(Unit.exit, data, writer);
+            }).NewLine();
         }
     }
 }

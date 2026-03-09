@@ -1,6 +1,6 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(While))]
     public sealed class WhileGenerator : NodeGenerator<While>
@@ -8,16 +8,17 @@ namespace Unity.VisualScripting.Community
         public WhileGenerator(Unit unit) : base(unit)
         {
         }
-    
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            var output = "";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("while".ControlHighlight() + " (") + GenerateValue(Unit.condition, data) + MakeClickableForThisUnit(")") + "\n";
-            output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-            output += GetNextUnit(Unit.body, data, indent + 1);
-            output += "\n" + CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-            output += GetNextUnit(Unit.exit, data, indent);
-            return output;
+            writer.WriteIndented("while".ControlHighlight()).Parentheses(w => GenerateValue(Unit.condition, data, w)).NewLine();
+            writer.WriteLine("{");
+            using (writer.IndentedScope(data))
+            {
+                GenerateChildControl(Unit.body, data, writer);
+            }
+            writer.WriteLine("}");
+            GenerateExitControl(Unit.exit, data, writer);
         }
-    } 
+    }
 }

@@ -2,12 +2,18 @@ using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Utility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnSliderValueChanged))]
     public class OnSliderValueChangedGenerator : EventListenerMethodGenerator<OnSliderValueChanged>
     {
-        public OnSliderValueChangedGenerator(Unit unit) : base(unit) { NameSpaces = "UnityEngine.UI"; }
+        public OnSliderValueChangedGenerator(Unit unit) : base(unit) { }
+
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "UnityEngine.UI";
+        }
+
         public override List<ValueOutput> OutputValues => new List<ValueOutput>() { Unit.value };
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(float), "value") };
@@ -29,9 +35,10 @@ namespace Unity.VisualScripting.Community
             return Unit.target;
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("value".VariableHighlight());
+            writer.GetVariable("value");
         }
     }
 }

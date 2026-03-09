@@ -1,13 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
-
     [NodeGenerator(typeof(AssetType))]
     public class AssetTypeGenerator : NodeGenerator<AssetType>
     {
@@ -15,11 +9,12 @@ namespace Unity.VisualScripting.Community
         {
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-
-            return MakeClickableForThisUnit("typeof".ConstructHighlight() + "(" + Unit.asset.title.TypeHighlight() + ")");
+            writer.Write("typeof".ConstructHighlight());
+            writer.Write("(");
+            writer.Write(Unit.asset.title.TypeHighlight());
+            writer.Write(")");
         }
     }
-
 }

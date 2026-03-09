@@ -16,10 +16,13 @@ namespace Unity.VisualScripting.Community
         [Serialize]
         public string typeHandleIdentification;
 #endif
-
         [InspectorToggleLeft]
         [Serialize]
         public object defaultValue = 0;
+
+        [Inspectable]
+        [Serialize]
+        public bool hasDefault;
 
         [Serialize]
         private SerializationData serializedValue;

@@ -1,28 +1,23 @@
-
-using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ClearDictionary))]
     public class ClearDictionaryGenerator : NodeGenerator<ClearDictionary>
     {
         public ClearDictionaryGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(output, data);
-        }
+            using (data.Expect(typeof(System.Collections.IDictionary)))
+            {
+                writer.WriteIndented();
+                GenerateValue(Unit.dictionaryInput, data, writer);
+            }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            data.SetExpectedType(typeof(System.Collections.IDictionary));
-            string output = CodeBuilder.Indent(indent) + GenerateValue(Unit.dictionaryInput, data) + MakeClickableForThisUnit(".Clear(");
-            data.RemoveExpectedType();
-            output = output + MakeClickableForThisUnit(");") + "\n" + GetNextUnit(Unit.exit, data, indent);
-            return output;
+            writer.InvokeMember(null, "Clear").WriteEnd(EndWriteOptions.LineEnd);
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

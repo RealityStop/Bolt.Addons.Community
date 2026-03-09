@@ -1,27 +1,30 @@
-using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting.Community;
-using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community
 {
     public abstract class SceneGraphProvider : BaseGraphProvider
     {
         protected SceneGraphProvider(NodeFinderWindow window) : base(window)
         {
         }
-        
+
         protected IEnumerable<T> GetTargetsFromScene<T>()
         {
-            var scene = SceneManager.GetActiveScene();
-            foreach (var rootGameObject in scene.GetRootGameObjects())
+            var count = SceneManager.sceneCount;
+            for (int i = 0; i < count; i++)
             {
-                foreach (var result in rootGameObject.GetComponentsInChildren<T>(true))
+                var scene = SceneManager.GetSceneAt(i);
+                if (!scene.IsValid() || !scene.isLoaded)
+                    continue;
+                foreach (var rootGameObject in scene.GetRootGameObjects())
                 {
-                    yield return result;
+                    foreach (var result in rootGameObject.GetComponentsInChildren<T>(true))
+                    {
+                        yield return result;
+                    }
                 }
             }
         }
-    } 
+    }
 }

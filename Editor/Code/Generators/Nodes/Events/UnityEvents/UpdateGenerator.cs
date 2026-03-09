@@ -7,7 +7,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Update))]
     public class UpdateGenerator : UnityMethodGenerator<Update, EmptyEventArgs>
@@ -17,5 +17,10 @@ namespace Unity.VisualScripting.Community
         }
         public override List<ValueOutput> OutputValues => new List<ValueOutput>();
         public override List<TypeParam> Parameters => new List<TypeParam>();
+
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            GenerateChildControl(Unit.trigger, data, writer);
+        }
     }
 }

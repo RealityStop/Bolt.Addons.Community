@@ -1,0 +1,172 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+
+namespace Unity.VisualScripting.Community
+{
+    [Widget(typeof(ValueReroute))]
+    public sealed class ValueRerouteWidget : UnitWidget<ValueReroute>
+    {
+        // Data is stored instead here of the unit itself because if the unit is deleted after copying,
+        // the data we need from it is also deleted.
+        private class RerouteCopyData
+        {
+            public Guid copyID;
+            public IUnitConnection sourceConnection;
+            public IGraph graph;
+            public ValueReroute sourceUnit;
+        }
+
+        private static List<RerouteCopyData> copyDataList = new List<RerouteCopyData>();
+        public ValueRerouteWidget(FlowCanvas canvas, ValueReroute unit) : base(canvas, unit)
+        {
+            var data = copyDataList.FirstOrDefault(d => d.copyID == unit.copyID);
+            if (data != null && unit.isCopying)
+            {
+                if (unit.hideConnection && data.sourceConnection != null && data.graph == unit.graph)
+                {
+                    var source = data.sourceConnection.source;
+                    unit.input.ValidlyConnectTo(source);
+                }
+            }
+
+            if (data != null && data.sourceUnit != null)
+            {
+                data.sourceUnit.isCopying = false;
+            }
+
+            unit.isCopying = false;
+            unit.copyID = default;
+        }
+
+        public override void ExpandCopyGroup(HashSet<IGraphElement> copyGroup)
+        {
+            var copyID = unit.guid;
+            if (!copyDataList.Any(c => c.copyID == copyID) && unit.hideConnection)
+            {
+                if (unit.input.hasValidConnection && canvas.selection.Contains(unit.input.connection.source.unit))
+                {
+                    base.ExpandCopyGroup(copyGroup);
+                    return;
+                }
+                var copy = new RerouteCopyData
+                {
+                    copyID = copyID,
+                    graph = unit.graph,
+                    sourceConnection = unit.input.hasValidConnection ? unit.input.connection : null,
+                    sourceUnit = unit
+                };
+                unit.copyID = copyID;
+                unit.isCopying = true;
+                copyDataList.Add(copy);
+            }
+
+            base.ExpandCopyGroup(copyGroup);
+        }
+
+        private bool isPortal => unit.hideConnection && unit.input.hasValidConnection;
+
+        public override void DrawForeground()
+        {
+            var inputHasConnection = inputs[0].port.hasAnyConnection;
+            var outputHasConnection = outputs[0].port.hasAnyConnection;
+            mouseIsOver = new Rect(_position.x - 20, _position.y - 10, mouseIsOver ? 80 : 40, 40).Contains(mousePosition);
+
+#if VISUAL_SCRIPTING_1_7_3
+            _position.width = 26;
+            GraphGUI.Node(new Rect(position.x, position.y + 3, 26, _position.height - 4), NodeShape.Square, NodeColor.Gray, isSelected);
+#else
+            if (isSelected || mouseIsOver || !inputHasConnection || !outputHasConnection || unit.hideConnection)
+            {
+                var width = 26f;
+                var height = _position.height - 4;
+                UnitPortDescription inputDescription = null;
+                if (isPortal)
+                {
+                    inputDescription = unit.input.connection.source.Description<UnitPortDescription>();
+                    width = UnitPortWidget<ValueInput>.Styles.label.CalcSize(inputDescription.ToGUIContent(IconSize.Small)).x + 50f;
+                }
+                _position.width = width;
+                GraphGUI.Node(new Rect(position.x, position.y + 3, width, height), NodeShape.Square, color, isSelected);
+
+                if (inputDescription != null)
+                    GUI.Label(new Rect(position.x + 24, position.y + 5, width, height), inputDescription.label);
+            }
+            else
+            {
+                _position.width = -19;
+            }
+#endif
+
+            Reposition();
+        }
+
+        EditorTexture valueIcon;
+
+        protected override bool snapToGrid => unit.SnapToGrid;
+
+        public override bool foregroundRequiresInput => true;
+
+        private bool mouseIsOver;
+
+        protected override void OnDoubleClick()
+        {
+            if (element.graph.zoom == 1 && unit.hideConnection && unit.input.hasValidConnection)
+            {
+                canvas.ViewElements(unit.input.connection.source.unit.Yield());
+                e.Use();
+            }
+            else
+                base.OnDoubleClick();
+        }
+
+        public override void CachePosition()
+        {
+            var inputPort = unit.input;
+            var outputPort = unit.output;
+            var inputHasConnection = inputPort.hasValidConnection;
+            var outputHasConnection = outputPort.hasValidConnection;
+            _position.x = unit.position.x;
+            _position.y = unit.position.y;
+
+#if VISUAL_SCRIPTING_1_7_3
+            _position.width = 26;
+#else
+            if (isPortal)
+            {
+                _position.width = VisualScripting.UnitPortWidget<ValueInput>.Styles.label.CalcSize(inputPort.connection.source.Description<UnitPortDescription>().ToGUIContent(IconSize.Small)).x + 50f;
+                _position.height = EditorGUIUtility.singleLineHeight;
+            }
+            else
+            {
+                _position.width = !inputHasConnection || !outputHasConnection || isSelected || mouseIsOver || unit.hideConnection ? 26 : -25;
+#endif
+                _position.height = 20;
+            }
+
+            inputs[0].y = _position.y + 5;
+            outputs[0].y = _position.y + 5;
+
+            if (valueIcon == null && (inputPort.Descriptor()).description.icon != null) valueIcon = ((UnitPortDescriptor)inputPort.Descriptor()).description.icon;
+
+#if !VISUAL_SCRIPTING_1_7_3
+            if (!unit.hideConnection && !inputHasConnection)
+            {
+                if (inputHasConnection && !outputHasConnection) { ((UnitPortDescriptor)inputPort.Descriptor()).description.icon = null; }
+                ((UnitPortDescriptor)inputPort.Descriptor()).description.icon = !inputHasConnection || isSelected || mouseIsOver ? valueIcon : null;
+                ((UnitPortDescriptor)outputPort.Descriptor()).description.icon = !outputHasConnection || isSelected || mouseIsOver ? valueIcon : null;
+            }
+            else if (unit.hideConnection && inputHasConnection)
+            {
+                ((UnitPortDescriptor)inputPort.Descriptor()).description.icon = ((UnitPortDescriptor)inputPort.connection.source.Descriptor()).description.icon;
+            }
+            else
+            {
+                ((UnitPortDescriptor)inputPort.Descriptor()).description.icon = null;
+            }
+#endif
+        }
+    }
+}

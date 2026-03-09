@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using Unity.VisualScripting.Community.Utility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnApplicationPause))]
     public class OnApplicationPauseGenerator : UnityMethodGenerator<OnApplicationPause, EmptyEventArgs>

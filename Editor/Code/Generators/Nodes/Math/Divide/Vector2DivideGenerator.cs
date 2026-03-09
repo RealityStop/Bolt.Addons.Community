@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Vector2Divide))]
     public class Vector2DivideGenerator : DivideGenerator<Vector2>

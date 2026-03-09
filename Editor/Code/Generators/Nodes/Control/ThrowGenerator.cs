@@ -5,7 +5,7 @@ using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Throw))]
     public class ThrowGenerator : NodeGenerator<Throw>
@@ -14,9 +14,17 @@ namespace Unity.VisualScripting.Community
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return CodeBuilder.Indent(indent) + MakeClickableForThisUnit("throw ".ControlHighlight()) + (Unit.custom ? GenerateValue(Unit.exception, data) : GenerateValue(Unit.message, data)) + MakeClickableForThisUnit(";") + "\n";
+            writer.WriteIndented();
+            writer.Write("throw".ControlHighlight());
+            writer.Space();
+            if (Unit.custom)
+                GenerateValue(Unit.exception, data, writer);
+            else
+                GenerateValue(Unit.message, data, writer);
+            writer.Write(";");
+            writer.NewLine();
         }
     }
 }

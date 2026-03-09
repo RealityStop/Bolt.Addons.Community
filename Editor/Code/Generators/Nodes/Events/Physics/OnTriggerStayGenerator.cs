@@ -4,7 +4,7 @@ using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
 #if MODULE_PHYSICS_EXISTS
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnTriggerStay))]
     public class OnTriggerStayGenerator : UnityMethodGenerator<OnTriggerStay, Collider>
@@ -17,9 +17,10 @@ namespace Unity.VisualScripting.Community
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(Collision), "other") };
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("other".VariableHighlight());
+            writer.GetVariable("other");
         }
     }
 }

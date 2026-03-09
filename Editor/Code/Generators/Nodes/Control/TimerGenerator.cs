@@ -4,18 +4,21 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
-using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Timer))]
-    public class TimerGenerator : VariableNodeGenerator
+    public class TimerGenerator : AwakeVariableNodeGenerator, IRequireMethods, IRequireUpdateCode
     {
         public TimerGenerator(Timer unit) : base(unit)
         {
-            NameSpaces = "Unity.VisualScripting.Community";
-            variableName = Name;
         }
+
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting.Community";
+        }
+
         private Timer Unit => unit as Timer;
         public override AccessModifier AccessModifier => AccessModifier.Private;
 
@@ -31,103 +34,138 @@ namespace Unity.VisualScripting.Community
 
         public override bool Literal => false;
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            variableName = Name;
-            if (!typeof(MonoBehaviour).IsAssignableFrom(data.ScriptType))
-            {
-                return CodeBuilder.Indent(indent + 1) + MakeClickableForThisUnit(CodeUtility.ErrorTooltip("Timer only works with ScriptGraphAssets, ScriptMachines or a ClassAsset that inherits MonoBehaviour", "Could not generate Timer", ""));
-            }
-
-            var output = string.Empty;
-            if (Unit.start.hasValidConnection && !data.scopeGeneratorData.TryGetValue(Unit.start, out _))
-            {
-                data.scopeGeneratorData.Add(Unit.start, true);
-                string turnedOnCallback = Unit.completed.hasValidConnection ? GetAction(Unit.completed, data) : null;
-                string turnedOffCallback = Unit.tick.hasValidConnection ? GetAction(Unit.tick, data) : null;
-
-                var parameters = new List<string>();
-                if (turnedOnCallback != null)
-                    parameters.Add(turnedOnCallback);
-                else if (turnedOffCallback != null)
-                    parameters.Add(MakeClickableForThisUnit("null".ConstructHighlight()));
-
-                if (turnedOffCallback != null)
-                    parameters.Add(turnedOffCallback);
-
-                string paramList = string.Join(MakeClickableForThisUnit(", "), parameters);
-
-                output += CodeBuilder.Indent(indent)
-                    + MakeClickableForThisUnit(variableName.VariableHighlight() + ".Initialize(")
-                    + paramList
-                    + MakeClickableForThisUnit(");") + "\n";
-            }
-
-            if (input == Unit.start)
-            {
-                var action = GetAction(Unit.started, data);
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".StartTimer(") + GenerateValue(Unit.duration, data) + MakeClickableForThisUnit(", ") + GenerateValue(Unit.unscaledTime, data) + (!string.IsNullOrEmpty(action) ? MakeClickableForThisUnit(", ") + action : "") + MakeClickableForThisUnit(");") + "\n";
-            }
-            else if (input == Unit.pause)
-            {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".PauseTimer();") + "\n";
-            }
-            else if (input == Unit.resume)
-            {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".ResumeTimer();") + "\n";
-            }
-            else if (input == Unit.toggle)
-            {
-                output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit(variableName.VariableHighlight() + ".ToggleTimer();") + "\n";
-            }
-
-            GenerateActionMethod(Unit.started, data, indent);
-            GenerateActionMethod(Unit.tick, data, indent);
-            GenerateActionMethod(Unit.completed, data, indent);
-
-            void GenerateActionMethod(ControlOutput port, ControlGenerationData data, int indent)
-            {
-                if (port.hasValidConnection && !data.scopeGeneratorData.TryGetValue(port, out _))
-                {
-                    data.scopeGeneratorData.Add(port, true);
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("void ".ConstructHighlight()) + GetAction(port, data) + MakeClickableForThisUnit("()") + "\n";
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("{") + "\n";
-                    output += GetNextUnit(port, data, indent + 1);
-                    output += CodeBuilder.Indent(indent) + MakeClickableForThisUnit("}") + "\n";
-                }
-            }
-
-            return output;
-        }
-
-        private string GetAction(ControlOutput controlOutput, ControlGenerationData data)
+        private string GetAction(ControlOutput controlOutput)
         {
             if (!controlOutput.hasValidConnection)
                 return "";
             var output = "";
-            output += MakeClickableForThisUnit(variableName.Capitalize().First().Letter() + "_" + controlOutput.key.Capitalize().First().Letter());
+            output += Name.Capitalize().First().Letter() + "_" + controlOutput.key.Capitalize().First().Letter();
             return output;
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
+            writer.GetVariable(Name);
+
             if (output == Unit.elapsedSeconds)
             {
-                return MakeClickableForThisUnit(variableName.VariableHighlight() + "." + "Elapsed".VariableHighlight());
+                writer.GetMember("Elapsed");
             }
             else if (output == Unit.elapsedRatio)
             {
-                return MakeClickableForThisUnit(variableName.VariableHighlight() + "." + "ElapsedPercentage".VariableHighlight());
+                writer.GetMember("ElapsedPercentage");
             }
             else if (output == Unit.remainingSeconds)
             {
-                return MakeClickableForThisUnit(variableName.VariableHighlight() + "." + "Remaining".VariableHighlight());
+                writer.GetMember("Remaining");
             }
             else if (output == Unit.remainingRatio)
             {
-                return MakeClickableForThisUnit(variableName.VariableHighlight() + "." + "RemainingPercentage".VariableHighlight());
+                writer.GetMember("RemainingPercentage");
             }
-            return base.GenerateValue(output, data);
+            else
+            {
+                base.GenerateValueInternal(output, data, writer);
+            }
+        }
+
+        string tickMethodName;
+        string completedMethodName;
+
+        public IEnumerable<MethodGenerator> GetRequiredMethods(ControlGenerationData data)
+        {
+            if (Unit.tick.hasValidConnection)
+            {
+                tickMethodName = data.AddMethodName(GetAction(Unit.tick));
+                var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), tickMethodName);
+                method.Body(w => GenerateChildControl(Unit.tick, data, w));
+                yield return method;
+            }
+
+            if (Unit.completed.hasValidConnection)
+            {
+                completedMethodName = data.AddMethodName(GetAction(Unit.completed));
+                var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), completedMethodName);
+                method.Body(w => GenerateChildControl(Unit.completed, data, w));
+                yield return method;
+            }
+        }
+
+        public override void GenerateAwakeCode(ControlGenerationData data, CodeWriter writer)
+        {
+            if (!Unit.completed.hasValidConnection && !Unit.tick.hasValidConnection) return;
+
+            string turnedOnCallback = Unit.completed.hasValidConnection ? completedMethodName : null;
+            string turnedOffCallback = Unit.tick.hasValidConnection ? tickMethodName : null;
+
+            writer.WriteIndented(Name.VariableHighlight());
+            writer.Write(".");
+            writer.Write("Initialize");
+            writer.Write("(");
+
+            if (turnedOnCallback != null)
+                writer.Write(turnedOnCallback);
+            else if (turnedOffCallback != null)
+                writer.Write("null".ConstructHighlight());
+
+            if (turnedOffCallback != null)
+            {
+                writer.Write(", ");
+                writer.Write(turnedOffCallback);
+            }
+
+            writer.WriteEnd(EndWriteOptions.All);
+        }
+
+        protected override void GenerateCode(ControlInput input, ControlGenerationData data, CodeWriter writer)
+        {
+            if (input == Unit.start)
+            {
+                writer.WriteIndented(Name.VariableHighlight());
+                writer.Write(".");
+                writer.Write("StartTimer");
+                writer.Write("(");
+                GenerateValue(Unit.duration, data, writer);
+                writer.Write(", ");
+                GenerateValue(Unit.unscaledTime, data, writer);
+                writer.Write(")");
+                writer.Write(";");
+                writer.NewLine();
+
+                GenerateExitControl(Unit.started, data, writer);
+            }
+            else if (input == Unit.pause)
+            {
+                writer.WriteIndented(Name.VariableHighlight());
+                writer.Write(".");
+                writer.Write("PauseTimer");
+                writer.Write("()");
+                writer.Write(";");
+                writer.NewLine();
+            }
+            else if (input == Unit.resume)
+            {
+                writer.WriteIndented(Name.VariableHighlight());
+                writer.Write(".");
+                writer.Write("ResumeTimer");
+                writer.Write("()");
+                writer.Write(";");
+                writer.NewLine();
+            }
+            else if (input == Unit.toggle)
+            {
+                writer.WriteIndented(Name.VariableHighlight());
+                writer.Write(".");
+                writer.Write("ToggleTimer");
+                writer.Write("()");
+                writer.Write(";");
+                writer.NewLine();
+            }
+        }
+
+        public void GenerateUpdateCode(ControlGenerationData data, CodeWriter writer)
+        {
+            writer.WriteIndented().GetVariable(Name).InvokeMember(null, "Update").WriteEnd(EndWriteOptions.LineEnd);
         }
     }
 }

@@ -4,7 +4,7 @@ using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
 #if MODULE_PHYSICS_2D_EXISTS
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnTriggerExit2D))]
     public class OnTriggerExit2DGenerator : UnityMethodGenerator<OnTriggerExit2D, Collider2D>
@@ -17,9 +17,10 @@ namespace Unity.VisualScripting.Community
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(Collider2D), "other") };
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("other".VariableHighlight());
+            writer.GetVariable("other");
         }
     }
 }

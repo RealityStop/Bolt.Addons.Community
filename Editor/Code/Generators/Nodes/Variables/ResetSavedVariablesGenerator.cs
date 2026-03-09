@@ -1,28 +1,19 @@
-using System;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ResetSavedVariables))]
     public class ResetSavedVariablesGenerator : NodeGenerator<ResetSavedVariables>
     {
         public ResetSavedVariablesGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateValue(output, data);
-        }
-
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
-        {
-            string output = string.Empty;
             foreach (var arg in Unit.arguments)
             {
-                output += CodeBuilder.Indent(indent) + CodeBuilder.CallCSharpUtilityMethod(Unit, MakeClickableForThisUnit("ResetSavedVariable"), GenerateValue(arg, data)) + MakeClickableForThisUnit(";") + "\n";
+                writer.WriteIndented();
+                writer.CallCSharpUtilityMethod("ResetSavedVariable", writer.Action(() => GenerateValue(arg, data, writer)));
+                writer.WriteEnd(EndWriteOptions.LineEnd);
             }
-            return output + GetNextUnit(Unit.OnReset, data, indent);
+            GenerateExitControl(Unit.OnReset, data, writer);
         }
     }
 }

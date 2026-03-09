@@ -1,0 +1,38 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace Unity.VisualScripting.Community
+{
+    [Widget(typeof(OnVariableChanged))]
+    public sealed class OnVariableChangedWidget : UnitWidget<OnVariableChanged>
+    {
+
+        protected override NodeColorMix baseColor => NodeColor.Green;
+
+
+        public OnVariableChangedWidget(FlowCanvas canvas, OnVariableChanged unit) : base(canvas, unit)
+        {
+            nameInspectorConstructor = (metadata) => new VisualScripting.VariableNameInspector(metadata, GetNameSuggestions);
+        }
+
+        private VisualScripting.VariableNameInspector nameInspector;
+        private Func<Metadata, VisualScripting.VariableNameInspector> nameInspectorConstructor;
+
+        public override Inspector GetPortInspector(IUnitPort port, Metadata metadata)
+        {
+            if (port == unit.name)
+            {
+                InspectorProvider.instance.Renew(ref nameInspector, metadata, nameInspectorConstructor);
+
+                return nameInspector;
+            }
+
+            return base.GetPortInspector(port, metadata);
+        }
+
+        private IEnumerable<string> GetNameSuggestions()
+        {
+            return EditorVariablesUtility.GetVariableNameSuggestions(unit.kind, reference);
+        }
+    }
+}

@@ -4,7 +4,7 @@ using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
 #if MODULE_PHYSICS_2D_EXISTS
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(OnCollisionStay2D))]
     public class OnCollisionStay2DGenerator : UnityMethodGenerator<OnCollisionStay2D, Collision2D>
@@ -17,27 +17,28 @@ namespace Unity.VisualScripting.Community
 
         public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(Collision2D), "other") };
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
             if (output == Unit.collider)
             {
-                return MakeClickableForThisUnit("other".VariableHighlight() + "." + "collider".VariableHighlight());
+                writer.GetVariable("other").GetMember("collider");
             }
             else if (output == Unit.contacts)
             {
-                return MakeClickableForThisUnit("other".VariableHighlight() + "." + "contacts".VariableHighlight());
+                writer.GetVariable("other").GetMember("contacts");
             }
             else if (output == Unit.relativeVelocity)
             {
-                return MakeClickableForThisUnit("other".VariableHighlight() + "." + "relativeVelocity".VariableHighlight());
+                writer.GetVariable("other").GetMember("relativeVelocity");
             }
             else if (output == Unit.enabled)
             {
-                return MakeClickableForThisUnit("other".VariableHighlight() + "." + "enabled".VariableHighlight());
+                writer.GetVariable("other").GetMember("enabled");
             }
             else
             {
-                return MakeClickableForThisUnit("other".VariableHighlight());
+                writer.GetVariable("other");
             }
         }
     }

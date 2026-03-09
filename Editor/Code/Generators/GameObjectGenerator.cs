@@ -9,7 +9,7 @@ using SMachine = Unity.VisualScripting.ScriptMachine;
 using SMachine = Unity.VisualScripting.FlowMachine;
 #endif
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [Serializable]
     [CodeGenerator(typeof(GameObject))]
@@ -18,10 +18,11 @@ namespace Unity.VisualScripting.Community
         public SMachine[] components = new SMachine[0];
         public SMachine current;
 
-        private readonly Dictionary<object, ControlGenerationData> datas = new Dictionary<object, ControlGenerationData>();
+        private readonly Dictionary<SMachine, ControlGenerationData> datas = new Dictionary<SMachine, ControlGenerationData>();
 
         public override ControlGenerationData GetGenerationData(bool newIfDisposed = true)
         {
+            if (current == null) return new ControlGenerationData(null, null);
             if (datas.TryGetValue(current, out var data))
             {
                 if (!data.isDisposed || !newIfDisposed)

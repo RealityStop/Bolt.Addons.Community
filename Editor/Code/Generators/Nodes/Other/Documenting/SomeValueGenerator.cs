@@ -1,6 +1,6 @@
 using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(SomeValue))]
     public class SomeValueGenerator : NodeGenerator<SomeValue>
@@ -14,9 +14,9 @@ namespace Unity.VisualScripting.Community
                 value = UnityEngine.Random.Range(0.0f, 1.0f);
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(value.As().Code(false));
+            writer.Object(value);
         }
     }
 }

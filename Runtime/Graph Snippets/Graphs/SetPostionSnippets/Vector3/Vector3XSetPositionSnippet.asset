@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e57c036929169040a5d784c8a5618e5, type: 3}
+  m_Name: Vector3XSetPositionSnippet
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"_sourceUnit":{"defaultValues":{},"position":{"x":0.0,"y":0.0},"guid":"13a9b24c-3831-4681-940a-e843671fb390","$version":"A","$id":"1"},"SnippetName":"SetPositionVector3","snippetArguments":[{"argumentName":"X","argumentType":"System.Single"}],"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":238.0,"y":-22.0},"zoom":1.0,"elements":[{"chainable":false,"member":{"name":"position","parameterTypes":null,"targetType":"UnityEngine.Transform","targetTypeName":"UnityEngine.Transform","$version":"A"},"defaultValues":{"target":null,"input":{"x":0.0,"y":0.0,"z":0.0,"$type":"UnityEngine.Vector3"}},"position":{"x":282.0,"y":0.0},"guid":"5c838725-0cfe-47ff-a0e3-6e03a0fbd24c","$version":"A","$type":"Unity.VisualScripting.SetMember","$id":"13"},{"argumentName":"X","defaultValues":{},"position":{"x":-74.0,"y":101.0},"guid":"41ad6683-d310-4681-8ecd-a367bf067673","$version":"A","$type":"Unity.VisualScripting.Community.SnippetInputNode","$id":"16"},{"chainable":false,"parameterNames":["x","y","z"],"member":{"name":".ctor","parameterTypes":["System.Single","System.Single","System.Single"],"targetType":"UnityEngine.Vector3","targetTypeName":"UnityEngine.Vector3","$version":"A"},"defaultValues":{"%x":{"$content":0.0,"$type":"System.Single"},"%y":{"$content":0.0,"$type":"System.Single"},"%z":{"$content":0.0,"$type":"System.Single"}},"position":{"x":144.0,"y":85.0},"guid":"2fd14aa1-ab9a-4188-8150-d10072ed8b14","$version":"A","$type":"Unity.VisualScripting.InvokeMember","$id":"18"},{"$ref":"1"},{"sourceUnit":{"$ref":"1"},"sourceKey":"source","destinationUnit":{"$ref":"13"},"destinationKey":"assign","guid":"f342579b-3194-45f0-bf0d-7bc587cc55de","$type":"Unity.VisualScripting.ControlConnection"},{"sourceUnit":{"$ref":"16"},"sourceKey":"output","destinationUnit":{"$ref":"18"},"destinationKey":"%x","guid":"497159d5-b89e-4a6b-990b-bee7f17a953b","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"18"},"sourceKey":"result","destinationUnit":{"$ref":"13"},"destinationKey":"input","guid":"9cbae8db-89ae-4d48-b963-ce8c5425551f","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
+  SnippetName: SetPositionVector3
+  snippetArguments:
+  - argumentName: X

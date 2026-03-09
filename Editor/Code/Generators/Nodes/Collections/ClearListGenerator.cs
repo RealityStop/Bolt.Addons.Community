@@ -2,7 +2,7 @@ using Unity.VisualScripting;
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ClearList))]
     public class ClearListGenerator : NodeGenerator<ClearList>
@@ -11,14 +11,20 @@ namespace Unity.VisualScripting.Community
         {
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return GenerateValue(Unit.listInput, data);
+            GenerateValue(Unit.listInput, data, writer);
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            return CodeBuilder.Indent(indent) + GenerateValue(Unit.listInput, data) + MakeClickableForThisUnit(".Clear();") + "\n" + GetNextUnit(Unit.exit, data, indent);
+            writer.InvokeMember(writer.Action(w =>
+            {
+                w.WriteIndented();
+                GenerateValue(Unit.listInput, data, w);
+            }), "Clear").WriteEnd(EndWriteOptions.LineEnd);
+
+            GenerateExitControl(Unit.exit, data, writer);
         }
     }
 }

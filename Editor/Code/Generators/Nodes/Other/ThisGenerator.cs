@@ -1,6 +1,7 @@
 using Unity.VisualScripting.Community.Libraries.CSharp;
+using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(This))]
     public sealed class ThisGenerator : NodeGenerator<This>
@@ -9,14 +10,9 @@ namespace Unity.VisualScripting.Community
         {
         }
     
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return base.GenerateControl(input, data, indent);
+            writer.Write("gameObject".VariableHighlight());
         }
-    
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
-        {
-            return MakeClickableForThisUnit("gameObject".VariableHighlight());
-        }
-    } 
+    }
 }

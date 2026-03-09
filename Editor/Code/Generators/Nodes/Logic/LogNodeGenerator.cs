@@ -1,49 +1,53 @@
 using System.Text;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using Unity.VisualScripting;
+using UnityEngine;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(LogNode))]
     public sealed class LogNodeGenerator : NodeGenerator<LogNode>
     {
         public LogNodeGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
             var unit = Unit;
-            var sb = new StringBuilder();
 
-            string formatString = GenerateValue(unit.format, data);
-
-            var args = new string[unit.argumentCount];
-            for (int i = 0; i < unit.argumentCount; i++)
+            writer.WriteIndented();
+            writer.Write(typeof(Debug)).Dot();
+            
+            string logMethod = unit.type switch
             {
-                args[i] = GenerateValue(unit.arguments[i], data);
-            }
-
-            string argsJoined = args.Length > 0 ? string.Join(MakeClickableForThisUnit(", "), args) : null;
-            string message;
+                LogType.Warning => "LogWarning",
+                LogType.Error => "LogError",
+                _ => "Log"
+            };
+            
+            writer.Write(logMethod);
+            writer.Write("(");
 
             if (unit.argumentCount == 0)
             {
-                message = formatString;
+                GenerateValue(unit.format, data, writer);
             }
             else
             {
-                message = $"{MakeClickableForThisUnit("string".ConstructHighlight())}{MakeClickableForThisUnit(".Format(")}{formatString}{MakeClickableForThisUnit(", ")}{argsJoined}{MakeClickableForThisUnit(")")}";
+                writer.Write("string".ConstructHighlight() + ".Format(");
+                GenerateValue(unit.format, data, writer);
+                
+                for (int i = 0; i < unit.argumentCount; i++)
+                {
+                    writer.Write(", ");
+                    GenerateValue(unit.arguments[i], data, writer);
+                }
+                
+                writer.Write(")");
             }
 
-            string logCall = unit.type switch
-            {
-                LogType.Warning => MakeClickableForThisUnit($"{"Debug".TypeHighlight()}.LogWarning(") + message + MakeClickableForThisUnit(");"),
-                LogType.Error => MakeClickableForThisUnit($"{"Debug".TypeHighlight()}.LogError(") + message + MakeClickableForThisUnit(");"),
-                _ => MakeClickableForThisUnit($"{"Debug".TypeHighlight()}.Log(") + message + MakeClickableForThisUnit(");")
-            };
-
-            sb.AppendLine(CodeBuilder.Indent(indent) + logCall);
-            sb.AppendLine(GetNextUnit(unit.output, data, indent));
-            return sb.ToString();
+            writer.WriteEnd();
+            GenerateExitControl(unit.output, data, writer);
         }
     }
 }

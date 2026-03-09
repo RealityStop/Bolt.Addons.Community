@@ -3,7 +3,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using System;
 using Unity.VisualScripting;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Null))]
     public class NullGenerator : NodeGenerator<Null>
@@ -12,11 +12,14 @@ namespace Unity.VisualScripting.Community
         {
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-
-            return MakeClickableForThisUnit("null".ConstructHighlight());
+            var expected = data.GetExpectedType();
+            if (expected != null && expected.IsReferenceType())
+            {
+                data.MarkExpectedTypeMet(typeof(Null));
+            }
+            writer.Null();
         }
     }
-
 }

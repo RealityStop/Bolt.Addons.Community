@@ -3,16 +3,22 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.Humility;
 
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(CreateDictionary))]
     public class CreateDictionaryGenerator : NodeGenerator<CreateDictionary>
     {
         public CreateDictionaryGenerator(Unit unit) : base(unit) { }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit("new ".ConstructHighlight() + GetDictionaryType(data).As().CSharpName(false, true) + "()");
+            var type = GetDictionaryType(data);
+            var expectedType = data.GetExpectedType();
+            if (expectedType != null && expectedType.IsAssignableFrom(type))
+            {
+                data.MarkExpectedTypeMet(type);
+            }
+            writer.New(type);
         }
 
         Type GetDictionaryType(ControlGenerationData data)

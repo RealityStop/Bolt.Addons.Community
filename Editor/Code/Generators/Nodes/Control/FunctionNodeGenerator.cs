@@ -1,5 +1,5 @@
 ﻿using Unity.VisualScripting.Community.Libraries.CSharp;
-namespace Unity.VisualScripting.Community
+namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(FunctionNode))]
     public sealed class FunctionNodeGenerator : NodeGenerator<FunctionNode>
@@ -8,15 +8,19 @@ namespace Unity.VisualScripting.Community
         {
         }
 
-        public override string GenerateControl(ControlInput input, ControlGenerationData data, int indent)
+        protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
-            if (!Unit.invoke.hasAnyConnection) return "\n";
-            return GetNextUnit(Unit.invoke, data, indent);
+            if (Unit.invoke == null || !Unit.invoke.hasAnyConnection)
+            {
+                return;
+            }
+
+            GenerateChildControl(Unit.invoke, data, writer);
         }
 
-        public override string GenerateValue(ValueOutput output, ControlGenerationData data)
+        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            return MakeClickableForThisUnit(output.key.LegalMemberName().VariableHighlight());
+            writer.Write(output.key.LegalMemberName().VariableHighlight());
         }
     }
 }
