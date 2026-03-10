@@ -122,7 +122,7 @@ namespace Unity.VisualScripting.Community
                 EventBus.Register(hook, action);
             }
         }
-#if ENABLE_COMMUNITY_NODES
+
         public static void RegisterReturnEvent(GameObject target, Action<ReturnEventArg> action, string name, int argCount, string eventID)
         {
             var hook = CommunityEvents.ReturnEvent;
@@ -150,7 +150,7 @@ namespace Unity.VisualScripting.Community
                 EventBus.Register(hook, (Action<ReturnEventArg>)Action);
             }
         }
-#endif
+
         public static void ClearSavedVariables()
         {
             SavedVariables.saved.Clear();
@@ -268,12 +268,12 @@ namespace Unity.VisualScripting.Community
         {
             return args.arguments[index].ConvertTo<T>();
         }
-#if ENABLE_COMMUNITY_NODES
+
         public static object GetArgument(this ReturnEventArg args, int index, Type targetType)
         {
             return args.arguments[index].ConvertTo(targetType);
         }
-#endif
+
         public static void TriggerAssetCustomEvent(ScriptGraphAsset asset, string name, params object[] args)
         {
             GraphReference.New(asset, true).TriggerEventHandler(hook => hook == "Custom", new CustomEventArgs(name, args), parent => true, true);
