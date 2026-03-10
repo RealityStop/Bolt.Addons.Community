@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community
         {
             PatchVariablesDeclarationsInspector();
             PatchWidgets();
-            PatchGraphContext();
+            // PatchGraphContext();
         }
 
         private static void PatchWidgets()
@@ -265,10 +265,10 @@ namespace Unity.VisualScripting.Community
         // I might use this later to patch the graph context to move the Utilities panel to the sidebars in the graph
         private static void PatchGraphContext()
         {
-            var provider = GraphContextProvider.instance;
+            // var provider = GraphContextProvider.instance;
 
-            PatchGlobalProvider<GraphReference, IGraphContext, GraphContextAttribute, PatchedFlowGraphContext>(provider,
-            typeof(FlowGraph));
+            // PatchGlobalProvider<GraphReference, IGraphContext, GraphContextAttribute, PatchedFlowGraphContext>(provider,
+            // typeof(FlowGraph));
 
             // var editorProvider = EditorProvider.instance;
 
@@ -295,19 +295,6 @@ namespace Unity.VisualScripting.Community
             PatchGlobalProvider<Metadata, Inspector, InspectorAttribute, PatchedVariableDeclarationInspector>(provider,
             typeof(VariableDeclaration));
 #endif
-        }
-    }
-
-    public class PatchedFlowGraphContext : FlowGraphContext
-    {
-        public PatchedFlowGraphContext(GraphReference reference) : base(reference) { }
-
-        public override string windowTitle => "Script Graph";
-
-        protected override IEnumerable<ISidebarPanelContent> SidebarPanels()
-        {
-            yield return new GraphInspectorPanel(this);
-            yield return new VariablesPanel(this);
         }
     }
 }
