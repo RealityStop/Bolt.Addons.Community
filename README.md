@@ -1,6 +1,6 @@
 # 🛠️ Unity Visual Scripting: Community Addons
 # Join the discord
-[![Discord Banner](https://discord.com/api/guilds/1086044503548366928/widget.png?style=banner2)](https://discord.gg/TdqJhZG3Nd)
+[![Discord Banner](https://discord.com/api/guilds/1086044503548366928/widget.png?style=banner2)](https://discord.gg/ny33h6zsQu)
 
 A community-driven project extending Unity Visual Scripting with custom nodes, assets, helpers and more! 
 
