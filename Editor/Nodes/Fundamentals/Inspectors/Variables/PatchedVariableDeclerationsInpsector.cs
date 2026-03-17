@@ -428,6 +428,8 @@ namespace Unity.VisualScripting.Community
             public ReorderableListControl listControl;
             private static readonly FieldInfo listControlFieldInfo = typeof(MetadataCollectionAdaptor).GetField("listControl", BindingFlags.NonPublic | BindingFlags.Instance);
 
+            private static Type InternalListAdaptorType = typeof(VariableDeclarationsInspector).GetNestedType("ListAdaptor", BindingFlags.NonPublic);
+            
             public new readonly PatchedVariableDeclarationsInspector parentInspector;
 
             public VariableDeclarationsAdaptor(Metadata metadata, PatchedVariableDeclarationsInspector parent) : base(metadata, parent)
@@ -745,9 +747,9 @@ namespace Unity.VisualScripting.Community
                         if (GUIUtility.hotControl == controlID)
                         {
                             var item = this[index];
-                            var list = typeof(VariableDeclarationsInspector)
-                                .GetNestedType("ListAdaptor", BindingFlags.NonPublic)
-                                .Instantiate(false, metadata, parentInspector) as MetadataListAdaptor;
+
+                            var list = InternalListAdaptorType.Instantiate(false, metadata, parentInspector) as MetadataListAdaptor;
+
                             GUIUtility.hotControl = 0;
                             DragAndDrop.PrepareStartDrag();
                             DragAndDrop.objectReferences = new UnityEngine.Object[0];
@@ -983,15 +985,19 @@ namespace Unity.VisualScripting.Community
 
                     if (draggedItem != null)
                     {
-                        if (draggedItem.sourceListAdaptor != this)
+                        if (InternalListAdaptorType.GetField("parentInspector", BindingFlags.Instance | BindingFlags.Public).GetValue(draggedItem.sourceListAdaptor) != parentInspector)
                         {
                             if (!CanDrop(draggedItem.item))
                                 return;
 
-                            if (parentInspector.foldouts == null)
-                                parentInspector.foldouts = new Dictionary<VariableDeclaration, VariableFoldout>();
+                            parentInspector.foldouts ??= new Dictionary<VariableDeclaration, VariableFoldout>();
 
                             parentInspector.foldouts[draggedItem.variableState.Item1] = draggedItem.variableState.Item2;
+                        }
+                        else
+                        {
+                            Move(draggedItem.index, insertionIndex);
+                            return;
                         }
                     }
                 }
