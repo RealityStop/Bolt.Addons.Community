@@ -1,10 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
@@ -30,8 +26,7 @@ namespace Unity.VisualScripting.Community.CSharp
         private SelectOnFlow Unit => unit as SelectOnFlow;
         public override Type ReturnType => typeof(void);
 
-        public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(0, "value") };
-        public override int GenericCount => 1;
+        public override List<TypeParam> Parameters => new List<TypeParam>() { new TypeParam(typeof(object), "value") };
 
         public override ControlOutput OutputPort => Unit.exit;
 
@@ -60,6 +55,7 @@ namespace Unity.VisualScripting.Community.CSharp
         }
         public override void GeneratedMethodCode(ControlGenerationData data, CodeWriter writer)
         {
+            data.CreateSymbol(unit, typeof(object));
             GenerateChildControl(Unit.exit, data, writer);
         }
     }

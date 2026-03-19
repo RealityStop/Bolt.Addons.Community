@@ -125,13 +125,13 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (input.hasValidConnection)
             {
-                GenerateConnectedValue(input, data, writer);
+                GenerateConnectedValueCasted(input, data, writer, input.type, () => ShouldCast(input, data, writer), false);
             }
             else if (input.hasDefaultValue)
             {
                 var isGameObject = input.type == typeof(GameObject);
-                var isComponent = typeof(Component).IsAssignableFrom(input.type);
-                if (input == Unit.target && (isGameObject || isComponent))
+                var isComponent = typeof(Component).IsStrictlyAssignableFrom(input.type);
+                if (input == Unit.target && unit.defaultValues[Unit.target.key] == null && (isGameObject || isComponent))
                 {
                     writer.Write("gameObject".VariableHighlight());
                     if (isComponent)
