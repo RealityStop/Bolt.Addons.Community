@@ -1,10 +1,4 @@
-using Unity;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
-using System.Linq;
-using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
-using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
 using System;
 
@@ -20,6 +14,7 @@ namespace Unity.VisualScripting.Community.CSharp
         public override IEnumerable<string> GetNamespaces()
         {
             yield return Unit.member.pseudoDeclaringType.Namespace;
+            yield return "Unity.VisualScripting";
         }
 
         protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
