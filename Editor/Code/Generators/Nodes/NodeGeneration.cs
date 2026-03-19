@@ -77,7 +77,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 return null;
         }
 
-        private static string GetComponentCode(Type type, CodeWriter writer, bool includeDot, bool includeParentheses)
+        public static string GetComponentCode(Type type, CodeWriter writer, bool includeDot, bool includeParentheses)
         {
             if (type == typeof(Transform))
             {

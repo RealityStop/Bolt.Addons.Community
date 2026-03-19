@@ -108,18 +108,16 @@ namespace Unity.VisualScripting.Community.CSharp
                     }
                     else if (Unit.target.hasDefaultValue)
                     {
-                        if (input.type == typeof(GameObject) || typeof(Component).IsStrictlyAssignableFrom(input.type))
+                        if (unit.defaultValues[Unit.target.key] == null)
                         {
-                            var sourceType = SourceType(Unit.target, data, writer);
-                            var code = Unit.target.GetComponent(writer, sourceType, Unit.member.pseudoDeclaringType, true, true);
-                            if (!string.IsNullOrEmpty(code))
-                            {
-                                writer.GetVariable("gameObject").Write(code);
-                                return;
-                            }
-                            else
+                            if (input.type == typeof(GameObject))
                             {
                                 writer.GetVariable("gameObject");
+                                return;
+                            }
+                            else if (typeof(Component).IsStrictlyAssignableFrom(input.type))
+                            {
+                                writer.GetVariable("gameObject").Write(NodeGeneration.GetComponentCode(input.type, writer, true, true));
                                 return;
                             }
                         }

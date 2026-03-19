@@ -62,11 +62,16 @@ namespace Unity.VisualScripting.Community.CSharp
             CompileAssets(HUMAssets.Find().Assets().OfType<EnumAsset>());
             CompileAssets(HUMAssets.Find().Assets().OfType<DelegateAsset>());
             CompileAssets(HUMAssets.Find().Assets().OfType<InterfaceAsset>());
-            CompileAssets(HUMAssets.Find().Assets().OfType<ScriptGraphAsset>());
-            CompileScriptMachines(AssetCompilierUtility.FindObjectsOfTypeIncludingInactive<SMachine>());
+            CompileAssets(HUMAssets.Find().Assets().OfType<ScriptGraphAsset>().Where(IsNotSubgraph));
+            CompileScriptMachines(AssetCompilierUtility.FindObjectsOfTypeIncludingInactive<SMachine>().Where(IsNotSubgraph));
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
+
+        private static bool IsNotSubgraph(IGraphRoot root)
+        {
+            return !root.GetReference().graph.elements.Any(u => u is GraphInput || u is GraphOutput);
         }
 
         [MenuItem("Addons/Compile Selected %&S")]

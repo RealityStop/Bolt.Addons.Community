@@ -22,6 +22,9 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override IEnumerable<string> GetNamespaces()
         {
+            if (!Unit.member.isReflected)
+                yield break;
+
             if (Unit.member.isExtension)
             {
                 yield return Unit.member.info.DeclaringType.Namespace;
@@ -34,6 +37,8 @@ namespace Unity.VisualScripting.Community.CSharp
 
         protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
+            if (!Unit.member.isReflected)
+                return;
             outputNames = new Dictionary<ValueOutput, string>();
             bool hasResultConnection = Unit.result != null && Unit.result.hasValidConnection;
 
@@ -109,6 +114,9 @@ namespace Unity.VisualScripting.Community.CSharp
 
         protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
         {
+            if (!Unit.member.isReflected)
+                return;
+
             if (input == null)
             {
                 writer.Write("/* Value Input is null */".ErrorHighlight());
@@ -170,6 +178,9 @@ namespace Unity.VisualScripting.Community.CSharp
 
         protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
+            if (!Unit.member.isReflected)
+                return;
+
             if (output == Unit.result)
             {
                 if (!Unit.enter.hasValidConnection && Unit.outputParameters.Count > 0)
