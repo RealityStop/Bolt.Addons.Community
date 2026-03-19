@@ -75,7 +75,7 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             if (scopes.Count > 0)
             {
-                var graphId = graphScopeStack.Peek();
+                var graphId = GraphID;
 
                 if (!graphVariableMap.TryGetValue(graphId, out var map))
                 {
@@ -103,6 +103,19 @@ namespace Unity.VisualScripting.Community.CSharp
             }
         }
         #region Scope Management
+
+        private string GraphID 
+        {
+            get 
+            {
+                if (graphScopeStack.Count == 0)
+                {
+                    graphScopeStack.Push("Global");
+                }
+
+                return graphScopeStack.Peek();
+            }
+        }
 
         Dictionary<string, int> methodIndex = new Dictionary<string, int>();
 
