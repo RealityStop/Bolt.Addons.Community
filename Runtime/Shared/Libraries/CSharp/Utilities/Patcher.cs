@@ -96,7 +96,8 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             "static",
             "where",
             "from",
-            "select"
+            "select",
+            "event"
         };
 
         public static string EnsureNonConstructName(this string text)
