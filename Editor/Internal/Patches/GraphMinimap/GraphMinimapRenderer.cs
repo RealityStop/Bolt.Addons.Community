@@ -11,18 +11,10 @@ namespace Unity.VisualScripting.Community
             GraphMiniMapStorage.Settings.height
         );
 
-        private const float Padding = 50f;
-
-        private static readonly Dictionary<IGraphElementWidget, Rect> cachedRects = new Dictionary<IGraphElementWidget, Rect>();
         private static readonly List<IGraphElementWidget> hitWidgets = new List<IGraphElementWidget>();
         private static IGraphElementWidget selectedWidget;
-        private static double lastUpdateTime = 0;
-        private const double updateInterval = 0.1;
 
-        private static Rect contentBounds;
-        private static float scale;
-        private static Vector2 minimapOffset;
-        private static Rect combinedBounds;
+        private const float Padding = 50f;
 
         public static void Draw(IGraphContext context, HashSet<IGraphElementWidget> widgets)
         {
@@ -34,71 +26,117 @@ namespace Unity.VisualScripting.Community
             Rect rect = GUILayoutUtility.GetRect(MinimapSize.x, MinimapSize.y);
             GUI.BeginGroup(rect);
 
-            double currentTime = EditorApplication.timeSinceStartup;
-            bool shouldUpdate = currentTime - lastUpdateTime > updateInterval;
-            lastUpdateTime = currentTime;
-
-            if (shouldUpdate)
-            {
-                UpdateCache(canvas, widgets, rect);
-            }
-
-            DrawMinimap(canvas);
-
-            HandleMouse(canvas);
-
-            GUI.EndGroup();
-        }
-
-        private static void UpdateCache(ICanvas canvas, HashSet<IGraphElementWidget> widgets, Rect rect)
-        {
-            contentBounds = GraphGUI.CalculateArea(widgets);
+            Rect contentBounds = GraphGUI.CalculateArea(widgets);
             contentBounds.xMin -= Padding;
             contentBounds.yMin -= Padding;
             contentBounds.xMax += Padding;
             contentBounds.yMax += Padding;
 
             Rect viewportWorld = new Rect(canvas.pan - canvas.viewport.size * 0.5f, canvas.viewport.size);
-            combinedBounds = contentBounds.Encompass(viewportWorld);
+            Rect combinedBounds = contentBounds.Encompass(viewportWorld);
 
             float scaleX = rect.width / combinedBounds.width;
             float scaleY = rect.height / combinedBounds.height;
-            scale = scaleX < scaleY ? scaleX : scaleY;
-            if (scale <= 0f) return;
+            float scale = scaleX < scaleY ? scaleX : scaleY;
+            if (scale <= 0f) { GUI.EndGroup(); return; }
 
-            minimapOffset = rect.center - combinedBounds.size * (scale * 0.5f);
+            Vector2 minimapOffset = rect.center - combinedBounds.size * (scale * 0.5f);
+            Vector2 boundsMin = combinedBounds.min;
 
-            cachedRects.Clear();
-            foreach (var w in widgets)
+            Vector2 ToMinimap(Vector2 worldPos)
             {
-                if (!canvas.widgetProvider.IsValid(w.item)) continue;
-
-                var widget = canvas.Widget(w.item) as IGraphElementWidget;
-                if (widget == null) continue;
-
-                Rect wp = widget.position;
-                cachedRects[widget] = new Rect(ToMinimap(wp.position), wp.size * scale);
-            }
-        }
-
-        private static void DrawMinimap(ICanvas canvas)
-        {
-            if (scale <= 0f) return;
-
-            foreach (var kvp in cachedRects)
-            {
-                var widget = kvp.Key;
-                var drawRect = kvp.Value;
-
-                Handles.DrawSolidRectangleWithOutline(
-                    drawRect,
-                    GetElementColor(widget).WithAlpha(0.1f),
-                    Color.white * (canvas.selection.Contains(widget.element) ? 1f : 0)
-                );
+                return (worldPos - boundsMin) * scale + minimapOffset;
             }
 
-            // Draw viewport rectangle
-            Rect viewportWorld = new Rect(canvas.pan - canvas.viewport.size * 0.5f, canvas.viewport.size);
+            GraphUtility.OverrideContextIfNeeded(() =>
+            {
+                hitWidgets.Clear();
+
+                var e = Event.current;
+                Vector2 mousePos = e.mousePosition;
+                Vector2 mouseWorld = (mousePos - minimapOffset) / scale + boundsMin;
+
+                var selection = canvas.selection;
+                bool contextIsValid = GraphContextProvider.instance.IsValid(context.reference);
+
+                IGraphElementWidget closest = null;
+                float closestDistSq = float.MaxValue;
+
+                Rect drawRect = default;
+
+                foreach (var w in widgets)
+                {
+                    if (!canvas.widgetProvider.IsValid(w.item)) continue;
+
+                    var widget = canvas.Widget(w.item) as IGraphElementWidget;
+                    if (widget == null) continue;
+
+                    if (!contextIsValid) continue;
+
+                    Rect wp = widget.position;
+
+                    drawRect.position = ToMinimap(wp.position);
+                    drawRect.size = wp.size * scale;
+
+                    Handles.DrawSolidRectangleWithOutline(
+                        drawRect,
+                        GetElementColor(widget).WithAlpha(0.1f),
+                        Color.white * (canvas.selection.Contains(widget.element) ? 1f : 0)
+                    );
+
+                    Vector2 center = wp.center;
+                    Vector2 delta = center - mouseWorld;
+                    float distSq = delta.sqrMagnitude;
+
+                    if (distSq < closestDistSq)
+                    {
+                        closestDistSq = distSq;
+                        closest = widget;
+                    }
+
+                    if (drawRect.Contains(mousePos))
+                    {
+                        hitWidgets.Add(widget);
+                    }
+                }
+
+                if (e.type == EventType.MouseDown && e.button == 0)
+                {
+                    IGraphElementWidget target = null;
+
+                    if (hitWidgets.Count > 0)
+                    {
+                        int index = 0;
+                        if (selectedWidget != null)
+                        {
+                            int i = hitWidgets.IndexOf(selectedWidget);
+                            if (i >= 0) index = (i + 1) % hitWidgets.Count;
+                        }
+                        target = hitWidgets[index];
+                    }
+                    else
+                    {
+                        target = closest;
+                    }
+
+                    if (target != null)
+                    {
+                        selectedWidget = target;
+                        canvas.ViewElements(target.element.Yield());
+
+                        if (target.canSelect)
+                        {
+                            if (e.shift)
+                                selection.Add(target.element);
+                            else
+                                selection.Select(target.element);
+                        }
+
+                        e.Use();
+                    }
+                }
+            });
+
             Vector2 viewPos = ToMinimap(viewportWorld.position);
             Vector2 viewSize = viewportWorld.size * scale;
 
@@ -114,75 +152,8 @@ namespace Unity.VisualScripting.Community
                 new Color(1f, 1f, 1f, 0.1f),
                 Color.yellow
             );
-        }
 
-        private static void HandleMouse(ICanvas canvas)
-        {
-            Event e = Event.current;
-            if (e.type != EventType.MouseDown || e.button != 0) return;
-
-            Vector2 mousePos = e.mousePosition;
-            Vector2 mouseWorld = (mousePos - minimapOffset) / scale + combinedBounds.min;
-
-            hitWidgets.Clear();
-            IGraphElementWidget closest = null;
-            float closestDistSq = float.MaxValue;
-
-            foreach (var kvp in cachedRects)
-            {
-                var widget = kvp.Key;
-                var drawRect = kvp.Value;
-
-                if (drawRect.Contains(mousePos))
-                    hitWidgets.Add(widget);
-
-                Vector2 delta = widget.position.center - mouseWorld;
-                float distSq = delta.sqrMagnitude;
-                if (distSq < closestDistSq)
-                {
-                    closestDistSq = distSq;
-                    closest = widget;
-                }
-            }
-
-            IGraphElementWidget target = null;
-
-            if (hitWidgets.Count > 0)
-            {
-                int index = 0;
-                if (selectedWidget != null)
-                {
-                    int i = hitWidgets.IndexOf(selectedWidget);
-                    if (i >= 0) index = (i + 1) % hitWidgets.Count;
-                }
-                target = hitWidgets[index];
-            }
-            else
-            {
-                target = closest;
-            }
-
-            if (target != null)
-            {
-                selectedWidget = target;
-                canvas.ViewElements(target.element.Yield());
-
-                var selection = canvas.selection;
-                if (target.canSelect)
-                {
-                    if (e.shift)
-                        selection.Add(target.element);
-                    else
-                        selection.Select(target.element);
-                }
-
-                e.Use();
-            }
-        }
-
-        private static Vector2 ToMinimap(Vector2 worldPos)
-        {
-            return (worldPos - combinedBounds.min) * scale + minimapOffset;
+            GUI.EndGroup();
         }
 
         private static Color GetElementColor(IWidget widget)
@@ -199,13 +170,13 @@ namespace Unity.VisualScripting.Community
             else if (widget is GraphGroupWidget group)
             {
                 return group.element.color;
-#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
             }
+#if VISUAL_SCRIPTING_1_8_0_OR_GREATER
             else if (widget is StickyNoteWidget sticky)
             {
                 return StickyNote.GetStickyColor(sticky.element.colorTheme);
-#endif
             }
+#endif
             return Color.white;
         }
     }
