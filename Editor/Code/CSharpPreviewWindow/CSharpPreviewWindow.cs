@@ -989,13 +989,16 @@ namespace Unity.VisualScripting.Community.CSharp
                 {
                     info.RestoreCompiler();
                     var compiler = info.compiler as BaseCompiler;
-                    if (compiler == null) continue;
+                    if (compiler == null || info == null || info.@object == null) continue;
 
 #if UNITY_2023_1_OR_NEWER
                     if (!AssetDatabase.AssetPathExists(info.relativePath)) continue;
 #endif
 
                     var type = AssetDatabase.LoadAssetAtPath<MonoScript>(info.relativePath)?.GetClass();
+
+                    if (type == null) continue;
+
                     try
                     {
                         compiler.PostProcess(info.@object, new PathConfig(), type);

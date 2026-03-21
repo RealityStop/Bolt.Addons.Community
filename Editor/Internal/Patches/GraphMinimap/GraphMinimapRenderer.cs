@@ -16,7 +16,7 @@ namespace Unity.VisualScripting.Community
 
         private const float Padding = 50f;
 
-        public static void Draw(IGraphContext context, HashSet<IGraphElementWidget> widgets)
+        public static void Draw(IGraphContext context, IEnumerable<IGraphElementWidget> widgets)
         {
             if (context == null || context.graph == null) return;
 
@@ -64,11 +64,10 @@ namespace Unity.VisualScripting.Community
 
                 Rect drawRect = default;
 
-                foreach (var w in widgets)
+                foreach (var widget in widgets)
                 {
-                    if (!canvas.widgetProvider.IsValid(w.item)) continue;
+                    if (!canvas.widgetProvider.IsValid(widget.item)) continue;
 
-                    var widget = canvas.Widget(w.item) as IGraphElementWidget;
                     if (widget == null) continue;
 
                     if (!contextIsValid) continue;

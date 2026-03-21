@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Unity.VisualScripting.Community 
+namespace Unity.VisualScripting.Community
 {
     internal sealed class GraphMinimapInstance : IDisposable
     {
@@ -21,71 +21,72 @@ namespace Unity.VisualScripting.Community
                 GraphMiniMapStorage.MarkDirty();
             }
         }
-    
+
         private static Vector2 lastMousePos = Vector2.zero;
-    
+
         private readonly GraphWindow window;
         private IGraphContext context;
-    
+
         private readonly VisualElement container;
         private readonly IMGUIContainer background;
         private readonly Button toggle;
-    
+
         private IGraph subscribedGraph;
-        private HashSet<IGraphElementWidget> widgets = new HashSet<IGraphElementWidget>();
-    
+        private IEnumerable<IGraphElementWidget> widgets = Enumerable.Empty<IGraphElementWidget>();
+
         public Sidebars sidebars;
-    
+
         private bool minimized;
-    
+
         private static readonly Color MinimapBackgroundDark = new Color(0f, 0f, 0f, 0.9f);
         private static readonly Color MinimapBackgroundLight = new Color(1f, 1f, 1f, 0.9f);
         private static readonly Color BorderColor = new Color(1f, 1f, 1f, 0.25f);
-    
+
         private static FieldInfo sidebarsField = typeof(GraphWindow).GetField("sidebars", BindingFlags.NonPublic | BindingFlags.Instance);
-    
+
         public GraphMinimapInstance(GraphWindow window)
         {
             activeInstances.Add(this);
-    
+
             this.window = window;
             this.context = window.context;
             sidebars = (Sidebars)sidebarsField.GetValue(window);
-    
+
             minimized = GraphMiniMapStorage.Settings
                 .minimized
                 .TryGetValue(window.reference.ToString(), out var value) && value;
-    
+
             container = CreateContainer();
             background = CreateRenderer();
             toggle = CreateToggle();
-    
+
             container.Add(background);
             container.Add(toggle);
-    
+
             AddResizeHandle(container);
-    
+
             window.rootVisualElement.Add(container);
-    
+
+            UpdateState();
+
             Subscribe(context);
-    
         }
-    
+
         public void Tick()
         {
             if (window.context != context)
             {
                 Subscribe(window.context);
             }
-    
+
             if (!minimized)
             {
                 background.MarkDirtyRepaint();
             }
-    
+
             KeepMinimapAnchored();
         }
-    
+
         private void Subscribe(IGraphContext newContext)
         {
             if (subscribedGraph != null)
@@ -93,38 +94,36 @@ namespace Unity.VisualScripting.Community
                 subscribedGraph.elements.CollectionChanged -= OnElementsChanged;
                 subscribedGraph = null;
             }
-    
+
             context = newContext;
-    
+
             if (context?.graph == null)
                 return;
-    
+
             subscribedGraph = context.graph;
             subscribedGraph.elements.CollectionChanged += OnElementsChanged;
-    
+
             CacheWidgets();
         }
-    
+
         private void OnElementsChanged()
         {
             EditorApplication.delayCall += CacheWidgets;
         }
-    
+
         private void CacheWidgets()
         {
             if (context?.graph == null)
                 return;
-    
-            widgets = LinqUtility.ToHashSet(context.graph.elements
-                .Select(e => context.canvas.Widget(e))
-                .OfType<IGraphElementWidget>());
+
+            widgets = context.graph.elements.Select(e => context.canvas.Widget(e)).OfType<IGraphElementWidget>();
         }
-    
+
         private void KeepMinimapAnchored()
         {
             if (window == null || context == null)
                 return;
-    
+
             var canvas = context.canvas;
             if (canvas == null)
                 return;
@@ -135,11 +134,11 @@ namespace Unity.VisualScripting.Community
             }
             catch { }
         }
-    
+
         private VisualElement CreateContainer()
         {
             bool isDark = EditorGUIUtility.isProSkin;
-    
+
             var miniMapContainer = new VisualElement
             {
                 style =
@@ -169,18 +168,18 @@ namespace Unity.VisualScripting.Community
                     },
                 pickingMode = PickingMode.Ignore
             };
-    
+
             return miniMapContainer;
         }
-    
+
         private IMGUIContainer CreateRenderer()
         {
             var imgui = new IMGUIContainer(Draw);
             imgui.cullingEnabled = false;
-    
+
             return imgui;
         }
-    
+
         private Button CreateToggle()
         {
             var button = new Button(() =>
@@ -188,7 +187,7 @@ namespace Unity.VisualScripting.Community
                 minimized = !minimized;
                 GraphMiniMapStorage.Settings
                     .minimized[window.reference.ToString()] = minimized;
-    
+
                 GraphMiniMapStorage.MarkDirty();
                 UpdateState();
             })
@@ -214,7 +213,7 @@ namespace Unity.VisualScripting.Community
             button.text = minimized ? "+" : "—";
             return button;
         }
-    
+
         private void AddResizeHandle(VisualElement container)
         {
             var resizeHandle = new VisualElement
@@ -231,9 +230,9 @@ namespace Unity.VisualScripting.Community
                         cursor = UIElementsCursorUpdater.DefaultCursor(UIElementsCursorUpdater.CursorType.ResizeUpRight)
                     }
             };
-    
+
             container.Add(resizeHandle);
-    
+
             bool resizing = false;
             resizeHandle.RegisterCallback<MouseDownEvent>(evt =>
             {
@@ -242,25 +241,25 @@ namespace Unity.VisualScripting.Community
                 resizeHandle.CaptureMouse();
                 evt.StopPropagation();
             });
-    
+
             resizeHandle.RegisterCallback<MouseMoveEvent>(evt =>
             {
                 if (!resizing) return;
-    
+
                 Vector2 delta = evt.mousePosition - lastMousePos;
                 lastMousePos = evt.mousePosition;
-    
+
                 float newWidth = Mathf.Clamp(container.resolvedStyle.width - delta.x, 200, Mathf.Min(600, window.context.canvas.viewport.width - 25));
                 float newHeight = Mathf.Clamp(container.resolvedStyle.height + delta.y, 150, Mathf.Min(500, window.context.canvas.viewport.height - 25));
-    
+
                 container.style.width = newWidth;
                 container.style.height = newHeight;
-    
+
                 SetGlobalSize(new Vector2(newWidth, newHeight));
                 background.MarkDirtyRepaint();
                 evt.StopPropagation();
             });
-    
+
             resizeHandle.RegisterCallback<MouseUpEvent>(evt =>
             {
                 if (!resizing) return;
@@ -269,37 +268,37 @@ namespace Unity.VisualScripting.Community
                 evt.StopPropagation();
             });
         }
-    
+
         private static void SetGlobalSize(Vector2 size)
         {
             MinimapSize = size;
             GraphMiniMapStorage.MarkDirty();
-    
+
             foreach (var instance in activeInstances)
             {
                 instance.ApplySize(size);
             }
         }
-    
+
         private void ApplySize(Vector2 size)
         {
             if (minimized)
                 return;
-    
+
             container.style.width =
                 Mathf.Min(size.x, context.canvas.viewport.width - 25);
-    
+
             container.style.height =
                 Mathf.Min(size.y, context.canvas.viewport.height - 25);
-    
+
             background.MarkDirtyRepaint();
         }
-    
+
         private void UpdateState()
         {
             if (container == null || background == null || toggle == null)
                 return;
-    
+
             if (minimized)
             {
                 background.style.display = DisplayStyle.None;
@@ -316,28 +315,28 @@ namespace Unity.VisualScripting.Community
                 toggle.text = "—";
                 container.Q("MinimapResizeHandle").style.display = DisplayStyle.Flex;
             }
-    
+
             container.MarkDirtyRepaint();
         }
-    
+
         private void Draw()
         {
             if (minimized)
                 return;
-    
+
             MiniMapRenderer.Draw(context, widgets);
         }
-    
+
         public void Dispose()
         {
             activeInstances.Remove(this);
-    
+
             if (subscribedGraph != null)
             {
                 subscribedGraph.elements.CollectionChanged -= OnElementsChanged;
             }
-    
+
             container.RemoveFromHierarchy();
         }
-    } 
+    }
 }
