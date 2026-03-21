@@ -150,7 +150,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             {
                 data.ChildReference(nester, false);
             }
-            modifiedName = data.AddLocalNameInScope(legalName);
+            modifiedName = data.AddLocalNameInScope(legalName, type ?? typeof(object));
             if (owner is INesterUnit)
             {
                 data.ParentReference(false);
