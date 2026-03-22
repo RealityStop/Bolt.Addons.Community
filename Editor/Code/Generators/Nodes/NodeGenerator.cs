@@ -370,7 +370,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 }
             }
 
-            return graphPointer != null;
+            return graphPointer != null && Flow.CanPredict(target, graphPointer.AsReference());
         }
     }
 
