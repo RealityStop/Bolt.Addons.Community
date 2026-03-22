@@ -4,6 +4,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -34,9 +35,7 @@ namespace Unity.VisualScripting.Community.CSharp
                         GenerateValue(Unit.target, data, writer);
                     }
 
-                    var code = !result.IsSatisfied ? Unit.target.GetComponent(writer, SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, true, true) : "";
-
-                    writer.GetMember(code, memberName).Equal();
+                    writer.GetMember(null, memberName).Equal();
                     using (data.Expect(Unit.input.type))
                     {
                         GenerateValue(Unit.input, data, writer);
@@ -63,13 +62,7 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 GenerateValue(Unit.target, data, writer);
             }
-            var code = !result.IsSatisfied ? Unit.target.GetComponent(writer, SourceType(Unit.target, data, writer), Unit.member.pseudoDeclaringType, true, true) : "";
-            writer.Write(code).GetMember(Unit.member.name);
-        }
-
-        private Type SourceType(ValueInput valueInput, ControlGenerationData data, CodeWriter writer)
-        {
-            return GetSourceType(valueInput, data, writer) ?? valueInput.connection?.source?.type ?? valueInput.type;
+            writer.GetMember(Unit.member.name);
         }
 
         protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
@@ -83,6 +76,23 @@ namespace Unity.VisualScripting.Community.CSharp
                 if (input.hasValidConnection)
                 {
                     GenerateConnectedValueCasted(input, data, writer, input.type, () => ShouldCast(input, data, writer), true);
+                }
+                else if (Unit.target.hasDefaultValue)
+                {
+                    if (unit.defaultValues[Unit.target.key] == null)
+                    {
+                        if (input.type == typeof(GameObject))
+                        {
+                            writer.GetVariable("gameObject");
+                            return;
+                        }
+                        else if (typeof(Component).IsStrictlyAssignableFrom(input.type))
+                        {
+                            writer.GetVariable("gameObject").Write(input.GetComponent(writer, GetSourceType(input, data, writer, true, true), input.type, true, true));
+                            return;
+                        }
+                    }
+                    base.GenerateValueInternal(input, data, writer);
                 }
                 else
                 {

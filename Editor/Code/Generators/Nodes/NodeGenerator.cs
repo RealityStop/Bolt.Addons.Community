@@ -298,7 +298,7 @@ namespace Unity.VisualScripting.Community.CSharp
         /// <tt>resolveTypes:</tt> If true, the generator connected to the <tt>valueInput</tt> will ensure that it is fully initialized so that types can be resolved properly.
         /// It is not required if you trigger GenerateValue with the <tt>valueInput</tt> before calling this method.
         /// </summary>
-        public Type GetSourceType(ValueInput valueInput, ControlGenerationData data, CodeWriter writer, bool resolveTypes = true)
+        public Type GetSourceType(ValueInput valueInput, ControlGenerationData data, CodeWriter writer, bool resolveTypes = true, bool generatedSourceType = false)
         {
             if (valueInput == null)
             {
@@ -322,6 +322,13 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (NodeGeneration.IsSourceLiteral(valueInput, out var result))
             {
+                if (generatedSourceType)
+                {
+                    if (!valueInput.hasValidConnection && valueInput.nullMeansSelf && valueInput.unit.defaultValues[valueInput.key] == null)
+                    {
+                        return typeof(GameObject);
+                    }
+                }
                 return result;
             }
 
@@ -348,9 +355,13 @@ namespace Unity.VisualScripting.Community.CSharp
                     return pseudoSource.type;
                 }
 
-                if (valueInput.hasValidConnection)
+                return valueInput.connection.source.type;
+            }
+            else if (generatedSourceType)
+            {
+                if (!valueInput.hasValidConnection && valueInput.nullMeansSelf && valueInput.unit.defaultValues[valueInput.key] == null)
                 {
-                    return valueInput.connection.source.type;
+                    return typeof(GameObject);
                 }
             }
 

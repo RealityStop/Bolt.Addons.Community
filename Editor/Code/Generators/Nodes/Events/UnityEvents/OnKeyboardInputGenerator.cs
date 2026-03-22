@@ -28,6 +28,12 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public OnKeyboardInputGenerator(Unit unit) : base(unit) { }
 
+        public override IEnumerable<string> GetNamespaces()
+        {
+            yield return "Unity.VisualScripting.Community";
+            yield return "Unity.VisualScripting";
+        }
+
         public override void GenerateUpdateCode(ControlGenerationData data, CodeWriter writer)
         {
             writer.WriteIndented("if".ControlHighlight());

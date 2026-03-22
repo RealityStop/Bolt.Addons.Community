@@ -136,7 +136,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     writer.Write("gameObject".VariableHighlight());
                     if (isComponent)
                     {
-                        writer.GetComponent(null, input.type);
+                        writer.Write(input.GetComponent(writer, GetSourceType(input, data, writer, true, true), input.type, true, true));
                     }
                 }
                 else if (input == Unit.target && !input.nullMeansSelf)

@@ -112,7 +112,7 @@ namespace Unity.VisualScripting.Community.CSharp
                             }
                             else if (typeof(Component).IsStrictlyAssignableFrom(input.type))
                             {
-                                writer.GetVariable("gameObject").Write(NodeGeneration.GetComponentCode(input.type, writer, true, true));
+                                writer.GetVariable("gameObject").Write(input.GetComponent(writer, GetSourceType(input, data, writer, true, true), input.type, true, true));
                                 return;
                             }
                         }
@@ -126,7 +126,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private Type SourceType(ValueInput valueInput, ControlGenerationData data, CodeWriter writer)
         {
-            return GetSourceType(valueInput, data, writer) ?? valueInput.connection?.source?.type ?? valueInput.type;
+            return GetSourceType(valueInput, data, writer, true, true) ?? valueInput.connection?.source?.type ?? valueInput.type;
         }
     }
 }
