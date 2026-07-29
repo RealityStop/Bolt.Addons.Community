@@ -7,6 +7,7 @@ using System.Reflection;
 using UnityEngine;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using UnityEngine.Assemblies;
 
 namespace Unity.VisualScripting.Community.Libraries.Humility
 {
@@ -537,8 +538,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         public static Type[] Attribute<TAttribute>(this HUMType.Data.With with, Assembly _assembly = null, Func<TAttribute, bool> predicate = null) where TAttribute : Attribute
         {
             List<Type> result = new List<Type>();
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = _assembly == null ? CurrentAssemblies.GetLoadedAssemblies().ToArray() : new Assembly[] { _assembly };
+#else
             Assembly[] assemblies = _assembly == null ? AppDomain.CurrentDomain.GetAssemblies() : new Assembly[] { _assembly };
-
+#endif
             for (int assembly = 0; assembly < assemblies.Length; assembly++)
             {
                 Type[] types = assemblies[assembly].GetTypes();
@@ -576,7 +580,12 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         public static Type[] Attribute<TAttribute>(this HUMType.Data.With with, Func<TAttribute, bool> predicate) where TAttribute : Attribute
         {
             List<Type> result = new List<Type>();
+
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
 
             for (int assembly = 0; assembly < assemblies.Length; assembly++)
             {
@@ -616,7 +625,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         public static Type[] Derived(this HUMType.Data.Get derived, bool includeSelf = false)
         {
             List<Type> result = new List<Type>();
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
 
             for (int assembly = 0; assembly < assemblies.Length; assembly++)
             {
@@ -640,7 +653,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         public static void Derived(this HUMType.Data.Get derived, Action<Type> action, bool includeSelf = false)
         {
             List<Type> result = new List<Type>();
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
             if (includeSelf)
                 action?.Invoke(derived.type);
             for (int assembly = 0; assembly < assemblies.Length; assembly++)
@@ -664,7 +681,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         public static Type[] All(this HUMType.Data.Get derived, bool includeSelf = false)
         {
             List<Type> result = new List<Type>();
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
 
             for (int assembly = 0; assembly < assemblies.Length; assembly++)
             {
@@ -789,6 +810,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 var value = (Color)@as.value;
                 return Create("Color", value.r.As().Code(false, false, false, "", false, fullName), value.g.As().Code(false, false, false, "", false, fullName), value.b.As().Code(false, false, false, "", false, fullName), value.a.As().Code(false, false, false, "", false, fullName));
+            }
+            if (type == typeof(HDRColor))
+            {
+                var value = (HDRColor)@as.value;
+                return Create("HDRColor", value.color.As().Code(false, false, false, "", false, fullName));
             }
             if (type == typeof(Gradient))
             {
@@ -919,6 +945,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 var value = (Color)@as.value;
                 return CreateHighlighted("Color", value.r.As().Code(false, false, true, "", false, fullName), value.g.As().Code(false, false, true, "", false, fullName), value.b.As().Code(false, false, true, "", false, fullName), value.a.As().Code(false, false, true, "", false, fullName));
+            }
+            if (type == typeof(HDRColor))
+            {
+                var value = (HDRColor)@as.value;
+                return CreateHighlighted("HDRColor", value.color.As().Code(false, false, true, "", false, fullName));
             }
             if (type == typeof(Gradient))
             {
@@ -1058,6 +1089,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 var value = (Color)@as.value;
                 return Create("Color", value.r.As().Code(false, false, false, "", false, fullName), value.g.As().Code(false, false, false, "", false, fullName), value.b.As().Code(false, false, false, "", false, fullName), value.a.As().Code(false, false, false, "", false, fullName));
             }
+            if (type == typeof(HDRColor))
+            {
+                var value = (HDRColor)@as.value;
+                return Create("HDRColor", value.color.As().Code(false, false, false, "", false, fullName));
+            }
             if (type == typeof(Gradient))
             {
                 var value = (Gradient)@as.value;
@@ -1187,6 +1223,11 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             {
                 var value = (Color)@as.value;
                 return CreateHighlighted("Color", value.r.As().Code(false, false, true, "", false, fullName), value.g.As().Code(false, false, true, "", false, fullName), value.b.As().Code(false, false, true, "", false, fullName), value.a.As().Code(false, false, true, "", false, fullName));
+            }
+            if (type == typeof(HDRColor))
+            {
+                var value = (HDRColor)@as.value;
+                return CreateHighlighted("HDRColor", value.color.As().Code(false, false, true, "", false, fullName));
             }
             if (type == typeof(Gradient))
             {

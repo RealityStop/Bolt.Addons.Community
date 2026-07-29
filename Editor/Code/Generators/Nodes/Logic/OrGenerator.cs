@@ -4,22 +4,12 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(Or))]
-    public sealed class OrGenerator : NodeGenerator<Or>
+    public sealed class OrGenerator : LogicalOperatorGenerator<Or>
     {
-        public OrGenerator(Or unit) : base(unit)
-        {
-        }
-
-        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
-        {
-            if (output == Unit.result)
-            {
-                writer.Write("(");
-                GenerateValue(Unit.a, data, writer);
-                writer.Write(" || ");
-                GenerateValue(Unit.b, data, writer);
-                writer.Write(")");
-            }
-        }
+        public OrGenerator(Or unit) : base(unit) { }
+        protected override ValueInput LeftInput => Unit.a;
+        protected override ValueInput RightInput => Unit.b;
+        protected override ValueOutput OutputPort => Unit.result;
+        protected override string OperatorToken => " || ";
     }
 }

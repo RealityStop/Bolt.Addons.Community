@@ -10,6 +10,7 @@ using System.Reflection;
 using ParameterModifier = Unity.VisualScripting.Community.Libraries.CSharp.ParameterModifier;
 using System;
 using System.Collections;
+using UnityEngine.Assemblies;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -43,7 +44,13 @@ namespace Unity.VisualScripting.Community.CSharp
             }
             shouldUpdate = true;
 
-            allTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes()).ToArray();
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
+
+            allTypes = assemblies.SelectMany(assembly => assembly.GetTypes()).ToArray();
 
             CacheConstrainedAttributes();
         }

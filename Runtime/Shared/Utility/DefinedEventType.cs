@@ -9,6 +9,7 @@ namespace Unity.VisualScripting.Community
     public class DefinedEventType
     {
         [Inspectable]
+        [NonSerialized]
         public Type type;
 
         public DefinedEventType()

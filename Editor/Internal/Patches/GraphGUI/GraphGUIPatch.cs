@@ -19,8 +19,8 @@ namespace Unity.VisualScripting.Community
         static void OnEditorUpdate()
         {
 #if NEW_TOOLBAR_STYLE
-            var tabs = GraphWindow.tabs;
-            if (tabs == null || tabs.Count() == 0)
+            var tabs = GraphWindow.tabsNoAlloc;
+            if (tabs == null || tabs.Count == 0)
                 return;
 
             foreach (var window in tabs)

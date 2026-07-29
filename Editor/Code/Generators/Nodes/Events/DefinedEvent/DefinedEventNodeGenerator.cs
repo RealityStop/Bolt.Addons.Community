@@ -1,11 +1,8 @@
 using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
 using Unity.VisualScripting.Community.Utility;
 using System.Linq;
-using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Collections;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -99,7 +96,6 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public IEnumerable<FieldGenerator> GetRequiredVariables(ControlGenerationData data)
         {
-            eventVariableName = data.AddLocalNameInScope(eventVariableName);
             var field = FieldGenerator.Field(AccessModifier.Private, FieldModifier.None, typeof(IDisposable), eventVariableName);
             yield return field;
         }

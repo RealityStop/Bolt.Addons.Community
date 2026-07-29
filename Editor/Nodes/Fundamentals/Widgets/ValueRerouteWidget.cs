@@ -25,9 +25,9 @@ namespace Unity.VisualScripting.Community
             var data = copyDataList.FirstOrDefault(d => d.copyID == unit.copyID);
             if (data != null && unit.isCopying)
             {
-                if (unit.hideConnection && data.sourceConnection != null && data.graph == unit.graph)
+                var source = data.sourceConnection?.source;
+                if (unit.hideConnection && data.sourceConnection != null && unit.input.CanValidlyConnectTo(source))
                 {
-                    var source = data.sourceConnection.source;
                     unit.input.ValidlyConnectTo(source);
                 }
             }
@@ -65,9 +65,42 @@ namespace Unity.VisualScripting.Community
 
             base.ExpandCopyGroup(copyGroup);
         }
+#if NEW_UNIT_UI
+        protected override IEnumerable<IGraphItem> SnapTargets
+        {
+            get
+            {
+                foreach (var target in base.SnapTargets)
+                {
+                    yield return target;
 
+                    if (target is IUnit unit)
+                    {
+                        foreach (var port in unit.validPorts.OfType<IUnitValuePort>())
+                        {
+                            yield return port;
+                        }
+                    }
+                }
+            }
+        }
+#endif
         private bool isPortal => unit.hideConnection && unit.input.hasValidConnection;
 
+        private static GUIStyle _labelStyle;
+
+        private static GUIStyle labelStyle
+        {
+            get
+            {
+                _labelStyle ??= new GUIStyle(EditorStyles.label)
+                {
+                    clipping = TextClipping.Overflow
+                };
+
+                return _labelStyle;
+            }
+        }
         public override void DrawForeground()
         {
             var inputHasConnection = inputs[0].port.hasAnyConnection;
@@ -81,25 +114,23 @@ namespace Unity.VisualScripting.Community
             if (isSelected || mouseIsOver || !inputHasConnection || !outputHasConnection || unit.hideConnection)
             {
                 var width = 26f;
-                var height = _position.height - 4;
+                var height = _position.height - 8;
                 UnitPortDescription inputDescription = null;
                 if (isPortal)
                 {
                     inputDescription = unit.input.connection.source.Description<UnitPortDescription>();
                     width = UnitPortWidget<ValueInput>.Styles.label.CalcSize(inputDescription.ToGUIContent(IconSize.Small)).x + 50f;
                 }
-                _position.width = width;
                 GraphGUI.Node(new Rect(position.x, position.y + 3, width, height), NodeShape.Square, color, isSelected);
-
+#if NEW_UNIT_STYLE
+                const float yPadding = 5; 
+#else
+                const float yPadding = 7; 
+#endif
                 if (inputDescription != null)
-                    GUI.Label(new Rect(position.x + 24, position.y + 5, width, height), inputDescription.label);
-            }
-            else
-            {
-                _position.width = -19;
+                    GUI.Label(new Rect(position.x + 24, position.y + yPadding, width, height), inputDescription.label, labelStyle);
             }
 #endif
-
             Reposition();
         }
 
@@ -137,17 +168,26 @@ namespace Unity.VisualScripting.Community
             if (isPortal)
             {
                 _position.width = VisualScripting.UnitPortWidget<ValueInput>.Styles.label.CalcSize(inputPort.connection.source.Description<UnitPortDescription>().ToGUIContent(IconSize.Small)).x + 50f;
-                _position.height = EditorGUIUtility.singleLineHeight;
             }
             else
             {
-                _position.width = !inputHasConnection || !outputHasConnection || isSelected || mouseIsOver || unit.hideConnection ? 26 : -25;
+                _position.width = !inputHasConnection || !outputHasConnection || isSelected || mouseIsOver || unit.hideConnection ? 26 : -24;
 #endif
-                _position.height = 20;
             }
 
-            inputs[0].y = _position.y + 5;
-            outputs[0].y = _position.y + 5;
+#if NEW_UNIT_STYLE
+            _position.height = EditorGUIUtility.singleLineHeight;
+#else
+            _position.height = EditorGUIUtility.singleLineHeight + 6f;
+#endif
+
+#if NEW_UNIT_STYLE
+            inputs[0].y = _position.y + 2;
+            outputs[0].y = _position.y + 2;
+#else
+            inputs[0].y = _position.y + 6f;
+            outputs[0].y = _position.y + 6f;
+#endif
 
             if (valueIcon == null && (inputPort.Descriptor()).description.icon != null) valueIcon = ((UnitPortDescriptor)inputPort.Descriptor()).description.icon;
 

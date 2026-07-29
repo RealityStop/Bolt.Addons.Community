@@ -11,7 +11,6 @@ namespace Unity.VisualScripting.Community
     [UnitTitle("Comment")]
     [UnitShortTitle("")]
     [UnitCategory("Community\\Documentation")]
-    [Serializable]
     public class CommentNode : Unit
     {
         // Global

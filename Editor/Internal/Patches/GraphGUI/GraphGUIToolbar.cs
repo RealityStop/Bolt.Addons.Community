@@ -9,6 +9,11 @@ namespace Unity.VisualScripting.Community
 {
     internal static class GraphGUIToolbar
     {
+        private static readonly Color BackgroundColor = EditorGUIUtility.isProSkin ? new Color32(56, 56, 56, 255) : new Color32(194, 194, 194, 255);
+        private static readonly Color HoverColor = EditorGUIUtility.isProSkin ? new Color32(76, 76, 76, 255) : new Color32(214, 214, 214, 255);
+        private static readonly Color ActiveColor = EditorGUIUtility.isProSkin ? new Color32(88, 88, 88, 255) : new Color32(150, 150, 150, 255);
+        private static readonly Color ActiveHoverColor = EditorGUIUtility.isProSkin ? new Color32(108, 108, 108, 255) : new Color32(130, 130, 130, 255);
+
         public static void Build(VisualElement root, GraphWindow window)
         {
             var state = GraphGUIState.Get(window);
@@ -117,11 +122,7 @@ namespace Unity.VisualScripting.Community
 
             Texture2D lockedIconTex = null;
             ToolbarButton lockedButton = null;
-            lockedButton = CreateToggleButton("", 30, 20, () => !window.locked ? disabledColor : ColorPalette.unityBackgroundMid, () =>
-            {
-                window.locked = !window.locked;
-                lockedButton.style.backgroundColor = !window.locked ? disabledColor : ColorPalette.unityBackgroundMid;
-            });
+            lockedButton = CreateToggleButton("", 30, 20, () => window.locked, (val) => window.locked = val);
             IMGUIContainer initializer = null;
             initializer = new IMGUIContainer(() =>
             {
@@ -130,7 +131,7 @@ namespace Unity.VisualScripting.Community
                     GraphGUIStyles.InitializeNewGUI();
                     if (lockedIconTex != null)
                         return;
-                    
+
                     try
                     {
                         lockedIconTex = GraphGUI.Styles.lockIcon.image as Texture2D;
@@ -145,20 +146,20 @@ namespace Unity.VisualScripting.Community
             });
 
             ToolbarButton inspectorButton = null;
-            inspectorButton = CreateToggleButton("", 30, 20, () => !window.graphInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid, () =>
-            {
-                window.graphInspectorEnabled = !window.graphInspectorEnabled;
-                inspectorButton.style.backgroundColor = !window.graphInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid;
-                window.MatchSelection();
-            }, BoltCore.Icons.inspectorWindow?[IconSize.Small]);
+            inspectorButton = CreateToggleButton("", 30, 20, () => window.graphInspectorEnabled,
+                (val) =>
+                {
+                    window.graphInspectorEnabled = val;
+                    window.MatchSelection();
+                }, BoltCore.Icons.inspectorWindow?[IconSize.Small]);
 
             ToolbarButton variablesButton = null;
-            variablesButton = CreateToggleButton("", 40, 20, () => !window.variablesInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid, () =>
-            {
-                window.variablesInspectorEnabled = !window.variablesInspectorEnabled;
-                variablesButton.style.backgroundColor = !window.variablesInspectorEnabled ? disabledColor : ColorPalette.unityBackgroundMid;
-                window.MatchSelection();
-            }, BoltCore.Icons.variablesWindow?[IconSize.Small]);
+            variablesButton = CreateToggleButton("", 40, 20, () => window.variablesInspectorEnabled,
+                (val) =>
+                {
+                    window.variablesInspectorEnabled = val;
+                    window.MatchSelection();
+                }, BoltCore.Icons.variablesWindow?[IconSize.Small]);
 
             toolbar.Add(lockedButton);
             toolbar.Add(inspectorButton);
@@ -174,9 +175,9 @@ namespace Unity.VisualScripting.Community
             toolbar.Add(GraphGUIUtilities.CreateZoomContainer(window));
         }
 
-        private static ToolbarButton CreateToggleButton(string text, float width, float height, Func<Color> backgroundColor, Action callback, Texture2D icon = null)
+        private static ToolbarButton CreateToggleButton(string text, float width, float height, Func<bool> getter, Action<bool> setter, Texture2D icon = null)
         {
-            var btn = new ToolbarButton(callback)
+            var btn = new ToolbarButton()
             {
                 text = text,
                 focusable = false,
@@ -184,7 +185,7 @@ namespace Unity.VisualScripting.Community
                 {
                     width = width,
                     height = height,
-                    backgroundColor = backgroundColor(),
+                    backgroundColor = getter() ? ActiveColor : BackgroundColor,
 #if UNITY_2022_2_OR_NEWER
                     backgroundSize = new BackgroundSize(16f, 16f)
 #else
@@ -193,29 +194,35 @@ namespace Unity.VisualScripting.Community
                 }
             };
 
-#if UNITY_2022_2_OR_NEWER
-            if (icon != null) btn.style.backgroundImage = icon;
-#else
+            void UpdateColor(bool isHovering)
+            {
+                bool isActive = getter();
+                if (isHovering)
+                    btn.style.backgroundColor = isActive ? ActiveHoverColor : HoverColor;
+                else
+                    btn.style.backgroundColor = isActive ? ActiveColor : BackgroundColor;
+            }
+
+            btn.clicked += () =>
+            {
+                setter(!getter());
+                UpdateColor(true);
+            };
+
+            btn.RegisterCallback<MouseEnterEvent>(evt => UpdateColor(true));
+            btn.RegisterCallback<MouseLeaveEvent>(evt => UpdateColor(false));
+
             if (icon != null)
             {
-                var imgContainer = new VisualElement();
-                imgContainer.style.flexGrow = 1;
-                imgContainer.style.flexShrink = 1;
-                imgContainer.style.justifyContent = Justify.Center;
-                imgContainer.style.alignItems = Align.Center;
-
-                var img = new Image();
-                img.image = icon;
-                img.scaleMode = ScaleMode.ScaleToFit;
-                img.style.width = 16f;
-                img.style.height = 16f;
-
-                imgContainer.Add(img);
-                btn.Add(imgContainer);
-            }
+#if UNITY_2022_2_OR_NEWER
+                btn.style.backgroundImage = icon;
+#else
+                var img = new Image { image = icon, scaleMode = ScaleMode.ScaleToFit };
+                img.style.width = 16f; img.style.height = 16f;
+                btn.Add(img);
 #endif
-            btn.RegisterCallback<MouseEnterEvent>(evt => btn.style.backgroundColor = new Color(0.3f, 0.3f, 0.3f, 0.5f));
-            btn.RegisterCallback<MouseLeaveEvent>(evt => btn.style.backgroundColor = backgroundColor());
+            }
+
             return btn;
         }
 

@@ -15,8 +15,12 @@ namespace Unity.VisualScripting.Community
         public override void DrawForeground()
         {
             base.DrawForeground();
-
-            var buttonPosition = new Rect(position.x + 1, position.y + 40 + 5, position.width - 8 + 6, 24);
+#if NEW_UNIT_STYLE
+            const int yPadding = 48;
+#else
+            const int yPadding = 45;
+#endif
+            var buttonPosition = new Rect(position.x + 1, position.y + yPadding, position.width - 8 + 6, 24);
 
             if (GUI.Button(buttonPosition, "Trigger"))
             {

@@ -41,6 +41,14 @@ namespace Unity.VisualScripting.Community.CSharp
                 return;
             }
 
+            if (input == Unit.reset)
+            {
+                writer.WriteIndented();
+                writer.InvokeMember(variableName.VariableHighlight(), "ResetCooldown");
+                writer.WriteEnd(EndWriteOptions.LineEnd);
+                return;
+            }
+
             if (!data.scopeGeneratorData.TryGetValue(Unit.enter, out _))
             {
                 data.scopeGeneratorData.Add(Unit.enter, true);
@@ -64,12 +72,6 @@ namespace Unity.VisualScripting.Community.CSharp
                     "StartCooldown",
                     writer.Action(() => GenerateValue(Unit.duration, data, writer)),
                     writer.Action(() => GenerateValue(Unit.unscaledTime, data, writer)));
-                writer.WriteEnd(EndWriteOptions.LineEnd);
-            }
-            else if (input == Unit.reset)
-            {
-                writer.WriteIndented();
-                writer.InvokeMember(variableName.VariableHighlight(), "ResetCooldown");
                 writer.WriteEnd(EndWriteOptions.LineEnd);
             }
 

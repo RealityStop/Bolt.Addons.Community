@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using Unity.VisualScripting.Community.Libraries.Humility;
+using System.Reflection;
 using UnityEngine;
 #if VISUAL_SCRIPTING_1_7
 using SUnit = Unity.VisualScripting.SubgraphUnit;
@@ -87,6 +87,11 @@ namespace Unity.VisualScripting.Community.CSharp
             {
                 return (includeDot ? "." : "") + $"GetComponent<{writer.GetTypeNameHighlighted(type)}>" + (includeParentheses ? "()" : "");
             }
+        }
+
+        public static string GetComponent(this ValueInput input, CodeWriter writer, Type sourceType, bool includeDot, bool includeParentheses)
+        {
+            return GetComponent(input, writer, sourceType, input.type, includeDot, includeParentheses);
         }
 
         public static string GetComponent(this ValueInput input, CodeWriter writer, Type sourceType, Type requiredType, bool includeDot, bool includeParentheses)
@@ -280,11 +285,41 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public static bool IsValidRefUnit(this Unit unit)
         {
-            return unit is GetVariable || (unit is AssetFieldUnit fieldUnit && fieldUnit.actionDirection == ActionDirection.Get) || (unit is InheritedFieldUnit inheritedField && inheritedField.actionDirection == ActionDirection.Get);
+            // Check if it's private would be the proper way to check this as well,
+            // but since you can compile the graph you are working on and use those members as a GetMember unit,
+            // there is no way to check if the current graph is part of the same type so private would fail even though it's valid.
+            // So we allow it then let the compiled script errors tell you it's invalid.
+            return unit is GetVariable || 
+            (unit is GetMember getMember && getMember.member.isSettable) ||
+            (unit is AssetFieldUnit fieldUnit && fieldUnit.actionDirection == ActionDirection.Get && !IsReadonly(fieldUnit.field)) || 
+            (unit is InheritedFieldUnit inheritedField && inheritedField.actionDirection == ActionDirection.Get && inheritedField.member.isSettable);
         }
+
         public static bool IsValidRefUnit(this IUnit unit)
         {
             return IsValidRefUnit(unit as Unit);
+        }
+
+        public static bool IsReadonly(FieldDeclaration declaration)
+        {
+            if (declaration.isProperty)
+            {
+                return false;
+            }
+
+            return (declaration.fieldModifier & FieldModifier.Readonly) != 0;
+        }
+
+        public static bool IsPrivate(Member member)
+        {
+            switch (member.info)
+            {
+                case FieldInfo f: return f.IsPrivate;
+                case PropertyInfo p: return p.GetScope() == AccessModifier.Private;
+                case MethodInfo m: return m.IsPrivate;
+                case ConstructorInfo c: return c.IsPrivate;
+                default: throw new InvalidOperationException();
+            }
         }
     }
 }

@@ -25,6 +25,7 @@ namespace Unity.VisualScripting.Community
         public Action<Type> onValueChanged;
 
         [InspectorWide]
+        [NonSerialized]
         public List<GenericParameter> typeParameters = new List<GenericParameter>();
 
         [SerializeField]

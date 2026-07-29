@@ -27,10 +27,7 @@ namespace Unity.VisualScripting.Community
 
         public override float zIndex
         {
-            get
-            {
-                return float.MaxValue;
-            }
+            get => float.MaxValue;
             set { }
         }
 
@@ -40,21 +37,16 @@ namespace Unity.VisualScripting.Community
             borderText = 3f,
             borderTotal = borderOutside * 2f + borderInside * 2f + borderText * 2f;
 
-        Rect
-        wholeRect,
-        borderRect,
-        textRect;
-
-        Vector2
-            textAreaSize;
-
+        Rect wholeRect, borderRect, textRect;
+        Vector2 textAreaSize;
         int hash;
 
         GUIStyle textGUI, titleGUI;
 
         public override Rect position
         {
-            get => unit.wholeRect; set => unit.wholeRect = value;
+            get => unit.wholeRect;
+            set => unit.wholeRect = value;
         }
 
         public override bool canClip => false;
@@ -72,45 +64,37 @@ namespace Unity.VisualScripting.Community
                 textRect = default;
             }
         }
+
         private bool createdStyles;
+
         public override void DrawBackground()
         {
             if (!createdStyles)
             {
                 createdStyles = true;
-                // Move creation of styles here stop GUI errors since this widget could be created on load
-                // Not during OnGUI
                 textGUI = new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true };
                 titleGUI = new GUIStyle(GUI.skin.label) { richText = true, wordWrap = true, alignment = TextAnchor.MiddleLeft, fontSize = 10 };
             }
 
             if (hash == 0) hash = unit.GetHashCode();
 
-            // If first time running, create a palette.
             if (!CommentNodeInspector.initialised) { CommentNodeInspector.UpdatePalette(); CommentNodeInspector.initialised = true; }
 
-            // If unit locked to palette, grab the assigned color
             if (unit.lockedToPalette)
             {
                 unit.color = CommentNodeInspector.colorPalette[unit.customPalette ? 1 : 0, unit.paletteSelection.row, unit.paletteSelection.col] / 3f;
                 unit.fontColor = CommentNodeInspector.fontPalette[unit.customPalette ? 2 : unit.fontColorize ? 1 : 0, unit.paletteSelection.row, unit.paletteSelection.col];
             }
 
-            // Set text area GUI style
             textGUI.fontStyle = unit.fontBold && unit.fontItalic ? FontStyle.BoldAndItalic : unit.fontBold ? FontStyle.Bold : unit.fontItalic ? FontStyle.Italic : FontStyle.Normal;
             textGUI.fontSize = unit.fontSize;
             textGUI.alignment = unit.alignCentre ? TextAnchor.MiddleCenter : TextAnchor.MiddleLeft;
 
-            // Get text area xy size
             textAreaSize = textGUI.CalcSizeWithConstraints(new GUIContent(unit.comment), new Vector2(Mathf.Round(unit.maxWidth - borderTotal), 1000f));
             textAreaSize.y = textGUI.CalcHeight(new GUIContent(unit.comment), unit.maxWidth - borderTotal);
 
-            // Set whole area rect
             unit.wholeRect = new Rect(unit.position.x, unit.position.y, unit.hasTitle ? Mathf.Max(titleGUI.CalcSize(new GUIContent(unit.title)).x + borderTotal, Mathf.Clamp(textAreaSize.x + borderTotal, unit.autoWidth ? borderTotal : unit.maxWidth, unit.maxWidth)) : Mathf.Clamp(textAreaSize.x + borderTotal, unit.autoWidth ? borderTotal : unit.maxWidth, unit.maxWidth), Mathf.Clamp(textAreaSize.y + borderTotal, borderTotal, 1000));
 
-            // Resource - https://unitylist.com/p/5c3/Unity-editor-icons
-
-            // Draw border if mouse present
             if (unit.wholeRect.Contains(e.mousePosition) || selection.Contains(unit))
             {
                 GUI.DrawTexture(unit.wholeRect, Texture2D.whiteTexture, ScaleMode.ScaleAndCrop, true, 0, unit.color * new Color(0.5f, 0.5f, 0.5f, 0.5f), 0, borderOutside);
@@ -118,7 +102,7 @@ namespace Unity.VisualScripting.Community
 
             List<int> invalidIndexs = new List<int>();
             int index = 0;
-            // Draw connections to other units
+
             foreach (var connectedElement in unit.connectedElements)
             {
                 if (connectedElement == null || !canvas.widgetProvider.IsValid(connectedElement))
@@ -128,13 +112,14 @@ namespace Unity.VisualScripting.Community
                 }
                 var elementWidget = canvas.Widget(connectedElement);
                 var lineColor = unit.color;
+
                 if (unit.curvedLine)
                 {
                     Vector3 start = new Vector3(unit.position.x + unit.wholeRect.width / 2, unit.position.y + unit.wholeRect.height / 2, 0);
                     Vector3 end = GetElementPosition(connectedElement, elementWidget);
                     var targetEdge = CompareVectors(start, end);
                     Vector3 connectionEnd = CorrectLineEnd(targetEdge, new Vector2(GetEdgePosition(elementWidget.position, targetEdge, connectedElement).x, GetEdgePosition(elementWidget.position, targetEdge, connectedElement).y));
-                    // Draw the connection
+
                     GraphGUI.DrawConnection(
                         lineColor,
                         start,
@@ -159,9 +144,12 @@ namespace Unity.VisualScripting.Community
                     var targetEdge = CompareVectors(start, end);
                     Vector3 connectionEnd = CorrectLineEnd(targetEdge, new Vector2(GetEdgePosition(elementWidget.position, targetEdge, connectedElement).x, GetEdgePosition(elementWidget.position, targetEdge, connectedElement).y));
                     Vector3[] points = { start, connectionEnd };
+
+                    Color prevHandles = Handles.color;
                     Handles.color = lineColor;
                     Handles.DrawAAPolyLine(5f, points);
-                    Handles.color = Color.white;
+                    Handles.color = prevHandles;
+
                     Edge edge = CompareVectors(start, end);
                     Vector3 arrowBase = GetEdgePosition(elementWidget.position, edge, connectedElement);
                     DrawArrowheadAtEnd(arrowBase, edge, lineColor);
@@ -174,13 +162,12 @@ namespace Unity.VisualScripting.Community
                 unit.connectedElements.RemoveAt(_index);
             }
 
-            // Get inner area rect
             unit.borderRect = unit.wholeRect.Offset(xy: borderOutside, centre: true);
 
-            // Draw border
             GUI.DrawTexture(unit.borderRect, Texture2D.whiteTexture, ScaleMode.ScaleAndCrop, true, 0, unit.color, 0, 7);
             GUI.DrawTexture(unit.borderRect, Texture2D.whiteTexture, ScaleMode.ScaleAndCrop, true, 0, unit.color * (2f - unit.color.grayscale), borderInside, 7);
         }
+
         private Vector2 GetElementPosition(IGraphElement graphElement, IGraphElementWidget elementWidget)
         {
             if (graphElement is GraphGroup graphGroup)
@@ -251,24 +238,23 @@ namespace Unity.VisualScripting.Community
                     throw new System.ArgumentException("Invalid edge specified for arrowhead.");
             }
 
-            // Calculate arrowhead points (tip + two side points)
             Vector3 leftPoint = arrowBase + (direction * arrowLength) + (perpendicular * arrowWidth);
             Vector3 rightPoint = arrowBase + (direction * arrowLength) - (perpendicular * arrowWidth);
 
-            // Create the arrowhead polygon points (tip and sides)
             Vector3[] arrowPoints = new Vector3[]
             {
-            arrowBase,
-            leftPoint,
-            rightPoint
+                arrowBase,
+                leftPoint,
+                rightPoint
             };
 
+            Color prevColor = Handles.color;
             Handles.color = color;
-
             Handles.DrawAAConvexPolygon(arrowPoints);
-
-            Handles.color = Color.white;
+            Handles.DrawAAPolyLine(3f, new Vector3[] { leftPoint, arrowBase, rightPoint, leftPoint });
+            Handles.color = prevColor;
         }
+
 #if VISUAL_SCRIPTING_1_8_0_OR_GREATER
         public Vector2 GetEdgePosition(Rect target, Edge edge, IGraphElement graphElement)
         {
@@ -276,11 +262,7 @@ namespace Unity.VisualScripting.Community
             {
                 case Edge.Top:
                     {
-                        if (graphElement is GraphGroup or StickyNote)
-                        {
-                            return new Vector2(target.center.x, target.yMin);
-                        }
-                        else if (graphElement is CommentNode)
+                        if (graphElement is GraphGroup || graphElement is StickyNote || graphElement is CommentNode)
                         {
                             return new Vector2(target.center.x, target.yMin);
                         }
@@ -288,11 +270,7 @@ namespace Unity.VisualScripting.Community
                     }
                 case Edge.Bottom:
                     {
-                        if (graphElement is GraphGroup or StickyNote)
-                        {
-                            new Vector2(target.center.x, target.yMax);
-                        }
-                        else if (graphElement is CommentNode)
+                        if (graphElement is GraphGroup || graphElement is StickyNote || graphElement is CommentNode)
                         {
                             return new Vector2(target.center.x, target.yMax);
                         }
@@ -329,11 +307,7 @@ namespace Unity.VisualScripting.Community
             {
                 case Edge.Top:
                     {
-                        if (graphElement is GraphGroup)
-                        {
-                            return new Vector2(target.center.x, target.yMin);
-                        }
-                        else if (graphElement is CommentNode)
+                        if (graphElement is GraphGroup || graphElement is CommentNode)
                         {
                             return new Vector2(target.center.x, target.yMin);
                         }
@@ -341,11 +315,7 @@ namespace Unity.VisualScripting.Community
                     }
                 case Edge.Bottom:
                     {
-                        if (graphElement is GraphGroup)
-                        {
-                            new Vector2(target.center.x, target.yMax);
-                        }
-                        else if (graphElement is CommentNode)
+                        if (graphElement is GraphGroup || graphElement is CommentNode)
                         {
                             return new Vector2(target.center.x, target.yMax);
                         }
@@ -376,6 +346,7 @@ namespace Unity.VisualScripting.Community
             }
         }
 #endif
+
         public Edge CompareVectors(Vector2 first, Vector2 second)
         {
             float deltaX = second.x - first.x;
@@ -405,12 +376,16 @@ namespace Unity.VisualScripting.Community
                 return (deltaX > 0) ? Edge.Left : Edge.Right;
             }
         }
-
+#if NEW_UNIT_UI
+        protected override bool AllowRectSnapping => false;
+#endif
         public override void HandleInput()
         {
             base.HandleInput();
 
-            if (canvas.selection.Contains(unit))
+            bool isEditingText = GUI.GetNameOfFocusedControl() == "commentField" + hash;
+
+            if (!isEditingText && canvas.selection.Contains(unit) && e.freeType == EventType.KeyDown && !e.ctrlOrCmd && !e.alt && !e.shift)
             {
                 if (e.keyCode == KeyCode.C)
                 {
@@ -423,12 +398,12 @@ namespace Unity.VisualScripting.Community
                         }
                     }
                     Reposition();
+                    e.Use();
                 }
                 else if (e.keyCode == KeyCode.X)
                 {
                     metadata["connectedElements"].RecordUndo();
-                    var connectedElements = new List<IGraphElement>();
-                    connectedElements.AddRange(unit.connectedElements);
+                    var connectedElements = new List<IGraphElement>(unit.connectedElements);
                     foreach (var element in connectedElements)
                     {
                         if (unit.connectedElements.Contains(element) && canvas.selection.Contains(element))
@@ -437,6 +412,7 @@ namespace Unity.VisualScripting.Community
                         }
                     }
                     Reposition();
+                    e.Use();
                 }
             }
         }
@@ -468,58 +444,54 @@ namespace Unity.VisualScripting.Community
 
         public override void DrawForeground()
         {
-            GUI.contentColor = Color.white;
-            if (unit.hasTitle)
-                EditorGUI.LabelField(new Rect(unit.position.x + borderOutside + 7f, unit.position.y, unit.wholeRect.width, borderOutside), unit.title, titleGUI);
+            Color originalContentColor = GUI.contentColor;
 
-            GUI.contentColor = unit.fontColor;
-
-            unit.textRect = unit.borderRect.Offset(xy: borderText, centre: true);
-            // If mouse hovering over unit
-            if (unit.textRect.Contains(e.mousePosition))
+            try
             {
-                GUI.SetNextControlName("commentField" + hash.ToString());
-                EditorGUI.BeginChangeCheck();
-                var comment = EditorGUI.TextArea(unit.textRect, unit.comment, textGUI);
-                if (EditorGUI.EndChangeCheck())
+                if (unit.hasTitle)
                 {
-                    metadata["comment"].RecordUndo();
-                    metadata["comment"].value = comment;
+                    GUI.contentColor = Color.white;
+                    EditorGUI.LabelField(new Rect(unit.position.x + borderOutside + 7f, unit.position.y, unit.wholeRect.width, borderOutside), unit.title, titleGUI);
                 }
-                return;
-            }
-            // Draw main comment
-            // If unit text selected
-            else if (GUI.GetNameOfFocusedControl() == "commentField" + hash.ToString())
-            {
-                EditorGUI.BeginChangeCheck();
-                var comment = EditorGUI.TextArea(unit.textRect, unit.comment, textGUI);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    metadata["comment"].RecordUndo();
-                    metadata["comment"].value = comment;
-                }
-                GUI.contentColor = Color.white;
-                return;
-            }
 
-            // Draw outline?
-            if (unit.hasOutline)
-            {
-                GUI.contentColor = unit.fontColor.maxColorComponent > 0.5f ? unit.color * 0.9f * (unit.color.maxColorComponent / 1f) : (unit.color * 0.9f * (1f / unit.color.maxColorComponent)).WithAlpha(1f);
-
-                float outline = Mathf.Max(unit.fontSize / 60f, 1f);
-                EditorGUI.LabelField(unit.textRect.Offset(x: -outline, y: -outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
-                EditorGUI.LabelField(unit.textRect.Offset(x: outline, y: outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
-                EditorGUI.LabelField(unit.textRect.Offset(x: -outline, y: outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
-                EditorGUI.LabelField(unit.textRect.Offset(x: outline, y: -outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
                 GUI.contentColor = unit.fontColor;
+                unit.textRect = unit.borderRect.Offset(xy: borderText, centre: true);
+
+                string controlName = "commentField" + hash;
+                if (unit.textRect.Contains(e.mousePosition) || GUI.GetNameOfFocusedControl() == controlName)
+                {
+                    GUI.SetNextControlName(controlName);
+                    EditorGUI.BeginChangeCheck();
+                    var comment = EditorGUI.TextArea(unit.textRect, unit.comment, textGUI);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        metadata["comment"].RecordUndo();
+                        metadata["comment"].value = comment;
+                    }
+                    return;
+                }
+
+                if (unit.hasOutline)
+                {
+                    GUI.contentColor = unit.fontColor.maxColorComponent > 0.5f 
+                        ? unit.color * 0.9f * (unit.color.maxColorComponent / 1f) 
+                        : (unit.color * 0.9f * (1f / unit.color.maxColorComponent)).WithAlpha(1f);
+
+                    float outline = Mathf.Max(unit.fontSize / 60f, 1f);
+                    EditorGUI.LabelField(unit.textRect.Offset(x: -outline, y: -outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
+                    EditorGUI.LabelField(unit.textRect.Offset(x: outline, y: outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
+                    EditorGUI.LabelField(unit.textRect.Offset(x: -outline, y: outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
+                    EditorGUI.LabelField(unit.textRect.Offset(x: outline, y: -outline), unit.comment, new GUIStyle(textGUI) { fontSize = unit.fontSize + 1 });
+                    GUI.contentColor = unit.fontColor;
+                }
+
+                EditorGUI.LabelField(unit.textRect, unit.comment, textGUI);
+                unit.position = unit.wholeRect.position;
             }
-
-            EditorGUI.LabelField(unit.textRect, unit.comment, textGUI);
-            GUI.contentColor = Color.white;
-
-            unit.position = unit.wholeRect.position;
+            finally
+            {
+                GUI.contentColor = originalContentColor;
+            }
         }
     }
 }

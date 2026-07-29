@@ -18,6 +18,7 @@ namespace Unity.VisualScripting.Community
 #endif
         [InspectorToggleLeft]
         [Serialize]
+        [NonSerialized]
         public object defaultValue = 0;
 
         [Inspectable]

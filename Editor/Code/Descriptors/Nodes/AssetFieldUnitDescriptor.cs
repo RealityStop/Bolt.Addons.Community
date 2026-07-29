@@ -17,22 +17,34 @@ namespace Unity.VisualScripting.Community
 
         protected override string DefinedSurtitle()
         {
-            return target.field.parentAsset.title;
+            if (target.field)
+                return target.field.parentAsset.title;
+            else
+                return base.DefinedSurtitle();
         }
 
         protected override EditorTexture DefinedIcon()
         {
-            return target.field.type.Icon();
+            if (target.field)
+                return target.field.type.Icon();
+            else
+                return BoltCore.Icons.errorState;
         }
 
         protected override string DefinedTitle()
         {
-            return target.field.parentAsset.title + "." + target.field.FieldName;
+            if (target.field)
+                return target.field.parentAsset.title + "." + target.field.FieldName;
+            else
+                return "No Field Assigned";
         }
 
         protected override string DefinedShortTitle()
         {
-            return target.field.FieldName;
+            if (target.field)
+                return target.field.FieldName;
+            else
+                return base.DefinedShortTitle();
         }
     }
 

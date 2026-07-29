@@ -21,6 +21,7 @@ namespace Unity.VisualScripting.Community
         public List<string> lastCompiledNames = new List<string>();
 
         [FullSerializer.fsProperty(Converter = typeof(FakeGenericParameterTypeConverter))]
+        [NonSerialized]
         public Type AssetType;
 
 #if UNITY_EDITOR

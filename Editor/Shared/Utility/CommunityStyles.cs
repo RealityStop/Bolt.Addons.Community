@@ -1,8 +1,10 @@
 #pragma warning disable
 using System;
 using System.Collections;
+using System.Linq;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Libraries.Humility;
+using Unity.VisualScripting.ReorderableList;
 using UnityEditor;
 using UnityEngine;
 
@@ -37,6 +39,12 @@ namespace Unity.VisualScripting.Community
         public static readonly Texture2D DragHandleTexture;
         public static readonly Texture2D RemoveItemTexture;
 
+        public static readonly Texture2D controlPortUnconnected;
+        public static readonly Texture2D controlPortConnected;
+        public static readonly Texture2D valuePortUnconnected;
+        public static readonly Texture2D valuePortConnected;
+        public static readonly Texture2D valuePortalConnection;
+
         private static GUIStyle toolbarButton;
         internal static Texture2D toolbarButtonNormalTex;
         private static Texture2D toolbarButtonHoverTex;
@@ -45,6 +53,10 @@ namespace Unity.VisualScripting.Community
         private static Texture2D sidebarAnchorButtonNormalTex;
         private static Texture2D sidebarAnchorButtonHoverTex;
         private static bool lastProSkin;
+
+        public static readonly float relativeBend = 0.5f;
+        public static readonly float minBend = 20f;
+        public static readonly float connectionThickness = 3f;
 
         public static GUIStyle ToolbarButton
         {
@@ -166,7 +178,7 @@ namespace Unity.VisualScripting.Community
 
         static CommunityStyles()
         {
-            backgroundColor = Unity.VisualScripting.ColorPalette.unityBackgroundMid.color.Darken(0.05f);
+            backgroundColor = Unity.VisualScripting.ColorPalette.unityBackgroundMid.color;
             foldoutBackgroundColor = Unity.VisualScripting.ColorPalette.unityBackgroundDark.color.Darken(0.02f);
             foldoutHeaderColor = Unity.VisualScripting.ColorPalette.unityBackgroundDark.color.Darken(0.05f);
 
@@ -190,6 +202,12 @@ namespace Unity.VisualScripting.Community
             var sidebarAnchorButtonBg = CommunityStyles.backgroundColor;
             var sidebarAnchorButtonBorder = EditorGUIUtility.isProSkin ? CommunityStyles.backgroundColor.Darken(0.05f) : CommunityStyles.backgroundColor.Brighten(0.05f);
             sidebarAnchorButtonBackground = MakeBorderedTexture(headerBg, border, BorderSide.LeftRight | BorderSide.Top);
+
+            controlPortConnected = PathUtil.Load("ConnectedHandle", CommunityEditorPath.Fundamentals)?[12];
+            controlPortUnconnected = PathUtil.Load("UnconnectedHandle", CommunityEditorPath.Fundamentals)?[12];
+            valuePortConnected = PathUtil.Load("ValuePortConnected", CommunityEditorPath.Fundamentals)?[12];
+            valuePortUnconnected = PathUtil.Load("ValuePortUnconnected", CommunityEditorPath.Fundamentals)?[12];
+            valuePortalConnection = PathUtil.Load("PortalConnectionIn", CommunityEditorPath.Fundamentals)?[16];
         }
 
         public static Texture2D MakeBorderedTexture(Color background, Color border, BorderSide borderSides = BorderSide.TopBottom, int width = 32, int height = 32, int borderThickness = 1)
@@ -232,15 +250,23 @@ namespace Unity.VisualScripting.Community
             return tex;
         }
 
-        private static string[] preferredNames = new string[] { "key", "title", "id", "label", "name" };
+        public static bool TitleFoldout(Rect position, bool isExpanded, GUIContent title)
+        {
+            if (Event.current.type == EventType.Repaint)
+            {
+                ReorderableListStyles.Title.Draw(position, "", false, false, false, false);
+            }
+
+            position.x += 16;
+
+            return EditorGUI.Foldout(position, isExpanded, title, true);
+        }
+
+        private static readonly string[] preferredNames = { "key", "title", "id", "label", "name" };
 
         /// <summary>
         /// Get the display name for metadata when in a collection.
         /// </summary>
-        /// <param name="element">The metadata</param>
-        /// <param name="index">The metadata index in the collection</param>
-        /// <param name="valueAsFallback">If the value is primitive use the value as the display name if none other can be resolved.</param>
-        /// <returns>The GUIContent with the Name and Icon</returns>
         public static GUIContent GetCollectionDisplayName(Metadata element, int index, bool valueAsFallback = false)
         {
             object value = element?.value;
@@ -251,6 +277,8 @@ namespace Unity.VisualScripting.Community
             if (value is string s && !string.IsNullOrEmpty(s))
                 return new GUIContent(s, typeof(string).Icon()?[IconSize.Small]);
 
+            Type valueType = value.GetType();
+
             if (value is Type type)
             {
                 return new GUIContent(type.DisplayName(), type.Icon()?[IconSize.Small]);
@@ -258,21 +286,22 @@ namespace Unity.VisualScripting.Community
 
             if (value is UnityEngine.Object uobj)
             {
-                if (uobj is UnityEngine.Object uv)
-                {
-                    if (uv is IEventMachine machine)
-                        return new GUIContent(GetMachineName(machine), machine.GetType().Icon()?[IconSize.Small]);
-                    else if (uv is IMacro macro)
-                        return new GUIContent(GetMacroName(macro), macro.GetType().Icon()?[IconSize.Small]);
-                    else if (!string.IsNullOrEmpty(uv.name))
-                        return new GUIContent(uv.name, uv.GetType().Icon()?[IconSize.Small]);
-                }
+                if (uobj is IEventMachine machine)
+                    return new GUIContent(GetMachineName(machine), machine.GetType().Icon()?[IconSize.Small]);
+
+                if (uobj is IMacro macro)
+                    return new GUIContent(GetMacroName(macro), macro.GetType().Icon()?[IconSize.Small]);
+
+                if (!string.IsNullOrEmpty(uobj.name))
+                    return new GUIContent(uobj.name, uobj.GetType().Icon()?[IconSize.Small]);
             }
 
             if (value is ICollection collection)
             {
                 return new GUIContent($"{collection.GetType().DisplayName()} [{collection.Count}]", collection.GetType().Icon()?[IconSize.Small]);
             }
+
+            Texture icon = valueType.Icon()?[IconSize.Small];
 
             object TryGetMemberValue(string memberName)
             {
@@ -292,7 +321,6 @@ namespace Unity.VisualScripting.Community
                 var mv = TryGetMemberValue(pref);
                 if (mv != null)
                 {
-                    var icon = value.GetType().Icon()?[IconSize.Small];
                     if (mv is UnityEngine.Object uv)
                     {
                         if (uv is IEventMachine machine)
@@ -308,24 +336,25 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            if (valueAsFallback && value.GetType().IsBasic())
+            if (valueAsFallback && valueType.IsBasic())
             {
-                return new GUIContent(value.ToString(), value.GetType().Icon()?[IconSize.Small]);
+                return new GUIContent(value.ToString(), icon);
             }
 
-            return new GUIContent($"Value {index + 1}", value.GetType().Icon()?[IconSize.Small]);
+            return new GUIContent($"Value {index + 1}", icon);
         }
 
         public static string GetMachineName(IEventMachine machine)
         {
-            if (!string.IsNullOrEmpty(machine?.GetReference()?.graph?.title))
+            var graphTitle = machine?.GetReference()?.graph?.title;
+            if (!string.IsNullOrEmpty(graphTitle))
             {
-                return machine.GetReference().graph.title;
+                return graphTitle;
             }
 
-            if (machine.nest.source == GraphSource.Macro && machine.nest.macro is UnityEngine.Object @object)
+            if (machine.nest.source == GraphSource.Macro && machine.nest.macro is UnityEngine.Object obj)
             {
-                if (!string.IsNullOrEmpty(@object.name)) return $"{@object.name}";
+                if (!string.IsNullOrEmpty(obj.name)) return obj.name;
             }
 
             return "Unnamed Machine";
@@ -333,14 +362,15 @@ namespace Unity.VisualScripting.Community
 
         public static string GetMacroName(IMacro macro)
         {
-            if (!string.IsNullOrEmpty(macro?.GetReference()?.graph?.title))
+            var graphTitle = macro?.GetReference()?.graph?.title;
+            if (!string.IsNullOrEmpty(graphTitle))
             {
-                return macro.GetReference().graph.title;
+                return graphTitle;
             }
 
-            if (macro is UnityEngine.Object @object)
+            if (macro is UnityEngine.Object obj)
             {
-                return @object.name;
+                return obj.name;
             }
 
             return "Unnamed Macro";

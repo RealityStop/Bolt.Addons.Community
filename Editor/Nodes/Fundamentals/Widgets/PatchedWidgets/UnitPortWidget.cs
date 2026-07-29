@@ -292,6 +292,8 @@ namespace Unity.VisualScripting.Community
             }
         }
 
+        protected virtual Vector2 HandleSize => Styles.handleSize;
+
         public override void CachePosition()
         {
             var outside = edge.Normal().x;
@@ -300,9 +302,9 @@ namespace Unity.VisualScripting.Community
 
             var handlePosition = new Rect(
                 x,
-                y + (EditorGUIUtility.singleLineHeight - Styles.handleSize.y + Styles.spaceBetweenEdgeAndHandle) / 2,
-                Styles.handleSize.x,
-                Styles.handleSize.y
+                y + (EditorGUIUtility.singleLineHeight - HandleSize.y + Styles.spaceBetweenEdgeAndHandle) / 2,
+                HandleSize.x,
+                HandleSize.y
             );
 
             if (flip) handlePosition.x -= handlePosition.width;
@@ -342,6 +344,21 @@ namespace Unity.VisualScripting.Community
                 identifierPosition = identifierPosition.Encompass(labelPosition);
                 this.labelPosition = labelPosition;
             }
+
+            var bounds = identifierPosition;
+
+            if (bounds.width < 16f)
+            {
+                bounds.x -= (16f - bounds.width) / 2f;
+                bounds.width = 16f;
+            }
+            if (bounds.height < 16f)
+            {
+                bounds.y -= (16f - bounds.height) / 2f;
+                bounds.height = 16f;
+            }
+            
+            identifierPosition = bounds;
 
             surroundPosition = Styles.surroundPadding.Add(identifierPosition);
         }
@@ -449,6 +466,10 @@ namespace Unity.VisualScripting.Community
 
 
         #region Drawing
+
+        protected virtual float connectionMinBend => CommunityStyles.minBend;
+        protected virtual float connectionrelativeBend => CommunityStyles.relativeBend;
+        protected virtual Edge connectionEndEdge => edge == Edge.Left ? Edge.Right : Edge.Left;
 
         public override bool canClip => base.canClip && canvas.connectionSource != port;
 
@@ -786,6 +807,8 @@ namespace Unity.VisualScripting.Community
             }
         }
 
+        protected static readonly Vector2 PortalSize = new Vector2(16, 16);
+
         protected virtual void DrawConnectionSource()
         {
             var start = handlePosition.GetEdgeCenter(edge);
@@ -795,20 +818,27 @@ namespace Unity.VisualScripting.Community
                 canvas.connectionEnd = mousePosition;
             }
 
-            float minBend = 20f;
+            Vector2 size = HandleSize;
+            Texture texture = handleTextureConnected;
 
-            GraphGUI.DrawConnection
-                (
-                    color,
-                    start,
-                    canvas.connectionEnd,
-                    edge,
-                    null,
-                    handleTextureConnected,
-                    Styles.handleSize,
-                    UnitConnectionStyles.relativeBend,
-                    minBend
-                );
+            if (e.alt && this is ValueInputWidget or ValueOutputWidget)
+            {
+                size = PortalSize;
+                texture = CommunityStyles.valuePortalConnection;
+            }
+
+            GraphGUI.DrawConnection(
+                color,
+                start,
+                canvas.connectionEnd,
+                edge,
+                connectionEndEdge,
+                texture,
+                size,
+                connectionrelativeBend,
+                connectionMinBend,
+                CommunityStyles.connectionThickness
+            );
         }
 
         private void DrawSurround()

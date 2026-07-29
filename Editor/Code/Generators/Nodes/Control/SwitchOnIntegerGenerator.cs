@@ -60,15 +60,15 @@ namespace Unity.VisualScripting.Community.CSharp
                         data.SetHasBroke(false);
                         if (values[i].Value.hasValidConnection)
                         {
-                            data.NewScope();
-                            GenerateChildControl(values[i].Value, data, writer);
-                            data.ExitScope();
+                            using (writer.IndentedScope(data))
+                            {
+                                GenerateChildControl(values[i].Value, data, writer);
+                            }
                         }
 
                         if ((data.MustBreak && !data.HasBroke) || (data.MustReturn && !data.HasReturned))
                         {
-                            writer.WriteIndented();
-                            writer.Write("break".ControlHighlight());
+                            writer.WriteIndented("break".ControlHighlight(), 1);
                             writer.Write(";");
                             writer.NewLine();
                         }
@@ -84,15 +84,15 @@ namespace Unity.VisualScripting.Community.CSharp
                     data.SetHasBroke(false);
                     if (Unit.@default.hasValidConnection)
                     {
-                        data.NewScope();
-                        GenerateChildControl(Unit.@default, data, writer);
-                        data.ExitScope();
+                        using (writer.IndentedScope(data))
+                        {
+                            GenerateChildControl(Unit.@default, data, writer);
+                        }
                     }
 
                     if ((data.MustBreak && !data.HasBroke) || (data.MustReturn && !data.HasReturned))
                     {
-                        writer.WriteIndented();
-                        writer.Write("break".ControlHighlight());
+                        writer.WriteIndented("break".ControlHighlight(), 1);
                         writer.Write(";");
                         writer.NewLine();
                     }

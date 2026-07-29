@@ -14,6 +14,7 @@ namespace Unity.VisualScripting.Community.Utility
     {
         [SerializeField]
         [Inspectable]
+        [NonSerialized]
         [FullSerializer.fsProperty(Converter = typeof(FakeGenericParameterTypeConverter))]
         public Type type = typeof(object);
 
@@ -43,6 +44,7 @@ namespace Unity.VisualScripting.Community.Utility
         [Serialize]
         [SerializeField]
         [InspectorToggleLeft]
+        [NonSerialized]
         public object defaultValue;
 #if VISUAL_SCRIPTING_1_7
         public SerializableType typeHandle;

@@ -12,9 +12,12 @@ namespace Unity.VisualScripting.Community
     public abstract class FieldDeclaration : ScriptableObject
     {
         [Inspectable]
+        [NonSerialized]
         public Type type = typeof(int);
 
         [Inspectable]
+        [NonSerialized]
+        [Serialize]
         public object value;
 
         public string FieldName;

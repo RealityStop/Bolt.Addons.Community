@@ -729,5 +729,133 @@ namespace Unity.VisualScripting.Community
             }
             Undo.CollapseUndoOperations(group);
         }
+
+        /// <summary>
+        /// <para>
+        /// <paramref name="kind"/>: The kind of variable to look for when renaming. Excludes Flow variables see: <see cref="GetFlowVariablesRenameTargets(Unit, string, GraphReference)"/>
+        /// </para>
+        /// <para>
+        /// <paramref name="oldName"/>: The current name of the variable, this is what it searches for.
+        /// </para>
+        /// <para>
+        /// <paramref name="newName"/>: The new name to replace the old name with.
+        /// </para>
+        /// <para>
+        /// <paramref name="metadata"/>: The metadata of the <see cref="VariableDeclarations.collection"/> field.
+        /// </para>
+        /// </summary>
+        public static void RenameVariables(VariableKind kind, string oldName, string newName, Metadata metadata)
+        {
+            switch (kind)
+            {
+                case VariableKind.Graph:
+                    if (EditorWindow.focusedWindow == GraphWindow.active)
+                        UpdateAllGraphVariables((FlowGraph)GraphWindow.activeContext.graph, oldName, newName);
+                    else if (VariablesWindow.isVariablesWindowContext && VariablesWindow.currentContext != null)
+                        UpdateAllGraphVariables((FlowGraph)VariablesWindow.currentContext.graph, oldName, newName);
+                    break;
+                case VariableKind.Object:
+                    {
+                        var ancestor = metadata.Ancestor(m => m.value is VisualScripting.Variables);
+                        if (ancestor != null && ancestor.value != null)
+                        {
+                            var gameObject = (ancestor.value as VisualScripting.Variables).gameObject;
+                            UpdateAllObjectVariables(gameObject, oldName, newName);
+                        }
+                        else if (EditorWindow.focusedWindow == GraphWindow.active && GraphWindow.activeReference != null)
+                        {
+                            if (GraphWindow.activeReference.gameObject != null)
+                                UpdateAllObjectVariables(GraphWindow.activeReference.gameObject, oldName, newName);
+                        }
+                    }
+                    break;
+                case VariableKind.Scene:
+                    {
+                        var ancestor = metadata.Ancestor(m => m.value is VisualScripting.Variables);
+                        if (ancestor != null && ancestor.value != null)
+                        {
+                            var scene = (ancestor.value as VisualScripting.Variables).gameObject.scene;
+                            UpdateAllSceneVariables(scene, oldName, newName);
+                        }
+                        else if (EditorWindow.focusedWindow == GraphWindow.active && GraphWindow.activeReference != null)
+                        {
+                            if (GraphWindow.activeReference.scene != null)
+                                UpdateAllSceneVariables(GraphWindow.activeReference.scene.Value, oldName, newName);
+                            else
+                            {
+                                Scene? current = null;
+                                for (int i = 0; i < SceneManager.sceneCount; i++)
+                                {
+                                    var scene = SceneManager.GetSceneAt(i);
+                                    if (!scene.isLoaded) continue;
+
+                                    var variables = VisualScripting.Variables.Scene(scene);
+
+                                    if (variables == metadata.parent.value)
+                                    {
+                                        current = scene;
+                                        break;
+                                    }
+                                }
+
+                                if (current == null)
+                                {
+                                    Debug.LogWarning(
+                                        $"[Rename Variables] Could not find the scene that this variable is in please ensure that the scene is valid and loaded."
+                                    );
+                                    break;
+                                }
+
+                                UpdateAllSceneVariables(current.Value, oldName, newName);
+                            }
+                        }
+                    }
+                    break;
+                case VariableKind.Application:
+                    {
+                        if (Application.isPlaying)
+                        {
+                            Debug.LogWarning($"[Rename Variables] Cannot rename all Application variables while in play mode!");
+                            break;
+                        }
+                        bool choice = EditorUtility.DisplayDialog(
+                            "Update ALL Application Variables?",
+                            "This will go through ALL scenes and macros to find every Variable Unit "
+                            + $"using {oldName} and update it to {newName}.\n\n"
+                            + "This operation is FINAL and cannot be undone!",
+                            "Update All",
+                            "Rename Only"
+                        );
+
+                        if (choice)
+                        {
+                            RenameApplicationVariables(oldName, newName);
+                        }
+                    }
+                    break;
+                case VariableKind.Saved:
+                    {
+                        if (Application.isPlaying)
+                        {
+                            Debug.LogWarning($"[Rename Variables] Cannot rename all Saved variables while in play mode!");
+                            break;
+                        }
+                        bool choice = EditorUtility.DisplayDialog(
+                            "Update ALL Saved Variables?",
+                            "This will go through ALL scenes and macros to find every Variable Unit "
+                            + $"using {oldName} and update it to {newName}.\n\n"
+                            + "This operation is FINAL and cannot be undone!",
+                            "Update All",
+                            "Rename Only"
+                        );
+
+                        if (choice)
+                        {
+                            RenameSavedVariables(oldName, newName);
+                        }
+                    }
+                    break;
+            }
+        }
     }
 }

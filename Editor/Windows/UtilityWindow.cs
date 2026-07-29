@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community
         private BorderedRectangle container;
 
         public static Event e;
-        public GraphContext<FlowGraph, FlowCanvas> graphContext;
+        public IGraphContext graphContext;
 
         public static UtilityWindow Open()
         {

@@ -23,7 +23,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             if (type == typeof(string)) return value + "[Type:String]";
             if (type == typeof(Type)) return ((Type)value).FullName + "[Type:Type]";
             if (type == typeof(UnityEngine.GameObject)) return "null";
-             
+
             return string.Empty;
         }
 
@@ -33,7 +33,7 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
         public static object Deserialized(this string str)
         {
             if (str.Contains("[Type:Boolean]"))
-        
+
             {
                 if (str.Contains("true")) return true;
                 if (str.Contains("false")) return false;
@@ -59,13 +59,35 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
                 return Type.GetType(str.Replace("[Type:Type]", string.Empty));
             }
 
-            if (str.Contains("[Type:GameObject"))
+            const string tag = "[Type:GameObject]";
+            if (str.Contains(tag))
             {
-                var parsedInt = int.Parse(str.Replace("[Type:GameObject]", string.Empty));
+                string idStr = str.Replace(tag, string.Empty);
+
 #if UNITY_EDITOR
-                var asset = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GetAssetPath(parsedInt));
-                return asset;
+#if UNITY_6000_5_OR_NEWER
+                if (ulong.TryParse(idStr, out ulong parsedULong))
+                {
+                    EntityId entityId = EntityId.FromULong(parsedULong);
+                    string path = AssetDatabase.GetAssetPath(entityId);
+                    return !string.IsNullOrEmpty(path) ? AssetDatabase.LoadAssetAtPath<GameObject>(path) : null;
+                }
+#elif UNITY_6000_3_OR_NEWER
+                if (int.TryParse(idStr, out int parsedInt))
+                {
+                    EntityId entityId = (EntityId)parsedInt;
+                    string path = AssetDatabase.GetAssetPath(entityId);
+                    return !string.IsNullOrEmpty(path) ? AssetDatabase.LoadAssetAtPath<GameObject>(path) : null;
+                }
+#else
+                if (int.TryParse(idStr, out int parsedInt))
+                {
+                    string path = AssetDatabase.GetAssetPath(parsedInt);
+                    return !string.IsNullOrEmpty(path) ? AssetDatabase.LoadAssetAtPath<GameObject>(path) : null;
+                }
 #endif
+#endif
+                return null;
             }
 
             return null;

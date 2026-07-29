@@ -21,18 +21,20 @@ namespace Unity.VisualScripting.Community
 
         public override float zIndex
         {
-            get
-            {
-                return float.MaxValue;
-            }
+            get => float.MaxValue;
             set { }
         }
-
+#if NEW_UNIT_UI
+        protected override bool AllowRectSnapping => false;
+#endif
         public override bool canClip => false;
         Vector3 lineStart;
         Vector3 lineEnd;
+
         public override void DrawForeground()
         {
+            Color originalHandlesColor = Handles.color;
+
             Vector3 unitCenter = new Vector3(position.x + position.width / 2f, position.y + position.height / 2f);
             Vector3 direction = Quaternion.Euler(0f, 0f, unit.rotationAngle) * Vector3.right;
 
@@ -56,7 +58,6 @@ namespace Unity.VisualScripting.Community
             Vector3 arrowTipEnd = lineEnd + (lineEnd - lineStart).normalized * arrowHeight;
 
             if (unit.ShowTopArrow) DrawArrow(arrowTipStart, lineStart, unit.ArrowColor);
-
             if (unit.ShowBottomArrow) DrawArrow(arrowTipEnd, lineEnd, unit.ArrowColor);
 
             if (unit.ShowCenter)
@@ -66,7 +67,7 @@ namespace Unity.VisualScripting.Community
 
             DrawTextField((lineStart + lineEnd) / 2f, unit.Text);
 
-            Handles.color = Color.white;
+            Handles.color = originalHandlesColor;
             SendToBack();
         }
 
@@ -83,28 +84,25 @@ namespace Unity.VisualScripting.Community
                 arrowTip + arrowSide2 * arrowWidth
             };
 
+            Color prev = Handles.color;
             Handles.color = arrowColor;
             Handles.DrawAAConvexPolygon(arrowPoints);
+            Handles.color = prev;
         }
 
         private void DrawUnitPosition(Vector3 unitCenter)
         {
             float halfSize = arrowHandle / 2f;
 
-            if (isMouseOver)
-            {
-                Handles.color = Color.black;
-            }
-            else
-            {
-                Handles.color = Color.white;
-            }
+            Color prev = Handles.color;
+            Handles.color = isMouseOver ? Color.black : Color.white;
             Handles.DrawAAConvexPolygon(
                 unitCenter + new Vector3(-halfSize, -halfSize, 0f),
                 unitCenter + new Vector3(-halfSize, halfSize, 0f),
                 unitCenter + new Vector3(halfSize, halfSize, 0f),
                 unitCenter + new Vector3(halfSize, -halfSize, 0f)
             );
+            Handles.color = prev;
         }
 
         protected override IEnumerable<DropdownOption> contextOptions => base.contextOptions.Where(c => c.label != "Replace...");
@@ -177,7 +175,7 @@ namespace Unity.VisualScripting.Community
 
             if (e.rawType == EventType.MouseDown && !canvas.isSelecting && over)
             {
-                if (e.mouseButton == 0)
+                if (e.mouseButton == MouseButton.Left)
                 {
                     Select();
                     GUI.changed = true;
@@ -189,7 +187,7 @@ namespace Unity.VisualScripting.Community
                         e.Use();
                     }
 
-                    if (e.clickCount == 2 && e.mouseButton == 0 && overLine)
+                    if (e.clickCount == 2 && overLine)
                     {
                         Vector2 canvasCenter = canvas.pan + canvas.viewport.center;
                         Vector3 furthestEnd = Vector2.Distance(lineStart, canvasCenter) > Vector2.Distance(lineEnd, canvasCenter) ? lineStart : lineEnd;
@@ -334,39 +332,41 @@ namespace Unity.VisualScripting.Community
             return Vector2.Distance(point, closest);
         }
 
-        private void DrawTextField(Vector3 position, string text)
+        private void DrawTextField(Vector3 canvasPosition, string text)
         {
-            GUIStyle style = new GUIStyle(GUI.skin.label);
-            style.alignment = TextAnchor.MiddleCenter;
+            if (string.IsNullOrEmpty(text)) return;
 
-            Vector2 screenPos = HandleUtility.WorldToGUIPoint(position);
+            GUIStyle style = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter
+            };
 
             GUIContent content = new GUIContent(text);
             Vector2 textSize = style.CalcSize(content);
 
-            Rect labelRect = new Rect(screenPos.x - textSize.x / 2f, screenPos.y - textSize.y / 2f, textSize.x, textSize.y);
+            Rect labelRect = new Rect(canvasPosition.x - textSize.x / 2f, canvasPosition.y - textSize.y / 2f, textSize.x, textSize.y);
 
-            Handles.BeginGUI();
+            Color originalColor = GUI.contentColor;
+            GUI.contentColor = Color.white;
             GUI.Label(labelRect, content, style);
-            Handles.EndGUI();
+            GUI.contentColor = originalColor;
         }
 
         private void DrawDottedLine(Vector3 start, Vector3 end, float segmentLength, float gapLength = 5f)
         {
             Vector3 direction = (end - start).normalized;
-
             Vector3 currentPosition = start;
 
             while (Vector3.Distance(currentPosition, end) > segmentLength)
             {
                 Vector3 segmentEnd = currentPosition + direction * segmentLength;
-                Handles.DrawAAPolyLine(currentPosition, segmentEnd);
+                Handles.DrawAAPolyLine(lineWidth, currentPosition, segmentEnd);
                 currentPosition = segmentEnd + direction * gapLength;
             }
 
             if (Vector3.Distance(currentPosition, end) > 0f)
             {
-                Handles.DrawAAPolyLine(currentPosition, end);
+                Handles.DrawAAPolyLine(lineWidth, currentPosition, end);
             }
         }
     }

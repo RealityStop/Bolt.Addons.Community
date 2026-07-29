@@ -39,7 +39,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             // Add parameters with labels
             for (int i = 0; i < parameterValuesWithLabel.Count; i++)
             {
-                parameterList.Add(parameterValuesWithLabel[i].Item1.VariableHighlight() + " = " + writer.Object(parameterValuesWithLabel[i].Item2));
+                parameterList.Add(parameterValuesWithLabel[i].Item1.VariableHighlight() + " = " + writer.ObjectString(parameterValuesWithLabel[i].Item2));
             }
 
             // Add type parameters

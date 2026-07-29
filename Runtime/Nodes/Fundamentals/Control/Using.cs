@@ -20,7 +20,7 @@ namespace Unity.VisualScripting.Community
         public ValueInput value;
         protected override void Definition()
         {
-            enter = ControlInput(nameof(enter), Trigger);
+            enter = ControlInputCoroutine(nameof(enter), Trigger, TriggerCoroutine);
             exit = ControlOutput(nameof(exit));
             body = ControlOutput(nameof(body));
             value = ValueInput<IDisposable>(nameof(value), default);
@@ -29,18 +29,25 @@ namespace Unity.VisualScripting.Community
             Succession(enter, exit);
             Succession(enter, body);
         }
+        
         public ControlOutput Trigger(Flow flow)
         {
-            if (flow.isCoroutine)
-            {
-                throw new NotSupportedException("The 'using' statement cannot be used with coroutines.");
-            }
             var disposable = flow.GetValue<IDisposable>(value);
             using (disposable)
             {
                 flow.Invoke(body);
             }
             return exit;
+        }
+
+        public IEnumerator TriggerCoroutine(Flow flow)
+        {
+            var disposable = flow.GetValue<IDisposable>(value);
+            using (disposable)
+            {
+                yield return body;
+            }
+            yield return exit;
         }
     }
 }

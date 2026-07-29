@@ -76,14 +76,23 @@ namespace Unity.VisualScripting.Community.CSharp
         public IEnumerable<MethodGenerator> GetRequiredMethods(ControlGenerationData data)
         {
             name = data.AddMethodName(name);
-            var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), name);
-            method.AddParameter(ParameterGenerator.Parameter("args", typeof(ReturnEventArg), ParameterModifier.None));
+            var runnerMethod = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), name);
+            runnerMethod.AddParameter(ParameterGenerator.Parameter("args", typeof(ReturnEventArg), ParameterModifier.None));
             data.AddLocalNameInScope("args");
-            method.Body(writer =>
+            runnerMethod.Body(writer =>
             {
                 writer.WriteIndented(Unit.coroutine ? $"StartCoroutine({name}({"args".VariableHighlight()}))" : Name + $"({"args".VariableHighlight()})");
                 writer.Write(";");
                 writer.NewLine();
+            });
+            yield return runnerMethod;
+
+            var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), Name);
+            method.AddParameter(ParameterGenerator.Parameter("args", typeof(ReturnEventArg), ParameterModifier.None));
+            data.AddLocalNameInScope("args");
+            method.Body(writer =>
+            {
+                GenerateCode(null, data, writer);
             });
             yield return method;
         }

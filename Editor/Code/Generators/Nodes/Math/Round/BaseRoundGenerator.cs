@@ -11,7 +11,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override IEnumerable<string> GetNamespaces()
         {
-            yield return $"{"static".ConstructHighlight()} Unity.VisualScripting.{"Round".TypeHighlight()}<{"float".ConstructHighlight()}` {"float".ConstructHighlight()}>";
+            yield return $"{"static".ConstructHighlight()} Unity.VisualScripting.{"Round".TypeHighlight()}<{"float".ConstructHighlight()}, {"float".ConstructHighlight()}>";
         }
 
         protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)

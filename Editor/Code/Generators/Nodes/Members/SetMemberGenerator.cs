@@ -17,7 +17,8 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override IEnumerable<string> GetNamespaces()
         {
-            yield return Unit.member.pseudoDeclaringType.Namespace;
+            if (Unit.member != null)
+                yield return Unit.member.pseudoDeclaringType.Namespace;
         }
 
         protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)

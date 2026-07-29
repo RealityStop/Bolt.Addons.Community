@@ -45,13 +45,6 @@ namespace Unity.VisualScripting.Community
             unscaledTime = ValueInput(nameof(unscaledTime), false);
         }
 
-        public override void StartListening(GraphStack stack)
-        {
-            base.StartListening(stack);
-
-            var data = stack.GetElementData<Data>(this);
-        }
-
         protected override bool ShouldTrigger(Flow flow, EmptyEventArgs args)
         {
             var data = flow.stack.GetElementData<Data>(this);

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Assemblies;
 using UnityEngine.Events;
 
 namespace Unity.VisualScripting.Community
@@ -228,7 +229,11 @@ namespace Unity.VisualScripting.Community
             AotSupportMethodsType = Type.GetType("Unity.VisualScripting.Community.Generated.AotSupportMethods, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
             if (AotSupportMethodsType == null)
             {
+#if UNITY_6000_4_OR_NEWER
+                foreach (var asm in CurrentAssemblies.GetLoadedAssemblies())
+#else
                 foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+#endif
                 {
                     AotSupportMethodsType = asm.GetType(AotSupportTypeFullName);
                     if (AotSupportMethodsType != null)

@@ -11,6 +11,8 @@ using System.IO;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using ParameterModifier = Unity.VisualScripting.Community.Libraries.CSharp.ParameterModifier;
 using Unity.VisualScripting.Community.CSharp;
+using UnityEngine.Assemblies;
+using System.Reflection;
 
 namespace Unity.VisualScripting.Community
 {
@@ -114,7 +116,13 @@ namespace Unity.VisualScripting.Community
         {
             List<TypeGroup> types = new List<TypeGroup>();
 
-            var allTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes().Where(type => typeof(UnityEventBase).IsAssignableFrom(type))).ToList();
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
+
+            var allTypes = assemblies.SelectMany(assembly => assembly.GetTypes().Where(type => typeof(UnityEventBase).IsAssignableFrom(type))).ToList();
 
             int count = allTypes.Count;
             for (int i = 0; i < count; i++)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using UnityEngine.Assemblies;
 
 namespace Unity.VisualScripting.Community.Utility
 {
@@ -15,7 +16,11 @@ namespace Unity.VisualScripting.Community.Utility
             lock (lockObject)
             {
                 var type = typeof(IEditorStateFetcher);
+#if UNITY_6000_4_OR_NEWER
+                var types = CurrentAssemblies.GetLoadedAssemblies()
+#else
                 var types = AppDomain.CurrentDomain.GetAssemblies()
+#endif
                     .SelectMany(s => s.GetTypes())
                     .Where(p =>
                     {

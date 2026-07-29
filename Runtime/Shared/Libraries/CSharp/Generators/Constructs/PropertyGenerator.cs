@@ -362,7 +362,7 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
 
         public bool IsAutoImplemented()
         {
-            return (getterBodyAction == null && setterBodyAction == null) || (modifier == PropertyModifier.Abstract);
+            return (getterBodyAction == null && setterBodyAction == null) || ((modifier & PropertyModifier.Abstract) != 0);
         }
 
         public PropertyGenerator SetWarning(string warning)

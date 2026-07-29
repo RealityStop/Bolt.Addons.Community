@@ -6,9 +6,14 @@
     [UnitCategory("Community\\Logic")]
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.Latch")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.Latch")]
-    public sealed class Latch : Unit
+    public sealed class Latch : Unit, IGraphElementWithData
     {
         public Latch() : base() { }
+
+        private class Data : IGraphElementData
+        {
+            public bool isSet;
+        }
 
         /// <summary>
         /// The entry point for the Latch.
@@ -55,8 +60,6 @@
         [DoNotSerialize]
         public ValueOutput value { get; private set; }
 
-        private bool _isSet = false;
-
         protected override void Definition()
         {
             enter = ControlInput(nameof(enter), Enter);
@@ -64,7 +67,7 @@
             reset = ValueInput<bool>(nameof(reset), false);
             resetDominant = ValueInput<bool>(nameof(resetDominant), false);
             exit = ControlOutput(nameof(exit));
-            value = ValueOutput<bool>(nameof(value), (x) => _isSet);
+            value = ValueOutput<bool>(nameof(value), (flow) => flow.stack.GetElementData<Data>(this).isSet);
 
             Succession(enter, exit);
 
@@ -81,27 +84,33 @@
 
         public ControlOutput Enter(Flow flow)
         {
+            var data = flow.stack.GetElementData<Data>(this);
             if (flow.GetValue<bool>(set))
             {
                 if (flow.GetValue<bool>(reset))
                 {
                     if (flow.GetValue<bool>(resetDominant))
-                        _isSet = false;
+                        data.isSet = false;
                     else
-                        _isSet = true;
+                        data.isSet = true;
                 }
                 else
                 {
-                    _isSet = true;
+                    data.isSet = true;
                 }
             }
             else
             {
                 if (flow.GetValue<bool>(reset))
-                    _isSet = false;
+                    data.isSet = false;
             }
 
             return exit;
+        }
+
+        public IGraphElementData CreateData()
+        {
+            return new Data();
         }
     }
 }

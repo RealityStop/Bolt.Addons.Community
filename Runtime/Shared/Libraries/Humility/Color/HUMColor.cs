@@ -70,8 +70,8 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
             return new Color((value.r + other.r) / 2, (value.g + other.g) / 2, (value.b + other.b) / 2);
         }
         /// <summary>
-         /// Lightens up the color by adding all values by the percent.
-         /// </summary>
+        /// Lightens up the color by adding all values by the percent.
+        /// </summary>
         public static Color Blend(this Color value, Color other, float percent)
         {
             return new Color((value.r + (other.r * percent)) / 2, (value.g + (other.g * percent)) / 2, (value.b + (other.b * percent)) / 2);

@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Assemblies;
 
 namespace Unity.VisualScripting.Community
 {
@@ -17,7 +18,11 @@ namespace Unity.VisualScripting.Community
             lock (lockObject)
             {
                 var type = typeof(CommunityOptions);
+#if UNITY_6000_4_OR_NEWER
+                var types = CurrentAssemblies.GetLoadedAssemblies()
+#else
                 var types = AppDomain.CurrentDomain.GetAssemblies()
+#endif
                     .SelectMany(s => s.GetTypes())
                     .Where(p =>
                     {

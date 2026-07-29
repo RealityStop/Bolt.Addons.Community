@@ -38,10 +38,7 @@ namespace Unity.VisualScripting.Community
                 return;
             }
 
-            var normal = GUI.backgroundColor;
             adaptor.Field(position, label);
-            // Restore color after tinting add
-            GUI.backgroundColor = normal;
         }
 
         public override float GetAdaptiveWidth() => adaptor.GetAdaptiveWidth();

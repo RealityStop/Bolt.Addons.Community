@@ -14,5 +14,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
         Unsafe = 1 << 4,
         Volatile = 1 << 5,
         New = 1 << 6,
+        Virtual = 1 << 7,
     }
 }

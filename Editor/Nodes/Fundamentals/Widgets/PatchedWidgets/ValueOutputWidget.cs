@@ -26,44 +26,24 @@ namespace Unity.VisualScripting.Community
                 {
                     if (connections.FirstOrDefault(c => c.destination?.unit is ValueReroute)?.destination?.unit is ValueReroute valueReroute && valueReroute.hideConnection)
                     {
-                        return PathUtil.Load("PortalConnectionIn", CommunityEditorPath.Fundamentals)?[16];
+                        return CommunityStyles.valuePortalConnection;
                     }
                 }
-                return BoltFlow.Icons.valuePortConnected?[12];
+
+                return CommunityStyles.valuePortConnected;
             }
         }
 
-        protected override Texture handleTextureUnconnected => BoltFlow.Icons.valuePortUnconnected?[12];
+        protected override Texture handleTextureUnconnected => CommunityStyles.valuePortUnconnected;
 
-        protected override void DrawConnectionSource()
-        {
-            var start = handlePosition.GetEdgeCenter(edge);
+#if !ENABLE_VERTICAL_FLOW
+        private const float HorizontalMinBlend = 20f;
+        protected override float connectionMinBend => HorizontalMinBlend;
+        protected override float connectionrelativeBend => UnitConnectionStyles.relativeBend;
+#endif
 
-            if (window.IsFocused())
-            {
-                canvas.connectionEnd = mousePosition;
-            }
-
-            float minBend = 20f;
-
-            Vector2 size = new Vector2(9, 12);
-
-            if (e.alt) size = new Vector2(16, 16);
-
-            GraphGUI.DrawConnection
-                (
-                    color,
-                    start,
-                    canvas.connectionEnd,
-                    edge,
-                    null,
-                    e.alt ? PathUtil.Load("PortalConnectionIn", CommunityEditorPath.Fundamentals)?[16] : BoltFlow.Icons.valuePortConnected?[12],
-                    size,
-                    UnitConnectionStyles.relativeBend,
-                    minBend
-                );
-        }
-
+        private readonly Vector2 handleSize = new Vector2(10, 10);
+        protected override Vector2 HandleSize => handleSize;
 
         public override void CachePosition()
         {
@@ -74,8 +54,8 @@ namespace Unity.VisualScripting.Community
             var inside = -outside;
             var flip = inside < 0;
 
-            var width = VisualScripting.UnitPortWidget<ValueInput>.Styles.handleSize.x;
-            var height = VisualScripting.UnitPortWidget<ValueInput>.Styles.handleSize.y;
+            var width = 10;
+            var height = 10;
 
             bool hide = false;
 

@@ -8,7 +8,6 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
     /// <summary>
     /// A generator that retains data for creating a Binary Operator as a string.
     /// </summary>
-    [Serializable]
     [RenamedFrom("Bolt.Addons.Community.Libraries.CSharp.BinaryOperatorGenerator")]
     public sealed class BinaryOperatorGenerator : ConstructGenerator
     {

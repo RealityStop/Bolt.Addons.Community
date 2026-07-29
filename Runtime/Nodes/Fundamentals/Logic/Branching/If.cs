@@ -25,7 +25,7 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize]
         public ControlOutput False;
         [DoNotSerialize]
-        [PortLabel("Next")]
+        [PortLabel("Then")]
         public ControlOutput Finished;
 
         protected override void Definition()

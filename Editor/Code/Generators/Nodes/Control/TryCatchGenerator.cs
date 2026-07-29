@@ -33,7 +33,7 @@ namespace Unity.VisualScripting.Community.CSharp
             if (!Unit.@catch.hasValidConnection && !Unit.@finally.hasValidConnection)
             {
                 using (writer.CodeDiagnosticScope("Catch or Finally requires connection", CodeDiagnosticKind.Warning))
-                    writer.Error("Expected catch or finally block");
+                    writer.Error("Expected catch or finally block", WriteOptions.IndentedNewLineAfter);
                 return;
             }
 

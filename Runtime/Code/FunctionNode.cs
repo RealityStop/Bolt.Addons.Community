@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    [Serializable]
     [UnitTitle("Function")]
     [SpecialUnit]
     [RenamedFrom("Bolt.Addons.Community.Code.FunctionUnit")]

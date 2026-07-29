@@ -15,7 +15,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override IEnumerable<string> GetNamespaces()
         {
-            var @namespace = Unit.type?.Namespace ?? Unit.value.GetType().Namespace;
+            var @namespace = Unit.type?.Namespace ?? Unit.value?.GetType().Namespace;
 
             if (!string.IsNullOrEmpty(@namespace))
                 yield return @namespace;

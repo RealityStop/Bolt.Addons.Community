@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEditor.Build;
+using UnityEditor.Build.Profile;
 
 namespace Unity.VisualScripting.Community
 {
@@ -16,7 +17,6 @@ namespace Unity.VisualScripting.Community
         private const string UNIT_STYLE = "NEW_UNIT_STYLE";
         private const string TOOLBAR_STYLE = "NEW_TOOLBAR_STYLE";
         private const string GRAPH_MINIMAP = "ENABLE_GRAPH_MINIMAP";
-        private const string DARK_UI = "DARKER_UI";
         private const string NEW_VARIABLES_UI = "NEW_VARIABLES_UI";
         private const string NEW_LIST_UI = "NEW_LIST_UI";
         private const string NEW_DICTIONARY_UI = "NEW_DICTIONARY_UI";
@@ -29,7 +29,6 @@ namespace Unity.VisualScripting.Community
             UpdateUnitStyle();
             UpdateToolbarStyle();
             UpdateGraphMiniMap();
-            UpdateDarkUI();
             UpdateVariablesUI();
             UpdateListUI();
             UpdateDictionaryUI();
@@ -61,11 +60,6 @@ namespace Unity.VisualScripting.Community
             SetDefine(GRAPH_MINIMAP, EditorPrefs.GetBool(ProjectSettingsProviderView.GraphMinimapKey, false));
         }
 
-        public static void UpdateDarkUI()
-        {
-            SetDefine(DARK_UI, EditorPrefs.GetBool(ProjectSettingsProviderView.DarkerUIKey, false));
-        }
-
         public static void UpdateVariablesUI()
         {
             SetDefine(NEW_VARIABLES_UI, EditorPrefs.GetBool(ProjectSettingsProviderView.NewVariablesUIKey, false));
@@ -85,31 +79,62 @@ namespace Unity.VisualScripting.Community
         {
             if (string.IsNullOrWhiteSpace(symbol)) return;
 
-#if UNITY_2022_1_OR_NEWER
-            var target = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
-            string defines = PlayerSettings.GetScriptingDefineSymbols(target);
-#else
-            var target = EditorUserBuildSettings.selectedBuildTargetGroup;
-            string defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(target);
+#if UNITY_6000_0_OR_NEWER
+            BuildProfile activeProfile = BuildProfile.GetActiveBuildProfile();
+
+            if (activeProfile != null)
+            {
+                List<string> list = activeProfile.scriptingDefines != null
+                    ? activeProfile.scriptingDefines.Where(d => !string.IsNullOrWhiteSpace(d)).ToList()
+                    : new List<string>();
+
+                bool changed = false;
+                if (enabled && !list.Contains(symbol))
+                {
+                    list.Add(symbol);
+                    changed = true;
+                }
+                else if (!enabled && list.Contains(symbol))
+                {
+                    list.Remove(symbol);
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    activeProfile.scriptingDefines = list.ToArray();
+                    EditorUtility.SetDirty(activeProfile);
+                    AssetDatabase.SaveAssetIfDirty(activeProfile);
+                }
+                return;
+            }
 #endif
 
-            List<string> list = defines.Split(';').Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
-            bool changed = false;
+#if UNITY_2022_1_OR_NEWER
+            var target = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            string definesString = PlayerSettings.GetScriptingDefineSymbols(target);
+#else
+            var target = EditorUserBuildSettings.selectedBuildTargetGroup;
+            string definesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(target);
+#endif
 
-            if (enabled && !list.Contains(symbol))
+            List<string> legacyList = definesString.Split(';').Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
+            bool legacyChanged = false;
+
+            if (enabled && !legacyList.Contains(symbol))
             {
-                list.Add(symbol);
-                changed = true;
+                legacyList.Add(symbol);
+                legacyChanged = true;
             }
-            else if (!enabled && list.Contains(symbol))
+            else if (!enabled && legacyList.Contains(symbol))
             {
-                list.Remove(symbol);
-                changed = true;
+                legacyList.Remove(symbol);
+                legacyChanged = true;
             }
 
-            if (!changed) return;
+            if (!legacyChanged) return;
 
-            string result = string.Join(";", list);
+            string result = string.Join(";", legacyList);
 
 #if UNITY_2022_1_OR_NEWER
             PlayerSettings.SetScriptingDefineSymbols(target, result);

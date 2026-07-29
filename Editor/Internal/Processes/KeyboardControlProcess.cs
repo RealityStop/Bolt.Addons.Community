@@ -203,7 +203,7 @@ namespace Unity.VisualScripting.Community
                 var destinationPos = destinationWidget.position;
                 var reroutePos = rerouteWidget.position;
 
-                rerouteWidget.position = new Rect(destinationPos.xMin - reroutePos.width - 35, destinationPos.position.y - 4, reroutePos.width, reroutePos.height);
+                rerouteWidget.position = new Rect(destinationPos.xMin - reroutePos.width - 40, destinationPos.position.y - 1, reroutePos.width, reroutePos.height);
                 rerouteWidget.Reposition();
             }
             finally

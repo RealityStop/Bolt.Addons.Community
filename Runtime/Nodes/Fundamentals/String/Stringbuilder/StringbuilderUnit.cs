@@ -35,7 +35,7 @@ namespace Unity.VisualScripting.Community
         [Inspectable, InspectorLabel("Append Modes", "List to store the modes for each input (Max: 10 items)")]
         [InspectorWide]
         [InspectorRange(MinInputs, MaxInputs)]
-        public List<StringAppendMode> appendModes = new List<StringAppendMode>();
+        public List<StringAppendMode> appendModes = new List<StringAppendMode>() { new StringAppendMode() { appendMode = AppendMode.Default} };
 
         [DoNotSerialize]
         public List<ValueInput> inputPorts { get; private set; } = new List<ValueInput>();

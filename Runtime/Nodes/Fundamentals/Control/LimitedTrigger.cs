@@ -4,8 +4,13 @@ namespace Unity.VisualScripting.Community
     [UnitTitle("LimitedTrigger")]
     [UnitCategory("Community\\Control")]
     [TypeIcon(typeof(Once))]
-    public class LimitedTrigger : Unit
+    public class LimitedTrigger : Unit, IGraphElementWithData
     {
+        private class Data : IGraphElementData
+        {
+            public int timesTriggered;
+        }
+
         [DoNotSerialize]
         [PortLabelHidden]
         public ControlInput Input;
@@ -23,8 +28,6 @@ namespace Unity.VisualScripting.Community
         [DoNotSerialize]
         public ValueInput Times;
 
-        private int timesTriggered = 0;
-
         protected override void Definition()
         {
             Input = ControlInput(nameof(Input), IncreaseTimes);
@@ -41,11 +44,12 @@ namespace Unity.VisualScripting.Community
 
         private ControlOutput IncreaseTimes(Flow flow)
         {
+            var data = flow.stack.GetElementData<Data>(this);
             int timesToTrigger = (int)flow.GetValue(Times);
 
-            if (timesTriggered < timesToTrigger)
+            if (data.timesTriggered < timesToTrigger)
             {
-                timesTriggered++;
+                data.timesTriggered++;
                 return Exit;
             }
             else
@@ -56,8 +60,15 @@ namespace Unity.VisualScripting.Community
 
         private ControlOutput ResetTimes(Flow flow)
         {
-            timesTriggered = 0;
+            var data = flow.stack.GetElementData<Data>(this);
+
+            data.timesTriggered = 0;
             return null;
+        }
+
+        public IGraphElementData CreateData()
+        {
+            return new Data();
         }
     }
 }

@@ -7,6 +7,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Linq;
 using System.Reflection;
+using UnityEngine.Assemblies;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -40,7 +41,11 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             List<Type> list = new List<Type>();
 
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
 
             for (int a = 0; a < assemblies.Length; a++)
             {

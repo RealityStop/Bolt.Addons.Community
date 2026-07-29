@@ -7,9 +7,14 @@
     [RenamedFrom("Bolt.Addons.Community.Logic.Units.EdgeTrigger")]
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.EdgeTrigger")]
     [TypeIcon(typeof(ISelectUnit))]
-    public sealed class EdgeTrigger : Unit
+    public sealed class EdgeTrigger : Unit, IGraphElementWithData
     {
         public EdgeTrigger() : base() { }
+
+        private class Data : IGraphElementData
+        {
+            public bool? lastEdge;
+        }
 
         /// <summary>
         /// The entry point for the branch.
@@ -37,13 +42,18 @@
         [PortLabelHidden]
         public ControlOutput exit { get; private set; }
 
-        private bool? _lastEdge;
-
         protected override void Definition()
         {
             enter = ControlInput(nameof(enter), Enter);
             inValue = ValueInput<bool>(nameof(inValue), false);
-            outValue = ValueOutput<bool>(nameof(outValue), (recursion) => { if (_lastEdge.HasValue) return _lastEdge.Value; return false; });
+            outValue = ValueOutput<bool>(nameof(outValue), (flow) =>
+            {
+                var data = flow.stack.GetElementData<Data>(this);
+
+                if (data.lastEdge.HasValue)
+                    return data.lastEdge.Value;
+                return false;
+            });
             exit = ControlOutput(nameof(exit));
 
             Succession(enter, exit);
@@ -54,14 +64,20 @@
 
         public ControlOutput Enter(Flow flow)
         {
+            var data = flow.stack.GetElementData<Data>(this);
             bool currentValue = flow.GetValue<bool>(inValue);
-            if (!_lastEdge.HasValue || _lastEdge != currentValue)
+            if (!data.lastEdge.HasValue || data.lastEdge != currentValue)
             {
-                _lastEdge = currentValue;
+                data.lastEdge = currentValue;
                 return exit;
             }
 
             return null;
+        }
+
+        public IGraphElementData CreateData()
+        {
+            return new Data();
         }
     }
 }

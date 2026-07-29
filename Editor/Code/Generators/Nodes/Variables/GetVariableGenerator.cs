@@ -69,7 +69,10 @@ namespace Unity.VisualScripting.Community.CSharp
 
                 case VariableKind.Object:
                     writer.Write(variablesType + ".Object(");
-                    GenerateValue(Unit.@object, data, writer);
+                    using (data.Expect(typeof(GameObject)))
+                    {
+                        GenerateValue(Unit.@object, data, writer);
+                    }
                     writer.Write(")");
                     ResolveVariableTypeSafe(VisualScripting.Variables.Object(GetTarget(data)), name, data);
                     break;
@@ -184,8 +187,10 @@ namespace Unity.VisualScripting.Community.CSharp
                 writer.Write("gameObject".VariableHighlight());
                 return;
             }
-
-            GenerateValue(Unit.@object, data, writer);
+            using (data.Expect(typeof(GameObject)))
+            {
+                GenerateValue(Unit.@object, data, writer);
+            }
         }
 
         private void ResolveVariableTypeSafe(VariableDeclarations declarations, string name, ControlGenerationData data)

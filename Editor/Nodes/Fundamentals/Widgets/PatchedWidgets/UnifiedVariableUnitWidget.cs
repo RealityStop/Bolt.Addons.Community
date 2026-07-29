@@ -9,21 +9,41 @@ namespace Unity.VisualScripting.Community
 {
     public sealed class UnifiedVariableUnitWidget : UnitWidget<UnifiedVariableUnit>
     {
-        private bool isRenaming;
-        private List<(UnifiedVariableUnit, UnityEngine.Object)> renameTargets = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
-        private static List<UnifiedVariableUnit> targets = new List<UnifiedVariableUnit>();
+        #region Reflection Caching
 
-        private static FieldInfo collectionField = typeof(VariableDeclarations).GetField("collection", BindingFlags.Instance | BindingFlags.NonPublic);
-        private MethodInfo setNameMethod = typeof(VariableDeclaration).GetProperty("name", BindingFlags.Instance | BindingFlags.Public).GetSetMethod(true);
+        private static readonly FieldInfo CollectionField =
+            typeof(VariableDeclarations).GetField("collection", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly MethodInfo SetNameMethod =
+            typeof(VariableDeclaration).GetProperty("name", BindingFlags.Instance | BindingFlags.Public)?.GetSetMethod(true);
+
+        #endregion
+
+        private static readonly List<UnifiedVariableUnit> ActiveRenameTargets = new List<UnifiedVariableUnit>();
+        private static UnifiedVariableUnit closestToMouse;
+
+        private readonly List<(UnifiedVariableUnit, UnityEngine.Object)> renameTargets = new List<(UnifiedVariableUnit, UnityEngine.Object)>();
+        private readonly Func<Metadata, VariableNameInspector> nameInspectorConstructor;
+        private readonly string controlName;
 
         private VariableDeclarationCollection collection;
         private VariableDeclarationCollection savedCollection;
         private GameObject storedObject;
-
-        private static UnifiedVariableUnit closestToMouse;
-
         private VariableKind previousKind;
-        private readonly string controlName;
+
+        private VariableNameInspector nameInspector;
+        private string newProjectName;
+        private string oldProjectName;
+        private bool isRenaming;
+
+        protected override NodeColorMix baseColor => NodeColorMix.TealReadable;
+
+        public UnifiedVariableUnitWidget(FlowCanvas canvas, UnifiedVariableUnit unit) : base(canvas, unit)
+        {
+            controlName = $"{unit}_VariableNameInspector";
+
+            nameInspectorConstructor = metadata => new VariableNameInspector(metadata, GetNameSuggestions, OnVariableRenamed, controlName);
+        }
 
         public override void CachePosition()
         {
@@ -37,316 +57,45 @@ namespace Unity.VisualScripting.Community
                 storedObject = null;
             }
 
-            switch (unit.kind)
+            if (collection == null)
             {
-                case VariableKind.Graph:
-                    if (collection == null)
-                        collection = (VariableDeclarationCollection)collectionField.GetValue(VisualScripting.Variables.Graph(reference));
-                    break;
-                case VariableKind.Object:
-                    if (collection != null) break;
-
-                    if (!Flow.CanPredict(unit.@object, reference)) break;
-
-                    var value = Flow.Predict(unit.@object, reference);
-                    if (value is GameObject @object)
-                    {
-                        if (@object != null && storedObject != @object)
-                        {
-                            storedObject = @object;
-                            collection = (VariableDeclarationCollection)collectionField.GetValue(VisualScripting.Variables.Object(@object));
-                        }
-                    }
-
-                    break;
-                case VariableKind.Scene:
-                    if (collection == null && reference.scene != null)
-                        collection = (VariableDeclarationCollection)collectionField.GetValue(VisualScripting.Variables.Scene(reference.scene));
-                    break;
-                case VariableKind.Application:
-                    if (collection == null)
-                        collection = (VariableDeclarationCollection)collectionField.GetValue(VisualScripting.Variables.Application);
-                    break;
-                case VariableKind.Saved:
-                    if (collection == null)
-                        collection = (VariableDeclarationCollection)collectionField.GetValue(VisualScripting.Variables.Saved);
-                    if (savedCollection == null)
-                        savedCollection = (VariableDeclarationCollection)collectionField.GetValue(SavedVariables.saved);
-                    break;
+                ResolveVariableCollections();
             }
-        }
-
-        private string newProjectName;
-        private string oldProjectName;
-        public UnifiedVariableUnitWidget(FlowCanvas canvas, UnifiedVariableUnit unit) : base(canvas, unit)
-        {
-            controlName = unit.ToString() + "_VariableNameInspector";
-            nameInspectorConstructor = (metadata) => new VariableNameInspector(metadata, GetNameSuggestions, (oldName, newName) =>
-            {
-                if (isRenaming)
-                {
-                    switch (unit.kind)
-                    {
-                        case VariableKind.Graph:
-                            {
-                                var declarations = VisualScripting.Variables.Graph(reference);
-                                RenameVariable(oldName, newName, declarations);
-                            }
-                            break;
-                        case VariableKind.Object:
-                            {
-                                if (storedObject == null) break;
-
-                                var declarations = VisualScripting.Variables.Object(storedObject);
-                                RenameVariable(oldName, newName, declarations);
-                            }
-                            break;
-                        case VariableKind.Scene:
-                            {
-                                if (reference.scene == null) break;
-
-                                var declarations = VisualScripting.Variables.Scene(reference.scene);
-                                RenameVariable(oldName, newName, declarations);
-                            }
-                            break;
-                        case VariableKind.Application:
-                            {
-                                var declarations = VisualScripting.Variables.Application;
-                                newName = RenameVariable(oldName, newName, declarations);
-
-                                newProjectName = newName;
-                            }
-                            break;
-                        case VariableKind.Saved:
-                            {
-                                var mainDeclarations = VisualScripting.Variables.Saved;
-
-                                newName = RenameVariable(oldName, newName, mainDeclarations);
-
-                                if (!Application.isPlaying)
-                                {
-                                    var saved = SavedVariables.saved;
-                                    
-                                    newName = RenameVariable(oldName, newName, saved);
-                                }
-
-                                newProjectName = newName;
-                            }
-                            break;
-                    }
-
-                    var group = Undo.GetCurrentGroup();
-                    foreach (var target in renameTargets)
-                    {
-                        if (target.Item1.name.hasValidConnection) continue;
-
-                        if (target.Item2 != null)
-                            Undo.RecordObject(target.Item2, $"Renamed '{oldName}' variable to '{newName}'");
-
-                        target.Item1.name.SetDefaultValue(newName);
-                    }
-                    Undo.CollapseUndoOperations(group);
-
-                    if (GUI.GetNameOfFocusedControl() != controlName)
-                    {
-                        isRenaming = false;
-                        targets.Clear();
-                    }
-                }
-            }, controlName);
-        }
-
-        private string RenameVariable(string oldName, string newName, VariableDeclarations declarations)
-        {
-            if (declarations.IsDefined(oldName))
-            {
-                var declaration = declarations.GetDeclaration(oldName);
-
-                newName = OperateOnString(declarations, newName);
-
-                collection.EditorRename(declaration, newName);
-                setNameMethod.Invoke(declaration, new object[] { newName });
-            }
-            return newName;
-        }
-
-        private string OperateOnString(VariableDeclarations declarations, string newName)
-        {
-            if (string.IsNullOrEmpty(newName))
-            {
-                int counter = 1;
-
-                var baseName = "Unnamed Variable";
-                newName = baseName;
-                while (declarations.IsDefined(newName))
-                {
-                    newName = $"{baseName} ({counter++})";
-                }
-            }
-            else if (declarations.IsDefined(newName))
-            {
-                int counter = 1;
-
-                var baseName = newName;
-                newName = baseName;
-                while (declarations.IsDefined(newName))
-                {
-                    newName = $"{baseName} ({counter++})";
-                }
-            }
-            return newName;
         }
 
         public override void DrawForeground()
         {
             base.DrawForeground();
-            if (targets.Contains(unit))
+
+            if (ActiveRenameTargets.Contains(unit))
+            {
                 GraphGUI.DrawDragAndDropPreviewLabel(new Vector2(edgePosition.x, outerPosition.yMax), "Renaming", typeof(string).Icon());
+            }
         }
 
         public override void HandleInput()
         {
-            if (!unit.name.hasValidConnection && e != null && e.keyCode == KeyCode.F2 && selection.Contains(unit))
+            if (ShouldStartRename())
             {
-                if (selection.Count(e => e is UnifiedVariableUnit) > 1)
-                {
-                    if (closestToMouse == null) closestToMouse = unit;
-                    else if (Vector2.Distance(unit.position, e.mousePosition) < Vector2.Distance(closestToMouse.position, e.mousePosition))
-                    {
-                        closestToMouse = unit;
-                    }
-                }
-                else
-                {
-                    closestToMouse = unit;
-                }
-
-                if (closestToMouse != null && closestToMouse != unit) return;
-
-                if (IsSceneRequired() && reference.gameObject == null)
-                {
-                    Debug.LogWarning(
-                        $"[Rename Variables] The selected variable is an {unit.kind} variable inside an Asset. " +
-                        $"{reference.rootObject.GetType().DisplayName()}'s do not have access to the scene this graph is used in. Rename the variable directly from the GameObject or Scene itself."
-                    );
-                    return;
-                }
-
-                EditorGUI.FocusTextInControl(controlName);
-                switch (unit.kind)
-                {
-                    case VariableKind.Flow:
-                        targets = GraphUtility.GetFlowVariablesRenameTargets(unit, unit.defaultValues[unit.name.key] as string, reference);
-                        renameTargets = targets.Select<UnifiedVariableUnit, (UnifiedVariableUnit, UnityEngine.Object)>(t => (t, null)).ToList();
-                        isRenaming = true;
-                        break;
-                    case VariableKind.Graph:
-                        targets = GraphUtility.GetGraphVariablesRenameTargets(graph as FlowGraph, unit.defaultValues[unit.name.key] as string);
-                        renameTargets = targets.Select<UnifiedVariableUnit, (UnifiedVariableUnit, UnityEngine.Object)>(t => (t, null)).ToList();
-                        isRenaming = true;
-                        break;
-                    case VariableKind.Object:
-                        if (Flow.CanPredict(unit.@object, reference))
-                        {
-                            var value = Flow.Predict(unit.@object, reference);
-                            if (value is GameObject @object)
-                            {
-                                renameTargets = GraphUtility.GetObjectVariablesRenameTargets(reference, @object, unit.defaultValues[unit.name.key] as string);
-                                targets = renameTargets.Select(t => t.Item1).ToList();
-                                isRenaming = true;
-                            }
-                        }
-                        break;
-                    case VariableKind.Scene:
-                        if (reference.scene != null && SceneVariables.InstantiatedIn(reference.scene.Value))
-                        {
-                            renameTargets = GraphUtility.GetSceneVariablesRenameTargets(reference, reference.scene, unit.defaultValues[unit.name.key] as string);
-                            targets = renameTargets.Select(t => t.Item1).ToList();
-                            isRenaming = true;
-                        }
-                        break;
-                    default:
-                        if (Application.isPlaying)
-                        {
-                            Debug.LogWarning($"[Rename Variables] Cannot rename all {unit.kind} variables while in play mode!");
-                            break;
-                        }
-                        isRenaming = true;
-                        renameTargets = GraphUtility.GetCurrentlyAccessibleProjectUnits(unit.defaultValues[unit.name.key] as string, unit.kind);
-                        targets = renameTargets.Select(t => t.Item1).ToList();
-                        oldProjectName = unit.defaultValues[unit.name.key] as string;
-                        break;
-                }
+                ExecuteStartRename();
             }
-            else if (isRenaming && (!selection.Contains(unit) ||
-            GUI.GetNameOfFocusedControl() != controlName ||
-            e.keyCode == KeyCode.Return || e.keyCode == KeyCode.Escape || !canvas.isMouseOver))
+            else if (ShouldEndRename())
             {
-                isRenaming = false;
-                targets.Clear();
-                switch (unit.kind)
-                {
-                    case VariableKind.Application:
-                        {
-                            bool choice = oldProjectName != newProjectName && EditorUtility.DisplayDialog(
-                                "Update ALL Application Variables?",
-                                "This will go through ALL scenes and macros to find every Variable Unit "
-                                + $"using {oldProjectName} and update it to {newProjectName}.\n\n"
-                                + "This operation is FINAL and cannot be undone!",
-                                "Update All",
-                                "Rename Only"
-                            );
-
-                            if (choice)
-                            {
-                                GraphUtility.RenameApplicationVariables(oldProjectName, newProjectName);
-                            }
-                        }
-                        break;
-                    case VariableKind.Saved:
-                        {
-                            bool choice = oldProjectName != newProjectName && EditorUtility.DisplayDialog(
-                                "Update ALL Saved Variables?",
-                                "This will go through ALL scenes and macros to find every Variable Unit "
-                                + $"using {oldProjectName} and update it to {newProjectName}.\n\n"
-                                + "This operation is FINAL and cannot be undone!",
-                                "Update All",
-                                "Rename Only"
-                            );
-
-                            if (choice)
-                            {
-                                GraphUtility.RenameSavedVariables(oldProjectName, newProjectName);
-                            }
-                        }
-                        break;
-                }
-                oldProjectName = null;
-                newProjectName = null;
+                ExecuteEndRename();
             }
             else if (!selection.Contains(unit))
             {
                 isRenaming = false;
             }
+
             base.HandleInput();
         }
-
-        private bool IsSceneRequired()
-        {
-            return unit.kind == VariableKind.Object || unit.kind == VariableKind.Scene;
-        }
-
-        protected override NodeColorMix baseColor => NodeColorMix.TealReadable;
-
-        private VariableNameInspector nameInspector;
-        private Func<Metadata, VariableNameInspector> nameInspectorConstructor;
 
         public override Inspector GetPortInspector(IUnitPort port, Metadata metadata)
         {
             if (port == unit.name)
             {
                 InspectorProvider.instance.Renew(ref nameInspector, metadata, nameInspectorConstructor);
-
                 return nameInspector;
             }
 
@@ -362,39 +111,296 @@ namespace Unity.VisualScripting.Community
                     yield return option;
                 }
 
-                if (!unit.name.hasValidConnection && !Flow.CanPredict(unit.name, reference))
-                    yield break;
-
-                yield return new DropdownOption((Action)FindAll, "Find/All");
-                yield return new DropdownOption((Action)FindSetters, "Find/Setters");
-                yield return new DropdownOption((Action)FindGetters, "Find/Getters");
+                if (!unit.name.hasValidConnection && Flow.CanPredict(unit.name, reference))
+                {
+                    yield return new DropdownOption((Action)FindAll, "Find/All");
+                    yield return new DropdownOption((Action)FindSetters, "Find/Setters");
+                    yield return new DropdownOption((Action)FindGetters, "Find/Getters");
+                }
             }
         }
 
-        private void FindAll()
+        #region Variable Collection Handling
+
+        private void ResolveVariableCollections()
         {
-            var value = Flow.Predict(unit.name, reference);
-            if (value is string name)
-                NodeFinderWindow.Open($"{name} [SetVariable: {unit.kind}] | {name} [GetVariable: {unit.kind}]");
+            switch (unit.kind)
+            {
+                case VariableKind.Graph:
+                    collection = GetCollection(VisualScripting.Variables.Graph(reference));
+                    break;
+
+                case VariableKind.Object:
+                    if (Flow.CanPredict(unit.@object, reference) && Flow.Predict(unit.@object, reference) is GameObject go)
+                    {
+                        if (go != null && storedObject != go)
+                        {
+                            storedObject = go;
+                            collection = GetCollection(VisualScripting.Variables.Object(go));
+                        }
+                    }
+                    break;
+
+                case VariableKind.Scene:
+                    if (reference.scene != null)
+                        collection = GetCollection(VisualScripting.Variables.Scene(reference.scene));
+                    break;
+
+                case VariableKind.Application:
+                    collection = GetCollection(VisualScripting.Variables.Application);
+                    break;
+
+                case VariableKind.Saved:
+                    collection = GetCollection(VisualScripting.Variables.Saved);
+                    savedCollection = GetCollection(SavedVariables.saved);
+                    break;
+            }
         }
 
-        private void FindSetters()
+        private static VariableDeclarationCollection GetCollection(VariableDeclarations declarations)
         {
-            var value = Flow.Predict(unit.name, reference);
-            if (value is string name)
-                NodeFinderWindow.Open($"{name} [SetVariable: {unit.kind}]");
+            return declarations != null ? (VariableDeclarationCollection)CollectionField?.GetValue(declarations) : null;
         }
 
-        private void FindGetters()
+        #endregion
+
+        #region Renaming Logic
+
+        private void OnVariableRenamed(string oldName, string newName)
         {
-            var value = Flow.Predict(unit.name, reference);
-            if (value is string name)
-                NodeFinderWindow.Open($"{name} [GetVariable: {unit.kind}]");
+            if (!isRenaming) return;
+
+            switch (unit.kind)
+            {
+                case VariableKind.Graph:
+                    RenameVariable(oldName, newName, VisualScripting.Variables.Graph(reference));
+                    break;
+
+                case VariableKind.Object:
+                    if (storedObject != null)
+                        RenameVariable(oldName, newName, VisualScripting.Variables.Object(storedObject));
+                    break;
+
+                case VariableKind.Scene:
+                    if (reference.scene != null)
+                        RenameVariable(oldName, newName, VisualScripting.Variables.Scene(reference.scene));
+                    break;
+
+                case VariableKind.Application:
+                    newName = RenameVariable(oldName, newName, VisualScripting.Variables.Application);
+                    newProjectName = newName;
+                    break;
+
+                case VariableKind.Saved:
+                    newName = RenameVariable(oldName, newName, VisualScripting.Variables.Saved);
+                    if (!Application.isPlaying)
+                    {
+                        newName = RenameVariable(oldName, newName, SavedVariables.saved);
+                    }
+                    newProjectName = newName;
+                    break;
+            }
+
+            int group = Undo.GetCurrentGroup();
+            foreach (var (targetUnit, targetObject) in renameTargets)
+            {
+                if (targetUnit.name.hasValidConnection) continue;
+
+                if (targetObject != null)
+                {
+                    Undo.RecordObject(targetObject, $"Renamed '{oldName}' variable to '{newName}'");
+                }
+
+                targetUnit.name.SetDefaultValue(newName);
+            }
+            Undo.CollapseUndoOperations(group);
+
+            if (GUI.GetNameOfFocusedControl() != controlName)
+            {
+                isRenaming = false;
+                ActiveRenameTargets.Clear();
+            }
+        }
+
+        private string RenameVariable(string oldName, string newName, VariableDeclarations declarations)
+        {
+            if (declarations == null || !declarations.IsDefined(oldName))
+                return newName;
+
+            var declaration = declarations.GetDeclaration(oldName);
+            newName = EnsureUniqueName(declarations, newName);
+
+            collection?.EditorRename(declaration, newName);
+            SetNameMethod?.Invoke(declaration, new object[] { newName });
+
+            return newName;
+        }
+
+        private static string EnsureUniqueName(VariableDeclarations declarations, string candidateName)
+        {
+            string baseName = string.IsNullOrEmpty(candidateName) ? "Unnamed Variable" : candidateName;
+            string finalName = baseName;
+            int counter = 1;
+
+            while (declarations.IsDefined(finalName))
+            {
+                finalName = $"{baseName} ({counter++})";
+            }
+
+            return finalName;
+        }
+
+        private bool ShouldStartRename()
+        {
+            return !unit.name.hasValidConnection && e != null && e.keyCode == KeyCode.F2 && selection.Contains(unit);
+        }
+
+        private void ExecuteStartRename()
+        {
+            if (selection.Count(s => s is UnifiedVariableUnit) > 1)
+            {
+                if (closestToMouse == null || Vector2.Distance(unit.position, e.mousePosition) < Vector2.Distance(closestToMouse.position, e.mousePosition))
+                {
+                    closestToMouse = unit;
+                }
+            }
+            else
+            {
+                closestToMouse = unit;
+            }
+
+            if (closestToMouse != null && closestToMouse != unit) return;
+
+            if (IsSceneRequired() && reference.gameObject == null)
+            {
+                Debug.LogWarning(
+                    $"[Rename Variables] The selected variable is an {unit.kind} variable inside an Asset. " +
+                    $"{reference.rootObject.GetType().DisplayName()} does not have access to the scene this graph is used in."
+                );
+                return;
+            }
+
+            EditorGUI.FocusTextInControl(controlName);
+            string currentName = unit.defaultValues[unit.name.key] as string;
+
+            switch (unit.kind)
+            {
+                case VariableKind.Flow:
+                    ActiveRenameTargets.Clear();
+                    ActiveRenameTargets.AddRange(GraphUtility.GetFlowVariablesRenameTargets(unit, currentName, reference));
+                    renameTargets.Clear();
+                    renameTargets.AddRange(ActiveRenameTargets.Select<UnifiedVariableUnit, (UnifiedVariableUnit, UnityEngine.Object)>(t => (t, null)));
+                    isRenaming = true;
+                    break;
+
+                case VariableKind.Graph:
+                    ActiveRenameTargets.Clear();
+                    ActiveRenameTargets.AddRange(GraphUtility.GetGraphVariablesRenameTargets(graph as FlowGraph, currentName));
+                    renameTargets.Clear();
+                    renameTargets.AddRange(ActiveRenameTargets.Select<UnifiedVariableUnit, (UnifiedVariableUnit, UnityEngine.Object)>(t => (t, null)));
+                    isRenaming = true;
+                    break;
+
+                case VariableKind.Object:
+                    if (Flow.CanPredict(unit.@object, reference) && Flow.Predict(unit.@object, reference) is GameObject go)
+                    {
+                        renameTargets.Clear();
+                        renameTargets.AddRange(GraphUtility.GetObjectVariablesRenameTargets(reference, go, currentName));
+                        ActiveRenameTargets.Clear();
+                        ActiveRenameTargets.AddRange(renameTargets.Select(t => t.Item1));
+                        isRenaming = true;
+                    }
+                    break;
+
+                case VariableKind.Scene:
+                    if (reference.scene != null && SceneVariables.InstantiatedIn(reference.scene.Value))
+                    {
+                        renameTargets.Clear();
+                        renameTargets.AddRange(GraphUtility.GetSceneVariablesRenameTargets(reference, reference.scene, currentName));
+                        ActiveRenameTargets.Clear();
+                        ActiveRenameTargets.AddRange(renameTargets.Select(t => t.Item1));
+                        isRenaming = true;
+                    }
+                    break;
+
+                default:
+                    if (Application.isPlaying)
+                    {
+                        Debug.LogWarning($"[Rename Variables] Cannot rename all {unit.kind} variables while in play mode!");
+                        break;
+                    }
+                    isRenaming = true;
+                    renameTargets.Clear();
+                    renameTargets.AddRange(GraphUtility.GetCurrentlyAccessibleProjectUnits(currentName, unit.kind));
+                    ActiveRenameTargets.Clear();
+                    ActiveRenameTargets.AddRange(renameTargets.Select(t => t.Item1));
+                    oldProjectName = currentName;
+                    break;
+            }
+        }
+
+        private bool ShouldEndRename()
+        {
+            return isRenaming && (!selection.Contains(unit) ||
+                   GUI.GetNameOfFocusedControl() != controlName ||
+                   e.keyCode == KeyCode.Return ||
+                   e.keyCode == KeyCode.Escape ||
+                   !canvas.isMouseOver);
+        }
+
+        private void ExecuteEndRename()
+        {
+            isRenaming = false;
+            ActiveRenameTargets.Clear();
+
+            if (oldProjectName != null && newProjectName != null && oldProjectName != newProjectName)
+            {
+                if (unit.kind == VariableKind.Application || unit.kind == VariableKind.Saved)
+                {
+                    bool confirm = EditorUtility.DisplayDialog(
+                        $"Update ALL {unit.kind} Variables?",
+                        $"This will search ALL scenes and macros to update '{oldProjectName}' to '{newProjectName}'.\n\nThis operation is FINAL and cannot be undone!",
+                        "Update All",
+                        "Rename Only"
+                    );
+
+                    if (confirm)
+                    {
+                        if (unit.kind == VariableKind.Application)
+                            GraphUtility.RenameApplicationVariables(oldProjectName, newProjectName);
+                        else
+                            GraphUtility.RenameSavedVariables(oldProjectName, newProjectName);
+                    }
+                }
+            }
+
+            oldProjectName = null;
+            newProjectName = null;
+        }
+
+        private bool IsSceneRequired() => unit.kind == VariableKind.Object || unit.kind == VariableKind.Scene;
+
+        #endregion
+
+        #region Search Helpers
+
+        private void FindAll() => OpenNodeFinder($"{{0}} [SetVariable: {unit.kind}] | {{0}} [GetVariable: {unit.kind}]");
+        private void FindSetters() => OpenNodeFinder($"{{0}} [SetVariable: {unit.kind}]");
+        private void FindGetters() => OpenNodeFinder($"{{0}} [GetVariable: {unit.kind}]");
+
+        private void OpenNodeFinder(string querySuffix)
+        {
+            if (Flow.Predict(unit.name, reference) is string varName)
+            {
+                NodeFinderWindow.Open(string.Format(querySuffix, varName));
+            }
         }
 
         private IEnumerable<string> GetNameSuggestions()
         {
             return EditorVariablesUtility.GetVariableNameSuggestions(unit.kind, reference);
         }
+
+        #endregion
     }
 }

@@ -32,8 +32,12 @@ namespace Unity.VisualScripting.Community
         protected override void Definition()
         {
             input = ValueInput(portType, "in");
-            output = ValueOutput(portType, "out", (flow) => { return flow.GetValue(input); });
-            Requirement(input, output);
+            output = ValueOutput(portType, "out", (flow) => { return flow.GetValue(input); }).PredictableIf(f =>
+            {
+                var connection = input.connection;
+
+                return connection != null && Flow.CanPredict(connection.source, f.stack.AsReference());
+            });
         }
     }
 }
