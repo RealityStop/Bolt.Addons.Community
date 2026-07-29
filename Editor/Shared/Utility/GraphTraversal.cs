@@ -197,6 +197,23 @@ namespace Unity.VisualScripting.Community
             else return $"Embed {nester.GetType().Name}";
         }
 
+        public static string GetNesterName(IGraphNesterElement nester)
+        {
+            if (nester is INesterUnit nesterUnit) return GetNesterUnitName(nesterUnit);
+            else if (nester is INesterState nesterState) return GetNesterStateName(nesterState);
+            else if (nester is INesterStateTransition nesterStateTransition) return GetNesterStateTransitionName(nesterStateTransition);
+
+            if (!string.IsNullOrEmpty(nester.nest.graph.title))
+            {
+                return nester.nest.graph.title;
+            }
+            else if (nester.nest.source == GraphSource.Macro && nester.nest.macro is Object @object)
+            {
+                return @object.name;
+            }
+            else return $"Embed {nester.GetType().Name}";
+        }
+
         public static void TraverseGraph(IGraph graph, System.Action<Unit> visit)
         {
             if (graph == null || visit == null) return;

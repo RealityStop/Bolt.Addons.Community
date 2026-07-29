@@ -19,6 +19,7 @@ namespace Unity.VisualScripting.Community
         [SerializeField]
         public List<TypeParam> parameters = new List<TypeParam>();
         [Serialize]
+        [NonSerialized]
         public Dictionary<string, object> fields = new Dictionary<string, object>();
         [Serialize]
         private SerializationData fieldsSerialization;

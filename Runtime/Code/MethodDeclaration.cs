@@ -23,6 +23,7 @@ namespace Unity.VisualScripting.Community
             Nested = true, NonPublic = false, NonSerializable = true, Object = true, Obsolete = false, OpenConstructedGeneric = false,
             Primitives = true, Public = true, Reference = true, Sealed = true, Static = false, Structs = true, Value = true)]
         [FullSerializer.fsProperty(Converter = typeof(FakeGenericParameterTypeConverter))]
+        [NonSerialized]
         public Type returnType = typeof(Libraries.CSharp.Void);
 
         [SerializeField]
@@ -31,6 +32,7 @@ namespace Unity.VisualScripting.Community
 
         public int genericParameterCount => genericParameters.Count;
 
+        [NonSerialized]
         public List<GenericParameter> genericParameters = new List<GenericParameter>();
 
         /// <summary>

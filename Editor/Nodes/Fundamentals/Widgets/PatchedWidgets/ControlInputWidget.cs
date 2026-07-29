@@ -9,9 +9,11 @@ namespace Unity.VisualScripting.Community
 
         protected override Edge edge => Edge.Top;
 
-        protected override Texture handleTextureConnected => PathUtil.Load("ConnectedHandle", CommunityEditorPath.Fundamentals)?[12];
+        protected override Edge connectionEndEdge => Edge.Bottom;
 
-        protected override Texture handleTextureUnconnected => PathUtil.Load("UnconnectedHandle", CommunityEditorPath.Fundamentals)?[12];
+        protected override Texture handleTextureConnected => CommunityStyles.controlPortConnected;
+
+        protected override Texture handleTextureUnconnected => CommunityStyles.controlPortUnconnected;
 
         protected override bool colorIfActive => !BoltFlow.Configuration.animateControlConnections || !BoltFlow.Configuration.animateValueConnections;
 
@@ -42,6 +44,8 @@ namespace Unity.VisualScripting.Community
                 identifierPosition = identifierPosition.Encompass(labelPosition);
                 this.labelPosition = labelPosition;
             }
+
+            surroundPosition = Styles.surroundPadding.Add(identifierPosition);
         }
     }
 }

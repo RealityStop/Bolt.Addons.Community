@@ -1,153 +1,153 @@
-using UnityEngine;
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
     public static class RectUtility
     {
+        public struct SnapLine
+        {
+            public Vector2 start;
+            public Vector2 end;
+        }
+
         public struct SnapResult
         {
-            public bool snapped;
+            public bool snappedX;
+            public bool snappedY;
             public Vector2 snapPosition;
-            public List<Line> snapLines;
+            
+            public bool hasVerticalLine;
+            public SnapLine verticalLine;
+            
+            public bool hasHorizontalLine;
+            public SnapLine horizontalLine;
 
-            public struct Line
-            {
-                public Vector2 start;
-                public Vector2 end;
-            }
+            public bool snapped => snappedX || snappedY;
         }
 
         public static SnapResult CheckSnap(Rect current, List<Rect> others, float threshold = 5f)
         {
             SnapResult result = new SnapResult
             {
-                snapped = false,
-                snapPosition = current.position,
-                snapLines = new List<SnapResult.Line>()
+                snapPosition = current.position
             };
 
-            Vector2 newPos = current.position;
+            float bestXDist = threshold;
+            float bestYDist = threshold;
 
-            SnapResult.Line? closestHorizontalLine = null;
-            float closestHorizontalDistance = float.MaxValue;
+            float deltaX = 0f;
+            float deltaY = 0f;
 
-            SnapResult.Line? closestVerticalLine = null;
-            float closestVerticalDistance = float.MaxValue;
+            int bestXTargetIdx = -1;
+            int bestYTargetIdx = -1;
+            float bestXValue = 0f;
+            float bestYValue = 0f;
 
-            foreach (var target in others)
+            for (int i = 0; i < others.Count; i++)
             {
+                Rect target = others[i];
                 if (target == current) continue;
 
-                float[] currentX = { current.xMin, current.center.x, current.xMax };
-                float[] targetX = { target.xMin, target.center.x, target.xMax };
-
-                for (int ci = 0; ci < currentX.Length; ci++)
+                for (int ci = 0; ci < 3; ci++)
                 {
-                    for (int ti = 0; ti < targetX.Length; ti++)
+                    float cx = GetXPoint(current, ci);
+                    for (int ti = 0; ti < 3; ti++)
                     {
-                        float cx = currentX[ci];
-                        float tx = targetX[ti];
+                        float tx = GetXPoint(target, ti);
                         float dist = Mathf.Abs(cx - tx);
 
-                        if (dist <= threshold && dist < closestHorizontalDistance)
+                        if (dist < bestXDist)
                         {
-                            closestHorizontalDistance = dist;
-                            float deltaX = tx - cx;
-
-                            Rect moved = current;
-                            moved.position += new Vector2(deltaX, 0);
-
-                            newPos.x = moved.x;
-
-                            float yStart = Mathf.Max(moved.yMin, target.yMin);
-                            float yEnd = Mathf.Min(moved.yMax, target.yMax);
-
-                            if (yStart > yEnd)
-                            {
-                                if (moved.center.y < target.center.y)
-                                {
-                                    yStart = moved.yMax;
-                                    yEnd = target.yMin;
-                                }
-                                else
-                                {
-                                    yStart = target.yMax;
-                                    yEnd = moved.yMin;
-                                }
-                            }
-
-                            closestHorizontalLine = new SnapResult.Line
-                            {
-                                start = new Vector2(tx, yStart),
-                                end = new Vector2(tx, yEnd)
-                            };
+                            bestXDist = dist;
+                            deltaX = tx - cx;
+                            bestXTargetIdx = i;
+                            bestXValue = tx;
                         }
                     }
                 }
 
-                float[] currentY = { current.yMin, current.center.y, current.yMax };
-                float[] targetY = { target.yMin, target.center.y, target.yMax };
-
-                for (int ci = 0; ci < currentY.Length; ci++)
+                for (int ci = 0; ci < 3; ci++)
                 {
-                    for (int ti = 0; ti < targetY.Length; ti++)
+                    float cy = GetYPoint(current, ci);
+                    for (int ti = 0; ti < 3; ti++)
                     {
-                        float cy = currentY[ci];
-                        float ty = targetY[ti];
+                        float ty = GetYPoint(target, ti);
                         float dist = Mathf.Abs(cy - ty);
 
-                        if (dist <= threshold && dist < closestVerticalDistance)
+                        if (dist < bestYDist)
                         {
-                            closestVerticalDistance = dist;
-                            float deltaY = ty - cy;
-
-                            Rect moved = current;
-                            moved.position += new Vector2(0, deltaY);
-
-                            newPos.y = moved.y;
-
-                            float xStart = Mathf.Max(moved.xMin, target.xMin);
-                            float xEnd = Mathf.Min(moved.xMax, target.xMax);
-
-                            if (xStart > xEnd)
-                            {
-                                if (moved.center.x < target.center.x)
-                                {
-                                    xStart = moved.xMax;
-                                    xEnd = target.xMin;
-                                }
-                                else
-                                {
-                                    xStart = target.xMax;
-                                    xEnd = moved.xMin;
-                                }
-                            }
-
-                            closestVerticalLine = new SnapResult.Line
-                            {
-                                start = new Vector2(xStart, ty),
-                                end = new Vector2(xEnd, ty)
-                            };
+                            bestYDist = dist;
+                            deltaY = ty - cy;
+                            bestYTargetIdx = i;
+                            bestYValue = ty;
                         }
                     }
                 }
             }
 
-            if (closestHorizontalLine.HasValue)
+            if (bestXTargetIdx != -1)
             {
-                result.snapLines.Add(closestHorizontalLine.Value);
-                result.snapped = true;
+                result.snappedX = true;
+                result.snapPosition.x += deltaX;
             }
 
-            if (closestVerticalLine.HasValue)
+            if (bestYTargetIdx != -1)
             {
-                result.snapLines.Add(closestVerticalLine.Value);
-                result.snapped = true;
+                result.snappedY = true;
+                result.snapPosition.y += deltaY;
             }
 
-            result.snapPosition = newPos.PixelPerfect();
+            result.snapPosition = result.snapPosition.PixelPerfect();
+
+            Rect snappedRect = new Rect(result.snapPosition, current.size);
+
+            if (bestXTargetIdx != -1)
+            {
+                Rect target = others[bestXTargetIdx];
+                result.hasVerticalLine = true;
+
+                float yMin = Mathf.Min(snappedRect.yMin, target.yMin);
+                float yMax = Mathf.Max(snappedRect.yMax, target.yMax);
+
+                result.verticalLine = new SnapLine
+                {
+                    start = new Vector2(bestXValue, yMin),
+                    end = new Vector2(bestXValue, yMax)
+                };
+            }
+
+            if (bestYTargetIdx != -1)
+            {
+                Rect target = others[bestYTargetIdx];
+                result.hasHorizontalLine = true;
+
+                float xMin = Mathf.Min(snappedRect.xMin, target.xMin);
+                float xMax = Mathf.Max(snappedRect.xMax, target.xMax);
+
+                result.horizontalLine = new SnapLine
+                {
+                    start = new Vector2(xMin, bestYValue),
+                    end = new Vector2(xMax, bestYValue)
+                };
+            }
+
             return result;
         }
+
+        private static float GetXPoint(in Rect r, int index) => index switch
+        {
+            0 => r.xMin,
+            1 => r.center.x,
+            _ => r.xMax
+        };
+
+        private static float GetYPoint(in Rect r, int index) => index switch
+        {
+            0 => r.yMin,
+            1 => r.center.y,
+            _ => r.yMax
+        };
     }
 }

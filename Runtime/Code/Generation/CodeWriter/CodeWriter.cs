@@ -7,6 +7,7 @@ using Unity.VisualScripting.Community.CSharp;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
+using UnityEngine.Assemblies;
 
 namespace Unity.VisualScripting.Community
 {
@@ -161,6 +162,21 @@ namespace Unity.VisualScripting.Community
             rawBuilder.Append(raw);
             highlightedBuilder.Append(text);
             return this;
+        }
+
+        public CodeWriter WriteIndented(string text, int amount = 1)
+        {
+            var oldIndent = IndentLevel;
+            try
+            {
+                Indent(amount);
+
+                return WriteIndented(text);
+            }
+            finally
+            {
+                IndentLevel = oldIndent;
+            }
         }
 
         public CodeWriter WriteLine(string text = "")
@@ -494,9 +510,11 @@ namespace Unity.VisualScripting.Community
             if (cached) return;
 
             Dictionary<string, HashSet<string>> map = new Dictionary<string, HashSet<string>>();
-
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
+#endif
             for (int a = 0; a < assemblies.Length; a++)
             {
                 Type[] types;
@@ -554,7 +572,9 @@ namespace Unity.VisualScripting.Community
         NewLineBefore = 1 << 1,
         NewLineAfter = 1 << 2,
         NewLineBeforeAndAfter = NewLineBefore | NewLineAfter,
-        IndentedNewLineAfter = Indented | NewLineAfter
+        IndentedNewLineBefore = Indented | NewLineBefore,
+        IndentedNewLineAfter = Indented | NewLineAfter,
+        IndentedNewLineAfterAndBefore = Indented | NewLineBeforeAndAfter
     }
 
     [Flags]

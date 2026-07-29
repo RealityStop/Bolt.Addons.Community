@@ -2,16 +2,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assemblies;
 
 namespace Unity.VisualScripting.Community
 {
     public class SurroundWithWindow : EditorWindow
     {
         private static List<Type> surroundCommands;
-        public static Action<SurroundCommand> onCommandSelected {get; private set; }
+        public static Action<SurroundCommand> onCommandSelected { get; private set; }
         private bool positionSet;
         private Vector2 mousePosition;
 
@@ -24,7 +26,14 @@ namespace Unity.VisualScripting.Community
         {
             var window = CreateInstance<SurroundWithWindow>();
             SurroundWithWindow.onCommandSelected = onCommandSelected;
-            surroundCommands = AppDomain.CurrentDomain.GetAssemblies()
+
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
+
+            surroundCommands = assemblies
                 .SelectMany(assembly => assembly.GetTypes())
                 .Where(type => typeof(ISurroundWithCommandBase).IsAssignableFrom(type) && !type.IsAbstract && !type.IsInterface)
                 .ToList();

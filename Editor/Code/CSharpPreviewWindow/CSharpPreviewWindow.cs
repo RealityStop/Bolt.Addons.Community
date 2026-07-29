@@ -46,17 +46,54 @@ namespace Unity.VisualScripting.Community.CSharp
             window = win;
         }
 
+        private IGraph SelectedGraph;
+
         private void OnEnable()
         {
             window = this;
             Selection.selectionChanged += OnSelectionChanged;
             OnSelectionChanged();
             UpdateCodeDisplay();
+
+            GraphWindow.activeContextChanged += ActiveContextChanged;
+
+            var activeContext = GraphWindow.activeContext;
+            if (activeContext != null)
+            {
+                ActiveContextChanged(activeContext);
+            }
         }
 
         private void OnDisable()
         {
             Selection.selectionChanged -= OnSelectionChanged;
+            if (SelectedGraph != null)
+            {
+                SelectedGraph.elements.CollectionChanged -= WatchElements;
+            }
+            GraphWindow.activeContextChanged -= ActiveContextChanged;
+        }
+
+        private void ActiveContextChanged(IGraphContext context)
+        {
+            if (context == null) return;
+
+            if (SelectedGraph != null)
+            {
+                SelectedGraph.elements.CollectionChanged -= WatchElements;
+            }
+
+            SelectedGraph = context.graph;
+
+            SelectedGraph.elements.CollectionChanged += WatchElements;
+        }
+
+        private void WatchElements()
+        {
+            if (!Serialization.isSerializing)
+                RefreshPreview();
+            else
+                EditorApplication.delayCall += () => RefreshPreview();
         }
 
         private void OnSelectionChanged()

@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Reflection;
+using UnityEngine.Assemblies;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -55,8 +57,11 @@ namespace Unity.VisualScripting.Community
 
         private static IEnumerable<IUnitOption> DelegateOptions()
         {
-            List<Type> result = new List<Type>();
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
 
             for (int assembly = 0; assembly < assemblies.Length; assembly++)
             {

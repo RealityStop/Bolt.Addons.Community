@@ -1,6 +1,3 @@
-using Unity;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Community;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using System.Collections.Generic;
@@ -15,13 +12,16 @@ namespace Unity.VisualScripting.Community.CSharp
     public sealed class InvokeMemberGenerator : LocalVariableGenerator
     {
         private InvokeMember Unit => unit as InvokeMember;
-        private Dictionary<ValueOutput, string> outputNames;
+        private Dictionary<ValueOutput, string> outputNames = new Dictionary<ValueOutput, string>();
         public InvokeMemberGenerator(InvokeMember unit) : base(unit)
         {
         }
 
         public override IEnumerable<string> GetNamespaces()
         {
+            if (Unit.member == null)
+                yield break;
+
             if (!Unit.member.isReflected)
                 yield break;
 
@@ -39,7 +39,7 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             if (!Unit.member.isReflected)
                 return;
-            outputNames = new Dictionary<ValueOutput, string>();
+
             bool hasResultConnection = Unit.result != null && Unit.result.hasValidConnection;
 
             if (hasResultConnection)
@@ -98,7 +98,7 @@ namespace Unity.VisualScripting.Community.CSharp
                     if (!hasResultConnection)
                         writer.WriteIndented();
                     GenerateValue(Unit.target, data, writer);
-                    writer.Write(Unit.target.GetComponent(writer, GetSourceType(Unit.target, data, writer), Unit.target.type, true, true));
+                    writer.Write(Unit.target.GetComponent(writer, GetSourceType(Unit.target, data, writer), true, true));
                 }
 
                 writer.Dot();
@@ -269,6 +269,8 @@ namespace Unity.VisualScripting.Community.CSharp
                     {
                         outputNames.Add(outValue, "&" + name);
                     }
+
+                    continue;
                 }
 
                 if (input == null)
@@ -287,7 +289,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     if (!input.hasValidConnection || (input.hasValidConnection && !input.connection.source.unit.IsValidRefUnit()))
                     {
-                        writer.Error($"{input.key.Replace("%", "")} needs connection to a Get Variable or Get Member unit");
+                        writer.Error($"{input.key.Replace("%", "")} needs connection to a Get Variable or a Settable Get Member unit");
                         continue;
                     }
 

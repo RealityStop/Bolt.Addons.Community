@@ -28,6 +28,16 @@ namespace Unity.VisualScripting.Community
             return state;
         }
 
+        public static void Delete(UnityEngine.Object rootObject, Guid[] parentGuids, string variableName)
+        {
+            if (rootObject == null)
+                return;
+
+            var key = BuildInspectorKey(rootObject, parentGuids);
+
+            SessionState.EraseBool($"{key}.{variableName}");
+        }
+
         private static string BuildInspectorKey(UnityEngine.Object rootObject, Guid[] parentGuids)
         {
             var globalId = GlobalObjectId.GetGlobalObjectIdSlow(rootObject);

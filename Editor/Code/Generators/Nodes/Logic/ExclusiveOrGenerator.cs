@@ -1,25 +1,16 @@
-﻿using Unity.VisualScripting;
-using Unity.VisualScripting.Community.Libraries.CSharp;
-
-namespace Unity.VisualScripting.Community.CSharp
+﻿namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ExclusiveOr))]
-    public sealed class ExclusiveOrGenerator : NodeGenerator<ExclusiveOr>
+    public sealed class ExclusiveOrGenerator : BinaryComparisonGenerator<ExclusiveOr>
     {
         public ExclusiveOrGenerator(ExclusiveOr unit) : base(unit)
         {
         }
 
-        protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
-        {
-            if (output == Unit.result)
-            {
-                writer.Write("(");
-                GenerateValue(Unit.a, data, writer);
-                writer.Write(" ^ ");
-                GenerateValue(Unit.b, data, writer);
-                writer.Write(")");
-            }
-        }
+        protected override ValueInput LeftInput => Unit.a;
+        protected override ValueInput RightInput => Unit.b;
+        protected override ValueOutput OutputPort => Unit.result;
+        protected override string OperatorToken => " ^ ";
+        protected override string OperatorMethodName => "op_ExclusiveOr";
     }
 }

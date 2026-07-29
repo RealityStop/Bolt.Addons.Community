@@ -22,10 +22,7 @@ namespace Unity.VisualScripting.Community
 
         protected override void OnGUI(Rect position, GUIContent label)
         {
-            var normal = GUI.backgroundColor;
             adaptor.Field(position, label);
-            // Restore color after tinting add
-            GUI.backgroundColor = normal;
         }
 
         public override float GetAdaptiveWidth()

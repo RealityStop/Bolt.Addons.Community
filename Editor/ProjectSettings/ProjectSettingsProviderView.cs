@@ -14,7 +14,6 @@ namespace Unity.VisualScripting.Community
         public const string NewToolbarKey = "Community_Settings_NewToolbar";
         public const string GraphMinimapKey = "Community_Settings_GraphMinimap";
 
-        public const string DarkerUIKey = "Community_Settings_DarkerUI";
         public const string NewVariablesUIKey = "Community_Settings_NewVariablesUI";
         public const string ShowVariablesQuickbarKey = "Community_Settings_ShowVariablesQuickbar";
         public const string NewListUIKey = "Community_Settings_NewListUI";
@@ -27,7 +26,6 @@ namespace Unity.VisualScripting.Community
         private bool _unitStyle;
         private bool _newToolbar;
         private bool _graphMinimap;
-        private bool _darkerUI;
         private bool _newVariablesUI;
         private bool _showVariablesQuickbar;
         private bool _newListUI;
@@ -38,7 +36,6 @@ namespace Unity.VisualScripting.Community
         private bool _originalUnitStyle;
         private bool _originalNewToolbar;
         private bool _originalGraphMinimap;
-        private bool _originalDarkerUI;
         private bool _originalNewVariablesUI;
         private bool _originalShowVariablesQuickbar;
         private bool _originalNewListUI;
@@ -106,7 +103,6 @@ namespace Unity.VisualScripting.Community
             GUILayout.Space(10);
             GUILayout.Label("UI", EditorStyles.boldLabel);
 
-            DrawToggle("Darker UI", ref _darkerUI);
             DrawToggle("New Variables UI", ref _newVariablesUI);
 
             EditorGUI.BeginDisabledGroup(!_newVariablesUI);
@@ -130,7 +126,6 @@ namespace Unity.VisualScripting.Community
             _originalNewToolbar = _newToolbar = EditorPrefs.GetBool(NewToolbarKey, false);
             _originalGraphMinimap = _graphMinimap = EditorPrefs.GetBool(GraphMinimapKey, false);
 
-            _originalDarkerUI = _darkerUI = EditorPrefs.GetBool(DarkerUIKey, false);
             _originalNewVariablesUI = _newVariablesUI = EditorPrefs.GetBool(NewVariablesUIKey, false);
             _originalShowVariablesQuickbar = _showVariablesQuickbar = EditorPrefs.GetBool(ShowVariablesQuickbarKey, false);
             _originalNewListUI = _newListUI = EditorPrefs.GetBool(NewListUIKey, false);
@@ -145,7 +140,6 @@ namespace Unity.VisualScripting.Community
                 _unitStyle != _originalUnitStyle ||
                 _newToolbar != _originalNewToolbar ||
                 _graphMinimap != _originalGraphMinimap ||
-                _darkerUI != _originalDarkerUI ||
                 _newVariablesUI != _originalNewVariablesUI ||
                 _showVariablesQuickbar != _originalShowVariablesQuickbar ||
                 _newListUI != _originalNewListUI ||
@@ -211,7 +205,6 @@ namespace Unity.VisualScripting.Community
             }
             EditorPrefs.SetBool(NewToolbarKey, _newToolbar);
             EditorPrefs.SetBool(GraphMinimapKey, _graphMinimap);
-            EditorPrefs.SetBool(DarkerUIKey, _darkerUI);
             EditorPrefs.SetBool(NewVariablesUIKey, _newVariablesUI);
             EditorPrefs.SetBool(ShowVariablesQuickbarKey, _showVariablesQuickbar);
             EditorPrefs.SetBool(NewListUIKey, _newListUI);
@@ -222,7 +215,6 @@ namespace Unity.VisualScripting.Community
             ScriptingDefineUtility.UpdateUnitStyle();
             ScriptingDefineUtility.UpdateToolbarStyle();
             ScriptingDefineUtility.UpdateGraphMiniMap();
-            ScriptingDefineUtility.UpdateDarkUI();
             ScriptingDefineUtility.UpdateVariablesUI();
             ScriptingDefineUtility.UpdateListUI();
             ScriptingDefineUtility.UpdateDictionaryUI();
@@ -233,7 +225,6 @@ namespace Unity.VisualScripting.Community
             _originalNewToolbar = _newToolbar;
             _originalGraphMinimap = _graphMinimap;
 
-            _originalDarkerUI = _darkerUI;
             _originalNewVariablesUI = _newVariablesUI;
             _originalShowVariablesQuickbar = _showVariablesQuickbar;
             _originalNewListUI = _newListUI;
@@ -247,7 +238,6 @@ namespace Unity.VisualScripting.Community
             _unitStyle = false;
             _newToolbar = false;
             _graphMinimap = false;
-            _darkerUI = false;
             _newVariablesUI = false;
             _showVariablesQuickbar = false;
             _newListUI = false;

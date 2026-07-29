@@ -35,57 +35,9 @@ namespace Unity.VisualScripting.Community
             }
         }
 
-        protected override void DrawConnection()
-        {
-            var color = this.color;
+        protected override Edge sourceEdge => Edge.Bottom;
 
-            var sourceWidget = canvas.Widget<IUnitPortWidget>(connection.source);
-            var destinationWidget = canvas.Widget<IUnitPortWidget>(connection.destination);
-
-            var highlight = !canvas.isCreatingConnection && (sourceWidget.isMouseOver || destinationWidget.isMouseOver);
-
-            var willDisconnect = sourceWidget.willDisconnect || destinationWidget.willDisconnect;
-
-            if (willDisconnect)
-            {
-                color = UnitConnectionStyles.disconnectColor;
-            }
-            else if (highlight)
-            {
-                color = UnitConnectionStyles.highlightColor;
-            }
-            else if (colorIfActive)
-            {
-                if (EditorApplication.isPaused)
-                {
-                    if (EditorTimeBinding.frame == ConnectionDebugData.lastInvokeFrame)
-                    {
-                        color = UnitConnectionStyles.activeColor;
-                    }
-                }
-                else
-                {
-                    color = Color.Lerp(UnitConnectionStyles.activeColor, color, (EditorTimeBinding.time - ConnectionDebugData.lastInvokeTime) / UnitWidget<IUnit>.Styles.invokeFadeDuration);
-                }
-            }
-
-            float minBend = 20f;
-
-            var thickness = 3;
-
-            GraphGUI.DrawConnection(
-                color,
-                sourceHandleEdgeCenter,
-                destinationHandleEdgeCenter,
-                Edge.Bottom,
-                Edge.Top,
-                null,
-                Vector2.zero,
-                UnitConnectionStyles.relativeBend,
-                minBend,
-                thickness
-            );
-        }
+        protected override Edge destinationEdge => Edge.Top;
 
         #endregion
 

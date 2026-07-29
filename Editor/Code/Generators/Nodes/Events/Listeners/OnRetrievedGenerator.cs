@@ -30,8 +30,10 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override void GenerateAwakeCode(ControlGenerationData data, CodeWriter writer)
         {
+            if (!Unit.trigger.hasValidConnection) return;
+
             writer.WriteIndented();
-            writer.InvokeMember(typeof(EventBus), "Register", new CodeWriter.TypeParameter[] { typeof(PoolData) }, 
+            writer.InvokeMember(typeof(EventBus), "Register", new CodeWriter.TypeParameter[] { typeof(PoolData) },
                 writer.Action(() => writer.GetMember(typeof(CommunityEvents), "OnRetrieved")),
                 writer.Action(() => writer.Write(methodName.VariableHighlight()))
             );
@@ -50,7 +52,8 @@ namespace Unity.VisualScripting.Community.CSharp
             methodName = data.AddMethodName(methodName);
             var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), methodName);
             method.AddParameter(ParameterGenerator.Parameter("args", typeof(PoolData), ParameterModifier.None));
-            method.Body(writer => {
+            method.Body(writer =>
+            {
                 writer.WriteIndented("if".ControlHighlight());
                 writer.Write(" (");
                 writer.GetMember("args".VariableHighlight(), "pool");

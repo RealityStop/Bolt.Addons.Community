@@ -144,7 +144,6 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public IEnumerable<FieldGenerator> GetRequiredVariables(ControlGenerationData data)
         {
-            name = data.AddLocalNameInScope(name, typeof(object));
             var field = FieldGenerator.Field(AccessModifier.Private, FieldModifier.None, typeof(object), name);
             yield return field;
         }

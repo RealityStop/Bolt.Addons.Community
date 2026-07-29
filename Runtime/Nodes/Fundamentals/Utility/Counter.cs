@@ -7,8 +7,13 @@ namespace Unity.VisualScripting.Community
     [UnitTitle("Counter")]
     [UnitCategory("Community\\Utility")]
     [TypeIcon(typeof(Add<object>))]
-    public class CounterNode : Unit
+    public class CounterNode : Unit, IGraphElementWithData
     {
+        private class Data : IGraphElementData
+        {
+            public int counter;
+        }
+
         [DoNotSerialize]
         [PortLabelHidden]
         public ControlInput enter;
@@ -39,16 +44,23 @@ namespace Unity.VisualScripting.Community
 
         public ControlOutput OnEnter(Flow flow)
         {
-            counter++;
+            var data = flow.stack.GetElementData<Data>(this);
+            data.counter++;
             flow.SetValue(timesTriggered, counter);
             return exit;
         }
 
         public ControlOutput OnReset(Flow flow)
         {
-            counter = 0;
+            var data = flow.stack.GetElementData<Data>(this);
+            data.counter = 0;
             flow.SetValue(timesTriggered, counter);
             return null;
+        }
+
+        public IGraphElementData CreateData()
+        {
+            return new Data();
         }
     }
 }

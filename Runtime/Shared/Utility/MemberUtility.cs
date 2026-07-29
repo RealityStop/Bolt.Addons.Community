@@ -18,34 +18,41 @@ namespace Unity.VisualScripting.Community
 
             if (memberInfo is EventInfo) return null;
 
-            if (memberInfo is FieldInfo fieldInfo)
+            try
             {
-                if (!nonPublic && !fieldInfo.IsPublic) return null;
-                return fieldInfo.ToManipulator(targetType);
+                if (memberInfo is FieldInfo fieldInfo)
+                {
+                    if (!nonPublic && !fieldInfo.IsPublic) return null;
+                    return fieldInfo.ToManipulator(targetType);
+                }
+
+                if (memberInfo is PropertyInfo propertyInfo)
+                {
+                    if (propertyInfo.GetIndexParameters().Length > 0) return null;
+
+                    var getter = propertyInfo.GetGetMethod(nonPublic);
+                    var setter = propertyInfo.GetSetMethod(nonPublic);
+                    if (getter == null && setter == null) return null;
+
+                    return propertyInfo.ToManipulator(targetType);
+                }
+
+                if (memberInfo is MethodInfo methodInfo)
+                {
+                    if (methodInfo.IsSpecialName) return null;
+                    if (!nonPublic && !methodInfo.IsPublic) return null;
+                    return methodInfo.ToManipulator(targetType);
+                }
+
+                if (memberInfo is ConstructorInfo ctorInfo)
+                {
+                    if (!nonPublic && !ctorInfo.IsPublic) return null;
+                    return ctorInfo.ToManipulator(targetType);
+                }
             }
-
-            if (memberInfo is PropertyInfo propertyInfo)
+            catch (MissingMemberException)
             {
-                if (propertyInfo.GetIndexParameters().Length > 0) return null;
-
-                var getter = propertyInfo.GetGetMethod(nonPublic);
-                var setter = propertyInfo.GetSetMethod(nonPublic);
-                if (getter == null && setter == null) return null;
-
-                return propertyInfo.ToManipulator(targetType);
-            }
-
-            if (memberInfo is MethodInfo methodInfo)
-            {
-                if (methodInfo.IsSpecialName) return null;
-                if (!nonPublic && !methodInfo.IsPublic) return null;
-                return methodInfo.ToManipulator(targetType);
-            }
-
-            if (memberInfo is ConstructorInfo ctorInfo)
-            {
-                if (!nonPublic && !ctorInfo.IsPublic) return null;
-                return ctorInfo.ToManipulator(targetType);
+                return null;
             }
 
             return null;

@@ -11,7 +11,6 @@ using SMachine = Unity.VisualScripting.FlowMachine;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
-    [Serializable]
     [CodeGenerator(typeof(GameObject))]
     public sealed class GameObjectGenerator : BaseGraphGenerator<GameObject>
     {

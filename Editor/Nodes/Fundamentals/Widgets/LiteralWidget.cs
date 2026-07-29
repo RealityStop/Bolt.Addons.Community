@@ -1,4 +1,4 @@
-# if NEW_UNIT_UI
+#if NEW_UNIT_UI
 using UnityEditor;
 using UnityEngine;
 using System.Linq;
@@ -55,74 +55,73 @@ namespace Unity.VisualScripting.Community
             var edgeX = edgeOrigin.x;
             var edgeY = edgeOrigin.y;
 
-            const float compactX = 0.8f;
-
-            var titleWidth = Styles.title.CalcSize(titleContent).x;
-            var iconSize = Styles.iconSize;
-            var innerY = edgeY;
-            var innerX = edgeX;
-
-            iconPosition = new Rect(innerX, innerY, iconSize, iconSize);
-
-            titlePosition = new Rect(
-                iconPosition.xMax + Styles.spaceAfterIcon * compactX,
-                innerY,
-                titleWidth,
-                iconSize
-            );
-
-            var totalWidth = titlePosition.xMax + 20f - edgeX;
-            var totalHeight = iconSize;
-
-            if (showHeaderAddon)
-            {
-                var width = GetHeaderAddonWidth();
-                var height = GetHeaderAddonHeight(width);
-
-                headerAddonPosition = new Rect(
-                    titlePosition.x,
-                    titlePosition.yMax + 2f,
-                    width,
-                    height
-                );
-
-                totalWidth = Mathf.Max(totalWidth, headerAddonPosition.xMax + 20f - edgeX);
-                totalHeight = headerAddonPosition.yMax - edgeY;
-            }
+            iconPosition = new Rect(edgeX, edgeY, 0, 0);
+            titlePosition = new Rect(edgeX, edgeY, 0, 0);
 
             var validOutput = outputs.OfType<ValueOutputWidget>().FirstOrDefault();
-            var invalidOutputs = outputs
-                .Where(p => p is InvalidOutputWidget)
-                .Cast<IUnitPortWidget>()
-                .ToList();
 
-            float portsStartY = edgeY + totalHeight + Styles.spaceBetweenPorts;
+            var invalidInputs = inputs.Cast<IUnitPortWidget>().ToList();
+            var invalidOutputs = outputs.Cast<IUnitPortWidget>()
+                                        .Where(p => p != validOutput)
+                                        .ToList();
 
+            float addonWidth = 0f;
+            float addonHeight = 0f;
+            if (showHeaderAddon)
+            {
+                addonWidth = GetHeaderAddonWidth();
+                addonHeight = GetHeaderAddonHeight(addonWidth);
+            }
+
+            float inspectorX = edgeX + 5f;
+#if !NEW_UNIT_STYLE
+            headerAddonPosition = new Rect(inspectorX, edgeY + 4.5f, addonWidth, addonHeight);
+#else
+            headerAddonPosition = new Rect(inspectorX, edgeY + 2f, addonWidth, addonHeight);
+#endif
             if (validOutput != null)
             {
-                float visualCenterY = Styles.spaceBetweenPorts + edgeY + (totalHeight / 2f) - (validOutput.GetHeight() / 2f);
-                validOutput.y = visualCenterY;
-
-                portsStartY += validOutput.GetHeight() + Styles.spaceBetweenPorts;
-
-                totalWidth += validOutput.GetInnerWidth();
+                validOutput.y = headerAddonPosition.y + (addonHeight / 2f) - (validOutput.GetHeight() / 2f);
+#if !NEW_UNIT_STYLE
+                validOutput.y += 2.5f;
+#endif
             }
+
+            bool hasInvalidPorts = false;
+            float inputY = headerAddonPosition.y + addonHeight + 10f;
+            float maxInputWidth = 0f;
+            foreach (var port in invalidInputs)
+            {
+                hasInvalidPorts = true;
+
+                port.y = inputY;
+                inputY += port.GetHeight() + Styles.spaceBetweenPorts;
+                maxInputWidth = Mathf.Max(maxInputWidth, port.GetInnerWidth());
+            }
+
+            float outputY = (validOutput != null) ? validOutput.y + validOutput.GetHeight() + Styles.spaceBetweenPorts : headerAddonPosition.y;
+            float maxOutputWidth = (validOutput != null) ? validOutput.GetInnerWidth() : 0f;
+
+            var invalidOutputY = headerAddonPosition.y + addonHeight + 10f;
 
             foreach (var port in invalidOutputs)
             {
-                port.y = portsStartY;
-                portsStartY += port.GetHeight() + Styles.spaceBetweenPorts;
+                hasInvalidPorts = true;
 
-                totalWidth = Mathf.Max(
-                    totalWidth,
-                    port.GetInnerWidth() + 20f
-                );
+                port.y = invalidOutputY;
+                invalidOutputY += port.GetHeight() + Styles.spaceBetweenPorts;
+                maxOutputWidth = Mathf.Max(maxOutputWidth, port.GetInnerWidth());
             }
 
-            if (invalidOutputs.Count > 0)
-            {
-                totalHeight = portsStartY - edgeY;
-            }
+            float totalWidth = 15f + addonWidth + maxInputWidth + maxOutputWidth;
+
+#if NEW_UNIT_STYLE
+            const float heightPadding = 0;
+#else
+            const float heightPadding = 5;
+#endif
+
+            float totalHeight = !hasInvalidPorts ? headerAddonPosition.height + heightPadding : Mathf.Max(headerAddonPosition.height + heightPadding, inputY - edgeY, outputY - edgeY);
 
             _position = new Rect(edgeX, edgeY, totalWidth, totalHeight);
         }

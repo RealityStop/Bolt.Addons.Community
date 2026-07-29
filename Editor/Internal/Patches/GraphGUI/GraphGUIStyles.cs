@@ -99,10 +99,10 @@ namespace Unity.VisualScripting.Community
             ApplyNodeStyle(NodeColor.Green, "GreenNode");
             ApplyNodeStyle(NodeColor.Gray, "GrayNode");
             ApplyNodeStyle(NodeColor.Yellow, "YellowNode");
-            ApplyNodeStyle(NodeColor.Orange, "OrangeNode", "OrangeNodeSelected");
+            ApplyNodeStyle(NodeColor.Orange, "OrangeNode");
             ApplyNodeStyle(NodeColor.Teal, "TealNode");
-            ApplyNodeStyle(NodeColor.Blue, "BlueNode");
-            ApplyNodeStyle(NodeColor.Red, "RedNode", "RedNodeSelected");
+            ApplyNodeStyle(NodeColor.Blue, "BlueNode", "SelectedBlueNode");
+            ApplyNodeStyle(NodeColor.Red, "RedNode");
 
             var stateBackground = VisualScripting.StateWidget<FlowState>.Styles.contentBackground;
 
@@ -156,19 +156,23 @@ namespace Unity.VisualScripting.Community
         {
             var style = GraphGUI.GetNodeStyle(NodeShape.Square, color);
 
+            var normalTexture = PathUtil.Load(normal, CommunityEditorPath.Fundamentals)?[IconSize.Large];
+            var selectedTexture = PathUtil.Load(selected, CommunityEditorPath.Fundamentals)?[IconSize.Large];
+
             style.normal.background =
-                PathUtil.Load(normal, CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                normalTexture;
 
             style.active.background =
-                PathUtil.Load(selected, CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                selectedTexture;
 
             style.focused.background =
-                PathUtil.Load(selected, CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                selectedTexture;
 
             style.hover.background =
-                PathUtil.Load(selected, CommunityEditorPath.Fundamentals)?[IconSize.Large];
+                selectedTexture;
 
-            style.padding = new RectOffset(5, 5, 5, 5);
+            style.border = new RectOffset(12, 12, 12, 12);
+            style.padding = new RectOffset(8, 8, 8, 8);
         }
     }
 }

@@ -23,7 +23,16 @@ namespace Unity.VisualScripting.Community
         {
             PatchVariablesDeclarationsInspector();
             PatchWidgets();
+            PatchGraphEditors();
             // PatchGraphContext();
+        }
+
+        private static void PatchGraphEditors()
+        {
+            var provider = EditorProvider.instance;
+
+            PatchGlobalProvider<Metadata, Inspector, EditorAttribute, FlowGraphEditor>(provider, typeof(FlowGraph));
+            PatchGlobalProvider<Metadata, Inspector, EditorAttribute, PatchedStateGraphEditor>(provider, typeof(StateGraph));
         }
 
         private static void PatchWidgets()
@@ -291,10 +300,9 @@ namespace Unity.VisualScripting.Community
 #if NEW_VARIABLES_UI
             PatchGlobalProvider<Metadata, Inspector, InspectorAttribute, PatchedVariableDeclarationsInspector>(provider,
             typeof(VariableDeclarations));
-#else
+#endif
             PatchGlobalProvider<Metadata, Inspector, InspectorAttribute, PatchedVariableDeclarationInspector>(provider,
             typeof(VariableDeclaration));
-#endif
         }
     }
 }

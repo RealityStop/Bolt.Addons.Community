@@ -13,7 +13,8 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public override IEnumerable<string> GetNamespaces()
         {
-            yield return Unit.member.pseudoDeclaringType.Namespace;
+            if (Unit.member != null)
+                yield return Unit.member.pseudoDeclaringType.Namespace;
             yield return "Unity.VisualScripting";
         }
 
@@ -33,20 +34,7 @@ namespace Unity.VisualScripting.Community.CSharp
                 return;
             }
 
-            string name;
-
-            if (Unit.member.isField)
-            {
-                name = Unit.member.fieldInfo.Name;
-            }
-            else if (Unit.member.isProperty)
-            {
-                name = Unit.member.name;
-            }
-            else
-            {
-                name = Unit.member.ToDeclarer().ToString(); // I don't think this should be possible through normal usage.
-            }
+            string name = Unit.member.name;
 
             if (!typeof(Component).IsAssignableFrom(Unit.member.pseudoDeclaringType))
             {

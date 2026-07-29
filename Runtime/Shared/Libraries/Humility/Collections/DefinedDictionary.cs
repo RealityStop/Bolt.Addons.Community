@@ -8,7 +8,9 @@ namespace Unity.VisualScripting.Community.Libraries.Humility
     [Serializable]
     public class DefinedDictionary<TKey, TValue> : ISerializationCallbackReceiver
     {
+        [NonSerialized]
         public Dictionary<TKey, TValue> previous = new Dictionary<TKey, TValue>();
+        [NonSerialized]
         public Dictionary<TKey, TValue> current = new Dictionary<TKey, TValue>();
         [SerializeField]
         private List<string> previousSerializedKeys = new List<string>();

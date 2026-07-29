@@ -166,9 +166,7 @@ namespace Unity.VisualScripting.Community
                 }
             }
 
-            var thickness = 3;
-
-            GraphGUI.DrawConnection(color, sourceHandleEdgeCenter, destinationHandleEdgeCenter, Edge.Right, Edge.Left, null, Vector2.zero, UnitConnectionStyles.relativeBend, UnitConnectionStyles.minBend, thickness);
+            GraphGUI.DrawConnection(color, sourceHandleEdgeCenter, destinationHandleEdgeCenter, sourceEdge, destinationEdge, null, Vector2.zero, CommunityStyles.relativeBend, CommunityStyles.minBend, CommunityStyles.connectionThickness);
         }
 
         #endregion
@@ -196,6 +194,9 @@ namespace Unity.VisualScripting.Community
 
 
         #region Droplets
+
+        protected virtual Edge sourceEdge => Edge.Right;
+        protected virtual Edge destinationEdge => Edge.Left;
 
         protected readonly List<float> droplets = new List<float>();
 
@@ -230,8 +231,11 @@ namespace Unity.VisualScripting.Community
                 else
                 {
                     var t = (droplet - handleAlignmentMargin) / (1 - 2 * handleAlignmentMargin);
-
-                    position = GraphGUI.GetPointOnConnection(t, sourceHandleEdgeCenter, destinationHandleEdgeCenter, Edge.Bottom, Edge.Top, UnitConnectionStyles.relativeBend, UnitConnectionStyles.minBend);
+#if ENABLE_VERTICAL_FLOW
+                    position = GraphGUI.GetPointOnConnection(t, sourceHandleEdgeCenter, destinationHandleEdgeCenter, sourceEdge, destinationEdge, CommunityStyles.relativeBend, CommunityStyles.minBend);
+#else
+                    position = GraphGUI.GetPointOnConnection(t, sourceHandleEdgeCenter, destinationHandleEdgeCenter, sourceEdge, destinationEdge, UnitConnectionStyles.relativeBend, UnitConnectionStyles.minBend);
+#endif
                 }
 
                 var size = GetDropletSize();

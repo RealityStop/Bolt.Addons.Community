@@ -437,7 +437,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 if (i != 0) writer.NewLine();
                                 WriteMethodBody(unit, data, inner);
                             }
-                        });
+                        }).NewLine();
                     }
 
                     if (focusFalseUnits.Count > 0)
@@ -452,7 +452,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 if (i != 0) writer.NewLine();
                                 WriteMethodBody(unit, data, inner);
                             }
-                        });
+                        }).NewLine();
                     }
                 });
 
@@ -478,7 +478,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 if (i != 0) writer.NewLine();
                                 WriteMethodBody(unit, data, inner);
                             }
-                        });
+                        }).NewLine();
                     }
 
                     if (pauseFalseUnits.Count > 0)
@@ -493,7 +493,7 @@ namespace Unity.VisualScripting.Community.CSharp
                                 if (i != 0) writer.NewLine();
                                 WriteMethodBody(unit, data, inner);
                             }
-                        });
+                        }).NewLine();
                     }
                 });
 
@@ -553,7 +553,6 @@ namespace Unity.VisualScripting.Community.CSharp
                         specialUnitCode = GenerateSpecialUnitCode(@class, false);
                     }
 #endif
-
                     if (isCoroutine)
                     {
                         string coroutineMethodName = GetMethodName(unit, true);
@@ -588,7 +587,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                         if (!methodBodies.TryGetValue(unityMethodName, out var unityMethod))
                         {
-                            unityMethod = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), unityMethodName);
+                            unityMethod = MethodGenerator.Method(generator?.AccessModifier ?? AccessModifier.Private, MethodModifier.None, typeof(void), unityMethodName);
                             unityMethod.SetOwner(Unit);
                             if (Unit is BoltNamedAnimationEvent || Unit is BoltAnimationEvent || Unit is BoltUnityEvent)
                             {
@@ -656,7 +655,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                         if (!methodBodies.TryGetValue(unityMethodName, out var method))
                         {
-                            method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), unityMethodName);
+                            method = MethodGenerator.Method(generator?.AccessModifier ?? AccessModifier.Private, MethodModifier.None, typeof(void), unityMethodName);
                             method.SetOwner(Unit);
                             if (Unit is BoltNamedAnimationEvent || Unit is BoltAnimationEvent || Unit is BoltUnityEvent)
                             {

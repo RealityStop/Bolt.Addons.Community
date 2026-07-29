@@ -45,6 +45,7 @@ namespace Unity.VisualScripting.Community
         [SerializeField]
         public CustomVariables variables = new CustomVariables();
 
+        [NonSerialized]
         public VisualElement container;
 
         public Event e { get; private set; }

@@ -96,7 +96,7 @@ namespace Unity.VisualScripting.Community.CSharp
 
                     if (!input.hasValidConnection || (input.hasValidConnection && !input.connection.source.unit.IsValidRefUnit()))
                     {
-                        writer.Error($"{input.key.Replace("%", "")} needs connection to a Get Variable or Get Member unit");
+                        writer.Error($"{input.key.Replace("%", "")} needs connection to a Get Variable or a Settable Get Member unit");
                         continue;
                     }
 

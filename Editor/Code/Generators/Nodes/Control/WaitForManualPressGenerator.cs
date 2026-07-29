@@ -36,7 +36,7 @@ namespace Unity.VisualScripting.Community.CSharp
         public IEnumerable<MethodGenerator> GetRequiredMethods(ControlGenerationData data)
         {
             var method = MethodGenerator.Method(AccessModifier.Private, MethodModifier.None, typeof(void), data.AddMethodName("WaitForPress"));
-            method.Body(w => w.Write($"{Name.VariableHighlight()} = {"false".ConstructHighlight()};").NewLine());
+            method.Body(w => w.WriteIndented($"{Name.VariableHighlight()} = {"false".ConstructHighlight()};").NewLine());
             var attribute = AttributeGenerator.Attribute<ContextMenu>();
             attribute.AddParameter($"Trigger_{Name}");
             method.AddAttribute(attribute);

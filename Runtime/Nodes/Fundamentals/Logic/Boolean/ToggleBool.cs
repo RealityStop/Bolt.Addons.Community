@@ -6,18 +6,21 @@ namespace Unity.VisualScripting.Community
     [UnitCategory("Community\\Utility")]
     [UnitTitle("Toggle Boolean")]
     [TypeIcon(typeof(ToggleFlow))]
-    public class ToggleBool : Unit
+    public class ToggleBool : Unit, IGraphElementWithData
     {
+        private class Data : IGraphElementData
+        {
+            public bool Cached = false;
+
+            public bool value;
+        }
+
         [DoNotSerialize]
         public ValueInput Value;
 
         [DoNotSerialize]
         [PortLabelHidden]
         public ValueOutput Result;
-
-        private bool Cached = false;
-
-        private bool value;
 
         protected override void Definition()
         {
@@ -27,26 +30,30 @@ namespace Unity.VisualScripting.Community
 
         private bool GetResult(Flow flow)
         {
-            if (!Cached)
+            var data = flow.stack.GetElementData<Data>(this);
+            if (!data.Cached)
             {
-                value = (bool)flow.GetValue(Value);
+                data.value = (bool)flow.GetValue(Value);
 
-                value = !value;
+                data.value = !data.value;
 
-                Cached = true;
+                data.Cached = true;
 
-                return value;
+                return data.value;
             }
             else
             {
-                flow.SetValue(Value, value);
+                flow.SetValue(Value, data.value);
 
-                value = !value;
+                data.value = !data.value;
 
-                return value;
+                return data.value;
             }
+        }
 
-
+        public IGraphElementData CreateData()
+        {
+            return new Data();
         }
     }
 

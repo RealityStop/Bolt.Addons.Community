@@ -3,6 +3,8 @@ using UnityEditor;
 using System.Collections.Generic;
 using System;
 using System.Reflection;
+using UnityEngine.Assemblies;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
@@ -42,7 +44,12 @@ namespace Unity.VisualScripting.Community
                 GenericMenu menu = new GenericMenu();
 
                 List<Type> result = new List<Type>();
-                Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
 
                 for (int assembly = 0; assembly < assemblies.Length; assembly++)
                 {

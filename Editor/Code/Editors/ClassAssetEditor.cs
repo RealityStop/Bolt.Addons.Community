@@ -8,6 +8,7 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityObject = UnityEngine.Object;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using UnityEngine.Assemblies;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
@@ -45,7 +46,12 @@ namespace Unity.VisualScripting.Community.CSharp
 
         private void GetAllInheritableTypes()
         {
-            inheritTypes ??= AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).Where(t =>
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
+            inheritTypes ??= assemblies.SelectMany(a => a.GetTypes()).Where(t =>
                 t.Is().Inheritable() &&
                 !NameUtility.TypeHasSpecialName(t)
             ).ToArray();

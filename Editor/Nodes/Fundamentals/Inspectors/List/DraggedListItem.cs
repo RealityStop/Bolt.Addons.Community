@@ -3,21 +3,14 @@ using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
-    public class DraggedListItem : VisualScripting.DraggedListItem
+    internal class DraggedListItem : VisualScripting.DraggedListItem
     {
         public DraggedListItem(MetadataListAdaptor sourceListAdaptor, int index, object item, bool foldoutState) : base(sourceListAdaptor, index, item)
         {
             this.foldoutState = foldoutState;
         }
 
-        public DraggedListItem(MetadataListAdaptor sourceListAdaptor, int index, object item, (VariableDeclaration, VariableFoldout) variableState) : base(sourceListAdaptor, index, item)
-        {
-            this.variableState = variableState;
-        }
-
         public readonly bool foldoutState;
-
-        public readonly (VariableDeclaration, VariableFoldout) variableState;
     }
 
     public class DraggedDictionaryItem

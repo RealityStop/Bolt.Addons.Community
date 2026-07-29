@@ -15,6 +15,11 @@ namespace Unity.VisualScripting.Community
         [ColorUsage(true, true)]
         public Color color;
 
+        public HDRColor(Color color)
+        {
+            this.color = color;
+        }
+
         public static implicit operator Color(HDRColor hdrColor)
         {
             return hdrColor.color;
@@ -24,7 +29,7 @@ namespace Unity.VisualScripting.Community
         {
             return new HDRColor { color = color };
         }
-        
+
         public override string ToString()
         {
             return color.ToString();

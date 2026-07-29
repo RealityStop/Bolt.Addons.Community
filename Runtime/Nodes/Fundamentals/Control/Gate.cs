@@ -8,9 +8,15 @@
     [RenamedFrom("Bolt.Addons.Community.Fundamentals.Gate")]
     [TypeIcon(typeof(ISelectUnit))]
     [UnitOrder(0)]
-    public sealed class Gate : Unit
+    public sealed class Gate : Unit, IGraphElementWithData
     {
         public Gate() : base() { }
+
+        private class Data : IGraphElementData
+        {
+            public bool isInitial = true;
+            public bool isOpen = false;
+        }
 
         /// <summary>
         /// The entry point for the branch.
@@ -50,9 +56,6 @@
         [PortLabel("Exit")]
         public ControlOutput exit { get; private set; }
 
-        private bool _isInitial = true;
-        private bool _isOpen = false;
-
         protected override void Definition()
         {
             enter = ControlInput(nameof(enter), Enter);
@@ -69,40 +72,53 @@
 
         public ControlOutput Enter(Flow flow)
         {
-            PrepInitialState(flow);
+            var data = flow.stack.GetElementData<Data>(this);
 
-            if (_isOpen)
+            PrepInitialState(flow, data);
+
+            if (data.isOpen)
                 return exit;
 
             return null;
         }
 
-        private ControlOutput Open(Flow obj)
+        private ControlOutput Open(Flow flow)
         {
-            _isInitial = false;
-            _isOpen = true;
+            var data = flow.stack.GetElementData<Data>(this);
+
+            data.isInitial = false;
+            data.isOpen = true;
             return null;
         }
 
-        private ControlOutput Close(Flow obj)
+        private ControlOutput Close(Flow flow)
         {
-            _isInitial = false;
-            _isOpen = false;
+            var data = flow.stack.GetElementData<Data>(this);
+
+            data.isInitial = false;
+            data.isOpen = false;
             return null;
         }
 
-        private ControlOutput Toggle(Flow obj)
+        private ControlOutput Toggle(Flow flow)
         {
-            _isInitial = false;
-            _isOpen = !_isOpen;
+            var data = flow.stack.GetElementData<Data>(this);
+
+            data.isInitial = false;
+            data.isOpen = !data.isOpen;
             return null;
         }
 
-        private void PrepInitialState(Flow flow)
+        private void PrepInitialState(Flow flow, Data data)
         {
-            if (_isInitial)
-                _isOpen = flow.GetValue<bool>(initialState);
-            _isInitial = false;
+            if (data.isInitial)
+                data.isOpen = flow.GetValue<bool>(initialState);
+            data.isInitial = false;
+        }
+
+        public IGraphElementData CreateData()
+        {
+            return new Data();
         }
     }
 }

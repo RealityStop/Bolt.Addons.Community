@@ -28,43 +28,44 @@ namespace Unity.VisualScripting.Community.Libraries.CSharp
             { FieldModifier.Readonly, new FieldModifier[] { FieldModifier.Constant, FieldModifier.Volatile } },
             { FieldModifier.Volatile, new FieldModifier[] { FieldModifier.Constant, FieldModifier.Readonly } },
             { FieldModifier.Unsafe,   new FieldModifier[] { FieldModifier.Constant } },
-            { FieldModifier.New, new FieldModifier[0] },
-            { FieldModifier.None, new FieldModifier[0] }
+            { FieldModifier.New,      Array.Empty<FieldModifier>() },
+            { FieldModifier.None,     Array.Empty<FieldModifier>() }
         };
 
         public static readonly Dictionary<PropertyModifier, PropertyModifier[]> propertyModifierConflicts = new Dictionary<PropertyModifier, PropertyModifier[]>()
         {
-            { PropertyModifier.Abstract, new[] { PropertyModifier.Static, PropertyModifier.Sealed, PropertyModifier.Override, PropertyModifier.Unsafe, PropertyModifier.Volatile } },
-            { PropertyModifier.Override, new[] { PropertyModifier.Static, PropertyModifier.Sealed, PropertyModifier.Abstract, PropertyModifier.Unsafe, PropertyModifier.Volatile } },
-            { PropertyModifier.Sealed,   new[] { PropertyModifier.Static, PropertyModifier.Abstract, PropertyModifier.Unsafe, PropertyModifier.Volatile } },
-            { PropertyModifier.Static,   new[] { PropertyModifier.Abstract, PropertyModifier.Override, PropertyModifier.Sealed, PropertyModifier.Volatile } },
-            { PropertyModifier.Unsafe,   new[] { PropertyModifier.Abstract, PropertyModifier.Override, PropertyModifier.Sealed, PropertyModifier.Volatile } },
-            { PropertyModifier.Volatile, new[] { PropertyModifier.Abstract, PropertyModifier.Override, PropertyModifier.Sealed, PropertyModifier.Static, PropertyModifier.Unsafe } },
-            { PropertyModifier.New, Array.Empty<PropertyModifier>() },
-            { PropertyModifier.None, Array.Empty<PropertyModifier>() },
+            { PropertyModifier.Abstract, new[] { PropertyModifier.Static, PropertyModifier.Sealed, PropertyModifier.Override, PropertyModifier.Virtual, PropertyModifier.Volatile } },
+            { PropertyModifier.Override, new[] { PropertyModifier.Static, PropertyModifier.Abstract, PropertyModifier.Virtual, PropertyModifier.New, PropertyModifier.Volatile } },
+            { PropertyModifier.Sealed,   new[] { PropertyModifier.Static, PropertyModifier.Abstract, PropertyModifier.Virtual, PropertyModifier.Volatile } },
+            { PropertyModifier.Static,   new[] { PropertyModifier.Abstract, PropertyModifier.Virtual, PropertyModifier.Override, PropertyModifier.Sealed, PropertyModifier.Volatile } },
+            { PropertyModifier.Virtual,  new[] { PropertyModifier.Static, PropertyModifier.Abstract, PropertyModifier.Override, PropertyModifier.Sealed, PropertyModifier.Volatile } },
+            { PropertyModifier.Unsafe,   new[] { PropertyModifier.Volatile } },
+            { PropertyModifier.Volatile, new[] { PropertyModifier.Abstract, PropertyModifier.Override, PropertyModifier.Sealed, PropertyModifier.Static, PropertyModifier.Unsafe, PropertyModifier.New, PropertyModifier.Virtual } },
+            { PropertyModifier.New,      new[] { PropertyModifier.Override, PropertyModifier.Volatile } },
+            { PropertyModifier.None,     Array.Empty<PropertyModifier>() },
         };
 
         public static readonly Dictionary<ParameterModifier, ParameterModifier[]> parameterModifierConflicts = new Dictionary<ParameterModifier, ParameterModifier[]>
         {
-            { ParameterModifier.In, new ParameterModifier[] { ParameterModifier.Out, ParameterModifier.Ref, ParameterModifier.Params, ParameterModifier.This } },
-            { ParameterModifier.Out, new ParameterModifier[] { ParameterModifier.In, ParameterModifier.Ref, ParameterModifier.Params, ParameterModifier.This } },
-            { ParameterModifier.Ref, new ParameterModifier[] { ParameterModifier.In, ParameterModifier.Out, ParameterModifier.Params } },
+            { ParameterModifier.In,     new ParameterModifier[] { ParameterModifier.Out, ParameterModifier.Ref, ParameterModifier.Params } },
+            { ParameterModifier.Out,    new ParameterModifier[] { ParameterModifier.In, ParameterModifier.Ref, ParameterModifier.Params, ParameterModifier.This } },
+            { ParameterModifier.Ref,    new ParameterModifier[] { ParameterModifier.In, ParameterModifier.Out, ParameterModifier.Params } },
             { ParameterModifier.Params, new ParameterModifier[] { ParameterModifier.In, ParameterModifier.Out, ParameterModifier.Ref, ParameterModifier.This } },
-            { ParameterModifier.This, new ParameterModifier[] { ParameterModifier.In, ParameterModifier.Out, ParameterModifier.Params } },
-            { ParameterModifier.None, Array.Empty<ParameterModifier>() }
+            { ParameterModifier.This,   new ParameterModifier[] { ParameterModifier.Out, ParameterModifier.Params } },
+            { ParameterModifier.None,   Array.Empty<ParameterModifier>() }
         };
 
         public static readonly Dictionary<MethodModifier, MethodModifier[]> methodModifierConflicts = new Dictionary<MethodModifier, MethodModifier[]>
         {
             { MethodModifier.Abstract, new MethodModifier[] { MethodModifier.Static, MethodModifier.Sealed, MethodModifier.Override, MethodModifier.Extern, MethodModifier.Virtual, MethodModifier.Async } },
-            { MethodModifier.Virtual,  new MethodModifier[] { MethodModifier.Static, MethodModifier.Sealed, MethodModifier.Override, MethodModifier.Extern, MethodModifier.Abstract, MethodModifier.Async } },
-            { MethodModifier.Override, new MethodModifier[] { MethodModifier.Static, MethodModifier.Sealed, MethodModifier.Virtual, MethodModifier.Extern, MethodModifier.Abstract } },
-            { MethodModifier.Sealed,   new MethodModifier[] { MethodModifier.Static, MethodModifier.Virtual, MethodModifier.Override, MethodModifier.Extern, MethodModifier.Abstract } },
+            { MethodModifier.Virtual,  new MethodModifier[] { MethodModifier.Static, MethodModifier.Sealed, MethodModifier.Override, MethodModifier.Extern, MethodModifier.Abstract } },
+            { MethodModifier.Override, new MethodModifier[] { MethodModifier.Static, MethodModifier.Virtual, MethodModifier.Extern, MethodModifier.Abstract } },
+            { MethodModifier.Sealed,   new MethodModifier[] { MethodModifier.Static, MethodModifier.Virtual, MethodModifier.Extern, MethodModifier.Abstract } },
             { MethodModifier.Static,   new MethodModifier[] { MethodModifier.Abstract, MethodModifier.Virtual, MethodModifier.Override, MethodModifier.Sealed } },
             { MethodModifier.Extern,   new MethodModifier[] { MethodModifier.Abstract, MethodModifier.Virtual, MethodModifier.Override, MethodModifier.Sealed } },
             { MethodModifier.Async,    new MethodModifier[] { MethodModifier.Abstract } },
-            { MethodModifier.Unsafe,   new MethodModifier[0] },
-            { MethodModifier.None,     new MethodModifier[0] },
+            { MethodModifier.Unsafe,   Array.Empty<MethodModifier>() },
+            { MethodModifier.None,     Array.Empty<MethodModifier>() },
         };
 
         public static string AsString(this FieldModifier modifier)

@@ -13,7 +13,7 @@ namespace Unity.VisualScripting.Community
     
         public override void DrawForeground()
         {
-            var Literal = new Literal(unit.type, unit.value);
+            var Literal = new Literal(unit.type ?? typeof(int), unit.value ?? 0);
             var unitPosition = unit.position;
             var preservation = UnitPreservation.Preserve(unit);
             context.BeginEdit();

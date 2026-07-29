@@ -22,22 +22,22 @@ namespace Unity.VisualScripting.Community
             var container = new VisualElement
             {
                 style =
-                {
-                    flexDirection = FlexDirection.Row,
-                    alignItems = Align.Center,
-                    justifyContent = Justify.FlexEnd,
-                    flexGrow = 1
-                }
+        {
+            flexDirection = FlexDirection.Row,
+            alignItems = Align.Center,
+            justifyContent = Justify.FlexEnd,
+            flexGrow = 1
+        }
             };
 
             var zoomLabel = new Label("Zoom")
             {
                 style =
-                {
-                    unityTextAlign = TextAnchor.MiddleLeft,
-                    marginRight = 2,
-                    fontSize = 11
-                }
+        {
+            unityTextAlign = TextAnchor.MiddleLeft,
+            marginRight = 2,
+            fontSize = 11
+        }
             };
             container.Add(zoomLabel);
 
@@ -50,13 +50,13 @@ namespace Unity.VisualScripting.Community
             };
             container.Add(zoomSlider);
 
-            var zoomValue = new Label($"{window.context.graph.zoom:0.#}x")
+            var zoomValue = new Label($"{window.context.graph.zoom:0.0}x")
             {
                 style =
                 {
                     unityTextAlign = TextAnchor.MiddleLeft,
                     marginLeft = 2,
-                    fontSize = 11
+                    fontSize = 11,
                 }
             };
 
@@ -65,18 +65,19 @@ namespace Unity.VisualScripting.Community
             container.Add(new IMGUIContainer(() =>
             {
                 if (window.context == null) return;
-                zoomValue.text = $"{window.context.graph.zoom:0.#}x";
+                zoomValue.text = $"{window.context.graph.zoom:0.0}x";
                 zoomSlider.value = window.context.graph.zoom;
             }));
 
             zoomSlider.RegisterValueChangedCallback(ev =>
             {
                 window.context.graph.zoom = ev.newValue;
-                zoomValue.text = $"{ev.newValue:0.#}x";
+                zoomValue.text = $"{ev.newValue:0.0}x";
             });
 
             return container;
         }
+
         public const float FloatingToolbarButtonSize = 28;
         public static float GetCanvasToolbarWidth(ICanvas canvas)
         {
@@ -85,16 +86,18 @@ namespace Unity.VisualScripting.Community
             {
                 size = 1;
             }
+
             if (canvas is FlowCanvas)
             {
                 size += 8;
-                return (FloatingToolbarButtonSize * size) + 10;
+                return (FloatingToolbarButtonSize * size) + (30 * 4);
             }
             else if (canvas is StateCanvas)
             {
                 size += 6;
-                return (FloatingToolbarButtonSize * size) + 10;
+                return (FloatingToolbarButtonSize * size) + (30 * 4);
             }
+
             return 0;
         }
     }

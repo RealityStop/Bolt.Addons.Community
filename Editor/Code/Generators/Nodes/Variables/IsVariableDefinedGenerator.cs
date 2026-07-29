@@ -25,10 +25,10 @@ namespace Unity.VisualScripting.Community.CSharp
         {
             switch (Unit.kind)
             {
-                case VariableKind.Flow:
-                case VariableKind.Graph:
-                    writer.Error($"{Unit.kind} Variables do not support connected names");
-                    break;
+                case VariableKind.Flow or VariableKind.Graph:
+                    using (writer.CodeDiagnosticScope($"{Unit.kind} Variables cannot use IsDefined yet.", CodeDiagnosticKind.Error))
+                        writer.Error($"Could not generate {Unit.kind} Variable");
+                    return;
                 case VariableKind.Object:
                     writer.InvokeMember(writer.GetTypeNameHighlighted(typeof(VisualScripting.Variables)), "Object", writer.Action(() => GenerateValue(Unit.@object, data, writer)));
                     break;

@@ -8,6 +8,7 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Utility;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assemblies;
 using ParameterModifier = Unity.VisualScripting.Community.Libraries.CSharp.ParameterModifier;
 
 namespace Unity.VisualScripting.Community.CSharp
@@ -19,7 +20,7 @@ namespace Unity.VisualScripting.Community.CSharp
         where TMethodDeclaration : MethodDeclaration
         where TConstructorDeclaration : ConstructorDeclaration
     {
-
+        [NonSerialized]
         public Dictionary<string, object> AttributeParameters;
 
         protected Metadata attributes;
@@ -712,7 +713,13 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (Target.icon == null) Target.icon = DefaultIcon();
 
-            allTypes = AppDomain.CurrentDomain.GetAssemblies()
+#if UNITY_6000_4_OR_NEWER
+            Assembly[] assemblies = CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#endif
+
+            allTypes = assemblies
                 .SelectMany(assembly => assembly.GetTypes()).ToArray();
 
             CacheConstrainedAttributes();

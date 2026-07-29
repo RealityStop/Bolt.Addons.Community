@@ -26,12 +26,21 @@ namespace Unity.VisualScripting.Community
                 {
                     if (valueReroute.hideConnection)
                     {
-                        return PathUtil.Load("PortalConnectionIn", CommunityEditorPath.Fundamentals)?[16];
+                        return CommunityStyles.valuePortalConnection;
                     }
                 }
-                return BoltFlow.Icons.valuePortConnected?[12];
+                return CommunityStyles.valuePortConnected;
             }
         }
+
+#if !ENABLE_VERTICAL_FLOW
+        private const float HorizontalMinBlend = 20f;
+        protected override float connectionMinBend => HorizontalMinBlend;
+        protected override float connectionrelativeBend => UnitConnectionStyles.relativeBend;
+#endif
+
+        private readonly Vector2 handleSize = new Vector2(10, 10);
+        protected override Vector2 HandleSize => handleSize;
 
         protected override void DrawConnectionSource()
         {
@@ -42,11 +51,9 @@ namespace Unity.VisualScripting.Community
                 canvas.connectionEnd = mousePosition;
             }
 
-            float minBend = 20f;
+            Vector2 size = handleSize;
 
-            Vector2 size = new Vector2(9, 12);
-
-            if (e.alt) size = new Vector2(16, 16);
+            if (e.alt) size = PortalSize;
 
             GraphGUI.DrawConnection
                 (
@@ -55,14 +62,19 @@ namespace Unity.VisualScripting.Community
                     canvas.connectionEnd,
                     edge,
                     null,
-                    e.alt ? PathUtil.Load("PortalConnectionIn", CommunityEditorPath.Fundamentals)?[16] : BoltFlow.Icons.valuePortConnected?[12],
+                    e.alt ? CommunityStyles.valuePortalConnection : CommunityStyles.valuePortConnected,
                     size,
+#if ENABLE_VERTICAL_FLOW
+                    CommunityStyles.relativeBend,
+                    CommunityStyles.minBend
+#else
                     UnitConnectionStyles.relativeBend,
-                    minBend
+                    HorizontalMinBlend
+#endif
                 );
         }
 
-        protected override Texture handleTextureUnconnected => BoltFlow.Icons.valuePortUnconnected?[12];
+        protected override Texture handleTextureUnconnected => CommunityStyles.valuePortUnconnected;
 
         public override void CachePosition()
         {
@@ -72,8 +84,8 @@ namespace Unity.VisualScripting.Community
             var outside = edge.Normal().x;
             var inside = -outside;
             var flip = inside < 0;
-            var width = VisualScripting.UnitPortWidget<ValueInput>.Styles.handleSize.x;
-            var height = VisualScripting.UnitPortWidget<ValueInput>.Styles.handleSize.y;
+            var width = 10;
+            var height = 10;
             var connection = port.connection;
 
             bool hide = false;

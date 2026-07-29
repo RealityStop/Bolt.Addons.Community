@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using Unity.VisualScripting.Community.Utility;
 using Unity.VisualScripting.Community.Libraries.Humility;
-
+using static Unity.VisualScripting.Round<float, float>;
 namespace Unity.VisualScripting.Community.CSharp
 {
     [NodeGenerator(typeof(ChannelEvent))]
@@ -34,7 +34,8 @@ namespace Unity.VisualScripting.Community.CSharp
                     GetNormalCode(data, writer);
                 }
             }
-            writer.Write(");");
+            writer.NewLine();
+            writer.Write("});", WriteOptions.IndentedNewLineAfter);
         }
 
         private void GetCoroutineCode(ControlGenerationData data, CodeWriter writer)

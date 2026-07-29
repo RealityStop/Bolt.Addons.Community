@@ -67,7 +67,11 @@ namespace Unity.VisualScripting.Community
         private class SerializableValueHandler
         {
             public string targetGuid;
+#if UNITY_6000_5_OR_NEWER
+            public EntityId targetEntityID;
+#else
             public int targetInstanceID;
+#endif
             public string scenePath;
             public List<SerializableKeyValuePair> assetValues = new List<SerializableKeyValuePair>();
             public List<SerializableKeyValuePair> sceneObjectValues = new List<SerializableKeyValuePair>();
@@ -88,12 +92,23 @@ namespace Unity.VisualScripting.Community
         {
             if (obj is GameObject go)
             {
+#if UNITY_6000_5_OR_NEWER
+                return EntityId.ToULong(go.GetEntityId()).ToString();
+#elif UNITY_6000_4_OR_NEWER
+                return go.GetEntityId().ToString();
+#else
                 return go.GetInstanceID().ToString();
+#endif
             }
             else if (obj is Component comp)
             {
-                // Add component type to make path unique for different components
+#if UNITY_6000_5_OR_NEWER
+                return EntityId.ToULong(comp.gameObject.GetEntityId()).ToString() + "," + EntityId.ToULong(comp.GetEntityId()).ToString() + "," + comp.GetType().FullName;
+#elif UNITY_6000_4_OR_NEWER
+                return comp.gameObject.GetEntityId().ToString() + "," + comp.GetEntityId().ToString() + "," + comp.GetType().FullName;
+#else
                 return comp.gameObject.GetInstanceID().ToString() + "," + comp.GetInstanceID().ToString() + "," + comp.GetType().FullName;
+#endif
             }
             return null;
         }
@@ -108,7 +123,15 @@ namespace Unity.VisualScripting.Community
                     continue;
 
                 var handler = new SerializableValueHandler();
+
+#if UNITY_6000_5_OR_NEWER
+                handler.targetEntityID = kvp.Key.GetEntityId();
+#elif UNITY_6000_4_OR_NEWER
+                handler.targetInstanceID = kvp.Key.GetEntityId();
+#else
                 handler.targetInstanceID = kvp.Key.GetInstanceID();
+#endif
+
                 handler.scenePath = GetScenePath(kvp.Key);
 
                 foreach (var valueKvp in kvp.Value)
@@ -169,18 +192,41 @@ namespace Unity.VisualScripting.Community
                         if (handler.scenePath.Contains(','))
                         {
                             var split = handler.scenePath.Split(',');
-                            var instanceID = int.Parse(split[0]);
-                            var go = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+#if UNITY_6000_5_OR_NEWER
+                            var goEntityId = EntityId.FromULong(ulong.Parse(split[0]));
+                            var go = EditorUtility.EntityIdToObject(goEntityId) as GameObject;
+#elif UNITY_6000_3_OR_NEWER
+                            var ID = int.Parse(split[0]);
+                            var go = EditorUtility.EntityIdToObject(ID) as GameObject;
+#else
+                            var ID = int.Parse(split[0]);
+                            var go = EditorUtility.InstanceIDToObject(ID) as GameObject;
+#endif
                             if (go != null)
                             {
                                 target = go.GetComponents<Component>()
-                                    .FirstOrDefault(c => c != null && c.GetInstanceID() == int.Parse(split[1]));
+                                    .FirstOrDefault(c => c != null &&
+#if UNITY_6000_5_OR_NEWER
+                                    c.GetEntityId() == EntityId.FromULong(ulong.Parse(split[1])));
+#elif UNITY_6000_4_OR_NEWER
+                                    c.GetEntityId() == int.Parse(split[1]));
+#else
+                                    c.GetInstanceID() == int.Parse(split[1]));
+#endif
                             }
                         }
                         else
                         {
-                            var instanceID = int.Parse(handler.scenePath);
-                            target = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+#if UNITY_6000_5_OR_NEWER
+                            var goEntityId = EntityId.FromULong(ulong.Parse(handler.scenePath));
+                            target = EditorUtility.EntityIdToObject(goEntityId) as GameObject;
+#elif UNITY_6000_3_OR_NEWER
+                            var ID = int.Parse(handler.scenePath);
+                            target = EditorUtility.EntityIdToObject(ID) as GameObject;
+#else
+                            var ID = int.Parse(handler.scenePath);
+                            target = EditorUtility.InstanceIDToObject(ID) as GameObject;
+#endif
                         }
                     }
 
@@ -206,18 +252,41 @@ namespace Unity.VisualScripting.Community
                         if (pair.value.Contains(','))
                         {
                             var split = pair.value.Split(',');
-                            var instanceID = int.Parse(split[0]);
-                            var go = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+#if UNITY_6000_5_OR_NEWER
+                            var goEntityId = EntityId.FromULong(ulong.Parse(split[0]));
+                            var go = EditorUtility.EntityIdToObject(goEntityId) as GameObject;
+#elif UNITY_6000_3_OR_NEWER
+                            var ID = int.Parse(split[0]);
+                            var go = EditorUtility.EntityIdToObject(ID) as GameObject;
+#else
+                            var ID = int.Parse(split[0]);
+                            var go = EditorUtility.InstanceIDToObject(ID) as GameObject;
+#endif
                             if (go != null)
                             {
                                 sceneValue = go.GetComponents<Component>()
-                                    .FirstOrDefault(c => c.GetInstanceID() == int.Parse(split[1]));
+                                    .FirstOrDefault(c => c != null &&
+#if UNITY_6000_5_OR_NEWER
+                                    c.GetEntityId() == EntityId.FromULong(ulong.Parse(split[1])));
+#elif UNITY_6000_4_OR_NEWER
+                                    c.GetEntityId() == int.Parse(split[1]));
+#else
+                                    c.GetInstanceID() == int.Parse(split[1]));
+#endif
                             }
                         }
                         else
                         {
-                            var instanceID = int.Parse(pair.value);
-                            sceneValue = EditorUtility.InstanceIDToObject(instanceID);
+#if UNITY_6000_5_OR_NEWER
+                            var goEntityId = EntityId.FromULong(ulong.Parse(pair.value));
+                            sceneValue = EditorUtility.EntityIdToObject(goEntityId) as GameObject;
+#elif UNITY_6000_3_OR_NEWER
+                            var ID = int.Parse(pair.value);
+                            sceneValue = EditorUtility.EntityIdToObject(ID) as GameObject;
+#else
+                            var ID = int.Parse(pair.value);
+                            sceneValue = EditorUtility.InstanceIDToObject(ID) as GameObject;
+#endif
                         }
 
                         if (sceneValue != null && !valueDict.ContainsValue(sceneValue))
@@ -267,9 +336,7 @@ namespace Unity.VisualScripting.Community
             return null;
 #endif
         }
-        /// <summary>
-        /// Used to communicate with the CodeGenerator to get the current scriptmachine from the target object.
-        /// </summary>
+
         public static System.Func<GameObject, SMachine> requestMachine;
         public static Object currentAsset;
         public static void SetIsUsed(string variableName)
@@ -329,6 +396,7 @@ namespace Unity.VisualScripting.Community
             variableName = "";
             return false;
         }
+
         public static Dictionary<string, Object> GetAllValues(Object target, bool clearObsolete = true)
         {
             EnsureCurrentAsset(target);
@@ -339,6 +407,7 @@ namespace Unity.VisualScripting.Community
                 return ObjectValueHandlers[target];
             else return new Dictionary<string, Object>();
         }
+
         public static void RemoveObsoleteValues(Object target)
         {
             EnsureLoaded();

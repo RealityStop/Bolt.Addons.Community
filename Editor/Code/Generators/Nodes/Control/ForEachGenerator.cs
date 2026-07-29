@@ -48,6 +48,8 @@ namespace Unity.VisualScripting.Community.CSharp
                     variableName = data.AddLocalNameInScope("item", typeof(object), true);
                 }
 
+                data.CreateSymbol(Unit, elementType);
+
                 writer.WriteIndented("foreach ".ControlHighlight());
                 writer.Parentheses(w =>
                 {
@@ -96,20 +98,58 @@ namespace Unity.VisualScripting.Community.CSharp
 
         protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
+            var expectedType = data.GetExpectedType();
+
             if (output == Unit.currentItem)
             {
                 if (!data.ContainsNameInAncestorScope(variableName))
                 {
-                    writer.WriteErrorDiagnostic($"{variableName}, can only be used inside the loop.", $"Could not find or access {variableName}");
+                    writer.WriteErrorDiagnostic($"{variableName}, can only be used inside the loop.", $"Could not find or access {variableName}", WriteOptions.IndentedNewLineAfter);
                     return;
                 }
+
                 if (Unit.dictionary)
                 {
                     writer.GetMember(variableName.VariableHighlight(), "Value");
+
+                    if (expectedType == null) return;
+
+                    if (data.TryGetSymbol(Unit, out var symbol))
+                    {
+                        var type = symbol.Type;
+                        if (type.IsGenericType)
+                        {
+                            var itemType = type.GetGenericArguments()[1];
+
+                            if (expectedType.IsAssignableFrom(itemType))
+                                data.MarkExpectedTypeMet(resolvedAs: itemType);
+                        }
+                        else if (type == typeof(DictionaryEntry))
+                        {
+                            if (expectedType.IsAssignableFrom(typeof(object)))
+                                data.MarkExpectedTypeMet(resolvedAs: typeof(object));
+                        }
+                        else if (expectedType.IsAssignableFrom(type))
+                        {
+                            data.MarkExpectedTypeMet(resolvedAs: type);
+                        }
+                    }
                 }
                 else
                 {
                     writer.Write(variableName.VariableHighlight());
+
+                    if (expectedType == null) return;
+
+                    if (data.TryGetSymbol(Unit, out var symbol))
+                    {
+                        var type = symbol.Type;
+
+                        if (expectedType.IsAssignableFrom(type))
+                        {
+                            data.MarkExpectedTypeMet(resolvedAs: type);
+                        }
+                    }
                 }
 
                 return;
@@ -117,16 +157,47 @@ namespace Unity.VisualScripting.Community.CSharp
 
             if (output == Unit.currentKey)
             {
+
                 if (!data.ContainsNameInAncestorScope(variableName))
                 {
-                    writer.WriteErrorDiagnostic($"{variableName}, can only be used inside the loop.", $"Could not find or access {variableName}");
+                    writer.WriteErrorDiagnostic($"{variableName}, can only be used inside the loop.", $"Could not find or access {variableName}", WriteOptions.IndentedNewLineAfter);
                     return;
                 }
+
                 writer.GetMember(variableName.VariableHighlight(), "Key");
+
+                if (expectedType == null) return;
+
+                if (data.TryGetSymbol(Unit, out var symbol))
+                {
+                    var type = symbol.Type;
+                    if (type.IsGenericType)
+                    {
+                        var itemType = type.GetGenericArguments()[0];
+
+                        if (expectedType.IsAssignableFrom(itemType))
+                            data.MarkExpectedTypeMet(resolvedAs: itemType);
+                    }
+                    else if (type == typeof(DictionaryEntry))
+                    {
+                        if (expectedType.IsAssignableFrom(typeof(object)))
+                            data.MarkExpectedTypeMet(resolvedAs: typeof(object));
+                    }
+                    else if (expectedType.IsAssignableFrom(type))
+                    {
+                        data.MarkExpectedTypeMet(resolvedAs: type);
+                    }
+                }
+
                 return;
             }
 
             writer.Write(currentIndex.VariableHighlight());
+
+            if (expectedType != null && expectedType.IsAssignableFrom(typeof(int)))
+            {
+                data.MarkExpectedTypeMet(resolvedAs: typeof(int));
+            }
         }
 
         protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)

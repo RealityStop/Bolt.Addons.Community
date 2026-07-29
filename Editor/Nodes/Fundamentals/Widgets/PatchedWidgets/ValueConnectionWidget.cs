@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Unity.VisualScripting.Community
 {
@@ -12,6 +13,7 @@ namespace Unity.VisualScripting.Community
 
         private new ValueConnection.DebugData ConnectionDebugData => GetDebugData<ValueConnection.DebugData>();
 
+        private static readonly Dictionary<Type, List<MemberInfo>> _inspectableMembersCache = new Dictionary<Type, List<MemberInfo>>();
 
         #region Drawing
 
@@ -64,11 +66,11 @@ namespace Unity.VisualScripting.Community
                         {
                             var innerRect = new Rect(labelPosition.x + 1, labelPosition.y + 1, labelPosition.width - 2, labelPosition.height - 2);
 
-                            var colorText = exception.Message;
-                            var textSize = Styles.prediction.CalcSize(new GUIContent(colorText));
+                            var errorText = exception.Message;
+                            var textSize = Styles.prediction.CalcSize(new GUIContent(errorText));
                             var textRect = new Rect(labelPosition.x + labelPosition.width + 6, labelPosition.center.y - textSize.y / 2, textSize.x, textSize.y);
 
-                            GUI.Label(textRect, colorText, Styles.prediction);
+                            GUI.Label(textRect, errorText, Styles.prediction);
                         }
                     }
                     else if (value is Color colorValue)
@@ -110,21 +112,20 @@ namespace Unity.VisualScripting.Community
 
                         if (labelPosition.Contains(Event.current.mousePosition))
                         {
-                            var inspectableMembers = type
-                                .GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                                .Where(m =>
-                                {
-                                    if (m is FieldInfo f)
+                            if (!_inspectableMembersCache.TryGetValue(type, out var inspectableMembers))
+                            {
+                                inspectableMembers = type
+                                    .GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                                    .Where(m =>
                                     {
-                                        return f.IsPublic || f.HasAttribute<SerializeField>() || f.HasAttribute<SerializeAttribute>() || f.HasAttribute<InspectableAttribute>();
-                                    }
-                                    else if (m is PropertyInfo p)
-                                    {
-                                        return (p.HasAttribute<InspectableAttribute>() || p.HasAttribute<SerializeAttribute>() || p.IsPubliclyGettable()) && p.CanRead;
-                                    }
-                                    return false;
-                                })
-                                .ToList();
+                                        if (m is FieldInfo f) return f.IsPublic || f.HasAttribute<SerializeField>() || f.HasAttribute<SerializeAttribute>() || f.HasAttribute<InspectableAttribute>();
+                                        if (m is PropertyInfo p) return (p.HasAttribute<InspectableAttribute>() || p.HasAttribute<SerializeAttribute>() || p.IsPubliclyGettable()) && p.CanRead;
+                                        return false;
+                                    })
+                                    .ToList();
+
+                                _inspectableMembersCache[type] = inspectableMembers;
+                            }
 
                             if (inspectableMembers.Count > 0)
                             {
@@ -137,16 +138,21 @@ namespace Unity.VisualScripting.Community
                                     var member = inspectableMembers[i];
                                     object memberValue = null;
 
+                                    string str;
                                     try
                                     {
                                         if (member is FieldInfo fi)
-                                            memberValue = fi.GetValue(value);
+                                            memberValue = fi.GetValueOptimized(value);
                                         else if (member is PropertyInfo pi && pi.CanRead)
-                                            memberValue = pi.GetValue(value);
-                                    }
-                                    catch { /* ignore inaccessible members */ }
+                                            memberValue = pi.GetValueOptimized(value);
 
-                                    string str = $"{member.Name}: {memberValue?.ToString() ?? "null"}";
+                                        str = $"{member.Name}: {memberValue?.ToString() ?? "null"}";
+                                    }
+                                    catch
+                                    {
+                                        str = $"{member.Name}: Unknown";
+                                    }
+
                                     lines[i] = str;
 
                                     var size = Styles.prediction.CalcSize(new GUIContent(str));
@@ -209,7 +215,45 @@ namespace Unity.VisualScripting.Community
             }
 
             if (!hideConnection)
+            {
+#if ENABLE_VERTICAL_FLOW
+                var color = this.color;
+
+                var sourceWidget = canvas.Widget<IUnitPortWidget>(connection.source);
+                var destinationWidget = canvas.Widget<IUnitPortWidget>(connection.destination);
+
+                var highlight = !canvas.isCreatingConnection && (sourceWidget.isMouseOver || destinationWidget.isMouseOver);
+
+                var willDisconnect = sourceWidget.willDisconnect || destinationWidget.willDisconnect;
+
+                if (willDisconnect)
+                {
+                    color = UnitConnectionStyles.disconnectColor;
+                }
+                else if (highlight)
+                {
+                    color = UnitConnectionStyles.highlightColor;
+                }
+                else if (colorIfActive)
+                {
+                    if (EditorApplication.isPaused)
+                    {
+                        if (EditorTimeBinding.frame == ConnectionDebugData.lastInvokeFrame)
+                        {
+                            color = UnitConnectionStyles.activeColor;
+                        }
+                    }
+                    else
+                    {
+                        color = Color.Lerp(UnitConnectionStyles.activeColor, color, (EditorTimeBinding.time - ConnectionDebugData.lastInvokeTime) / UnitWidget<IUnit>.Styles.invokeFadeDuration);
+                    }
+                }
+
+                GraphGUI.DrawConnection(color, sourceHandleEdgeCenter, destinationHandleEdgeCenter, Edge.Right, Edge.Left, null, Vector2.zero, CommunityStyles.relativeBend, CommunityStyles.minBend, CommunityStyles.connectionThickness);
+#else
                 base.DrawConnection();
+#endif
+            }
         }
 
         public override void CachePosition()
@@ -218,11 +262,7 @@ namespace Unity.VisualScripting.Community
 
             var rect = new Rect(sourceHandlePosition);
 
-            if (element.source.unit is ValueReroute srcReroute && srcReroute.hideConnection)
-            {
-                rect.width -= 5;
-            }
-            else if (element.destination.unit is ValueReroute desReroute && desReroute.hideConnection)
+            if (element.destination.unit is ValueReroute desReroute && desReroute.hideConnection)
             {
                 rect.width -= 5;
             }
@@ -238,55 +278,29 @@ namespace Unity.VisualScripting.Community
 
         private bool IsMouseOverConnection(Vector2 mousePos, Vector2 start, Vector2 end, float threshold = 8f)
         {
+            if (!clippingPosition.Contains(mousePos))
+            {
+                return false;
+            }
+
             float distance = Vector2.Distance(start, end);
-
             int segments = Mathf.Clamp(Mathf.CeilToInt(distance / 10f), 12, 80);
-
             float minDist = float.MaxValue;
 
             for (int i = 0; i <= segments; i++)
             {
                 float t = i / (float)segments;
-
+#if ENABLE_VERTICAL_FLOW
+                Vector2 p = GraphGUI.GetPointOnConnection(t, start, end, Edge.Right, Edge.Left, CommunityStyles.relativeBend, CommunityStyles.minBend);
+#else
                 Vector2 p = GraphGUI.GetPointOnConnection(t, start, end, Edge.Right, Edge.Left, UnitConnectionStyles.relativeBend, UnitConnectionStyles.minBend);
-
+#endif
                 float dist = Vector2.Distance(mousePos, p);
-                if (dist < minDist)
-                    minDist = dist;
+                if (dist < minDist) minDist = dist;
+                if (minDist < threshold) return true;
             }
 
-            return minDist < threshold;
-        }
-
-        protected override void DrawDroplets()
-        {
-            foreach (var droplet in droplets)
-            {
-                Vector2 position;
-
-                if (droplet < handleAlignmentMargin)
-                {
-                    var t = droplet / handleAlignmentMargin;
-                    position = Vector2.Lerp(sourceHandlePosition.center, sourceHandleEdgeCenter, t);
-                }
-                else if (droplet > 1 - handleAlignmentMargin)
-                {
-                    var t = (droplet - (1 - handleAlignmentMargin)) / handleAlignmentMargin;
-                    position = Vector2.Lerp(destinationHandleEdgeCenter, destinationHandlePosition.center, t);
-                }
-                else
-                {
-                    var t = (droplet - handleAlignmentMargin) / (1 - 2 * handleAlignmentMargin);
-                    position = GraphGUI.GetPointOnConnection(t, sourceHandleEdgeCenter, destinationHandleEdgeCenter, Edge.Right, Edge.Left, UnitConnectionStyles.relativeBend, UnitConnectionStyles.minBend);
-                }
-
-                var size = GetDropletSize();
-
-                using (LudiqGUI.color.Override(GUI.color * color))
-                {
-                    DrawDroplet(new Rect(position.x - size.x / 2, position.y - size.y / 2, size.x, size.y));
-                }
-            }
+            return false;
         }
 
         public static Color DetermineColor(Type source, Type destination)

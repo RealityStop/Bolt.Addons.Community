@@ -38,6 +38,7 @@ namespace Unity.VisualScripting.Community
             [Inspectable]
             [TypeFilter(TypesMatching.Any, typeof(string), typeof(int), typeof(float), typeof(double), typeof(decimal), typeof(bool), typeof(char), typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(uint), typeof(long), typeof(ulong), typeof(LayerMask))]
             [TypeSet(TypeSet.SettingsAssembliesTypes)]
+            [NonSerialized]
             public Type argumentType = typeof(string);
         }
     }

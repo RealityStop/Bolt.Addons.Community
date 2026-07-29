@@ -42,7 +42,6 @@ namespace Unity.VisualScripting.Community.CSharp
 
         public IEnumerable<FieldGenerator> GetRequiredVariables(ControlGenerationData data)
         {
-            name = data.AddLocalNameInScope(name.LegalMemberName(), typeof(OnEveryXSecondsLogic));
             var variable = FieldGenerator.Field(AccessModifier.Private, FieldModifier.None, typeof(OnEveryXSecondsLogic), name);
             variable.Default(new OnEveryXSecondsLogic());
             variable.SetNewlineLiteral(false);
