@@ -60,10 +60,8 @@ namespace Unity.VisualScripting.Community
 
             var validOutput = outputs.OfType<ValueOutputWidget>().FirstOrDefault();
 
-            var invalidInputs = inputs.Cast<IUnitPortWidget>().ToList();
-            var invalidOutputs = outputs.Cast<IUnitPortWidget>()
-                                        .Where(p => p != validOutput)
-                                        .ToList();
+            var invalidInputs = inputs.ToList();
+            var invalidOutputs = outputs.Where(p => p != validOutput).ToList();
 
             float addonWidth = 0f;
             float addonHeight = 0f;

@@ -91,6 +91,8 @@ namespace Unity.VisualScripting.Community
                 .ThenBy(mi => mi.MetadataToken)
                 .Select(mi => mi.Name));
 
+            settings.Clear();
+
             foreach (var name in settingNames)
             {
                 settings.Add(metadata[name]);
