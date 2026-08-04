@@ -1,26 +1,17 @@
-using System;
 using Unity.VisualScripting.Community.Libraries.CSharp;
-using Unity.VisualScripting.Community.Libraries.Humility;
 
 namespace Unity.VisualScripting.Community.CSharp
 {
-    [NodeGenerator(typeof(NegativeValueNode))]
-    public class NegativeValueNodeGenerator : NodeGenerator<NegativeValueNode>
+    [NodeGenerator(typeof(NegateValueNode))]
+    public class NegativeValueNodeGenerator : NodeGenerator<NegateValueNode>
     {
         public NegativeValueNodeGenerator(Unit unit) : base(unit) { }
 
         protected override void GenerateValueInternal(ValueOutput output, ControlGenerationData data, CodeWriter writer)
         {
-            var valueInput = Unit.type switch
-            {
-                NegateType.Float => Unit.Float,
-                NegateType.Int => Unit.Int,
-                NegateType.Vector2 => Unit.Vector2,
-                NegateType.Vector3 => Unit.Vector3,
-                _ => throw new NotSupportedException($"Unsupported type: {Unit.type}")
-            };
             writer.Write("-");
-            GenerateValue(valueInput, data, writer);
+
+            GenerateValue(Unit.Object, data, writer);
         }
 
         protected override void GenerateValueInternal(ValueInput input, ControlGenerationData data, CodeWriter writer)
@@ -47,7 +38,7 @@ namespace Unity.VisualScripting.Community.CSharp
             }
             else
             {
-                writer.Write($"/* \"{input.key} Requires Input\" */".ErrorHighlight());
+                writer.Write($"/* \"{input.key}\" Requires Input */".ErrorHighlight());
             }
         }
     }

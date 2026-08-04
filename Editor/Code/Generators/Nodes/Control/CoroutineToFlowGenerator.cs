@@ -19,7 +19,7 @@ namespace Unity.VisualScripting.Community.CSharp
             }
 
             GenerateExitControl(Unit.Converted, data, writer);
-            GenerateExitControl(Unit.Corutine, data, writer);
+            GenerateExitControl(Unit.Coroutine, data, writer);
         }
     }
 }

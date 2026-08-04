@@ -18,7 +18,14 @@
 
         protected override void InitializeDelegate(Flow flow, bool instance = false)
         {
-            _func.Initialize(flow, this, () => { var _flow = Flow.New(flow.stack.AsReference()); _flow.Invoke(invoke); return _flow.GetValue(@return); });
+            _func.Initialize(flow, this, () =>
+            {
+                using (var _flow = Flow.New(flow.stack.AsReference()))
+                {
+                    _flow.Invoke(invoke);
+                    return _flow.GetValue(@return);
+                }
+            });
         }
 
         protected override void Definition()

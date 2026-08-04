@@ -17,10 +17,10 @@
         {
             if (instance)
             {
-                _action.SetInstance(flow, this, () => { var _flow = Flow.New(flow.stack.ToReference()); _flow.Invoke(invoke); });
+                _action.SetInstance(flow, this, () => { var _flow = Flow.New(flow.stack.ToReference()); _flow.Run(invoke); });
                 return;
             }
-            _action.Initialize(flow, this, () => { var _flow = Flow.New(flow.stack.ToReference()); _flow.Invoke(invoke); });
+            _action.Initialize(flow, this, () => { var _flow = Flow.New(flow.stack.ToReference()); _flow.Run(invoke); });
         }
     }
 }

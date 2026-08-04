@@ -1,79 +1,77 @@
-using UnityEngine;
-using Unity.VisualScripting;
-using System.Numerics;
-using UnityEngine.Windows;
+using System.Linq;
 
 namespace Unity.VisualScripting.Community
 {
-[RenamedFrom("NegativeValueNode")]    
-    [UnitTitle("Negate")] // Node title
-    [UnitCategory("Community\\Math")] // Node category
-    [TypeIcon(typeof(Negate))] // Node category
-    public class NegativeValueNode : Unit
+    [RenamedFrom("NegativeValueNode")]
+    [RenamedFrom("Unity.VisualScripting.Community.NegativeValueNode")]
+    [UnitTitle("Negate")]
+    [UnitCategory("Community\\Math")]
+    [TypeIcon(typeof(Negate))]
+    public class NegateValueNode : Unit
     {
-        [UnitHeaderInspectable]
-        [Inspectable]
         public NegateType type;
         [DoNotSerialize]
+        [PortLabelHidden]
         public ValueInput Float;
         [DoNotSerialize]
+        [PortLabelHidden]
         public ValueInput Int;
         [DoNotSerialize]
+        [PortLabelHidden]
         public ValueInput Vector2;
         [DoNotSerialize]
+        [PortLabelHidden]
         public ValueInput Vector3;
-    
         [DoNotSerialize]
+        [PortLabel("X")]
+        public ValueInput Object;
+
+        [DoNotSerialize]
+        [PortLabel("-X")]
         public ValueOutput output;
-    
+
         protected override void Definition()
         {
-            switch (type)
+            Object = ValueInput<object>(nameof(Object));
+            output = ValueOutput(nameof(output), GetNegativeValue).PredictableIf(f =>
             {
-                case NegateType.Float:
-                    Float = ValueInput<float>(nameof(Float));
-                    break;
-                case NegateType.Int:
-                    Int = ValueInput<int>(nameof(Int));
-                    break;
-                case NegateType.Vector2:
-                    Vector2 = ValueInput<UnityEngine.Vector2>(nameof(Vector2));
-                    break;
-                case NegateType.Vector3:
-                    Vector3 = ValueInput<UnityEngine.Vector3>(nameof(Vector3));
-                    break;
-                default:
-                    Float = ValueInput<float>(nameof(Float));
-                    break;
-            }
-    
-            output = ValueOutput(nameof(output), GetNegativeValue);
+                var connection = Object.connection;
+
+                return connection != null && Flow.CanPredict(connection.source, f.stack.AsReference());
+            });
+
+            UnityThread.EditorAsync(PostDeserialize);
         }
-    
+
         private object GetNegativeValue(Flow flow)
         {
-            switch (type)
+            object value = flow.GetValue(Object);
+            return OperatorUtility.Negate(value);
+        }
+
+        private void PostDeserialize()
+        {
+            foreach (var invalidInput in inputs)
             {
-                case NegateType.Float:
-                    float floatvalue = flow.GetValue<float>(Float);
-                    return -floatvalue;
-                case NegateType.Int:
-                    int intvalue = flow.GetValue<int>(Int);
-                    return -intvalue;
-                case NegateType.Vector2:
-                    UnityEngine.Vector2 vector2value = flow.GetValue<UnityEngine.Vector2>(Vector2);
-                    return -vector2value;
-                case NegateType.Vector3:
-                    UnityEngine.Vector3 vector3value = flow.GetValue<UnityEngine.Vector3>(Vector3);
-                    return -vector3value;
-                default:
-                    float value = flow.GetValue<float>(Float);
-                    return -value;
+                switch (invalidInput.key)
+                {
+                    case nameof(Float):
+                    case nameof(Int):
+                    case nameof(Vector2):
+                    case nameof(Vector3):
+
+                        var connection = invalidInput.connections.FirstOrDefault();
+                        if (connection == null) break;
+
+                        Object.ValidlyConnectTo(connection.source);
+
+                        connection.destination.Disconnect();
+                        break;
+                }
             }
-    
         }
     }
-    
+
     public enum NegateType
     {
         Float,
@@ -81,5 +79,5 @@ namespace Unity.VisualScripting.Community
         Vector2,
         Vector3,
     }
-    
+
 }

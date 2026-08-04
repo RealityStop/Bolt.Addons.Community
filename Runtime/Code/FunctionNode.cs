@@ -111,6 +111,7 @@ namespace Unity.VisualScripting.Community
             if (!fieldDeclaration.get) throw new InvalidOperationException($"Cannot get value from field {fieldDeclaration.name}");
             var flow = Flow.New(fieldDeclaration.getter.GetReference() as GraphReference);
             var result = flow.GetValue(returnValue);
+            flow.Dispose();
             return result;
         }
 
@@ -124,7 +125,7 @@ namespace Unity.VisualScripting.Community
 
             var flow = Flow.New(fieldDeclaration.setter.GetReference() as GraphReference);
             flow.SetValue(parameterPorts[0], value);
-            flow.Invoke(invoke);
+            flow.Run(invoke);
         }
 
         public object Invoke(params object[] parameters)
@@ -151,7 +152,10 @@ namespace Unity.VisualScripting.Community
 
             flow.Invoke(invoke);
 
-            return returnValue != null ? flow.GetValue(returnValue) : null;
+            var value = returnValue != null ? flow.GetValue(returnValue) : null;
+
+            flow.Dispose();
+            return value;
         }
     }
 }

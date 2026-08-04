@@ -159,7 +159,7 @@ namespace Unity.VisualScripting.Community
 
         private static VariableDeclarationCollection GetCollection(VariableDeclarations declarations)
         {
-            return declarations != null ? (VariableDeclarationCollection)CollectionField?.GetValue(declarations) : null;
+            return declarations != null ? (VariableDeclarationCollection)CollectionField?.GetValueOptimized(declarations) : null;
         }
 
         #endregion
@@ -224,6 +224,9 @@ namespace Unity.VisualScripting.Community
 
         private string RenameVariable(string oldName, string newName, VariableDeclarations declarations)
         {
+            if (string.IsNullOrEmpty(oldName))
+                return newName;
+
             if (declarations == null || !declarations.IsDefined(oldName))
                 return newName;
 
@@ -231,7 +234,7 @@ namespace Unity.VisualScripting.Community
             newName = EnsureUniqueName(declarations, newName);
 
             collection?.EditorRename(declaration, newName);
-            SetNameMethod?.Invoke(declaration, new object[] { newName });
+            SetNameMethod?.InvokeOptimized(declaration, new object[] { newName });
 
             return newName;
         }
@@ -342,10 +345,10 @@ namespace Unity.VisualScripting.Community
         private bool ShouldEndRename()
         {
             return isRenaming && (!selection.Contains(unit) ||
-                   GUI.GetNameOfFocusedControl() != controlName ||
-                   e.keyCode == KeyCode.Return ||
-                   e.keyCode == KeyCode.Escape ||
-                   !canvas.isMouseOver);
+                GUI.GetNameOfFocusedControl() != controlName ||
+                e.keyCode == KeyCode.Return ||
+                e.keyCode == KeyCode.Escape ||
+                !canvas.isMouseOver);
         }
 
         private void ExecuteEndRename()
@@ -388,11 +391,11 @@ namespace Unity.VisualScripting.Community
         private void FindSetters() => OpenNodeFinder($"{{0}} [SetVariable: {unit.kind}]");
         private void FindGetters() => OpenNodeFinder($"{{0}} [GetVariable: {unit.kind}]");
 
-        private void OpenNodeFinder(string querySuffix)
+        private void OpenNodeFinder(string queryFormat)
         {
             if (Flow.Predict(unit.name, reference) is string varName)
             {
-                NodeFinderWindow.Open(string.Format(querySuffix, varName));
+                NodeFinderWindow.Open(string.Format(queryFormat, varName));
             }
         }
 

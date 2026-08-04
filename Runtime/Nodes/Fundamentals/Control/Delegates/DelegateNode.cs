@@ -50,16 +50,20 @@ namespace Unity.VisualScripting.Community
                 {
                     Callback = ValueOutput(_delegate.GetDelegateType(), nameof(Callback), (flow) =>
                     {
-                        var _flow = Flow.New(flow.stack.AsReference());
-                        InitializeDelegate(_flow, _delegate.initialized);
-                        return _delegate.GetDelegate();
+                        using (var _flow = Flow.New(flow.stack.AsReference()))
+                        {
+                            InitializeDelegate(_flow, _delegate.initialized);
+                            return _delegate.GetDelegate();
+                        }
                     });
                 }
                 @delegate = ValueOutput(_delegate.GetType(), "delegate", (flow) =>
                 {
-                    var _flow = Flow.New(flow.stack.AsReference());
-                    InitializeDelegate(_flow, _delegate.initialized);
-                    return _delegate;
+                    using (var _flow = Flow.New(flow.stack.AsReference()))
+                    {
+                        InitializeDelegate(_flow, _delegate.initialized);
+                        return _delegate;
+                    }
                 });
 
                 for (int i = 0; i < _delegate.parameters.Length; i++)

@@ -3,11 +3,14 @@ using System.Diagnostics;
 namespace Unity.VisualScripting.Community
 {
     [UnitCategory("Community/Time")]
-    [UnitTitle("StopWatch")]
+    [UnitTitle("Stopwatch")]
     [TypeIcon(typeof(Timer))]
-    public class StopwatchUnit : Unit
+    public class StopwatchUnit : Unit, IGraphElementWithData
     {
-        public Stopwatch Stopwatch { get; private set; }
+        private class Data : IGraphElementData
+        {
+            public Stopwatch Stopwatch;
+        }
 
         [DoNotSerialize]
         public ControlInput Start { get; private set; }
@@ -82,46 +85,67 @@ namespace Unity.VisualScripting.Community
 
         private ControlOutput StartStopwatch(Flow flow)
         {
-            Stopwatch ??= new Stopwatch();
-            Stopwatch.Start();
+            var data = flow.stack.GetElementData<Data>(this);
+            var stopwatch = data.Stopwatch;
+            stopwatch ??= new Stopwatch();
+            stopwatch.Start();
             return Started;
         }
 
         private ControlOutput ResetStopwatch(Flow flow)
         {
-            Stopwatch?.Reset();
+            var data = flow.stack.GetElementData<Data>(this);
+            var stopwatch = data.Stopwatch;
+            stopwatch?.Reset();
             return null;
         }
 
         private ControlOutput StopStopwatch(Flow flow)
         {
-            Stopwatch?.Stop();
+            var data = flow.stack.GetElementData<Data>(this);
+            var stopwatch = data.Stopwatch;
+            stopwatch?.Stop();
             return Stopped;
         }
 
         private float GetElapsedMilliseconds(Flow flow)
         {
-            return Stopwatch != null ? Stopwatch.Elapsed.Milliseconds : 0f;
+            var data = flow.stack.GetElementData<Data>(this);
+            var stopwatch = data.Stopwatch;
+            return stopwatch != null ? stopwatch.Elapsed.Milliseconds : 0f;
         }
 
         private float GetElapsedSeconds(Flow flow)
         {
-            return Stopwatch != null ? (float)Stopwatch.Elapsed.TotalSeconds : 0f;
+            var data = flow.stack.GetElementData<Data>(this);
+            var stopwatch = data.Stopwatch;
+            return stopwatch != null ? (float)stopwatch.Elapsed.TotalSeconds : 0f;
         }
 
         private float GetElapsedMinutes(Flow flow)
         {
-            return Stopwatch != null ? (float)Stopwatch.Elapsed.TotalMinutes : 0f;
+            var data = flow.stack.GetElementData<Data>(this);
+            var stopwatch = data.Stopwatch;
+            return stopwatch != null ? (float)stopwatch.Elapsed.TotalMinutes : 0f;
         }
 
         private float GetElapsedHours(Flow flow)
         {
-            return Stopwatch != null ? (float)Stopwatch.Elapsed.TotalHours : 0f;
+            var data = flow.stack.GetElementData<Data>(this);
+            var stopwatch = data.Stopwatch;
+            return stopwatch != null ? (float)stopwatch.Elapsed.TotalHours : 0f;
         }
 
         private bool GetIsRunning(Flow flow)
         {
-            return Stopwatch != null && Stopwatch.IsRunning;
+            var data = flow.stack.GetElementData<Data>(this);
+            var stopwatch = data.Stopwatch;
+            return stopwatch != null && stopwatch.IsRunning;
+        }
+
+        public IGraphElementData CreateData()
+        {
+            return new Data();
         }
     }
 }

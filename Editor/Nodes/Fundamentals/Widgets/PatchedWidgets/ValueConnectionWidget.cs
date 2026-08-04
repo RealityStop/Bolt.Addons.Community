@@ -21,6 +21,9 @@ namespace Unity.VisualScripting.Community
 
         protected override bool colorIfActive => !BoltFlow.Configuration.animateControlConnections || !BoltFlow.Configuration.animateValueConnections;
         public bool hideConnection { get; private set; }
+
+        public override float zIndex { get => float.MaxValue; set { } }
+
         public override void DrawForeground()
         {
             base.DrawForeground();

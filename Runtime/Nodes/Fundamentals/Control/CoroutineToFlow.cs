@@ -1,11 +1,10 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("CorutineConverter")]
     [RenamedFrom("Unity.VisualScripting.Community.CorutineConverter")]
-    [UnitTitle("CoroutineToFlow")]
+    [UnitTitle("Coroutine To Flow")]
     [UnitCategory("Community\\Control")]
     [TypeIcon(typeof(Flow))]
     public class CoroutineToFlow : Unit
@@ -16,16 +15,16 @@ namespace Unity.VisualScripting.Community
         public ControlOutput Converted;
         [DoNotSerialize]
         [PortLabel("Coroutine")]
-        public ControlOutput Corutine;
+        public ControlOutput Coroutine;
 
         protected override void Definition()
         {
             In = ControlInput("In", Convert);
             Converted = ControlOutput("Flow");
-            Corutine = ControlOutput("Coroutine");
+            Coroutine = ControlOutput("Coroutine");
 
             Succession(In, Converted);
-            Succession(In, Corutine);
+            Succession(In, Coroutine);
         }
 
         private ControlOutput Convert(Flow flow)
@@ -46,7 +45,7 @@ namespace Unity.VisualScripting.Community
             {
                 var Convertedflow = Flow.New(GraphRef);
                 Convertedflow.Run(Converted);
-                return Corutine;
+                return Coroutine;
             }
         }
     }

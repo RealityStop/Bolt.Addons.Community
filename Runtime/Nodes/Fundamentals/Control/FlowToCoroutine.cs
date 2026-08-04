@@ -1,10 +1,9 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("FlowToCoroutine")]
-    [UnitTitle("FlowToCoroutine")]
+    [UnitTitle("Flow To Coroutine")]
     [UnitCategory("Community\\Control")]
     [TypeIcon(typeof(Coroutine))]
     public class FlowToCoroutine : Unit

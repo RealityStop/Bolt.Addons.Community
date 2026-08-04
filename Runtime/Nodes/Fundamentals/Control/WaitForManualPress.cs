@@ -1,16 +1,22 @@
 using System.Collections;
-using Unity.VisualScripting;
 using Unity.VisualScripting.Community.Utility;
 using UnityEngine;
 
 namespace Unity.VisualScripting.Community
 {
     [RenamedFrom("WaitForManualPress")]
-    [UnitTitle("WaitForPress")]
+    [UnitTitle("Wait For Press")]
     [UnitCategory("Community/Control")]
     [TypeIcon(typeof(WaitUnit))]
-    public class WaitForManualPress : Unit
+    public class WaitForManualPress : Unit, IGraphElementWithData
     {
+        private class Data : IGraphElementData
+        {
+            public bool isWaiting;
+
+            public bool isCoroutine;
+        }
+
         [NodeButton("Trigger")]
         [UnitHeaderInspectable]
         public NodeButton button;
@@ -23,12 +29,6 @@ namespace Unity.VisualScripting.Community
         [PortLabelHidden]
         public ControlOutput output;
 
-        private bool IsWaiting;
-
-        private GraphReference reference;
-
-        private bool coroutine;
-
         protected override void Definition()
         {
             input = ControlInputCoroutine(nameof(input), Wait, WaitCoroutine);
@@ -39,31 +39,45 @@ namespace Unity.VisualScripting.Community
 
         private ControlOutput Wait(Flow flow)
         {
-            reference = flow.stack.ToReference();
-            IsWaiting = true;
-            coroutine = false;
+            var data = flow.stack.GetElementData<Data>(this);
+            data.isWaiting = true;
+            data.isCoroutine = false;
             return null;
         }
 
         private IEnumerator WaitCoroutine(Flow flow)
         {
-            IsWaiting = true;
-            coroutine = true;
-            yield return new WaitWhile(() => IsWaiting);
+            var data = flow.stack.GetElementData<Data>(this);
+            data.isCoroutine = true;
+
+            if (data.isWaiting)
+                yield break;
+
+            data.isWaiting = true;
+            yield return new WaitWhile(() => data.isWaiting);
             yield return output;
         }
 
         public void Trigger(GraphReference reference)
         {
-            if (IsWaiting)
+            if (!reference.hasData) return;
+
+            var data = reference.GetElementData<Data>(this);
+
+            if (data.isWaiting)
             {
-                IsWaiting = false;
-                if (!coroutine)
+                data.isWaiting = false;
+                if (!data.isCoroutine)
                 {
                     Flow flow = Flow.New(reference);
-                    flow.Invoke(output);
+                    flow.Run(output);
                 }
             }
+        }
+
+        public IGraphElementData CreateData()
+        {
+            return new Data();
         }
     }
 
