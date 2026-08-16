@@ -3,7 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+#if UNITY_6000_4_OR_NEWER
 using UnityEngine.Assemblies;
+#endif
 using UnityEngine.Events;
 
 namespace Unity.VisualScripting.Community

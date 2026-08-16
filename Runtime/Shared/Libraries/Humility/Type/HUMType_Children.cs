@@ -7,7 +7,9 @@ using System.Reflection;
 using UnityEngine;
 using System.Linq;
 using Unity.VisualScripting.Community.Libraries.Humility;
+#if UNITY_6000_4_OR_NEWER
 using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.VisualScripting.Community.Libraries.Humility
 {

@@ -7,8 +7,9 @@ using Unity.VisualScripting.Community.CSharp;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using UnityEngine;
+#if UNITY_6000_4_OR_NEWER
 using UnityEngine.Assemblies;
-
+#endif
 namespace Unity.VisualScripting.Community
 {
     public sealed partial class CodeWriter

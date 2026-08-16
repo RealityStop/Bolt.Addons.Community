@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
+#if UNITY_6000_4_OR_NEWER
 using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.VisualScripting.Community.Utility
 {

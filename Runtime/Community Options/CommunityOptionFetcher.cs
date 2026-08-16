@@ -5,7 +5,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+#if UNITY_6000_4_OR_NEWER
 using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.VisualScripting.Community
 {
