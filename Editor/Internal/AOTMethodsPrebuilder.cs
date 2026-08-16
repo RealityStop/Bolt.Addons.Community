@@ -11,7 +11,9 @@ using System.IO;
 using Unity.VisualScripting.Community.Libraries.CSharp;
 using ParameterModifier = Unity.VisualScripting.Community.Libraries.CSharp.ParameterModifier;
 using Unity.VisualScripting.Community.CSharp;
+#if UNITY_6000_4_OR_NEWER
 using UnityEngine.Assemblies;
+#endif
 using System.Reflection;
 
 namespace Unity.VisualScripting.Community

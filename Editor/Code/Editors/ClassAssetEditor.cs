@@ -8,7 +8,9 @@ using Unity.VisualScripting.Community.Libraries.CSharp;
 using UnityObject = UnityEngine.Object;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+#if UNITY_6000_4_OR_NEWER
 using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.VisualScripting.Community.CSharp
 {

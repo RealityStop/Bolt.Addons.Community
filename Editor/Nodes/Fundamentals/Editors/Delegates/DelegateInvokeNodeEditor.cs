@@ -3,7 +3,9 @@ using UnityEditor;
 using System.Collections.Generic;
 using System;
 using System.Reflection;
+#if UNITY_6000_4_OR_NEWER
 using UnityEngine.Assemblies;
+#endif
 using System.Linq;
 
 namespace Unity.VisualScripting.Community

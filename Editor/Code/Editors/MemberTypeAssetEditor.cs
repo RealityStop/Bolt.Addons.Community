@@ -8,7 +8,9 @@ using Unity.VisualScripting.Community.Libraries.Humility;
 using Unity.VisualScripting.Community.Utility;
 using UnityEditor;
 using UnityEngine;
+#if UNITY_6000_4_OR_NEWER
 using UnityEngine.Assemblies;
+#endif
 using ParameterModifier = Unity.VisualScripting.Community.Libraries.CSharp.ParameterModifier;
 
 namespace Unity.VisualScripting.Community.CSharp

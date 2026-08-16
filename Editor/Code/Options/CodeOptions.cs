@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using Unity.VisualScripting.Community.Libraries.Humility;
 using System.Reflection;
+#if UNITY_6000_4_OR_NEWER
 using UnityEngine.Assemblies;
+#endif
 using System.Linq;
 
 namespace Unity.VisualScripting.Community
