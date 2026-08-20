@@ -42,58 +42,50 @@ Add the following line to your `Packages/manifest.json` under `dependencies`:
 ---
 
 ## 📦 What's Included?
-We include a multitude of assets, nodes, and tooling to extend missing language concepts and provide fundamental utilities and extensions for graphs. Here is what you will find:
+   > We include a multitude of assets, nodes, and tooling to extend missing language concepts and provide fundamental utilities and extensions for graphs. Here is what you will find:
 
-### 📦 Node Library
+### 🧩 Node Library
 
-| Category | Units |
-| :--- | :--- |
-| [**Variables**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#variables) | Increment, Decrement, Plus Equals, Reset Saved, Clear Saved |
-| [**Events**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#events) | On Every X Seconds, On Variable Changed, Manual Event, Defined Event, Trigger Defined Event, Global Defined Event, Return Event, Event Return, Trigger Return Event, Editor Window Events, Trigger Asset Custom Event, Reset Graph Listener, Channel Event, Trigger Channel Event |
-| [**Control**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#control) | Branch (Params), Gate, Edge Trigger, Change Detect, Invoke Delegate, Bind Delegate, Unbind Delegate, Create Delegate, FlowToCoroutine, CoroutineToFlow, WaitForManualPress, If (Next), ElseIf, Using, Flow Reroute, Value Reroute, Chance Flow, Limited Trigger |
-| [**Collections**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#control) | Create Array, Get Array Item, Query Node, Random Element, Random Numbers, Set Array Item |
-| [**Logic**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#logic) | Logic Params, Log Node, Toggle Bool, Gate, Polarity, Between, Edge Trigger, Latch |
-| [**Utility**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#logic) | Convert, As, Copy To Clipboard, Counter, IsStringEmptyOrWhitespace, HDRColors, Select Expose, Bold, Italic, Strikethrough, Underline, Reverse String, String Builder, Size, Color, Random String, Multiline String |
-| [**Documentation**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#documentation) | Comment, Arrow, Todo, Stuff Happens, Some Value |
-| [**Object Pooling**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#pooling) | Initialize Object Pool, Retrieve Object, Return Object, Return All Objects, On Retrieved, On Returned |
-| [**Graphs**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Machine-Variables) | Machine Is, Get Machine, Get Machine Variable, Get Machines, Set Machine Variable, Has Machine Variable |
-| [**Time**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Unit-Reference---Machine-Variables) | Yield, Enumerator, Stopwatch |
-| [**Editor Window View**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Window-View) | Window Is, Get Window Variable, Set Window Variable |
-| [**Math**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Window-View) | Math Op, Negate Value, Decay, Exponential, Linear, Logarithmic, Reverse Linear, Sigmoid |
-
-### 💎 Assets
-*Code Assets generate dependency-free C# code directly from your graphs.*
-
-| Category | Type | Description |
-| :--- | :--- | :--- |
-| [**Code**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/C%23-Generation) | Class, Delegates, Enums, Interface, Struct | Essential Visual Scripting to C# building blocks. (Experimental) |
-| [**Editor**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Windows) | Window View | Tool for custom UI, Using Visual Scripting |
-| **Wizards** | [Node](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Node-Creation-Wizard) & [Descriptor Creation](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Descriptor-Creation-Wizard) | Tools for faster unit and descriptor creation. |
+| Category | Units | Docs |
+| :--- | :--- | :---: |
+| **Control Flow** | Branch (Params), Gate, Edge Trigger, Change Detect, Chance Flow, Limited Trigger, Latch, If (Next), ElseIf, Flow/Value Reroute, Flow To Coroutine | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#control) |
+| **Events & Delegates** | On Every X Seconds, On Variable Changed, Defined/Return Events, Channel Events, Delegate Binding (Invoke, Bind, Unbind) | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#events) |
+| **Variables & Data** | Increment/Decrement, Plus Equals, Save/Clear Variables, Machine Variables, Window Variables | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#variables) |
+| **Math & Logic** | Math Op, Negate, Curves (Decay, Sigmoid, Exponential, Linear), Logic Params, Toggle Bool, Polarity, Between | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#logic) |
+| **Strings & Text** | StringBuilder, Formatting (Bold, Italic, Underline, Strikethrough), String Manipulation (Reverse, Size, Color, Random String) | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#utility) |
+| **Memory & Utilities** | Object Pooling (Init, Retrieve, Return), Clipboard Copy, Counter, Log Node, Stopwatch, Convert, As | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#pooling) |
+| **Collections** | Array Operations (Create, Set, Get), Query Node, Random Element, Random Numbers | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#collections) |
+| **Documentation** | Comment, Arrow, Todo, Placeholder Nodes(Stuff Happens, Some Value) | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Units-Reference#documentation) |
 
 ---
 
-### 🛠️ Utilities
-*Workflow enhancements to speed up your development process.*
+### 💎 Assets & Tools
 
-| Utility Tool | Function |
-| :--- | :--- |
-| [**Selection to Macro**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Selection-to-Macro) | Quickly convert a group of nodes into a Subgraph (Embed or Macro). |
-| [**Graph Snippets**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Graph-Snippets) | Save and inject common node patterns (Control & Value). |
-| [**Node Finder**](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Node-Finder) | Global search utility for finding nodes and other elements within any graph or subgraph. |
+| Category | Feature | Description | Docs |
+| :--- | :--- | :--- | :---: |
+| **Code Generation** | C# Asset Generator | Compiles graphs directly into dependency-free C# classes, delegates, enums, interfaces, and structs *(Experimental)*. | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/C%23-Generation) |
+| **Editor UI** | Editor Window View | Build custom Unity editor windows directly using Visual Scripting graphs. | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Editor-Windows) |
+| **Wizards** | Node Creation Wizard | Automated editor script to generate boilerplate code for new custom units. | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Node-Creation-Wizard) |
+| **Wizards** | Descriptor Creation Wizard | Automated editor script to generate unit descriptors. | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Descriptor-Creation-Wizard) |
 
 ---
 
-## 👥 Community Credits
+### 🛠️ Workflow Enhancements
 
-### 🛡️ Maintainers
-*The current and past architects of the project.*
+| Tool | Function | Docs |
+| :--- | :--- | :---: |
+| **Selection to Macro** | Instantly collapse selected node clusters into Subgraphs or Macros. | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Selection-to-Macro) |
+| **Graph Snippets** | Store, share, and reuse standard node patterns across projects. | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Graph-Snippets) |
+| **Node Finder** | Project-wide search tool for finding nodes and other elements within any graph or subgraph. | [Wiki](https://github.com/RealityStop/Bolt.Addons.Community/wiki/Node-Finder) |
 
-| Current | Legacy (The Original Team) |
-| :--- | :--- |
-| **S2NX7** | Reality.Stop() • JasonJonesLASM |
+---
+
+## 👥 Community & Credits
+
+### Maintainers
+* **Active Maintainers:** S2NX7
+* **Legacy Authors:** Reality.Stop() • JasonJonesLASM
 
 > [!NOTE]
-> ### 🌟 Contributors
-> *A special thanks to those who have helped shape this project.*
-> 
+> **Special Thanks to Contributors:**  
 > Necka • AFoolsDuty • Eka • Silence • PurerLogic • Tomate Salat • Spyboticer • omega-ult
