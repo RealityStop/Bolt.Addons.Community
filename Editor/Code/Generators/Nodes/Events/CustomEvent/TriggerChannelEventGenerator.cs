@@ -14,11 +14,12 @@ namespace Unity.VisualScripting.Community.CSharp
 
         protected override void GenerateControlInternal(ControlInput input, ControlGenerationData data, CodeWriter writer)
         {
+            writer.WriteIndented();
             writer.InvokeMember(typeof(EventBus), "Trigger",
             writer.Action(() => writer.GetMember(typeof(CommunityEvents), "ChannelEvent")),
             writer.Action(() => GenerateValue(Unit.channel, data, writer)));
 
-            writer.NewLine();
+            writer.WriteEnd(EndWriteOptions.LineEnd);
 
             GenerateExitControl(Unit.OutputTrigger, data, writer);
         }
